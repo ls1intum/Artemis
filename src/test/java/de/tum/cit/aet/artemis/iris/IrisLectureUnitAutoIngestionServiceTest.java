@@ -23,9 +23,9 @@ import org.springframework.scheduling.TaskScheduler;
 
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.iris.service.IrisLectureUnitAutoIngestionService;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class IrisLectureUnitAutoIngestionServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -39,7 +39,7 @@ class IrisLectureUnitAutoIngestionServiceTest extends AbstractSpringIntegrationI
     private TaskScheduler taskScheduler;
 
     @Mock
-    private LectureUnitRepository lectureUnitRepository;
+    private LectureUnitRepositoryApi lectureUnitRepositoryApi;
 
     @InjectMocks
     private IrisLectureUnitAutoIngestionService irisLectureUnitAutoIngestionService;
@@ -67,12 +67,12 @@ class IrisLectureUnitAutoIngestionServiceTest extends AbstractSpringIntegrationI
 
     @Test
     void scheduleLectureUnitAutoIngestion_shouldScheduleTask_forAttachmentVideoUnit() {
-        when(lectureUnitRepository.findByIdElseThrow(lectureUnitId)).thenReturn(attachmentVideoUnit);
+        when(lectureUnitRepositoryApi.findByIdElseThrow(lectureUnitId)).thenReturn(attachmentVideoUnit);
         doReturn(scheduledFutureMock).when(taskScheduler).schedule(runnableCaptor.capture(), instantCaptor.capture());
 
         irisLectureUnitAutoIngestionService.scheduleLectureUnitAutoIngestion(lectureUnitId);
 
-        verify(lectureUnitRepository).findByIdElseThrow(lectureUnitId);
+        verify(lectureUnitRepositoryApi).findByIdElseThrow(lectureUnitId);
         verify(taskScheduler).schedule(runnableCaptor.getValue(), instantCaptor.getValue());
 
         Runnable scheduledRunnable = runnableCaptor.getValue();
@@ -82,7 +82,7 @@ class IrisLectureUnitAutoIngestionServiceTest extends AbstractSpringIntegrationI
 
     @Test
     void scheduleLectureUnitAutoIngestion_shouldCancelExistingTask_beforeSchedulingNewOne() {
-        when(lectureUnitRepository.findByIdElseThrow(lectureUnitId)).thenReturn(attachmentVideoUnit);
+        when(lectureUnitRepositoryApi.findByIdElseThrow(lectureUnitId)).thenReturn(attachmentVideoUnit);
 
         ScheduledFuture<?> firstScheduledFuture = mock(ScheduledFuture.class, "firstFuture");
         ScheduledFuture<?> secondScheduledFuture = mock(ScheduledFuture.class, "secondFuture");
@@ -101,7 +101,7 @@ class IrisLectureUnitAutoIngestionServiceTest extends AbstractSpringIntegrationI
 
     @Test
     void cancelLectureUnitAutoIngestion_shouldCancelScheduledTask() {
-        when(lectureUnitRepository.findByIdElseThrow(lectureUnitId)).thenReturn(attachmentVideoUnit);
+        when(lectureUnitRepositoryApi.findByIdElseThrow(lectureUnitId)).thenReturn(attachmentVideoUnit);
         doReturn(scheduledFutureMock).when(taskScheduler).schedule(any(Runnable.class), any(Instant.class));
         irisLectureUnitAutoIngestionService.scheduleLectureUnitAutoIngestion(lectureUnitId);
         verify(taskScheduler).schedule(any(Runnable.class), any(Instant.class));
@@ -126,11 +126,11 @@ class IrisLectureUnitAutoIngestionServiceTest extends AbstractSpringIntegrationI
     @Test
     void scheduleLectureUnitAutoIngestion_shouldNotScheduleTask_forNonAttachmentVideoUnit() {
         LectureUnit nonVideoUnit = mock(LectureUnit.class);
-        when(lectureUnitRepository.findByIdElseThrow(lectureUnitId)).thenReturn(nonVideoUnit);
+        when(lectureUnitRepositoryApi.findByIdElseThrow(lectureUnitId)).thenReturn(nonVideoUnit);
 
         irisLectureUnitAutoIngestionService.scheduleLectureUnitAutoIngestion(lectureUnitId);
 
-        verify(lectureUnitRepository).findByIdElseThrow(lectureUnitId);
+        verify(lectureUnitRepositoryApi).findByIdElseThrow(lectureUnitId);
         verify(taskScheduler, never()).schedule(any(Runnable.class), any(Instant.class));
     }
 }
