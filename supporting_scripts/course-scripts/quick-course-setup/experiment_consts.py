@@ -23,7 +23,7 @@ SPAMMY_BUILD_GRADLE = """
 
     spam_logs() {
         log_line="📣 This is a test log message meant to spam the output. 📣"
-        for ((i = 1; i <= 100000; i++)); do
+        for ((i = 1; i <= 20000; i++)); do
             printf "Log line %d: %s\n" "$i" "$log_line"
         done
     exit 1
