@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
@@ -115,6 +116,9 @@ public class LocalVCServletService {
 
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
+    private final ExercisePersistenceService exercisePersistenceService;
+
+
     @Value("${artemis.version-control.url}")
     public void setLocalVCBaseUrl(URI localVCBaseUri) {
         LocalVCServletService.localVCBaseUri = localVCBaseUri;
@@ -137,11 +141,13 @@ public class LocalVCServletService {
     private final Map<String, Repository> repositories = new HashMap<>();
 
     public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
-            ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
-            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService) {
+                                 RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
+                                 ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
+                                 ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
+                                 ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
+                                 ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService,
+                                 ExercisePersistenceService exercisePersistenceService
+    ) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -155,6 +161,7 @@ public class LocalVCServletService {
         this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
         this.vcsAccessLogService = vcsAccessLogService;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -183,8 +190,7 @@ public class LocalVCServletService {
             repository.incrementOpen();
             log.debug("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
             return repository;
-        }
-        else {
+        } else {
             log.debug("Opening local repository {}", repositoryPath);
             try (Repository repository = FileRepositoryBuilder.create(repositoryDir.toFile())) {
                 // Enable pushing without credentials, authentication is handled by the LocalVCPushFilter.
@@ -194,8 +200,7 @@ public class LocalVCServletService {
                 repository.incrementOpen();
                 log.debug("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
                 return repository;
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 log.error("Unable to open local repository {}", repositoryPath);
                 throw new RepositoryNotFoundException(repositoryPath, e);
             }
@@ -212,7 +217,7 @@ public class LocalVCServletService {
      * @throws LocalVCInternalException  If an internal error occurs, e.g. because the LocalVCRepositoryUri could not be created.
      */
     public void authenticateAndAuthorizeGitRequest(HttpServletRequest request, RepositoryActionType repositoryAction)
-            throws LocalVCAuthException, LocalVCForbiddenException, AuthenticationException {
+        throws LocalVCAuthException, LocalVCForbiddenException, AuthenticationException {
 
         long timeNanoStart = System.nanoTime();
 
@@ -257,8 +262,7 @@ public class LocalVCServletService {
         try {
             var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false);
             savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation);
-        }
-        catch (LocalVCForbiddenException e) {
+        } catch (LocalVCForbiddenException e) {
             log.error("User {} does not have access to the repository {}", user.getLogin(), localVCRepositoryUri);
             saveFailedAccessVcsAccessLog(new AuthenticationContext.Request(request), repositoryTypeOrUserName, exercise, localVCRepositoryUri, user, repositoryAction);
             throw e;
@@ -278,7 +282,7 @@ public class LocalVCServletService {
      * @throws LocalVCAuthException If the user authentication fails or the user is not authorized to access a certain repository.
      */
     private void savePreliminaryVcsAccessLogForHTTPs(HttpServletRequest request, LocalVCRepositoryUri localVCRepositoryUri, User user, RepositoryActionType repositoryAction,
-            Optional<ProgrammingExerciseParticipation> optionalParticipation) throws LocalVCAuthException {
+                                                     Optional<ProgrammingExerciseParticipation> optionalParticipation) throws LocalVCAuthException {
         if (optionalParticipation.isPresent()) {
             ProgrammingExerciseParticipation participation = optionalParticipation.get();
             var ipAddress = request.getRemoteAddr();
@@ -301,7 +305,7 @@ public class LocalVCServletService {
      * @param repositoryAction         The {@link RepositoryActionType} action that was attempted.
      */
     public void saveFailedAccessVcsAccessLog(AuthenticationContext context, String repositoryTypeOrUserName, Exercise exercise, LocalVCRepositoryUri localVCRepositoryUri,
-            User user, RepositoryActionType repositoryAction) {
+                                             User user, RepositoryActionType repositoryAction) {
         var participation = tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, (ProgrammingExercise) exercise);
         var commitHash = getCommitHash(localVCRepositoryUri);
         var authenticationMechanism = resolveAuthenticationMechanismFromSessionOrRequest(context, user);
@@ -336,8 +340,7 @@ public class LocalVCServletService {
             case AuthenticationContext.Request request -> {
                 try {
                     return resolveHTTPSAuthenticationMechanism(request.request().getHeader(HttpHeaders.AUTHORIZATION), user);
-                }
-                catch (LocalVCAuthException ignored) {
+                } catch (LocalVCAuthException ignored) {
                     return AuthenticationMechanism.AUTH_HEADER_MISSING;
                 }
             }
@@ -353,8 +356,7 @@ public class LocalVCServletService {
     private String getCommitHash(LocalVCRepositoryUri localVCRepositoryUri) {
         try {
             return getLatestCommitHash(repositories.get(localVCRepositoryUri.getRelativeRepositoryPath().toString()));
-        }
-        catch (GitAPIException e) {
+        } catch (GitAPIException e) {
             log.warn("Failed to obtain commit hash for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(), e.getMessage());
         }
         return "";
@@ -388,13 +390,12 @@ public class LocalVCServletService {
      * @param authorizationHeader  the authorization header containing authentication credentials
      * @param exercise             the programming exercise the user is attempting to access
      * @param localVCRepositoryUri the URI of the local version control repository the user is attempting to access
-     *
      * @return the authenticated {@link User} if authentication is successful
      * @throws LocalVCAuthException    if an error occurs during authentication with the local version control system
      * @throws AuthenticationException if the authentication credentials are invalid or authentication fails
      */
     private User authenticateUser(String authorizationHeader, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri)
-            throws LocalVCAuthException, AuthenticationException {
+        throws LocalVCAuthException, AuthenticationException {
 
         UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
         String username = usernameAndPassword.username();
@@ -404,8 +405,7 @@ public class LocalVCServletService {
 
         try {
             SecurityUtils.checkUsernameAndPasswordValidity(username, passwordOrToken);
-        }
-        catch (AccessForbiddenException | AuthenticationException e) {
+        } catch (AccessForbiddenException | AuthenticationException e) {
             if (StringUtils.isNotEmpty(passwordOrToken)) {
                 log.warn("Failed login attempt for user {} with password {} due to issue: {}", username, passwordOrToken, e.getMessage());
             }
@@ -414,7 +414,7 @@ public class LocalVCServletService {
 
         // check user VCS access token
         if (Objects.equals(user.getVcsAccessToken(), passwordOrToken) && user.getVcsAccessTokenExpiryDate() != null
-                && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())) {
+            && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())) {
             return user;
         }
 
@@ -441,7 +441,7 @@ public class LocalVCServletService {
      * @return {@code true} if the authentication is successful, {@code false} otherwise
      */
     private boolean tryAuthenticationWithParticipationVCSAccessToken(User user, String providedToken, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri)
-            throws LocalVCAuthException {
+        throws LocalVCAuthException {
 
         // Note: we first check if the user has used a vcs access token instead of a password
         if (providedToken.startsWith(TOKEN_PREFIX) && providedToken.length() == VCS_ACCESS_TOKEN_LENGTH) {
@@ -452,8 +452,7 @@ public class LocalVCServletService {
                 Optional<ProgrammingExerciseStudentParticipation> studentParticipation;
                 if (exercise.isTeamMode()) {
                     studentParticipation = programmingExerciseParticipationService.findTeamParticipationByExerciseAndUser(exercise, user);
-                }
-                else {
+                } else {
                     participations = programmingExerciseParticipationService.findStudentParticipationsByExerciseAndStudentId(exercise, user.getLogin());
                     studentParticipation = participations.stream().filter(participation -> participation.getRepositoryUri().equals(localVCRepositoryUri.toString())).findAny();
                 }
@@ -464,8 +463,7 @@ public class LocalVCServletService {
                         return true;
                     }
                 }
-            }
-            catch (EntityNotFoundException e) {
+            } catch (EntityNotFoundException e) {
                 throw new LocalVCAuthException();
             }
         }
@@ -487,7 +485,7 @@ public class LocalVCServletService {
         ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
 
         boolean isAllowedRepository = repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())
-                || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString());
+            || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString());
 
         return isAllowedRepository && authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
     }
@@ -504,8 +502,7 @@ public class LocalVCServletService {
     private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
         try {
             return programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, true);
-        }
-        catch (EntityNotFoundException e) {
+        } catch (EntityNotFoundException e) {
             throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey, e);
         }
     }
@@ -554,7 +551,7 @@ public class LocalVCServletService {
      * @throws LocalVCForbiddenException If the user is not allowed to access the repository.
      */
     public Optional<ProgrammingExerciseParticipation> authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise,
-            RepositoryActionType repositoryActionType, LocalVCRepositoryUri localVCRepositoryUri, boolean usingSSH) throws LocalVCForbiddenException {
+                                                                    RepositoryActionType repositoryActionType, LocalVCRepositoryUri localVCRepositoryUri, boolean usingSSH) throws LocalVCForbiddenException {
 
         if (checkIfRepositoryIsAuxiliaryOrTestRepository(exercise, repositoryTypeOrUserName, repositoryActionType, user)) {
             return Optional.empty();
@@ -591,34 +588,31 @@ public class LocalVCServletService {
      * @throws LocalVCInternalException If no participation is found and it is not an auxiliary repository.
      */
     private ProgrammingExerciseParticipation tryToLoadParticipation(boolean usingSSH, String repositoryTypeOrUserName, LocalVCRepositoryUri localVCRepositoryUri,
-            ProgrammingExercise exercise) throws LocalVCInternalException {
+                                                                    ProgrammingExercise exercise) throws LocalVCInternalException {
         ProgrammingExerciseParticipation participation;
         try {
             if (usingSSH) {
                 participation = programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString(),
-                        exercise);
-            }
-            else {
+                    exercise);
+            } else {
                 participation = programmingExerciseParticipationService.fetchParticipationByRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString(), exercise);
             }
-        }
-        catch (EntityNotFoundException e) {
+        } catch (EntityNotFoundException e) {
             // If the repository was not found, this could mean it is an auxiliary repository (which do not have participations)
             if (auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
                 return programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(exercise.getId());
             }
             throw new LocalVCInternalException(
-                    "No participation found for repository with repository type or username " + repositoryTypeOrUserName + " in exercise " + exercise.getId(), e);
+                "No participation found for repository with repository type or username " + repositoryTypeOrUserName + " in exercise " + exercise.getId(), e);
         }
         return participation;
     }
 
     private void checkAccessForRepository(ProgrammingExerciseParticipation participation, User user, ProgrammingExercise exercise, RepositoryActionType repositoryActionType)
-            throws LocalVCForbiddenException {
+        throws LocalVCForbiddenException {
         try {
             repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, repositoryActionType);
-        }
-        catch (AccessForbiddenException e) {
+        } catch (AccessForbiddenException e) {
             throw new LocalVCForbiddenException(e);
         }
     }
@@ -635,12 +629,12 @@ public class LocalVCServletService {
      * @param repositoryActionType     the action that should be performed on of the repository
      * @param user                     the user who tries to access the repository
      * @return true if the repository is an Auxiliary or Test repository, and the user has access to it.
-     *         false for students if the repository is possibly an auxiliary repository, or
-     *         false for TAs if the repository is neither auxiliary nor test
+     * false for students if the repository is possibly an auxiliary repository, or
+     * false for TAs if the repository is neither auxiliary nor test
      * @throws LocalVCForbiddenException if the user has no access rights for the requested repository
      */
     private boolean checkIfRepositoryIsAuxiliaryOrTestRepository(ProgrammingExercise exercise, String repositoryTypeOrUserName, RepositoryActionType repositoryActionType,
-            User user) throws LocalVCForbiddenException {
+                                                                 User user) throws LocalVCForbiddenException {
 
         // Students are not able to access Test or Aux repositories.
         // To save on db queries we do not check whether it is an Aux repo here, as we would need to fetch them first.
@@ -657,8 +651,7 @@ public class LocalVCServletService {
         if (auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
             try {
                 repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(repositoryActionType == RepositoryActionType.WRITE, exercise, user, repositoryTypeOrUserName);
-            }
-            catch (AccessForbiddenException e) {
+            } catch (AccessForbiddenException e) {
                 throw new LocalVCForbiddenException(e);
             }
             // The user is at least TA, it is either an Auxiliary repository or a Test repository, and the user has access to it
@@ -680,7 +673,7 @@ public class LocalVCServletService {
      * @param serverSession           the SSH serverSession, where the data gets stored
      */
     public void cacheAttributesInSshSession(User user, Optional<ProgrammingExerciseParticipation> optionalParticipation, RepositoryActionType repositoryActionType,
-            AuthenticationMechanism authenticationMechanism, String ipAddress, LocalVCRepositoryUri localVCRepositoryUri, ServerSession serverSession) {
+                                            AuthenticationMechanism authenticationMechanism, String ipAddress, LocalVCRepositoryUri localVCRepositoryUri, ServerSession serverSession) {
         if (optionalParticipation.isPresent()) {
             ProgrammingExerciseParticipation participation = optionalParticipation.get();
             try {
@@ -692,14 +685,13 @@ public class LocalVCServletService {
 
                 var finalRepositoryActionType = repositoryActionType == RepositoryActionType.READ ? RepositoryActionType.PULL : RepositoryActionType.PUSH;
                 var preliminaryAccessLog = new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), finalRepositoryActionType,
-                        authenticationMechanism, commitHash, ipAddress);
+                    authenticationMechanism, commitHash, ipAddress);
 
                 serverSession.setAttribute(SshConstants.VCS_ACCESS_LOG_KEY, preliminaryAccessLog);
                 serverSession.setAttribute(SshConstants.PARTICIPATION_KEY, participation);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 log.warn("Failed to obtain commit hash or store access log for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(),
-                        e.getMessage());
+                    e.getMessage());
             }
         }
     }
@@ -714,11 +706,9 @@ public class LocalVCServletService {
     public int getHttpStatusForException(Exception exception, String repositoryUri) {
         if (exception instanceof LocalVCAuthException) {
             return HttpStatus.UNAUTHORIZED.value();
-        }
-        else if (exception instanceof LocalVCForbiddenException) {
+        } else if (exception instanceof LocalVCForbiddenException) {
             return HttpStatus.FORBIDDEN.value();
-        }
-        else {
+        } else {
             log.error("Internal server error while trying to access repository {}: {}", repositoryUri, exception.getMessage());
             return HttpStatus.INTERNAL_SERVER_ERROR.value();
         }
@@ -738,7 +728,7 @@ public class LocalVCServletService {
      * @throws VersionControlException        if the commit belongs to the wrong branch (i.e. not the default branch of the participation).
      */
     public void processNewPush(String commitHash, Repository repository, User user, Optional<ProgrammingExercise> cachedExercise,
-            Optional<ProgrammingExerciseParticipation> cachedParticipation, Optional<VcsAccessLog> vcsAccessLog) {
+                               Optional<ProgrammingExerciseParticipation> cachedParticipation, Optional<VcsAccessLog> vcsAccessLog) {
         long timeNanoStart = System.nanoTime();
 
         Path repositoryFolderPath = repository.getDirectory().toPath();
@@ -753,14 +743,12 @@ public class LocalVCServletService {
 
         try {
             participation = cachedParticipation.orElseGet(() -> programmingExerciseParticipationService
-                    .fetchParticipationWithSubmissionsByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(), localVCRepositoryUri.toString(), exercise));
-        }
-        catch (EntityNotFoundException e) {
+                .fetchParticipationWithSubmissionsByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(), localVCRepositoryUri.toString(), exercise));
+        } catch (EntityNotFoundException e) {
             repositoryType = getRepositoryType(repositoryTypeOrUserName, exercise);
             if (repositoryType.equals(RepositoryType.AUXILIARY) || repositoryType.equals(RepositoryType.TESTS)) {
                 participation = retrieveSolutionParticipation(exercise);
-            }
-            else {
+            } else {
                 throw new VersionControlException("Could not find participation for repository", e);
             }
         }
@@ -791,21 +779,23 @@ public class LocalVCServletService {
             if (vcsAccessLog.isPresent()) {
                 vcsAccessLog.get().setCommitHash(finalCommitHash);
                 vcsAccessLogService.ifPresent(service -> service.saveVcsAccesslog(vcsAccessLog.get()));
-            }
-            else {
+            } else {
                 var finalParticipation = participation;
                 vcsAccessLogService.ifPresent(service -> service.updateCommitHash(finalParticipation, finalCommitHash));
             }
-        }
-        catch (GitAPIException | IOException e) {
+            // Create new versioning for programming exercises when any non-submission repository is pushed
+            if (!repositoryType.equals(RepositoryType.USER)) {
+                exercisePersistenceService.save(exercise);
+            }
+        } catch (GitAPIException | IOException e) {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
             // For exceptions happening inside runBuildJob(), the user is notified. See the addBuildJobToQueue() method in the LocalCIBuildJobManagementService for that.
             throw new VersionControlException(
-                    "Could not process new push to repository " + localVCRepositoryUri.getURI() + " and commit " + commitHash + ". No build job was queued.", e);
+                "Could not process new push to repository " + localVCRepositoryUri.getURI() + " and commit " + commitHash + ". No build job was queued.", e);
         }
 
         log.debug("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUri.getURI(), commitHash,
-                TimeLogUtil.formatDurationFrom(timeNanoStart));
+            TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
     private ProgrammingExerciseParticipation retrieveSolutionParticipation(ProgrammingExercise exercise) {
@@ -816,8 +806,7 @@ public class LocalVCServletService {
         ProgrammingExercise exercise;
         try {
             exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
-        }
-        catch (EntityNotFoundException e) {
+        } catch (EntityNotFoundException e) {
             throw new VersionControlException("Could not find programming exercise for project key " + projectKey, e);
         }
         return exercise;
@@ -826,8 +815,7 @@ public class LocalVCServletService {
     private static LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
         try {
             return new LocalVCRepositoryUri(repositoryFolderPath, localVCBaseUri);
-        }
-        catch (LocalVCInternalException e) {
+        } catch (LocalVCInternalException e) {
             // This means something is misconfigured.
             throw new VersionControlException("Could not create valid repository URI from path " + repositoryFolderPath, e);
         }
@@ -850,7 +838,7 @@ public class LocalVCServletService {
      * @throws VersionControlException if something unexpected goes wrong when creating the submission or triggering the build.
      */
     private void processNewPushToTestOrAuxRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation solutionParticipation,
-            RepositoryType repositoryType) throws VersionControlException {
+                                                     RepositoryType repositoryType) throws VersionControlException {
         // Create a new submission for the solution repository.
         ProgrammingSubmission submission = getProgrammingSubmission(exercise, commitHash);
 
@@ -860,8 +848,7 @@ public class LocalVCServletService {
             try {
                 // Set a flag to inform the instructor that the student results are now outdated.
                 programmingExerciseTestCaseChangedService.setTestCasesChanged(exercise.getId(), true);
-            }
-            catch (EntityNotFoundException e) {
+            } catch (EntityNotFoundException e) {
                 throw new VersionControlException("Could not set test cases changed flag", e);
             }
         }
@@ -875,8 +862,7 @@ public class LocalVCServletService {
         ProgrammingSubmission submission;
         try {
             submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash);
-        }
-        catch (EntityNotFoundException | IllegalStateException e) {
+        } catch (EntityNotFoundException | IllegalStateException e) {
             throw new VersionControlException("Could not create submission for solution participation", e);
         }
         return submission;
@@ -885,17 +871,13 @@ public class LocalVCServletService {
     private RepositoryType getRepositoryType(String repositoryTypeOrUserName, ProgrammingExercise exercise) {
         if (repositoryTypeOrUserName.equals("exercise")) {
             return RepositoryType.TEMPLATE;
-        }
-        else if (repositoryTypeOrUserName.equals("solution")) {
+        } else if (repositoryTypeOrUserName.equals("solution")) {
             return RepositoryType.SOLUTION;
-        }
-        else if (repositoryTypeOrUserName.equals("tests")) {
+        } else if (repositoryTypeOrUserName.equals("tests")) {
             return RepositoryType.TESTS;
-        }
-        else if (auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
+        } else if (auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
             return RepositoryType.AUXILIARY;
-        }
-        else {
+        } else {
             return RepositoryType.USER;
         }
     }
@@ -925,8 +907,7 @@ public class LocalVCServletService {
         ProgrammingSubmission submission;
         try {
             submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit, user);
-        }
-        catch (EntityNotFoundException | IllegalStateException | IllegalArgumentException e) {
+        } catch (EntityNotFoundException | IllegalStateException | IllegalArgumentException e) {
             throw new VersionControlException("Could not process submission for participation: " + e.getMessage(), e);
         }
 
@@ -975,7 +956,7 @@ public class LocalVCServletService {
      * @param request             the request from the user
      * @param authorizationHeader the authorization header containing the user's credentials
      * @param clientOffered       the number of objects offered by the client in the operation, used to determine
-     *                                if the action is a clone (if 0) or a pull (if greater than 0).
+     *                            if the action is a clone (if 0) or a pull (if greater than 0).
      */
     public void updateAndStoreVCSAccessLogForCloneAndPullHTTPS(HttpServletRequest request, String authorizationHeader, int clientOffered) {
         if (!request.getMethod().equals("POST")) {
@@ -991,8 +972,7 @@ public class LocalVCServletService {
             RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
 
             vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(localVCRepositoryUri, repositoryActionType));
-        }
-        catch (Exception ignored) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -1005,7 +985,7 @@ public class LocalVCServletService {
      *
      * @param session       the {@link ServerSession} representing the SSH session.
      * @param clientOffered the number of objects offered by the client in the operation, used to determine
-     *                          if the action is a clone (if 0) or a pull (if greater than 0).
+     *                      if the action is a clone (if 0) or a pull (if greater than 0).
      */
     public void updateAndStoreVCSAccessLogForCloneAndPullSSH(ServerSession session, int clientOffered) {
         try {
@@ -1016,8 +996,7 @@ public class LocalVCServletService {
             RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
             accessLog.setRepositoryActionType(repositoryActionType);
             vcsAccessLogService.ifPresent(service -> service.saveVcsAccesslog(accessLog));
-        }
-        catch (Exception ignored) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -1037,11 +1016,10 @@ public class LocalVCServletService {
             AuthenticationMechanism mechanism = usernameAndPassword.password().startsWith("vcpat-") ? AuthenticationMechanism.VCS_ACCESS_TOKEN : AuthenticationMechanism.PASSWORD;
             LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(servletRequest);
             var participation = programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(),
-                    localVCRepositoryUri.toString(), null);
+                localVCRepositoryUri.toString(), null);
             var ipAddress = servletRequest.getRemoteAddr();
             vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
-        }
-        catch (LocalVCAuthException | EntityNotFoundException ignored) {
+        } catch (LocalVCAuthException | EntityNotFoundException ignored) {
             // Caught when: 1) no user, or 2) no participation was found. In both cases it does not make sense to write a log
         }
     }

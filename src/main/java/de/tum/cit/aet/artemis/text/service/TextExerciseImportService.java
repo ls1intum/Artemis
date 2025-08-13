@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -48,8 +49,6 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     private static final Logger log = LoggerFactory.getLogger(TextExerciseImportService.class);
 
-    private final TextExerciseRepository textExerciseRepository;
-
     private final FeedbackRepository feedbackRepository;
 
     private final TextBlockRepository textBlockRepository;
@@ -62,18 +61,20 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     private final ExerciseService exerciseService;
 
-    public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository,
-            TextSubmissionRepository textSubmissionRepository, ChannelService channelService, FeedbackService feedbackService,
-            Optional<CompetencyProgressApi> competencyProgressApi, ExerciseService exerciseService) {
+    private final ExercisePersistenceService exercisePersistenceService;
+
+    public TextExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository,
+                                     SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository,
+                                     TextSubmissionRepository textSubmissionRepository, ChannelService channelService, FeedbackService feedbackService,
+                                     Optional<CompetencyProgressApi> competencyProgressApi, ExerciseService exerciseService, ExercisePersistenceService exercisePersistenceService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.textBlockRepository = textBlockRepository;
-        this.textExerciseRepository = textExerciseRepository;
         this.feedbackRepository = feedbackRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
         this.exerciseService = exerciseService;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -96,7 +97,7 @@ public class TextExerciseImportService extends ExerciseImportService {
             newExercise.setFeedbackSuggestionModule(null);
         }
 
-        TextExercise newTextExercise = exerciseService.saveWithCompetencyLinks(newExercise, textExerciseRepository::save);
+        TextExercise newTextExercise = exerciseService.saveWithCompetencyLinks(newExercise, exercisePersistenceService::save);
 
         channelService.createExerciseChannel(newTextExercise, Optional.ofNullable(importedExercise.getChannelName()));
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
@@ -144,8 +145,7 @@ public class TextExerciseImportService extends ExerciseImportService {
             if (originalTextBlock.getType() != null) {
                 if (originalTextBlock.getType() == TextBlockType.AUTOMATIC) {
                     newTextBlock.automatic();
-                }
-                else {
+                } else {
                     newTextBlock.manual();
                 }
             }
@@ -227,9 +227,9 @@ public class TextExerciseImportService extends ExerciseImportService {
 
         // first collect original text blocks as <startIndex, TextBlock> map, startIndex will help to match newly created text block with original text block
         Map<Integer, TextBlock> originalManualTextBlockMap = originalTextBlocks.stream().filter(textBlock -> textBlock.getType() == TextBlockType.MANUAL)
-                .collect(Collectors.toMap(TextBlock::getStartIndex, Function.identity()));
+            .collect(Collectors.toMap(TextBlock::getStartIndex, Function.identity()));
         Map<Integer, TextBlock> nonManualTextBlockMap = originalTextBlocks.stream().filter(textBlock -> textBlock.getType() != TextBlockType.MANUAL)
-                .collect(Collectors.toMap(TextBlock::getStartIndex, Function.identity()));
+            .collect(Collectors.toMap(TextBlock::getStartIndex, Function.identity()));
 
         Map<String, String> textBlockIdPair = new HashMap<>();
 
@@ -238,8 +238,7 @@ public class TextExerciseImportService extends ExerciseImportService {
             TextBlock oldTextBlock;
             if (newTextBlock.getType() == TextBlockType.MANUAL) {
                 oldTextBlock = originalManualTextBlockMap.get(newTextBlock.getStartIndex());
-            }
-            else {
+            } else {
                 oldTextBlock = nonManualTextBlockMap.get(newTextBlock.getStartIndex());
             }
             if (oldTextBlock != null) {

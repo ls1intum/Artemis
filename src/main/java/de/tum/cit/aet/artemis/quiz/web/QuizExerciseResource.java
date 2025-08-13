@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -155,13 +156,15 @@ public class QuizExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
+    private final ExercisePersistenceService exercisePersistenceService;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
-            UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
-            Optional<ExamDateApi> examDateApi, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
-            QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
-            GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService,
-            QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi) {
+                                UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
+                                Optional<ExamDateApi> examDateApi, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
+                                QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
+                                GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
+                                QuizBatchRepository quizBatchRepository, ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService,
+                                QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, ExercisePersistenceService exercisePersistenceService) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -185,6 +188,7 @@ public class QuizExerciseResource {
         this.quizResultService = quizResultService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -220,7 +224,7 @@ public class QuizExerciseResource {
     @PostMapping(value = "quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<QuizExercise> createQuizExercise(@RequestPart("exercise") QuizExercise quizExercise,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
+                                                           @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
         log.info("REST request to create QuizExercise : {}", quizExercise);
         if (quizExercise.getId() != null) {
             throw new BadRequestAlertException("A new quizExercise cannot already have an ID", ENTITY_NAME, "idExists");
@@ -249,7 +253,7 @@ public class QuizExerciseResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**
@@ -260,13 +264,13 @@ public class QuizExerciseResource {
      * @param files            the new files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
      * @param notificationText about the quiz exercise update that should be displayed to the student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with status 500
-     *         (Internal Server Error) if the quizExercise couldn't be updated
+     * (Internal Server Error) if the quizExercise couldn't be updated
      */
     @PutMapping(value = "quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<QuizExercise> updateQuizExercise(@PathVariable Long exerciseId, @RequestPart("exercise") QuizExercise quizExercise,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText)
-            throws IOException {
+                                                           @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText)
+        throws IOException {
         log.info("REST request to update quiz exercise : {}", quizExercise);
         quizExercise.setId(exerciseId);
 
@@ -459,8 +463,7 @@ public class QuizExerciseResource {
         try {
             var batch = quizBatchService.joinBatch(quizExercise, user, joinRequest.password());
             return ResponseEntity.ok(batch);
-        }
-        catch (QuizJoinException ex) {
+        } catch (QuizJoinException ex) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", ex.getError(), ex.getMessage())).build();
         }
     }
@@ -507,8 +510,7 @@ public class QuizExerciseResource {
 
         if (!user.getId().equals(batch.getCreator())) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
-        }
-        else {
+        } else {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, quizExercise, user);
         }
         if (quizExercise.isExamExercise()) {
@@ -550,14 +552,14 @@ public class QuizExerciseResource {
                 // only synchronized quiz exercises can be started like this
                 if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED) {
                     return ResponseEntity.badRequest()
-                            .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotSynchronized", "Quiz is not synchronized.")).build();
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotSynchronized", "Quiz is not synchronized.")).build();
                 }
 
                 var quizBatch = quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise);
                 // check if quiz hasn't already started
                 if (quizBatch.isStarted()) {
                     return ResponseEntity.badRequest()
-                            .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyStarted", "Quiz has already started.")).build();
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyStarted", "Quiz has already started.")).build();
                 }
 
                 // set release date to now, truncated to seconds
@@ -576,7 +578,7 @@ public class QuizExerciseResource {
                 // only synchronized quiz exercises can be started like this
                 if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizSynchronized", "Quiz is synchronized."))
-                            .build();
+                        .build();
                 }
 
                 // set release date to now, truncated to seconds because the database only stores seconds
@@ -586,7 +588,7 @@ public class QuizExerciseResource {
                 // check if quiz is already visible
                 if (quizExercise.isVisibleToStudents()) {
                     return ResponseEntity.badRequest()
-                            .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyVisible", "Quiz is already visible to students.")).build();
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyVisible", "Quiz is already visible to students.")).build();
                 }
 
                 // set quiz to visible
@@ -596,13 +598,13 @@ public class QuizExerciseResource {
                 // check if quiz has ended
                 if (!quizExercise.isQuizEnded()) {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotEndedYet", "Quiz hasn't ended yet."))
-                            .build();
+                        .build();
                 }
                 // check if quiz is already open for practice
                 if (quizExercise.isIsOpenForPractice()) {
                     return ResponseEntity.badRequest()
-                            .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyOpenForPractice", "Quiz is already open for practice."))
-                            .build();
+                        .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyOpenForPractice", "Quiz is already open for practice."))
+                        .build();
                 }
 
                 // set quiz to open for practice
@@ -612,20 +614,19 @@ public class QuizExerciseResource {
             case START_BATCH -> {
                 // Use the start-batch endpoint for starting batches instead
                 return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizBatchActionNotAllowed", "Action not allowed."))
-                        .build();
+                    .build();
             }
         }
 
         // save quiz exercise
-        quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
+        quizExercise = exercisePersistenceService.saveAndFlush(quizExercise);
         // reload the quiz exercise with questions and statistics to prevent problems with proxy objects
         quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
 
         if (action == QuizAction.START_NOW) {
             // notify the instance message send service to send the quiz exercise start schedule (if necessary
             instanceMessageSendService.sendQuizExerciseStartSchedule(quizExercise.getId());
-        }
-        else if (action == QuizAction.END_NOW) {
+        } else if (action == QuizAction.END_NOW) {
             // when the instructor ends the quiz, calculate the results
             quizSubmissionService.calculateAllResults(quizExerciseId);
         }
@@ -672,13 +673,13 @@ public class QuizExerciseResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         List<DragAndDropQuestion> dragAndDropQuestions = quizExercise.getQuizQuestions().stream().filter(question -> question instanceof DragAndDropQuestion)
-                .map(question -> ((DragAndDropQuestion) question)).toList();
+            .map(question -> ((DragAndDropQuestion) question)).toList();
         List<String> backgroundImagePaths = dragAndDropQuestions.stream().map(DragAndDropQuestion::getBackgroundFilePath).toList();
         List<String> dragItemImagePaths = dragAndDropQuestions.stream().flatMap(question -> question.getDragItems().stream().map(DragItem::getPictureFilePath)).toList();
         List<Path> imagesToDelete = Stream
-                .concat(backgroundImagePaths.stream().filter(Objects::nonNull).map(path -> convertToActualPath(path, FilePathType.DRAG_AND_DROP_BACKGROUND)),
-                        dragItemImagePaths.stream().filter(Objects::nonNull).map(path -> convertToActualPath(path, FilePathType.DRAG_ITEM)))
-                .filter(Objects::nonNull).toList();
+            .concat(backgroundImagePaths.stream().filter(Objects::nonNull).map(path -> convertToActualPath(path, FilePathType.DRAG_AND_DROP_BACKGROUND)),
+                dragItemImagePaths.stream().filter(Objects::nonNull).map(path -> convertToActualPath(path, FilePathType.DRAG_ITEM)))
+            .filter(Objects::nonNull).toList();
 
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -693,8 +694,7 @@ public class QuizExerciseResource {
     private Path convertToActualPath(String pathString, FilePathType filePathType) {
         try {
             return FilePathConverter.fileSystemPathForExternalUri(URI.create(pathString), filePathType);
-        }
-        catch (FilePathParsingException e) {
+        } catch (FilePathParsingException e) {
             log.warn("Could not find file {} for deletion", pathString);
             return null;
         }
@@ -711,12 +711,12 @@ public class QuizExerciseResource {
      * @param quizExercise   the quizExercise to re-evaluate
      * @param files          the files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
      * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with
-     *         status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
+     * status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
      */
     @PutMapping(value = "quiz-exercises/{quizExerciseId}/re-evaluate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastInstructorInExercise(resourceIdFieldName = "quizExerciseId")
     public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestPart("exercise") QuizExercise quizExercise,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
+                                                               @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
         log.info("REST request to re-evaluate quiz exercise : {}", quizExerciseId);
         QuizExercise originalQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
 
@@ -726,10 +726,9 @@ public class QuizExerciseResource {
             ZonedDateTime latestIndividualExamEndDate = api.getLatestIndividualExamEndDate(originalQuizExercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                 throw new BadRequestAlertException("The exam of the quiz exercise has not ended yet. Re-evaluation is only allowed after an exam has ended.", ENTITY_NAME,
-                        "examOfQuizExerciseNotEnded");
+                    "examOfQuizExerciseNotEnded");
             }
-        }
-        else if (!originalQuizExercise.isQuizEnded()) {
+        } else if (!originalQuizExercise.isQuizEnded()) {
             throw new BadRequestAlertException("The quiz exercise has not ended yet. Re-evaluation is only allowed after a quiz has ended.", ENTITY_NAME, "quizExerciseNotEnded");
         }
 
@@ -756,7 +755,7 @@ public class QuizExerciseResource {
     @GetMapping("quiz-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<QuizExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
-            @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
+                                                                                   @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(quizExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
@@ -771,13 +770,13 @@ public class QuizExerciseResource {
      * @param importedExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
      * @param files            the files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
      * @return The imported exercise (200), a not found error (404) if the template does not exist,
-     *         or a forbidden error (403) if the user is not at least an instructor in the target course.
+     * or a forbidden error (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping(value = "quiz-exercises/import/{sourceExerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<QuizExercise> importExercise(@PathVariable long sourceExerciseId, @RequestPart("exercise") QuizExercise importedExercise,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
+                                                       @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
         log.info("REST request to import from quiz exercise : {}", sourceExerciseId);
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
@@ -806,7 +805,7 @@ public class QuizExerciseResource {
         QuizExercise newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, files);
 
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + newQuizExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
+            .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }
 
     private void setQuizBatches(User user, QuizExercise quizExercise) {

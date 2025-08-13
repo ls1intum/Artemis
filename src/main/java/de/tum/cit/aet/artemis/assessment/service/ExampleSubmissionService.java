@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -51,9 +52,13 @@ public class ExampleSubmissionService {
 
     private final TutorParticipationRepository tutorParticipationRepository;
 
+    private final ExercisePersistenceService exercisePersistenceService;
+
     public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository,
-            Optional<TextSubmissionImportApi> textSubmissionImportApi, ModelingExerciseImportService modelingExerciseImportService,
-            GradingCriterionRepository gradingCriterionRepository, TutorParticipationRepository tutorParticipationRepository) {
+                                    Optional<TextSubmissionImportApi> textSubmissionImportApi, ModelingExerciseImportService modelingExerciseImportService,
+                                    GradingCriterionRepository gradingCriterionRepository, TutorParticipationRepository tutorParticipationRepository,
+                                    ExercisePersistenceService exercisePersistenceService
+    ) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -61,6 +66,7 @@ public class ExampleSubmissionService {
         this.textSubmissionImportApi = textSubmissionImportApi;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.tutorParticipationRepository = tutorParticipationRepository;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -102,7 +108,7 @@ public class ExampleSubmissionService {
             // Remove the reference to the exercise when the example submission is deleted
             optionalExercise.ifPresent(exercise -> {
                 exercise.removeExampleSubmission(exampleSubmission);
-                exerciseRepository.save(exercise);
+                exercisePersistenceService.save(exercise);
             });
 
             // due to Cascade.Remove this will also remove the submission and the result(s) in case they exist
@@ -125,7 +131,7 @@ public class ExampleSubmissionService {
         var gradingCriteria = this.gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
-                .forEach(gradingInstruction -> gradingInstructionCopyTracker.put(gradingInstruction.getId(), gradingInstruction));
+            .forEach(gradingInstruction -> gradingInstructionCopyTracker.put(gradingInstruction.getId(), gradingInstruction));
 
         if (exercise instanceof ModelingExercise) {
             ModelingSubmission modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);

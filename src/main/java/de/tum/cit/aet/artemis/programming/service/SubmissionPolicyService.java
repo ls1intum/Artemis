@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -30,20 +31,20 @@ import de.tum.cit.aet.artemis.programming.web.SubmissionPolicyResource;
 @Service
 public class SubmissionPolicyService {
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private final ParticipationRepository participationRepository;
 
-    public SubmissionPolicyService(ProgrammingExerciseRepository programmingExerciseRepository, SubmissionPolicyRepository submissionPolicyRepository,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, ParticipationRepository participationRepository) {
-        this.programmingExerciseRepository = programmingExerciseRepository;
+    private final ExercisePersistenceService exercisePersistenceService;
+
+    public SubmissionPolicyService(SubmissionPolicyRepository submissionPolicyRepository,
+                                   ProgrammingSubmissionRepository programmingSubmissionRepository, ParticipationRepository participationRepository, ExercisePersistenceService exercisePersistenceService) {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.participationRepository = participationRepository;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -59,7 +60,7 @@ public class SubmissionPolicyService {
     public SubmissionPolicy addSubmissionPolicyToProgrammingExercise(SubmissionPolicy submissionPolicy, ProgrammingExercise programmingExercise) {
         SubmissionPolicy addedSubmissionPolicy = submissionPolicyRepository.save(submissionPolicy);
         programmingExercise.setSubmissionPolicy(addedSubmissionPolicy);
-        programmingExerciseRepository.save(programmingExercise);
+        exercisePersistenceService.save(programmingExercise);
         return addedSubmissionPolicy;
     }
 
@@ -98,11 +99,11 @@ public class SubmissionPolicyService {
         Integer submissionLimit = submissionPolicy.getSubmissionLimit();
         if (submissionPolicy.isActive() == null) {
             throw new BadRequestAlertException("Submission policies must be activated or deactivated. Activation cannot be null.", SubmissionPolicyResource.ENTITY_NAME,
-                    "submissionPolicyActiveNull");
+                "submissionPolicyActiveNull");
         }
         if (submissionLimit == null || submissionLimit < 1) {
             throw new BadRequestAlertException("The submission limit of submission policies must be greater than 0.", SubmissionPolicyResource.ENTITY_NAME,
-                    "submissionPolicyIllegalSubmissionLimit");
+                "submissionPolicyIllegalSubmissionLimit");
         }
         // Currently, only submission penalty policies must be validated further.
         // A validateLockRepositoryPolicy method would be empty.
@@ -115,7 +116,7 @@ public class SubmissionPolicyService {
         Double penalty = submissionPenaltyPolicy.getExceedingPenalty();
         if (penalty == null || penalty <= 0) {
             throw new BadRequestAlertException("The penalty of submission penalty policies must be greater than 0.", SubmissionPolicyResource.ENTITY_NAME,
-                    "submissionPenaltyPolicyIllegalPenalty");
+                "submissionPenaltyPolicyIllegalPenalty");
         }
 
     }
@@ -129,7 +130,7 @@ public class SubmissionPolicyService {
     public void removeSubmissionPolicyFromProgrammingExercise(ProgrammingExercise programmingExercise) {
         disableSubmissionPolicy(programmingExercise.getSubmissionPolicy());
         programmingExercise.setSubmissionPolicy(null);
-        programmingExerciseRepository.save(programmingExercise);
+        exercisePersistenceService.save(programmingExercise);
     }
 
     /**
@@ -142,11 +143,9 @@ public class SubmissionPolicyService {
     public SubmissionPolicy enableSubmissionPolicy(SubmissionPolicy policy) {
         if (policy instanceof LockRepositoryPolicy lockRepositoryPolicy) {
             return enableLockRepositoryPolicy(lockRepositoryPolicy);
-        }
-        else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
+        } else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
             return enableSubmissionPenaltyPolicy(submissionPenaltyPolicy);
-        }
-        else {
+        } else {
             throw new NotImplementedException();
         }
     }
@@ -169,11 +168,9 @@ public class SubmissionPolicyService {
     public void disableSubmissionPolicy(SubmissionPolicy policy) {
         if (policy instanceof LockRepositoryPolicy lockRepositoryPolicy) {
             disableLockRepositoryPolicy(lockRepositoryPolicy);
-        }
-        else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
+        } else if (policy instanceof SubmissionPenaltyPolicy submissionPenaltyPolicy) {
             disableSubmissionPenaltyPolicy(submissionPenaltyPolicy);
-        }
-        else {
+        } else {
             throw new NotImplementedException();
         }
     }
@@ -287,7 +284,7 @@ public class SubmissionPolicyService {
         int submissionCompensation = 0;
         if (withSubmissionCompensation) {
             participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId)
-                    .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+                .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
             var submissions = participation.getSubmissions();
             if (submissions != null && !submissions.isEmpty()) {
                 submissionCompensation = submissions.iterator().next().getResults().isEmpty() ? 1 : 0;
@@ -300,8 +297,8 @@ public class SubmissionPolicyService {
         // This means that the user is able to submit more often than the allowed number of submissions, if a lock repository policy is configured.
         // As these submissions have to happen in quick succession, this does not constitute an advantage for the student and the behavior is acceptable.
         return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId).stream()
-                .filter(submission -> submission.getType() == SubmissionType.MANUAL && !submission.getResults().isEmpty()).map(ProgrammingSubmission::getCommitHash).distinct()
-                .count() + submissionCompensation;
+            .filter(submission -> submission.getType() == SubmissionType.MANUAL && !submission.getResults().isEmpty()).map(ProgrammingSubmission::getCommitHash).distinct()
+            .count() + submissionCompensation;
     }
 
     /**
@@ -335,9 +332,9 @@ public class SubmissionPolicyService {
             if (illegalSubmissionCount > 0) {
                 double deduction = illegalSubmissionCount * penaltyPolicy.getExceedingPenalty();
                 Feedback penaltyFeedback = new Feedback().credits(-deduction).text(Feedback.SUBMISSION_POLICY_FEEDBACK_IDENTIFIER + "Submission Penalty Policy")
-                        .detailText("You have submitted %d more time%s than the submission limit of %d. This results in a deduction of %.1f points!"
-                                .formatted(illegalSubmissionCount, illegalSubmissionCount == 1 ? "" : "s", penaltyPolicy.getSubmissionLimit(), deduction))
-                        .positive(false).type(FeedbackType.AUTOMATIC).result(result);
+                    .detailText("You have submitted %d more time%s than the submission limit of %d. This results in a deduction of %.1f points!"
+                        .formatted(illegalSubmissionCount, illegalSubmissionCount == 1 ? "" : "s", penaltyPolicy.getSubmissionLimit(), deduction))
+                    .positive(false).type(FeedbackType.AUTOMATIC).result(result);
                 result.addFeedback(penaltyFeedback);
             }
         }

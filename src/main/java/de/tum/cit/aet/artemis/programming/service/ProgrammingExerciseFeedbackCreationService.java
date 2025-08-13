@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,14 +93,17 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
+    private final ExercisePersistenceService exercisePersistenceService;
+
     public ProgrammingExerciseFeedbackCreationService(ProgrammingExerciseTestCaseRepository testCaseRepository, WebsocketMessagingService websocketMessagingService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository,
-            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository) {
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ExercisePersistenceService exercisePersistenceService) {
         this.testCaseRepository = testCaseRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -326,7 +330,7 @@ public class ProgrammingExerciseFeedbackCreationService {
             // that got later pushed into the test repository. Since this test case now exists,
             // the problem statement should now refer to its id.
             programmingExerciseTaskService.replaceTestNamesWithIds(exercise);
-            programmingExerciseRepository.save(exercise);
+            exercisePersistenceService.save(exercise);
             return true;
         }
         return false;

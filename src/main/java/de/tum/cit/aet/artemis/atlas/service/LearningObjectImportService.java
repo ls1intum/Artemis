@@ -18,6 +18,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -113,14 +114,16 @@ public class LearningObjectImportService {
 
     private final CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
 
+    private final ExercisePersistenceService exercisePersistenceService;
+
     public LearningObjectImportService(ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseImportService programmingExerciseImportService, Optional<FileUploadImportApi> fileUploadImportApi,
-            ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseImportService modelingExerciseImportService,
-            Optional<TextExerciseImportApi> textExerciseImportApi, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService,
-            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<LectureUnitApi> lectureUnitApi,
-            Optional<LectureImportApi> lectureImportApi, CourseCompetencyRepository courseCompetencyRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            GradingCriterionRepository gradingCriterionRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository,
-            CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
+                                       ProgrammingExerciseImportService programmingExerciseImportService, Optional<FileUploadImportApi> fileUploadImportApi,
+                                       ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseImportService modelingExerciseImportService,
+                                       Optional<TextExerciseImportApi> textExerciseImportApi, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService,
+                                       Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<LectureUnitApi> lectureUnitApi,
+                                       Optional<LectureImportApi> lectureImportApi, CourseCompetencyRepository courseCompetencyRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+                                       GradingCriterionRepository gradingCriterionRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository,
+                                       CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, ExercisePersistenceService exercisePersistenceService) {
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
@@ -139,6 +142,7 @@ public class LearningObjectImportService {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
         this.competencyLectureUnitLinkRepository = competencyLectureUnitLinkRepository;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -150,7 +154,7 @@ public class LearningObjectImportService {
      * @param importOptions            The import options.
      */
     public void importRelatedLearningObjects(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
-            Course courseToImportInto, CompetencyImportOptionsDTO importOptions) {
+                                             Course courseToImportInto, CompetencyImportOptionsDTO importOptions) {
         Set<CourseCompetency> importedCourseCompetencies = idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).collect(Collectors.toSet());
 
         Set<Exercise> importedExercises = new HashSet<>();
@@ -169,13 +173,13 @@ public class LearningObjectImportService {
         }
 
         courseCompetencyRepository.saveAll(importedCourseCompetencies);
-        exerciseRepository.saveAll(importedExercises);
+        importedExercises.forEach(exercisePersistenceService::save);
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         api.saveAll(importedLectures);
     }
 
     private void importOrLoadExercises(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
-            Course courseToImportInto, Set<Exercise> importedExercises) {
+                                       Course courseToImportInto, Set<Exercise> importedExercises) {
         for (CourseCompetency sourceCourseCompetency : sourceCourseCompetencies) {
             sourceCourseCompetency.getExerciseLinks().forEach(sourceExerciseLink -> {
                 try {
@@ -188,10 +192,9 @@ public class LearningObjectImportService {
                     link = competencyExerciseLinkRepository.save(link);
                     importedExercise.getCompetencyLinks().add(link);
                     importedCompetency.getExerciseLinks().add(link);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     log.error("Failed to import exercise with title {} together with its competency with id {}", sourceExerciseLink.getExercise().getTitle(),
-                            sourceCourseCompetency.getId(), e);
+                        sourceCourseCompetency.getId(), e);
                 }
             });
         }
@@ -199,25 +202,27 @@ public class LearningObjectImportService {
 
     private Exercise importOrLoadExercise(Exercise sourceExercise, Course course) throws JsonProcessingException {
         return switch (sourceExercise) {
-            case ProgrammingExercise programmingExercise -> importOrLoadProgrammingExercise(programmingExercise, course);
+            case ProgrammingExercise programmingExercise ->
+                importOrLoadProgrammingExercise(programmingExercise, course);
             case FileUploadExercise fileUploadExercise -> {
                 FileUploadImportApi api = fileUploadImportApi.orElseThrow(() -> new ApiProfileNotPresentException(FileUploadImportApi.class, PROFILE_CORE));
                 yield importOrLoadExercise(fileUploadExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId, api::findWithGradingCriteriaByIdElseThrow,
-                        api::importFileUploadExercise);
+                    api::importFileUploadExercise);
             }
-            case ModelingExercise modelingExercise -> importOrLoadExercise(modelingExercise, course, modelingExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
+            case ModelingExercise modelingExercise ->
+                importOrLoadExercise(modelingExercise, course, modelingExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
                     modelingExerciseRepository::findByIdWithExampleSubmissionsAndResultsElseThrow, modelingExerciseImportService::importModelingExercise);
             case TextExercise textExercise -> {
                 var api = textExerciseImportApi.orElseThrow(() -> new TextApiNotPresentException(TextExerciseImportApi.class));
                 yield importOrLoadExercise(textExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId,
-                        api::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, api::importTextExercise);
+                    api::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, api::importTextExercise);
             }
-            case QuizExercise quizExercise -> importOrLoadExercise(quizExercise, course, quizExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
+            case QuizExercise quizExercise ->
+                importOrLoadExercise(quizExercise, course, quizExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
                     quizExerciseRepository::findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow, (exercise, templateExercise) -> {
                         try {
                             return quizExerciseImportService.importQuizExercise(exercise, templateExercise, null);
-                        }
-                        catch (IOException e) {
+                        } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
                     });
@@ -228,7 +233,7 @@ public class LearningObjectImportService {
     private Exercise importOrLoadProgrammingExercise(ProgrammingExercise programmingExercise, Course course) throws JsonProcessingException {
         Optional<ProgrammingExercise> foundByTitle = programmingExerciseRepository.findWithCompetenciesByTitleAndCourseId(programmingExercise.getTitle(), course.getId());
         Optional<ProgrammingExercise> foundByShortName = programmingExerciseRepository.findByShortNameAndCourseIdWithCompetencies(programmingExercise.getShortName(),
-                course.getId());
+            course.getId());
 
         if (foundByTitle.isPresent() && foundByShortName.isPresent() && !foundByTitle.get().equals(foundByShortName.get())) {
             throw new IllegalArgumentException("Two programming exercises with the title or short name already exist in the course");
@@ -236,11 +241,9 @@ public class LearningObjectImportService {
 
         if (foundByTitle.isPresent()) {
             return foundByTitle.get();
-        }
-        else if (foundByShortName.isPresent()) {
+        } else if (foundByShortName.isPresent()) {
             return foundByShortName.get();
-        }
-        else {
+        } else {
             programmingExercise = programmingExerciseRepository.findByIdForImportElseThrow(programmingExercise.getId());
             // Fetching the tasks separately, as putting it in the query above leads to Hibernate duplicating the tasks.
             var templateTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
@@ -249,8 +252,8 @@ public class LearningObjectImportService {
             programmingExercise.setGradingCriteria(gradingCriteria);
 
             ProgrammingExercise newExercise = programmingExerciseRepository
-                    .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(
-                            programmingExercise.getId());
+                .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(
+                    programmingExercise.getId());
             PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(newExercise, programmingExerciseRepository);
             newExercise.setCourse(course);
             newExercise.forceNewProjectKey();
@@ -283,16 +286,15 @@ public class LearningObjectImportService {
      * @param findFunction   The function to find an existing exercise by title
      * @param loadForImport  The function to load an exercise for import
      * @param importFunction The function to import the exercise
+     * @param <E>            The type of the exercise
      * @return The imported or loaded exercise
-     * @param <E> The type of the exercise
      */
     private <E extends Exercise> Exercise importOrLoadExercise(E exercise, Course course, ThrowingBiFunction<String, Long, Optional<E>> findFunction,
-            Function<Long, E> loadForImport, BiFunction<E, E, E> importFunction) {
+                                                               Function<Long, E> loadForImport, BiFunction<E, E, E> importFunction) {
         Optional<E> foundByTitle = findFunction.apply(exercise.getTitle(), course.getId());
         if (foundByTitle.isPresent()) {
             return foundByTitle.get();
-        }
-        else {
+        } else {
             exercise = loadForImport.apply(exercise.getId());
             exercise.setCourse(course);
             exercise.setId(null);
@@ -312,24 +314,23 @@ public class LearningObjectImportService {
      * @param importedLectureUnits     The set of imported lecture units
      */
     private void importOrLoadLectureUnits(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
-            Course courseToImportInto, Map<String, Lecture> titleToImportedLectures, Set<LectureUnit> importedLectureUnits) {
+                                          Course courseToImportInto, Map<String, Lecture> titleToImportedLectures, Set<LectureUnit> importedLectureUnits) {
         for (CourseCompetency sourceCourseCompetency : sourceCourseCompetencies) {
             for (CompetencyLectureUnitLink sourceLectureUnitLink : sourceCourseCompetency.getLectureUnitLinks()) {
                 try {
                     importOrLoadLectureUnit(sourceLectureUnitLink, sourceCourseCompetency, idToImportedCompetency, courseToImportInto, titleToImportedLectures,
-                            importedLectureUnits);
-                }
-                catch (Exception e) {
+                        importedLectureUnits);
+                } catch (Exception e) {
                     log.error("Failed to import lecture unit with name {} together with its competency with id {}", sourceLectureUnitLink.getLectureUnit().getName(),
-                            sourceCourseCompetency.getId(), e);
+                        sourceCourseCompetency.getId(), e);
                 }
             }
         }
     }
 
     private void importOrLoadLectureUnit(CompetencyLectureUnitLink sourceLectureUnitLink, CourseCompetency sourceCourseCompetency,
-            Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures,
-            Set<LectureUnit> importedLectureUnits) throws NoUniqueQueryException {
+                                         Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures,
+                                         Set<LectureUnit> importedLectureUnits) throws NoUniqueQueryException {
         if (lectureUnitApi.isEmpty() || lectureUnitRepositoryApi.isEmpty()) {
             return;
         }
@@ -341,15 +342,14 @@ public class LearningObjectImportService {
         Lecture importedLecture = importOrLoadLecture(sourceLecture, courseToImportInto, titleToImportedLectures);
 
         Optional<LectureUnit> foundLectureUnit = repositoryApi.findByNameAndLectureTitleAndCourseIdWithCompetencies(sourceLectureUnit.getName(), sourceLecture.getTitle(),
-                courseToImportInto.getId());
+            courseToImportInto.getId());
         LectureUnit importedLectureUnit;
         if (foundLectureUnit.isEmpty()) {
             importedLectureUnit = api.importLectureUnit(sourceLectureUnit);
 
             importedLecture.getLectureUnits().add(importedLectureUnit);
             importedLectureUnit.setLecture(importedLecture);
-        }
-        else {
+        } else {
             importedLectureUnit = foundLectureUnit.get();
         }
 
@@ -377,7 +377,7 @@ public class LearningObjectImportService {
     }
 
     private void setAllDates(Set<Exercise> importedExercises, Set<Lecture> importedLectures, Set<LectureUnit> importedLectureUnits,
-            Set<CourseCompetency> importedCourseCompetencies, ZonedDateTime referenceDate, boolean isReleaseDate) {
+                             Set<CourseCompetency> importedCourseCompetencies, ZonedDateTime referenceDate, boolean isReleaseDate) {
         long timeOffset = determineTimeOffset(importedExercises, importedLectures, importedLectureUnits, importedCourseCompetencies, referenceDate, isReleaseDate);
         if (timeOffset == 0) {
             return;
@@ -401,7 +401,7 @@ public class LearningObjectImportService {
      * @return The time offset to apply
      */
     private long determineTimeOffset(Set<Exercise> importedExercises, Set<Lecture> importedLectures, Set<LectureUnit> importedLectureUnits,
-            Set<CourseCompetency> importedCourseCompetencies, ZonedDateTime referenceDate, boolean isReleaseDate) {
+                                     Set<CourseCompetency> importedCourseCompetencies, ZonedDateTime referenceDate, boolean isReleaseDate) {
         Optional<ZonedDateTime> earliestTime;
 
         if (isReleaseDate) {
@@ -409,8 +409,7 @@ public class LearningObjectImportService {
             Stream<ZonedDateTime> lectureDates = importedLectures.stream().map(Lecture::getVisibleDate);
             Stream<ZonedDateTime> lectureUnitDates = importedLectureUnits.stream().map(LectureUnit::getReleaseDate);
             earliestTime = Stream.concat(exerciseDates, Stream.concat(lectureDates, lectureUnitDates)).filter(Objects::nonNull).min(Comparator.naturalOrder());
-        }
-        else {
+        } else {
             Stream<ZonedDateTime> exerciseDates = importedExercises.stream().map(Exercise::getDueDate);
             Stream<ZonedDateTime> lectureDates = importedLectures.stream().map(Lecture::getEndDate);
             Stream<ZonedDateTime> competencyDates = importedCourseCompetencies.stream().map(CourseCompetency::getSoftDueDate);

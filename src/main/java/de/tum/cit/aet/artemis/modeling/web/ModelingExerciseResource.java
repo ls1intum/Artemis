@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -114,12 +115,14 @@ public class ModelingExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
+    private final ExercisePersistenceService exercisePersistenceService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
-            AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
-            ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
-            SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
-            GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
-            Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi) {
+                                    AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
+                                    ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
+                                    SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
+                                    GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
+                                    Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, ExercisePersistenceService exercisePersistenceService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -137,6 +140,7 @@ public class ModelingExerciseResource {
         this.channelRepository = channelRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -169,7 +173,7 @@ public class ModelingExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        ModelingExercise result = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
+        ModelingExercise result = exerciseService.saveWithCompetencyLinks(modelingExercise, exercisePersistenceService::save);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
@@ -190,7 +194,7 @@ public class ModelingExerciseResource {
     @GetMapping("modeling-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
-            @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
+                                                                                       @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
@@ -201,13 +205,13 @@ public class ModelingExerciseResource {
      * @param modelingExercise the modelingExercise to update
      * @param notificationText the text shown to students
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or with status 400 (Bad Request) if the modelingExercise is not valid, or with
-     *         status 500 (Internal Server Error) if the modelingExercise couldn't be updated
+     * status 500 (Internal Server Error) if the modelingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("modeling-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody ModelingExercise modelingExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
+                                                                   @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update ModelingExercise : {}", modelingExercise);
         if (modelingExercise.getId() == null) {
             return createModelingExercise(modelingExercise);
@@ -233,7 +237,7 @@ public class ModelingExerciseResource {
 
         channelService.updateExerciseChannel(modelingExerciseBeforeUpdate, modelingExercise);
 
-        ModelingExercise updatedModelingExercise = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
+        ModelingExercise updatedModelingExercise = exerciseService.saveWithCompetencyLinks(modelingExercise, exercisePersistenceService::save);
 
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(modelingExerciseBeforeUpdate, updatedModelingExercise);
@@ -327,7 +331,7 @@ public class ModelingExerciseResource {
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param importedExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
-     *         (403) if the user is not at least an instructor in the target course.
+     * (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("modeling-exercises/import/{sourceExerciseId}")
@@ -346,7 +350,7 @@ public class ModelingExerciseResource {
         importedExercise.validateGeneralSettings();
 
         final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
-        modelingExerciseRepository.save(newModelingExercise);
+        exercisePersistenceService.save(newModelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId())).body(newModelingExercise);
     }
 
@@ -381,15 +385,15 @@ public class ModelingExerciseResource {
      * @param modelingExercise                            the modelingExercise to re-evaluate and update
      * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingExercise, or
-     *         with status 400 (Bad Request) if the modelingExercise is not valid, or with status 409 (Conflict)
-     *         if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
-     *         Server Error) if the modelingExercise couldn't be updated
+     * with status 400 (Bad Request) if the modelingExercise is not valid, or with status 409 (Conflict)
+     * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
+     * Server Error) if the modelingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("modeling-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId, @RequestBody ModelingExercise modelingExercise,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
+                                                                                @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
         log.debug("REST request to re-evaluate ModelingExercise : {}", modelingExercise);
 
         modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);

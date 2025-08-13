@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.HashMap;
 import java.util.Optional;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -39,14 +40,17 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
 
     private final ExerciseService exerciseService;
 
+    private final ExercisePersistenceService exercisePersistenceService;
+
     public FileUploadExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             FileUploadExerciseRepository fileUploadExerciseRepository, ChannelService channelService, FeedbackService feedbackService,
-            Optional<CompetencyProgressApi> competencyProgressApi, ExerciseService exerciseService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, ExerciseService exerciseService, ExercisePersistenceService exercisePersistenceService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
         this.exerciseService = exerciseService;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -63,7 +67,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         FileUploadExercise newExercise = copyFileUploadExerciseBasis(importedExercise);
 
-        FileUploadExercise newFileUploadExercise = exerciseService.saveWithCompetencyLinks(newExercise, fileUploadExerciseRepository::save);
+        FileUploadExercise newFileUploadExercise = exerciseService.saveWithCompetencyLinks(newExercise, exercisePersistenceService::save);
 
         channelService.createExerciseChannel(newFileUploadExercise, Optional.ofNullable(importedExercise.getChannelName()));
 

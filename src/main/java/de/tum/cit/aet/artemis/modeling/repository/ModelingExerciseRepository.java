@@ -140,4 +140,27 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     default ModelingExercise findWithEagerCompetenciesByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
     }
+
+    /**
+     * Finds a modeling exercise with all data needed for versioning.
+     * Loads all base exercise relationships that need to be captured in versions.
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM ModelingExercise e
+                LEFT JOIN FETCH e.categories
+                LEFT JOIN FETCH e.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+                LEFT JOIN FETCH e.teamAssignmentConfig
+                LEFT JOIN FETCH e.exampleSubmissions es
+                LEFT JOIN FETCH es.submission s
+                LEFT JOIN FETCH s.results
+                LEFT JOIN FETCH e.submissionPolicy
+                LEFT JOIN FETCH e.gradingCriteria
+                LEFT JOIN FETCH e.gradingInstructions
+                LEFT JOIN FETCH e.plagiarismDetectionConfig
+                LEFT JOIN FETCH e.attachments
+            WHERE e.id = :exerciseId
+            """)
+    Optional<ModelingExercise> findWithCompleteDataForVersioningById(@Param("exerciseId") long exerciseId);
 }

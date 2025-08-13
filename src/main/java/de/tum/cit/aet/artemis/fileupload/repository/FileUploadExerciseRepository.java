@@ -80,4 +80,27 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     default FileUploadExercise findWithGradingCriteriaByIdElseThrow(Long exerciseId) {
         return getValueElseThrow(findWithGradingCriteriaById(exerciseId), exerciseId);
     }
+
+    /**
+     * Finds a file upload exercise with all data needed for versioning.
+     * Loads all base exercise relationships that need to be captured in versions.
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM FileUploadExercise e
+                LEFT JOIN FETCH e.categories
+                LEFT JOIN FETCH e.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+                LEFT JOIN FETCH e.teamAssignmentConfig
+                LEFT JOIN FETCH e.exampleSubmissions es
+                LEFT JOIN FETCH es.submission s
+                LEFT JOIN FETCH s.results
+                LEFT JOIN FETCH e.submissionPolicy
+                LEFT JOIN FETCH e.gradingCriteria
+                LEFT JOIN FETCH e.gradingInstructions
+                LEFT JOIN FETCH e.plagiarismDetectionConfig
+                LEFT JOIN FETCH e.attachments
+            WHERE e.id = :exerciseId
+            """)
+    Optional<FileUploadExercise> findWithCompleteDataForVersioningById(@Param("exerciseId") long exerciseId);
 }

@@ -132,7 +132,6 @@ public class ProgrammingExerciseValidationService {
 
         programmingExerciseRepository.validateCourseSettings(programmingExercise, course);
         validateStaticCodeAnalysisSettings(programmingExercise);
-
         programmingExercise.generateAndSetProjectKey();
         checkIfProjectExists(programmingExercise);
 

@@ -87,6 +87,36 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "buildConfig" })
     Optional<ProgrammingExercise> findForCreationById(long exerciseId);
 
+    /**
+     * Finds a programming exercise with all data needed for versioning.
+     * Loads all base exercise relationships plus programming-specific fields.
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM ProgrammingExercise e
+                LEFT JOIN FETCH e.categories
+                LEFT JOIN FETCH e.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+                LEFT JOIN FETCH e.teamAssignmentConfig
+                LEFT JOIN FETCH e.exampleSubmissions es
+                LEFT JOIN FETCH es.submission s
+                LEFT JOIN FETCH s.results
+                LEFT JOIN FETCH e.submissionPolicy
+                LEFT JOIN FETCH e.gradingCriteria
+                LEFT JOIN FETCH e.gradingInstructions
+                LEFT JOIN FETCH e.plagiarismDetectionConfig
+                LEFT JOIN FETCH e.attachments
+                LEFT JOIN FETCH e.auxiliaryRepositories
+                LEFT JOIN FETCH e.templateParticipation
+                LEFT JOIN FETCH e.solutionParticipation
+                LEFT JOIN FETCH e.testCases
+                LEFT JOIN FETCH e.tasks
+                LEFT JOIN FETCH e.staticCodeAnalysisCategories
+                LEFT JOIN FETCH e.buildConfig
+            WHERE e.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findWithCompleteDataForVersioningById(@Param("exerciseId") long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = "testCases")
     Optional<ProgrammingExercise> findWithTestCasesById(long exerciseId);
 

@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
@@ -93,10 +94,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final ExerciseService exerciseService;
 
+    private final ExercisePersistenceService exercisePersistenceService;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
-            InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
-            ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
-            ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService) {
+                               InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
+                               ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
+                               ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, ExercisePersistenceService exercisePersistenceService) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -106,6 +109,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.quizBatchService = quizBatchService;
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.exerciseService = exerciseService;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -235,7 +239,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<QuizExercise> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
-            final User user) {
+                                                                  final User user) {
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
@@ -300,8 +304,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
 
         var allFilesToRemoveMerged = filesToRemove.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(path -> FilePathConverter.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).filter(Objects::nonNull)
-                .toList();
+            .flatMap(entry -> entry.getValue().stream().map(path -> FilePathConverter.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).filter(Objects::nonNull)
+            .toList();
 
         FileUtil.deleteFiles(allFilesToRemoveMerged);
     }
@@ -325,7 +329,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     private void handleDndQuestionUpdate(DragAndDropQuestion dragAndDropQuestion, Map<FilePathType, Set<String>> oldPaths, Map<FilePathType, Set<String>> filesToRemove,
-            Map<String, MultipartFile> fileMap, DragAndDropQuestion questionUpdate) throws IOException {
+                                         Map<String, MultipartFile> fileMap, DragAndDropQuestion questionUpdate) throws IOException {
         String newBackgroundPath = dragAndDropQuestion.getBackgroundFilePath();
 
         // Don't do anything if the path is null because it's getting removed
@@ -334,8 +338,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             if (oldBackgroundPaths.contains(newBackgroundPath)) {
                 // Path didn't change
                 filesToRemove.get(FilePathType.DRAG_AND_DROP_BACKGROUND).remove(newBackgroundPath);
-            }
-            else {
+            } else {
                 // Path changed and file was provided
                 saveDndQuestionBackground(dragAndDropQuestion, fileMap, questionUpdate.getId());
             }
@@ -347,8 +350,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             if (newDragItemPath != null && !dragItemOldPaths.contains(newDragItemPath)) {
                 // Path changed and file was provided
                 saveDndDragItemPicture(dragItem, fileMap, null);
-            }
-            else if (newDragItemPath != null) {
+            } else if (newDragItemPath != null) {
                 filesToRemove.get(FilePathType.DRAG_ITEM).remove(newDragItemPath);
             }
         }
@@ -370,8 +372,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         if (isCreate) {
             newFilePathsMap = new HashMap<>(exerciseFilePathsMap);
-        }
-        else {
+        } else {
             for (Map.Entry<FilePathType, Set<String>> entry : exerciseFilePathsMap.entrySet()) {
                 FilePathType type = entry.getKey();
                 Set<String> paths = entry.getValue();
@@ -382,7 +383,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 });
 
                 Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(filePath), type)))
-                        .collect(Collectors.toSet());
+                    .collect(Collectors.toSet());
 
                 if (!newPaths.isEmpty()) {
                     newFilePathsMap.put(type, newPaths);
@@ -420,7 +421,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
 
         question.setBackgroundFilePath(
-                saveDragAndDropImage(FilePathConverter.getDragAndDropBackgroundFilePath(), file, FilePathType.DRAG_AND_DROP_BACKGROUND, questionId).toString());
+            saveDragAndDropImage(FilePathConverter.getDragAndDropBackgroundFilePath(), file, FilePathType.DRAG_AND_DROP_BACKGROUND, questionId).toString());
     }
 
     /**
@@ -429,7 +430,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param dragItem the drag item
      * @param files    all provided files
      * @param entityId The entity id connected to this file, can be question id for background, or the drag item id
-     *                     for drag item images
+     *                 for drag item images
      */
     public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files, @Nullable Long entityId) throws IOException {
         MultipartFile file = files.get(dragItem.getPictureFilePath());
@@ -497,8 +498,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     if (quizBatch.getStartTime() != null) {
                         quizExercise.setDueDate(quizBatch.getStartTime().plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
                     }
-                }
-                else {
+                } else {
                     quizBatch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, quizBatch.getStartTime()));
                 }
             }
@@ -508,13 +508,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // the questions
         // and delete the now orphaned entries from the database
         log.debug("Save quiz exercise to database: {}", quizExercise);
-        return quizExerciseRepository.saveAndFlush(quizExercise);
+        return exercisePersistenceService.saveAndFlush(quizExercise);
     }
 
     /**
      * @param newQuizExercise the newly created quiz exercise, after importing basis of imported exercise
      * @param files           the new files to be added to the newQuizExercise which do not have a previous path and
-     *                            need to be saved in the server
+     *                        need to be saved in the server
      * @return the new exercise with the updated file paths which have been created and saved
      * @throws IOException throws IO exception if corrupted files
      */
@@ -528,7 +528,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 }
                 for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
                     if (dragItem.getPictureFilePath() != null
-                            && !Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM))) {
+                        && !Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM))) {
                         saveDndDragItemPicture(dragItem, fileMap, dragItem.getId());
                     }
                 }
@@ -556,8 +556,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     private Set<CalendarEventDTO> deriveCalendarEventDTOs(QuizExerciseCalendarEventDTO dao, boolean userIsStudent) {
         if (dao.quizMode() == QuizMode.SYNCHRONIZED) {
             return deriveCalendarEventDTOForSynchronizedQuizExercise(dao, userIsStudent).map(Set::of).orElseGet(Collections::emptySet);
-        }
-        else {
+        } else {
             return deriveCalendarEventDTOsForIndividualAndBatchedQuizExercises(dao, userIsStudent);
         }
     }
@@ -587,7 +586,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
 
         return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.START_AND_END_DATE, dto.title(), synchronizedBatch.getStartTime(),
-                synchronizedBatch.getStartTime().plusSeconds(dto.duration()), null, null));
+            synchronizedBatch.getStartTime().plusSeconds(dto.duration()), null, null));
     }
 
     /**

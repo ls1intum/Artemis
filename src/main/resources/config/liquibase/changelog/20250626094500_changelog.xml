@@ -16,8 +16,19 @@
             <column name="exercise_id" type="bigint">
                 <constraints nullable="false" />
             </column>
-            <column name="content" type="json">
+            
+            <!-- Differential versioning fields -->
+            <column name="version_type" type="varchar(20)">
                 <constraints nullable="false" />
+            </column>
+            <column name="previous_version_id" type="bigint">
+                <constraints nullable="true" />
+            </column>
+            <column name="content_json" type="json">
+                <constraints nullable="false" />
+            </column>
+            <column name="content_hash" type="varchar(64)">
+                <constraints nullable="true" />
             </column>
 
             <!-- Auditing fields -->
@@ -30,27 +41,39 @@
             <column name="last_modified_by" type="varchar(50)" />
             <column name="last_modified_date" type="datetime(3)" />
 
-
         </createTable>
 
-        <!-- Create indexes -->
-        <createIndex indexName="idx_exercise_version_created_date"
+        <!-- Create indexes for performance -->
+        <createIndex indexName="idx_exercise_versions"
             tableName="exercise_version">
-            <column name="created_date" />
+            <column name="exercise_id" />
+            <column name="created_date" descending="true" />
+        </createIndex>
+        
+        <createIndex indexName="idx_version_chain"
+            tableName="exercise_version">
+            <column name="previous_version_id" />
         </createIndex>
 
         <!-- Add foreign key constraints -->
         <addForeignKeyConstraint baseColumnNames="author_id"
             baseTableName="exercise_version"
-            constraintName="fk_exercise_version_author_id"
+            constraintName="fk_exercise_version_author"
             referencedColumnNames="id"
             referencedTableName="jhi_user" />
 
         <addForeignKeyConstraint baseColumnNames="exercise_id"
             baseTableName="exercise_version"
-            constraintName="fk_exercise_version_exercise_id"
+            constraintName="fk_exercise_version_exercise"
             referencedColumnNames="id"
-            referencedTableName="exercise" />
+            referencedTableName="exercise"
+            onDelete="CASCADE" />
+            
+        <addForeignKeyConstraint baseColumnNames="previous_version_id"
+            baseTableName="exercise_version"
+            constraintName="fk_exercise_version_previous"
+            referencedColumnNames="id"
+            referencedTableName="exercise_version" />
     </changeSet>
 
 

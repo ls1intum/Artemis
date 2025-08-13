@@ -682,4 +682,42 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE exercise.course.id = :courseId AND TYPE(exercise) IN (FileUploadExercise, TextExercise, ModelingExercise, ProgrammingExercise)
             """)
     Set<NonQuizExerciseCalendarEventDTO> getNonQuizExerciseCalendarEventsDAOsForCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Finds exercise with comprehensive data including all subtype relationships.
+     * This loads ALL relationships from Programming, Quiz, Text, Modeling, and FileUpload exercises.
+     * Use this method for complete exercise versioning data capture.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the exercise with complete data from all exercise types
+     */
+    @EntityGraph(type = LOAD, attributePaths = {
+        // Base Exercise fields
+        "categories",
+        "competencyLinks.competency",
+        "teamAssignmentConfig",
+        "exampleSubmissions",
+        "exampleSubmissions.submission.results",
+        "submissionPolicy",
+        "gradingCriteria",
+        "gradingInstructions",
+        "plagiarismDetectionConfig",
+        "course",
+        "exerciseGroup",
+
+        // ProgrammingExercise fields
+        "auxiliaryRepositories",
+        "templateParticipation",
+        "solutionParticipation",
+        "testCases",
+        "tasks",
+        "staticCodeAnalysisCategories",
+        "buildConfig",
+
+        // QuizExercise fields
+        "quizPointStatistic",
+        "quizQuestions",
+        "quizBatches"
+    })
+    Optional<Exercise> findWithCompleteDataById(Long exerciseId);
 }

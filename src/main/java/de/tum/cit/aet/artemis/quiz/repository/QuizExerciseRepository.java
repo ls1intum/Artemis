@@ -169,4 +169,30 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     default QuizExercise findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(quizExerciseId), quizExerciseId);
     }
+
+    /**
+     * Finds a quiz exercise with all data needed for versioning.
+     * Loads all base exercise relationships plus quiz-specific fields.
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM QuizExercise e
+                LEFT JOIN FETCH e.categories
+                LEFT JOIN FETCH e.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+                LEFT JOIN FETCH e.teamAssignmentConfig
+                LEFT JOIN FETCH e.exampleSubmissions es
+                LEFT JOIN FETCH es.submission s
+                LEFT JOIN FETCH s.results
+                LEFT JOIN FETCH e.submissionPolicy
+                LEFT JOIN FETCH e.gradingCriteria
+                LEFT JOIN FETCH e.gradingInstructions
+                LEFT JOIN FETCH e.plagiarismDetectionConfig
+                LEFT JOIN FETCH e.attachments
+                LEFT JOIN FETCH e.quizPointStatistic
+                LEFT JOIN FETCH e.quizQuestions
+                LEFT JOIN FETCH e.quizBatches
+            WHERE e.id = :exerciseId
+            """)
+    Optional<QuizExercise> findWithCompleteDataForVersioningById(@Param("exerciseId") long exerciseId);
 }

@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -77,13 +78,15 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ExerciseService exerciseService;
 
+    private final ExercisePersistenceService exercisePersistenceService;
+
     public ProgrammingExerciseImportBasicService(Optional<VersionControlService> versionControlService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, StaticCodeAnalysisService staticCodeAnalysisService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService, ChannelService channelService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ExerciseService exerciseService) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ExerciseService exerciseService, ExercisePersistenceService exercisePersistenceService) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -98,6 +101,7 @@ public class ProgrammingExerciseImportBasicService {
         this.channelService = channelService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.exerciseService = exerciseService;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -167,7 +171,7 @@ public class ProgrammingExerciseImportBasicService {
             }
         }
 
-        final ProgrammingExercise importedExercise = exerciseService.saveWithCompetencyLinks(newProgrammingExercise, programmingExerciseRepository::save);
+        final ProgrammingExercise importedExercise = exerciseService.saveWithCompetencyLinks(newProgrammingExercise, exercisePersistenceService::save);
 
         final Map<Long, Long> newTestCaseIdByOldId = importTestCases(originalProgrammingExercise, importedExercise);
         importTasks(originalProgrammingExercise, importedExercise, newTestCaseIdByOldId);
@@ -204,7 +208,7 @@ public class ProgrammingExerciseImportBasicService {
             importedExercise.addAuxiliaryRepository(newAuxiliaryRepository);
         }
 
-        ProgrammingExercise savedImportedExercise = programmingExerciseRepository.save(importedExercise);
+        ProgrammingExercise savedImportedExercise = exercisePersistenceService.save(importedExercise);
 
         channelService.createExerciseChannel(savedImportedExercise, Optional.ofNullable(newProgrammingExercise.getChannelName()));
 

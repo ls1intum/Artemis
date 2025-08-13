@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import jakarta.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
@@ -94,6 +95,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final ParticipationRepository participationRepository;
 
+    private final ExercisePersistenceService exercisePersistenceService;
+
     public ProgrammingExerciseCreationUpdateService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingSubmissionService programmingSubmissionService,
             UserRepository userRepository, ExerciseService exerciseService, ProgrammingExerciseRepository programmingExerciseRepository, ChannelService channelService,
@@ -101,7 +104,7 @@ public class ProgrammingExerciseCreationUpdateService {
             ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProgrammingExerciseAtlasIrisService programmingExerciseAtlasIrisService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<VersionControlService> versionControlService, ParticipationRepository participationRepository, GitService gitService) {
+            Optional<VersionControlService> versionControlService, ParticipationRepository participationRepository, GitService gitService, ExercisePersistenceService exercisePersistenceService) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -119,6 +122,7 @@ public class ProgrammingExerciseCreationUpdateService {
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
         this.gitService = gitService;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -158,7 +162,7 @@ public class ProgrammingExerciseCreationUpdateService {
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         programmingExercise.setBuildConfig(savedBuildConfig);
 
-        var savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(programmingExercise, programmingExerciseRepository::saveForCreation);
+        var savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(programmingExercise, exercisePersistenceService::saveProgrammingExerciseWithEagerRefetch);
 
         savedProgrammingExercise.getBuildConfig().setProgrammingExercise(savedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(savedProgrammingExercise.getBuildConfig());
@@ -173,7 +177,7 @@ public class ProgrammingExerciseCreationUpdateService {
         connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
 
         programmingExerciseBuildConfigRepository.saveAndFlush(savedProgrammingExercise.getBuildConfig());
-        savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        savedProgrammingExercise = exercisePersistenceService.saveProgrammingExerciseWithEagerRefetch(savedProgrammingExercise);
 
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
 
@@ -196,7 +200,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseCreationScheduleService.performScheduleOperationsAndCheckNotifications(savedProgrammingExercise);
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreationAndEnableIris(savedProgrammingExercise);
 
-        return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        return exercisePersistenceService.saveProgrammingExerciseWithEagerRefetch(savedProgrammingExercise);
     }
 
     /**
@@ -271,7 +275,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());
 
-        ProgrammingExercise savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(updatedProgrammingExercise, programmingExerciseRepository::save);
+        ProgrammingExercise savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(updatedProgrammingExercise, exercisePersistenceService::save);
 
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
@@ -341,7 +345,7 @@ public class ProgrammingExerciseCreationUpdateService {
 
         programmingExercise.validateDates();
 
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExercise savedProgrammingExercise = exercisePersistenceService.save(programmingExercise);
         programmingExerciseCreationScheduleService.createNotificationsOnUpdate(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
     }
@@ -361,7 +365,7 @@ public class ProgrammingExerciseCreationUpdateService {
         String oldProblemStatement = programmingExercise.getProblemStatement();
         programmingExercise.setProblemStatement(problemStatement);
         programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExercise updatedProgrammingExercise = exercisePersistenceService.save(programmingExercise);
 
         // Set the old problem statement again for notifyAboutExerciseChanges method, but don't save it
         programmingExercise.setProblemStatement(oldProblemStatement);

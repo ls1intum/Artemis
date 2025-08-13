@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -40,7 +41,6 @@ public class ModelingExerciseImportService extends ExerciseImportService {
 
     private static final Logger log = LoggerFactory.getLogger(ModelingExerciseImportService.class);
 
-    private final ModelingExerciseRepository modelingExerciseRepository;
 
     private final ChannelService channelService;
 
@@ -48,14 +48,17 @@ public class ModelingExerciseImportService extends ExerciseImportService {
 
     private final ExerciseService exerciseService;
 
-    public ModelingExerciseImportService(ModelingExerciseRepository modelingExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
-            Optional<CompetencyProgressApi> competencyProgressApi, ExerciseService exerciseService) {
+    private final ExercisePersistenceService exercisePersistenceService;
+
+
+    public ModelingExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository,
+                                         SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
+                                         Optional<CompetencyProgressApi> competencyProgressApi, ExerciseService exerciseService, ExercisePersistenceService exercisePersistenceService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
-        this.modelingExerciseRepository = modelingExerciseRepository;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
         this.exerciseService = exerciseService;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -74,7 +77,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise, gradingInstructionCopyTracker);
 
-        ModelingExercise newModelingExercise = exerciseService.saveWithCompetencyLinks(newExercise, modelingExerciseRepository::save);
+        ModelingExercise newModelingExercise = exerciseService.saveWithCompetencyLinks(newExercise, exercisePersistenceService::save);
 
         channelService.createExerciseChannel(newModelingExercise, Optional.ofNullable(importedExercise.getChannelName()));
         newModelingExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));

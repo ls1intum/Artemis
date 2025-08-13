@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.web.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -40,12 +41,15 @@ public class BuildPlanResource {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
+    private final ExercisePersistenceService exercisePersistenceService;
+
     public BuildPlanResource(BuildPlanRepository buildPlanRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authorizationCheckService, ProgrammingTriggerService programmingTriggerService) {
+                             AuthorizationCheckService authorizationCheckService, ProgrammingTriggerService programmingTriggerService, ExercisePersistenceService exercisePersistenceService) {
         this.buildPlanRepository = buildPlanRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.programmingTriggerService = programmingTriggerService;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -62,7 +66,7 @@ public class BuildPlanResource {
         final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(exerciseId);
         // orElseThrow is safe here since the query above ensures that we find a build plan that is attached to that exercise
         final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
+            .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
 
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
@@ -87,7 +91,7 @@ public class BuildPlanResource {
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         final BuildPlan createdBuildPlan = buildPlanRepository.setBuildPlanForExercise(buildPlan.getBuildPlan(), programmingExercise);
-        programmingExerciseRepository.save(programmingExercise);
+        exercisePersistenceService.save(programmingExercise);
 
         programmingTriggerService.triggerTemplateAndSolutionBuild(programmingExercise.getId());
 

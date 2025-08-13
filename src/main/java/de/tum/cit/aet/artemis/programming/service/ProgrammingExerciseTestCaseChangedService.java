@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -32,13 +33,16 @@ public class ProgrammingExerciseTestCaseChangedService {
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
+    private final ExercisePersistenceService exercisePersistenceService;
+
     public ProgrammingExerciseTestCaseChangedService(ProgrammingExerciseRepository programmingExerciseRepository, ResultRepository resultRepository,
             ProgrammingTestCaseChangedUserNotificationService programmingTestCaseChangedUserNotificationService,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ExercisePersistenceService exercisePersistenceService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.resultRepository = resultRepository;
         this.programmingTestCaseChangedUserNotificationService = programmingTestCaseChangedUserNotificationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -95,7 +99,7 @@ public class ProgrammingExerciseTestCaseChangedService {
             return;
         }
         programmingExercise.setTestCasesChanged(testCasesChanged);
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        ProgrammingExercise updatedProgrammingExercise = exercisePersistenceService.save(programmingExercise);
         // Send a websocket message about the new state to the client.
         programmingTestCaseChangedUserNotificationService.notifyUserAboutTestCaseChanged(testCasesChanged, updatedProgrammingExercise);
     }

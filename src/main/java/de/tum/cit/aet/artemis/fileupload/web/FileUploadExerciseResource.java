@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -114,12 +115,17 @@ public class FileUploadExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
+    private final ExercisePersistenceService exercisePersistenceService;
+
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
-            FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
-            FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi) {
+                                      CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
+                                      FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
+                                      ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
+                                      FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
+                                      ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
+                                      ExercisePersistenceService exercisePersistenceService
+    ) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -137,6 +143,7 @@ public class FileUploadExerciseResource {
         this.channelRepository = channelRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -162,7 +169,7 @@ public class FileUploadExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        FileUploadExercise result = exerciseService.saveWithCompetencyLinks(fileUploadExercise, fileUploadExerciseRepository::save);
+        FileUploadExercise result = exerciseService.saveWithCompetencyLinks(fileUploadExercise, exercisePersistenceService::save);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);
@@ -181,13 +188,13 @@ public class FileUploadExerciseResource {
      * @param sourceId                   The ID of the original exercise which should get imported
      * @param importedFileUploadExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
-     *         (403) if the user is not at least an editor in the target course.
+     * (403) if the user is not at least an editor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("file-upload-exercises/import/{sourceId}")
     @EnforceAtLeastEditor
     public ResponseEntity<FileUploadExercise> importFileUploadExercise(@PathVariable long sourceId, @RequestBody FileUploadExercise importedFileUploadExercise)
-            throws URISyntaxException {
+        throws URISyntaxException {
 
         if (sourceId <= 0 || (importedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedFileUploadExercise.getExerciseGroup() == null)) {
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
@@ -232,7 +239,7 @@ public class FileUploadExerciseResource {
 
         if (!isFilePatternValid(fileUploadExercise)) {
             throw new BadRequestAlertException("The file pattern is invalid. Please use a comma separated list with actual file endings without dots (e.g. 'png, pdf').",
-                    ENTITY_NAME, "filepattern.invalid");
+                ENTITY_NAME, "filepattern.invalid");
         }
     }
 
@@ -248,7 +255,7 @@ public class FileUploadExerciseResource {
     @GetMapping("file-upload-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<FileUploadExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
-            @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
+                                                                                         @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(fileUploadExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
@@ -260,12 +267,12 @@ public class FileUploadExerciseResource {
      * @param notificationText   the text shown to students
      * @param exerciseId         the id of exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or with status 400 (Bad Request) if the fileUploadExercise is not valid, or
-     *         with status 500 (Internal Server Error) if the fileUploadExercise couldn't be updated
+     * with status 500 (Internal Server Error) if the fileUploadExercise couldn't be updated
      */
     @PutMapping("file-upload-exercises/{exerciseId}")
     @EnforceAtLeastEditor
     public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) {
+                                                                       @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
         // TODO: The route has an exerciseId but we don't do anything useful with it. Change route and client requests?
 
@@ -287,7 +294,7 @@ public class FileUploadExerciseResource {
 
         channelService.updateExerciseChannel(fileUploadExerciseBeforeUpdate, fileUploadExercise);
 
-        var updatedExercise = exerciseService.saveWithCompetencyLinks(fileUploadExercise, fileUploadExerciseRepository::save);
+        var updatedExercise = exerciseService.saveWithCompetencyLinks(fileUploadExercise, exercisePersistenceService::save);
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
         slideApi.ifPresent(api -> api.handleDueDateChange(fileUploadExerciseBeforeUpdate, updatedExercise));
@@ -332,12 +339,11 @@ public class FileUploadExerciseResource {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.debug("REST request to get FileUploadExercise : {}", exerciseId);
         var exercise = fileUploadExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("FileUploadExercise", exerciseId));
+            .orElseThrow(() -> new EntityNotFoundException("FileUploadExercise", exerciseId));
         // If the exercise belongs to an exam, only editors or above are allowed to access it, otherwise also TA have access
         if (exercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
-        }
-        else {
+        } else {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         }
 
@@ -403,14 +409,14 @@ public class FileUploadExerciseResource {
      * @param fileUploadExercise                          the fileUploadExercise to re-evaluate and update
      * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or
-     *         with status 400 (Bad Request) if the fileUploadExercise is not valid, or with status 409 (Conflict)
-     *         if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
-     *         Server Error) if the fileUploadExercise couldn't be updated
+     * with status 400 (Bad Request) if the fileUploadExercise is not valid, or with status 409 (Conflict)
+     * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal
+     * Server Error) if the fileUploadExercise couldn't be updated
      */
     @PutMapping("file-upload-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable long exerciseId, @RequestBody FileUploadExercise fileUploadExercise,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
+                                                                                    @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", fileUploadExercise);
 
         // check that the exercise exists for given id

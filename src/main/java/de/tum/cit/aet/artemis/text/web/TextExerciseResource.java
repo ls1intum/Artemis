@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.exercise.service.ExercisePersistenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -166,15 +167,17 @@ public class TextExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
+    private final ExercisePersistenceService exercisePersistenceService;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
-            ExerciseDeletionService exerciseDeletionService, Optional<PlagiarismResultApi> plagiarismResultApi, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, ResultRepository resultRepository, TextExerciseImportService textExerciseImportService,
-            TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
-            GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
-            InstanceMessageSendService instanceMessageSendService, Optional<PlagiarismDetectionApi> plagiarismDetectionApi, CourseRepository courseRepository,
-            ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<IrisSettingsApi> irisSettingsApi, Optional<ExamAccessApi> examAccessApi, Optional<SlideApi> slideApi) {
+                                ExerciseDeletionService exerciseDeletionService, Optional<PlagiarismResultApi> plagiarismResultApi, UserRepository userRepository,
+                                AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
+                                ParticipationRepository participationRepository, ResultRepository resultRepository, TextExerciseImportService textExerciseImportService,
+                                TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
+                                GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
+                                InstanceMessageSendService instanceMessageSendService, Optional<PlagiarismDetectionApi> plagiarismDetectionApi, CourseRepository courseRepository,
+                                ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
+                                Optional<IrisSettingsApi> irisSettingsApi, Optional<ExamAccessApi> examAccessApi, Optional<SlideApi> slideApi, ExercisePersistenceService exercisePersistenceService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultApi = plagiarismResultApi;
@@ -203,6 +206,7 @@ public class TextExerciseResource {
         this.competencyProgressApi = competencyProgressApi;
         this.irisSettingsApi = irisSettingsApi;
         this.slideApi = slideApi;
+        this.exercisePersistenceService = exercisePersistenceService;
     }
 
     /**
@@ -210,7 +214,7 @@ public class TextExerciseResource {
      *
      * @param textExercise the textExercise to create
      * @return the ResponseEntity with status 201 (Created) and with body the new textExercise, or
-     *         with status 400 (Bad Request) if the textExercise has already an ID
+     * with status 400 (Bad Request) if the textExercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("text-exercises")
@@ -237,7 +241,7 @@ public class TextExerciseResource {
         // Check that only allowed athena modules are used
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
-        TextExercise result = exerciseService.saveWithCompetencyLinks(textExercise, textExerciseRepository::save);
+        TextExercise result = exerciseService.saveWithCompetencyLinks(textExercise, exercisePersistenceService::save);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
@@ -254,16 +258,16 @@ public class TextExerciseResource {
      *
      * @param textExercise     the textExercise to update
      * @param notificationText about the text exercise update that should be displayed for the
-     *                             student group
+     *                         student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or
-     *         with status 400 (Bad Request) if the textExercise is not valid, or with status 500 (Internal
-     *         Server Error) if the textExercise couldn't be updated
+     * with status 400 (Bad Request) if the textExercise is not valid, or with status 500 (Internal
+     * Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("text-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<TextExercise> updateTextExercise(@RequestBody TextExercise textExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
+                                                           @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
         log.debug("REST request to update TextExercise : {}", textExercise);
         if (textExercise.getId() == null) {
             return createTextExercise(textExercise);
@@ -295,7 +299,7 @@ public class TextExerciseResource {
 
         channelService.updateExerciseChannel(textExerciseBeforeUpdate, textExercise);
 
-        TextExercise updatedTextExercise = exerciseService.saveWithCompetencyLinks(textExercise, textExerciseRepository::save);
+        TextExercise updatedTextExercise = exerciseService.saveWithCompetencyLinks(textExercise, exercisePersistenceService::save);
 
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(textExerciseBeforeUpdate, updatedTextExercise);
@@ -350,7 +354,7 @@ public class TextExerciseResource {
      * @param exerciseId                    the id of the textExercise to retrieve
      * @param withPlagiarismDetectionConfig boolean flag whether to include the plagiarism detection config of the exercise
      * @return the ResponseEntity with status 200 (OK) and with body the textExercise, or with
-     *         status 404 (Not Found)
+     * status 404 (Not Found)
      */
     @GetMapping("text-exercises/{exerciseId}")
     @EnforceAtLeastTutor
@@ -361,8 +365,7 @@ public class TextExerciseResource {
         // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it
         if (textExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
-        }
-        else {
+        } else {
             // in courses, also tutors can access the exercise
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);
         }
@@ -499,7 +502,7 @@ public class TextExerciseResource {
     @GetMapping("text-exercises")
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<TextExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
-            @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
+                                                                                   @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(textExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
@@ -512,9 +515,9 @@ public class TextExerciseResource {
      *
      * @param sourceExerciseId The ID of the original exercise which should get imported
      * @param importedExercise The new exercise containing values that should get overwritten in the
-     *                             imported exercise, s.a. the title or difficulty
+     *                         imported exercise, s.a. the title or difficulty
      * @return The imported exercise (200), a not found error (404) if the template does not exist,
-     *         or a forbidden error (403) if the user is not at least an instructor in the target course.
+     * or a forbidden error (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
     @PostMapping("text-exercises/import/{sourceExerciseId}")
@@ -536,14 +539,13 @@ public class TextExerciseResource {
         // If Athena is disabled and the service is not present, we also disable feedback suggestions
         try {
             athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), ENTITY_NAME),
-                    () -> importedExercise.setFeedbackSuggestionModule(null));
-        }
-        catch (BadRequestAlertException e) {
+                () -> importedExercise.setFeedbackSuggestionModule(null));
+        } catch (BadRequestAlertException e) {
             importedExercise.setFeedbackSuggestionModule(null);
         }
 
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
-        textExerciseRepository.save(newTextExercise);
+        exercisePersistenceService.save(newTextExercise);
 
         return ResponseEntity.created(new URI("/api/text/text-exercises/" + newTextExercise.getId())).body(newTextExercise);
     }
@@ -579,7 +581,7 @@ public class TextExerciseResource {
      *
      * @param exerciseId ID of the text exercise for which the plagiarism result should be returned
      * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
-     *         parameters are invalid
+     * parameters are invalid
      */
     @GetMapping("text-exercises/{exerciseId}/plagiarism-result")
     @EnforceAtLeastEditor
@@ -609,7 +611,7 @@ public class TextExerciseResource {
     @FeatureToggle(Feature.PlagiarismChecks)
     @EnforceAtLeastEditor
     public ResponseEntity<PlagiarismResultDTO> checkPlagiarism(@PathVariable long exerciseId, @RequestParam int similarityThreshold, @RequestParam int minimumScore,
-            @RequestParam int minimumSize) throws ExitException {
+                                                               @RequestParam int minimumSize) throws ExitException {
         PlagiarismDetectionApi api = plagiarismDetectionApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismDetectionApi.class));
 
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
@@ -630,15 +632,15 @@ public class TextExerciseResource {
      * @param textExercise                                the textExercise to re-evaluate and update
      * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
      * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or
-     *         with status 400 (Bad Request) if the textExercise is not valid, or with status 409 (Conflict)
-     *         if given exerciseId is not same as in the object of the request body, or with status 500
-     *         (Internal Server Error) if the textExercise couldn't be updated
+     * with status 400 (Bad Request) if the textExercise is not valid, or with status 409 (Conflict)
+     * if given exerciseId is not same as in the object of the request body, or with status 500
+     * (Internal Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("text-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
     public ResponseEntity<TextExercise> reEvaluateAndUpdateTextExercise(@PathVariable long exerciseId, @RequestBody TextExercise textExercise,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
+                                                                        @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
         log.debug("REST request to re-evaluate TextExercise : {}", textExercise);
 
         // check that the exercise exists for given id
