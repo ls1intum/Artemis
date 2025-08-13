@@ -86,6 +86,7 @@
     animation: highlightPulse 1.5s ease-in-out;
 }
 
+//TODO adjust how the color is defined
 @keyframes highlightPulse {
     0% {
         background-color: transparent;
