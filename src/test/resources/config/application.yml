@@ -97,10 +97,6 @@ artemis:
     licenses:
         matlab:
             license-server: "1234@license-server"
-    nebula:
-        enabled: true
-        url: http://nebula.fake
-        secret: secret-token
 
 
 
