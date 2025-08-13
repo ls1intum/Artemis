@@ -31,6 +31,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
+import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
@@ -67,6 +70,9 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private AttachmentVideoUnitTestRepository attachmentVideoUnitTestRepository;
+
+    @Autowired
+    private LectureTranscriptionRepository lectureTranscriptionRepository;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -302,5 +308,85 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         });
 
         pyrisWebhookService.addLectureUnitToPyrisDB(testUnit);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testIngestTranscriptionForLectureUnit() throws Exception {
+        activateIrisFor(lecture1.getCourse());
+        AttachmentVideoUnit unitWithTranscription = lectureUtilService.createAttachmentVideoUnit(true);
+        unitWithTranscription.setLecture(lecture1);
+        unitWithTranscription.setVideoSource("https://example.com/video.mp4");
+        lecture1.getLectureUnits().add(unitWithTranscription);
+        lecture1 = lectureRepository.save(lecture1);
+        unitWithTranscription = attachmentVideoUnitTestRepository.save(unitWithTranscription);
+        LectureTranscription lectureTranscription = new LectureTranscription("de", List.of(new LectureTranscriptionSegment(0.0, 10.0, "Dies ist eine Beispieltranskription.", 1)),
+                unitWithTranscription);
+        lectureTranscriptionRepository.save(lectureTranscription);
+
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
+
+        String jobToken = pyrisWebhookService.addLectureUnitToPyrisDB(unitWithTranscription);
+        assertThat(jobToken).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteLectureUnitWithTranscriptionFromPyrisDB() throws Exception {
+        activateIrisFor(lecture1.getCourse());
+        AttachmentVideoUnit unitWithTranscription = lectureUtilService.createAttachmentVideoUnit(true);
+        unitWithTranscription.setLecture(lecture1);
+        unitWithTranscription.setVideoSource("https://example.com/video.mp4");
+        lecture1.getLectureUnits().add(unitWithTranscription);
+        lecture1 = lectureRepository.save(lecture1);
+        unitWithTranscription = attachmentVideoUnitTestRepository.save(unitWithTranscription);
+        LectureTranscription lectureTranscription = new LectureTranscription("de", List.of(new LectureTranscriptionSegment(0.0, 10.0, "Dies ist eine Beispieltranskription.", 1)),
+                unitWithTranscription);
+        lectureTranscriptionRepository.save(lectureTranscription);
+
+        irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
+
+        String jobToken = pyrisWebhookService.deleteLectureFromPyrisDB(List.of(unitWithTranscription));
+        assertThat(jobToken).isNotNull();
+
+        PyrisStageDTO doneStage = new PyrisStageDTO("done", 1, PyrisStageState.DONE, "Stage completed successfully.");
+        PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(doneStage), unitWithTranscription.getId());
+        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
+        request.postWithoutResponseBody("/api/iris/public/pyris/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
+
+        assertThat(pyrisJobService.getJob(jobToken)).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteLectureUnitWithTranscriptionKeepsJobIfNotDone() throws Exception {
+        activateIrisFor(lecture1.getCourse());
+        AttachmentVideoUnit unitWithTranscription = lectureUtilService.createAttachmentVideoUnit(true);
+        unitWithTranscription.setLecture(lecture1);
+        unitWithTranscription.setVideoSource("https://example.com/video.mp4");
+        lecture1.getLectureUnits().add(unitWithTranscription);
+        lecture1 = lectureRepository.save(lecture1);
+        unitWithTranscription = attachmentVideoUnitTestRepository.save(unitWithTranscription);
+        LectureTranscription lectureTranscription = new LectureTranscription("de", List.of(new LectureTranscriptionSegment(0.0, 10.0, "Dies ist eine Beispieltranskription.", 1)),
+                unitWithTranscription);
+        lectureTranscriptionRepository.save(lectureTranscription);
+
+        irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
+
+        String jobToken = pyrisWebhookService.deleteLectureFromPyrisDB(List.of(unitWithTranscription));
+        assertThat(jobToken).isNotNull();
+
+        PyrisStageDTO inProgressStage = new PyrisStageDTO("inProgressStage", 1, PyrisStageState.IN_PROGRESS, "Stage läuft noch.");
+        PyrisLectureIngestionStatusUpdateDTO statusUpdate = new PyrisLectureIngestionStatusUpdateDTO("Success", List.of(inProgressStage), unitWithTranscription.getId());
+        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobToken))));
+        request.postWithoutResponseBody("/api/iris/public/pyris/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
+
+        assertThat(pyrisJobService.getJob(jobToken)).isNotNull();
     }
 }

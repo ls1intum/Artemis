@@ -178,7 +178,8 @@ public class PyrisWebhookService {
      */
     public String deleteLectureFromPyrisDB(List<AttachmentVideoUnit> attachmentVideoUnits) {
         List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentVideoUnits = new ArrayList<>();
-        attachmentVideoUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf"))
+        attachmentVideoUnits.stream().filter(
+                unit -> (unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf")) || unit.getVideoSource() != null)
                 .forEach(unit -> {
                     toUpdateAttachmentVideoUnits.add(processAttachmentVideoUnitForDeletion(unit));
                 });
