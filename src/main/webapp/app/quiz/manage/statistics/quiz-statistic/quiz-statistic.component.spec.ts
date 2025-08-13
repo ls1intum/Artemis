@@ -74,8 +74,8 @@ describe('QuizExercise Statistic Component', () => {
             loadQuizSuccessSpy = jest.spyOn(comp, 'loadQuizSuccess');
             loadDataSpy = jest.spyOn(comp, 'loadData');
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true, isHighlighted: false },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true, isHighlighted: false },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
             comp.quizExercise = quizExercise;
@@ -121,8 +121,8 @@ describe('QuizExercise Statistic Component', () => {
         beforeEach(() => {
             loadDataSpy = jest.spyOn(comp, 'loadData');
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true, isHighlighted: false },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true, isHighlighted: false },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
             comp.quizExercise = quizExercise;
@@ -162,8 +162,8 @@ describe('QuizExercise Statistic Component', () => {
         it('should return MaxScore by looping over scores', () => {
             // setup
             quizExercise.quizQuestions = [
-                { points: 1, invalid: false, exportQuiz: false, randomizeOrder: true, isHighlighted: false },
-                { points: 2, invalid: false, exportQuiz: false, randomizeOrder: true, isHighlighted: false },
+                { points: 1, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { points: 2, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             comp.quizExercise = quizExercise;
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
@@ -195,8 +195,8 @@ describe('QuizExercise Statistic Component', () => {
     describe('loadData', () => {
         beforeEach(() => {
             quizExercise.quizQuestions = [
-                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true, isHighlighted: false },
-                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true, isHighlighted: false },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
             comp.quizExercise = quizExercise;

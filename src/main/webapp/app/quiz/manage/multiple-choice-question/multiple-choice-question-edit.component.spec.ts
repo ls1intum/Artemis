@@ -33,7 +33,6 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             { id: 1, explanation: 'answer-explanation', hint: 'answer-hint', text: 'answer-text', invalid: false },
             { id: 2, text: 'answer-text-correct', isCorrect: true, invalid: false },
         ],
-        isHighlighted: false,
     };
 
     beforeEach(async () => {
@@ -116,7 +115,6 @@ describe('MultipleChoiceQuestionEditComponent', () => {
                     hint: 'text5',
                 },
             ],
-            isHighlighted: false,
         };
 
         expect(component.question).toEqual(expected);
@@ -153,7 +151,6 @@ describe('MultipleChoiceQuestionEditComponent', () => {
                     text: 'text5',
                 },
             ],
-            isHighlighted: false,
         };
 
         expect(component.question).toEqual(expected);
@@ -173,7 +170,6 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             explanation: undefined,
             hasCorrectOption: undefined,
             answerOptions: [],
-            isHighlighted: false,
         };
 
         expect(component.question).toEqual(expected);

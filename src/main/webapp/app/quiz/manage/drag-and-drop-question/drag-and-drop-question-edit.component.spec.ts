@@ -535,7 +535,6 @@ describe('DragAndDropQuestionEditComponent', () => {
             explanation: 'explanation',
             hint: 'hint',
             scoringType: ScoringType.ALL_OR_NOTHING,
-            isHighlighted: false,
         } as DragAndDropQuestion;
         component.backupQuestion = backupQuestion;
 
