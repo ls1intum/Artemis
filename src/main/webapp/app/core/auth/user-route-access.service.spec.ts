@@ -3,18 +3,16 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { ActivatedRouteSnapshot, Route, Router, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Mutable } from 'test/helpers/mutable';
 import { mockedActivatedRouteSnapshot } from 'test/helpers/mocks/activated-route/mock-activated-route-snapshot';
 import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -27,7 +25,7 @@ describe('UserRouteAccessService', () => {
     let accountService: AccountService;
     let accountServiceStub: jest.SpyInstance;
 
-    let storageService: StateStorageService;
+    let sessionStorageService: SessionStorageService;
     let router: Router;
 
     let alertServiceStub: jest.SpyInstance;
@@ -48,11 +46,10 @@ describe('UserRouteAccessService', () => {
             providers: [
                 mockedActivatedRouteSnapshot(route),
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
-                MockProvider(StateStorageService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -63,7 +60,7 @@ describe('UserRouteAccessService', () => {
                 service = TestBed.inject(UserRouteAccessService);
                 TestBed.createComponent(CourseExerciseDetailsComponent);
                 accountService = TestBed.inject(AccountService);
-                storageService = TestBed.inject(StateStorageService);
+                sessionStorageService = TestBed.inject(SessionStorageService);
                 router = TestBed.inject(Router);
             });
 
@@ -109,7 +106,7 @@ describe('UserRouteAccessService', () => {
 
     it('should return false if it does not have authority', async () => {
         jest.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(false));
-        const storeSpy = jest.spyOn(storageService, 'storeUrl');
+        const storeSpy = jest.spyOn(sessionStorageService, 'store');
 
         const result = await service.checkLogin([Authority.EDITOR], url);
 
@@ -119,12 +116,12 @@ describe('UserRouteAccessService', () => {
 
     it('should store url if identity is undefined', async () => {
         jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(undefined));
-        const storeSpy = jest.spyOn(storageService, 'storeUrl');
+        const storeSpy = jest.spyOn(sessionStorageService, 'store');
         const navigateMock = jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
 
         await expect(service.checkLogin([Authority.EDITOR], url)).resolves.toBeFalse();
         expect(storeSpy).toHaveBeenCalledOnce();
-        expect(storeSpy).toHaveBeenCalledWith(url);
+        expect(storeSpy).toHaveBeenCalledWith('previousUrl', url);
         expect(navigateMock).toHaveBeenCalledTimes(2);
         expect(navigateMock.mock.calls[0][0]).toEqual(['accessdenied']);
         expect(navigateMock.mock.calls[1][0]).toEqual(['/']);

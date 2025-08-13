@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of } from 'rxjs';
 import { LtiCoursesComponent } from 'app/lti/manage/lti13-select-course/lti13-select-course.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { LtiCourseCardComponent } from 'app/lti/manage/lti-course-card/lti-course-card.component';
 import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { SessionStorageService } from 'ngx-webstorage';
 import { AlertService } from 'app/shared/service/alert.service';
 
 describe('LtiCoursesComponent', () => {
@@ -29,7 +28,7 @@ describe('LtiCoursesComponent', () => {
                 MockProvider(CourseManagementService, {
                     findAllOnlineCoursesWithRegistrationId: jest.fn().mockReturnValue(of(mockCourses)),
                 }),
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 MockProvider(AlertService),
             ],
         })

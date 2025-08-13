@@ -112,14 +112,10 @@ public class LocalVCServletService {
     // TODO As soon as only LocalVC is supported, this Optional can be removed
     private final Optional<VcsAccessLogService> vcsAccessLogService;
 
-    private static URI localVCBaseUri;
-
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     @Value("${artemis.version-control.url}")
-    public void setLocalVCBaseUrl(URI localVCBaseUri) {
-        LocalVCServletService.localVCBaseUri = localVCBaseUri;
-    }
+    private URI localVCBaseUri;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
@@ -233,6 +229,7 @@ public class LocalVCServletService {
         }
 
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
+        log.debug("Parsed repository URI from request: {}", localVCRepositoryUri);
         String projectKey = localVCRepositoryUri.getProjectKey();
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
 
@@ -487,12 +484,13 @@ public class LocalVCServletService {
     }
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
-        var urlString = request.getRequestURL().toString().replace("/info/refs", "");
-        return new LocalVCRepositoryUri(Path.of(urlString), localVCBaseUri);
+        String path = request.getRequestURI();
+        String normalizedPath = path.replaceFirst("/(info/refs|git-(upload|receive)-pack)$", "");
+        return new LocalVCRepositoryUri(localVCBaseUri, Path.of(normalizedPath));
     }
 
     private LocalVCRepositoryUri parseRepositoryUri(Path repositoryPath) {
-        return new LocalVCRepositoryUri(repositoryPath, localVCBaseUri);
+        return new LocalVCRepositoryUri(localVCBaseUri, repositoryPath);
     }
 
     private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
@@ -817,9 +815,9 @@ public class LocalVCServletService {
         return exercise;
     }
 
-    private static LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
+    private LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
         try {
-            return new LocalVCRepositoryUri(repositoryFolderPath, localVCBaseUri);
+            return new LocalVCRepositoryUri(localVCBaseUri, repositoryFolderPath);
         }
         catch (LocalVCInternalException e) {
             // This means something is misconfigured.
@@ -942,14 +940,14 @@ public class LocalVCServletService {
         revCommit = repository.parseCommit(objectId);
 
         // Get the branch name.
-        Git git = new Git(repository);
-        // Look in the 'refs/heads' namespace for a ref that points to the commit.
-        // The returned map contains at most one entry where the key is the commit id and the value denotes the branch which points to it.
-        Map<ObjectId, String> objectIdBranchNameMap = git.nameRev().addPrefix("refs/heads").add(objectId).call();
-        if (!objectIdBranchNameMap.isEmpty()) {
-            branch = objectIdBranchNameMap.get(objectId);
+        try (Git git = new Git(repository)) {
+            // Look in the 'refs/heads' namespace for a ref that points to the commit.
+            // The returned map contains at most one entry where the key is the commit id and the value denotes the branch which points to it.
+            Map<ObjectId, String> objectIdBranchNameMap = git.nameRev().addPrefix("refs/heads").add(objectId).call();
+            if (!objectIdBranchNameMap.isEmpty()) {
+                branch = objectIdBranchNameMap.get(objectId);
+            }
         }
-        git.close();
 
         if (revCommit == null || branch == null) {
             throw new VersionControlException("Something went wrong retrieving the revCommit or the branch.");
