@@ -86,7 +86,7 @@ public class LearnerProfileResource {
     }
 
     /**
-     * PUT learner-profiles/{learnerProfileId} : update fields in a {@link LearnerProfile}.
+     * PUT learner-profile : update fields in the current user's {@link LearnerProfile}.
      *
      * @param learnerProfileDTO {@link LearnerProfileDTO} object from the request body.
      * @return A ResponseEntity with a status matching the validity of the request containing the updated profile.

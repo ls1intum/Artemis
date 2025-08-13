@@ -23,7 +23,7 @@ export class FeedbackOnboardingModalComponent {
     onboardingCompleted = signal<undefined>(undefined);
     step = 0;
     readonly totalSteps = 2;
-    selected: (number | null)[] = [null, null];
+    selected: (number | undefined)[] = [undefined, undefined];
     feedbackExamples = FEEDBACK_EXAMPLES;
 
     private activeModal = inject(NgbActiveModal);
@@ -61,7 +61,7 @@ export class FeedbackOnboardingModalComponent {
      */
     select(step: number, choice: number) {
         if (this.selected[step] === choice) {
-            this.selected[step] = null;
+            this.selected[step] = undefined;
         } else {
             this.selected[step] = choice;
         }
@@ -79,7 +79,7 @@ export class FeedbackOnboardingModalComponent {
      * @param selection - The selected option index (0 or 1)
      * @returns 1 for first option, 3 for second option, 2 as default
      */
-    private mapSelectionToFeedbackValue(selection: number | null): number {
+    private mapSelectionToFeedbackValue(selection: number | undefined): number {
         if (selection === 0) return 1;
         if (selection === 1) return 3;
         return 2;
