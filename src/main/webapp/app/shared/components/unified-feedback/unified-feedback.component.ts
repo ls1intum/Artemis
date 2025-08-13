@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faExclamationTriangle, faRedo } from '@fortawesome/free-solid-svg-icons';
@@ -12,11 +12,11 @@ export type FeedbackIconType = 'retry' | 'success' | 'error';
     imports: [NgClass, FaIconComponent],
 })
 export class UnifiedFeedbackComponent {
-    @Input() feedbackContent: string = '';
-    @Input() points: number = 0;
-    @Input() icon: FeedbackIconType = 'success';
-    @Input() title?: string;
-    @Input() reference?: string;
+    feedbackContent = input<string>('');
+    points = input<number>(0);
+    icon = input<FeedbackIconType>('success');
+    title = input<string | undefined>(undefined);
+    reference = input<string | undefined>(undefined);
 
     // Icons
     readonly faCheck = faCheck;
@@ -24,7 +24,7 @@ export class UnifiedFeedbackComponent {
     readonly faRedo = faRedo;
 
     getIconForType(): any {
-        switch (this.icon) {
+        switch (this.icon()) {
             case 'success':
                 return this.faCheck;
             case 'error':
@@ -37,7 +37,7 @@ export class UnifiedFeedbackComponent {
     }
 
     getAlertClass(): string {
-        switch (this.icon) {
+        switch (this.icon()) {
             case 'success':
                 return 'alert-success';
             case 'error':

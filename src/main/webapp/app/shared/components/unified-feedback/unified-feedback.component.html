@@ -1,9 +1,9 @@
 <div class="alert unified-feedback" [ngClass]="getAlertClass()">
     <div class="unified-feedback__content">
         <!-- Reference (optional) -->
-        @if (reference) {
+        @if (reference()) {
             <div class="unified-feedback__reference">
-                <small class="text-muted">{{ reference }}</small>
+                <small class="text-muted">{{ reference() }}</small>
             </div>
         }
 
@@ -13,17 +13,17 @@
             <div class="unified-feedback__header">
                 <div class="unified-feedback__header-left">
                     <fa-icon [icon]="getIconForType()" class="unified-feedback__icon" />
-                    @if (title) {
-                        <span class="unified-feedback__title">{{ title }}</span>
+                    @if (title()) {
+                        <span class="unified-feedback__title">{{ title() }}</span>
                     }
                 </div>
-                <div class="unified-feedback__points">{{ points }} points</div>
+                <div class="unified-feedback__points">{{ points() }} points</div>
             </div>
 
             <!-- Feedback content -->
-            @if (feedbackContent) {
+            @if (feedbackContent()) {
                 <div class="unified-feedback__text">
-                    {{ feedbackContent }}
+                    {{ feedbackContent() }}
                 </div>
             }
         </div>
