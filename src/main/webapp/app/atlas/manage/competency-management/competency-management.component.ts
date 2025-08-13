@@ -25,6 +25,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -59,6 +60,7 @@ export class CompetencyManagementComponent implements OnInit {
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly sessionStorageService = inject(SessionStorageService);
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly isLoading = signal<boolean>(false);
@@ -86,11 +88,11 @@ export class CompetencyManagementComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        const lastVisit = sessionStorage.getItem('lastTimeVisitedCourseCompetencyExplanation');
+        const lastVisit = this.sessionStorageService.retrieve('alreadyVisitedCompetencyManagement');
         if (!lastVisit) {
             this.openCourseCompetencyExplanation();
         }
-        sessionStorage.setItem('lastTimeVisitedCourseCompetencyExplanation', Date.now().toString());
+        this.sessionStorageService.store('alreadyVisitedCompetencyManagement', true);
     }
 
     private async loadIrisEnabled() {

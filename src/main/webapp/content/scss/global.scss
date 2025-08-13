@@ -308,14 +308,6 @@ Generic styles
     overflow-y: auto;
     overflow-x: hidden;
     background-color: var(--bs-body-bg);
-    padding-bottom: var(--footer-height-prod);
-    @media (max-width: 768px) {
-        height: 100dvh;
-        padding-bottom: var(--footer-height-prod) !important;
-    }
-    &.footer-height-dev {
-        padding-bottom: var(--footer-height-dev);
-    }
 }
 
 .main-container {
@@ -809,7 +801,7 @@ Course Info Bar
      * block element (such as a paragraph) for improved readability.
      *
      * Example (Markdown):
-     * 
+     *
      * - First item
      * - Second item
      * More text after the list.
@@ -1098,15 +1090,15 @@ body.transparent-background {
 }
 
 .scrollable-content {
-    height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height));
+    height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--header-height));
     overflow-y: auto;
 
     &.content-height-dev {
-        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--header-height));
+        height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--header-height));
     }
     @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
-        height: calc(100dvh - var(--sidebar-footer-height-prod) - var(--header-height)) !important;
+        height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--header-height)) !important;
+        height: calc(100dvh - var(--sidebar-header-footer-combined-height) - var(--header-height)) !important;
     }
 }
 
@@ -1167,4 +1159,49 @@ $transition-in-between-delay: 0.05s;
 
 .min-h-100 {
     min-height: 100%;
+}
+
+/*
+Hides the scrollbar, unless the user is currently using the scrollbar
+Note: This class assumes that the scrollbar is already present (e.g. overflow-y and a defined max-height)
+*/
+.hide-scrollbar-unless-scrolling {
+    /* required for Firefox and Safari, otherwise elments are hidden when scrollbar is not in use */
+    scrollbar-gutter: stable;
+
+    /* Firefox scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color var(--scrollbar-transition-time);
+
+    /* On hover/active, show the scrollbar in Firefox */
+    &:hover,
+    &:active {
+        scrollbar-color: var(--scrollbar-color) transparent;
+    }
+
+    /* WebKit scrollbar styling (Chrome, Safari, etc.) */
+    &::-webkit-scrollbar {
+        width: var(--scrollbar-width);
+        opacity: 0;
+        transition: opacity var(--scrollbar-transition-time);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        width: var(--scrollbar-width);
+        background-color: transparent;
+        border-radius: var(--scrollbar-width);
+        transition: background-color var(--scrollbar-transition-time);
+    }
+
+    &::-webkit-scrollbar-track {
+        background-color: transparent;
+    }
+
+    /* Show scrollbar on hover/active scrolling */
+    &:hover::-webkit-scrollbar-thumb,
+    &:active::-webkit-scrollbar-thumb {
+        width: var(--scrollbar-width);
+        background-color: var(--scrollbar-color);
+    }
 }

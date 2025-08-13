@@ -159,7 +159,7 @@ examples.forEach((activeConversation) => {
             if (isChannelDTO(activeConversation) || isGroupChatDTO(activeConversation)) {
                 genericEditPropertyDialogTest('name', {
                     propertyName: 'name',
-                    maxPropertyLength: 30,
+                    maxPropertyLength: 20,
                     isRequired: true,
                     regexPattern: channelRegex,
                 });
