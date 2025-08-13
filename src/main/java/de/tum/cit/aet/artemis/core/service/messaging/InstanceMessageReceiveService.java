@@ -64,13 +64,13 @@ public class InstanceMessageReceiveService {
 
     private final QuizScheduleService quizScheduleService;
 
-    private final IrisLectureUnitAutoIngestionApi irisLectureUnitAutoIngestionApi;
+    private final Optional<IrisLectureUnitAutoIngestionApi> irisLectureUnitAutoIngestionApi;
 
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             ExerciseRepository exerciseRepository, Optional<AthenaApi> athenaApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
             UserRepository userRepository, UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService,
             ParticipantScoreScheduleService participantScoreScheduleService, QuizScheduleService quizScheduleService, SlideUnhideScheduleService slideUnhideScheduleService,
-            IrisLectureUnitAutoIngestionApi irisLectureUnitAutoIngestionApi) {
+            Optional<IrisLectureUnitAutoIngestionApi> irisLectureUnitAutoIngestionApi) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.athenaApi = athenaApi;
@@ -232,11 +232,11 @@ public class InstanceMessageReceiveService {
 
     public void processLectureUnitAutoIngestionSchedule(Long lectureUnitId) {
         log.info("Received schedule lecture unit ingestion for lecture unit id {}", lectureUnitId);
-        irisLectureUnitAutoIngestionApi.scheduleLectureUnitAutoIngestion(lectureUnitId);
+        irisLectureUnitAutoIngestionApi.ifPresent(api -> api.scheduleLectureUnitAutoIngestion(lectureUnitId));
     }
 
     public void processLectureUnitAutoIngestionScheduleCancel(Long lectureUnitId) {
         log.info("Received schedule cancel lecture unit ingestion for lecture unit id {}", lectureUnitId);
-        irisLectureUnitAutoIngestionApi.cancelLectureUnitAutoIngestion(lectureUnitId);
+        irisLectureUnitAutoIngestionApi.ifPresent(api -> api.cancelLectureUnitAutoIngestion(lectureUnitId));
     }
 }
