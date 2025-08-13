@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 
@@ -41,9 +40,6 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
 
     @Autowired
     private LectureUtilService lectureUtilService;
-
-    @Autowired
-    private LectureUnitRepository lectureUnitRepository;
 
     private Lecture lecture1;
 
@@ -83,7 +79,6 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         LectureTranscriptionSegment segment2 = new LectureTranscriptionSegment(0.0, 12.0, "Today we will talk about Artemis", 1);
         LectureTranscription transcription = new LectureTranscription("en", List.of(new LectureTranscriptionSegment[] { segment1, segment2 }), this.lectureUnit);
 
-        LectureTranscription transcriptionAttachmentUnit = new LectureTranscription("en", List.of(), this.lectureUnit);
         lectureTranscriptionRepository.save(transcription);
     }
 
@@ -96,6 +91,7 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         });
         request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId() + "/ingest", Optional.empty(), boolean.class,
                 HttpStatus.OK);
+        // TODO add assertions to check if the transcription was ingested correctly
     }
 
     @Test

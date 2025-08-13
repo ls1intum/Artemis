@@ -60,7 +60,7 @@ class RepositoryUriTest {
     void testLocalRepositoryPath() throws Exception {
         Path repositoryPath = Path.of("/local/path/projectX/projectX-repo/.git");
         URI localVCServerUri = new URI("https://artemis.tum.de");
-        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(repositoryPath, localVCServerUri);
+        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(localVCServerUri, repositoryPath);
 
         assertThat(uri.getURI().toString()).isEqualTo("https://artemis.tum.de/git/projectX/projectX-repo.git");
         assertThat(uri.getProjectKey()).isEqualTo("projectX");
@@ -75,7 +75,7 @@ class RepositoryUriTest {
         String repositorySlug = "projectX23-my-repo";
         URI localVCBaseUri = new URI("https://artemis.cit.tum.de");
 
-        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUri);
+        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(localVCBaseUri, projectKey, repositorySlug);
 
         assertThat(uri.getProjectKey()).isEqualTo(projectKey);
         assertThat(uri.getRepositoryTypeOrUserName()).isEqualTo("my-repo");
@@ -87,7 +87,7 @@ class RepositoryUriTest {
     void testRemoteRepositoryPath() throws Exception {
         Path repositoryPath = Path.of("/remote/path/projectY/projectY-repo");
         URI localVCServerUri = new URI("https://artemis.tum.de");
-        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(repositoryPath, localVCServerUri);
+        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(localVCServerUri, repositoryPath);
 
         assertThat(uri.getURI().toString()).isEqualTo("https://artemis.tum.de/git/projectY/projectY-repo.git");
         assertThat(uri.getProjectKey()).isEqualTo("projectY");
@@ -102,7 +102,7 @@ class RepositoryUriTest {
         URI localVCServerUri;
         try {
             localVCServerUri = new URI("https://artemis.tum.de");
-            assertThatThrownBy(() -> new LocalVCRepositoryUri(repositoryPath, localVCServerUri)).isInstanceOf(LocalVCInternalException.class)
+            assertThatThrownBy(() -> new LocalVCRepositoryUri(localVCServerUri, repositoryPath)).isInstanceOf(LocalVCInternalException.class)
                     .hasMessageContaining("Invalid project key and repository slug: invalid, path");
         }
         catch (Exception e) {
@@ -116,7 +116,7 @@ class RepositoryUriTest {
         String repositorySlug = "my-repo";
         URI localVCBaseUri = new URI("https://artemis.tum.de");
 
-        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUri);
+        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(localVCBaseUri, projectKey, repositorySlug);
 
         assertThat(uri.getProjectKey()).isEqualTo(projectKey);
         assertThat(uri.getRepositoryTypeOrUserName()).isEqualTo(repositorySlug);
@@ -130,7 +130,7 @@ class RepositoryUriTest {
         String repositorySlug = "projectX-practice-my-repo";
         URI localVCBaseUri = new URI("https://artemis.tum.de");
 
-        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(projectKey, repositorySlug, localVCBaseUri);
+        LocalVCRepositoryUri uri = new LocalVCRepositoryUri(localVCBaseUri, projectKey, repositorySlug);
 
         assertThat(uri.getProjectKey()).isEqualTo(projectKey);
         assertThat(uri.getRepositoryTypeOrUserName()).isEqualTo("my-repo");
@@ -158,7 +158,7 @@ class RepositoryUriTest {
 
         assertThatThrownBy(() -> {
             new URI(malformedBaseUri);  // This check is to simulate the situation where URI is incorrect.
-            new LocalVCRepositoryUri(projectKey, repositorySlug, new URI(malformedBaseUri));
+            new LocalVCRepositoryUri(new URI(malformedBaseUri), projectKey, repositorySlug);
         }).isInstanceOf(URISyntaxException.class);
     }
 
