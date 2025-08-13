@@ -7,8 +7,9 @@
 }
 
 .highlight-box {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: white; //linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 12px;
+    border: 1px solid #d1d5db;
     padding: 20px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     min-width: min-content;
@@ -32,14 +33,14 @@
 
 .highlight-label {
     font-size: 0.875rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: black; //rgba(255, 255, 255, 0.8);
     margin-bottom: 4px;
     font-weight: 500;
 }
 
 .highlight-value {
     font-size: 1.5rem;
-    color: white;
+    color: black;
     font-weight: bold;
 }
 

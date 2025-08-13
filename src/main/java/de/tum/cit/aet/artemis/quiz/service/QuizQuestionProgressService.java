@@ -238,6 +238,8 @@ public class QuizQuestionProgressService {
         updateProgressWithNewAttempt(data, score, answeredAt);
         updateProgressCalculations(data, score, existingProgress);
         existingProgress.setProgressJson(data);
+
+        quizTrainingLeaderboardService.updateLeaderboardScore(userId, courseId, Set.of(data));
         try {
             quizQuestionProgressRepository.save(existingProgress);
         }
