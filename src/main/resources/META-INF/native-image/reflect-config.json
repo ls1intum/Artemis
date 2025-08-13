@@ -982,5 +982,51 @@
         "name": "de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO",
         "allDeclaredConstructors": true,
         "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.core.dto.calendar.ExamCalendarEventDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.exercise.dto.StudentDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
     }
+
 ]

@@ -105,7 +105,7 @@ public class BuildJobGitService extends AbstractGitService {
      * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
      */
     @Override
-    protected URI getGitUri(LocalVCRepositoryUri localVCRepositoryUri) throws URISyntaxException {
+    protected URI getGitUri(@NotNull LocalVCRepositoryUri localVCRepositoryUri) throws URISyntaxException {
         return useSsh() ? getSshUri(localVCRepositoryUri, sshUrlTemplate) : localVCRepositoryUri.getURI();
     }
 

@@ -42,6 +42,9 @@ graalvmNative {
             buildArgs.add('--report-unsupported-elements-at-runtime')
             buildArgs.add('-Dspring.profiles.active=prod,localci,localvc,artemis,scheduling,iris,buildagent,core,local')
 
+            // Include webapp resources in the native image
+            buildArgs.add('-H:IncludeResources=static/.*')
+
             // ⬇️ Delay class initialization
             // ICU4J (for JPlag)
             buildArgs.add('--initialize-at-build-time=com.ibm.icu.charset.CharsetProviderICU')
@@ -123,9 +126,12 @@ graalvmNative {
         }
     }
 }
-
 tasks.named("processAot") {
     systemProperty "spring.profiles.active", "prod,localci,localvc,artemis,scheduling,iris,buildagent,core,local"
+    environment "SPRING_APPLICATION_JSON", '{"jhipster":{"security":{"authentication":{"jwt":{"base64Secret":"QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQQ=="}}}}}'
+}
+nativeCompile {
+    dependsOn processResources
 }
 
 group = "de.tum.cit.aet.artemis"
@@ -664,4 +670,3 @@ tasks.named("dependencyUpdates").configure {
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
 // 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups at the moment)
 // 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups at the moment)
-def void enhance(Closure<Boolean> booleanClosure) {}
