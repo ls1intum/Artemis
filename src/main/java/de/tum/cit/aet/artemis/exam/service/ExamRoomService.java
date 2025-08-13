@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
@@ -54,6 +55,8 @@ import de.tum.cit.aet.artemis.exam.repository.LayoutStrategyRepository;
 public class ExamRoomService {
 
     private static final Logger log = LoggerFactory.getLogger(ExamRoomService.class);
+
+    private static final String ENTITY_NAME = "examRoom";
 
     private final ExamRoomRepository examRoomRepository;
 
@@ -199,17 +202,13 @@ public class ExamRoomService {
         // for relative layouts will only be done if the rooms have already been parsed
         List<ExamSeatDTO> seats = convertRowInputsToExamSeatDTOs(examRoomInput.rows);
         if (seats == null) {
-            log.warn("Skipping room {} because the seats are stored incorrectly", room.getRoomNumber());
-            return null;
+            throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the seats couldn't be converted", ENTITY_NAME, "cannotConvertSeats");
         }
-
         room.setSeats(seats);
-        /* Extract the seats - End */
 
         /* Extract the layouts */
         List<LayoutStrategy> layouts = convertLayoutInputsToLayoutStrategies(examRoomInput.layouts, room);
         room.setLayoutStrategies(layouts);
-        /* Extract the layouts - End */
 
         return room;
     }
@@ -276,10 +275,8 @@ public class ExamRoomService {
                 case "auto_layout" -> layoutStrategy.setType(LayoutStrategyType.RELATIVE_DISTANCE);
                 // useable_seats is a common typo in the JSON files
                 case "usable_seats", "useable_seats" -> layoutStrategy.setType(LayoutStrategyType.FIXED_SELECTION);
-                default -> {
-                    log.warn("Unknown layout type '{}' in room {}", layoutType, room.getRoomNumber());
-                    return;
-                }
+                default -> throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted", ENTITY_NAME,
+                        "cannotConvertLayouts");
             }
             layoutStrategy.setParametersJson(String.valueOf(layoutDetailNode));
 
@@ -287,16 +284,16 @@ public class ExamRoomService {
             switch (layoutStrategy.getType()) {
                 case LayoutStrategyType.FIXED_SELECTION -> {
                     if (!layoutDetailNode.isArray()) {
-                        log.warn("Skipping layout '{}' of room {} because it's a fixed selection, but parameters aren't an array", layoutName, room.getRoomNumber());
-                        return;
+                        throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted", ENTITY_NAME,
+                                "cannotConvertLayouts");
                     }
 
                     layoutStrategy.setCapacity(layoutDetailNode.size());
                 }
                 case LayoutStrategyType.RELATIVE_DISTANCE -> {
                     if (!layoutDetailNode.isObject()) {
-                        log.warn("Skipping layout '{}' of room {} because it's a relative selection, but parameters aren't an object", layoutName, room.getRoomNumber());
-                        return;
+                        throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted", ENTITY_NAME,
+                                "cannotConvertLayouts");
                     }
 
                     calculateSeatsFromRelativeDistanceLayout(layoutDetailNode, room).ifPresent(layoutStrategy::setCapacity);
