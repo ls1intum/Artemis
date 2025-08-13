@@ -263,7 +263,7 @@ public class SecurityConfiguration {
 
         // Configure WebAuthn passkey if enabled
         if(passkeyEnabled){
-        passkeyWebAuthnConfigurer.orElseThrow(()->new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
+            passkeyWebAuthnConfigurer.orElseThrow(()->new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
         }
 
         // @formatter:on
