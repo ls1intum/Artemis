@@ -4,7 +4,7 @@ import jakarta.annotation.Nullable;
 
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 public interface VersionControlService {
 
@@ -20,7 +20,7 @@ public interface VersionControlService {
      *
      * @param repositoryUri of the repository that should be deleted
      */
-    void deleteRepository(VcsRepositoryUri repositoryUri);
+    void deleteRepository(LocalVCRepositoryUri repositoryUri);
 
     /**
      * Get the clone URL used for cloning
@@ -29,7 +29,7 @@ public interface VersionControlService {
      * @param repositorySlug The repository slug
      * @return The clone URL
      */
-    VcsRepositoryUri getCloneRepositoryUri(String projectKey, String repositorySlug);
+    LocalVCRepositoryUri getCloneRepositoryUri(String projectKey, String repositorySlug);
 
     /**
      * Check if the given repository uri is valid and accessible.
@@ -37,7 +37,7 @@ public interface VersionControlService {
      * @param repositoryUri the VCS repository URI
      * @return whether the repository is valid
      */
-    Boolean repositoryUriIsValid(@Nullable VcsRepositoryUri repositoryUri);
+    boolean repositoryUriIsValid(@Nullable LocalVCRepositoryUri repositoryUri);
 
     /**
      * Creates a project on the VCS.
@@ -77,8 +77,8 @@ public interface VersionControlService {
      * @return The URL for cloning the repository
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
-    VcsRepositoryUri copyRepositoryWithoutHistory(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
-            Integer attempt) throws VersionControlException;
+    LocalVCRepositoryUri copyRepositoryWithoutHistory(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey,
+            String targetRepositoryName, Integer attempt) throws VersionControlException;
 
     /**
      * Copies a repository from one project to another one. The project can be the same. The commit history is preserved.
@@ -92,6 +92,6 @@ public interface VersionControlService {
      * @return The URL for cloning the repository
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
-    VcsRepositoryUri copyRepositoryWithHistory(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
+    LocalVCRepositoryUri copyRepositoryWithHistory(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
             Integer attempt) throws VersionControlException;
 }

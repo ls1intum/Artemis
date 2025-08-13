@@ -15,12 +15,11 @@ import {
 } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockProvider } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import * as testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 
@@ -45,14 +44,8 @@ describe('QuizExercise Generator', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(TranslateService),
-                {
-                    provide: SessionStorageService,
-                    useClass: MockSyncStorage,
-                },
-                {
-                    provide: LocalStorageService,
-                    useClass: MockLocalStorageService,
-                },
+                SessionStorageService,
+                LocalStorageService,
                 { provide: Router, useClass: MockRouter },
             ],
         }).compileComponents();
