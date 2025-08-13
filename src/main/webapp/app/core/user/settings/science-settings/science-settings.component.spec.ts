@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -33,8 +33,8 @@ describe('ScienceSettingsComponent', () => {
         MockProvider(AlertService),
         MockProvider(ScienceSettingsService),
         MockProvider(UrlSerializer),
-        { provide: LocalStorageService, useClass: MockSyncStorage },
-        { provide: SessionStorageService, useClass: MockSyncStorage },
+        LocalStorageService,
+        SessionStorageService,
         { provide: TranslateService, useClass: MockTranslateService },
         provideHttpClient(),
     ];

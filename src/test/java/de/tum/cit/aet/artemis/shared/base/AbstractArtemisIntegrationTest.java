@@ -95,6 +95,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @MockitoSpyBean
     protected Lti13Service lti13Service;
 
+    // TODO: in the future, we should not mock gitService anymore
     @MockitoSpyBean
     protected GitService gitService;
 

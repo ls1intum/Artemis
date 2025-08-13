@@ -106,7 +106,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
@@ -804,7 +803,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testGenerateStructureOracle() throws Exception {
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(VcsRepositoryUri.class), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(LocalVCRepositoryUri.class), any(Path.class), anyBoolean(), anyBoolean());
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests";
         var result = request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.OK);
         assertThat(result).startsWith("Successfully generated the structure oracle");
@@ -1651,13 +1650,13 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(jplagZipArchive).exists();
 
         try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
-            assertThat(zipFile.getEntry("overview.json")).isNotNull();
+            assertThat(zipFile.getEntry("submissionMappings.json")).isNotNull();
             assertThat(zipFile.getEntry("files/1-Submission1.java/1-Submission1.java")).isNotNull();
             assertThat(zipFile.getEntry("files/2-Submission2.java/2-Submission2.java")).isNotNull();
 
             // it is random which of the following two exists, but one of them must be part of the zip file
-            var json1 = zipFile.getEntry("1-Submission1.java-2-Submission2.java.json");
-            var json2 = zipFile.getEntry("2-Submission2.java-1-Submission1.java.json");
+            var json1 = zipFile.getEntry("comparisons/1-Submission1.java-2-Submission2.java.json");
+            var json2 = zipFile.getEntry("comparisons/2-Submission2.java-1-Submission1.java.json");
             assertThat(json1 != null || json2 != null).isTrue();
         }
     }

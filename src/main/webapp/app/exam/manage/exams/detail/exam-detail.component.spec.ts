@@ -35,8 +35,6 @@ import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams
 import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import * as Utils from 'app/shared/util/utils';
 import { ExerciseDetailDirective } from 'app/shared/detail-overview-list/exercise-detail.directive';
 import { NoDataComponent } from 'app/shared/components/no-data/no-data-component';
@@ -119,7 +117,6 @@ describe('ExamDetailComponent', () => {
                 MockProvider(AlertService),
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
                 MockProvider(ArtemisDurationFromSecondsPipe),
                 { provide: ProfileService, useClass: MockProfileService },
             ],
