@@ -111,14 +111,10 @@ public class LocalVCServletService {
     // TODO As soon as only LocalVC is supported, this Optional can be removed
     private final Optional<VcsAccessLogService> vcsAccessLogService;
 
-    private static URI localVCBaseUri;
-
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     @Value("${artemis.version-control.url}")
-    public void setLocalVCBaseUri(URI localVCBaseUri) {
-        LocalVCServletService.localVCBaseUri = localVCBaseUri;
-    }
+    private URI localVCBaseUri;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
@@ -242,6 +238,7 @@ public class LocalVCServletService {
         }
 
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
+        log.debug("Parsed repository URI from request: {}", localVCRepositoryUri);
         String projectKey = localVCRepositoryUri.getProjectKey();
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
 
@@ -824,7 +821,7 @@ public class LocalVCServletService {
         return exercise;
     }
 
-    private static LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
+    private LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
         try {
             return new LocalVCRepositoryUri(localVCBaseUri, repositoryFolderPath);
         }

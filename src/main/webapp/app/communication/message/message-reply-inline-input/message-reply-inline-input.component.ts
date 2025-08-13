@@ -129,6 +129,12 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         this.localStorageService.store('chatWarningDismissed', true);
     }
 
+    /**
+     * Generates a unique key for storing draft messages based on user ID, conversation ID, and post ID.
+     * Returns an empty string if any required IDs are missing.
+     *
+     * @returns A unique draft key string or empty string if required IDs are missing
+     */
     private getDraftKey(): string {
         const userId = this.currentUserId;
         const conversationId = this.activeConversation()?.id;
