@@ -93,10 +93,12 @@
         background-color: transparent;
         box-shadow: 0 0 0 0 transparentize(default-variables.$primary, 0.6);
     }
+
     50% {
         background-color: transparentize(default-variables.$primary, 0.95);
         box-shadow: 0 0 0 4px transparentize(default-variables.$primary, 0.8);
     }
+
     100% {
         background-color: transparent;
         box-shadow: 0 0 0 4px transparentize(default-variables.$primary, 1);
