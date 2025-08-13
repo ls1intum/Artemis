@@ -38,11 +38,11 @@ export abstract class QuizQuestion implements BaseEntity, CanBecomeInvalid, Exer
     public explanation?: string;
     public points?: number;
     public scoringType?: ScoringType;
-    public randomizeOrder = true;
-    public invalid = false;
+    public randomizeOrder = true; // default value
+    public invalid = false; // default value
     public quizQuestionStatistic?: QuizQuestionStatistic;
     public exercise?: QuizExercise;
-    public exportQuiz = false;
+    public exportQuiz = false; // default value
     public type?: QuizQuestionType;
     public exerciseId?: number;
     public isHighlighted? = false;
