@@ -37,9 +37,8 @@ public class LayoutStrategy extends DomainObject {
 
     /**
      * The capacity of this layout strategy, i.e., how many students can be at max seated using this strategy.
-     * This is nullable by default, to lazily defer that calculation for expensive to calculate layouts.
      */
-    @Column(name = "capacity", nullable = true)
+    @Column(name = "capacity", nullable = false)
     private Integer capacity;
 
     /**

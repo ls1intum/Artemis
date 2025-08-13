@@ -62,7 +62,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="capacity" type="integer">
-                <constraints nullable="true"/>
+                <constraints nullable="false"/>
             </column>
             <!-- default type supposed to work for both MySQL and PostgreSQL -->
             <column name="parameters" type="json">

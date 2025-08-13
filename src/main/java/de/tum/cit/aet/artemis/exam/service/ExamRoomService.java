@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -276,7 +275,7 @@ public class ExamRoomService {
                 // useable_seats is a common typo in the JSON files
                 case "usable_seats", "useable_seats" -> layoutStrategy.setType(LayoutStrategyType.FIXED_SELECTION);
                 default -> throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted", ENTITY_NAME,
-                        "cannotConvertLayouts");
+                        "cannotConvertUnknownLayout");
             }
             layoutStrategy.setParametersJson(String.valueOf(layoutDetailNode));
 
@@ -285,7 +284,7 @@ public class ExamRoomService {
                 case LayoutStrategyType.FIXED_SELECTION -> {
                     if (!layoutDetailNode.isArray()) {
                         throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted", ENTITY_NAME,
-                                "cannotConvertLayouts");
+                                "cannotConvertLayout");
                     }
 
                     layoutStrategy.setCapacity(layoutDetailNode.size());
@@ -293,10 +292,10 @@ public class ExamRoomService {
                 case LayoutStrategyType.RELATIVE_DISTANCE -> {
                     if (!layoutDetailNode.isObject()) {
                         throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted", ENTITY_NAME,
-                                "cannotConvertLayouts");
+                                "cannotConvertLayout");
                     }
 
-                    calculateSeatsFromRelativeDistanceLayout(layoutDetailNode, room).ifPresent(layoutStrategy::setCapacity);
+                    layoutStrategy.setCapacity(calculateSeatsFromRelativeDistanceLayout(layoutDetailNode, room));
                 }
             }
 
@@ -319,13 +318,11 @@ public class ExamRoomService {
      * However, any or all of those can be omitted. If omitted, they will default to 0, which means no restrictions.
      *
      * @param layoutDetailNode The JSON node containing the expected relative layout information
-     * @return The number of exam seats that can be used with the given layout, or an empty optional if it couldn't
-     *         determine the size.
+     * @return The number of exam seats that can be used with the given layout
      */
-    private static Optional<Integer> calculateSeatsFromRelativeDistanceLayout(JsonNode layoutDetailNode, ExamRoom examRoom) {
-        // If we don't have exam seat information, we can't calculate the size
+    private static int calculateSeatsFromRelativeDistanceLayout(JsonNode layoutDetailNode, ExamRoom examRoom) {
         if (examRoom.getSeats().isEmpty()) {
-            return Optional.empty();
+            return 0;
         }
 
         // first_row in some rooms is -1. I assume this means the same as 0
@@ -350,7 +347,7 @@ public class ExamRoomService {
             }
         }
 
-        return Optional.of(selectedSeats.size());
+        return selectedSeats.size();
     }
 
     private static ExamRoomUploadInformationDTO getExamRoomUploadInformationDTO(MultipartFile zipFile, long startTime, Set<ExamRoom> examRooms) {
