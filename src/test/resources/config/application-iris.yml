@@ -2,3 +2,8 @@ artemis:
     iris:
         url: "http://iris.fake"
         secret-token: "secret-token"
+    #this needs to be here. otherwise the core config overrides it and test fails. We cannot put it in the usual
+    #application-artemis, since core also overrides it
+    nebula:
+        url: "http://nebula.fake"
+        secret: "secret-token"
