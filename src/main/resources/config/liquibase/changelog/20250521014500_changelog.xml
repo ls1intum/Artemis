@@ -6,15 +6,59 @@
             http://www.liquibase.org/xml/ns/dbchangelog
             https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
 
-    <changeSet id="20250521014500-add-jobid-and-status-to-lecture-transcription" author="goyal">
+    <!-- Keep your job_id exactly as before -->
+    <changeSet id="20250521014500-add-jobid" author="goyal">
         <addColumn tableName="lecture_transcription">
             <column name="job_id" type="VARCHAR(255)">
                 <constraints nullable="true" unique="true"/>
             </column>
-            <column name="transcription_status" type="ENUM('PENDING','PROCESSING','COMPLETED','FAILED')" defaultValue="PENDING">
-            <constraints nullable="false"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- MySQL: native ENUM -->
+    <changeSet id="20250521014501-add-status-mysql" author="goyal">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="mysql"/>
+        </preConditions>
+        <addColumn tableName="lecture_transcription">
+            <column name="transcription_status"
+                    type="ENUM('PENDING','PROCESSING','COMPLETED','FAILED')"
+                    defaultValue="PENDING">
+                <constraints nullable="false"/>
             </column>
         </addColumn>
+        <rollback>
+            <dropColumn tableName="lecture_transcription" columnName="transcription_status"/>
+        </rollback>
+    </changeSet>
+
+    <!-- PostgreSQL: TEXT + CHECK via raw SQL (avoids the addCheckConstraint element) -->
+    <changeSet id="20250521014502-add-status-pg" author="goyal">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+        </preConditions>
+
+        <!-- add column -->
+        <addColumn tableName="lecture_transcription">
+            <column name="transcription_status" type="TEXT" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <!-- add CHECK constraint -->
+        <sql>
+            ALTER TABLE lecture_transcription
+                ADD CONSTRAINT chk_lecture_transcription_status
+                    CHECK (transcription_status IN ('PENDING','PROCESSING','COMPLETED','FAILED'));
+        </sql>
+
+        <rollback>
+            <sql>
+                ALTER TABLE lecture_transcription
+                DROP CONSTRAINT IF EXISTS chk_lecture_transcription_status;
+            </sql>
+            <dropColumn tableName="lecture_transcription" columnName="transcription_status"/>
+        </rollback>
     </changeSet>
 
 </databaseChangeLog>
