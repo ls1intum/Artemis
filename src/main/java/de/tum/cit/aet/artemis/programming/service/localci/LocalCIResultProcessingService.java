@@ -122,8 +122,8 @@ public class LocalCIResultProcessingService {
     private void initResultProcessingExecutor() {
         ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-result-%d")
                 .setUncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in result processing thread {}", t.getName(), e)).build();
-        resultProcessingExecutor = new ThreadPoolExecutor(concurrentResultProcessingSize, concurrentResultProcessingSize, 0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<Runnable>(10000), threadFactory, new ThreadPoolExecutor.AbortPolicy());
+        resultProcessingExecutor = new ThreadPoolExecutor(concurrentResultProcessingSize, concurrentResultProcessingSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1),
+                threadFactory, new ThreadPoolExecutor.AbortPolicy());
         log.info("Initialized LocalCI result processing executor with pool size {}", concurrentResultProcessingSize);
     }
 
@@ -173,12 +173,12 @@ public class LocalCIResultProcessingService {
             resultProcessingExecutor.execute(this::processResult);
         }
         catch (RejectedExecutionException ex) {
-            log.warn("Result processing executor queue full, processing result in caller thread.");
+            log.warn("Result processing executor queue is full.");
         }
     }
 
     /**
-     * Processes the build job results published by the build agents, notifies the user about the result and saves the result to the database.
+     * Polls a build job result from the build job queue, notifies the user about the result and saves the result to the database.
      */
     private void processResult() {
         ResultQueueItem resultQueueItem = distributedDataAccessService.getDistributedBuildResultQueue().poll();
