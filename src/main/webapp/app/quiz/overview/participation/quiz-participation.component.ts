@@ -960,6 +960,18 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
     }
 
+    private highlightQuestion(questionIndex: number) {
+        const questionToBeHighlighted: QuizQuestion | undefined = this.quizExercise.quizQuestions ? this.quizExercise.quizQuestions[questionIndex] : undefined;
+        if (!questionToBeHighlighted) {
+            return;
+        }
+
+        questionToBeHighlighted.isHighlighted = true;
+        setTimeout(() => {
+            questionToBeHighlighted.isHighlighted = false;
+        }, 1500); // remove highlight after 1.5 seconds
+    }
+
     /**
      * TODO this is duplicated with {@link QuizExamSubmissionComponent#navigateToQuestion}, extract to a shared component
      *
@@ -974,15 +986,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             inline: 'start',
         });
 
-        const questionToBeHighlighted: QuizQuestion | undefined = this.quizExercise.quizQuestions ? this.quizExercise.quizQuestions[questionIndex] : undefined;
-        if (!questionToBeHighlighted) {
-            return;
-        }
-
-        questionToBeHighlighted.isHighlighted = true;
-        setTimeout(() => {
-            questionToBeHighlighted.isHighlighted = false;
-        }, 1500); // remove highlight after 1.5 seconds
+        this.highlightQuestion(questionIndex);
     }
 
     /**

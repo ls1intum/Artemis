@@ -7,7 +7,7 @@ import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-dr
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -133,6 +133,23 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         }
     }
 
+    private highlightQuizQuestion(questionId: number): void {
+        const quizQuestions = this.quizConfiguration().quizQuestions;
+        if (!quizQuestions) {
+            return;
+        }
+
+        const questionToBeHighlighted: QuizQuestion | undefined = quizQuestions.find((question) => question.id === questionId);
+        if (!questionToBeHighlighted) {
+            return;
+        }
+
+        questionToBeHighlighted.isHighlighted = true;
+        setTimeout(() => {
+            questionToBeHighlighted.isHighlighted = false;
+        }, 1500); // remove highlight after 1.5 seconds
+    }
+
     /**
      * TODO This is duplicated with {@link QuizParticipationComponent#navigateToQuestion}, extract to a shared component
      *
@@ -148,6 +165,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
                 inline: 'start',
             });
         }
+
+        this.highlightQuizQuestion(questionId);
     }
 
     /**
