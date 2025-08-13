@@ -221,4 +221,86 @@ describe('AttachmentVideoUnitService', () => {
             req.flush(expectedBlob);
         });
     });
+    describe('startTranscription', () => {
+        const lectureId = 7;
+        const lectureUnitId = 13;
+        const videoUrl = 'https://tum-live.de/stream/abc.m3u8';
+
+        it('should POST to the correct URL with expected body and return text response', fakeAsync(() => {
+            let response: HttpResponse<string> | undefined;
+
+            service
+                .startTranscription(lectureId, lectureUnitId, videoUrl)
+                .pipe(take(1))
+                .subscribe((resp) => (response = resp));
+
+            const req = httpMock.expectOne({
+                method: 'POST',
+                url: `/api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/nebula-transcriber`,
+            });
+
+            // request shape
+            expect(req.request.method).toBe('POST');
+            expect(req.request.responseType).toBe('text');
+            expect(req.request.body).toEqual({
+                videoUrl,
+                lectureId,
+                lectureUnitId,
+            });
+
+            const returnedFromService = 'transcription started';
+            req.flush(returnedFromService);
+
+            expect(response).toBeDefined();
+            expect(response!.status).toBe(200);
+            expect(response!.body).toBe(returnedFromService);
+        }));
+
+        it('should handle non-JSON plain text responses', fakeAsync(() => {
+            let response: HttpResponse<string> | undefined;
+
+            service
+                .startTranscription(lectureId, lectureUnitId, videoUrl)
+                .pipe(take(1))
+                .subscribe((resp) => (response = resp));
+
+            const req = httpMock.expectOne({
+                method: 'POST',
+                url: `/api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/nebula-transcriber`,
+            });
+
+            expect(req.request.responseType).toBe('text');
+
+            // Simulate plain text body (e.g., a job id or status string)
+            req.flush('JOB-12345');
+
+            expect(response).toBeDefined();
+            expect(response!.body).toBe('JOB-12345');
+        }));
+
+        it('should propagate server errors', fakeAsync(() => {
+            let errorStatus: number | undefined;
+            let errorText: string | undefined;
+
+            service.startTranscription(lectureId, lectureUnitId, videoUrl).subscribe({
+                next: () => {
+                    throw new Error('expected an error, not a success');
+                },
+                error: (err) => {
+                    errorStatus = err.status;
+                    errorText = err.statusText;
+                },
+            });
+
+            const req = httpMock.expectOne({
+                method: 'POST',
+                url: `/api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/nebula-transcriber`,
+            });
+
+            req.flush('Internal error', { status: 500, statusText: 'Server Error' });
+
+            expect(errorStatus).toBe(500);
+            expect(errorText).toBe('Server Error');
+        }));
+    });
 });
