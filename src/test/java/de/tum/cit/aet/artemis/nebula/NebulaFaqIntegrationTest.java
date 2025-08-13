@@ -90,7 +90,7 @@ class NebulaFaqIntegrationTest extends AbstractNebulaIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void callRewritingPipeline_forbidden_shouldReturn403() throws Exception {
+    void callRewritingPipelineForbiddenShouldReturn403() throws Exception {
 
         var dto = new FaqRewritingDTO("test", null);
         nebulaRequestMockProvider.mockThrowingNebulaExceptionForUrl("/faq/rewrite-faq", new NebulaForbiddenException());
@@ -100,7 +100,7 @@ class NebulaFaqIntegrationTest extends AbstractNebulaIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void callRewritingPipeline_internalError_shouldReturn500() throws Exception {
+    void callRewritingPipelineInternalErrorShouldReturn500() throws Exception {
 
         var dto = new FaqRewritingDTO("test", null);
         nebulaRequestMockProvider.mockThrowingNebulaExceptionForUrl("/faq/rewrite-faq", new NebulaInternalErrorException("simulated error"));
@@ -110,7 +110,7 @@ class NebulaFaqIntegrationTest extends AbstractNebulaIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void callRewritingPipeline_connectorError_shouldReturn500() throws Exception {
+    void callRewritingPipelineCoonnectorErrorShouldReturn500() throws Exception {
         var dto = new FaqRewritingDTO("test", null);
         nebulaRequestMockProvider.mockThrowingNebulaRuntimeExceptionForUrl("/faq/rewrite-faq", new NebulaConnectorException("simulated connector failure"));
 

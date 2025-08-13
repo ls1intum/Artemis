@@ -58,6 +58,7 @@ public class NebulaConnectionService {
      * Executes the FAQ rewriting operation by sending a request to the Nebula service.
      *
      * @param faqRewritingDTO the data transfer object containing the necessary information for rewriting FAQs
+     * @return FaqRewritingResponseDTO with the result
      */
     public FaqRewritingResponseDTO executeFaqRewriting(FaqRewritingDTO faqRewritingDTO) {
         try {
@@ -79,6 +80,7 @@ public class NebulaConnectionService {
      * Executes the FAQ rewriting operation by sending a request to the Nebula service.
      *
      * @param faqConsistencyDTO the data transfer object containing the necessary information for consistency check the current FAQs
+     * @return FaqConsistencyResponseDTO with the result
      */
     public FaqConsistencyResponseDTO executeFaqConsistencyCheck(FaqConsistencyDTO faqConsistencyDTO) {
         try {
