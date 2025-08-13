@@ -38,6 +38,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
+import com.google.errorprone.annotations.MustBeClosed;
+
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
@@ -153,11 +155,17 @@ public class LocalVCServletService {
 
     /**
      * Resolves the repository for the given path by creating a JGit repository and opening the local repository.
+     * <p>
+     * The returned {@link Repository} remains open after this method returns.
+     * It is the caller's responsibility to close it when no longer needed.
+     * <strong>Do not</strong> use try-with-resources inside this method, as that would close the repository
+     * before the caller can use it.
      *
      * @param repositoryPath the path of the repository, as parsed out of the URL (everything after /git).
      * @return the opened repository instance.
      * @throws RepositoryNotFoundException if the repository could not be found.
      */
+    @MustBeClosed
     public Repository resolveRepository(String repositoryPath) throws RepositoryNotFoundException {
 
         long timeNanoStart = System.nanoTime();
