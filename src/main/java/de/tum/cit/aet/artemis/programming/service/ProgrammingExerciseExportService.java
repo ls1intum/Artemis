@@ -73,10 +73,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 /**
  * Service for exporting programming exercises.
@@ -402,7 +402,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
         var exercise = exerciseOrEmpty.get();
         String zippedRepoName = gitRepositoryExportService.getZippedRepoName(exercise, repositoryType.getName());
-        var repositoryUri = exercise.getRepositoryURL(repositoryType);
+        var repositoryUri = exercise.getRepositoryURI(repositoryType);
         return exportRepository(repositoryUri, repositoryType.getName(), zippedRepoName, exercise, workingDir, outputDir, null, exportErrors);
     }
 
@@ -452,7 +452,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return exportSolutionAndTestStudentRepositoryForExercise(zippedRepoName, exercise, uniquePath, gitDirFilter, exportErrors);
         }
         else {
-            var repositoryUri = exercise.getRepositoryURL(repositoryType);
+            var repositoryUri = exercise.getRepositoryURI(repositoryType);
             return exportRepository(repositoryUri, repositoryType.getName(), zippedRepoName, exercise, uniquePath, uniquePath, gitDirFilter, exportErrors);
         }
     }
@@ -512,7 +512,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @param contentFilter  a filter for the content of the zip file
      * @return an optional containing the path to the zip file if the export was successful
      */
-    private Optional<File> exportRepository(VcsRepositoryUri repositoryUri, String repositoryName, String zippedRepoName, ProgrammingExercise exercise, Path workingDir,
+    private Optional<File> exportRepository(LocalVCRepositoryUri repositoryUri, String repositoryName, String zippedRepoName, ProgrammingExercise exercise, Path workingDir,
             Path outputDir, @Nullable Predicate<Path> contentFilter, List<String> exportErrors) {
         try {
             // It's not guaranteed that the repository uri is defined (old courses).
@@ -660,7 +660,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @throws IOException     if the zip file couldn't be created
      * @throws GitAPIException if the repo couldn't get checked out
      */
-    private Path createZipForRepository(VcsRepositoryUri repositoryUri, String zipFilename, Path workingDir, Path outputDir, @Nullable Predicate<Path> contentFilter)
+    private Path createZipForRepository(LocalVCRepositoryUri repositoryUri, String zipFilename, Path workingDir, Path outputDir, @Nullable Predicate<Path> contentFilter)
             throws IOException, GitAPIException, GitException, UncheckedIOException {
         var repositoryDir = fileService.getTemporaryUniquePathWithoutPathCreation(workingDir, 5);
         Path localRepoPath;
@@ -710,6 +710,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @return The checked out repository as a zip file or directory
      * @throws IOException if zip file creation failed
      */
+    // TODO: we should check out the repo in memory and not clone it into the file system and additionally do multiple remote operations
     public Path getRepositoryWithParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
             final RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir, boolean zipOutput) throws IOException, UncheckedIOException {
         if (participation.getVcsRepositoryUri() == null) {

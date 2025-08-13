@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguratio
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
@@ -27,7 +26,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -89,9 +87,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
-import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.File;
@@ -100,7 +96,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
@@ -110,8 +105,6 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 public class GitService extends AbstractGitService {
 
     private static final Logger log = LoggerFactory.getLogger(GitService.class);
-
-    private final ProfileService profileService;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
@@ -139,9 +132,8 @@ public class GitService extends AbstractGitService {
 
     private static final String ANONYMIZED_STUDENT_EMAIL = "";
 
-    public GitService(ProfileService profileService, ZipFileService zipFileService) {
+    public GitService(ZipFileService zipFileService) {
         super();
-        this.profileService = profileService;
         this.zipFileService = zipFileService;
     }
 
@@ -184,23 +176,18 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Get the URI for a {@link VcsRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS is
+     * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
+     * is
      * used.
      * This method is for internal use (getting the URI for cloning the repository into the Artemis file system).
      * For the local VCS however, the repository is cloned from the folder defined in the environment variable "artemis.version-control.local-vcs-repo-path".
      *
-     * @param vcsRepositoryUri the {@link VcsRepositoryUri} for which to get the URI
+     * @param vcsRepositoryUri the {@link LocalVCRepositoryUri} for which to get the URI
      * @return the URI (SSH, HTTP(S), or local path)
-     * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
      */
     @Override
-    protected URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
-        if (profileService.isLocalVCorCIActive()) {
-            // Create less generic LocalVCRepositoryUri out of VcsRepositoryUri.
-            LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(vcsRepositoryUri.toString());
-            return localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toUri();
-        }
-        return useSsh() ? getSshUri(vcsRepositoryUri, sshUrlTemplate) : vcsRepositoryUri.getURI();
+    protected URI getGitUri(@NotNull LocalVCRepositoryUri vcsRepositoryUri) {
+        return vcsRepositoryUri.getLocalRepositoryPath(localVCBasePath).toUri();
     }
 
     /**
@@ -276,7 +263,7 @@ public class GitService extends AbstractGitService {
      * @return the repository if it could be checked out.
      * @throws GitAPIException if the repository could not be checked out.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
+    public Repository getOrCheckoutRepository(LocalVCRepositoryUri repoUri, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
         return getOrCheckoutRepositoryWithTargetPath(repoUri, repoClonePath, pullOnGet, writeAccess);
     }
 
@@ -291,44 +278,10 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the repository could not be checked out.
      * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
-    public Repository getOrCheckoutRepositoryWithTargetPath(VcsRepositoryUri repoUri, Path targetPath, boolean pullOnGet, boolean writeAccess)
+    public Repository getOrCheckoutRepositoryWithTargetPath(LocalVCRepositoryUri repoUri, Path targetPath, boolean pullOnGet, boolean writeAccess)
             throws GitAPIException, GitException {
         Path localPath = getLocalPathOfRepo(targetPath, repoUri);
         return getOrCheckoutRepositoryWithLocalPath(repoUri, localPath, pullOnGet, writeAccess);
-    }
-
-    /**
-     * Checkout at the given repository at the given commit hash
-     *
-     * @param repository the repository to check out the commit in
-     * @param commitHash the hash of the commit to check out
-     * @return the repository checked out at the given commit
-     */
-    public Repository checkoutRepositoryAtCommit(Repository repository, String commitHash) {
-        try (Git git = new Git(repository)) {
-            git.checkout().setName(commitHash).call();
-        }
-        catch (GitAPIException e) {
-            throw new GitException("Could not checkout commit " + commitHash + " in repository located at  " + repository.getLocalPath(), e);
-        }
-        return repository;
-    }
-
-    /**
-     * Get the local repository for a given remote repository URI.
-     * <p>
-     * If the local repo does not exist yet, it will be checked out.
-     * After retrieving the repository, the commit for the given hash will be checked out.
-     *
-     * @param vcsRepositoryUri the url of the remote repository
-     * @param commitHash       the hash of the commit to checkout
-     * @param pullOnGet        pull from the remote on the checked out repository, if it does not need to be cloned
-     * @return the repository if it could be checked out
-     * @throws GitAPIException if the repository could not be checked out
-     */
-    public Repository checkoutRepositoryAtCommit(VcsRepositoryUri vcsRepositoryUri, String commitHash, boolean pullOnGet) throws GitAPIException {
-        var repository = getOrCheckoutRepository(vcsRepositoryUri, pullOnGet, false);
-        return checkoutRepositoryAtCommit(repository, commitHash);
     }
 
     /**
@@ -342,7 +295,7 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the repository could not be checked out.
      * @throws GitException    if the same repository is attempted to be cloned multiple times.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, boolean pullOnGet, String defaultBranch, boolean writeAccess) throws GitAPIException, GitException {
+    public Repository getOrCheckoutRepository(LocalVCRepositoryUri repoUri, boolean pullOnGet, String defaultBranch, boolean writeAccess) throws GitAPIException, GitException {
         Path localPath = getLocalPathOfRepo(repoClonePath, repoUri);
         return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet, defaultBranch, writeAccess);
     }
@@ -359,7 +312,7 @@ public class GitService extends AbstractGitService {
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    public Repository getOrCheckoutRepositoryWithLocalPath(VcsRepositoryUri repoUri, Path localPath, boolean pullOnGet, boolean writeAccess)
+    public Repository getOrCheckoutRepositoryWithLocalPath(LocalVCRepositoryUri repoUri, Path localPath, boolean pullOnGet, boolean writeAccess)
             throws GitAPIException, GitException, InvalidPathException {
         return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet, defaultBranch, writeAccess);
     }
@@ -378,7 +331,7 @@ public class GitService extends AbstractGitService {
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch,
+    public Repository getOrCheckoutRepository(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch,
             boolean writeAccess) throws GitAPIException, GitException, InvalidPathException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUri differs from the targetRepoUri, we attempt to clone the source repo into the target directory
@@ -464,7 +417,7 @@ public class GitService extends AbstractGitService {
         }
     }
 
-    public Path getDefaultLocalPathOfRepo(VcsRepositoryUri targetUrl) {
+    public Path getDefaultLocalPathOfRepo(LocalVCRepositoryUri targetUrl) {
         return getLocalPathOfRepo(repoClonePath, targetUrl);
     }
 
@@ -475,7 +428,7 @@ public class GitService extends AbstractGitService {
      * @param targetUrl  url of the repository
      * @return path of the local file system
      */
-    public Path getLocalPathOfRepo(Path targetPath, VcsRepositoryUri targetUrl) {
+    public Path getLocalPathOfRepo(Path targetPath, LocalVCRepositoryUri targetUrl) {
         if (targetUrl == null) {
             return null;
         }
@@ -493,7 +446,7 @@ public class GitService extends AbstractGitService {
      * @param remoteRepositoryUri the remote repository uri for the git repository, will be added to the Repository object for later use, can be null
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri) {
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri) {
         return getExistingCheckedOutRepositoryByLocalPath(localPath, remoteRepositoryUri, defaultBranch, false);
     }
 
@@ -506,7 +459,7 @@ public class GitService extends AbstractGitService {
      * @param writeAccess         whether the repository should be opened with write access
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri, String defaultBranch,
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch,
             boolean writeAccess) {
         try {
             if (!Files.exists(localPath)) {
@@ -918,7 +871,7 @@ public class GitService extends AbstractGitService {
 
     /**
      * Retrieves a bare JGit repository based on a remote repository URI. This method is functional only when LocalVC is active.
-     * It uses the default branch, also see {@link #getBareRepository(VcsRepositoryUri, String, boolean)} for more details.
+     * It uses the default branch, also see {@link #getBareRepository(LocalVCRepositoryUri, String, boolean)} for more details.
      *
      * @param repositoryUri The URI of the remote VCS repository, not null.
      * @param writeAccess   Whether we write to the repository or not. If true, the git config will be set.
@@ -926,7 +879,7 @@ public class GitService extends AbstractGitService {
      * @throws GitException If the repository cannot be created due to I/O errors or invalid reference names.
      */
     @NotNull
-    public Repository getBareRepository(VcsRepositoryUri repositoryUri, boolean writeAccess) {
+    public Repository getBareRepository(LocalVCRepositoryUri repositoryUri, boolean writeAccess) {
         return getBareRepository(repositoryUri, defaultBranch, writeAccess);
     }
 
@@ -945,7 +898,7 @@ public class GitService extends AbstractGitService {
      * @return The initialized bare Repository instance.
      * @throws GitException If the repository cannot be created due to I/O errors or invalid reference names.
      */
-    public Repository getBareRepository(VcsRepositoryUri repositoryUri, String branch, boolean writeAccess) {
+    public Repository getBareRepository(LocalVCRepositoryUri repositoryUri, String branch, boolean writeAccess) {
         var localRepoUri = new LocalVCRepositoryUri(repositoryUri.toString());
         var localPath = localRepoUri.getLocalRepositoryPath(localVCBasePath);
         try {
@@ -967,7 +920,7 @@ public class GitService extends AbstractGitService {
      * @return The initialized bare Repository instance.
      * @throws GitException If the repository cannot be created due to I/O errors or invalid reference names.
      */
-    public Repository getExistingBareRepository(VcsRepositoryUri repositoryUri, String branch) {
+    public Repository getExistingBareRepository(LocalVCRepositoryUri repositoryUri, String branch) {
         var localRepoUri = new LocalVCRepositoryUri(repositoryUri.toString());
         var localPath = localRepoUri.getLocalRepositoryPath(localVCBasePath);
         try {
@@ -995,7 +948,7 @@ public class GitService extends AbstractGitService {
      * @return a Repository object representing the newly created bare repository
      * @throws IOException if there is an error accessing the repositories or creating the new commit
      */
-    public Repository copyBareRepositoryWithoutHistory(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
+    public Repository copyBareRepositoryWithoutHistory(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
         log.debug("copy bare repository without history from {} to {} for source branch {}", sourceRepoUri, targetRepoUri, sourceBranch);
         Repository sourceRepo = getExistingBareRepository(sourceRepoUri, sourceBranch);
 
@@ -1066,7 +1019,7 @@ public class GitService extends AbstractGitService {
      * @return a Repository object representing the newly created bare repository
      * @throws IOException if there is an error accessing the repositories or creating the new commit
      */
-    public Repository copyBareRepositoryWithHistory(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
+    public Repository copyBareRepositoryWithHistory(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, String sourceBranch) throws IOException {
         log.debug("Copying full history from {} to {} for branch {}", sourceRepoUri, targetRepoUri, sourceBranch);
         Repository sourceRepo = getExistingBareRepository(sourceRepoUri, sourceBranch);
 
@@ -1134,7 +1087,7 @@ public class GitService extends AbstractGitService {
         }
     }
 
-    private static void logCommits(VcsRepositoryUri sourceRepoUri, String sourceBranch, Repository sourceRepo) throws IOException {
+    private static void logCommits(LocalVCRepositoryUri sourceRepoUri, String sourceBranch, Repository sourceRepo) throws IOException {
         if (log.isDebugEnabled()) {
             // Log how many commits the source repository has
             try (RevWalk walk = new RevWalk(sourceRepo)) {
@@ -1341,7 +1294,7 @@ public class GitService extends AbstractGitService {
      *
      * @param repoUri url of the repository.
      */
-    public void deleteLocalRepository(VcsRepositoryUri repoUri) {
+    public void deleteLocalRepository(LocalVCRepositoryUri repoUri) {
         try {
             if (repoUri != null && repositoryAlreadyExists(repoUri)) {
                 // We need to close the possibly still open repository otherwise an IOException will be thrown on Windows
@@ -1378,21 +1331,30 @@ public class GitService extends AbstractGitService {
      * @param repoUri URL of the remote repository.
      * @return True if repo exists on disk
      */
-    public boolean repositoryAlreadyExists(VcsRepositoryUri repoUri) {
+    public boolean repositoryAlreadyExists(LocalVCRepositoryUri repoUri) {
         Path localPath = getDefaultLocalPathOfRepo(repoUri);
         return Files.exists(localPath);
     }
 
     /**
-     * Stashes not submitted/committed changes of the repo.
+     * Checkout a repository and get the git log for a given repository uri.
      *
-     * @param repo student repo of a participation in a programming exercise
-     * @throws GitAPIException if the git operation does not work
+     * @param vcsRepositoryUri the repository uri for which the git log should be retrieved
+     * @return a list of commit info DTOs containing author, timestamp, commit message, and hash
+     * @throws GitAPIException if an error occurs while retrieving the git log
      */
-    public void stashChanges(Repository repo) throws GitAPIException {
-        try (Git git = new Git(repo)) {
-            git.stashCreate().call();
+    public List<CommitInfoDTO> getCommitInfos(LocalVCRepositoryUri vcsRepositoryUri) throws GitAPIException {
+        List<CommitInfoDTO> commitInfos = new ArrayList<>();
+        log.debug("Using local VCS for getting commit info on repo {}", vcsRepositoryUri);
+        try (var repo = getBareRepository(vcsRepositoryUri, false); var git = new Git(repo)) {
+            Iterable<RevCommit> commits = git.log().call();
+            commits.forEach(commit -> {
+                var commitInfo = CommitInfoDTO.of(commit);
+                commitInfos.add(commitInfo);
+            });
         }
+
+        return commitInfos;
     }
 
     private PullCommand pullCommand(Git git) {
@@ -1413,59 +1375,5 @@ public class GitService extends AbstractGitService {
 
     protected <C extends GitCommand<?>> C authenticate(TransportCommand<C, ?> command) {
         return command.setTransportConfigCallback(sshCallback);
-    }
-
-    /**
-     * Checkout a repository and get the git log for a given repository uri.
-     *
-     * @param vcsRepositoryUri the repository uri for which the git log should be retrieved
-     * @return a list of commit info DTOs containing author, timestamp, commit message, and hash
-     * @throws GitAPIException if an error occurs while retrieving the git log
-     */
-    public List<CommitInfoDTO> getCommitInfos(VcsRepositoryUri vcsRepositoryUri) throws GitAPIException {
-        List<CommitInfoDTO> commitInfos = new ArrayList<>();
-
-        if (profileService.isLocalVCActive()) {
-            log.debug("Using local VCS for getting commit info on repo {}", vcsRepositoryUri);
-            try (var repo = getBareRepository(vcsRepositoryUri, false); var git = new Git(repo)) {
-                getCommitInfo(git, commitInfos);
-            }
-        }
-        else {
-            log.debug("Checking out repo {} to get commit info", vcsRepositoryUri);
-            try (var repo = getOrCheckoutRepository(vcsRepositoryUri, true, false); var git = new Git(repo)) {
-                getCommitInfo(git, commitInfos);
-            }
-        }
-
-        return commitInfos;
-    }
-
-    private void getCommitInfo(Git git, List<CommitInfoDTO> commitInfos) throws GitAPIException {
-        Iterable<RevCommit> commits = git.log().call();
-        commits.forEach(commit -> {
-            var commitInfo = CommitInfoDTO.of(commit);
-            commitInfos.add(commitInfo);
-        });
-    }
-
-    /**
-     *
-     * @param contentRootPath the root path of the content to zip
-     * @param zipFilename     the name of the zipped file
-     * @param zipDir          path of folder where the zip should be located on disk
-     * @param contentFilter   path filter to exclude some files, can be null to include everything
-     * @return path to the zip file
-     * @throws IOException if the zipping process failed.
-     */
-    public Path zipFiles(Path contentRootPath, String zipFilename, String zipDir, @Nullable Predicate<Path> contentFilter) throws IOException, UncheckedIOException {
-        String sanitizedFileName = FileUtil.sanitizeFilename(zipFilename);
-        if (!sanitizedFileName.toLowerCase(java.util.Locale.ROOT).endsWith(".zip")) {
-            sanitizedFileName += ".zip";
-        }
-
-        Path zipFilePath = Path.of(zipDir, sanitizedFileName);
-        Files.createDirectories(Path.of(zipDir));
-        return zipFileService.createZipFileWithFolderContent(zipFilePath, contentRootPath, contentFilter);
     }
 }

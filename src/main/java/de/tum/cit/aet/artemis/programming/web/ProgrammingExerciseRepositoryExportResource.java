@@ -176,7 +176,7 @@ public class ProgrammingExerciseRepositoryExportResource {
         long start = System.nanoTime();
 
         RepositoryType repositoryType = includeTests ? RepositoryType.TESTS : RepositoryType.SOLUTION;
-        VcsRepositoryUri repositoryUri = programmingExercise.getRepositoryURL(repositoryType);
+        VcsRepositoryUri repositoryUri = programmingExercise.getRepositoryURI(repositoryType);
         if (repositoryUri == null) {
             return ResponseEntity.internalServerError().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
                     "Failed to export repository because the repository URI is not defined.")).body(null);

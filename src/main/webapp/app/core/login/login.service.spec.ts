@@ -19,7 +19,8 @@ describe('LoginService', () => {
     let loginService: LoginService;
 
     let authenticateStub: jest.SpyInstance;
-    let authServerProviderStub: jest.SpyInstance;
+    let authServerProviderLogoutStub: jest.SpyInstance;
+    let authServerProviderClearStub: jest.SpyInstance;
     let alertServiceClearStub: jest.SpyInstance;
     let navigateByUrlStub: jest.SpyInstance;
 
@@ -42,7 +43,8 @@ describe('LoginService', () => {
                 loginService = TestBed.inject(LoginService);
 
                 authenticateStub = jest.spyOn(accountService, 'authenticate');
-                authServerProviderStub = jest.spyOn(authServerProvider, 'logout');
+                authServerProviderLogoutStub = jest.spyOn(authServerProvider, 'logout');
+                authServerProviderClearStub = jest.spyOn(authServerProvider, 'clearCaches');
                 alertServiceClearStub = jest.spyOn(alertService, 'closeAll');
                 navigateByUrlStub = jest.spyOn(router, 'navigateByUrl');
             });
@@ -57,7 +59,7 @@ describe('LoginService', () => {
         loginService.logout(true);
 
         commonExpects();
-        expect(authServerProviderStub).toHaveBeenCalledOnce();
+        expect(authServerProviderLogoutStub).toHaveBeenCalledOnce();
     });
 
     it('should logout properly and not call server logout on forceful logout', () => {
@@ -65,7 +67,7 @@ describe('LoginService', () => {
         loginService.logout(false);
 
         commonExpects();
-        expect(authServerProviderStub).not.toHaveBeenCalled();
+        expect(authServerProviderLogoutStub).not.toHaveBeenCalled();
     });
 
     function commonExpects() {
@@ -75,5 +77,6 @@ describe('LoginService', () => {
         expect(alertServiceClearStub).toHaveBeenCalledWith();
         expect(navigateByUrlStub).toHaveBeenCalledOnce();
         expect(navigateByUrlStub).toHaveBeenCalledWith('/');
+        expect(authServerProviderClearStub).toHaveBeenCalledOnce();
     }
 });

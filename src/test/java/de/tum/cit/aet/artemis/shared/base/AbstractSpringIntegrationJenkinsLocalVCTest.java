@@ -23,6 +23,7 @@ import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,13 +51,14 @@ import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 // TODO: rewrite this test to use LocalVC
 @ResourceLock("AbstractSpringIntegrationJenkinsLocalVCTest")
@@ -74,7 +76,8 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @MockitoSpyBean
     protected JenkinsService continuousIntegrationService;
 
-    // TODO: we should remove @MockitoSpyBean here and use @Autowired instead
+    // TODO: we should remove @MockitoSpyBean here and use @Autowired instead in the future because we should NOT mock the LocalVCService anymore, all its operations can be
+    // executed in the test environment.
     @MockitoSpyBean
     protected LocalVCService versionControlService;
 
@@ -104,6 +107,14 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
 
     @MockitoSpyBean
     protected ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
+
+    protected URI localVCBaseUri;
+
+    @Value("${artemis.version-control.url}")
+    public void setLocalVCBaseUri(URI localVCBaseUri) {
+        this.localVCBaseUri = localVCBaseUri;
+        ProgrammingExerciseFactory.localVCBaseUri = localVCBaseUri; // Set the static field in ProgrammingExerciseFactory for convenience
+    }
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     protected Path localVCRepoPath;
@@ -168,7 +179,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
         // mocking them turned out to be not feasible with reasonable effort as this effects a lot of other test classes and leads to many other test failures.
         // not mocking for all tests also posed a problem due to many test failures in other classes.
         doCallRealMethod().when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
-        doCallRealMethod().when(gitService).getOrCheckoutRepository(any(VcsRepositoryUri.class), eq(true), anyBoolean());
+        doCallRealMethod().when(gitService).getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), anyBoolean());
     }
 
     @Override
@@ -282,8 +293,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
 
     @Override
     public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception {
-        final String slug = "test201904bprogrammingexercise6-exercise-testuser";
-        final String hash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         final String projectKey = participation.getProgrammingExercise().getProjectKey();
         jenkinsRequestMockProvider.mockTriggerBuild(projectKey, participation.getBuildPlanId(), false);
     }

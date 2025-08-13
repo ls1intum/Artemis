@@ -132,7 +132,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
@@ -792,8 +791,8 @@ public class ProgrammingExerciseTestService {
     private AuxiliaryRepository addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(sourceExercise);
         String auxRepoName = sourceExercise.generateRepositoryName("auxrepo");
-        var url = versionControlService.getCloneRepositoryUri(sourceExercise.getProjectKey(), new LocalVCRepositoryUri(convertToLocalVcUriString(sourceAuxRepo)).toString());
-        repository.setRepositoryUri(url.toString());
+        var url = new LocalVCRepositoryUri(convertToLocalVcUriString(sourceAuxRepo)).toString();
+        repository.setRepositoryUri(url);
         return auxiliaryRepositoryRepository.save(repository);
     }
 
@@ -1780,20 +1779,20 @@ public class ProgrammingExerciseTestService {
             // Mock template repo
             Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.workingCopyGitRepoFile.toPath(), null);
             createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
-            doReturn(templateRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class),
+            doReturn(templateRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.TEMPLATE)), any(Path.class),
                     anyBoolean(), anyBoolean());
             doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
             // Mock solution repo
             Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null);
             createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
-            doReturn(solutionRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class),
+            doReturn(solutionRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.SOLUTION)), any(Path.class),
                     anyBoolean(), anyBoolean());
 
             // Mock tests repo
             Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null);
             createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
-            doReturn(testsRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean(),
+            doReturn(testsRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.TESTS)), any(Path.class), anyBoolean(),
                     anyBoolean());
         }
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-instructor-exercise";
@@ -1839,7 +1838,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
-        VcsRepositoryUri vcsUrl = exercise.getRepositoryURL(repoType);
+        LocalVCRepositoryUri vcsUrl = exercise.getRepositoryURI(repoType);
         Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null);
 
         createAndCommitDummyFileInLocalRepository(localRepo, fileName);
@@ -1873,18 +1872,18 @@ public class ProgrammingExerciseTestService {
 
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.workingCopyGitRepoFile.toPath(), null);
-        doReturn(templateRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean(),
+        doReturn(templateRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean(),
                 anyBoolean());
 
         // Mock solution repo
         Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null);
-        doReturn(solutionRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean(),
+        doReturn(solutionRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.SOLUTION)), any(Path.class), anyBoolean(),
                 anyBoolean());
 
         // Mock tests repo
         Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
-        doReturn(testsRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean(),
+        doReturn(testsRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.TESTS)), any(Path.class), anyBoolean(),
                 anyBoolean());
 
         request.put("/api/core/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
@@ -1971,19 +1970,19 @@ public class ProgrammingExerciseTestService {
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
-        doReturn(templateRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean(),
+        doReturn(templateRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean(),
                 anyBoolean());
 
         // Mock solution repo
         Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
-        doReturn(solutionRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean(),
+        doReturn(solutionRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.SOLUTION)), any(Path.class), anyBoolean(),
                 anyBoolean());
 
         // Mock tests repo
         Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
-        doReturn(testsRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean(),
+        doReturn(testsRepository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(exercise.getRepositoryURI(RepositoryType.TESTS)), any(Path.class), anyBoolean(),
                 anyBoolean());
     }
 

@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -197,7 +198,7 @@ public class GitRepositoryExportService {
      * @throws IOException     if IO operations fail
      */
     public InputStreamResource exportRepositorySnapshot(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
-        Repository repository = gitService.getBareRepository(repositoryUri, false);
+        Repository repository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false);
         byte[] zipData = createJGitArchive(repository, "HEAD");
         return createZipInputStreamResource(zipData, filename);
     }
@@ -214,7 +215,7 @@ public class GitRepositoryExportService {
      * @throws IOException     if IO operations fail
      */
     public InputStreamResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
-        Repository repository = gitService.getBareRepository(repositoryUri, false);
+        Repository repository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false);
         return gitArchiveHelper.exportRepositoryWithFullHistoryToMemory(repository, filename);
     }
 
@@ -319,7 +320,7 @@ public class GitRepositoryExportService {
     public InputStreamResource exportInstructorRepositoryForExerciseInMemory(ProgrammingExercise programmingExercise, RepositoryType repositoryType, List<String> exportErrors) {
         String zippedRepoName = getZippedRepoName(programmingExercise, repositoryType.getName());
         try {
-            return exportRepositoryWithFullHistoryToMemory(programmingExercise.getRepositoryURL(repositoryType), zippedRepoName);
+            return exportRepositoryWithFullHistoryToMemory(programmingExercise.getRepositoryURI(repositoryType), zippedRepoName);
         }
         catch (IOException | GitAPIException ex) {
             String error = "Failed to export instructor repository " + repositoryType.getName() + " for programming exercise '" + programmingExercise.getTitle() + "' (id: "
