@@ -80,6 +80,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private quizService = inject(ArtemisQuizService);
     private serverDateService = inject(ArtemisServerDateService);
 
+    protected readonly faSync = faSync;
+    protected readonly faCircleNotch = faCircleNotch;
+
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -153,10 +156,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     timeoutJustSaved = debounce(() => {
         this.justSaved = false;
     }, 2000);
-
-    // Icons
-    faSync = faSync;
-    faCircleNotch = faCircleNotch;
 
     constructor() {
         smoothscroll.polyfill();
