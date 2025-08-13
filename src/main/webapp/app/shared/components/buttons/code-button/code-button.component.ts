@@ -6,10 +6,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
-import { LocalStorageService } from 'ngx-webstorage';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { PROFILE_THEIA } from 'app/app.constants';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
@@ -65,7 +65,7 @@ export class CodeButtonComponent implements OnInit {
     private sshUserSettingsService = inject(SshUserSettingsService);
     private accountService = inject(AccountService);
     private profileService = inject(ProfileService);
-    private localStorage = inject(LocalStorageService);
+    private localStorageService = inject(LocalStorageService);
     private participationService = inject(ParticipationService);
     private ideSettingsService = inject(IdeSettingsService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
@@ -210,7 +210,7 @@ export class CodeButtonComponent implements OnInit {
     }
 
     private storeToLocalStorage() {
-        this.localStorage.store('code-button-state', this.selectedAuthenticationMechanism);
+        this.localStorageService.store<RepositoryAuthenticationMethod>('code-button-state', this.selectedAuthenticationMechanism);
     }
 
     public formatTip(translationKey: string, url: string): string {
@@ -222,9 +222,8 @@ export class CodeButtonComponent implements OnInit {
     }
 
     onClick() {
-        this.selectedAuthenticationMechanism = this.authenticationMechanisms.includes(this.localStorage.retrieve('code-button-state'))
-            ? this.localStorage.retrieve('code-button-state')
-            : this.authenticationMechanisms[0];
+        const storedState = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
+        this.selectedAuthenticationMechanism = storedState && this.authenticationMechanisms.includes(storedState) ? storedState : this.authenticationMechanisms[0];
 
         if (this.useSsh) {
             this.useSshUrl();

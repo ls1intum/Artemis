@@ -17,7 +17,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -155,6 +158,9 @@ public class ExamUtilService {
 
     @Autowired
     private FileUploadSubmissionRepository fileUploadSubmissionRepo;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepository;
 
     /**
      * Creates and saves a course with an exam and an exercise group with all exercise types excluding programming exercises.
@@ -708,6 +714,27 @@ public class ExamUtilService {
         quizGroup.addExercise(quiz);
         exerciseRepository.save(quiz);
 
+        return exam;
+    }
+
+    /**
+     * Creates and saves an exam with five exercise groups (0: modelling, 1: text, 2: file upload, 3: quiz, 4: programming)
+     *
+     * @param course The Course to which the Exam should be added
+     * @return The newly created Exam
+     */
+    public Exam addExamWithModellingAndTextAndFileUploadAndQuizAndProgramming(Course course) {
+        Exam exam = addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course);
+        ExerciseGroup programmingGroup = exam.getExerciseGroups().get(4);
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup);
+        Set<GradingCriterion> gradingCriteria = ProgrammingExerciseFactory.generateGradingCriteria(programmingExercise);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        exerciseRepository.save(programmingExercise);
+        gradingCriterionRepository.saveAll(gradingCriteria);
+
+        programmingGroup.addExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         return exam;
     }
 
@@ -1289,6 +1316,60 @@ public class ExamUtilService {
      */
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
         return addCourseExamExerciseGroupWithOneTextExercise(null);
+    }
+
+    /**
+     * Creates and saves an Exam with two correction rounds configured for testing scenarios.
+     *
+     * @return The newly created Exam with two correction rounds
+     */
+    public Exam setupExamWithTwoCorrectionRounds() {
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+        Exam exam = addExam(course);
+        exam.setNumberOfCorrectionRoundsInExam(2);
+        exam.setStartDate(ZonedDateTime.now().minusHours(2));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        exam.setPublishResultsDate(ZonedDateTime.now().minusMinutes(30));
+        exam.setExamStudentReviewStart(ZonedDateTime.now().minusMinutes(20));
+        exam.setExamStudentReviewEnd(ZonedDateTime.now().plusDays(1));
+        exam.setVisibleDate(ZonedDateTime.now().minusHours(3));
+        exam.setWorkingTime(3600); // 1 hour
+        return examRepository.save(exam);
+    }
+
+    /**
+     * Sets up a programming exercise with second correction enabled for the given exam.
+     *
+     * @param exam The exam to add the programming exercise to
+     * @return The configured programming exercise
+     */
+    public ProgrammingExercise setupProgrammingExerciseWithSecondCorrection(Exam exam) {
+        exam = addExerciseGroupsAndExercisesToExam(exam, true);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(6);
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) exerciseGroup.getExercises().iterator().next();
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setSecondCorrectionEnabled(true);
+        programmingExercise.setMaxPoints(10.0);
+        return exerciseRepository.save(programmingExercise);
+    }
+
+    /**
+     * Sets up a student exam with submission state for the given exam, programming exercise, and student.
+     *
+     * @param exam                The exam
+     * @param programmingExercise The programming exercise
+     * @param student             The student
+     * @return The configured student exam
+     */
+    public StudentExam setupStudentExamWithSubmission(Exam exam, ProgrammingExercise programmingExercise, User student) {
+        StudentExam studentExam = addStudentExamWithUser(exam, student);
+        studentExam.setSubmitted(true);
+        studentExam.setWorkingTime(exam.getWorkingTime());
+        studentExam.setStartedAndStartDate(ZonedDateTime.now().minusHours(2));
+        studentExam.setSubmissionDate(ZonedDateTime.now().minusHours(1).minusMinutes(30));
+        studentExam.addExercise(programmingExercise);
+        return studentExamRepository.save(studentExam);
     }
 
 }

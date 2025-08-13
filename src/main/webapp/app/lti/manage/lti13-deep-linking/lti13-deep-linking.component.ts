@@ -8,8 +8,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { AlertService } from 'app/shared/service/alert.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { onError } from 'app/shared/util/global.utils';
-import { SessionStorageService } from 'ngx-webstorage';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
@@ -209,8 +209,8 @@ export class Lti13DeepLinkingComponent implements OnInit {
      */
     sendDeepLinkRequest() {
         if (this.selectedExercises?.size || this.selectedLectures?.size || this.isCompetencySelected || this.isLearningPathSelected || this.isIrisSelected) {
-            const ltiIdToken = this.sessionStorageService.retrieve('ltiIdToken') ?? '';
-            const clientRegistrationId = this.sessionStorageService.retrieve('clientRegistrationId') ?? '';
+            const ltiIdToken = this.sessionStorageService.retrieve<string>('ltiIdToken') ?? '';
+            const clientRegistrationId = this.sessionStorageService.retrieve<string>('clientRegistrationId') ?? '';
 
             type DeepLinkingResponse = {
                 targetLinkUri: string;

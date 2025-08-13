@@ -14,13 +14,13 @@ import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 public abstract class AbstractVersionControlService implements VersionControlService {
 
@@ -50,8 +50,19 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     }
 
     @Override
-    public VcsRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
-            Integer attempt) throws VersionControlException {
+    public LocalVCRepositoryUri copyRepositoryWithoutHistory(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey,
+            String targetRepositoryName, Integer attempt) throws VersionControlException {
+        return copyRepository(sourceProjectKey, sourceRepositoryName, sourceBranch, targetProjectKey, targetRepositoryName, attempt, false);
+    }
+
+    @Override
+    public LocalVCRepositoryUri copyRepositoryWithHistory(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey,
+            String targetRepositoryName, Integer attempt) throws VersionControlException {
+        return copyRepository(sourceProjectKey, sourceRepositoryName, sourceBranch, targetProjectKey, targetRepositoryName, attempt, true);
+    }
+
+    private LocalVCRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
+            Integer attempt, boolean withHistory) throws VersionControlException {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
         String targetProjectKeyLowerCase = targetProjectKey.toLowerCase();
@@ -59,11 +70,10 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             targetProjectKeyLowerCase = targetProjectKeyLowerCase + attempt;
         }
         final String targetRepoSlug = targetProjectKeyLowerCase + "-" + targetRepositoryName;
-        // get the remote url of the source repo
         final var sourceRepoUri = getCloneRepositoryUri(sourceProjectKey, sourceRepositoryName);
-        // get the remote url of the target repo
         final var targetRepoUri = getCloneRepositoryUri(targetProjectKey, targetRepoSlug);
-        try (Repository targetRepo = gitService.copyBareRepository(sourceRepoUri, targetRepoUri, sourceBranch)) {
+        try (Repository targetRepo = withHistory ? gitService.copyBareRepositoryWithHistory(sourceRepoUri, targetRepoUri, sourceBranch)
+                : gitService.copyBareRepositoryWithoutHistory(sourceRepoUri, targetRepoUri, sourceBranch)) {
             return targetRepo.getRemoteRepositoryUri(); // should be the same as targetRepoUri
         }
         catch (IOException | LargeObjectException ex) {

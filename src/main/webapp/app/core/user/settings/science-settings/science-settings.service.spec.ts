@@ -3,8 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { LocalStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from '../../../layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
@@ -30,12 +28,7 @@ describe('ScienceSettingsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
-                { provide: ProfileService, useClass: MockProfileService },
-            ],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ProfileService, useClass: MockProfileService }],
         })
             .compileComponents()
             .then(() => {
@@ -61,7 +54,7 @@ describe('ScienceSettingsService', () => {
         const spy = jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(new HttpResponse<Setting[]>({ body: scienceSettingsForTesting })));
 
         scienceSettingsService['listenForScienceSettingsChanges']();
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledOnce();
 
         const settings = scienceSettingsService.getScienceSettings();
         expect(settings).toEqual(scienceSettingsForTesting);

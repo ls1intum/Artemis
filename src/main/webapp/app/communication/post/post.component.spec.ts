@@ -46,8 +46,6 @@ import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { MockConversationService } from 'test/helpers/mocks/service/mock-conversation.service';
@@ -95,7 +93,7 @@ describe('PostComponent', () => {
                 MockProvider(OneToOneChatService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
+
                 { provide: ConversationService, useClass: MockConversationService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],

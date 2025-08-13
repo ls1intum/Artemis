@@ -1,7 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/QuizTrainingAnswer';
+import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluation';
 
 @Injectable({
     providedIn: 'root',
@@ -14,6 +16,10 @@ export class CourseTrainingQuizService {
      * @param courseId
      */
     getQuizQuestions(courseId: number): Observable<QuizQuestion[]> {
-        return this.http.get<QuizQuestion[]>(`api/quiz/courses/${courseId}/practice/quiz`);
+        return this.http.get<QuizQuestion[]>(`api/quiz/courses/${courseId}/training/questions`);
+    }
+
+    submitForTraining(answer: QuizTrainingAnswer, questionId: number, courseId: number): Observable<HttpResponse<SubmittedAnswerAfterEvaluation>> {
+        return this.http.post<SubmittedAnswerAfterEvaluation>(`api/quiz/courses/${courseId}/training/${questionId}/submit`, answer, { observe: 'response' });
     }
 }

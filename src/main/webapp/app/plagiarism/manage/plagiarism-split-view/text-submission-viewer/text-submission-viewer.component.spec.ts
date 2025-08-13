@@ -1,12 +1,12 @@
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Subject, of, throwError } from 'rxjs';
 import { TextSubmissionViewerComponent } from 'app/plagiarism/manage/plagiarism-split-view/text-submission-viewer/text-submission-viewer.component';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { DomainChange, DomainType, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { SplitPaneHeaderComponent } from 'app/plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component';
@@ -39,8 +39,8 @@ describe('Text Submission Viewer Component', () => {
         TestBed.configureTestingModule({
             declarations: [TextSubmissionViewerComponent, MockComponent(SplitPaneHeaderComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
@@ -104,7 +104,7 @@ describe('Text Submission Viewer Component', () => {
 
     it('handles a programming submission fetch error', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
-        jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(throwError({}));
+        jest.spyOn(repositoryService, 'getRepositoryContentForPlagiarismView').mockReturnValue(throwError(() => {}));
 
         comp.ngOnChanges({
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
