@@ -127,11 +127,12 @@ public class LocalCIResultProcessingService {
      * Processes the build job results published by the build agents, notifies the user about the result and saves the result to the database.
      */
     public void processResult() {
-
+        var startTime = System.currentTimeMillis();
         // set lock to prevent multiple nodes from processing the same build job
         ResultQueueItem resultQueueItem = distributedDataAccessService.getDistributedBuildResultQueue().poll();
 
         if (resultQueueItem == null) {
+            log.debug("No build job result available to process. Returning");
             return;
         }
         log.info("Processing build job result with id {}", resultQueueItem.buildJobQueueItem().id());
@@ -229,6 +230,7 @@ public class LocalCIResultProcessingService {
                     log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", buildJob.exerciseId(), e);
                 }
             }
+            log.info("Finished processing build job result with id {} in {} ms", buildJob.id(), System.currentTimeMillis() - startTime);
         }
     }
 
