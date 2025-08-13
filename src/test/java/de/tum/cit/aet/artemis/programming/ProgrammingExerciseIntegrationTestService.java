@@ -572,7 +572,7 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testExportSubmissionsByParticipationIds_nonExistentParticipationId_notFound() throws Exception {
-        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/10";
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + Long.MAX_VALUE;
         request.postWithResponseBodyFile(path, getOptions(), HttpStatus.NOT_FOUND);
     }
 

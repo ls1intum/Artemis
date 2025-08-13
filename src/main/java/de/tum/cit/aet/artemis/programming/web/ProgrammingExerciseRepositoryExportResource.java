@@ -27,8 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.ProgrammingExercises)
@@ -63,8 +62,6 @@ public class ProgrammingExerciseRepositoryExportResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ProgrammingExerciseExportService programmingExerciseExportService;
-
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     private final Optional<ExamAccessApi> examAccessApi;
@@ -72,11 +69,9 @@ public class ProgrammingExerciseRepositoryExportResource {
     private final GitRepositoryExportService gitRepositoryExportService;
 
     public ProgrammingExerciseRepositoryExportResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            ProgrammingExerciseExportService programmingExerciseExportService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, Optional<ExamAccessApi> examAccessApi,
-            GitRepositoryExportService gitRepositoryExportService) {
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, Optional<ExamAccessApi> examAccessApi, GitRepositoryExportService gitRepositoryExportService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
-        this.programmingExerciseExportService = programmingExerciseExportService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.examAccessApi = examAccessApi;
         this.gitRepositoryExportService = gitRepositoryExportService;
@@ -91,7 +86,7 @@ public class ProgrammingExerciseRepositoryExportResource {
      * @throws IOException if something during the zip process went wrong
      */
     @GetMapping("programming-exercises/{exerciseId}/export-instructor-repository/{repositoryType}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise(resourceIdFieldName = "exerciseId")
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportInstructorRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) throws IOException {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId)
@@ -119,7 +114,7 @@ public class ProgrammingExerciseRepositoryExportResource {
      * @throws IOException if something during the zip process went wrong
      */
     @GetMapping("programming-exercises/{exerciseId}/export-instructor-auxiliary-repository/{repositoryId}")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastTutorInExercise(resourceIdFieldName = "exerciseId")
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportInstructorAuxiliaryRepository(@PathVariable long exerciseId, @PathVariable long repositoryId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -159,7 +154,7 @@ public class ProgrammingExerciseRepositoryExportResource {
      * @throws IOException if something during the zip process went wrong
      */
     @GetMapping("programming-exercises/{exerciseId}/export-student-requested-repository")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInExercise(resourceIdFieldName = "exerciseId")
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportStudentRequestedRepository(@PathVariable long exerciseId, @RequestParam() boolean includeTests) throws IOException {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId)
@@ -216,7 +211,7 @@ public class ProgrammingExerciseRepositoryExportResource {
      * @throws IOException If the repository could not be zipped.
      */
     @GetMapping("programming-exercises/{exerciseId}/export-student-repository/{participationId}")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInExercise(resourceIdFieldName = "exerciseId")
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportStudentRepository(@PathVariable long exerciseId, @PathVariable long participationId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);

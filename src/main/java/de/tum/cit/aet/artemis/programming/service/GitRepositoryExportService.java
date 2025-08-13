@@ -98,6 +98,14 @@ public class GitRepositoryExportService {
         }
     }
 
+    private String sanitizeZipFilename(String filename) {
+        String sanitized = FileUtil.sanitizeFilename(filename).replaceAll("\\s+", "");
+        if (!sanitized.toLowerCase(java.util.Locale.ROOT).endsWith(".zip")) {
+            sanitized += ".zip";
+        }
+        return sanitized;
+    }
+
     /**
      * Zips the contents of a folder, files are filtered according to the contentFilter.
      * Content filtering is added with the intention of optionally excluding ".git" directory from the result.
@@ -116,10 +124,7 @@ public class GitRepositoryExportService {
      *          Predicate<Path> includeAll = null;
      */
     public Path zipFiles(Path contentRootPath, String zipFilename, String zipDir, @Nullable Predicate<Path> contentFilter) throws IOException {
-        String sanitized = FileUtil.sanitizeFilename(zipFilename).replaceAll("\\s+", "");
-        if (!sanitized.toLowerCase(java.util.Locale.ROOT).endsWith(".zip")) {
-            sanitized += ".zip";
-        }
+        String sanitized = sanitizeZipFilename(zipFilename);
         Path zipFilePath = Path.of(zipDir, sanitized);
         Files.createDirectories(Path.of(zipDir));
         return zipFileService.createZipFileWithFolderContent(zipFilePath, contentRootPath, contentFilter);
@@ -142,10 +147,7 @@ public class GitRepositoryExportService {
      *          Predicate<Path> includeAll = null;
      */
     public InputStreamResource zipDirectoryToMemory(Path contentRootPath, String zipFilename, @Nullable Predicate<Path> contentFilter) throws IOException {
-        String sanitized = FileUtil.sanitizeFilename(zipFilename).replaceAll("\\s+", "");
-        if (!sanitized.toLowerCase(java.util.Locale.ROOT).endsWith(".zip")) {
-            sanitized += ".zip";
-        }
+        String sanitized = sanitizeZipFilename(zipFilename);
 
         var byteArrayResource = zipFileService.createZipFileWithFolderContentInMemory(contentRootPath, sanitized, contentFilter);
 
@@ -231,11 +233,11 @@ public class GitRepositoryExportService {
      */
     public Map<File, FileType> listFilesAndFolders(Repository repo, boolean omitBinaries) {
         FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
-        Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
+        Iterator<java.io.File> iterator = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
         Map<File, FileType> files = new HashMap<>();
 
-        while (itr.hasNext()) {
-            File nextFile = new File(itr.next(), repo);
+        while (iterator.hasNext()) {
+            File nextFile = new File(iterator.next(), repo);
             Path nextPath = nextFile.toPath();
 
             if (Files.isSymbolicLink(nextPath)) {
@@ -265,11 +267,11 @@ public class GitRepositoryExportService {
      */
     public Collection<File> getFiles(Repository repo) {
         FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
-        Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), filter, filter);
+        Iterator<java.io.File> iterator = FileUtils.iterateFiles(repo.getLocalPath().toFile(), filter, filter);
         Collection<File> files = new ArrayList<>();
 
-        while (itr.hasNext()) {
-            files.add(new File(itr.next(), repo));
+        while (iterator.hasNext()) {
+            files.add(new File(iterator.next(), repo));
         }
 
         return files;
@@ -283,8 +285,7 @@ public class GitRepositoryExportService {
      * @return The File object
      */
     public Optional<File> getFileByName(Repository repo, String filename) {
-        // Makes sure the requested file is part of the scanned list of files.
-        // Ensures that it is not possible to do bad things like filename="../../passwd"
+        // Prevents directory traversal attacks by only allowing access to scanned files
 
         for (File file : listFilesAndFolders(repo).keySet()) {
             if (file.toString().equals(filename)) {

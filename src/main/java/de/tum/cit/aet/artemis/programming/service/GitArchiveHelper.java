@@ -5,8 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -30,6 +32,8 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 class GitArchiveHelper {
 
     private static final Logger log = LoggerFactory.getLogger(GitArchiveHelper.class);
+
+    private static final Set<String> IGNORED_ZIP_FILE_NAMES = Set.of("gc.log.lock");
 
     InputStreamResource exportRepositoryWithFullHistoryToMemory(Repository repository, String filename) throws IOException, GitAPIException {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
@@ -97,6 +101,12 @@ class GitArchiveHelper {
                     String relativePath = rootPath.relativize(path).toString().replace("\\", "/");
                     String zipEntryName = prefix + "/" + relativePath;
 
+                    // Skip ignored files like ephemeral lock files
+                    String fileName = path.getFileName().toString();
+                    if (IGNORED_ZIP_FILE_NAMES.contains(fileName)) {
+                        return;
+                    }
+
                     if (Files.isDirectory(path)) {
                         if (!zipEntryName.endsWith("/")) {
                             zipEntryName += "/";
@@ -110,7 +120,7 @@ class GitArchiveHelper {
                     zipOutputStream.closeEntry();
                 }
                 catch (IOException e) {
-                    throw new RuntimeException("Failed to add path to zip: " + path, e);
+                    throw new UncheckedIOException(e);
                 }
             });
         }
