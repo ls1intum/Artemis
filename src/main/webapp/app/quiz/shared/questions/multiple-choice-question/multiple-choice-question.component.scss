@@ -234,3 +234,22 @@
 .visual-new-answer-title {
     margin-top: 1rem;
 }
+
+.question-highlight {
+    animation: highlightPulse 1.5s ease-in-out;
+}
+
+@keyframes highlightPulse {
+    0% {
+        background-color: transparent;
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4);
+    }
+    50% {
+        background-color: rgba(0, 123, 255, 0.05);
+        box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.2);
+    }
+    100% {
+        background-color: transparent;
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+    }
+}
