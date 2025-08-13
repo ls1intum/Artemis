@@ -24,8 +24,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [NgClass, NgbTooltip, TranslateDirective, NgbPopover, FaIconComponent, QuizScoringInfoStudentModalComponent, ArtemisTranslatePipe],
 })
 export class ShortAnswerQuestionComponent {
-    private artemisMarkdown = inject(ArtemisMarkdownService);
-    shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+    private readonly artemisMarkdown = inject(ArtemisMarkdownService);
+    readonly shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
 
     protected readonly faExclamationCircle = faExclamationCircle;
     protected readonly farQuestionCircle = faQuestionCircle;
