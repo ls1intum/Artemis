@@ -114,9 +114,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
@@ -272,8 +272,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         studentExamRepository.save(studentExamForTestExam2);
 
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).getExistingCheckedOutRepositoryByLocalPath(any(), any(), any(), anyBoolean());
-        doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).copyBareRepositoryWithoutHistory(any(), any(), any());
+        // TODO: get rid of these mocks, we should have realistic tests
+        doReturn(new Repository("ab", new LocalVCRepositoryUri(localVCBaseUri, "test", "test-test"))).when(gitService).getExistingCheckedOutRepositoryByLocalPath(any(), any(),
+                any(), anyBoolean());
+        doReturn(new Repository("ab", new LocalVCRepositoryUri(localVCBaseUri, "test", "test-test"))).when(gitService).copyBareRepositoryWithoutHistory(any(), any(), any());
         // TODO: all parts using programmingExerciseTestService should also be provided for LocalVC+Jenkins
         programmingExerciseTestService.setup(this, versionControlService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);

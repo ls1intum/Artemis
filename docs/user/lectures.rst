@@ -14,9 +14,25 @@ Apart from :ref:`Exercises <exercises>` and :ref:`Exams <exams>`, Artemis can al
 Students
 ^^^^^^^^
 
-Students can see all published lectures of a course, grouped by date, when clicking on the tab labeled *Lectures*.
+Students can see all published lectures of a course by clicking on the tab labeled *Lectures*.
 
-|lectures-overview|
+|general-menu|
+
+Lecture Organization and Navigation
+""""""""""""""""""""""""""""""""""""
+
+The lecture overview provides an organized view of all course lectures. The sidebar displays lectures categorized by time periods to help students navigate course content efficiently:
+
+- **Future:** Upcoming lectures that haven't started yet
+- **Current:** Lectures active in the current week
+- **Past:** Lectures whose end date has passed
+- **No Date:** Lectures without specific dates assigned
+
+|lecture-overview-collapse|
+
+When a section(e.g No date) contains more than 5 lectures, Artemis may create weekly subsections to improve navigation, though the exact grouping depends on lecture dates and distribution across weeks.
+
+|lecture-overview-current| |lecture-overview-past|
 
 Clicking on a lecture leads to the following page, where students can see the title, description, lecture units, and attachments.
 
@@ -180,8 +196,14 @@ Instructors can create competencies, which are desired learning objectives, and 
 See :ref:`Adaptive Learning <adaptive-learning>` for more information.
 
 
-.. |lectures-overview| image:: lectures/lectures-overview.png
-    :width: 1000
+.. |general-menu| image:: lectures/general-menu-lecture.png
+    :width: 250
+.. |lecture-overview-collapse| image:: lectures/lecture-overview-collapse.png
+    :width: 250
+.. |lecture-overview-past| image:: lectures/lecture-overview-past.png
+    :width: 250
+.. |lecture-overview-current| image:: lectures/lecture-overview-current.png
+    :width: 250
 .. |lecture-details| image:: lectures/lecture-details.png
     :width: 1000
 .. |lectures-management| image:: lectures/lectures-management.png

@@ -32,18 +32,18 @@ describe('PlagiarismCaseReviewComponent', () => {
     });
 
     it('should initialize with default values', () => {
-        expect(component.forStudent).toBeTrue();
+        expect(component.forStudent()).toBeTrue();
         expect(component.splitControlSubject).toBeInstanceOf(Subject);
     });
 
     it('should set plagiarismCase input', () => {
-        component.plagiarismCase = mockPlagiarismCase;
-        expect(component.plagiarismCase).toEqual(mockPlagiarismCase);
+        fixture.componentRef.setInput('plagiarismCase', mockPlagiarismCase);
+        expect(component.plagiarismCase()).toEqual(mockPlagiarismCase);
     });
 
     it('should set forStudent input to false', () => {
-        component.forStudent = false;
-        expect(component.forStudent).toBeFalse();
+        fixture.componentRef.setInput('forStudent', false);
+        expect(component.forStudent()).toBeFalse();
     });
 
     it('should have splitControlSubject as Subject', () => {
