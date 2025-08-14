@@ -147,8 +147,8 @@ public class ExamRoomService {
             }
 
         }
-        catch (IOException | IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Internal error while trying to parse the rooms");
+        catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Internal error while trying to read the rooms");
         }
         log.info("Parsed rooms in {}", TimeLogUtil.formatDurationFrom(startTime));
 
