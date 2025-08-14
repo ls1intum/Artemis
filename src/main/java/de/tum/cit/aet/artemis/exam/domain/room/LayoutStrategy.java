@@ -9,6 +9,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.context.annotation.Conditional;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -54,6 +56,7 @@ public class LayoutStrategy extends DomainObject {
      * The parameters of the layout strategy, i.e., the data that tells the strategy how to distribute the students.
      * Contents of this differ as the {@link LayoutStrategy#type} differs.
      */
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "parameters", columnDefinition = "json", nullable = false)
     private String parametersJson;
 
