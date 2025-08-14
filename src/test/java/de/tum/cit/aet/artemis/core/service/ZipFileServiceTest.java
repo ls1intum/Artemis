@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +56,7 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testCreateZipFileWithFolderContentInMemory(@TempDir Path testDir) throws IOException, Exception {
         Path testFile = Files.createTempFile(testDir, "test", ".txt");
-        Files.write(testFile, "test content".getBytes());
+        FileUtils.writeByteArrayToFile(testFile.toFile(), "test content".getBytes());
 
         ByteArrayResource result = zipFileService.createZipFileWithFolderContentInMemory(testDir, "test-archive.zip", null);
 
