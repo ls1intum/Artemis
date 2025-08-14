@@ -41,9 +41,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     private modelSubscription: number;
     private modelPatchSubscription: number;
 
-    mouseDownListener: ((this: Document, ev: MouseEvent) => any) | undefined;
-    scrollListener: ((this: Document, ev: Event) => any) | undefined;
-
     readonlyApollonDiagram?: SVG;
     readOnlySVG?: SafeHtml;
 
@@ -116,11 +113,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             }
             this.apollonEditor.destroy();
             this.apollonEditor = undefined;
-        }
-
-        if (this.mouseDownListener) {
-            document.removeEventListener('mousedown', this.mouseDownListener);
-            document.removeEventListener('scroll', this.scrollListener!);
         }
     }
 
