@@ -10,8 +10,11 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 
+import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -20,10 +23,7 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
     private ZipFileService zipFileService;
 
     @Test
-    void testExtractZipFileRecursively_unzipsNestedZipCorrectly() throws IOException {
-        Path testDir = Files.createTempDirectory("test-dir");
-        Path zipDir = Files.createTempDirectory("zip-dir");
-
+    void testExtractZipFileRecursively_unzipsNestedZipCorrectly(@TempDir Path testDir, @TempDir Path zipDir) throws IOException {
         Path rootDir = Files.createTempDirectory(testDir, "root-dir");
         Path subDir = Files.createTempDirectory(rootDir, "sub-dir");
         Path subDir2 = Files.createTempDirectory(subDir, "sub-dir2");
@@ -42,15 +42,28 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(subDirPathInZip.resolve(subDir2.getFileName()))
                 .isDirectoryContaining(Predicate.isEqual(subDirPathInZip.resolve(subDir2.getFileName()).resolve(file2.getFileName())));
         assertThat(rootDirPathInZip).isDirectoryContaining(Predicate.isEqual(rootDirPathInZip.resolve(file1.getFileName())));
-
     }
 
     @Test
-    void testCreateTemporaryZipFileSchedulesFileForDeletion() throws IOException {
-        var tempZipFile = Files.createTempFile("test", ".zip");
+    void testCreateTemporaryZipFileSchedulesFileForDeletion(@TempDir Path tempDir) throws IOException {
+        var tempZipFile = Files.createTempFile(tempDir, "test", ".zip");
         zipFileService.createTemporaryZipFile(tempZipFile, List.of(), 5);
         assertThat(tempZipFile).exists();
         verify(fileService).schedulePathForDeletion(tempZipFile, 5L);
+    }
+
+    @Test
+    void testCreateZipFileWithFolderContentInMemory(@TempDir Path testDir) throws IOException, Exception {
+        Path testFile = Files.createTempFile(testDir, "test", ".txt");
+        Files.write(testFile, "test content".getBytes());
+
+        ByteArrayResource result = zipFileService.createZipFileWithFolderContentInMemory(testDir, "test-archive.zip", null);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getFilename()).isEqualTo("test-archive.zip");
+        assertThat(result.contentLength()).isGreaterThan(0);
+
+        ZipTestUtil.verifyZipStructureAndContent(result.getByteArray());
     }
 
 }
