@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
@@ -92,9 +92,6 @@ public class ProgrammingExerciseRepositoryService {
     void commitAndPushRepository(final Repository repository, final String message, final boolean emptyCommit, final User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, message, emptyCommit, user);
-
-        // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
-        repository.setFiles(null);
     }
 
     /**
@@ -129,8 +126,8 @@ public class ProgrammingExerciseRepositoryService {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path repositoryTypeTemplateDir = getTemplateDirectoryForRepositoryType(repositoryType);
 
-        final VcsRepositoryUri repoUri = programmingExercise.getRepositoryURL(repositoryType);
-        final Repository repo = gitService.getOrCheckoutRepository(repoUri, true);
+        final LocalVCRepositoryUri repoUri = programmingExercise.getRepositoryURI(repositoryType);
+        final Repository repo = gitService.getOrCheckoutRepository(repoUri, false, true);
 
         // Get path, files and prefix for the programming-language dependent files. They are copied first.
         final Path generalTemplatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage())
@@ -247,7 +244,7 @@ public class ProgrammingExerciseRepositoryService {
             versionControlService.orElseThrow().createRepository(projectKey, repositoryName);
             repo.setRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(programmingExercise.getProjectKey(), repositoryName).toString());
 
-            final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUri(), true);
+            final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUri(), true, true);
             gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, true, null);
         }
     }
@@ -286,7 +283,7 @@ public class ProgrammingExerciseRepositoryService {
         versionControlService.orElseThrow().createRepository(programmingExercise.getProjectKey(), repositoryName);
         repo.setRepositoryUri(versionControlService.orElseThrow().getCloneRepositoryUri(programmingExercise.getProjectKey(), repositoryName).toString());
 
-        final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUri(), true);
+        final Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUri(), true, true);
         gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, true, null);
     }
 
@@ -311,26 +308,25 @@ public class ProgrammingExerciseRepositoryService {
      * @throws IOException     Thrown in case resources could be copied into the local repository.
      * @throws GitAPIException Thrown in case pushing to the version control system failed.
      */
-    private void setupTemplateAndPush(final RepositoryResources repositoryResources, final String templateName, final ProgrammingExercise programmingExercise, final User user)
-            throws IOException, GitAPIException {
+    private void setupTemplateAndPush(RepositoryResources resources, String templateName, ProgrammingExercise programmingExercise, User user) throws IOException, GitAPIException {
         // Only copy template if repo is empty
-        if (!gitService.getFiles(repositoryResources.repository).isEmpty()) {
+        if (!gitService.getFiles(resources.repository).isEmpty()) {
             return;
         }
 
-        final Path repoLocalPath = getRepoAbsoluteLocalPath(repositoryResources.repository);
+        final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
 
-        FileUtil.copyResources(repositoryResources.resources, repositoryResources.prefix, repoLocalPath, true);
+        FileUtil.copyResources(resources.resources, resources.prefix, repoLocalPath, true);
         // Also copy project type and static code analysis specific files AFTERWARDS (so that they might overwrite the default files)
-        if (repositoryResources.projectTypeResources != null) {
-            FileUtil.copyResources(repositoryResources.projectTypeResources, repositoryResources.projectTypePrefix, repoLocalPath, true);
+        if (resources.projectTypeResources != null) {
+            FileUtil.copyResources(resources.projectTypeResources, resources.projectTypePrefix, repoLocalPath, true);
         }
-        if (repositoryResources.staticCodeAnalysisResources != null) {
-            FileUtil.copyResources(repositoryResources.staticCodeAnalysisResources, repositoryResources.staticCodeAnalysisPrefix, repoLocalPath, true);
+        if (resources.staticCodeAnalysisResources != null) {
+            FileUtil.copyResources(resources.staticCodeAnalysisResources, resources.staticCodeAnalysisPrefix, repoLocalPath, true);
         }
 
-        replacePlaceholders(programmingExercise, repositoryResources.repository);
-        commitAndPushRepository(repositoryResources.repository, templateName + "-Template pushed by Artemis", true, user);
+        replacePlaceholders(programmingExercise, resources.repository);
+        commitAndPushRepository(resources.repository, templateName + "-Template pushed by Artemis", true, user);
     }
 
     private static Path getRepoAbsoluteLocalPath(final Repository repository) {
@@ -869,11 +865,10 @@ public class ProgrammingExerciseRepositoryService {
      */
     private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException {
         final var repositoryUri = versionControlService.orElseThrow().getCloneRepositoryUri(projectKey, repositoryName);
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true);
+        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true, true);
         FileUtil.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, "Template adjusted by Artemis", true, user);
-        repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
     }
 
 }

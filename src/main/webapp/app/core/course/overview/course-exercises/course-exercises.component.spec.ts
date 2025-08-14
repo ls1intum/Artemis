@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { SessionStorageService } from 'ngx-webstorage';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
@@ -33,6 +32,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
@@ -54,7 +54,7 @@ describe('CourseExercisesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [FormsModule, RouterModule.forRoot([]), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
+            imports: [FormsModule, RouterModule.forRoot([]), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective), FaIconComponent],
             declarations: [
                 CourseExercisesComponent,
                 SidebarComponent,
@@ -71,7 +71,7 @@ describe('CourseExercisesComponent', () => {
                 MockComponent(SearchFilterComponent),
             ],
             providers: [
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },

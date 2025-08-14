@@ -81,16 +81,8 @@ public class RepositoryParticipationService {
      */
     public Repository getRepositoryFromGitService(boolean pullOnGet, ProgrammingExerciseParticipation programmingParticipation) throws GitAPIException {
         var repositoryUri = programmingParticipation.getVcsRepositoryUri();
-
-        // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
-        // Retrieving the default branch is not necessary if the repository is already cached.
-        if (gitService.isRepositoryCached(repositoryUri)) {
-            return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet);
-        }
-        else {
-            String branch = programmingParticipation instanceof ProgrammingExerciseStudentParticipation studentParticipation ? studentParticipation.getBranch()
-                    : programmingExerciseRepository.findBranchByExerciseId(programmingParticipation.getExercise().getId());
-            return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet, branch);
-        }
+        String branch = programmingParticipation instanceof ProgrammingExerciseStudentParticipation studentParticipation ? studentParticipation.getBranch()
+                : programmingExerciseRepository.findBranchByExerciseId(programmingParticipation.getExercise().getId());
+        return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet, branch, false);
     }
 }

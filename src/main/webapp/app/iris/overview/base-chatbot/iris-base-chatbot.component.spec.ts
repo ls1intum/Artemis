@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -6,7 +7,6 @@ import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-stat
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -35,6 +35,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 describe('IrisBaseChatbotComponent', () => {
     let component: IrisBaseChatbotComponent;
@@ -67,7 +68,6 @@ describe('IrisBaseChatbotComponent', () => {
         } as any;
 
         await TestBed.configureTestingModule({
-            imports: [FontAwesomeModule, RouterModule, NoopAnimationsModule],
             declarations: [
                 IrisBaseChatbotComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -77,11 +77,12 @@ describe('IrisBaseChatbotComponent', () => {
                 MockComponent(IrisLogoComponent),
                 MockComponent(ButtonComponent),
             ],
+            imports: [FontAwesomeModule, RouterModule, NoopAnimationsModule],
             providers: [
                 MockProvider(NgbModal),
-                { provide: LocalStorageService, useValue: {} },
+                LocalStorageService,
                 { provide: TranslateService, useValue: {} },
-                { provide: SessionStorageService, useValue: {} },
+                SessionStorageService,
                 { provide: HttpClient, useValue: {} },
                 { provide: AccountService, useValue: accountMock },
                 { provide: UserService, useValue: mockUserService },
@@ -781,7 +782,7 @@ describe('IrisBaseChatbotComponent', () => {
 
             const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
             expect(relatedEntityButton).not.toBeNull();
-            expect(relatedEntityButton.getAttribute('ng-reflect-router-link')).toContain(expectedLinkFragment);
+            expect(component.relatedEntityRoute()).toBe(expectedLinkFragment);
         };
 
         it('should display correct related entity button when lecture session selected', fakeAsync(() => {

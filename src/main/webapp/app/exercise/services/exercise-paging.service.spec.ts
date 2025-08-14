@@ -4,10 +4,10 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExercisePagingService } from 'app/exercise/services/exercise-paging.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { take } from 'rxjs';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { DummyPagingService } from 'test/helpers/mocks/service/dummy-paging-service';
 
@@ -17,16 +17,10 @@ describe('Exercise Paging Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-            ],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }, SessionStorageService, LocalStorageService],
         });
         httpMock = TestBed.inject(HttpTestingController);
-        const httpClient = TestBed.get(HttpClient);
+        const httpClient = TestBed.inject(HttpClient);
         service = new DummyPagingService(httpClient);
     });
 

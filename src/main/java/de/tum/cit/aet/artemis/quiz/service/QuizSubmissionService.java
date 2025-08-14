@@ -65,9 +65,12 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final QuizQuestionProgressService quizQuestionProgressService;
+
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository, SubmissionVersionService submissionVersionService,
             QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, QuizBatchService quizBatchService, QuizStatisticService quizStatisticService,
-            StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService) {
+            StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService,
+            QuizQuestionProgressService quizQuestionProgressService) {
         super(submissionVersionService);
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
@@ -77,6 +80,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         this.quizStatisticService = quizStatisticService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.websocketMessagingService = websocketMessagingService;
+        this.quizQuestionProgressService = quizQuestionProgressService;
     }
 
     /**
@@ -86,18 +90,21 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      * <p>
      * The process includes:
      * <p>
-     * 1. **Updating Submission Properties**: Sets the submission as submitted, marks it as a manual submission,
-     * and records the current date and time as the submission date.
-     * 2. **Calculating Scores**: Computes the scores based on the quiz questions and updates the submission.
-     * 3. **Saving Submission**: Saves the updated submission in the repository.
-     * 4. **Creating Result**: Initializes a new result, associates it with the participation, sets it as unrated
-     * and automatic, and records the current date and time as the completion date.
-     * 5. **Saving Result**: Saves the newly created result in the repository.
-     * 6. **Setting Result-Submission Relation**: Links the result to the submission and recalculates the score.
-     * 7. **Updating Submission with Result**: Adds the result to the submission and saves it again to set the result index column.
-     * 8. **Re-saving Result**: Saves the result again to store the calculated score.
-     * 9. **Fixing Proxy Objects**: Reassigns the participation to the result to avoid proxy issues.
-     * 10. **Recalculating Statistics**: Updates the quiz statistics based on the new result.
+     * <ol>
+     * <li><b>Updating Submission Properties:</b> Sets the submission as submitted, marks it as a manual submission,
+     * and records the current date and time as the submission date.</li>
+     * <li><b>Calculating Scores:</b> Computes the scores based on the quiz questions and updates the submission.</li>
+     * <li><b>Saving Submission:</b> Saves the updated submission in the repository.</li>
+     * <li><b>Creating Result:</b> Initializes a new result, associates it with the participation, sets it as unrated
+     * and automatic, and records the current date and time as the completion date.</li>
+     * <li><b>Saving Result:</b> Saves the newly created result in the repository.</li>
+     * <li><b>Setting Result-Submission Relation:</b> Links the result to the submission and recalculates the score.</li>
+     * <li><b>Updating Submission with Result:</b> Adds the result to the submission and saves it again to set the result index column.</li>
+     * <li><b>Re-saving Result:</b> Saves the result again to store the calculated score.</li>
+     * <li><b>Fixing Proxy Objects:</b> Reassigns the participation to the result to avoid proxy issues.</li>
+     * <li><b>Recalculating Statistics:</b> Updates the quiz statistics based on the new result.</li>
+     * <li><b>Saving Question Progress</b>Updates the question progress based on the result and submission.</li>
+     * </ol>
      *
      * @param quizSubmission The quiz submission to be processed.
      * @param quizExercise   The quiz exercise related to the submission.
@@ -390,5 +397,4 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         savedQuizSubmission.filterForStudentsDuringQuiz();
         return savedQuizSubmission;
     }
-
 }

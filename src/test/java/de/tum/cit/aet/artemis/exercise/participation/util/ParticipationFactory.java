@@ -406,7 +406,7 @@ public class ParticipationFactory {
      */
     public static ProgrammingExerciseStudentParticipation generateIndividualProgrammingExerciseStudentParticipation(ProgrammingExercise exercise, User user) {
         var participation = new ProgrammingExerciseStudentParticipation();
-        final var buildPlanId = exercise.getProjectKey().toUpperCase() + "-" + user.getLogin().toUpperCase();
+        final var buildPlanId = exercise.getProjectKey() + "-" + user.getLogin().toUpperCase();
         participation.setInitializationDate(ZonedDateTime.now());
         participation.setParticipant(user);
         participation.setBuildPlanId(buildPlanId);

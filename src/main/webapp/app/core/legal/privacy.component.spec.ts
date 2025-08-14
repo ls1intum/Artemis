@@ -1,20 +1,19 @@
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PrivacyComponent } from 'app/core/legal/privacy.component';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { MockLanguageHelper } from 'test/helpers/mocks/service/mock-translate.service';
-import { SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LegalDocumentLanguage } from 'app/core/shared/entities/legal-document.model';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 
 describe('PrivacyComponent', () => {
     let component: PrivacyComponent;
@@ -27,13 +26,10 @@ describe('PrivacyComponent', () => {
             declarations: [PrivacyComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
-                {
-                    provide: SessionStorageService,
-                    useClass: MockSyncStorage,
-                },
+                SessionStorageService,
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: AccountService, useClass: MockAccountService },
-                provideHttpClient(),
+                provideHttpClient(withFetch()),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(PrivacyComponent);

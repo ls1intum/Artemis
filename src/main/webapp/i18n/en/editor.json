@@ -116,6 +116,7 @@
             "repoSelect": {
                 "assignmentRepo": "Assignment Repository",
                 "createAssignmentRepo": "Create Assignment Repository",
+                "createAssignmentRepoDisabledTooltip": "The Assignment Repository cannot be created for exam exercises. Please use the test run feature to try out the exercise.",
                 "deleteAssignmentRepo": "Delete Assignment Repository",
                 "templateRepo": "Template Repository",
                 "solutionRepo": "Solution Repository",
