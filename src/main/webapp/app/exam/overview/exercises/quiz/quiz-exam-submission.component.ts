@@ -27,6 +27,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
+import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -144,10 +145,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
             return;
         }
 
-        questionToBeHighlighted.isHighlighted = true;
-        setTimeout(() => {
-            questionToBeHighlighted.isHighlighted = false;
-        }, 1500); // remove highlight after 1.5 seconds
+        addTemporaryHighlightToQuestion(questionToBeHighlighted);
     }
 
     /**

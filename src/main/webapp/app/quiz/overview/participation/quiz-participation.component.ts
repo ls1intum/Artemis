@@ -46,6 +46,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
+import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 
 @Component({
     selector: 'jhi-quiz',
@@ -966,10 +967,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             return;
         }
 
-        questionToBeHighlighted.isHighlighted = true;
-        setTimeout(() => {
-            questionToBeHighlighted.isHighlighted = false;
-        }, 1500); // remove highlight after 1.5 seconds
+        addTemporaryHighlightToQuestion(questionToBeHighlighted);
     }
 
     /**
