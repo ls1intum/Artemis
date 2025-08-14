@@ -12,8 +12,8 @@ public record ExamSeatDTO(@JsonProperty @NotNull String name, // 'rowName, seatN
 
         @JsonProperty("condition") @NotNull SeatCondition seatCondition,
 
-        @JsonProperty("x") @NotNull float xCoordinate,  // >= 0,
+        @JsonProperty("x") @NotNull double xCoordinate,  // >= 0,
 
-        @JsonProperty("y") @NotNull float yCoordinate  // >= 0
+        @JsonProperty("y") @NotNull double yCoordinate  // >= 0
 ) {
 }
