@@ -41,16 +41,6 @@ public class LectureTranscriptionService {
 
     private final ObjectMapper objectMapper;
 
-    /**
-     * Creates a new LectureTranscriptionService.
-     *
-     * @param lectureTranscriptionRepository Repository for LectureTranscription entities
-     * @param lectureUnitRepository          Repository for LectureUnit entities
-     * @param restClientBuilder              Spring RestClient builder for HTTP calls
-     * @param objectMapper                   Jackson ObjectMapper for JSON mapping
-     * @param nebulaBaseUrl                  Base URL of the Nebula service
-     * @param nebulaSecretToken              Secret token used to authenticate with Nebula
-     */
     public LectureTranscriptionService(LectureTranscriptionRepository lectureTranscriptionRepository, LectureUnitRepository lectureUnitRepository,
             RestClient.Builder restClientBuilder, ObjectMapper objectMapper, @Value("${artemis.nebula.url}") String nebulaBaseUrl,
             @Value("${artemis.nebula.secret}") String nebulaSecretToken) {
