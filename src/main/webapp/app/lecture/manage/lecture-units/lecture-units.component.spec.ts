@@ -695,4 +695,153 @@ describe('LectureUpdateUnitsComponent', () => {
         expect(wizardUnitComponent).not.toBeNull();
         expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBeTrue();
     }));
+
+    it('createEditAttachmentVideoUnit: triggers transcription when enabled (200 -> success)', fakeAsync(() => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const alertService = TestBed.inject(AlertService);
+
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        const formData: AttachmentVideoUnitFormData = {
+            formProperties: { name: 'AVU', releaseDate: dayjs(), generateTranscript: true },
+            fileProperties: { file: fakeFile, fileName: 'Test-File.pdf' },
+            playlistUrl: 'https://live.rbg.tum.de/playlist.m3u8',
+        };
+
+        const created = new AttachmentVideoUnit();
+        created.id = 777;
+        created.videoSource = 'https://example.com/embed';
+        jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse<AttachmentVideoUnit>({ body: created, status: 201 })));
+
+        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse<string>({ status: 200, statusText: 'OK', body: 'ok' })));
+
+        const successSpy = jest.spyOn(alertService, 'success');
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
+
+        wizardUnitComponent.createEditAttachmentVideoUnit(formData);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(startSpy).toHaveBeenCalledWith(1, 777, 'https://live.rbg.tum.de/playlist.m3u8');
+            expect(successSpy).toHaveBeenCalled();
+            expect(errorSpy).not.toHaveBeenCalled();
+        });
+    }));
+
+    it('createEditAttachmentVideoUnit: transcription non-200 (202) shows error alert', fakeAsync(() => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const alertService = TestBed.inject(AlertService);
+
+        const formData: AttachmentVideoUnitFormData = {
+            formProperties: { name: 'AVU', releaseDate: dayjs(), generateTranscript: true },
+            fileProperties: { file: new File([''], 'f.pdf'), fileName: 'f.pdf' },
+            playlistUrl: 'https://live.rbg.tum.de/playlist.m3u8',
+        };
+
+        const created = new AttachmentVideoUnit();
+        created.id = 42;
+        jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse<AttachmentVideoUnit>({ body: created, status: 201 })));
+
+        jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse<string>({ status: 202, statusText: 'Accepted', body: 'accepted' })));
+
+        const successSpy = jest.spyOn(alertService, 'success');
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
+
+        wizardUnitComponent.createEditAttachmentVideoUnit(formData);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(errorSpy).toHaveBeenCalled();
+            expect(successSpy).not.toHaveBeenCalled();
+        });
+    }));
+
+    it('createEditAttachmentVideoUnit: transcription error shows error alert', fakeAsync(() => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const alertService = TestBed.inject(AlertService);
+
+        const formData: AttachmentVideoUnitFormData = {
+            formProperties: { name: 'AVU', releaseDate: dayjs(), generateTranscript: true },
+            fileProperties: { file: new File([''], 'f.pdf'), fileName: 'f.pdf' },
+            playlistUrl: 'https://live.rbg.tum.de/playlist.m3u8',
+        };
+
+        const created = new AttachmentVideoUnit();
+        created.id = 11;
+        jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse<AttachmentVideoUnit>({ body: created, status: 201 })));
+
+        jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(throwError(() => new Error('boom')));
+
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
+
+        wizardUnitComponent.createEditAttachmentVideoUnit(formData);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(errorSpy).toHaveBeenCalledWith(expect.stringMatching(/Transcript failed to start/i));
+        });
+    }));
+
+    it('createEditAttachmentVideoUnit: does not start transcription when no URL available', fakeAsync(() => {
+        const avuService = TestBed.inject(AttachmentVideoUnitService);
+
+        const formData: AttachmentVideoUnitFormData = {
+            formProperties: { name: 'AVU', releaseDate: dayjs(), generateTranscript: true },
+            fileProperties: { file: new File([''], 'f.pdf'), fileName: 'f.pdf' },
+            // playlistUrl intentionally omitted
+        };
+
+        const created = new AttachmentVideoUnit();
+        created.id = 5; // has id
+        created.videoSource = undefined; // no URL
+        jest.spyOn(avuService, 'create').mockReturnValue(of(new HttpResponse<AttachmentVideoUnit>({ body: created, status: 201 })));
+
+        const startSpy = jest.spyOn(avuService, 'startTranscription');
+
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
+
+        wizardUnitComponent.createEditAttachmentVideoUnit(formData);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(startSpy).not.toHaveBeenCalled();
+        });
+    }));
+
+    it('createEditAttachmentVideoUnit: does not start transcription in edit mode', fakeAsync(() => {
+        const avuService = TestBed.inject(AttachmentVideoUnitService);
+
+        const formData: AttachmentVideoUnitFormData = {
+            formProperties: { name: 'AVU', releaseDate: dayjs(), generateTranscript: true },
+            fileProperties: { file: new File([''], 'f.pdf'), fileName: 'f.pdf' },
+            playlistUrl: 'https://live.rbg.tum.de/playlist.m3u8',
+        };
+
+        const created = new AttachmentVideoUnit();
+        created.id = 8;
+        jest.spyOn(avuService, 'update').mockReturnValue(of(new HttpResponse<AttachmentVideoUnit>({ body: created, status: 200 })));
+        const startSpy = jest.spyOn(avuService, 'startTranscription');
+
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.isEditingLectureUnit = true;
+        wizardUnitComponent.currentlyProcessedAttachmentVideoUnit = new AttachmentVideoUnit();
+        wizardUnitComponent.currentlyProcessedAttachmentVideoUnit.attachment = new Attachment();
+        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
+
+        wizardUnitComponent.createEditAttachmentVideoUnit(formData);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(startSpy).not.toHaveBeenCalled();
+        });
+    }));
 });
