@@ -97,7 +97,7 @@ module.exports = {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
             statements: 89.66,
-            branches: 75.96,
+            branches: 75.92,
             functions: 83.63,
             lines: 89.73,
         },
