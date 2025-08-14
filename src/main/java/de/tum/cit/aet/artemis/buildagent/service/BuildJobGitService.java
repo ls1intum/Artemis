@@ -31,8 +31,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.AbstractGitService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Profile(PROFILE_BUILDAGENT)
 @Lazy
@@ -96,18 +96,19 @@ public class BuildJobGitService extends AbstractGitService {
     }
 
     /**
-     * Get the URI for a {@link VcsRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS is
+     * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
+     * is
      * used.
      * This method is for internal use (getting the URI for cloning the repository into the Artemis file system).
      * For the local VCS however, the repository is cloned from the folder defined in the environment variable "artemis.version-control.local-vcs-repo-path".
      *
-     * @param vcsRepositoryUri the {@link VcsRepositoryUri} for which to get the URI
+     * @param localVCRepositoryUri the {@link LocalVCRepositoryUri} for which to get the URI
      * @return the URI (SSH, HTTP(S), or local path)
      * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
      */
     @Override
-    protected URI getGitUri(VcsRepositoryUri vcsRepositoryUri) throws URISyntaxException {
-        return useSsh() ? getSshUri(vcsRepositoryUri, sshUrlTemplate) : vcsRepositoryUri.getURI();
+    protected URI getGitUri(LocalVCRepositoryUri localVCRepositoryUri) throws URISyntaxException {
+        return useSsh() ? getSshUri(localVCRepositoryUri, sshUrlTemplate) : localVCRepositoryUri.getURI();
     }
 
     /**
@@ -137,21 +138,14 @@ public class BuildJobGitService extends AbstractGitService {
      * @throws IOException          if the local path could not be deleted
      * @throws URISyntaxException   if the URI is invalid
      */
-    public Repository cloneRepository(VcsRepositoryUri repoUri, Path localPath) throws GitAPIException, GitException, InvalidPathException, IOException, URISyntaxException {
+    public Repository cloneRepository(LocalVCRepositoryUri repoUri, Path localPath) throws GitAPIException, GitException, InvalidPathException, IOException, URISyntaxException {
         var gitUriAsString = getGitUriAsString(repoUri);
         log.debug("Cloning from {} to {}", gitUriAsString, localPath);
         // make sure the directory to copy into is empty (the operation only executes a delete if the directory exists)
         FileUtils.deleteDirectory(localPath.toFile());
-        Git git = null;
-        try {
-            CloneCommand cloneCommand = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
-            git = cloneCommand.call();
+        CloneCommand cloneCommand = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
+        try (Git ignored = cloneCommand.call()) {
             return getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri, defaultBranch);
-        }
-        finally {
-            if (git != null) {
-                git.close();
-            }
         }
     }
 
@@ -164,7 +158,7 @@ public class BuildJobGitService extends AbstractGitService {
      * @param defaultBranch       the name of the branch that should be used as default branch
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable VcsRepositoryUri remoteRepositoryUri, String defaultBranch) {
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NotNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch) {
         try {
             return openCheckedOutRepositoryFromFileSystem(localPath, remoteRepositoryUri, defaultBranch);
         }
