@@ -265,6 +265,37 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetFilesWithFileAndDirectoryFilter() throws Exception {
+        // This case tests the FileAndDirectoryFilter inner class in GitRepositoryExportService
+        // by calling the getFiles endpoint which internally uses the filter
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).isNotEmpty();
+
+        assertThat(files.keySet()).noneMatch(file -> file.contains(".git"));
+
+        for (String key : files.keySet()) {
+            assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesWithContentAndFileAndDirectoryFilter() throws Exception {
+        // This case tests the FileAndDirectoryFilter inner class in GitRepositoryExportService
+        // by calling the files-content endpoint which internally uses the filter
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content", HttpStatus.OK, String.class, String.class);
+        assertThat(files).isNotEmpty();
+
+        assertThat(files.keySet()).noneMatch(file -> file.contains(".git"));
+
+        for (String key : files.keySet()) {
+            assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
+        }
+        assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetFileBeforeExamExerciseStartForbidden() throws Exception {
         programmingExercise = createProgrammingExerciseForExam();
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(1));
