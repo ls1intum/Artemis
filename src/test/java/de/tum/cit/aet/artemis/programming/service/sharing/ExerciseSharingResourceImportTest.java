@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIProgrammingLanguageFeatureService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 /**
@@ -266,7 +267,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
         when(continuousIntegrationService.copyBuildPlan(any(), anyString(), any(), anyString(), anyString(), anyBoolean())).thenReturn("");
 
-        when(versionControlService.getCloneRepositoryUri(eq(exercise.getProjectKey()), any())).thenReturn(new VcsRepositoryUri("http://some.cloneurl"));
+        when(versionControlService.getCloneRepositoryUri(eq(exercise.getProjectKey()), any())).thenReturn((LocalVCRepositoryUri) new VcsRepositoryUri("http://some.cloneurl"));
 
         doAnswer(invocation -> {
             VcsRepositoryUri uri = invocation.getArgument(0, VcsRepositoryUri.class);
@@ -282,7 +283,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
         // doNothing().when(continuousIntegrationTriggerService).triggerBuild(any());
 
         String setupInfoJsonString = objectMapper.writeValueAsString(setupInfo);
-        MvcResult resultPE = requestUtilService
+        requestUtilService
                 .performMvcRequest(
                         post("/api/programming/sharing/setup-import").contentType(MediaType.APPLICATION_JSON).content(setupInfoJsonString).accept(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
