@@ -13,7 +13,7 @@ artemis:
         concurrent-build-size: 1
         # If true, the CI jobs will be executed asynchronously. If false, the CI jobs will be executed synchronously (e.g. for debugging and tests).
         asynchronous: true
-        # The number of results that can be processed concurrently. This is used to speed up the processing of the results of the CI jobs.
+        # The number of results that can be processed concurrently. This is used to speed up the processing of the results of the CI jobs. Increase for production setups according to your available cpu resources.
         concurrent-result-processing-size: 1
         # The prefix that is used for the Docker containers that are created by the local CI system.
         build-container-prefix: local-ci-
