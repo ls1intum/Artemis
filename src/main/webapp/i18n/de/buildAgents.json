@@ -48,6 +48,10 @@
                 "descriptionSecond": "Diese Aktion ist irreversibel und führt zu Datenverlust. Das System benötigt einige Minuten, um wieder in den Normalbetrieb zurückzukehren.",
                 "descriptionThird": "Wenn du sicher bist, dass du fortfahren möchtest, gib bitte 'CLEAR DATA' in das untenstehende Eingabefeld ein und klicke auf die Schaltfläche 'Daten löschen'.",
                 "clearData": "Daten löschen"
+            },
+            "concurrencyResetWarning": {
+                "title": "Warnung: ",
+                "message": "Das Neustarten des Clusters oder das Bereitstellen einer neuen Version setzt die Parallelitätseinstellungen der Build-Agenten auf ihre Standardwerte zurück. Bitte konfigurieren Sie die Parallelitätseinstellungen nach jedem Cluster-Neustart oder jeder Bereitstellung neu."
             }
         }
     }

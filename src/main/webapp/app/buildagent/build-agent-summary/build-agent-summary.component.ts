@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { BuildAgentInformation, BuildAgentStatus } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subscription } from 'rxjs';
-import { faCog, faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCog, faExclamationTriangle, faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
 import { Router, RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/buildagent/shared/entities/build-agent.model';
@@ -40,6 +40,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     restSubscription: Subscription;
     routerLink: string;
     concurrencyMap: { [agentName: string]: number } = {};
+    concurrencyResetWarningDismissed = false;
 
     //icons
     protected readonly faTimes = faTimes;
@@ -47,6 +48,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     protected readonly faPlay = faPlay;
     protected readonly faTrash = faTrash;
     protected readonly faCog = faCog;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
 
     ngOnInit() {
         this.routerLink = this.router.url;
@@ -220,5 +222,9 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
 
         this.concurrencyMap[agentName] = newValue;
         this.adjustBuildAgentCapacity(agentName, newValue);
+    }
+
+    dismissConcurrencyResetWarning() {
+        this.concurrencyResetWarningDismissed = true;
     }
 }

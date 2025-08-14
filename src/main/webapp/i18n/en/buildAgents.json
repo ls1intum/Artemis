@@ -48,6 +48,10 @@
                 "descriptionSecond": "This action is irreversible and will lead in data loss. The system will take a few minutes to return to normal operation.",
                 "descriptionThird": "If you are sure you want to proceed, please type 'CLEAR DATA' in the input field below and click the 'Clear Data' button.",
                 "clearData": "Clear Data"
+            },
+            "concurrencyResetWarning": {
+                "title": "Warning: ",
+                "message": "Restarting the cluster or deploying a new version will reset the concurrency settings of build agents to their default values. Please reconfigure concurrency settings after any cluster restart or deployment."
             }
         }
     }

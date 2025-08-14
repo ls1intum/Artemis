@@ -98,6 +98,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     hasMore = signal(true);
 
     newConcurrency: number;
+    concurrencyResetWarningDismissed = false;
 
     //icons
     readonly faCircleCheck = faCircleCheck;
@@ -423,5 +424,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             // This is necessary to update the view when the build job duration is updated
             return { ...buildJob };
         });
+    }
+
+    dismissConcurrencyResetWarning() {
+        this.concurrencyResetWarningDismissed = true;
     }
 }

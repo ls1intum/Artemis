@@ -23,6 +23,17 @@
                 </button>
             </div>
         </div>
+
+        <!-- Warning about concurrency settings reset -->
+        @if (!concurrencyResetWarningDismissed) {
+            <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+                <fa-icon [icon]="faExclamationTriangle" class="me-2" />
+                <strong jhiTranslate="artemisApp.buildAgents.concurrencyResetWarning.title"></strong>
+                <span jhiTranslate="artemisApp.buildAgents.concurrencyResetWarning.message"></span>
+                <button type="button" class="btn-close" (click)="dismissConcurrencyResetWarning()" aria-label="Close"></button>
+            </div>
+        }
+
         <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildAgent" [allEntities]="buildAgents!">
             <ng-template let-settings="settings" let-controls="controls">
                 <ngx-datatable
