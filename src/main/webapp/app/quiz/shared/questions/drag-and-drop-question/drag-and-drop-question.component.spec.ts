@@ -25,7 +25,9 @@ describe('DragAndDropQuestionComponent', () => {
         const question = new DragAndDropQuestion();
         question.id = 1;
         question.backgroundFilePath = '';
-        comp.question = question;
+        fixture.componentRef.setInput('question', question);
+        fixture.detectChanges();
+        //comp.question = question;
     };
 
     beforeEach(() => {
@@ -61,7 +63,9 @@ describe('DragAndDropQuestionComponent', () => {
         question.hint = 'Test hint';
         question.explanation = 'Test explanation';
         const markdownSpy = jest.spyOn(markdownService, 'safeHtmlForMarkdown').mockImplementation((arg) => `${arg}markdown`);
-        comp.question = question;
+        //comp.question = question;
+        fixture.componentRef.setInput('question', question);
+        fixture.detectChanges();
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
@@ -73,7 +77,7 @@ describe('DragAndDropQuestionComponent', () => {
 
     it('should count correct mappings as zero if no correct mappings', () => {
         const { dropLocation } = getDropLocationMappingAndItem();
-        comp.question.dropLocations = [dropLocation];
+        comp.question().dropLocations = [dropLocation];
         comp.ngOnChanges();
         expect(comp.correctAnswer).toBe(0);
     });
@@ -84,10 +88,10 @@ describe('DragAndDropQuestionComponent', () => {
         const { dropLocation: dropLocation3, mapping: correctMapping3 } = getDropLocationMappingAndItem();
         const { mapping: correctMapping4 } = getDropLocationMappingAndItem();
         const { dropLocation: dropLocation5 } = getDropLocationMappingAndItem();
-        comp.question.dropLocations = [dropLocation1, dropLocation2, dropLocation3];
+        comp.question().dropLocations = [dropLocation1, dropLocation2, dropLocation3];
         // Mappings do not have any of drop locations so no selected item
-        comp.mappings = [correctMapping4];
-        comp.question.correctMappings = [correctMapping1, correctMapping2, correctMapping4];
+        comp.mappings.set([correctMapping4]);
+        comp.question().correctMappings = [correctMapping1, correctMapping2, correctMapping4];
         comp.ngOnChanges();
         /*
          *   without selected items it should not set correct answers to drop locations without valid drag item
@@ -103,8 +107,8 @@ describe('DragAndDropQuestionComponent', () => {
         // dropLocation4 is not one of the drop locations
         // dropLocation5 is neither correct nor selected
         // Hence 1 because of dropLocation1 (dropLocation5 must be excluded)
-        comp.mappings = [correctMapping1, correctMapping3];
-        comp.question.dropLocations = [dropLocation1, dropLocation2, dropLocation3, dropLocation5];
+        comp.mappings.set([correctMapping1, correctMapping3]);
+        comp.question().dropLocations = [dropLocation1, dropLocation2, dropLocation3, dropLocation5];
         comp.ngOnChanges();
         expect(comp.correctAnswer).toBe(1);
     });
@@ -121,8 +125,10 @@ describe('DragAndDropQuestionComponent', () => {
         const { mapping } = getDropLocationMappingAndItem();
         const mappings = [mapping];
         const solveSpy = jest.spyOn(dragAndDropQuestionUtil, 'solve').mockReturnValue(mappings);
-        comp.mappings = mappings;
-        comp.forceSampleSolution = true;
+        comp.mappings.set(mappings);
+        fixture.componentRef.setInput('forceSampleSolution', true);
+        fixture.detectChanges();
+        //comp.forceSampleSolution = true;
         expect(comp.forceSampleSolution).toBeTrue();
         expect(solveSpy).toHaveBeenCalledWith(comp.question, mappings);
         expect(comp.sampleSolutionMappings).toEqual(mappings);
@@ -138,15 +144,15 @@ describe('DragAndDropQuestionComponent', () => {
     it('should return unassigned drag items', () => {
         const { mapping: mapping1, dragItem: dragItem1 } = getDropLocationMappingAndItem();
         const { dragItem: dragItem2 } = getDropLocationMappingAndItem();
-        comp.mappings = [mapping1];
-        comp.question.dragItems = [dragItem1, dragItem2];
+        comp.mappings.set([mapping1]);
+        comp.question().dragItems = [dragItem1, dragItem2];
         expect(comp.getUnassignedDragItems()).toEqual([dragItem2]);
     });
 
     it('should return invalid dragItem for location', () => {
         const { dropLocation: dropLocation1, mapping: mapping1 } = getDropLocationMappingAndItem();
         const { dropLocation: dropLocation2, mapping: mapping2, dragItem: dragItem2 } = getDropLocationMappingAndItem();
-        comp.mappings = [mapping1, mapping2];
+        comp.mappings.set([mapping1, mapping2]);
         expect(comp.invalidDragItemForDropLocation(dropLocation1)).toBeFalse();
         dragItem2.invalid = true;
         expect(comp.invalidDragItemForDropLocation(dropLocation2)).toBeTrue();
@@ -187,10 +193,12 @@ describe('DragAndDropQuestionComponent', () => {
         expectedMappings: DragAndDropMapping[],
         callCount: number,
     ) => {
-        comp.mappings = mappings;
+        comp.mappings.set(mappings);
         const event = { item: { data: dragItem } } as CdkDragDrop<DragItem, DragItem>;
         const onMappingUpdate = jest.fn();
-        comp.onMappingUpdate = onMappingUpdate;
+        fixture.componentRef.setInput('onMappingUpdate', onMappingUpdate);
+        fixture.detectChanges();
+        //comp.onMappingUpdate = onMappingUpdate;
         comp.onDragDrop(dropLocation, event);
         expect(comp.mappings).toEqual(expectedMappings);
         expect(onMappingUpdate.mock.calls).toHaveLength(callCount);
