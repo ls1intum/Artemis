@@ -197,6 +197,7 @@ public class BuildJobManagementService {
         return futureResult.whenComplete(((result, throwable) -> {
             runningFutures.remove(buildJobItem.id());
             runningFuturesWrapper.remove(buildJobItem.id());
+            buildAgentConfiguration.checkAndAdjustThreadPoolSize();
         }));
     }
 
