@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewEncapsulation, inject, model, viewChild } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
@@ -78,8 +78,9 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
         return this._question;
     }
     // TODO: Map vs. Array --> consistency
-    @Input()
-    mappings: DragAndDropMapping[];
+    //@Input()
+    //mappings: DragAndDropMapping[];
+    mappings = model<DragAndDropMapping[]>([]);
     @Input()
     clickDisabled: boolean;
     @Input()
@@ -184,7 +185,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
 
         if (dropLocation) {
             // check if this mapping is new
-            if (this.dragAndDropQuestionUtil.isMappedTogether(this.mappings, dragItem, dropLocation)) {
+            if (this.dragAndDropQuestionUtil.isMappedTogether(this.mappings(), dragItem, dropLocation)) {
                 // Do nothing
                 return;
             }
@@ -192,39 +193,43 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
             // remove existing mappings that contain the drop location or drag item and save their old partners
             let oldDragItem;
             let oldDropLocation;
-            this.mappings = this.mappings.filter(function (mapping) {
-                if (this.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, mapping.dropLocation)) {
-                    oldDragItem = mapping.dragItem;
-                    return false;
-                }
-                if (this.dragAndDropQuestionUtil.isSameEntityWithTempId(dragItem, mapping.dragItem)) {
-                    oldDropLocation = mapping.dropLocation;
-                    return false;
-                }
-                return true;
-            }, this);
+            this.mappings.set(
+                this.mappings().filter(function (mapping) {
+                    if (this.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, mapping.dropLocation)) {
+                        oldDragItem = mapping.dragItem;
+                        return false;
+                    }
+                    if (this.dragAndDropQuestionUtil.isSameEntityWithTempId(dragItem, mapping.dragItem)) {
+                        oldDropLocation = mapping.dropLocation;
+                        return false;
+                    }
+                    return true;
+                }, this),
+            );
 
             // add new mapping
-            this.mappings.push(new DragAndDropMapping(dragItem, dropLocation));
+            this.mappings().push(new DragAndDropMapping(dragItem, dropLocation));
 
             // map oldDragItem and oldDropLocation, if they exist
             // this flips positions of drag items when a drag item is dropped on a drop location with an existing drag item
             if (oldDragItem && oldDropLocation) {
-                this.mappings.push(new DragAndDropMapping(oldDragItem, oldDropLocation));
+                this.mappings().push(new DragAndDropMapping(oldDragItem, oldDropLocation));
             }
         } else {
             const lengthBefore = this.mappings.length;
             // remove existing mapping that contains the drag item
-            this.mappings = this.mappings.filter(function (mapping) {
-                return !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem);
-            }, this);
+            this.mappings.set(
+                this.mappings().filter(function (mapping) {
+                    return !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem);
+                }, this),
+            );
             if (this.mappings.length === lengthBefore) {
                 // nothing changed => return here to skip calling this.onMappingUpdate()
                 return;
             }
         }
 
-        this.mappingsChange.emit(this.mappings);
+        this.mappingsChange.emit(this.mappings());
         /** Only execute the onMappingUpdate function if we received such input **/
         if (this.onMappingUpdate) {
             this.onMappingUpdate();
@@ -239,7 +244,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
      */
     dragItemForDropLocation(dropLocation: DropLocation) {
         if (this.mappings) {
-            const mapping = this.mappings.find((localMapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(localMapping.dropLocation, dropLocation));
+            const mapping = this.mappings().find((localMapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(localMapping.dropLocation, dropLocation));
             if (mapping) {
                 return mapping.dragItem;
             } else {
@@ -261,7 +266,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
      */
     getUnassignedDragItems() {
         return this.question.dragItems?.filter((dragItem) => {
-            return !this.mappings?.some((mapping) => {
+            return !this.mappings()?.some((mapping) => {
                 return this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem);
             }, this);
         }, this);
@@ -317,7 +322,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
      * Display a sample solution instead of the student's answer
      */
     showSampleSolution() {
-        this.sampleSolutionMappings = this.dragAndDropQuestionUtil.solve(this.question, this.mappings);
+        this.sampleSolutionMappings = this.dragAndDropQuestionUtil.solve(this.question, this.mappings());
         this.showingSampleSolution = true;
     }
 

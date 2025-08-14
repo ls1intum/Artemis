@@ -107,7 +107,7 @@
             <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
             <span class="show-explanation">{{ score || 0 }}/{{ shortAnswerQuestion.points }}</span>
             <span class="show-explanation">
-                <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="shortAnswerQuestion" [shortAnswerText]="submittedTexts" [questionIndex]="questionIndex" />
+                <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="shortAnswerQuestion" [shortAnswerText]="submittedTexts()" [questionIndex]="questionIndex" />
             </span>
         </div>
     }

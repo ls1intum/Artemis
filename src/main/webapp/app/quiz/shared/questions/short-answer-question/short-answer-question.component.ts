@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject, model } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
@@ -37,8 +37,9 @@ export class ShortAnswerQuestionComponent {
     }
 
     // TODO: Map vs. Array --> consistency
-    @Input()
-    submittedTexts: ShortAnswerSubmittedText[];
+    //@Input()
+    //submittedTexts: ShortAnswerSubmittedText[];
+    submittedTexts = model<ShortAnswerSubmittedText[]>([]);
     @Input()
     clickDisabled: boolean;
     @Input()
@@ -94,7 +95,7 @@ export class ShortAnswerQuestionComponent {
      * set as submitted texts
      */
     setSubmittedText() {
-        this.submittedTexts = [];
+        this.submittedTexts.set([]);
         let i = 0;
         for (const textpart of this.textParts) {
             let j = 0;
@@ -103,13 +104,13 @@ export class ShortAnswerQuestionComponent {
                     const submittedText = new ShortAnswerSubmittedText();
                     submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this.shortAnswerQuestion.id)).value;
                     submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element!), this.shortAnswerQuestion);
-                    this.submittedTexts.push(submittedText);
+                    this.submittedTexts().push(submittedText);
                 }
                 j++;
             }
             i++;
         }
-        this.submittedTextsChange.emit(this.submittedTexts);
+        this.submittedTextsChange.emit(this.submittedTexts());
         /** Only execute the onMappingUpdate function if we received such input **/
         if (this.fnOnSubmittedTextUpdate) {
             this.fnOnSubmittedTextUpdate();
@@ -137,7 +138,7 @@ export class ShortAnswerQuestionComponent {
      * @param spotTag Spot tag for which to get the submitted text
      */
     getSubmittedTextForSpot(spotTag: string): ShortAnswerSubmittedText {
-        return this.submittedTexts.filter((submittedText) => submittedText.spot!.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag))[0];
+        return this.submittedTexts().filter((submittedText) => submittedText.spot!.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag))[0];
     }
 
     /**
