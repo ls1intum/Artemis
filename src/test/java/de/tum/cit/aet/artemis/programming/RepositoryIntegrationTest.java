@@ -271,7 +271,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
 
-        assertThat(files.keySet()).noneMatch(file -> file.contains(".git"));
+        validateFilesExcludeGitAndFolders(files, false);
 
         for (String key : files.keySet()) {
             assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
@@ -286,7 +286,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content", HttpStatus.OK, String.class, String.class);
         assertThat(files).isNotEmpty();
 
-        assertThat(files.keySet()).noneMatch(file -> file.contains(".git"));
+        validateFilesExcludeGitAndFolders(files, true);
 
         for (String key : files.keySet()) {
             assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
@@ -1180,5 +1180,15 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         fileSubmission.setFileContent(fileContent);
         fileSubmissions.add(fileSubmission);
         return fileSubmissions;
+    }
+
+    private void validateFilesExcludeGitAndFolders(Map<String, ?> files, boolean excludeFolders) {
+        // Ensure we only exclude the actual .git directory (not files like .gitignore)
+        assertThat(files.keySet()).noneMatch(path -> path.equals(".git") || path.startsWith(".git/") || path.startsWith(".git\\") || path.contains("/.git/")
+                || path.contains("\\.git\\") || path.endsWith("/.git") || path.endsWith("\\.git"));
+
+        if (excludeFolders) {
+            assertThat(files.keySet()).doesNotContain(currentLocalFolderName);
+        }
     }
 }
