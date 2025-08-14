@@ -122,6 +122,8 @@ public class LocalCIResultProcessingService {
     private void initResultProcessingExecutor() {
         ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-result-%d")
                 .setUncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in result processing thread {}", t.getName(), e)).build();
+        // LinkedBlockingQueue with a capacity of 1 means no buffering is done and the executor will reject new tasks if it is busy. We do not need to buffer as we maintain the
+        // results in the distributed queue.
         resultProcessingExecutor = new ThreadPoolExecutor(concurrentResultProcessingSize, concurrentResultProcessingSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1),
                 threadFactory, new ThreadPoolExecutor.AbortPolicy());
         log.info("Initialized LocalCI result processing executor with pool size {}", concurrentResultProcessingSize);
@@ -173,7 +175,9 @@ public class LocalCIResultProcessingService {
             resultProcessingExecutor.execute(this::processResult);
         }
         catch (RejectedExecutionException ex) {
-            log.warn("Result processing executor queue is full.");
+            // this is not an issue as we rely on the queue and will continue polling from it once another
+            // event listener or schedule triggers
+            log.debug("Result processing executor queue is full.");
         }
     }
 

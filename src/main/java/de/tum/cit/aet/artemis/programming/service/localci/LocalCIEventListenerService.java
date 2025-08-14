@@ -145,7 +145,6 @@ public class LocalCIEventListenerService {
      */
     @Scheduled(fixedRate = 60 * 1000)
     public void processQueuedResults() {
-        var startTime = System.currentTimeMillis();
         final int initialSize = distributedDataAccessService.getResultQueueSize();
         log.debug("{} queued results in the distributed build result queue. Processing up to {} results.", initialSize, Math.min(concurrentResultProcessingSize, initialSize));
         for (int i = 0; i < concurrentResultProcessingSize; i++) {
@@ -159,7 +158,6 @@ public class LocalCIEventListenerService {
                 log.warn("Processing a queued result failed. Continuing with remaining items", ex);
             }
         }
-        log.debug("Result queue processing schedule completed in {} ms", System.currentTimeMillis() - startTime);
     }
 
     private boolean checkIfBuildJobIsStillBuilding(List<String> processingJobIds, String buildJobId) {
