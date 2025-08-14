@@ -161,8 +161,10 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     createEditAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
-        const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
+        const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
+
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
+
         if (!name || (!fileName && !videoSource)) {
             return;
         }
@@ -180,7 +182,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
 
         let notificationText: string | undefined;
-
         if (updateNotificationText) {
             notificationText = updateNotificationText;
         }
@@ -213,11 +214,16 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
         formData.append('attachmentVideoUnit', objectToJsonBlob(this.currentlyProcessedAttachmentVideoUnit));
 
-        (this.isEditingLectureUnit
+        const createOrUpdate$ = this.isEditingLectureUnit
             ? this.attachmentVideoUnitService.update(this.lecture.id!, this.currentlyProcessedAttachmentVideoUnit.id!, formData, notificationText)
-            : this.attachmentVideoUnitService.create(formData, this.lecture.id!)
-        ).subscribe({
-            next: () => {
+            : this.attachmentVideoUnitService.create(formData, this.lecture.id!);
+
+        createOrUpdate$.subscribe({
+            next: (res) => {
+                const createdUnit = res.body;
+                if (createdUnit) {
+                    this.triggerTranscriptionIfEnabled(createdUnit, generateTranscript, attachmentVideoUnitFormData.playlistUrl);
+                }
                 this.onCloseLectureUnitForms();
                 this.unitManagementComponent.loadData();
             },
@@ -286,5 +292,29 @@ export class LectureUpdateUnitsComponent implements OnInit {
                 };
                 break;
         }
+    }
+
+    private triggerTranscriptionIfEnabled(unit: AttachmentVideoUnit | undefined, generateTranscript: boolean | undefined, playlistUrl?: string): void {
+        if (!this.isEditingLectureUnit && generateTranscript && unit?.id) {
+            const transcriptionUrl = playlistUrl ?? unit.videoSource;
+
+            if (!transcriptionUrl) {
+                return; // No transcription URL available
+            }
+
+            this.attachmentVideoUnitService.startTranscription(this.lecture.id!, unit.id, transcriptionUrl).subscribe({
+                next: (res) => {
+                    if (res.status === 200) {
+                        this.alertService.success('Transcript generation started.');
+                    } else {
+                        this.alertService.error('Transcript request did not succeed. Status: ' + res.status);
+                    }
+                },
+                error: (err) => {
+                    this.alertService.error('Transcript failed to start: ' + err.message);
+                },
+            });
+        }
+        // When editing, disabled, or missing data, simply do nothing
     }
 }

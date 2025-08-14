@@ -47,9 +47,13 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
+/**
+ * Configuration class defining authentication and authorization mechanism for all application endpoints
+ * We don't make it lazy as it definitely should be instantiated at startup and this happens anyway. So, no negative effect on startup performance.
+ */
 @Configuration
 @EnableWebSecurity
-@Lazy
+@Lazy(value = false)
 @EnableMethodSecurity(securedEnabled = true)
 @Profile(PROFILE_CORE)
 public class SecurityConfiguration {
@@ -222,6 +226,7 @@ public class SecurityConfiguration {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // Configures authorization for various URL patterns. The patterns are considered in order.
             .authorizeHttpRequests(requests -> {
+
                 requests
                     // NOTE: Always have a look at {@link de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter} to see which URLs are forwarded to the SPA
                     // Client related URLs and publicly accessible information (allowed for everyone).
@@ -246,10 +251,10 @@ public class SecurityConfiguration {
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll();
-                    // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
-                    if (profileService.isLocalVCActive()) {
-                        requests.requestMatchers("/git/**").permitAll();
-                    }
+
+                    // `/git/**` endpoints (JGit servlet + LocalVC filters) are only registered under the `localvc` profile
+                    // LocalVCFetchFilter/LocalVCPushFilter handle auth
+                    requests.requestMatchers("/git/**").permitAll();
 
                     // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
                     requests.requestMatchers("/**").authenticated();
@@ -260,7 +265,7 @@ public class SecurityConfiguration {
 
         // Configure WebAuthn passkey if enabled
         if(passkeyEnabled){
-        passkeyWebAuthnConfigurer.orElseThrow(()->new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
+            passkeyWebAuthnConfigurer.orElseThrow(()->new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
         }
 
         // @formatter:on

@@ -97,7 +97,7 @@ describe('CourseRegistrationDetailComponent', () => {
             headers: new HttpHeaders(),
             status: 403,
         });
-        jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(throwError(httpResponseComingFromForDashboardEndpoint));
+        jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(throwError(() => httpResponseComingFromForDashboardEndpoint));
 
         component.ngOnInit();
         tick();

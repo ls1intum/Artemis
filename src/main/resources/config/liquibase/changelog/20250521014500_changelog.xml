@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+    http://www.liquibase.org/xml/ns/dbchangelog
+    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+
+    <!-- Atomic step 1: job_id for all DBs (nullable+unique by your design) -->
+    <changeSet id="20250521014500-add-jobid" author="goyal">
+        <addColumn tableName="lecture_transcription">
+            <column name="job_id" type="VARCHAR(255)">
+                <constraints nullable="true" unique="true"/>
+            </column>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="lecture_transcription" columnName="job_id"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Atomic step 2 (MySQL): status as native ENUM with default -->
+    <changeSet id="20250521014500-mysql-status-enum" author="goyal">
+        <preConditions onFail="MARK_RAN"><dbms type="mysql"/></preConditions>
+        <addColumn tableName="lecture_transcription">
+            <column name="transcription_status"
+                    type="ENUM('PENDING','PROCESSING','COMPLETED','FAILED')"
+                    defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="lecture_transcription" columnName="transcription_status"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Atomic step 3 (PostgreSQL): status as TEXT + CHECK, default PENDING -->
+    <changeSet id="20250521014500-pg-status-text" author="goyal">
+        <preConditions onFail="MARK_RAN"><dbms type="postgresql"/></preConditions>
+        <addColumn tableName="lecture_transcription">
+            <column name="transcription_status" type="TEXT" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <!-- Use SQL for CHECK to avoid XML schema issues -->
+        <sql>
+            ALTER TABLE lecture_transcription
+                ADD CONSTRAINT chk_lecture_transcription_status
+                    CHECK (transcription_status IN ('PENDING','PROCESSING','COMPLETED','FAILED'));
+        </sql>
+        <rollback>
+            <sql>ALTER TABLE lecture_transcription DROP CONSTRAINT IF EXISTS chk_lecture_transcription_status;</sql>
+            <dropColumn tableName="lecture_transcription" columnName="transcription_status"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Atomic step 4 (H2 tests): status as VARCHAR (keeps CI green) -->
+    <changeSet id="220250521014500-h2-status-varchar" author="goyal">
+        <preConditions onFail="MARK_RAN"><dbms type="h2"/></preConditions>
+        <addColumn tableName="lecture_transcription">
+            <column name="transcription_status" type="VARCHAR(32)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="lecture_transcription" columnName="transcription_status"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

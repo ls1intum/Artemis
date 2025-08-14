@@ -16,6 +16,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ExerciseResult, StudentExamWithGradeDTO, StudentResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -27,10 +28,8 @@ import { ExamResultOverviewComponent } from 'app/exam/overview/summary/result-ov
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import * as ExamUtils from 'app/exam/overview/exam.utils';
@@ -39,7 +38,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -156,6 +155,7 @@ const gradeInfo: StudentExamWithGradeDTO = {
 function sharedSetup(url: string[]) {
     beforeEach(() => {
         return TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 ExamResultSummaryComponent,
                 MockComponent(ExamResultOverviewComponent),
@@ -181,7 +181,7 @@ function sharedSetup(url: string[]) {
                         },
                     },
                 },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
+
                 { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
                 { provide: ExamParticipationService, useClass: MockExamParticipationService },
                 provideHttpClient(),
@@ -190,10 +190,7 @@ function sharedSetup(url: string[]) {
                     provide: TranslateService,
                     useClass: MockTranslateService,
                 },
-                {
-                    provide: SessionStorageService,
-                    useClass: MockSyncStorage,
-                },
+                SessionStorageService,
             ],
         })
             .compileComponents()

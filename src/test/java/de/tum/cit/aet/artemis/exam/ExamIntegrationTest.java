@@ -5,6 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpStatus.CREATED;
 
@@ -61,6 +67,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -83,8 +90,9 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
@@ -92,7 +100,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalV
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
-import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
@@ -136,16 +143,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     private ExamUtilService examUtilService;
 
     @Autowired
-    private TextExerciseUtilService textExerciseUtilService;
-
-    @Autowired
-    private ModelingExerciseUtilService modelingExerciseUtilService;
-
-    @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
 
     @Autowired
     private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     private Course course1;
 
@@ -1917,20 +1921,41 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportExamWithExercises_successfulWithImportToOtherCourse() throws Exception {
-        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course2);
+        setupMocks();
+        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndProgramming(course2);
         exam.setCourse(course1);
         exam.setId(null);
         exam.setChannelName("testchannelname");
-        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", exam, Exam.class, CREATED);
-        assertThat(received.getExerciseGroups()).hasSize(4);
 
-        for (int i = 0; i <= 3; i++) {
+        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", exam, Exam.class, CREATED);
+        assertThat(received.getExerciseGroups()).hasSize(5);
+
+        for (int i = 0; i <= 4; i++) {
             Exercise expected = exam.getExerciseGroups().get(i).getExercises().stream().findFirst().orElseThrow();
             Exercise exerciseReceived = received.getExerciseGroups().get(i).getExercises().stream().findFirst().orElseThrow();
             assertThat(exerciseReceived.getExerciseGroup()).isNotEqualTo(expected.getExerciseGroup());
             assertThat(exerciseReceived.getTitle()).isEqualTo(expected.getTitle());
             assertThat(exerciseReceived.getId()).isNotEqualTo(expected.getId());
         }
+        Exercise importedProgrammingExercise = received.getExerciseGroups().get(4).getExercises().iterator().next();
+        ProgrammingExercise importedExerciseWithAllData = programmingExerciseRepository
+                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigAndGradingCriteria(
+                        importedProgrammingExercise.getId())
+                .orElseThrow();
+        assertThat(importedExerciseWithAllData.getGradingCriteria()).hasSize(2);
+    }
+
+    private void setupMocks() {
+        doReturn(null).when(continuousIntegrationService).checkIfProjectExists(anyString(), anyString());
+        doReturn(new LocalVCRepositoryUri(localVCBaseUri, "projectkey", "repositoryslug")).when(versionControlService).copyRepositoryWithHistory(anyString(), anyString(),
+                anyString(), anyString(), anyString(), isNull());
+        doNothing().when(continuousIntegrationService).createProjectForExercise(any(ProgrammingExercise.class));
+        doReturn("build plan").when(continuousIntegrationService).copyBuildPlan(any(ProgrammingExercise.class), anyString(), any(ProgrammingExercise.class), anyString(),
+                anyString(), anyBoolean());
+        doNothing().when(continuousIntegrationService).updatePlanRepository(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
+        doNothing().when(continuousIntegrationService).givePlanPermissions(any(ProgrammingExercise.class), anyString());
+        doNothing().when(continuousIntegrationService).enablePlan(anyString(), anyString());
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(any());
     }
     // </editor-fold>
 
@@ -2255,4 +2280,21 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         assertThat(sameStudentExamDifferentIpAndFingerprint).hasSize(2);
     }
     // </editor-fold>
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetExamSidebarDataForRealExams() throws Exception {
+        Course course = courseUtilService.addEmptyCourse();
+        Exam exam = examUtilService.addExam(course);
+        Exam testExam = examUtilService.addTestExam(course);
+        StudentExam studentExam1 = examUtilService.addStudentExamWithUser(exam, student1);
+        examUtilService.addStudentExamWithUser(testExam, student1);
+        Set<ExamSidebarDataDTO> examSidebarData = request.getSet("/api/exam/courses/" + course.getId() + "/real-exams-sidebar-data", HttpStatus.OK, ExamSidebarDataDTO.class);
+        assertThat(examSidebarData).hasSize(1);
+        ExamSidebarDataDTO element = examSidebarData.iterator().next();
+        assertThat(element.id()).isEqualTo(exam.getId());
+        assertThat(element.title()).isEqualTo(exam.getTitle());
+        assertThat(element.workingTime()).isEqualTo(studentExam1.getWorkingTime());
+        assertThat(element.startDate().withZoneSameInstant(ZoneId.systemDefault())).isCloseTo(exam.getStartDate(), within(1, ChronoUnit.SECONDS));
+    }
 }

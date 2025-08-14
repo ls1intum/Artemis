@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -31,7 +30,6 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -64,19 +62,35 @@ public class LectureTranscriptionResource {
 
     private final LectureRepository lectureRepository;
 
+    private final RestClient.Builder restClientBuilder;
+
+    private final LectureTranscriptionService lectureTranscriptionService;
+
+    private final TumLiveService tumLiveService;
+
+    @Value("${artemis.nebula.url}")
+    private String nebulaBaseUrl;
+
+    @Value("${artemis.nebula.secret}")
+    private String nebulaSecretToken;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     private final LectureService lectureService;
 
     public LectureTranscriptionResource(LectureTranscriptionRepository transcriptionRepository, LectureUnitRepository lectureUnitRepository,
-            AuthorizationCheckService authCheckService, UserRepository userRepository, LectureRepository lectureRepository, LectureService lectureService) {
+            AuthorizationCheckService authCheckService, UserRepository userRepository, LectureRepository lectureRepository, LectureService lectureService,
+            RestClient.Builder restClientBuilder, LectureTranscriptionService lectureTranscriptionService, TumLiveService tumLiveService) {
         this.lectureTranscriptionRepository = transcriptionRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
+        this.restClientBuilder = restClientBuilder;
+        this.lectureTranscriptionService = lectureTranscriptionService;
+        this.tumLiveService = tumLiveService;
     }
 
     /**
@@ -199,6 +213,76 @@ public class LectureTranscriptionResource {
         LectureTranscriptionDTO dto = new LectureTranscriptionDTO(lectureUnitId, transcription.getLanguage(), transcription.getSegments());
 
         return ResponseEntity.ok(dto);
+    }
+
+    /**
+     * POST /lecture/{lectureId}/lecture-unit/{lectureUnitId}/nebula-transcriber :
+     * Start and complete the transcription process for a lecture video using Nebula.
+     * This method sends the video URL to Nebula, waits for the transcription result,
+     * and saves the transcription immediately into the system.
+     *
+     * @param lectureId     the ID of the lecture
+     * @param lectureUnitId the ID of the lecture unit
+     * @param request       the request containing the video URL and any additional options
+     * @return the ResponseEntity with status 200 (OK) and the saved transcription,
+     *         or 500 (Internal Server Error) if an error occurs
+     */
+
+    @PostMapping("{lectureId}/lecture-unit/{lectureUnitId}/nebula-transcriber")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<?> startNebulaTranscriptionAndSave(@PathVariable Long lectureId, @PathVariable Long lectureUnitId,
+            @RequestBody @Valid NebulaTranscriptionRequestDTO request) {
+
+        try {
+            RestClient nebulaRestClient = restClientBuilder.baseUrl(nebulaBaseUrl).build();
+
+            NebulaTranscriptionInitResponseDTO response = nebulaRestClient.post().uri("/transcribe/start").header("Content-Type", "application/json")
+                    .header("Authorization", nebulaSecretToken).body(request).retrieve().body(NebulaTranscriptionInitResponseDTO.class);
+
+            // Null or invalid response check
+            if (response.transcriptionId() == null) {
+                log.error("Nebula returned null or missing transcription ID for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
+                return ResponseEntity.internalServerError().body("Nebula did not return a valid transcription ID.");
+            }
+
+            // Create placeholder transcription for async processing
+            lectureTranscriptionService.createEmptyTranscription(lectureId, lectureUnitId, response.transcriptionId());
+
+            log.info("Transcription started for Lecture ID {}, Unit ID {}, Job ID: {}", lectureId, lectureUnitId, response.transcriptionId());
+            return ResponseEntity.ok("Transcription started. Job ID: " + response.transcriptionId());
+
+        }
+        catch (Exception e) {
+            log.error("Error initiating transcription for Lecture ID: {}, Unit ID: {} → {}", lectureId, lectureUnitId, e.getMessage(), e);
+            return ResponseEntity.internalServerError().body("Failed to start transcription: " + e.getMessage());
+        }
+    }
+
+    /**
+     * REST endpoint to fetch the TUM Live playlist URL for a given TUM Live video page URL.
+     * <p>
+     * This endpoint checks whether a playlist (e.g., an .m3u8 stream) is available for the
+     * specified video URL from TUM Live and returns it if found.
+     * </p>
+     *
+     * @param url the full TUM Live video page URL
+     * @return {@code 200 OK} with the playlist URL if available,
+     *         or {@code 404 Not Found} if no playlist could be retrieved.
+     */
+    @GetMapping("video-utils/tum-live-playlist")
+    public ResponseEntity<String> getTumLivePlaylist(@RequestParam String url) {
+        log.info("Received request to fetch playlist for TUM Live URL: {}", url);
+
+        Optional<String> playlistUrl = tumLiveService.getTumLivePlaylistLink(url);
+
+        if (playlistUrl.isPresent()) {
+            log.info("Playlist URL found: {}", playlistUrl.get());
+            return ResponseEntity.ok(playlistUrl.get());
+        }
+        else {
+            log.warn("No playlist URL found for: {}", url);
+            return ResponseEntity.notFound().build();
+        }
     }
 
 }
