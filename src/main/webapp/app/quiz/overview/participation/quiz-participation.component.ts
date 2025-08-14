@@ -977,7 +977,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @param questionIndex
      */
     navigateToQuestion(questionIndex: number): void {
-        const questionElement = document.getElementById('question' + questionIndex)!;
+        const questionElement = document.getElementById('question' + questionIndex);
+        if (!questionElement) {
+            captureException('navigateToQuestion: element not found for index ' + questionIndex);
+            return;
+        }
         questionElement.scrollIntoView({
             behavior: 'smooth',
             block: 'nearest',

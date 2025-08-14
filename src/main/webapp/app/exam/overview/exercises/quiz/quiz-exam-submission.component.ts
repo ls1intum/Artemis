@@ -156,13 +156,15 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      */
     navigateToQuestion(questionId: number): void {
         const element = document.getElementById('question' + questionId);
-        if (element) {
-            element.scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest',
-                inline: 'start',
-            });
+        if (!element) {
+            captureException('navigateToQuestion: element not found for questionId ' + questionId);
+            return;
         }
+        element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'start',
+        });
 
         this.highlightQuizQuestion(questionId);
     }
