@@ -9,7 +9,6 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -63,9 +62,6 @@ public class LocalCIEventListenerService {
     private final UserService userService;
 
     private final MailService mailService;
-
-    @Value("${artemis.continuous-integration.concurrent-result-processing-size:1}")
-    private int concurrentResultProcessingSize;
 
     public LocalCIEventListenerService(DistributedDataAccessService distributedDataAccessService, LocalCIQueueWebsocketService localCIQueueWebsocketService,
             BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, LocalCIResultProcessingService localCIResultProcessingService,
@@ -146,8 +142,9 @@ public class LocalCIEventListenerService {
     @Scheduled(fixedRate = 60 * 1000)
     public void processQueuedResults() {
         final int initialSize = distributedDataAccessService.getResultQueueSize();
-        log.debug("{} queued results in the distributed build result queue. Processing up to {} results.", initialSize, Math.min(concurrentResultProcessingSize, initialSize));
-        for (int i = 0; i < concurrentResultProcessingSize; i++) {
+        int processUpTo = Math.min(localCIResultProcessingService.getConcurrentResultProcessingSize(), initialSize);
+        log.debug("{} queued results in the distributed build result queue. Processing up to {} results.", initialSize, processUpTo);
+        for (int i = 0; i < processUpTo; i++) {
             if (distributedDataAccessService.getDistributedBuildResultQueue().peek() == null) {
                 break;
             }

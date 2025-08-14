@@ -86,7 +86,7 @@ public class LocalCIResultProcessingService {
 
     private UUID listenerId;
 
-    @Value("${artemis.continuous-integration.concurrent-result-processing-size:1}")
+    @Value("${artemis.continuous-integration.concurrent-result-processing-size:4}")
     private int concurrentResultProcessingSize;
 
     private ThreadPoolExecutor resultProcessingExecutor;
@@ -122,10 +122,10 @@ public class LocalCIResultProcessingService {
     private void initResultProcessingExecutor() {
         ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-result-%d")
                 .setUncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in result processing thread {}", t.getName(), e)).build();
-        // LinkedBlockingQueue with a capacity of 1 means no buffering is done and the executor will reject new tasks if it is busy. We do not need to buffer as we maintain the
-        // results in the distributed queue.
-        resultProcessingExecutor = new ThreadPoolExecutor(concurrentResultProcessingSize, concurrentResultProcessingSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1),
-                threadFactory, new ThreadPoolExecutor.AbortPolicy());
+        // buffer up to 1000 for at most 1s before rejecting new tasks. Rejections will not lead to loss because the results maintain in the queue but this speeds up
+        // result processing under high load so we dont need to wait for the polling schedule if many results are processed very fast.
+        resultProcessingExecutor = new ThreadPoolExecutor(concurrentResultProcessingSize, concurrentResultProcessingSize, 1000, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(1000), threadFactory, new ThreadPoolExecutor.AbortPolicy());
         log.info("Initialized LocalCI result processing executor with pool size {}", concurrentResultProcessingSize);
     }
 
@@ -357,6 +357,10 @@ public class LocalCIResultProcessingService {
         public void itemRemoved(ItemEvent<ResultQueueItem> event) {
 
         }
+    }
+
+    public int getConcurrentResultProcessingSize() {
+        return concurrentResultProcessingSize;
     }
 
     /**
