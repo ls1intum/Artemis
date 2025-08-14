@@ -98,7 +98,7 @@
                 @if (question.backgroundFilePath) {
                     <jhi-secured-image
                         [src]="addPublicFilePrefix(filePreviewPaths.get(question.backgroundFilePath!) || question.backgroundFilePath!)!"
-                        (endLoadingProcess)="changeLoading($event)"
+                        (loadingStatus)="changeLoading($event)"
                     />
                 }
                 <div class="click-layer">

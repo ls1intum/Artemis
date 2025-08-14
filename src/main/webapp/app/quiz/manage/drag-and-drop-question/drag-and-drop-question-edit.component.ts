@@ -26,7 +26,6 @@ import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and
 import { cloneDeep } from 'lodash-es';
 import { round } from 'app/shared/util/utils';
 import { MAX_SIZE_UNIT } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import { debounceTime, filter } from 'rxjs/operators';
 import { ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
@@ -233,13 +232,11 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             }
         }
 
-        this.backgroundImage()
-            .endLoadingProcess.pipe(
-                filter((loadingStatus) => loadingStatus === ImageLoadingStatus.SUCCESS),
-                // Some time until image render. Need to wait until image width is computed.
-                debounceTime(300),
-            )
-            .subscribe(() => this.adjustClickLayerWidth());
+        this.backgroundImage().loadingStatus.subscribe((loadingStatus) => {
+            if (loadingStatus === ImageLoadingStatus.SUCCESS) {
+                setTimeout(() => this.adjustClickLayerWidth(), 300);
+            }
+        });
         // render import images on UI immediatly
         this.makeFileMapPreview();
         // Trigger click layer width adjustment upon window resize.
@@ -950,7 +947,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                         this.question.correctMappings!.push(dndMapping);
                     }
                 };
-                image.src = this.backgroundImage().src;
+                image.src = this.backgroundImage().src();
             }
         }
         this.blankOutBackgroundImage();
@@ -991,7 +988,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                 this.setBackgroundFileFromFile(this.dataUrlToFile(dataUrlCanvas, 'background'));
             }
         };
-        image.src = this.backgroundImage().src;
+        image.src = this.backgroundImage().src();
     }
 
     /**
