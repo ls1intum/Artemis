@@ -150,20 +150,22 @@ public class LocalCIResultProcessingService {
     }
 
     private void shutdownResultProcessingExecutor() {
-        if (resultProcessingExecutor != null && !resultProcessingExecutor.isShutdown()) {
-            resultProcessingExecutor.shutdown();
-            try {
-                boolean terminated = resultProcessingExecutor.awaitTermination(5, TimeUnit.SECONDS);
-                if (!terminated) {
-                    log.warn("Result processing executor did not terminate in time, forcing shutdown");
-                    resultProcessingExecutor.shutdownNow();
-                }
-            }
-            catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.warn("Result processing executor termination interrupted", e);
+        if (resultProcessingExecutor == null || resultProcessingExecutor.isShutdown()) {
+            return;
+        }
+
+        resultProcessingExecutor.shutdown();
+        try {
+            boolean terminated = resultProcessingExecutor.awaitTermination(5, TimeUnit.SECONDS);
+            if (!terminated) {
+                log.warn("Result processing executor did not terminate in time, forcing shutdown");
                 resultProcessingExecutor.shutdownNow();
             }
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("Result processing executor termination interrupted", e);
+            resultProcessingExecutor.shutdownNow();
         }
     }
 
