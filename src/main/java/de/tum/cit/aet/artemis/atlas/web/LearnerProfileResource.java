@@ -6,6 +6,8 @@ import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MIN_PRO
 
 import java.util.Optional;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -93,7 +95,7 @@ public class LearnerProfileResource {
      */
     @PutMapping(value = "learner-profile")
     @EnforceAtLeastStudent
-    public ResponseEntity<LearnerProfileDTO> updateLearnerProfile(@RequestBody LearnerProfileDTO learnerProfileDTO) {
+    public ResponseEntity<LearnerProfileDTO> updateLearnerProfile(@Valid @RequestBody LearnerProfileDTO learnerProfileDTO) {
         User user = userRepository.getUser();
         log.debug("REST request to update LearnerProfile of user {}", user.getLogin());
 

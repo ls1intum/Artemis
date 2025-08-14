@@ -187,4 +187,76 @@ class LearnerProfileResourceTest extends AbstractAtlasIntegrationTest {
         assertThat(finalProfile.getFeedbackFormality()).isEqualTo(3);
         assertThat(finalProfile.hasSetupFeedbackPreferences()).isTrue();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateLearnerProfile_FeedbackDetailBelowMinimum_ReturnsBadRequest() throws Exception {
+        LearnerProfileDTO updateDTO = new LearnerProfileDTO(testProfile.getId(), 0, // Below minimum (1)
+                2, // Valid feedbackFormality
+                true);
+
+        request.put("/api/atlas/learner-profile", updateDTO, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateLearnerProfile_FeedbackDetailAboveMaximum_ReturnsBadRequest() throws Exception {
+        LearnerProfileDTO updateDTO = new LearnerProfileDTO(testProfile.getId(), 4, // Above maximum (3)
+                2, // Valid feedbackFormality
+                true);
+
+        request.put("/api/atlas/learner-profile", updateDTO, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateLearnerProfile_FeedbackFormalityBelowMinimum_ReturnsBadRequest() throws Exception {
+        LearnerProfileDTO updateDTO = new LearnerProfileDTO(testProfile.getId(), 2, // Valid feedbackDetail
+                0, // Below minimum (1)
+                true);
+
+        request.put("/api/atlas/learner-profile", updateDTO, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateLearnerProfile_FeedbackFormalityAboveMaximum_ReturnsBadRequest() throws Exception {
+        LearnerProfileDTO updateDTO = new LearnerProfileDTO(testProfile.getId(), 2, // Valid feedbackDetail
+                4, // Above maximum (3)
+                true);
+
+        request.put("/api/atlas/learner-profile", updateDTO, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateLearnerProfile_BothFieldsOutOfRange_ReturnsBadRequest() throws Exception {
+        LearnerProfileDTO updateDTO = new LearnerProfileDTO(testProfile.getId(), 0, // Below minimum (1)
+                4, // Above maximum (3)
+                true);
+
+        request.put("/api/atlas/learner-profile", updateDTO, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdateLearnerProfile_ValidBoundaryValues_Success() throws Exception {
+        // Test minimum values
+        LearnerProfileDTO minDTO = new LearnerProfileDTO(testProfile.getId(), 1, // Minimum value
+                1, // Minimum value
+                true);
+
+        LearnerProfileDTO minResponse = request.putWithResponseBody("/api/atlas/learner-profile", minDTO, LearnerProfileDTO.class, HttpStatus.OK);
+        assertThat(minResponse.feedbackDetail()).isEqualTo(1);
+        assertThat(minResponse.feedbackFormality()).isEqualTo(1);
+
+        // Test maximum values
+        LearnerProfileDTO maxDTO = new LearnerProfileDTO(testProfile.getId(), 3, // Maximum value
+                3, // Maximum value
+                false);
+
+        LearnerProfileDTO maxResponse = request.putWithResponseBody("/api/atlas/learner-profile", maxDTO, LearnerProfileDTO.class, HttpStatus.OK);
+        assertThat(maxResponse.feedbackDetail()).isEqualTo(3);
+        assertThat(maxResponse.feedbackFormality()).isEqualTo(3);
+    }
 }
