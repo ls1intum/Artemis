@@ -486,4 +486,142 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeFalse();
         expect(attachmentVideoUnitFormComponent.form.get('generateTranscript')!.value).toBeFalse();
     });
+    it('videoSourceUrlValidator: rejects TUM-Live without video_only=1, accepts others', () => {
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        // TUM-Live without ?video_only=1 -> invalid
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://live.rbg.tum.de/w/test/26');
+        expect(attachmentVideoUnitFormComponent.videoSourceControl!.errors).toEqual({ invalidVideoUrl: true });
+
+        // TUM-Live with ?video_only=1 -> valid
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://live.rbg.tum.de/w/test/26?video_only=1');
+        expect(attachmentVideoUnitFormComponent.videoSourceControl!.errors).toBeNull();
+
+        // Non TUM-Live arbitrary valid URL -> valid
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://example.com/video');
+        expect(attachmentVideoUnitFormComponent.videoSourceControl!.errors).toBeNull();
+    });
+
+    it('videoSourceTransformUrlValidator: accepts TUM-Live and known providers, rejects garbage', () => {
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        // Valid TUM-Live
+        attachmentVideoUnitFormComponent.urlHelperControl!.setValue('https://live.rbg.tum.de/w/test/26');
+        expect(attachmentVideoUnitFormComponent.urlHelperControl!.errors).toBeNull();
+
+        // Valid YouTube (parsable by js-video-url-parser)
+        attachmentVideoUnitFormComponent.urlHelperControl!.setValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+        expect(attachmentVideoUnitFormComponent.urlHelperControl!.errors).toBeNull();
+
+        // Invalid / unparsable
+        attachmentVideoUnitFormComponent.urlHelperControl!.setValue('not-a-url');
+        expect(attachmentVideoUnitFormComponent.urlHelperControl!.errors).toEqual({ invalidVideoUrl: true });
+    });
+
+    it('extractEmbeddedUrl: adds video_only=1 for TUM-Live and transforms YouTube to embed', () => {
+        const tumUrl = 'https://live.rbg.tum.de/w/test/26';
+        const transformedTum = attachmentVideoUnitFormComponent.extractEmbeddedUrl(tumUrl);
+        expect(transformedTum).toBe('https://live.rbg.tum.de/w/test/26?video_only=1');
+
+        const ytWatch = 'https://www.youtube.com/watch?v=8iU8LPEa4o0';
+        const ytEmbed = attachmentVideoUnitFormComponent.extractEmbeddedUrl(ytWatch);
+        expect(ytEmbed).toBe('https://www.youtube.com/embed/8iU8LPEa4o0');
+    });
+
+    it('setEmbeddedVideoUrl: uses urlHelper, sets videoSource, and checks playlist with ORIGINAL URL', () => {
+        const original = 'https://live.rbg.tum.de/w/test/26';
+        const embedded = 'https://live.rbg.tum.de/w/test/26?video_only=1';
+
+        // spy extract + playlist check
+        const extractSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'extractEmbeddedUrl').mockReturnValue(embedded);
+        const checkSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'checkTumLivePlaylist');
+
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponent.urlHelperControl!.setValue(original);
+
+        const stopPropagation = jest.fn();
+        attachmentVideoUnitFormComponent.setEmbeddedVideoUrl({ stopPropagation } as any);
+
+        expect(stopPropagation).toHaveBeenCalled();
+        expect(extractSpy).toHaveBeenCalledWith(original);
+        expect(attachmentVideoUnitFormComponent.videoSourceControl!.value).toBe(embedded);
+        // IMPORTANT: check should be called with the original URL, not the embedded one
+        expect(checkSpy).toHaveBeenCalledWith(original);
+
+        extractSpy.mockRestore();
+        checkSpy.mockRestore();
+    });
+
+    it('checkTumLivePlaylist: non-TUM hosts disable transcript, clear playlist, and reset checkbox', () => {
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        // Pre-set to ensure reset occurs
+        attachmentVideoUnitFormComponent.canGenerateTranscript.set(true);
+        attachmentVideoUnitFormComponent.playlistUrl.set('https://some/playlist.m3u8');
+        attachmentVideoUnitFormComponent.form.get('generateTranscript')!.setValue(true);
+
+        // Non TUM-Live URL
+        const nonTumUrl = 'https://example.com/video/123';
+        attachmentVideoUnitFormComponent.checkTumLivePlaylist(nonTumUrl);
+
+        expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeFalse();
+        expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
+        expect(attachmentVideoUnitFormComponent.form.get('generateTranscript')!.value).toBeFalse();
+    });
+
+    it('onFileChange: auto-fills name when empty and marks large files', () => {
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        // Name initially empty -> should be auto-filled without extension
+        expect(attachmentVideoUnitFormComponent.nameControl!.value).toBeFalsy();
+
+        const bigFile = new File(['a'.repeat(10)], 'Lecture-01.mp4', { type: 'video/mp4', lastModified: Date.now() });
+        Object.defineProperty(bigFile, 'size', { value: MAX_FILE_SIZE + 10 });
+
+        const input = document.createElement('input');
+        Object.defineProperty(input, 'files', { value: [bigFile] });
+
+        attachmentVideoUnitFormComponent.onFileChange({ target: input } as any);
+
+        expect(attachmentVideoUnitFormComponent.fileName()).toBe('Lecture-01.mp4');
+        expect(attachmentVideoUnitFormComponent.nameControl!.value).toBe('Lecture-01');
+        expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBeTrue();
+    });
+
+    it('isTransformable reflects urlHelper validity', () => {
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        // Empty -> false
+        attachmentVideoUnitFormComponent.urlHelperControl!.setValue('');
+        expect(attachmentVideoUnitFormComponent.isTransformable).toBeFalse();
+
+        // Invalid -> false
+        attachmentVideoUnitFormComponent.urlHelperControl!.setValue('not-a-url');
+        expect(attachmentVideoUnitFormComponent.isTransformable).toBeFalse();
+
+        // Valid -> true
+        attachmentVideoUnitFormComponent.urlHelperControl!.setValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+        expect(attachmentVideoUnitFormComponent.isTransformable).toBeTrue();
+    });
+    it('submitForm includes playlistUrl when present', () => {
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        attachmentVideoUnitFormComponent.nameControl!.setValue('Unit B');
+        attachmentVideoUnitFormComponent.versionControl!.enable();
+        attachmentVideoUnitFormComponent.versionControl!.setValue(1);
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue('https://www.youtube.com/embed/8iU8LPEa4o0');
+
+        // set a playlist URL to ensure it’s propagated
+        const playlist = 'https://live.rbg.tum.de/playlist.m3u8';
+        attachmentVideoUnitFormComponent.playlistUrl.set(playlist);
+
+        const emitSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+
+        attachmentVideoUnitFormComponent.submitForm();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+        const payload = emitSpy.mock.calls[0][0] as AttachmentVideoUnitFormData;
+        expect(payload.playlistUrl).toBe(playlist);
+
+        emitSpy.mockRestore();
+    });
 });
