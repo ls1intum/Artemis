@@ -106,13 +106,6 @@ describe('CalendarEventFilterComponent', () => {
 
             expect(mockService.toggleEventFilterOption).toHaveBeenCalledWith('tutorialEvents');
         });
-
-        it('should return correct CSS class for each option', () => {
-            expect(component.getColorClassForFilteringOption(CalendarEventFilterOption.ExamEvents)).toBe('exam-chip');
-            expect(component.getColorClassForFilteringOption(CalendarEventFilterOption.LectureEvents)).toBe('lecture-chip');
-            expect(component.getColorClassForFilteringOption(CalendarEventFilterOption.TutorialEvents)).toBe('tutorial-chip');
-            expect(component.getColorClassForFilteringOption(CalendarEventFilterOption.ExerciseEvents)).toBe('exercise-chip');
-        });
     });
 
     describe('mobile variant', () => {

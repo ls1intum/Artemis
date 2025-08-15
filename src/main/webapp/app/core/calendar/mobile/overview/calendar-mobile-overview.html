@@ -17,27 +17,27 @@
     <div class="header">
         <div class="title-close-button-row">
             <div class="header-spacer">
-                @if (selectedDay()) {
-                    <button type="button" class="close-button" (click)="unselectDay()">
+                @if (selectedDate()) {
+                    <button type="button" class="close-button" (click)="unselectDate()">
                         <fa-icon [icon]="faXmark" />
                     </button>
                 }
             </div>
-            <div class="month-title">{{ firstDayOfCurrentMonth().format('MMMM YYYY') }}</div>
+            <div class="month-title">{{ firstDateOfCurrentMonth().format('MMMM YYYY') }}</div>
             <div class="header-spacer">
-                <calendar-event-filter [variant]="CalendarEventFilterComponentVariant.MOBILE" />
+                <jhi-calendar-event-filter [variant]="CalendarEventFilterComponentVariant.MOBILE" />
             </div>
         </div>
         <div class="day-name-row">
-            @for (dayNameKey of utils.getWeekDayNameKeys(); track dayNameKey) {
+            @for (dayNameKey of weekdayNameKeys; track dayNameKey) {
                 <div class="weekday-label" jhiTranslate="{{ dayNameKey }}"></div>
             }
         </div>
     </div>
-    @let day = selectedDay();
+    @let day = selectedDate();
     @if (day) {
-        <calendar-mobile-day-presentation [selectedDay]="day" />
+        <jhi-calendar-mobile-day-presentation [selectedDate]="day" />
     } @else {
-        <calendar-mobile-month-presentation [firstDayOfMonth]="firstDayOfCurrentMonth()" (selectDay)="selectDay($event)" />
+        <jhi-calendar-mobile-month-presentation [firstDateOfMonth]="firstDateOfCurrentMonth()" (selectDate)="selectDate($event)" />
     }
 </div>

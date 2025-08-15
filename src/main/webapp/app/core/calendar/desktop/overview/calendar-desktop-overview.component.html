@@ -2,7 +2,7 @@
     <div class="header">
         <span class="h3">{{ getMonthDescription() }}</span>
         <div class="spacer"></div>
-        <calendar-event-filter [variant]="CalendarEventFilterComponentVariant.DESKTOP" />
+        <jhi-calendar-event-filter [variant]="CalendarEventFilterComponentVariant.DESKTOP" />
         <button id="today-button" type="button" class="btn btn-outline-primary" (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
         <div class="btn-group" role="group">
             <button
@@ -39,9 +39,9 @@
 
     <div class="calendar-presentation-container">
         @if (presentation() === 'month') {
-            <calendar-desktop-month-presentation [firstDayOfCurrentMonth]="firstDayOfCurrentMonth()" />
+            <jhi-calendar-desktop-month-presentation [firstDayOfCurrentMonth]="firstDayOfCurrentMonth()" />
         } @else {
-            <calendar-desktop-week-presentation [firstDayOfCurrentWeek]="firstDayOfCurrentWeek()" />
+            <jhi-calendar-desktop-week-presentation [firstDayOfCurrentWeek]="firstDayOfCurrentWeek()" />
         }
         @if (isLoading()) {
             <div class="loading-overlay">

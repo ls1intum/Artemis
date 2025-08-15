@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faFilter, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -13,8 +13,12 @@ export enum CalendarEventFilterComponentVariant {
     DESKTOP,
 }
 
+type IncludedOptionAndMetadata = { option: CalendarEventFilterOption; nameKey: string; colorClassName: string };
+
+type OptionAndMetadata = { option: CalendarEventFilterOption; nameKey: string; isIncluded: boolean };
+
 @Component({
-    selector: 'calendar-event-filter',
+    selector: 'jhi-calendar-event-filter',
     imports: [NgbPopover, FaIconComponent, TranslateDirective, NgClass],
     templateUrl: './calendar-event-filter.component.html',
     styleUrl: './calendar-event-filter.component.scss',
@@ -23,11 +27,20 @@ export class CalendarEventFilterComponent {
     private calendarEventService = inject(CalendarEventService);
 
     variant = input.required<CalendarEventFilterComponentVariant>();
-    includedOptions = this.calendarEventService.includedEventFilterOptions;
+    includedOptionsAndMetadata = computed<IncludedOptionAndMetadata[]>(() => {
+        const includedOptions = this.calendarEventService.includedEventFilterOptions();
+        return includedOptions.map((option) => ({ option: option, nameKey: utils.getFilterOptionNameKey(option), colorClassName: this.getColorClassFor(option) }));
+    });
+    optionsAndMetadata = computed<OptionAndMetadata[]>(() => {
+        const includedOptions = this.calendarEventService.includedEventFilterOptions();
+        return this.calendarEventService.eventFilterOptions.map((option) => ({
+            option: option,
+            nameKey: utils.getFilterOptionNameKey(option),
+            isIncluded: includedOptions.includes(option),
+        }));
+    });
 
     readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
-    readonly options = this.calendarEventService.eventFilterOptions;
-    readonly utils = utils;
     readonly faChevronDown = faChevronDown;
     readonly faXmark = faXmark;
     readonly faFilter = faFilter;
@@ -36,7 +49,7 @@ export class CalendarEventFilterComponent {
         this.calendarEventService.toggleEventFilterOption(option);
     }
 
-    getColorClassForFilteringOption(option: CalendarEventFilterOption): string {
+    private getColorClassFor(option: CalendarEventFilterOption): string {
         if (option === 'examEvents') {
             return 'exam-chip';
         } else if (option === 'lectureEvents') {

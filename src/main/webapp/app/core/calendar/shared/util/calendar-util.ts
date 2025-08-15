@@ -6,24 +6,8 @@ import { CalendarEvent, CalendarEventSubtype, CalendarEventType } from 'app/core
 
 dayjs.extend(isoWeek);
 
-export function getWeeksOfMonthFor(dayInMonth: Dayjs): Dayjs[][] {
-    const start = dayInMonth.startOf('month').startOf('isoWeek');
-    const end = dayInMonth.endOf('month').endOf('isoWeek');
-    const weeks: Dayjs[][] = [];
-    let date = start;
-    while (date.isBefore(end)) {
-        const week: Dayjs[] = [];
-        for (let i = 0; i < 7; i++) {
-            week.push(date.clone());
-            date = date.add(1, 'day');
-        }
-        weeks.push(week);
-    }
-    return weeks;
-}
-
-export function getWeekOf(day: Dayjs): Dayjs[] {
-    const start = day.startOf('isoWeek');
+export function getDatesInWeekOf(date: Dayjs): Dayjs[] {
+    const start = date.startOf('isoWeek');
     const week: Dayjs[] = [];
     let currentDay = start;
     for (let i = 0; i < 7; i++) {
@@ -44,7 +28,7 @@ export function getHoursOfDay(): string[] {
     return hours;
 }
 
-export function areDaysInSameMonth(firstDay: Dayjs, secondDay: Dayjs): boolean {
+export function areDatesInSameMonth(firstDay: Dayjs, secondDay: Dayjs): boolean {
     return firstDay.month() === secondDay.month();
 }
 

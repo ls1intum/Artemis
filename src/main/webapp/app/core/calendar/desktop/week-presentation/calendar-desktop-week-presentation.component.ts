@@ -8,7 +8,7 @@ import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day
 import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
 
 @Component({
-    selector: 'calendar-desktop-week-presentation',
+    selector: 'jhi-calendar-desktop-week-presentation',
     imports: [CalendarDayBadgeComponent, ArtemisTranslatePipe, NgbPopover, NgStyle, NgClass, CalendarEventsPerDaySectionComponent],
     templateUrl: './calendar-desktop-week-presentation.component.html',
     styleUrl: './calendar-desktop-week-presentation.component.scss',

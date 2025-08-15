@@ -18,7 +18,7 @@ describe('CalendarMobileDayPresentation', () => {
 
         fixture = TestBed.createComponent(CalendarMobileDayPresentationComponent);
 
-        fixture.componentRef.setInput('selectedDay', selectedDay);
+        fixture.componentRef.setInput('selectedDate', selectedDay);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });

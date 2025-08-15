@@ -32,8 +32,8 @@ describe('CalendarOverview', () => {
     });
 
     it('should render desktop overview when not mobile', () => {
-        const desktop = fixture.nativeElement.querySelector('calendar-desktop-overview');
-        const mobile = fixture.nativeElement.querySelector('calendar-mobile-overview');
+        const desktop = fixture.nativeElement.querySelector('jhi-calendar-desktop-overview');
+        const mobile = fixture.nativeElement.querySelector('jhi-calendar-mobile-overview');
         expect(desktop).toBeTruthy();
         expect(mobile).toBeFalsy();
     });
@@ -46,8 +46,8 @@ describe('CalendarOverview', () => {
 
         fixture.detectChanges();
 
-        const desktop = fixture.nativeElement.querySelector('calendar-desktop-overview');
-        const mobile = fixture.nativeElement.querySelector('calendar-mobile-overview');
+        const desktop = fixture.nativeElement.querySelector('jhi-calendar-desktop-overview');
+        const mobile = fixture.nativeElement.querySelector('jhi-calendar-mobile-overview');
         expect(desktop).toBeFalsy();
         expect(mobile).toBeTruthy();
     });

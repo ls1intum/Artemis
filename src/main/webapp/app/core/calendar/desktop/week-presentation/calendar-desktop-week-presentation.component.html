@@ -6,11 +6,11 @@
                 <div class="day-name">
                     {{ utils.getWeekDayNameKey(day) | artemisTranslate }}
                 </div>
-                <calendar-day-badge [day]="day" />
+                <jhi-calendar-day-badge [day]="day" />
             </div>
         }
     </div>
     <div class="scroll-container" #scrollContainer [class.no-scroll]="isEventSelected()">
-        <calendar-events-per-day-section [days]="weekDays()" (isEventSelected)="isEventSelected.set($event)" />
+        <jhi-calendar-events-per-day-section [dates]="weekDays()" (isEventSelected)="isEventSelected.set($event)" />
     </div>
 </div>

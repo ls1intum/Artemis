@@ -1,19 +1,19 @@
 <div class="frame">
     <div class="info-column">
         <div class="info-column-spacer"></div>
-        @for (hour of utils.getHoursOfDay(); track hour) {
+        @for (hour of hoursOfDay; track hour) {
             <div class="time-label">{{ hour }}</div>
         }
     </div>
-    @for (day of days(); track utils.identify(day)) {
+    @for (day of days(); track day.id) {
         <div class="event-column">
-            @for (index of utils.range(24); track index) {
+            @for (index of zeroToTwentyFour; track index) {
                 <div class="hour-segment"></div>
             }
-            @for (eventAndPosition of getEventsAndPositionsFor(day); track eventAndPosition.event.id) {
-                @let event = eventAndPosition.event;
-                @let position = eventAndPosition.position;
-                @let eventSubtypeDescriptor = utils.getEventSubtypeNameKey(event);
+            @for (eventAndMetadata of day.eventsAndMetadata; track eventAndMetadata.event.id) {
+                @let event = eventAndMetadata.event;
+                @let position = eventAndMetadata.position;
+                @let eventSubtypeDescriptor = eventAndMetadata.eventSubtypeDescriptor;
                 <div
                     class="event"
                     [ngClass]="{

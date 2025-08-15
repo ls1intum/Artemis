@@ -60,7 +60,7 @@ describe('CalendarMobileOverviewComponent', () => {
         dayToSelect = dayjs('2025-05-15');
         firstDayOfCurrentMonth = dayjs('2025-05-01');
         today = dayjs();
-        component.firstDayOfCurrentMonth.set(firstDayOfCurrentMonth);
+        component.firstDateOfCurrentMonth.set(firstDayOfCurrentMonth);
 
         fixture.detectChanges();
     });
@@ -70,7 +70,7 @@ describe('CalendarMobileOverviewComponent', () => {
     });
 
     it('should show CalendarMobileMonthPresentation when no day is selected', () => {
-        component.selectedDay.set(undefined);
+        component.selectedDate.set(undefined);
         fixture.detectChanges();
 
         const monthView = fixture.debugElement.query(By.directive(CalendarMobileMonthPresentationComponent));
@@ -82,7 +82,7 @@ describe('CalendarMobileOverviewComponent', () => {
 
     it('should show CalendarMobileDayPresentation when a day is selected', () => {
         const someDay = dayjs('2025-05-15');
-        component.selectedDay.set(someDay);
+        component.selectedDate.set(someDay);
         fixture.detectChanges();
 
         const monthView = fixture.debugElement.query(By.directive(CalendarMobileMonthPresentationComponent));
@@ -93,96 +93,96 @@ describe('CalendarMobileOverviewComponent', () => {
     });
 
     it('goToPrevious should update month when no day selected', () => {
-        component.selectedDay.set(undefined);
+        component.selectedDate.set(undefined);
         fixture.detectChanges();
 
         const previousButton = fixture.debugElement.query(By.css('.chevron-button:first-child'));
         previousButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.firstDayOfCurrentMonth().isSame(firstDayOfCurrentMonth.subtract(1, 'month'), 'day')).toBeTrue();
+        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth.subtract(1, 'month'), 'day')).toBeTrue();
     });
 
     it('goToPrevious should update selectedDay and month if new day falls into other month', () => {
-        component.selectedDay.set(firstDayOfCurrentMonth);
+        component.selectedDate.set(firstDayOfCurrentMonth);
         fixture.detectChanges();
 
         const previousButton = fixture.debugElement.query(By.css('.chevron-button:first-child'));
         previousButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.selectedDay()?.isSame(firstDayOfCurrentMonth.subtract(1, 'day'), 'day')).toBeTrue();
-        expect(component.firstDayOfCurrentMonth().isSame(firstDayOfCurrentMonth.subtract(1, 'month'), 'day')).toBeTrue();
+        expect(component.selectedDate()?.isSame(firstDayOfCurrentMonth.subtract(1, 'day'), 'day')).toBeTrue();
+        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth.subtract(1, 'month'), 'day')).toBeTrue();
     });
 
     it('goToPrevious should update selectedDay if new day falls into same month', () => {
-        component.selectedDay.set(dayToSelect);
+        component.selectedDate.set(dayToSelect);
         fixture.detectChanges();
 
         const previousButton = fixture.debugElement.query(By.css('.chevron-button:first-child'));
         previousButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.selectedDay()?.isSame(dayToSelect.subtract(1, 'day'), 'day')).toBeTrue();
-        expect(component.firstDayOfCurrentMonth().isSame(firstDayOfCurrentMonth, 'day')).toBeTrue();
+        expect(component.selectedDate()?.isSame(dayToSelect.subtract(1, 'day'), 'day')).toBeTrue();
+        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth, 'day')).toBeTrue();
     });
 
     it('goToNext should update month when no day selected', () => {
-        component.selectedDay.set(undefined);
+        component.selectedDate.set(undefined);
         fixture.detectChanges();
 
         const nextButton = fixture.debugElement.query(By.css('.chevron-button:last-child'));
         nextButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.firstDayOfCurrentMonth().isSame(firstDayOfCurrentMonth.add(1, 'month'), 'day')).toBeTrue();
+        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth.add(1, 'month'), 'day')).toBeTrue();
     });
 
     it('goToNext should update selectedDay and month if new day falls into other month', () => {
-        component.selectedDay.set(firstDayOfCurrentMonth.endOf('month'));
+        component.selectedDate.set(firstDayOfCurrentMonth.endOf('month'));
         fixture.detectChanges();
 
         const nextButton = fixture.debugElement.query(By.css('.chevron-button:last-child'));
         nextButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.selectedDay()?.isSame(firstDayOfCurrentMonth.add(1, 'month'), 'day')).toBeTrue();
-        expect(component.firstDayOfCurrentMonth().isSame(firstDayOfCurrentMonth.add(1, 'month'), 'day')).toBeTrue();
+        expect(component.selectedDate()?.isSame(firstDayOfCurrentMonth.add(1, 'month'), 'day')).toBeTrue();
+        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth.add(1, 'month'), 'day')).toBeTrue();
     });
 
     it('goToNext should update selectedDay if new day falls into same month', () => {
-        component.selectedDay.set(dayToSelect);
+        component.selectedDate.set(dayToSelect);
         fixture.detectChanges();
 
         const nextButton = fixture.debugElement.query(By.css('.chevron-button:last-child'));
         nextButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.selectedDay()?.isSame(dayToSelect.add(1, 'day'), 'day')).toBeTrue();
-        expect(component.firstDayOfCurrentMonth().isSame(firstDayOfCurrentMonth, 'day')).toBeTrue();
+        expect(component.selectedDate()?.isSame(dayToSelect.add(1, 'day'), 'day')).toBeTrue();
+        expect(component.firstDateOfCurrentMonth().isSame(firstDayOfCurrentMonth, 'day')).toBeTrue();
     });
 
     it('goToToday should set selectedDay and month if a day was selected', () => {
-        component.selectedDay.set(dayToSelect);
+        component.selectedDate.set(dayToSelect);
         fixture.detectChanges();
 
         const todayButton = fixture.debugElement.query(By.css('.today-button'));
         todayButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.selectedDay()?.isSame(today, 'day')).toBeTrue();
-        expect(component.firstDayOfCurrentMonth().isSame(today.startOf('month'), 'day')).toBeTrue();
+        expect(component.selectedDate()?.isSame(today, 'day')).toBeTrue();
+        expect(component.firstDateOfCurrentMonth().isSame(today.startOf('month'), 'day')).toBeTrue();
     });
 
     it('goToToday should only update month when no day selected', () => {
-        component.selectedDay.set(undefined);
+        component.selectedDate.set(undefined);
         fixture.detectChanges();
 
         const todayButton = fixture.debugElement.query(By.css('.today-button'));
         todayButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(component.firstDayOfCurrentMonth().isSame(today.startOf('month'), 'day')).toBeTrue();
-        expect(component.selectedDay()).toBeUndefined();
+        expect(component.firstDateOfCurrentMonth().isSame(today.startOf('month'), 'day')).toBeTrue();
+        expect(component.selectedDate()).toBeUndefined();
     });
 });

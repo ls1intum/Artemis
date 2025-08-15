@@ -1,11 +1,13 @@
-import { AfterViewInit, Component, ElementRef, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, computed, input, signal, viewChild } from '@angular/core';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
 
+type Day = { date: Dayjs; isSelected: boolean; id: string };
+
 @Component({
-    selector: 'calendar-mobile-day-presentation',
+    selector: 'jhi-calendar-mobile-day-presentation',
     imports: [CalendarDayBadgeComponent, CalendarEventsPerDaySectionComponent],
     templateUrl: './calendar-mobile-day-presentation.component.html',
     styleUrl: './calendar-mobile-day-presentation.component.scss',
@@ -14,17 +16,18 @@ export class CalendarMobileDayPresentationComponent implements AfterViewInit {
     readonly utils = utils;
     private scrollContainer = viewChild<ElementRef>('scrollContainer');
 
-    selectedDay = input.required<Dayjs>();
+    selectedDate = input.required<Dayjs>();
     isEventSelected = signal<boolean>(false);
+    weekDays = computed<Day[]>(() => {
+        const selectedDate = this.selectedDate();
+        const dates = utils.getDatesInWeekOf(selectedDate);
+        return dates.map((date) => ({ date: date, isSelected: date.isSame(selectedDate, 'day'), id: utils.identify(date) }));
+    });
 
     ngAfterViewInit(): void {
         const container = this.scrollContainer();
         if (container) {
             container.nativeElement.scrollTop = 7.5 * CalendarEventsPerDaySectionComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL;
         }
-    }
-
-    isSelected(day: Dayjs): boolean {
-        return day.isSame(this.selectedDay(), 'day');
     }
 }

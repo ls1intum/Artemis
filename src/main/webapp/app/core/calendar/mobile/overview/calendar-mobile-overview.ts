@@ -14,7 +14,7 @@ import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } fro
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
-    selector: 'calendar-mobile-overview',
+    selector: 'jhi-calendar-mobile-overview',
     imports: [
         NgStyle,
         NgClass,
@@ -35,13 +35,13 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     private courseId?: number;
 
     readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
-    readonly utils = utils;
     readonly faXmark = faXmark;
     readonly faChevronRight = faChevronRight;
     readonly faChevronLeft = faChevronLeft;
 
-    firstDayOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
-    selectedDay = signal<Dayjs | undefined>(undefined);
+    firstDateOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
+    selectedDate = signal<Dayjs | undefined>(undefined);
+    weekdayNameKeys = utils.getWeekDayNameKeys();
 
     ngOnInit(): void {
         this.activatedRouteSubscription = this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
@@ -57,51 +57,51 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
         this.activatedRouteSubscription?.unsubscribe();
     }
 
-    selectDay(day: Dayjs): void {
-        this.selectedDay.set(day);
+    selectDate(date: Dayjs): void {
+        this.selectedDate.set(date);
     }
 
-    unselectDay() {
-        this.selectedDay.set(undefined);
+    unselectDate() {
+        this.selectedDate.set(undefined);
     }
 
     goToPrevious(): void {
-        if (this.selectedDay()) {
-            this.selectedDay.update((oldDay) => oldDay!.subtract(1, 'day'));
-            if (!this.selectedDay()!.isSame(this.firstDayOfCurrentMonth(), 'month')) {
-                this.firstDayOfCurrentMonth.update((oldDay) => oldDay.subtract(1, 'month'));
+        if (this.selectedDate()) {
+            this.selectedDate.update((oldDate) => oldDate!.subtract(1, 'day'));
+            if (!this.selectedDate()!.isSame(this.firstDateOfCurrentMonth(), 'month')) {
+                this.firstDateOfCurrentMonth.update((oldDate) => oldDate.subtract(1, 'month'));
             }
         } else {
-            this.firstDayOfCurrentMonth.update((oldDay) => oldDay.subtract(1, 'month'));
+            this.firstDateOfCurrentMonth.update((oldDate) => oldDate.subtract(1, 'month'));
         }
         this.loadEventsForCurrentMonth();
     }
 
     goToNext(): void {
-        if (this.selectedDay()) {
-            this.selectedDay.update((oldDay) => oldDay!.add(1, 'day'));
-            if (!this.selectedDay()!.isSame(this.firstDayOfCurrentMonth(), 'month')) {
-                this.firstDayOfCurrentMonth.update((oldDay) => oldDay.add(1, 'month'));
+        if (this.selectedDate()) {
+            this.selectedDate.update((oldDate) => oldDate!.add(1, 'day'));
+            if (!this.selectedDate()!.isSame(this.firstDateOfCurrentMonth(), 'month')) {
+                this.firstDateOfCurrentMonth.update((oldDate) => oldDate.add(1, 'month'));
             }
         } else {
-            this.firstDayOfCurrentMonth.update((oldDay) => oldDay.add(1, 'month'));
+            this.firstDateOfCurrentMonth.update((oldDate) => oldDate.add(1, 'month'));
         }
         this.loadEventsForCurrentMonth();
     }
 
     goToToday(): void {
         const today = dayjs();
-        if (this.selectedDay()) {
-            this.selectedDay.set(today);
-            this.firstDayOfCurrentMonth.set(today.startOf('month'));
+        if (this.selectedDate()) {
+            this.selectedDate.set(today);
+            this.firstDateOfCurrentMonth.set(today.startOf('month'));
         } else {
-            this.firstDayOfCurrentMonth.set(today.startOf('month'));
+            this.firstDateOfCurrentMonth.set(today.startOf('month'));
         }
         this.loadEventsForCurrentMonth();
     }
 
     private loadEventsForCurrentMonth(): void {
         if (!this.courseId) return;
-        this.calendarEventService.loadEventsForCurrentMonth(this.courseId, this.firstDayOfCurrentMonth()).subscribe();
+        this.calendarEventService.loadEventsForCurrentMonth(this.courseId, this.firstDateOfCurrentMonth()).subscribe();
     }
 }

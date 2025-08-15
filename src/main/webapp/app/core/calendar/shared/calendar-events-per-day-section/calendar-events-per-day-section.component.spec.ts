@@ -83,7 +83,7 @@ describe('CalendarEventsPerDaySectionComponent', () => {
         fixture = TestBed.createComponent(CalendarEventsPerDaySectionComponent);
         component = fixture.componentInstance;
 
-        fixture.componentRef.setInput('days', week);
+        fixture.componentRef.setInput('dates', week);
         fixture.detectChanges();
     });
 

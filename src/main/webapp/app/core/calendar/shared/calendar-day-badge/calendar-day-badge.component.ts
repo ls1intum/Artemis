@@ -3,7 +3,7 @@ import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
 
 @Component({
-    selector: 'calendar-day-badge',
+    selector: 'jhi-calendar-day-badge',
     standalone: true,
     imports: [NgClass],
     templateUrl: './calendar-day-badge.component.html',

@@ -16,7 +16,7 @@ import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 
 @Component({
-    selector: 'calendar-desktop-overview',
+    selector: 'jhi-calendar-desktop-overview',
     imports: [
         CalendarDesktopMonthPresentationComponent,
         CalendarDesktopWeekPresentationComponent,

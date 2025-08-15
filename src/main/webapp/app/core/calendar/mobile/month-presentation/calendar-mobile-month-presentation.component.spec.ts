@@ -63,7 +63,7 @@ describe('CalendarMobileMonthPresentation', () => {
         fixture = TestBed.createComponent(CalendarMobileMonthPresentationComponent);
         component = fixture.componentInstance;
 
-        fixture.componentRef.setInput('firstDayOfMonth', dayjs('2025-05-01'));
+        fixture.componentRef.setInput('firstDateOfMonth', dayjs('2025-05-01'));
         fixture.detectChanges();
     });
 
@@ -91,7 +91,7 @@ describe('CalendarMobileMonthPresentation', () => {
     });
 
     it('should emit selected day on click', () => {
-        const emitSpy = jest.spyOn(component.selectDay, 'emit');
+        const emitSpy = jest.spyOn(component.selectDate, 'emit');
 
         const dayCell = fixture.debugElement.query(By.css('.day'));
         expect(dayCell).toBeTruthy();
