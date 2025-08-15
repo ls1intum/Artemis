@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 import com.hazelcast.core.HazelcastInstance;
 
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Profile(PROFILE_CORE + " | (" + PROFILE_BUILDAGENT + " & !redis)")
 @Component
 @Lazy
 public class HazelcastHealthIndicator implements HealthIndicator {
