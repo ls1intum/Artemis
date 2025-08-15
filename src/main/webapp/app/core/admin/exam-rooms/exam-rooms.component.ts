@@ -129,17 +129,18 @@ export class ExamRoomsComponent {
         }
 
         const file = files[0];
-        if (file.name.endsWith('.zip')) {
-            if (file.size > MAX_FILE_SIZE) {
-                this.showErrorNotification('fileSizeTooBig', { MAX_FILE_SIZE: MAX_FILE_SIZE / 1024 ** 2 });
-                return;
-            }
-
-            this.selectedFile.set(file);
-        } else {
+        if (!file.name.endsWith('.zip')) {
             this.showErrorNotification('noZipFile');
             this.selectedFile.set(undefined);
+            return;
         }
+
+        if (file.size > MAX_FILE_SIZE) {
+            this.showErrorNotification('fileSizeTooBig', { MAX_FILE_SIZE: MAX_FILE_SIZE / 1024 ** 2 });
+            return;
+        }
+
+        this.selectedFile.set(file);
     }
 
     /**
