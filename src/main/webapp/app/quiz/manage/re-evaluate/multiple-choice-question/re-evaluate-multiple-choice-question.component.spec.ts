@@ -19,7 +19,6 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
         fixture = TestBed.createComponent(ReEvaluateMultipleChoiceQuestionComponent);
         component = fixture.componentInstance;
 
-        // Provide the @Inputs
         const question = {
             title: 'Test Question',
             answerOptions: [answer1],
@@ -32,8 +31,10 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
             answerOptions: [answerBackup],
         } as MultipleChoiceQuestion;
 
-        component.question = question;
-        component.backupQuestion = backupQuestion;
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('backupQuestion', backupQuestion);
+
+        fixture.detectChanges();
     });
 
     afterEach(() => {
@@ -41,7 +42,6 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
     });
 
     it('should initialize component', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
@@ -86,11 +86,11 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
             button.click();
             fixture.detectChanges();
 
-            expect(component.question.title).toBe(component.backupQuestion.title);
-            expect(component.question.text).toBe(component.backupQuestion.text);
-            expect(component.question.explanation).toBe(component.backupQuestion.explanation);
-            expect(component.question.hint).toBe(component.backupQuestion.hint);
-            expect(component.question.answerOptions).toEqual(component.backupQuestion.answerOptions);
+            expect(component.question.title).toBe(component.backupQuestion().title);
+            expect(component.question.text).toBe(component.backupQuestion().text);
+            expect(component.question.explanation).toBe(component.backupQuestion().explanation);
+            expect(component.question.hint).toBe(component.backupQuestion().hint);
+            expect(component.question.answerOptions).toEqual(component.backupQuestion().answerOptions);
         });
     });
 
@@ -105,7 +105,7 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
         component.resetAnswer(answer1);
         fixture.detectChanges();
 
-        expect(component.question.answerOptions).toEqual(component.backupQuestion.answerOptions);
+        expect(component.question.answerOptions).toEqual(component.backupQuestion().answerOptions);
     });
 
     it('should invalidate answers', () => {

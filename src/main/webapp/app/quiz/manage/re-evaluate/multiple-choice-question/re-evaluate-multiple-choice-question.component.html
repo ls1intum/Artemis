@@ -168,7 +168,7 @@
             </div>
         </div>
         <div cdkDropList (cdkDropListDropped)="onReorderAnswerOptionDrop($event)">
-            @for (answer of question.answerOptions; track answer) {
+            @for (answer of question.answerOptions; track answer.id) {
                 <div class="answer-border" cdkDrag>
                     <div class="question-options row align-items-start">
                         <div class="col-3 col-lg-1 drag-handle">
