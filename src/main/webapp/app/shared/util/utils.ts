@@ -178,6 +178,6 @@ export function removeSpecialCharacters(input: string): string {
     return input.replace(/[^a-zA-Z0-9]/g, '');
 }
 
-export function secondsInMilliseconds(seconds: number): number {
+export function secondsToMilliseconds(seconds: number): number {
     return seconds * 1000;
 }
