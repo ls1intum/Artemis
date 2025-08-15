@@ -15,6 +15,7 @@ import { Subject } from 'rxjs';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/shared/service/alert.service';
 
 // privately used interfaces, i.e., not sent from the server like this
 interface ExamRoomDTOExtended extends ExamRoomDTO {
@@ -36,6 +37,7 @@ export class ExamRoomsComponent {
     private sortService: SortService = inject(SortService);
     private deleteDialogService: DeleteDialogService = inject(DeleteDialogService);
     private translateService: TranslateService = inject(TranslateService);
+    private alertService: AlertService = inject(AlertService);
 
     // Writeable signals
     private selectedFile: WritableSignal<File | undefined> = signal(undefined);
@@ -69,7 +71,8 @@ export class ExamRoomsComponent {
     );
     distinctLayoutStrategyNames: Signal<string> = computed(() =>
         [...new Set(this.overview()?.newestUniqueExamRooms?.flatMap((examRoomDTO) => examRoomDTO.layoutStrategies?.map((layoutStrategy) => layoutStrategy.name)) ?? [])]
-            .toSorted()
+            .slice()
+            .sort()
             .join(', '),
     );
     hasExamRoomData: Signal<boolean> = computed(() => !!this.numberOfUniqueExamRooms());
@@ -88,7 +91,7 @@ export class ExamRoomsComponent {
     faSort = faSort;
 
     // Fields for working with SortDirective
-    sort_attribute: 'roomNumber' | 'name' | 'building' | 'maxCapacity' = 'roomNumber';
+    sortAttribute: 'roomNumber' | 'name' | 'building' | 'maxCapacity' = 'roomNumber';
     ascending: boolean = true;
 
     // Fields for working with DeletionDialogService
@@ -129,7 +132,7 @@ export class ExamRoomsComponent {
         }
 
         const file = files[0];
-        if (!file.name.endsWith('.zip')) {
+        if (!file.name.toLowerCase().endsWith('.zip')) {
             this.showErrorNotification('noZipFile');
             this.selectedFile.set(undefined);
             return;
@@ -137,6 +140,7 @@ export class ExamRoomsComponent {
 
         if (file.size > MAX_FILE_SIZE) {
             this.showErrorNotification('fileSizeTooBig', { MAX_FILE_SIZE: MAX_FILE_SIZE / 1024 ** 2 });
+            this.selectedFile.set(undefined);
             return;
         }
 
@@ -205,7 +209,7 @@ export class ExamRoomsComponent {
     }
 
     /**
-     * REST request to delete all outdated and unused exams.
+     * REST request to delete all outdated and unused exam rooms.
      * An exam room is outdated if there exists a newer entry of the same (number, name) combination.
      * An exam room is unused if it isn't connected to any exam.
      */
@@ -232,21 +236,21 @@ export class ExamRoomsComponent {
      */
     sortRows(): void {
         if (!this.hasExamRoomData()) return;
-        this.sortService.sortByProperty(this.examRoomData()!, this.sort_attribute, this.ascending);
+        this.sortService.sortByProperty(this.examRoomData()!, this.sortAttribute, this.ascending);
     }
 
     private showErrorNotification(translationKey: string, interpolationValues?: any, trailingText?: string, translatePath: string = this.baseTranslationPath): void {
         const errorMessage = this.translateService.instant(`${translatePath}.${translationKey}`, interpolationValues);
-        this.deleteDialogService.alertService.error(trailingText ? `${errorMessage}: "${trailingText}"` : errorMessage);
+        this.alertService.error(trailingText ? `${errorMessage}: "${trailingText}"` : errorMessage);
     }
 
     private getMaxCapacityOfExamRoom(examRoom: ExamRoomDTO): number {
-        return examRoom!.layoutStrategies?.map((layoutStrategy) => layoutStrategy.capacity ?? 0).reduce((max, curr) => Math.max(max, curr), 0) ?? 0;
+        return examRoom.layoutStrategies?.map((layoutStrategy) => layoutStrategy.capacity ?? 0).reduce((max, curr) => Math.max(max, curr), 0) ?? 0;
     }
 
     private getLayoutStrategyNames(examRoom: ExamRoomDTO): string {
         return (
-            examRoom!.layoutStrategies
+            examRoom.layoutStrategies
                 ?.map((layoutStrategy) => layoutStrategy.name)
                 .sort()
                 .join(', ') ?? ''

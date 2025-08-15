@@ -179,6 +179,10 @@ public class ExamRoomService {
             return null;
         }
 
+        if (examRoomInput.name == null || examRoomInput.building == null) {
+            throw new BadRequestAlertException("Room name and building are required fields", ENTITY_NAME, "roomNameAndBuildingRequired");
+        }
+
         /* Extract simple exam room fields */
         ExamRoom room = new ExamRoom();
         room.setRoomNumber(roomNumber);
