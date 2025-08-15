@@ -351,18 +351,30 @@ public class ExamRoomService {
     }
 
     private static ExamRoomUploadInformationDTO getExamRoomUploadInformationDTO(MultipartFile zipFile, long startTime, Set<ExamRoom> examRooms) {
-        long startTimeOfDTO = System.nanoTime();
 
+        String uploadDuration = formatDurationWithMillisPrecisionFromNanos(startTime);
         String uploadedFileName = zipFile.getOriginalFilename();
-        PeriodFormatter formatter = new PeriodFormatterBuilder().appendDays().appendSuffix("d ").appendHours().appendSuffix("h ").appendMinutes().appendSuffix("m ").appendSeconds()
-                .appendSuffix("s ").appendMillis().appendSuffix("ms").toFormatter();
-
-        String uploadDuration = formatter.print(Period.millis((int) Duration.ofNanos(startTimeOfDTO - startTime).toMillis()).normalizedStandard());
         Integer numberOfUploadedRooms = examRooms.size();
         Integer numberOfUploadedSeats = examRooms.stream().mapToInt(room -> room.getSeats().size()).sum();
         List<String> roomNames = examRooms.stream().map(ExamRoom::getName).toList();
 
         return new ExamRoomUploadInformationDTO(uploadedFileName, uploadDuration, numberOfUploadedRooms, numberOfUploadedSeats, roomNames);
+    }
+
+    /**
+     * Calculates the duration between the point in time this function was called, and the start time,
+     * that was previously obtained with {@link System#nanoTime}, and then returns a string representation
+     * that's always with millisecond precision.
+     *
+     * @param startTimeNanos the time of the first measurement in nanoseconds
+     * @return A formatted string of the duration between now and timeNanoStart
+     */
+    private static String formatDurationWithMillisPrecisionFromNanos(long startTimeNanos) {
+        final long currentTime = System.nanoTime();
+        PeriodFormatter formatter = new PeriodFormatterBuilder().appendDays().appendSuffix("d ").appendHours().appendSuffix("h ").appendMinutes().appendSuffix("m ").appendSeconds()
+                .appendSuffix("s ").appendMillis().appendSuffix("ms").toFormatter();
+
+        return formatter.print(Period.millis((int) Duration.ofNanos(currentTime - startTimeNanos).toMillis()).normalizedStandard());
     }
 
     /**
@@ -412,10 +424,8 @@ public class ExamRoomService {
         examRoomRepository.deleteAllById(outdatedAndUnusedExamRoomIds);
 
         log.debug("Deleting all unused and outdated exam rooms took {}", TimeLogUtil.formatDurationFrom(startTime));
-        PeriodFormatter formatter = new PeriodFormatterBuilder().appendDays().appendSuffix("d ").appendHours().appendSuffix("h ").appendMinutes().appendSuffix("m ").appendSeconds()
-                .appendSuffix("s ").appendMillis().appendSuffix("ms").toFormatter();
 
-        String duration = formatter.print(Period.millis((int) Duration.ofNanos(System.nanoTime() - startTime).toMillis()).normalizedStandard());
+        String duration = formatDurationWithMillisPrecisionFromNanos(startTime);
         return new ExamRoomDeletionSummaryDTO(duration, outdatedAndUnusedExamRoomIds.size());
     }
 
