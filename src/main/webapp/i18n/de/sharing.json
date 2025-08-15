@@ -8,6 +8,7 @@
             "noExercisesFound": "Keine importierten Aufgaben gefunden?",
             "exerciseToImport": "Bitte die zu importierende Aufgabe auswählen",
             "loginAsInstructorOrEditor": "Bitte melden dich als Instruktor oder Editor an!",
+            "coursesLoading": "Kurse werden geladen, bitte ein wenig Geduld",
             "error": {
                 "loadingStatus": "Sharing Profile ist nicht aktiv!",
                 "statusError": "Status der Sharing Platform kann nicht identifiziert werden",
@@ -15,7 +16,9 @@
                 "importError": "Das importieren der Aufgabe ist fehlgeschlagen",
                 "missingToken": "Token aus der Sharing-Plattform fehlt",
                 "noImportedExercises": "Keine importierten Aufgaben gefunden",
-                "loadingCourses": "Fehler beim Laden der Kurse"
+                "loadingCourses": "Fehler beim Laden der Kurse",
+                "loadingBasket": "Fehler beim Laden des Imports",
+                "instructorNeeded": "Du musst mindestens Instruktorrechte haben! Bitte melde Dich entsprechend an."
             }
         }
     },

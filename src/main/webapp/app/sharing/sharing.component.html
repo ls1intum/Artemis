@@ -9,7 +9,7 @@
         </thead>
         <tbody>
             <tr>
-                <td class="vertical-align-top">
+                <td>
                     <br />
                     <div>
                         @if (!shoppingBasket) {
@@ -46,7 +46,7 @@
                         }
                         <br />
                         <div>
-                            <span jhiTranslate="artemisApp.sharing.expiresAt" [translateValues]="{ expirationDate: formattedExpiryDate }"></span>
+                            <span class="message" jhiTranslate="artemisApp.sharing.expiresAt" [translateValues]="{ expirationDate: formattedExpiryDate }"></span>
                         </div>
                         @if (!isInstructorOrEditor) {
                             <div class="p-2">
@@ -55,53 +55,57 @@
                         }
                     </div>
                 </td>
-                <td class="vertical-align-top">
-                    <div>
-                        <table class="table table-striped course-table">
-                            <thead>
-                                <tr jhiSort [(predicate)]="sortColumn" [(ascending)]="reverseSorting" (sortChange)="sortRows()">
-                                    <th class="d-none d-md-table-cell"></th>
-                                    <th class="d-none d-md-table-cell"></th>
-                                    <th class="d-none d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id"></span><fa-icon [icon]="faSort" /></th>
-                                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.course.title"></span> <fa-icon [icon]="faSort" /></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for (course of courses; track course) {
-                                    <tr>
-                                        <td>
-                                            <input
-                                                id="{{ course.id }}"
-                                                [attr.aria-label]="'Select course: ' + course.title"
-                                                type="radio"
-                                                value="{{ course.id }}"
-                                                (change)="onCourseSelected(course)"
-                                                name="course"
-                                                title="{{ course.title }}"
-                                                ngModel
-                                                required
-                                            />
-                                        </td>
-                                        <td class="d-none d-md-table-cell">
-                                            <div [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR, width: '15px', height: '20px' }">&nbsp;</div>
-                                        </td>
-                                        <td class="d-none d-md-table-cell">
-                                            <a [routerLink]="['/course-management', course.id]">{{ course.id }}</a>
-                                        </td>
-                                        <td>
-                                            <a [routerLink]="['/course-management', course.id]" class="bold">{{ course.title }}</a
-                                            ><br />
-                                            @if (course.shortName) {
-                                                <span> <span class="bold" jhiTranslate="artemisApp.course.shortName"> </span>: {{ course.shortName }} </span>
-                                            }
-                                        </td>
+                <td>
+                    <div class="scroll-courses">
+                        @if (!coursesLoading) {
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr jhiSort [(predicate)]="sortColumn" [(ascending)]="reverseSorting" (sortChange)="sortRows()">
+                                        <th class="d-none d-md-table-cell"></th>
+                                        <th class="d-none d-md-table-cell"></th>
+                                        <th class="d-none d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id"></span><fa-icon [icon]="faSort" /></th>
+                                        <th jhiSortBy="title"><span jhiTranslate="artemisApp.course.title"></span> <fa-icon [icon]="faSort" /></th>
                                     </tr>
-                                }
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    @for (course of courses; track course) {
+                                        <tr>
+                                            <td>
+                                                <input
+                                                    id="{{ course.id }}"
+                                                    [attr.aria-label]="'Select course: ' + course.title"
+                                                    type="radio"
+                                                    value="{{ course.id }}"
+                                                    (change)="onCourseSelected(course)"
+                                                    name="course"
+                                                    title="{{ course.title }}"
+                                                    ngModel
+                                                    required
+                                                />
+                                            </td>
+                                            <td class="d-none d-md-table-cell">
+                                                <div [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR, width: '15px', height: '20px' }">&nbsp;</div>
+                                            </td>
+                                            <td class="d-none d-md-table-cell">
+                                                <a [routerLink]="['/course-management', course.id]">{{ course.id }}</a>
+                                            </td>
+                                            <td>
+                                                <a [routerLink]="['/course-management', course.id]" class="bold">{{ course.title }}</a
+                                                ><br />
+                                                @if (course.shortName) {
+                                                    <span> <span class="bold" jhiTranslate="artemisApp.course.shortName"> </span>: {{ course.shortName }} </span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        } @else {
+                            <span class="message" jhiTranslate="artemisApp.sharing.coursesLoading">courses are load. Please stand by.</span>
+                        }
                     </div>
                 </td>
-                <td class="vertical-align-top">
+                <td>
                     <br />
                     <button
                         [disabled]="!selectedCourse"

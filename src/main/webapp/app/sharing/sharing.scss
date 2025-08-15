@@ -2,3 +2,16 @@
     border-spacing: 50px 0;
     border-collapse: separate;
 }
+
+.sharing-table > tbody > tr > td {
+    vertical-align: top;
+}
+
+.message {
+    font-size: smaller;
+}
+
+.scroll-courses {
+    max-height: 800px; /* restrict height */
+    overflow-y: auto; /* vertical scrollbar if needed */
+}

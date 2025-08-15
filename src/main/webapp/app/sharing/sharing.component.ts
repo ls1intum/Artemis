@@ -31,6 +31,7 @@ import { take } from 'rxjs';
 })
 export class SharingComponent implements OnInit {
     courses: Course[];
+    coursesLoading = true;
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     reverseSorting: boolean = false;
@@ -69,9 +70,11 @@ export class SharingComponent implements OnInit {
      * loads all courses from courseService
      */
     loadAll() {
-        this.courseService.getWithUserStats(false).subscribe({
+        this.coursesLoading = true;
+        this.courseService.getCourseOverview({}).subscribe({
             next: (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!;
+                this.coursesLoading = false;
             },
             error: (res: HttpErrorResponse) => this.alertService.error('artemisApp.sharing.error.loadingCourses'),
         });
@@ -151,11 +154,17 @@ export class SharingComponent implements OnInit {
             this.sharingInfo.returnURL = qparams['returnURL'];
             this.sharingInfo.apiBaseURL = qparams['apiBaseURL'];
             this.sharingInfo.checksum = qparams['checksum'];
-
             if (this.sharingInfo.basketToken) {
-                this.loadSharedExercises();
+                this.userRouteAccessService.checkLogin([Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN], this.router.url).then((isLoggedIn) => {
+                    if (isLoggedIn) {
+                        this.loadSharedExercises();
+                    } else {
+                        this.alertService.error('artemisApp.sharing.error.instructorNeeded');
+                    }
+                });
             }
         });
+
         this.userRouteAccessService.checkLogin([Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN], this.router.url).then((isLoggedIn) => {
             if (isLoggedIn) {
                 this.isInstructorOrEditor = true;

@@ -36,8 +36,8 @@ describe('SharingComponent', () => {
             navigate: jest.fn().mockResolvedValue(true), // mock a successful navigation
         };
         TestBed.configureTestingModule({
-            imports: [MockModule(ReactiveFormsModule)],
-            declarations: [SharingComponent, TranslatePipeMock, MockDirective(TranslateDirective)],
+            imports: [SharingComponent, MockModule(ReactiveFormsModule)],
+            declarations: [TranslatePipeMock, MockDirective(TranslateDirective)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -91,7 +91,7 @@ describe('SharingComponent', () => {
 
         req.flush(testBasket);
 
-        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/with-user-stats');
+        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/course-management-overview');
 
         courseReq.flush(courses);
 
@@ -174,7 +174,7 @@ describe('SharingComponent', () => {
             url: basketUrl,
         });
 
-        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/with-user-stats');
+        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/course-management-overview');
 
         courseReq.flush(courses);
 
@@ -205,7 +205,7 @@ describe('SharingComponent', () => {
 
         req.flush(testBasket);
 
-        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/with-user-stats');
+        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/course-management-overview');
 
         const errorSpy = jest.spyOn(alertService, 'error');
 

@@ -6,15 +6,22 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.codeability.sharing.plugins.api.SharingPluginConfig;
+import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -36,6 +43,20 @@ public class SharingPlatformMockProvider {
     public static final String SHARING_BASEURL = "http://localhost:9001/api";
 
     public static final String SHARING_BASEURL_PLUGIN = SHARING_BASEURL + "/pluginIF/v0.1";
+
+    private MockRestServiceServer mockSharingServer;
+
+    @Autowired
+    @Qualifier("sharingRestTemplate")
+    private RestTemplate restTemplate;
+
+    public MockRestServiceServer getMockSharingServer() {
+        return mockSharingServer;
+    }
+
+    public String getTestSharingApiKey() {
+        return sharingApiKey;
+    }
 
     /**
      * the shared secret api key
@@ -67,6 +88,11 @@ public class SharingPlatformMockProvider {
         String content = result.getResponse().getContentAsString();
         SharingPluginConfig sharingPluginConfig = objectMapper.readerFor(SharingPluginConfig.class).readValue(content);
         assertThat(sharingPluginConfig.pluginName).isEqualTo("Artemis Sharing Connector");
+
+        MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
+        builder.ignoreExpectOrder(true);
+        mockSharingServer = builder.build();
+
         return sharingPluginConfig;
     }
 
@@ -75,6 +101,7 @@ public class SharingPlatformMockProvider {
      */
     public void reset() throws Exception {
         sharingConnectorService.shutDown();
+        mockSharingServer.reset();
     }
 
     /**
@@ -92,6 +119,41 @@ public class SharingPlatformMockProvider {
         else {
             reset();
         }
+    }
+
+    /**
+     * returns the correct sharing info checksum for parameters
+     *
+     * @param sharingApiKey the api key
+     * @param params        the parameters
+     * @return the correct sharing info checksum
+     */
+    public static String calculateCorrectChecksum(String sharingApiKey, String... params) {
+        Map<String, String> paramsToCheckSum = parseParamsToMap(params);
+        return SecretChecksumCalculator.calculateChecksum(paramsToCheckSum, sharingApiKey);
+    }
+
+    /**
+     * parses the parameter list, and returns them as a mapp
+     *
+     * @param params the parameter list (alternating name and value)
+     * @return a map of parameters
+     */
+    public static Map<String, String> parseParamsToMap(String... params) {
+        if (params == null) {
+            throw new IllegalArgumentException("params cannot be null");
+        }
+        Map<String, String> paramsMap = new HashMap<>();
+        assertThat(params.length % 2).isEqualTo(0).describedAs("paramList must contain even elements");
+        for (int i = 0; i < params.length; i = i + 2) {
+            String paramName = params[i];
+            String paramValue = params[i + 1];
+            if (paramName == null || paramValue == null) {
+                throw new IllegalArgumentException("Parameter names and values cannot be null");
+            }
+            paramsMap.put(paramName, paramValue);
+        }
+        return paramsMap;
     }
 
 }
