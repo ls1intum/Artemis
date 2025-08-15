@@ -27,6 +27,7 @@
                     "roomsDeleted": "Deleted Rooms:"
                 },
                 "examRoomOverview": {
+                    "loadError": "Error while trying to obtain the exam room overview",
                     "missing": "Overview currently unavailable",
                     "title": "Exam Room Overview",
                     "totalExamRooms": "Total exam rooms:",

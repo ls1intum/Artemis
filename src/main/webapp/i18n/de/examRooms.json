@@ -27,6 +27,7 @@
                     "roomsDeleted": "Gelöschte Räume:"
                 },
                 "examRoomOverview": {
+                    "loadError": "Beim Laden der Prüfungsraumübersicht ist ein Fehler aufgetreten",
                     "missing": "Übersicht zurzeit leider nicht verfügbar",
                     "title": "Prüfungsraumübersicht",
                     "totalExamRooms": "Gespeicherte Prüfungsräume:",

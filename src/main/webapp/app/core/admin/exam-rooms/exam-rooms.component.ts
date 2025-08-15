@@ -109,7 +109,7 @@ export class ExamRoomsComponent {
                 this.overview.set(examRoomAdminOverviewResponse.body as ExamRoomAdminOverviewDTO);
             },
             error: (errorResponse: HttpErrorResponse) => {
-                this.showErrorNotification('');
+                this.showErrorNotification('loadExamRoomOverviewError', {}, errorResponse.message);
                 this.overview.set(undefined);
             },
         });
