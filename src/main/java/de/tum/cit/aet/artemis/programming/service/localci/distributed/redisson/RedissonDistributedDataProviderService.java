@@ -50,7 +50,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
 
     @Override
     public boolean isInstanceRunning() {
-        return !redissonClient.isShutdown() && redissonClient.isShuttingDown();
+        return !redissonClient.isShutdown() && !redissonClient.isShuttingDown();
     }
 
     @Override

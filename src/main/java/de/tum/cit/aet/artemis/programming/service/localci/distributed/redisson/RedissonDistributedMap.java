@@ -9,6 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.redisson.api.RMap;
 import org.redisson.api.RTopic;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryAddedEvent;
@@ -19,6 +21,8 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.li
 
 public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
 
+    private static final Logger log = LoggerFactory.getLogger(RedissonDistributedMap.class);
+
     private final RMap<K, V> map;
 
     private final RTopic notificationTopic;
@@ -28,6 +32,15 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
     public RedissonDistributedMap(RMap<K, V> map, RTopic notificationTopic) {
         this.map = map;
         this.notificationTopic = notificationTopic;
+    }
+
+    private void publishSafely(Object event) {
+        try {
+            notificationTopic.publish(event);
+        }
+        catch (Exception ex) {
+            log.warn("Failed to publish map notification. Event: {} for map {}", event, map.getName(), ex);
+        }
     }
 
     @Override
@@ -44,10 +57,10 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
     public void put(K key, V value) {
         V oldValue = map.put(key, value);
         if (oldValue != null) {
-            notificationTopic.publish(MapItemEvent.updated(key, value, oldValue));
+            publishSafely(MapItemEvent.updated(key, value, oldValue));
         }
         else {
-            notificationTopic.publish(MapItemEvent.added(key, value));
+            publishSafely(MapItemEvent.added(key, value));
         }
     }
 
@@ -55,7 +68,7 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
     public V remove(K key) {
         V oldValue = map.remove(key);
         if (oldValue != null) {
-            notificationTopic.publish(MapItemEvent.removed(key, oldValue));
+            publishSafely(MapItemEvent.removed(key, oldValue));
         }
         return oldValue;
     }

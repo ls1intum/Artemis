@@ -34,11 +34,21 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
         this.notificationTopic = notificationTopic;
     }
 
+    private void publishSafely(Object event) {
+        try {
+            notificationTopic.publish(event);
+        }
+
+        catch (Exception ex) {
+            log.error("Failed to publish queue notification. Event: {} for Queue {}", event, queue.getName(), ex);
+        }
+    }
+
     @Override
     public boolean add(T item) {
         boolean added = queue.add(item);
         if (added) {
-            notificationTopic.publish(QueueItemEvent.added(item));
+            publishSafely(QueueItemEvent.added(item));
         }
         return added;
     }
@@ -47,7 +57,7 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
     public T poll() {
         var item = queue.poll();
         if (item != null) {
-            notificationTopic.publish(QueueItemEvent.removed(item));
+            publishSafely(QueueItemEvent.removed(item));
         }
         return item;
     }
@@ -63,7 +73,7 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
         queue.clear();
         // use the copy instead so we can notify after clearing the queue
         for (T item : queueCopy) {
-            notificationTopic.publish(QueueItemEvent.removed(item));
+            publishSafely(QueueItemEvent.removed(item));
         }
     }
 
@@ -72,7 +82,7 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
         boolean changed = queue.addAll(items);
         if (changed) {
             for (T item : items) {
-                notificationTopic.publish(QueueItemEvent.added(item));
+                publishSafely(QueueItemEvent.added(item));
             }
         }
         return changed;
@@ -82,7 +92,7 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
     public void removeAll(Collection<T> items) {
         queue.removeAll(items);
         for (T item : items) {
-            notificationTopic.publish(QueueItemEvent.removed(item));
+            publishSafely(QueueItemEvent.removed(item));
         }
     }
 
