@@ -127,7 +127,14 @@ public class UserCreationService {
         }
         User savedUser = saveUser(newUser);
 
-        learnerProfileApi.ifPresent(api -> api.createProfile(savedUser));
+        learnerProfileApi.ifPresent(api -> {
+            try {
+                api.createProfile(savedUser);
+            }
+            catch (Exception e) {
+                log.warn("Failed to create learner profile for user {}: {}", savedUser.getLogin(), e.getMessage());
+            }
+        });
 
         log.debug("Created user: {}", savedUser);
         return savedUser;
@@ -177,7 +184,14 @@ public class UserCreationService {
         }
         User savedUser = saveUser(user);
 
-        learnerProfileApi.ifPresent(api -> api.createProfile(savedUser));
+        learnerProfileApi.ifPresent(api -> {
+            try {
+                api.createProfile(savedUser);
+            }
+            catch (Exception e) {
+                log.warn("Failed to create learner profile for user {}: {}", savedUser.getLogin(), e.getMessage());
+            }
+        });
 
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(savedUser, password));
 
