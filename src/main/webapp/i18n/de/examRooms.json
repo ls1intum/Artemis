@@ -6,6 +6,7 @@
                 "title": "Prüfungsraum Management",
                 "uploadRoomData": "Prüfungsraumdaten hochladen",
                 "deleteAllExamRooms": "Lösche ALLE Prüfungsraumdaten",
+                "deleteAllExamRoomsQuestion": "Dies wird ALLE Prüfungsraumdaten löschen, inklusive derer die noch Examina zugeordnet sind. Sind Sie sicher, dass Sie fortfahren wollen?",
                 "deleteExamRoomsSafe": "Lösche veraltete Prüfungsraumdaten",
                 "uploadFailed": "Ups. Beim Verarbeiten der Räume ist etwas schiefgelaufen.",
                 "deleting": "Löschen...",

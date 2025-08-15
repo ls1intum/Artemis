@@ -1,4 +1,4 @@
-import { Component, Signal, WritableSignal, computed, effect, inject, signal } from '@angular/core';
+import { Component, EventEmitter, Signal, WritableSignal, computed, effect, inject, signal } from '@angular/core';
 import { ExamRoomAdminOverviewDTO, ExamRoomDTO, ExamRoomDeletionSummaryDTO, ExamRoomUploadInformationDTO } from 'app/core/admin/exam-rooms/exam-rooms.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
@@ -8,6 +8,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExamRoomsService } from 'app/core/admin/exam-rooms/exam-rooms.service';
+import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { Subject } from 'rxjs';
 
 // privately used interfaces, i.e., not sent from the server like this
 export interface ExamRoomDTOExtended extends ExamRoomDTO {
@@ -24,6 +28,7 @@ export class ExamRoomsComponent {
     // injected
     private examRoomsService: ExamRoomsService = inject(ExamRoomsService);
     private sortService: SortService = inject(SortService);
+    private deleteDialogService: DeleteDialogService = inject(DeleteDialogService);
 
     // Writeable signals
     selectedFile: WritableSignal<File | undefined> = signal(undefined);
@@ -77,9 +82,13 @@ export class ExamRoomsComponent {
     // Icons
     faSort = faSort;
 
-    // Attributes for working with SortDirective
+    // Fields for working with SortDirective
     sort_attribute: 'roomNumber' | 'name' | 'building' | 'maxCapacity' = 'roomNumber';
     ascending: boolean = true;
+
+    // Fields for working with DeletionDialogService
+    private dialogErrorSource = new Subject<string>();
+    dialogError = this.dialogErrorSource.asObservable();
 
     // Basically ngInit / constructor
     initEffect = effect(() => {
@@ -146,25 +155,34 @@ export class ExamRoomsComponent {
      * REST request to delete ALL exam room related data.
      */
     clearExamRooms(): void {
-        if (!confirm('Are you sure you want to delete ALL exam rooms? This action cannot be undone.')) {
-            return;
-        }
+        const deleteEmitter = new EventEmitter<{ [key: string]: boolean }>();
 
-        this.actionStatus.set('deleting');
+        deleteEmitter.subscribe(() => {
+            this.actionStatus.set('deleting');
+            this.examRoomsService.deleteAllExamRooms().subscribe({
+                next: () => {
+                    this.actionStatus.set('deletionSuccess');
+                    this.actionInformation.set(undefined);
+                    this.dialogErrorSource.next('');
+                },
+                error: (err) => {
+                    this.actionStatus.set('deletionError');
+                    this.dialogErrorSource.next(err.message);
+                },
+                complete: () => {
+                    this.loadExamRoomOverview();
+                },
+            });
+        });
 
-        this.examRoomsService.deleteAllExamRooms().subscribe({
-            next: () => {
-                this.actionStatus.set('deletionSuccess');
-                alert('All exam rooms deleted.');
-            },
-            error: (err) => {
-                this.actionStatus.set('deletionError');
-                alert('Failed to clear exam rooms: ' + err.message);
-            },
-            complete: () => {
-                this.actionInformation.set(undefined); // since this purges everything, we don't need a summary
-                this.loadExamRoomOverview();
-            },
+        this.deleteDialogService.openDeleteDialog({
+            deleteQuestion: 'artemisApp.examRooms.adminOverview.deleteAllExamRoomsQuestion',
+            buttonType: ButtonType.ERROR,
+            actionType: ActionType.Delete,
+            delete: deleteEmitter,
+            dialogError: this.dialogError,
+            requireConfirmationOnlyForAdditionalChecks: false,
+            translateValues: {},
         });
     }
 
