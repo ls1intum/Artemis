@@ -50,6 +50,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
     readonly QuizStatus = QuizStatus;
     readonly QuizMode = QuizMode;
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() quizExercises: QuizExercise[] = [];
     filteredQuizExercises: QuizExercise[] = [];
 

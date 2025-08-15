@@ -11,6 +11,7 @@ import {
     SimpleChanges,
     ViewEncapsulation,
     inject,
+    input,
     viewChild,
 } from '@angular/core';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
@@ -119,10 +120,23 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     private readonly backgroundImage = viewChild.required<SecuredImageComponent>('backgroundImage');
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() question: DragAndDropQuestion;
-    @Input() questionIndex: number;
+    readonly questionIndex = input<number>(undefined!);
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() reEvaluationInProgress: boolean;
-    @Input() filePool = new Map<string, { path?: string; file: File }>();
+    readonly filePool = input(
+        new Map<
+            string,
+            {
+                path?: string;
+                file: File;
+            }
+        >(),
+    );
 
     @Output() questionUpdated = new EventEmitter<void>();
     @Output() questionDeleted = new EventEmitter<void>();
@@ -203,11 +217,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             this.backupQuestion = cloneDeep(this.question);
         }
 
-        if (!this.filePool || this.filePool.size == 0) {
+        const filePool = this.filePool();
+        if (!filePool || filePool.size == 0) {
             return;
         }
 
-        this.filePool.forEach((value, fileName) => {
+        filePool.forEach((value, fileName) => {
             if (value.path && !this.filePreviewPaths.has(fileName)) {
                 this.filePreviewPaths.set(fileName, value.path);
             }
@@ -286,8 +301,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * are rendered immediately on the UI after importing
      */
     makeFileMapPreview() {
-        if (this.filePool) {
-            this.filePool.forEach((value, key) => {
+        const filePool = this.filePool();
+        if (filePool) {
+            filePool.forEach((value, key) => {
                 this.filePreviewPaths.set(key, URL.createObjectURL(value.file));
             });
             this.changeDetector.detectChanges();
@@ -310,7 +326,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             this.removeFile.emit(this.question.backgroundFilePath);
         }
 
-        const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(file.name), this.filePool);
+        const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(file.name), this.filePool());
         this.question.backgroundFilePath = fileName;
         this.filePreviewPaths.set(fileName, URL.createObjectURL(file));
         this.addNewFile.emit({ fileName, file });
@@ -555,7 +571,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     createImageDragItemFromFile(dragItemFile: File): DragItem {
-        const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(dragItemFile.name), this.filePool);
+        const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(dragItemFile.name), this.filePool());
         this.addNewFile.emit({ fileName, file: dragItemFile });
         this.filePreviewPaths.set(fileName, URL.createObjectURL(dragItemFile));
 
@@ -761,7 +777,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             return;
         }
 
-        const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(dragItemFile.name), this.filePool);
+        const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(dragItemFile.name), this.filePool());
 
         this.addNewFile.emit({ fileName, file: dragItemFile });
         this.filePreviewPaths.set(fileName, URL.createObjectURL(dragItemFile));

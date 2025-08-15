@@ -7,7 +7,7 @@
                     class="btn question-collapse"
                     (click)="isQuestionCollapsed = !isQuestionCollapsed"
                     [attr.aria-expanded]="!isQuestionCollapsed"
-                    [attr.aria-controls]="'collapseQuestion' + questionIndex"
+                    [attr.aria-controls]="'collapseQuestion' + questionIndex()"
                 >
                     <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
                 </button>
@@ -97,13 +97,13 @@
                     <div class="form-check custom-control custom-checkbox">
                         <input
                             type="checkbox"
-                            id="{{ 'cbRandomizeOrderMC' + questionIndex }}"
+                            id="{{ 'cbRandomizeOrderMC' + questionIndex() }}"
                             [(ngModel)]="question.randomizeOrder"
                             class="form-check-input custom-control-input"
                         />
                         <label
                             class="form-check-label custom-control-label"
-                            for="{{ 'cbRandomizeOrderMC' + questionIndex }}"
+                            for="{{ 'cbRandomizeOrderMC' + questionIndex() }}"
                             jhiTranslate="artemisApp.multipleChoiceQuestion.randomizeOrder"
                         ></label>
                     </div>

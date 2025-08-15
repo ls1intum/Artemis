@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -47,8 +47,10 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
 
     readonly visualChild = viewChild.required<MultipleChoiceVisualQuestionComponent>('visual');
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() question: MultipleChoiceQuestion;
-    @Input() questionIndex: number;
+    readonly questionIndex = input<number>(undefined!);
 
     @Output() questionUpdated = new EventEmitter();
     @Output() questionDeleted = new EventEmitter();

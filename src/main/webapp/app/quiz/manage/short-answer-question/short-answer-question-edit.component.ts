@@ -11,6 +11,7 @@ import {
     SimpleChanges,
     ViewEncapsulation,
     inject,
+    input,
     viewChild,
 } from '@angular/core';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
@@ -85,12 +86,17 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     shortAnswerQuestion: ShortAnswerQuestion;
 
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input()
     set question(quizQuestion: QuizQuestion) {
         this.shortAnswerQuestion = quizQuestion as ShortAnswerQuestion;
     }
 
-    @Input() questionIndex: number;
+    readonly questionIndex = input<number>(undefined!);
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() reEvaluationInProgress: boolean;
 
     @Output() questionUpdated = new EventEmitter();
