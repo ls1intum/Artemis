@@ -23,6 +23,7 @@
                      JOIN exercise e ON p.exercise_id = e.id
             WHERE p.discriminator = 'SP'
               AND e.discriminator = 'Q'
+              AND e.exercise_group_id IS NULL
               AND p.test_run = FALSE
               AND p.id = (SELECT MIN(p_inner.id)
                           FROM participation p_inner
@@ -72,7 +73,8 @@
                      JOIN exercise e ON p_test.exercise_id = e.id
             WHERE p_test.test_run = TRUE
               AND p_test.discriminator = 'SP'
-              AND e.discriminator = 'Q';
+              AND e.discriminator = 'Q'
+              AND e.exercise_group_id IS NULL;
 
             UPDATE submission s
             SET participation_id = trm.first_normal_participation_id FROM temp_rollback_mapping trm
