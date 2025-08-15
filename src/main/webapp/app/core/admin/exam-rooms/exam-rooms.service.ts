@@ -12,8 +12,8 @@ export class ExamRoomsService {
     /**
      * Send a GET request to retrieve an overview over the stored exam rooms
      */
-    getAdminOverview(): Observable<ExamRoomAdminOverviewDTO> {
-        return this.http.get<ExamRoomAdminOverviewDTO>(`${this.baseUrl}/admin-overview`);
+    getAdminOverview(): Observable<HttpResponse<ExamRoomAdminOverviewDTO>> {
+        return this.http.get<ExamRoomAdminOverviewDTO>(`${this.baseUrl}/admin-overview`, { observe: 'response' });
     }
 
     /**

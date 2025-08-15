@@ -17,9 +17,6 @@
     @if (isUploading()) {
         <div jhiTranslate="entity.action.saving" class="text info"></div>
     }
-    @if (hasUploadFailed()) {
-        <div jhiTranslate="artemisApp.examRooms.adminOverview.uploadFailed" class="text error"></div>
-    }
     @if (hasUploadInformation()) {
         <p></p>
         <div class="card">
@@ -34,9 +31,6 @@
     }
     @if (isDeleting()) {
         <div jhiTranslate="artemisApp.examRooms.adminOverview.deleting" class="text info"></div>
-    }
-    @if (hasDeletionFailed()) {
-        <div jhiTranslate="artemisApp.examRooms.adminOverview.deletionFailed" class="text error"></div>
     }
     @if (hasDeletionInformation()) {
         <p></p>

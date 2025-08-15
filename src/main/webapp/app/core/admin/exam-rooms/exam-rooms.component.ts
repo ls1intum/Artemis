@@ -12,9 +12,12 @@ import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dia
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { Subject } from 'rxjs';
+import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { TranslateService } from '@ngx-translate/core';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 // privately used interfaces, i.e., not sent from the server like this
-export interface ExamRoomDTOExtended extends ExamRoomDTO {
+interface ExamRoomDTOExtended extends ExamRoomDTO {
     maxCapacity: number;
     layoutStrategyNames: string;
 }
@@ -25,15 +28,19 @@ export interface ExamRoomDTOExtended extends ExamRoomDTO {
     imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ExamRoomsComponent {
+    // readonly
+    private readonly baseTranslationPath = 'artemisApp.examRooms.adminOverview';
+
     // injected
     private examRoomsService: ExamRoomsService = inject(ExamRoomsService);
     private sortService: SortService = inject(SortService);
     private deleteDialogService: DeleteDialogService = inject(DeleteDialogService);
+    private translateService: TranslateService = inject(TranslateService);
 
     // Writeable signals
-    selectedFile: WritableSignal<File | undefined> = signal(undefined);
-    actionStatus: WritableSignal<'uploading' | 'uploadSuccess' | 'uploadError' | 'deleting' | 'deletionSuccess' | 'deletionError' | undefined> = signal(undefined);
-    actionInformation: WritableSignal<ExamRoomUploadInformationDTO | ExamRoomDeletionSummaryDTO | undefined> = signal(undefined);
+    private selectedFile: WritableSignal<File | undefined> = signal(undefined);
+    private actionStatus: WritableSignal<'uploading' | 'uploadSuccess' | 'deleting' | 'deletionSuccess' | undefined> = signal(undefined);
+    private actionInformation: WritableSignal<ExamRoomUploadInformationDTO | ExamRoomDeletionSummaryDTO | undefined> = signal(undefined);
     overview: WritableSignal<ExamRoomAdminOverviewDTO | undefined> = signal(undefined);
 
     // Computed signals
@@ -42,10 +49,8 @@ export class ExamRoomsComponent {
     canUpload: Signal<boolean> = computed(() => this.hasSelectedFile() && !this.isUploading());
     isUploading: Signal<boolean> = computed(() => this.actionStatus() === 'uploading');
     hasUploadInformation: Signal<boolean> = computed(() => this.actionStatus() === 'uploadSuccess' && !!this.uploadInformation());
-    hasUploadFailed: Signal<boolean> = computed(() => this.actionStatus() === 'uploadError');
     isDeleting: Signal<boolean> = computed(() => this.actionStatus() === 'deleting');
     hasDeletionInformation: Signal<boolean> = computed(() => this.actionStatus() === 'deletionSuccess' && !!this.deletionInformation());
-    hasDeletionFailed: Signal<boolean> = computed(() => this.actionStatus() === 'deletionError');
     uploadInformation: Signal<ExamRoomUploadInformationDTO | undefined> = computed(() => this.actionInformation() as ExamRoomUploadInformationDTO);
     deletionInformation: Signal<ExamRoomDeletionSummaryDTO | undefined> = computed(() => this.actionInformation() as ExamRoomDeletionSummaryDTO);
     hasOverview: Signal<boolean> = computed(() => !!this.overview());
@@ -88,7 +93,7 @@ export class ExamRoomsComponent {
 
     // Fields for working with DeletionDialogService
     private dialogErrorSource = new Subject<string>();
-    dialogError = this.dialogErrorSource.asObservable();
+    private dialogError = this.dialogErrorSource.asObservable();
 
     // Basically ngInit / constructor
     initEffect = effect(() => {
@@ -100,10 +105,11 @@ export class ExamRoomsComponent {
      */
     loadExamRoomOverview(): void {
         this.examRoomsService.getAdminOverview().subscribe({
-            next: (examRoomAdminOverview) => {
-                this.overview.set(examRoomAdminOverview);
+            next: (examRoomAdminOverviewResponse: HttpResponse<ExamRoomAdminOverviewDTO>) => {
+                this.overview.set(examRoomAdminOverviewResponse.body as ExamRoomAdminOverviewDTO);
             },
-            error: () => {
+            error: (errorResponse: HttpErrorResponse) => {
+                this.showErrorNotification('');
                 this.overview.set(undefined);
             },
         });
@@ -115,14 +121,24 @@ export class ExamRoomsComponent {
      * @param event A file selection event
      */
     onFileSelectedAcceptZip(event: Event): void {
-        const input = event.target as HTMLInputElement;
-        if (input.files && input.files.length > 0) {
-            const file = input.files[0];
-            if (file.name.endsWith('.zip')) {
-                this.selectedFile.set(file);
-            } else {
-                this.selectedFile.set(undefined);
+        const { files } = event.target as HTMLInputElement;
+        if (!files || files.length <= 0) {
+            this.showErrorNotification('invalidFile');
+            this.selectedFile.set(undefined);
+            return;
+        }
+
+        const file = files[0];
+        if (file.name.endsWith('.zip')) {
+            if (file.size > MAX_FILE_SIZE) {
+                this.showErrorNotification('fileSizeTooBig', { MAX_FILE_SIZE: MAX_FILE_SIZE / 1024 ** 2 });
+                return;
             }
+
+            this.selectedFile.set(file);
+        } else {
+            this.showErrorNotification('noZipFile');
+            this.selectedFile.set(undefined);
         }
     }
 
@@ -137,13 +153,14 @@ export class ExamRoomsComponent {
         this.actionStatus.set('uploading');
 
         this.examRoomsService.uploadRoomDataZipFile(file).subscribe({
-            next: (uploadInformationResponse) => {
+            next: (uploadInformationResponse: HttpResponse<ExamRoomUploadInformationDTO>) => {
                 this.actionStatus.set('uploadSuccess');
                 this.selectedFile.set(undefined);
                 this.actionInformation.set(uploadInformationResponse.body as ExamRoomUploadInformationDTO);
             },
-            error: () => {
-                this.actionStatus.set('uploadError');
+            error: (errorResponse: HttpErrorResponse) => {
+                this.showErrorNotification('uploadError', {}, errorResponse.message);
+                this.actionStatus.set(undefined);
             },
             complete: () => {
                 this.loadExamRoomOverview();
@@ -163,20 +180,20 @@ export class ExamRoomsComponent {
                 next: () => {
                     this.actionStatus.set('deletionSuccess');
                     this.actionInformation.set(undefined);
-                    this.dialogErrorSource.next('');
                 },
-                error: (err) => {
-                    this.actionStatus.set('deletionError');
-                    this.dialogErrorSource.next(err.message);
+                error: (errorResponse: HttpErrorResponse) => {
+                    this.showErrorNotification('deletionError', {}, errorResponse.message);
+                    this.actionStatus.set(undefined);
                 },
                 complete: () => {
+                    this.dialogErrorSource.next(''); // this.showErrorNotification is easier to use
                     this.loadExamRoomOverview();
                 },
             });
         });
 
         this.deleteDialogService.openDeleteDialog({
-            deleteQuestion: 'artemisApp.examRooms.adminOverview.deleteAllExamRoomsQuestion',
+            deleteQuestion: `${this.baseTranslationPath}.deleteAllExamRoomsQuestion`,
             buttonType: ButtonType.ERROR,
             actionType: ActionType.Delete,
             delete: deleteEmitter,
@@ -195,12 +212,13 @@ export class ExamRoomsComponent {
         this.actionStatus.set('deleting');
 
         this.examRoomsService.deleteOutdatedAndUnusedExamRooms().subscribe({
-            next: (examRoomDeletionSummaryResponse) => {
+            next: (examRoomDeletionSummaryResponse: HttpResponse<ExamRoomDeletionSummaryDTO>) => {
                 this.actionInformation.set(examRoomDeletionSummaryResponse.body as ExamRoomDeletionSummaryDTO);
                 this.actionStatus.set('deletionSuccess');
             },
-            error: () => {
-                this.actionStatus.set('deletionError');
+            error: (errorResponse: HttpErrorResponse) => {
+                this.showErrorNotification('deletionError', {}, errorResponse.message);
+                this.actionStatus.set(undefined);
             },
             complete: () => {
                 this.loadExamRoomOverview();
@@ -214,6 +232,11 @@ export class ExamRoomsComponent {
     sortRows(): void {
         if (!this.hasExamRoomData()) return;
         this.sortService.sortByProperty(this.examRoomData()!, this.sort_attribute, this.ascending);
+    }
+
+    private showErrorNotification(translationKey: string, interpolationValues?: any, trailingText?: string, translatePath: string = this.baseTranslationPath): void {
+        const errorMessage = this.translateService.instant(`${translatePath}.${translationKey}`, interpolationValues);
+        this.deleteDialogService.alertService.error(trailingText ? `${errorMessage}: "${trailingText}"` : errorMessage);
     }
 
     private getMaxCapacityOfExamRoom(examRoom: ExamRoomDTO): number {
