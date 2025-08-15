@@ -8,12 +8,15 @@ import java.util.Set;
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
+import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.CourseLearnerProfileDTO;
+import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 
@@ -24,6 +27,9 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     private static final int NUMBER_OF_STUDENTS = 1;
 
     private static final String STUDENT1_OF_COURSE = TEST_PREFIX + "student1";
+
+    @Autowired
+    private LearnerProfileRepository learnerProfileRepository;
 
     @BeforeEach
     void setupTestScenario() {
@@ -102,5 +108,36 @@ class LearnerProfileIntegrationTest extends AbstractAtlasIntegrationTest {
     void shouldFetchLearnerProfileLazily() {
         User user = userTestRepository.getUserWithGroupsAndAuthorities(STUDENT1_OF_COURSE);
         assertThat(Hibernate.isInitialized(user.getLearnerProfile())).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+    void shouldNotCreateDuplicateLearnerProfiles() throws Exception {
+        // First, get the learner profile to ensure it exists
+        request.get("/api/atlas/learner-profile", HttpStatus.OK, Object.class);
+
+        // Count the number of learner profiles before calling course learner profiles
+        long learnerProfileCountBefore = learnerProfileRepository.count();
+
+        // Call the course learner profiles endpoint which should not create a duplicate
+        request.getSet("/api/atlas/course-learner-profiles", HttpStatus.OK, CourseLearnerProfileDTO.class);
+
+        // Count the number of learner profiles after
+        long learnerProfileCountAfter = learnerProfileRepository.count();
+
+        // The count should remain the same - no duplicate should be created
+        assertThat(learnerProfileCountAfter).isEqualTo(learnerProfileCountBefore);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+    void shouldCreateLearnerProfileDuringUserCreation() throws Exception {
+        // This test verifies that learner profiles are created when users are created
+        // The user should already have a learner profile from the setup
+        User user = userTestRepository.getUserWithGroupsAndAuthorities(STUDENT1_OF_COURSE);
+        LearnerProfile existingProfile = learnerProfileRepository.findByUserElseThrow(user);
+
+        assertThat(existingProfile).isNotNull();
+        assertThat(existingProfile.getUser()).isEqualTo(user);
     }
 }

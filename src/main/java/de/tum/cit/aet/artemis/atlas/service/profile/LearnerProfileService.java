@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service.profile;
 
+import java.util.Optional;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -26,11 +28,18 @@ public class LearnerProfileService {
 
     /**
      * Create a learner profile for a user and saves it in the database
+     * If a profile already exists for the user, returns the existing profile
      *
      * @param user the user for which the profile is created
      * @return Saved LearnerProfile
      */
     public LearnerProfile createProfile(User user) {
+        // Check if profile already exists
+        Optional<LearnerProfile> existingProfile = learnerProfileRepository.findByUser(user);
+        if (existingProfile.isPresent()) {
+            return existingProfile.get();
+        }
+
         var profile = new LearnerProfile();
         profile.setUser(user);
         user.setLearnerProfile(profile);

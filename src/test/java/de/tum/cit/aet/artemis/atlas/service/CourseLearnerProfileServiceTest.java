@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -105,5 +107,65 @@ class CourseLearnerProfileServiceTest {
 
         courseLearnerProfileService.deleteCourseLearnerProfile(course, user);
         verify(courseLearnerProfileRepository).deleteByCourseAndUser(course, user);
+    }
+
+    @Test
+    void createCourseLearnerProfile_shouldNotCreateDuplicateLearnerProfile() {
+        Course course = new Course();
+        course.setId(1L);
+        User user = new User();
+        user.setId(2L);
+
+        // User already has a learner profile
+        LearnerProfile existingLearnerProfile = new LearnerProfile();
+        existingLearnerProfile.setId(10L);
+        existingLearnerProfile.setUser(user);
+        user.setLearnerProfile(existingLearnerProfile);
+
+        when(learnerProfileRepository.findByUser(user)).thenReturn(Optional.of(existingLearnerProfile));
+        when(learnerProfileRepository.findByUserElseThrow(user)).thenReturn(existingLearnerProfile);
+        when(courseLearnerProfileRepository.save(any(CourseLearnerProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CourseLearnerProfile result = courseLearnerProfileService.createCourseLearnerProfile(course, user);
+
+        // Verify that no new learner profile was created
+        verify(learnerProfileService, never()).createProfile(user);
+        verify(learnerProfileRepository).findByUser(user);
+        verify(learnerProfileRepository).findByUserElseThrow(user);
+        verify(courseLearnerProfileRepository).save(any(CourseLearnerProfile.class));
+
+        assertThat(result).isNotNull();
+        assertThat(result.getLearnerProfile()).isEqualTo(existingLearnerProfile);
+    }
+
+    @Test
+    void createCourseLearnerProfile_shouldCreateLearnerProfileIfNotExists() {
+        Course course = new Course();
+        course.setId(1L);
+        User user = new User();
+        user.setId(2L);
+
+        // User doesn't have a learner profile
+        when(learnerProfileRepository.findByUser(user)).thenReturn(Optional.empty());
+
+        LearnerProfile newLearnerProfile = new LearnerProfile();
+        newLearnerProfile.setId(10L);
+        newLearnerProfile.setUser(user);
+        user.setLearnerProfile(newLearnerProfile);
+
+        when(learnerProfileService.createProfile(user)).thenReturn(newLearnerProfile);
+        when(learnerProfileRepository.findByUserElseThrow(user)).thenReturn(newLearnerProfile);
+        when(courseLearnerProfileRepository.save(any(CourseLearnerProfile.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CourseLearnerProfile result = courseLearnerProfileService.createCourseLearnerProfile(course, user);
+
+        // Verify that a new learner profile was created
+        verify(learnerProfileService).createProfile(user);
+        verify(learnerProfileRepository).findByUser(user);
+        verify(learnerProfileRepository).findByUserElseThrow(user);
+        verify(courseLearnerProfileRepository).save(any(CourseLearnerProfile.class));
+
+        assertThat(result).isNotNull();
+        assertThat(result.getLearnerProfile()).isEqualTo(newLearnerProfile);
     }
 }
