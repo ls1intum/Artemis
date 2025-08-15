@@ -9,7 +9,6 @@ import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from './calendar-event-filter.component';
 
 describe('CalendarEventFilterComponent', () => {
-    let component: CalendarEventFilterComponent;
     let fixture: ComponentFixture<CalendarEventFilterComponent>;
     let mockService: jest.Mocked<CalendarEventService>;
 
@@ -35,7 +34,6 @@ describe('CalendarEventFilterComponent', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(CalendarEventFilterComponent);
-        component = fixture.componentInstance;
     });
 
     describe('desktop variant', () => {
