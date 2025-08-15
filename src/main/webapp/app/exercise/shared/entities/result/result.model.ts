@@ -5,6 +5,7 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 export class Result implements BaseEntity {
     public id?: number;
@@ -46,4 +47,17 @@ export class Result implements BaseEntity {
     public static hasNonEmptyAssessmentNote(that: Result | undefined): boolean {
         return that ? !!that.assessmentNote?.note?.length : false;
     }
+}
+/**
+ * Checks whether the given result is a practice result.
+ * A practice result is a result that belongs to a test run of a student participation.
+ * @param result the result to check
+ * @return true if the result is a practice result, false otherwise
+ */
+export function isPracticeResult(result: Result | undefined): boolean {
+    let studentParticipation: StudentParticipation | undefined;
+    if (result?.submission?.participation instanceof StudentParticipation) {
+        studentParticipation = result.submission.participation as StudentParticipation;
+    }
+    return studentParticipation?.testRun ?? false;
 }
