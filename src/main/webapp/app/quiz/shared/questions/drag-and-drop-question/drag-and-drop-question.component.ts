@@ -208,14 +208,14 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
                 this.mappings().push(new DragAndDropMapping(oldDragItem, oldDropLocation));
             }
         } else {
-            const lengthBefore = this.mappings.length;
+            const lengthBefore = this.mappings().length;
             // remove existing mapping that contains the drag item
             this.mappings.set(
                 this.mappings().filter(function (mapping) {
                     return !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem);
                 }, this),
             );
-            if (this.mappings.length === lengthBefore) {
+            if (this.mappings().length === lengthBefore) {
                 // nothing changed => return here to skip calling this.onMappingUpdate()
                 return;
             }
@@ -223,8 +223,9 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
 
         this.mappingsChange.emit(this.mappings());
         /** Only execute the onMappingUpdate function if we received such input **/
-        if (this.onMappingUpdate) {
-            this.onMappingUpdate();
+        const onMappingUpdateFn = this.onMappingUpdate();
+        if (onMappingUpdateFn) {
+            onMappingUpdateFn();
         }
     }
 
@@ -235,7 +236,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
      * @return the mapped drag item, or undefined, if no drag item has been mapped to this location
      */
     dragItemForDropLocation(dropLocation: DropLocation) {
-        if (this.mappings) {
+        if (this.mappings()) {
             const mapping = this.mappings().find((localMapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(localMapping.dropLocation, dropLocation));
             if (mapping) {
                 return mapping.dragItem;
