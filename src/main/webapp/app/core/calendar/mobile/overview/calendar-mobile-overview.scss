@@ -15,7 +15,7 @@
             line-height: 0;
 
             .today-label {
-                height: 1rem;
+                height: 1.25rem;
                 line-height: 1rem;
                 display: flex;
                 justify-content: center;
@@ -23,8 +23,8 @@
             }
 
             .chevron {
-                width: 1rem;
-                height: 1rem;
+                width: 1.25rem;
+                height: 1.25rem;
                 display: flex;
                 justify-content: center;
                 align-items: center;
@@ -44,9 +44,10 @@
         }
     }
 
-    .no-style-button {
+    .close-button {
         all: unset;
         cursor: pointer;
+        color: var(--secondary);
     }
 
     .header {
