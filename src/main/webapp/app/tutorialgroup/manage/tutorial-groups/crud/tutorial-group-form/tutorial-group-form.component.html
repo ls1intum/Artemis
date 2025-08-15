@@ -170,7 +170,7 @@
                     <div class="alert alert-danger" role="alert" jhiTranslate="artemisApp.forms.scheduleForm.scheduleChangeWarning"></div>
                 }
                 <hr />
-                <jhi-schedule-form [hidden]="!configureSchedule" #scheduleForm [parentFormGroup]="form" [course]="course" />
+                <jhi-schedule-form [hidden]="!configureSchedule" #scheduleForm [parentFormGroup]="form" [course]="course()" />
                 <hr [hidden]="!configureSchedule" />
                 <!-- Optional Notification Message -->
                 @if (notificationControl) {

@@ -1,6 +1,8 @@
 import { TestBed, fakeAsync } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
@@ -8,8 +10,6 @@ import { TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Params, Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
@@ -47,9 +47,9 @@ describe('TextAssessmentAnalytics Service', () => {
                         },
                     },
                 },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ActivatedRoute, useValue: route() },
             ],

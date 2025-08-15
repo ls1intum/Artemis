@@ -9,20 +9,18 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.sshd.server.session.ServerSession;
-import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -98,7 +96,7 @@ class LocalVCServletServiceTest {
     private LocalVCRepositoryUri testRepositoryUri;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         testUser = new User();
         testUser.setId(1L);
         testUser.setLogin("testuser");
@@ -121,15 +119,10 @@ class LocalVCServletServiceTest {
         // Use lenient() to avoid unnecessary stubbing errors for tests that don't use this mock
         lenient().when(testRepositoryUri.getRelativeRepositoryPath()).thenReturn(java.nio.file.Path.of("test/repo"));
 
-        // Setup mock repositories map to avoid NullPointerException in getCommitHash tests
-        Map<String, Repository> mockRepositories = new HashMap<>();
-        // Add a mock repository for the test repository URI
-        Repository mockRepository = mock(Repository.class);
-        mockRepositories.put("test/repo", mockRepository);
-        ReflectionTestUtils.setField(localVCServletService, "repositories", mockRepositories);
-
         // Setup the VcsAccessLogService as an Optional containing the mock
         ReflectionTestUtils.setField(localVCServletService, "vcsAccessLogService", Optional.of(vcsAccessLogService));
+
+        ReflectionTestUtils.setField(localVCServletService, "localVCBasePath", java.nio.file.Path.of("/tmp/test-repos"));
     }
 
     @Test
@@ -187,7 +180,7 @@ class LocalVCServletServiceTest {
     @Test
     void testResolveAuthenticationMechanismFromSessionOrRequest_withRequestAndMissingHeader() throws Exception {
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER)).thenReturn(null);
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(null);
 
         AuthenticationContext.Request context = new AuthenticationContext.Request(request);
 
@@ -205,7 +198,7 @@ class LocalVCServletServiceTest {
     void testResolveAuthenticationMechanismFromSessionOrRequest_withRequestAndValidHeader() throws Exception {
         HttpServletRequest request = mock(HttpServletRequest.class);
         String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString("user:password".getBytes());
-        when(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER)).thenReturn(authHeader);
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authHeader);
 
         AuthenticationContext.Request context = new AuthenticationContext.Request(request);
 
@@ -225,7 +218,7 @@ class LocalVCServletServiceTest {
         // Create a valid token with the correct prefix and length (50 characters total)
         String token = "vcpat-" + "a".repeat(44); // 6 + 44 = 50 characters total
         String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("user:" + token).getBytes());
-        when(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER)).thenReturn(authHeader);
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authHeader);
 
         testUser.setVcsAccessToken(token);
 

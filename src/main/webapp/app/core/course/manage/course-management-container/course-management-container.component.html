@@ -52,7 +52,9 @@
                                     (delete)="deleteCourse(course()!.id!)"
                                     [dialogError]="dialogError$"
                                     style="margin-right: 0 !important"
-                                ></button>
+                                >
+                                    <fa-icon [icon]="faTrash" />
+                                </button>
                             }
                         </div>
                     </jhi-course-title-bar>
@@ -62,7 +64,8 @@
                         class="course-body-container mx-2"
                         id="course-body-container"
                         [ngClass]="{
-                            'module-bg p-3 rounded rounded-3 scrollable-content': !hasSidebar(),
+                            'module-bg rounded rounded-3 scrollable-content': !hasSidebar(),
+                            'p-3': !hasSidebar() && !removePadding,
                             'content-height-dev': !isProduction || isTestServer,
                         }"
                     >

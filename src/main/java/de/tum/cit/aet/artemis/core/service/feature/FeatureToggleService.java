@@ -10,10 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
@@ -57,10 +55,22 @@ public class FeatureToggleService {
     }
 
     /**
+     * Lazy init: Retrieves the Hazelcast map that stores features
+     * If the map is not initialized, it initializes it.
+     *
+     * @return The map of features
+     */
+    private Map<Feature, Boolean> getFeaturesMap() {
+        if (this.features == null) {
+            initFeatures();
+        }
+        return this.features;
+    }
+
+    /**
      * Initialize relevant data from hazelcast
      */
-    @EventListener(ApplicationReadyEvent.class)
-    public void init() {
+    private void initFeatures() {
         // The map will automatically be distributed between all instances by Hazelcast.
         features = hazelcastInstance.getMap("features");
 
@@ -88,7 +98,7 @@ public class FeatureToggleService {
      */
     public void enableFeature(Feature feature) {
         getFeatures().ifPresent(features -> {
-            features.put(feature, true);
+            getFeaturesMap().put(feature, true);
             sendUpdate();
         });
     }
@@ -100,7 +110,7 @@ public class FeatureToggleService {
      */
     public void disableFeature(Feature feature) {
         getFeatures().ifPresent(features -> {
-            features.put(feature, false);
+            getFeaturesMap().put(feature, false);
             sendUpdate();
         });
     }
@@ -113,7 +123,7 @@ public class FeatureToggleService {
      */
     public void updateFeatureToggles(final Map<Feature, Boolean> updatedFeatures) {
         getFeatures().ifPresent(features -> {
-            features.putAll(updatedFeatures);
+            getFeaturesMap().putAll(updatedFeatures);
             sendUpdate();
         });
     }
@@ -138,7 +148,7 @@ public class FeatureToggleService {
     public boolean isFeatureEnabled(Feature feature) {
         try {
             if (isHazelcastRunning()) {
-                Boolean isEnabled = features.get(feature);
+                Boolean isEnabled = getFeaturesMap().get(feature);
                 return Boolean.TRUE.equals(isEnabled);
             }
         }
@@ -156,7 +166,7 @@ public class FeatureToggleService {
     public List<Feature> enabledFeatures() {
         try {
             if (isHazelcastRunning()) {
-                return features.entrySet().stream().filter(feature -> Boolean.TRUE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
+                return getFeaturesMap().entrySet().stream().filter(feature -> Boolean.TRUE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
             }
         }
         catch (HazelcastInstanceNotActiveException e) {
@@ -173,7 +183,7 @@ public class FeatureToggleService {
     public List<Feature> disabledFeatures() {
         try {
             if (isHazelcastRunning()) {
-                return features.entrySet().stream().filter(feature -> Boolean.FALSE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
+                return getFeaturesMap().entrySet().stream().filter(feature -> Boolean.FALSE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
             }
         }
         catch (HazelcastInstanceNotActiveException e) {

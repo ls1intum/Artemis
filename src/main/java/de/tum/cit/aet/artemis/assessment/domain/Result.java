@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.assessment.domain;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS;
 import static de.tum.cit.aet.artemis.core.config.Constants.SIZE_OF_UNSIGNED_TINYINT;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundToNDecimalPlaces;
@@ -13,6 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -82,6 +84,8 @@ public class Result extends DomainObject implements Comparable<Result> {
      * For all other exercises (modeling, programming, etc.) - results are rated=true when students submit before the due date (or when the due date is null), multiple results can
      * be rated=true, then the result with the last completionDate counts towards the total score of a student - results are rated=false when students submit after the due date
      */
+    // TODO: we should change this to a primitive boolean in the future with default value false
+    @Nullable
     @Column(name = "rated")
     private Boolean rated;
 
@@ -208,16 +212,21 @@ public class Result extends DomainObject implements Comparable<Result> {
         setScore(totalPoints / maxPoints * 100, course);
     }
 
-    public Boolean isRated() {
-        return rated;
+    /**
+     * Checks whether the result is rated.
+     *
+     * @return true if the result is rated. If rated is null, it returns false.
+     */
+    public boolean isRated() {
+        return Boolean.TRUE.equals(this.rated);
     }
 
-    public Result rated(Boolean rated) {
+    public Result rated(boolean rated) {
         this.rated = rated;
         return this;
     }
 
-    public void setRated(Boolean rated) {
+    public void setRated(boolean rated) {
         this.rated = rated;
     }
 
@@ -227,7 +236,11 @@ public class Result extends DomainObject implements Comparable<Result> {
             this.rated = true;
             return;
         }
-        this.rated = !submissionDate.isAfter(optionalDueDate.get());
+        var dueDate = optionalDueDate.get();
+        if (getSubmission().getParticipation().getExercise() instanceof ProgrammingExercise) {
+            dueDate = dueDate.plusSeconds(PROGRAMMING_GRACE_PERIOD_SECONDS);
+        }
+        this.rated = !submissionDate.isAfter(dueDate);
     }
 
     /**

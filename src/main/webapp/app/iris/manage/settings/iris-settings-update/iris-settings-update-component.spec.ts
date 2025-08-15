@@ -18,6 +18,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('IrisSettingsUpdateComponent', () => {
     let component: IrisSettingsUpdateComponent;
@@ -43,7 +44,7 @@ describe('IrisSettingsUpdateComponent', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [MockJhiTranslateDirective, IrisCourseSettingsUpdateComponent, IrisSettingsUpdateComponent, IrisCommonSubSettingsUpdateComponent],
+            imports: [MockJhiTranslateDirective, IrisCourseSettingsUpdateComponent, IrisSettingsUpdateComponent, IrisCommonSubSettingsUpdateComponent, FaIconComponent],
             declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
             providers: [
                 MockProvider(IrisSettingsService, irisSettingsServiceMock),

@@ -5,7 +5,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/onlineUnit.service';
 import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
 import { HttpResponse } from '@angular/common/http';
@@ -15,6 +14,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('OnlineUnitFormComponent', () => {
     let onlineUnitFormComponentFixture: ComponentFixture<OnlineUnitFormComponent>;
@@ -22,14 +22,8 @@ describe('OnlineUnitFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
-            declarations: [
-                OnlineUnitFormComponent,
-                FormDateTimePickerComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
-                MockComponent(CompetencySelectionComponent),
-            ],
+            imports: [ReactiveFormsModule, FormsModule, MockModule(NgbTooltipModule), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule), FontAwesomeTestingModule],
+            declarations: [OnlineUnitFormComponent, FormDateTimePickerComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CompetencySelectionComponent)],
             providers: [MockProvider(OnlineUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()

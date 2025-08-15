@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -28,20 +28,14 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, OwlDateTimeModule, OwlNativeDateTimeModule],
-            declarations: [
-                TutorialGroupsConfigurationFormComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDateRangePipe),
-                MockComponent(FaIconComponent),
-                MockDirective(TranslateDirective),
-            ],
+            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, OwlDateTimeModule, OwlNativeDateTimeModule, FaIconComponent],
+            declarations: [TutorialGroupsConfigurationFormComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDateRangePipe), MockDirective(TranslateDirective)],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TutorialGroupsConfigurationFormComponent);
                 component = fixture.componentInstance;
-                component.course = { id: 1, postsEnabled: true } as Course;
+                fixture.componentRef.setInput('course', { id: 1, postsEnabled: true } as Course);
                 clickSubmit = generateClickSubmitButton(component, fixture, {
                     period: validPeriod,
                     usePublicTutorialGroupChannels: true,
@@ -63,15 +57,15 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
     });
 
     it('should correctly set form values in edit mode', () => {
-        component.isEditMode = true;
+        fixture.componentRef.setInput('isEditMode', true);
         runOnPushChangeDetection(fixture);
         const formData: TutorialGroupsConfigurationFormData = {
             period: validPeriod,
             usePublicTutorialGroupChannels: true,
             useTutorialGroupChannels: true,
         };
-        component.formData = formData;
-        component.ngOnChanges();
+        fixture.componentRef.setInput('formData', formData);
+        fixture.detectChanges();
 
         const formControlNames = ['period', 'usePublicTutorialGroupChannels', 'useTutorialGroupChannels'];
         formControlNames.forEach((control) => {
@@ -80,15 +74,15 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
     });
 
     it('should show channel deletion warning when channel option is disabled in edit mode', () => {
-        component.isEditMode = true;
+        fixture.componentRef.setInput('isEditMode', true);
         runOnPushChangeDetection(fixture);
         const formData: TutorialGroupsConfigurationFormData = {
             period: validPeriod,
             usePublicTutorialGroupChannels: true,
             useTutorialGroupChannels: true,
         };
-        component.formData = formData;
-        component.ngOnChanges();
+        fixture.componentRef.setInput('formData', formData);
+        fixture.detectChanges();
 
         component.form.get('useTutorialGroupChannels')!.setValue(false);
         runOnPushChangeDetection(fixture);

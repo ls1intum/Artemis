@@ -1,22 +1,45 @@
+import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { CreateTutorialGroupComponent } from 'app/tutorialgroup/manage/tutorial-groups/crud/create-tutorial-group/create-tutorial-group.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { By } from '@angular/platform-browser';
 import { generateExampleTutorialGroup, tutorialGroupToTutorialGroupFormData } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { TutorialGroupFormComponent } from '../tutorial-group-form/tutorial-group-form.component';
+import { TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-form.component';
 import { LoadingIndicatorContainerComponent } from '../../../../../shared/loading-indicator-container/loading-indicator-container.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Component, EventEmitter, input, output } from '@angular/core';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
+@Component({
+    selector: 'jhi-tutorial-group-form',
+    template: `
+        <input #teachingAssistantInput="ngbTypeahead" />
+        <input #campusInput="ngbTypeahead" />
+        <input #languageInput="ngbTypeahead" />
+    `,
+})
+class TutorialGroupFormStubComponent {
+    formData = input<TutorialGroupFormData>();
+    course = input<Course>();
+    isEditMode = input<boolean>(false);
+
+    formSubmitted = output<EventEmitter<TutorialGroupFormData>>();
+}
 describe('CreateTutorialGroupComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupComponent>;
     let component: CreateTutorialGroupComponent;
@@ -26,26 +49,33 @@ describe('CreateTutorialGroupComponent', () => {
     const router = new MockRouter();
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            declarations: [
-                CreateTutorialGroupComponent,
-                MockComponent(LoadingIndicatorContainerComponent),
-                MockComponent(TutorialGroupFormComponent),
-                MockPipe(ArtemisTranslatePipe),
-            ],
+        return TestBed.configureTestingModule({
+            declarations: [CreateTutorialGroupComponent, MockComponent(LoadingIndicatorContainerComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
                 mockedActivatedRoute({}, {}, { course }, {}),
                 { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                SessionStorageService,
+                LocalStorageService,
             ],
-        }).compileComponents();
-
-        fixture = TestBed.createComponent(CreateTutorialGroupComponent);
-        component = fixture.componentInstance;
-        tutorialGroupService = TestBed.inject(TutorialGroupsService);
-        fixture.detectChanges();
+            imports: [OwlNativeDateTimeModule, TutorialGroupFormStubComponent],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(CreateTutorialGroupComponent);
+                component = fixture.componentInstance;
+                tutorialGroupService = TestBed.inject(TutorialGroupsService);
+                jest.spyOn(tutorialGroupService, 'getUniqueCampusValues').mockReturnValue(of(new HttpResponse<string[]>({ body: [] })));
+                jest.spyOn(tutorialGroupService, 'getUniqueLanguageValues').mockReturnValue(of(new HttpResponse<string[]>({ body: [] })));
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
+                fixture.detectChanges();
+            });
     });
 
     afterEach(() => {
@@ -77,7 +107,12 @@ describe('CreateTutorialGroupComponent', () => {
         const createStub = jest.spyOn(tutorialGroupService, 'create').mockReturnValue(of(createResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
-        const tutorialGroupForm: TutorialGroupFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFormComponent)).componentInstance;
+        expect(fixture.nativeElement.innerHTML).toContain('jhi-tutorial-group-form');
+
+        const tutorialGroupElement = fixture.debugElement.query(By.css('jhi-tutorial-group-form'));
+        expect(tutorialGroupElement).not.toBeNull();
+
+        const tutorialGroupForm = tutorialGroupElement.componentInstance;
 
         const formData = tutorialGroupToTutorialGroupFormData(exampleTutorialGroup);
 

@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisStatusDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
+import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisIntegrationTest {
@@ -63,7 +64,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
     }
 
     private IrisMessage createDefaultMockTextMessage(IrisSession irisSession) {
-        var messageToSend = irisSession.newMessage();
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSession(irisSession);
         messageToSend.addContent(createMockTextContent(), createMockTextContent(), createMockTextContent());
         return messageToSend;
     }
@@ -81,7 +82,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
     }
 
     private IrisMessage createDefaultMockJsonMessage(IrisSession irisSession) {
-        var messageToSend = irisSession.newMessage();
+        IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSession(irisSession);
         messageToSend.addContent(createMockJsonContent(), createMockJsonContent(), createMockJsonContent());
         return messageToSend;
     }

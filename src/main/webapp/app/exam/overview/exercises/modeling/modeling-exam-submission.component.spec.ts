@@ -20,6 +20,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 describe('ModelingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ModelingExamSubmissionComponent>;
@@ -42,6 +45,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
+            imports: [FaIconComponent],
             declarations: [
                 ModelingExamSubmissionComponent,
                 TranslatePipeMock,
@@ -154,8 +158,8 @@ describe('ModelingExamSubmissionComponent', () => {
     describe('updateProblemStatement', () => {
         it('should update problem statement', () => {
             const newProblemStatement = 'new problem statement';
-            comp.updateProblemStatement(newProblemStatement);
-            expect(comp.problemStatementHtml).toEqual(newProblemStatement);
+            comp.updateProblemStatement(TestBed.inject(ArtemisMarkdownService).safeHtmlForMarkdown(newProblemStatement));
+            expect((comp.problemStatementHtml as any).changingThisBreaksApplicationSecurity).toEqual(htmlForMarkdown(newProblemStatement));
         });
     });
 

@@ -16,16 +16,15 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import jakarta.annotation.PostConstruct;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
@@ -95,13 +94,13 @@ public class IrisSettingsService {
     }
 
     /**
-     * Hooks into the {@link ApplicationReadyEvent} and creates or updates the global IrisSettings object on startup.
-     *
-     * @param ignoredEvent Unused event param used to specify when the method should be executed
+     * Creates or updates the global IrisSettings object on bean creation.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
     @Profile(PROFILE_CORE_AND_SCHEDULING)
-    @EventListener
-    public void execute(FullStartupEvent ignoredEvent) throws Exception {
+    @PostConstruct
+    public void execute() throws Exception {
         var allGlobalSettings = irisSettingsRepository.findAllGlobalSettings();
         if (allGlobalSettings.isEmpty()) {
             createInitialGlobalSettings();
@@ -571,6 +570,18 @@ public class IrisSettingsService {
      */
     public boolean isEnabledFor(IrisSubSettingsType type, Course course) {
         var settings = getCombinedIrisSettingsFor(course, true);
+        return isFeatureEnabledInSettings(settings, type);
+    }
+
+    /**
+     * Checks whether an Iris feature is enabled for a course.
+     *
+     * @param type     The Iris feature to check
+     * @param courseId The course to check
+     * @return Whether the Iris feature is enabled for the course
+     */
+    public boolean isEnabledForCourse(IrisSubSettingsType type, Long courseId) {
+        var settings = getCombinedIrisSettingsForCourse(courseId, true);
         return isFeatureEnabledInSettings(settings, type);
     }
 

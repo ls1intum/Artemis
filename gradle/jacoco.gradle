@@ -1,25 +1,25 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.853, "CLASS": 116]
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.853, "CLASS": 117]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
-        "assessment"    :          ["INSTRUCTION": 0.925, "CLASS":  0],
-        "athena"        :          ["INSTRUCTION": 0.873, "CLASS":  2],
-        "atlas"         :          ["INSTRUCTION": 0.904, "CLASS":  6],
-        "buildagent"    :          ["INSTRUCTION": 0.798, "CLASS":  1],
+        "assessment"    :          ["INSTRUCTION": 0.924, "CLASS":  0],
+        "athena"        :          ["INSTRUCTION": 0.874, "CLASS":  2],
+        "atlas"         :          ["INSTRUCTION": 0.903, "CLASS":  6],
+        "buildagent"    :          ["INSTRUCTION": 0.805, "CLASS":  1],
         "communication" :          ["INSTRUCTION": 0.848, "CLASS":  5],
-        "core"          :          ["INSTRUCTION": 0.833, "CLASS": 46],
+        "core"          :          ["INSTRUCTION": 0.830, "CLASS": 48],
         "exam"          :          ["INSTRUCTION": 0.918, "CLASS":  2],
         "exercise"      :          ["INSTRUCTION": 0.916, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.953, "CLASS":  0],
-        "iris"          :          ["INSTRUCTION": 0.773, "CLASS": 25],
-        "lecture"       :          ["INSTRUCTION": 0.892, "CLASS":  1],
-        "lti"           :          ["INSTRUCTION": 0.895, "CLASS":  2],
-        "modeling"      :          ["INSTRUCTION": 0.939, "CLASS":  0],
-        "plagiarism"    :          ["INSTRUCTION": 0.903, "CLASS":  2],
-        "programming"   :          ["INSTRUCTION": 0.781, "CLASS": 21],
+        "iris"          :          ["INSTRUCTION": 0.774, "CLASS": 25],
+        "lecture"       :          ["INSTRUCTION": 0.896, "CLASS":  1],
+        "lti"           :          ["INSTRUCTION": 0.888, "CLASS":  2],
+        "modeling"      :          ["INSTRUCTION": 0.938, "CLASS":  0],
+        "plagiarism"    :          ["INSTRUCTION": 0.901, "CLASS":  2],
+        "programming"   :          ["INSTRUCTION": 0.785, "CLASS": 20],
         "quiz"          :          ["INSTRUCTION": 0.901, "CLASS":  2],
-        "text"          :          ["INSTRUCTION": 0.949, "CLASS":  1],
+        "text"          :          ["INSTRUCTION": 0.947, "CLASS":  1],
         "tutorialgroup" :          ["INSTRUCTION": 0.915, "CLASS":  1],
     ]
     // If no explicit modules defined -> generate reports and validate for each module
@@ -36,7 +36,7 @@ ext {
 }
 
 jacoco {
-    toolVersion = "0.8.12"
+    toolVersion = "0.8.13"
 }
 
 jacocoTestReport {

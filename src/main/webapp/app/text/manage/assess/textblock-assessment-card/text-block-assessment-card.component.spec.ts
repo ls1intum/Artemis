@@ -22,6 +22,7 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('TextblockAssessmentCardComponent', () => {
     let component: TextBlockAssessmentCardComponent;
@@ -29,7 +30,7 @@ describe('TextblockAssessmentCardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip), FaIconComponent],
             declarations: [
                 TextBlockAssessmentCardComponent,
                 TextBlockFeedbackEditorComponent,

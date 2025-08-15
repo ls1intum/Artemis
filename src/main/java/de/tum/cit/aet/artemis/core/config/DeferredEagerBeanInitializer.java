@@ -14,6 +14,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
+
 /**
  * This component initializes all lazy singleton beans after the application is ready.
  * This allows us to benefit from the lazy initialization of beans during startup, without comprising end user experience as beans are initialized before the first request is
@@ -39,6 +41,15 @@ public class DeferredEagerBeanInitializer {
      * This method should be called after the application is fully started to not block the startup process.
      */
     public void initializeDeferredEagerBeans() {
+        // Force eager initialization of HazelcastConnection first, so that connections are established as early as possible.
+        try {
+            context.getBean(HazelcastConnection.class);
+            log.debug("Priority initialization of HazelcastConnection completed");
+        }
+        catch (Throwable ex) {
+            log.warn("Priority initialization of HazelcastConnection failed", ex);
+        }
+
         DefaultListableBeanFactory bf = (DefaultListableBeanFactory) context.getBeanFactory();
         Arrays.stream(bf.getBeanDefinitionNames()).filter(name -> {
             BeanDefinition def = bf.getBeanDefinition(name);
@@ -53,7 +64,7 @@ public class DeferredEagerBeanInitializer {
                 log.warn("Deferred eager initialization of bean {} failed", name, ex);
             }
         });
-
+        context.publishEvent(new DeferredEagerBeanInitializationCompletedEvent());
         log.info("Deferred eager initialization of all beans completed");
     }
 }

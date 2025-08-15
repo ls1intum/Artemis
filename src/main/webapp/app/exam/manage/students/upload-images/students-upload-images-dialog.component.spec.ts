@@ -10,10 +10,11 @@ import { StudentsUploadImagesDialogComponent } from 'app/exam/manage/students/up
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
@@ -29,14 +30,8 @@ describe('StudentsUploadImagesDialogComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [FormsModule],
-            declarations: [
-                StudentsUploadImagesDialogComponent,
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
-                MockComponent(HelpIconComponent),
-            ],
+            imports: [FaIconComponent, FormsModule],
+            declarations: [StudentsUploadImagesDialogComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [
                 MockProvider(NgbActiveModal),
                 MockProvider(AlertService),
@@ -56,7 +51,7 @@ describe('StudentsUploadImagesDialogComponent', () => {
                 fixture.componentRef.setInput('courseId', course.id);
                 fixture.componentRef.setInput('exam', exam);
 
-                ngbModal = TestBed.get(NgbActiveModal);
+                ngbModal = TestBed.inject(NgbActiveModal);
             });
     });
 

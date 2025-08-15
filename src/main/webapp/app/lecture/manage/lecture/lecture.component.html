@@ -166,12 +166,10 @@
                                 <div class="btn-group flex-btn-group-container">
                                     <div class="btn-group-vertical me-1 mb-1">
                                         @if (lecture.isAtLeastEditor) {
-                                            <a [routerLink]="[lecture.id, 'attachments']" class="btn btn-primary mb-1 btn-sm">
+                                            <a [routerLink]="[lecture.id, 'attachments']" class="btn btn-primary mb-1 btn-sm" id="attachments">
                                                 <fa-icon [icon]="faFile" />
                                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.attachments"></span>
                                             </a>
-                                        }
-                                        @if (lecture.isAtLeastEditor) {
                                             <a [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm" id="units">
                                                 <fa-icon [icon]="faPuzzlePiece" />
                                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.units"></span>

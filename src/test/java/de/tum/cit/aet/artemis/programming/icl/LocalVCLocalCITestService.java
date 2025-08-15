@@ -8,13 +8,16 @@ import static org.awaitility.Awaitility.await;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
@@ -32,6 +35,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
@@ -82,7 +87,10 @@ public class LocalVCLocalCITestService {
     private ResultTestRepository resultRepository;
 
     @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
+    private URI localVCBaseUri;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCRepoPath;
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
@@ -113,7 +121,7 @@ public class LocalVCLocalCITestService {
         String projectKey = programmingExercise.getProjectKey();
         String repositorySlug = getRepositorySlug(projectKey, userLogin);
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
-        participation.setRepositoryUri(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, repositorySlug));
+        participation.setRepositoryUri(String.format(localVCBaseUri + "/git/%s/%s.git", projectKey, repositorySlug));
         participation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(participation);
 
@@ -173,9 +181,9 @@ public class LocalVCLocalCITestService {
      * @return the configured LocalRepository that contains Git handles to the remote and local repository.
      */
     public LocalRepository createAndConfigureLocalRepository(String projectKey, String repositorySlug) throws GitAPIException, IOException, URISyntaxException {
-        Path localRepositoryFolder = createRepositoryFolderInTempDirectory(projectKey, repositorySlug);
+        Path localRepositoryFolder = createRepositoryFolder(projectKey, repositorySlug);
         LocalRepository repository = new LocalRepository(defaultBranch);
-        repository.configureRepos("localRepo", localRepositoryFolder);
+        repository.configureRepos(localVCRepoPath, "localRepo", localRepositoryFolder);
         return repository;
     }
 
@@ -188,10 +196,9 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug the repository slug of the repository.
      * @return the path to the repository folder.
      */
-    private Path createRepositoryFolderInTempDirectory(String projectKey, String repositorySlug) throws IOException {
-        String tempDir = System.getProperty("java.io.tmpdir");
+    private Path createRepositoryFolder(String projectKey, String repositorySlug) throws IOException {
 
-        Path projectFolder = Path.of(tempDir, projectKey);
+        Path projectFolder = localVCRepoPath.resolve(projectKey);
 
         // Create the project folder if it does not exist.
         if (!Files.exists(projectFolder)) {
@@ -216,10 +223,10 @@ public class LocalVCLocalCITestService {
      * @param username       the username of the user that tries to access the repository using this URL.
      * @param projectKey     the project key of the repository.
      * @param repositorySlug the repository slug of the repository.
-     * @return the URL to the repository.
+     * @return the URL as string to the repository.
      */
-    public String constructLocalVCUrl(String username, String projectKey, String repositorySlug) {
-        return constructLocalVCUrl(username, USER_PASSWORD, projectKey, repositorySlug);
+    public String buildLocalVCUri(String username, String projectKey, String repositorySlug) {
+        return buildLocalVCUri(username, USER_PASSWORD, projectKey, repositorySlug);
     }
 
     /**
@@ -229,11 +236,19 @@ public class LocalVCLocalCITestService {
      * @param password       the password of the user that tries to access the repository using this URL.
      * @param projectKey     the project key of the repository.
      * @param repositorySlug the repository slug of the repository.
-     * @return the URL to the repository.
+     * @return the URL as string to the repository.
      */
-    public String constructLocalVCUrl(String username, String password, String projectKey, String repositorySlug) {
-        return "http://" + username + (!password.isEmpty() ? ":" : "") + password + (!username.isEmpty() ? "@" : "") + "localhost:" + port + "/git/" + projectKey.toUpperCase()
-                + "/" + repositorySlug + ".git";
+    public String buildLocalVCUri(@Nullable String username, @Nullable String password, @NotNull String projectKey, @NotNull String repositorySlug) {
+        String userInfo = null;
+
+        if (StringUtils.hasText(username)) {
+            userInfo = username;
+            if (StringUtils.hasText(password)) {
+                userInfo += ":" + password;
+            }
+        }
+        return UriComponentsBuilder.fromUri(localVCBaseUri).port(port).userInfo(userInfo).pathSegment("git", projectKey.toUpperCase(), repositorySlug + ".git").build().toUri()
+                .toString();
     }
 
     /**
@@ -291,7 +306,7 @@ public class LocalVCLocalCITestService {
         try {
             performFetch(repositoryHandle, username, password, projectKey, repositorySlug);
         }
-        catch (GitAPIException e) {
+        catch (GitAPIException | URISyntaxException e) {
             fail("Fetching was not successful: " + e.getMessage());
         }
     }
@@ -341,8 +356,8 @@ public class LocalVCLocalCITestService {
                 .withMessageContaining(expectedMessage);
     }
 
-    private void performFetch(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
-        String repositoryUri = constructLocalVCUrl(username, password, projectKey, repositorySlug);
+    private void performFetch(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException, URISyntaxException {
+        String repositoryUri = buildLocalVCUri(username, password, projectKey, repositorySlug);
         FetchCommand fetchCommand = repositoryHandle.fetch();
         // Set the remote URL.
         fetchCommand.setRemote(repositoryUri);
@@ -470,7 +485,7 @@ public class LocalVCLocalCITestService {
     }
 
     private void performPush(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
-        String repositoryUri = constructLocalVCUrl(username, password, projectKey, repositorySlug);
+        String repositoryUri = buildLocalVCUri(username, password, projectKey, repositorySlug);
         PushCommand pushCommand = repositoryHandle.push();
         // Set the remote URL.
         pushCommand.setRemote(repositoryUri);
@@ -484,7 +499,7 @@ public class LocalVCLocalCITestService {
      * @param programmingExercise the programming exercise.
      * @param localVCBasePath     the base path for the local repositories taken from the artemis.version-control.local-vcs-repo-path environment variable.
      */
-    public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, String localVCBasePath) {
+    public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, Path localVCBasePath) {
         LocalVCRepositoryUri templateRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri());
         assertThat(templateRepositoryUri.getLocalRepositoryPath(localVCBasePath)).exists();
         LocalVCRepositoryUri solutionRepositoryUri = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUri());
