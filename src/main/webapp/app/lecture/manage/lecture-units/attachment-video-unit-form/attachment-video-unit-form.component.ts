@@ -151,6 +151,8 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     private readonly formBuilder = inject(FormBuilder);
     private readonly accountService = inject(AccountService);
 
+    readonly shouldShowTranscriptionCreation = computed(() => this.accountService.isAdmin());
+
     form: FormGroup = this.formBuilder.group({
         name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
         description: [undefined as string | undefined, [Validators.maxLength(1000)]],
@@ -288,9 +290,5 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
     cancelForm() {
         this.onCancel.emit();
-    }
-
-    shouldShowTranscriptionCreation(): boolean {
-        return this.accountService.isAdmin();
     }
 }

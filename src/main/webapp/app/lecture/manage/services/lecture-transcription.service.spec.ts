@@ -32,7 +32,7 @@ describe('LectureTranscriptionService', () => {
     });
 
     it('should send POST request to create transcription', () => {
-        const transcription = { transcription: [] };
+        const transcription = { lectureUnitId: 1, language: 'en', segments: [] };
         const lectureId = 1;
         const lectureUnitId = 1;
         service.createTranscription(lectureId, lectureUnitId, transcription).subscribe(() => {});

@@ -107,7 +107,7 @@ public interface InstanceMessageSendService {
     void sendLectureUnitAutoIngestionSchedule(Long lectureUnitId);
 
     /**
-     * Send a message to schedule the ingestion of a lecture unit
+     * Send a message to cancel the ingestion of a lecture unit
      *
      * @param lectureUnitId the id of the lecture unit that should no longer be ingested
      */

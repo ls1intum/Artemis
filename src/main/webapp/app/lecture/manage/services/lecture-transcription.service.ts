@@ -24,7 +24,7 @@ export class LectureTranscriptionService {
             );
     }
 
-    createTranscription(lectureId: number, lectureUnitId: number, transcription: any): Observable<boolean> {
+    createTranscription(lectureId: number, lectureUnitId: number, transcription: LectureTranscriptionDTO): Observable<boolean> {
         return this.httpClient
             .post(`api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcription`, transcription, {
                 observe: 'response',
@@ -35,14 +35,14 @@ export class LectureTranscriptionService {
             );
     }
 
-    getTranscription(lectureUnitId: number): Observable<LectureTranscriptionDTO | null> {
+    getTranscription(lectureUnitId: number): Observable<LectureTranscriptionDTO | undefined> {
         return this.httpClient
             .get<LectureTranscriptionDTO>(`api/lecture/lecture-unit/${lectureUnitId}/transcript`, {
                 observe: 'response',
             })
             .pipe(
-                map((response) => response.body),
-                catchError(() => of(null)),
+                map((response) => response.body ?? undefined),
+                catchError(() => of(undefined)),
             );
     }
 }

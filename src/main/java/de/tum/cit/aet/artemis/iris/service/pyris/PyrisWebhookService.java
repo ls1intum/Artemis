@@ -142,6 +142,14 @@ public class PyrisWebhookService {
                 lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, attachmentVideoUnit.getVideoSource());
     }
 
+    /**
+     * Processes an {@link AttachmentVideoUnit} for deletion by creating a dummy DTO with only the necessary IDs.
+     * This method returns a {@link PyrisLectureUnitWebhookDTO} where most fields are empty or have default values,
+     * as only the IDs are required by Pyris to identify and delete the lecture unit from its database.
+     *
+     * @param attachmentVideoUnit The lecture unit to be processed for deletion.
+     * @return A {@link PyrisLectureUnitWebhookDTO} with IDs for deletion and empty/default values for other fields.
+     */
     private PyrisLectureUnitWebhookDTO processAttachmentVideoUnitForDeletion(AttachmentVideoUnit attachmentVideoUnit) {
         Long lectureUnitId = attachmentVideoUnit.getId();
         Long lectureId = attachmentVideoUnit.getLecture().getId();

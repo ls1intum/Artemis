@@ -3,7 +3,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, finalize, map, switchMap, take } from 'rxjs/operators';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit, LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -129,20 +129,20 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             .pipe(
                 switchMap(() => {
                     if (!videoTranscription) {
-                        return of(null);
+                        return of(undefined);
                     }
-                    let transcription: any;
+                    let transcription: LectureTranscriptionDTO;
                     try {
-                        transcription = JSON.parse(videoTranscription);
+                        transcription = JSON.parse(videoTranscription) as LectureTranscriptionDTO;
                     } catch (e) {
                         this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
-                        return of(null);
+                        return of(undefined);
                     }
                     transcription.lectureUnitId = this.attachmentVideoUnit.id!;
                     return this.lectureTranscriptionService.createTranscription(this.lectureId, this.attachmentVideoUnit.id!, transcription).pipe(
                         catchError((err) => {
                             onError(this.alertService, err);
-                            return of(null);
+                            return of(undefined);
                         }),
                     );
                 }),

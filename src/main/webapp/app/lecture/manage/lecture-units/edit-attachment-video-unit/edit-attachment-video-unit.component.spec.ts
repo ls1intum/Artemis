@@ -124,7 +124,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         updateAttachmentVideoUnitSpy = jest.spyOn(attachmentVideoUnitService, 'update');
         navigateSpy = jest.spyOn(router, 'navigate');
 
-        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(null));
+        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
     });
 
     afterEach(() => {

@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit, LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import dayjs from 'dayjs/esm';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -86,14 +86,14 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
                     if (!videoTranscription) {
                         return of(lectureUnit);
                     }
-                    let transcription: any;
+                    let transcription: LectureTranscriptionDTO;
                     try {
-                        transcription = JSON.parse(videoTranscription);
+                        transcription = JSON.parse(videoTranscription) as LectureTranscriptionDTO;
                     } catch {
                         this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
                         return of(lectureUnit);
                     }
-                    transcription.lectureUnitId = lectureUnit.id;
+                    transcription.lectureUnitId = lectureUnit.id!;
                     return this.lectureTranscriptionService.createTranscription(this.lectureId, lectureUnit.id!, transcription).pipe(
                         map(() => lectureUnit),
                         catchError((err) => {

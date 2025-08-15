@@ -2,7 +2,7 @@ import { Component, Input, OnInit, ViewChild, computed, inject, signal, viewChil
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
-import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit, LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -233,15 +233,15 @@ export class LectureUpdateUnitsComponent implements OnInit {
                         return of(lectureUnit);
                     }
 
-                    let transcription: any;
+                    let transcription: LectureTranscriptionDTO;
                     try {
-                        transcription = JSON.parse(videoTranscription);
+                        transcription = JSON.parse(videoTranscription) as LectureTranscriptionDTO;
                     } catch (e) {
                         this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
                         return of(lectureUnit);
                     }
 
-                    transcription.lectureUnitId = lectureUnit.id;
+                    transcription.lectureUnitId = lectureUnit.id!;
 
                     return this.lectureTranscriptionService.createTranscription(this.lecture.id!, lectureUnit.id!, transcription).pipe(
                         map(() => lectureUnit),
