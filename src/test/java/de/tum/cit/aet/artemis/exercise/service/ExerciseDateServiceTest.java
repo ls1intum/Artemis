@@ -58,9 +58,6 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
     @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
     private ExamUtilService examUtilService;
 
     @Autowired

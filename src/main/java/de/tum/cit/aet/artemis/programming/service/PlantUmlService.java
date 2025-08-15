@@ -9,17 +9,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
+import jakarta.annotation.PostConstruct;
+
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import net.sourceforge.plantuml.FileFormat;
 import net.sourceforge.plantuml.FileFormatOption;
@@ -47,13 +47,15 @@ public class PlantUmlService {
 
     /**
      * Initializes themes and sets system properties for PlantUML security when the application is ready.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *
      * <p>
      * Deletes temporary theme files to ensure updates, ensures themes are available, and configures PlantUML security settings.
      *
      * @throws IOException if an I/O error occurs during file deletion
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void applicationReady() throws IOException {
         // Delete on first launch to ensure updates
         Files.deleteIfExists(PATH_TMP_THEME.resolve(DARK_THEME_FILE_NAME));
