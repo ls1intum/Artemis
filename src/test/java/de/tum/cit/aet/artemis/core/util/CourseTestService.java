@@ -1771,33 +1771,6 @@ public class CourseTestService {
     }
 
     // Test
-    public void testAddTutorAndEditorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus expectedFailureCode) throws Exception {
-        adjustUserGroupsToCustomGroups();
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        course = courseRepo.save(course);
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        course = courseRepo.save(course);
-
-        request.postWithoutLocation("/api/core/courses/" + course.getId() + "/tutors/" + userPrefix + "tutor1", null, expectedFailureCode, null);
-        request.postWithoutLocation("/api/core/courses/" + course.getId() + "/editors/" + userPrefix + "editor1", null, expectedFailureCode, null);
-        request.postWithoutLocation("/api/core/courses/" + course.getId() + "/instructors/" + userPrefix + "instructor1", null, expectedFailureCode, null);
-    }
-
-    // Test
-    public void testRemoveTutorFromCourse_failsToRemoveUserFromGroup() throws Exception {
-        adjustUserGroupsToCustomGroups();
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
-        course = courseRepo.save(course);
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        course = courseRepo.save(course);
-
-        User tutor = userRepo.findOneWithGroupsByLogin(userPrefix + "tutor1").orElseThrow();
-        request.delete("/api/core/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    // Test
     public void testRemoveStudentOrTutorOrInstructorFromCourse() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);

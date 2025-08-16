@@ -12,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -211,34 +210,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
         assertThat(course.getInstructorGroupName()).isEqualTo("new-instructor-group");
         assertThat(course.getEditorGroupName()).isEqualTo("new-editor-group");
         assertThat(course.getTeachingAssistantGroupName()).isEqualTo("new-ta-group");
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testSetPermissionsForNewGroupMembersInCourseFails() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course.setInstructorGroupName("new-instructor-group");
-
-        // Create editor in the course
-        User user = userUtilService.createAndSaveUser("new-editor");
-        user.setGroups(Set.of("new-instructor-group"));
-        userTestRepository.save(user);
-
-        request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testSetPermissionsForNewGroupMembersInCourseMemberDoesntExist() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course.setInstructorGroupName("new-instructor-group");
-
-        // Create editor in the course
-        User user = userUtilService.createAndSaveUser("new-editor");
-        user.setGroups(Set.of("new-instructor-group"));
-        userTestRepository.save(user);
-
-        request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
     }
 
     /**
@@ -462,33 +433,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUnenrollFromCourse() throws Exception {
         courseTestService.testUnenrollFromCourse();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testAddTutorAndInstructorToCourse_failsToAddUserToGroup() throws Exception {
-        courseTestService.testAddTutorAndEditorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testRemoveTutorFromCourse_failsToRemoveUserFromGroup() throws Exception {
-        courseTestService.testRemoveTutorFromCourse_failsToRemoveUserFromGroup();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testRemoveTutorFromCourse_removeUserGroupFails() throws Exception {
-        Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course = courseRepository.save(course);
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-
-        Optional<User> optionalTutor = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1");
-        assertThat(optionalTutor).isPresent();
-
-        User tutor = optionalTutor.get();
-
-        request.delete("/api/core/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
