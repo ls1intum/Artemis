@@ -26,7 +26,7 @@ import { QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
-import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
@@ -46,6 +46,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
+import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 
 @Component({
     selector: 'jhi-quiz',
@@ -79,6 +80,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private quizService = inject(ArtemisQuizService);
     private serverDateService = inject(ArtemisServerDateService);
+
+    protected readonly faSync = faSync;
+    protected readonly faCircleNotch = faCircleNotch;
 
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
@@ -153,10 +157,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     timeoutJustSaved = debounce(() => {
         this.justSaved = false;
     }, 2000);
-
-    // Icons
-    faSync = faSync;
-    faCircleNotch = faCircleNotch;
 
     constructor() {
         smoothscroll.polyfill();
@@ -961,6 +961,15 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
     }
 
+    private highlightQuestion(questionIndex: number) {
+        const questionToBeHighlighted: QuizQuestion | undefined = this.quizExercise.quizQuestions ? this.quizExercise.quizQuestions[questionIndex] : undefined;
+        if (!questionToBeHighlighted) {
+            return;
+        }
+
+        addTemporaryHighlightToQuestion(questionToBeHighlighted);
+    }
+
     /**
      * TODO this is duplicated with {@link QuizExamSubmissionComponent#navigateToQuestion}, extract to a shared component
      *
@@ -968,11 +977,18 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      * @param questionIndex
      */
     navigateToQuestion(questionIndex: number): void {
-        document.getElementById('question' + questionIndex)!.scrollIntoView({
+        const questionElement = document.getElementById('question' + questionIndex);
+        if (!questionElement) {
+            captureException('navigateToQuestion: element not found for index ' + questionIndex);
+            return;
+        }
+        questionElement.scrollIntoView({
             behavior: 'smooth',
             block: 'nearest',
             inline: 'start',
         });
+
+        this.highlightQuestion(questionIndex);
     }
 
     /**

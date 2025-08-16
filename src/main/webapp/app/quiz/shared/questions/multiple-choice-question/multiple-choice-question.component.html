@@ -1,6 +1,11 @@
 <div
     class="mc-question markdown-preview"
-    [ngClass]="{ disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.points! && !forceSampleSolution }"
+    [ngClass]="{
+        disabled: clickDisabled && !showResult,
+        result: showResult && !forceSampleSolution,
+        incorrect: (score || 0) < question.points! && !forceSampleSolution,
+        'question-highlight': question.isHighlighted,
+    }"
 >
     <h4 class="question-title-display">
         <span>{{ questionIndex }})</span> {{ question.title }}
@@ -11,8 +16,7 @@
     }
     @if (!isSingleChoice) {
         <h6 jhiTranslate="artemisApp.quizQuestion.allOptions"></h6>
-    }
-    @if (isSingleChoice) {
+    } @else {
         <h6 jhiTranslate="artemisApp.quizQuestion.singleOption"></h6>
     }
     @if (question.hint || (question.explanation && showResult)) {
