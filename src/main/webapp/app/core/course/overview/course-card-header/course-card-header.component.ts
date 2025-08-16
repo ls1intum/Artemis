@@ -1,5 +1,5 @@
 import { Component, OnInit, input } from '@angular/core';
-import { CachingStrategy, SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { RouterModule } from '@angular/router';
 import { CommonModule, SlicePipe } from '@angular/common';
@@ -21,7 +21,6 @@ export class CourseCardHeaderComponent implements OnInit {
     courseNotificationCount = input<number>(0);
     archiveMode = input<boolean>(false);
 
-    CachingStrategy = CachingStrategy;
     color: string;
     titleColor: string;
 

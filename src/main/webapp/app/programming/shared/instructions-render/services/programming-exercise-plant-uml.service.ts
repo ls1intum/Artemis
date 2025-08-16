@@ -1,6 +1,5 @@
 import { Injectable, effect, inject } from '@angular/core';
 import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
-import { Cacheable } from 'ts-cacheable';
 import { Observable, Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -28,19 +27,14 @@ export class ProgrammingExercisePlantUmlService {
         });
     }
 
+    // TODO: consider to reimplement this differently, let the browser fetch and cache the image and just make sure to retry it once or twice in case it fails
+
     /**
      * Requests the plantuml png file as arraybuffer and converts it to base64.
      * @param plantUml - definition obtained by parsing the README markdown file.
      *
      * Note: we cache up to 100 results in 1 hour so that they do not need to be loaded several time
      */
-    @Cacheable({
-        /** Cacheable configuration **/
-        maxCacheCount: 100,
-        maxAge: 3600000, // ms
-        slidingExpiration: true,
-        cacheBusterObserver: themeChangedSubject, // evict cache on theme change
-    })
     getPlantUmlImage(plantUml: string) {
         return this.http
             .get(`${this.resourceUrl}/png`, {
@@ -56,13 +50,6 @@ export class ProgrammingExercisePlantUmlService {
      *
      * Note: we cache up to 100 results in 1 hour so that they do not need to be loaded several time
      */
-    @Cacheable({
-        /** Cacheable configuration **/
-        maxCacheCount: 100,
-        maxAge: 3600000, // ms
-        slidingExpiration: true,
-        cacheBusterObserver: themeChangedSubject, // evict cache on theme change
-    })
     getPlantUmlSvg(plantUml: string): Observable<string> {
         return this.http.get(`${this.resourceUrl}/svg`, {
             params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml).set('useDarkTheme', this.themeService.currentTheme() === Theme.DARK),

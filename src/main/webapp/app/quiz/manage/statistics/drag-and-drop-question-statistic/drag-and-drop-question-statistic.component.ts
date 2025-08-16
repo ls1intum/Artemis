@@ -15,6 +15,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { NgStyle } from '@angular/common';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
@@ -31,6 +32,8 @@ import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-st
 export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
     private artemisMarkdown = inject(ArtemisMarkdownService);
+
+    readonly addPublicFilePrefix = addPublicFilePrefix;
 
     declare question: DragAndDropQuestion;
 

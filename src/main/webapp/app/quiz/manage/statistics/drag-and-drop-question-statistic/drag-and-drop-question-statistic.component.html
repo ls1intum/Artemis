@@ -79,8 +79,9 @@
                             </div>
                             <p>&nbsp;</p>
                             <div class="drag-and-drop-quizStatistic-picture col-md-8 offset-md-2">
-                                @if (question.backgroundFilePath) {
-                                    <jhi-secured-image [src]="question.backgroundFilePath" />
+                                @let backgroundFilePath = question.backgroundFilePath;
+                                @if (backgroundFilePath) {
+                                    <jhi-secured-image [src]="addPublicFilePrefix(backgroundFilePath)!" />
                                 }
                                 <div class="click-layer">
                                     @if (!showSolution) {

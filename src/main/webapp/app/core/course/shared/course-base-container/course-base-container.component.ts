@@ -28,7 +28,6 @@ import { sortCourses } from 'app/shared/util/course.util';
 import { SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -108,7 +107,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
 
     protected readonly FeatureToggle = FeatureToggle;
-    protected readonly CachingStrategy = CachingStrategy;
 
     constructor() {
         effect(() => {

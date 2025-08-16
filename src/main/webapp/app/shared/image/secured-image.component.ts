@@ -1,22 +1,11 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
-import { BehaviorSubject, Observable, isObservable, of } from 'rxjs';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { DomSanitizer } from '@angular/platform-browser';
-import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
-import { base64StringToBlob } from 'app/shared/util/blob-util';
-import { AsyncPipe } from '@angular/common';
+import { Component, ElementRef, computed, effect, inject, input, output } from '@angular/core';
+import { httpResource } from '@angular/common/http';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
-// Status that is emitted to the client to describe the loading status of the picture
 export const enum ImageLoadingStatus {
     SUCCESS = 'success',
     ERROR = 'error',
     LOADING = 'loading',
-}
-
-export enum CachingStrategy {
-    LOCAL_STORAGE = 'LOCAL_STORAGE',
-    SESSION_STORAGE = 'SESSION_STORAGE',
-    NONE = 'NONE',
 }
 
 /**
@@ -30,102 +19,49 @@ export enum CachingStrategy {
 @Component({
     selector: 'jhi-secured-image',
     template: `
-        @if (!this.mobileDragAndDrop) {
-            <img [attr.src]="dataUrl | async" alt="alt" />
-        }
-        @if (this.mobileDragAndDrop) {
-            <img [attr.src]="dataUrl | async" class="dnd-drag-start" draggable="true" alt="alt" cdkDrag />
+        @if (mobileDragAndDrop()) {
+            <img [attr.src]="localImageUrl() ?? null" class="dnd-drag-start" draggable="true" [attr.alt]="alt() ?? null" cdkDrag />
+        } @else {
+            <img [attr.src]="localImageUrl() ?? null" [attr.alt]="alt() ?? null" />
         }
     `,
-    imports: [AsyncPipe],
+    imports: [],
 })
-export class SecuredImageComponent implements OnChanges, OnInit {
+export class SecuredImageComponent {
     private domSanitizer = inject(DomSanitizer);
-    private cacheableImageService = inject(CacheableImageService);
+    private retried = false;
+
     element = inject(ElementRef);
+    mobileDragAndDrop = input<boolean>(false);
+    src = input.required<string>();
+    alt = input<string | undefined>(undefined);
+    loadingStatus = output<ImageLoadingStatus>();
 
-    // This part just creates an rxjs stream from the src
-    // this makes sure that we can handle it when the src changes
-    // or even when the component gets destroyed
-    @Input() mobileDragAndDrop = false;
-    @Input() src: string;
-    @Input() cachingStrategy = CachingStrategy.SESSION_STORAGE;
-    @Input() alt = '';
-    private srcSubject?: BehaviorSubject<string>;
-    dataUrl: Observable<string>;
-    private retryCounter = 0;
+    private imageResource = httpResource.blob<SafeUrl>(() => this.src(), {
+        parse: (blob) => this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(blob)), // we need DomSanitizer to trust the url
+    });
 
-    @Output() endLoadingProcess = new EventEmitter<ImageLoadingStatus>();
+    localImageUrl = computed<SafeUrl | undefined>(() => (this.imageResource.hasValue() ? this.imageResource.value() : undefined));
 
-    ngOnInit(): void {
-        this.srcSubject = new BehaviorSubject(this.src);
-        // this stream will contain the actual url that our img tag will load
-        // everytime the src changes, the previous call would be canceled and the
-        // new resource would be loaded
-        this.dataUrl = this.srcSubject.pipe(
-            filter((url) => !!url),
-            switchMap((url) => this.loadImage(url)),
-        );
+    constructor() {
+        effect(() => {
+            if (this.imageResource.error() && !this.retried) {
+                this.retried = true;
+                this.imageResource.reload();
+            }
+        });
+        effect(() => {
+            if (this.imageResource.isLoading()) {
+                this.loadingStatus.emit(ImageLoadingStatus.LOADING);
+            } else if (this.imageResource.error() && this.retried) {
+                this.loadingStatus.emit(ImageLoadingStatus.ERROR);
+            } else if (this.imageResource.hasValue()) {
+                this.loadingStatus.emit(ImageLoadingStatus.SUCCESS);
+            }
+        });
     }
 
-    ngOnChanges() {
-        if (this.srcSubject) {
-            this.srcSubject.next(this.src);
-        }
-    }
-
-    // we need HttpClient to load the image and DomSanitizer to trust the url
-
-    // triggers the reload of the picture when the user clicks on a button
     retryLoadImage() {
-        this.retryCounter = 0;
-        this.endLoadingProcess.emit(ImageLoadingStatus.LOADING);
-        this.ngOnChanges();
-    }
-
-    /**
-     * Load the image and decide by the active cache strategy if a cache should be used.
-     * The requested image will be declared as safe by this method so that angular will not complain.
-     * This method has a retry mechanism and will try a couple of times to retry downloading the file if it fails.
-     *
-     * @param url of the image on the server.
-     */
-    private loadImage(url: string): Observable<any> {
-        return of(undefined).pipe(
-            // Load the image from the server with the active caching strategy.
-            switchMap(() => {
-                let res;
-                if (this.cachingStrategy === CachingStrategy.SESSION_STORAGE) {
-                    res = this.cacheableImageService.loadCachedSessionStorage(url);
-                } else if (this.cachingStrategy === CachingStrategy.LOCAL_STORAGE) {
-                    res = this.cacheableImageService.loadCachedLocalStorage(url);
-                } else {
-                    res = this.cacheableImageService.loadWithoutCache(url);
-                }
-                // If the result is cached, it will not be an observable but a normal object - in this case it needs to be wrapped into an observable.
-                return isObservable(res) ? res : of(res);
-            }),
-            // The image will be loaded as a base64 string, so it needs to be converted to a blob before it can be used.
-            map((base64String: string) => {
-                return base64StringToBlob(base64String, 'application/json');
-            }),
-            // We need to declare the blob as safe, otherwise angular will complain about the inserted element.
-            map((blob: Blob) => {
-                return this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(blob));
-            }),
-            // Emit that the file was loaded successfully.
-            tap(() => {
-                this.endLoadingProcess.emit(ImageLoadingStatus.SUCCESS);
-            }),
-            catchError((error) => {
-                if (this.retryCounter === 0) {
-                    this.retryCounter++;
-                    return this.loadImage(url);
-                } else {
-                    this.endLoadingProcess.emit(ImageLoadingStatus.ERROR);
-                }
-                throw error;
-            }),
-        );
+        this.imageResource.reload();
     }
 }
