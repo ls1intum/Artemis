@@ -10,7 +10,17 @@
                     </div>
                     <span class="text-muted" id="build-agent-info">{{ buildAgent.buildAgent?.name }} - {{ buildAgent.buildAgent?.memberAddress }}</span>
                 </div>
-                <div class="ms-3 d-flex justify-content-center gap-2">
+                <div class="ms-3 d-flex justify-content-center gap-2 align-items-center">
+                    <div class="d-flex align-items-center ms-3">
+                        <label class="form-label mb-0 me-2" jhiTranslate="artemisApp.buildAgents.concurrencyLabel"></label>
+                        <jhi-number-input
+                            [value]="buildAgent.maxNumberOfConcurrentBuildJobs || 1"
+                            [minValue]="1"
+                            [maxValue]="buildAgent.maxConcurrentBuildsAllowed"
+                            [disabled]="buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED'"
+                            (valueChange)="onConcurrencyChange($event)"
+                        />
+                    </div>
                     @if (buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED') {
                         <button class="btn btn-success" (click)="resumeBuildAgent()">
                             <fa-icon [icon]="faPlay" />
@@ -47,11 +57,6 @@
                     <span>{{ buildAgent.buildAgentDetails?.averageBuildDuration }}</span>
                 </div>
                 <div>
-                    <span class="bold" jhiTranslate="artemisApp.buildAgents.maxNumberOfConcurrentBuildJobs"></span>
-                    <span class="bold">:</span>
-                    <span>{{ buildAgent.maxNumberOfConcurrentBuildJobs }}</span>
-                </div>
-                <div>
                     <span class="bold" jhiTranslate="artemisApp.buildAgents.gitRevision"></span>
                     <span class="bold">:</span>
                     <span>{{ buildAgent.buildAgentDetails?.gitRevision }}</span>
@@ -65,6 +70,16 @@
                     <span>{{ buildAgent.pauseAfterConsecutiveBuildFailures }}</span>
                 </div>
             </div>
+
+            <!-- Warning about concurrency settings reset -->
+            @if (!concurrencyResetWarningDismissed) {
+                <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+                    <fa-icon [icon]="faExclamationTriangle" class="me-2" />
+                    <strong jhiTranslate="artemisApp.buildAgents.concurrencyResetWarning.title"></strong>
+                    <span jhiTranslate="artemisApp.buildAgents.concurrencyResetWarning.message"></span>
+                    <button type="button" class="btn-close" (click)="dismissConcurrencyResetWarning()" aria-label="Close"></button>
+                </div>
+            }
 
             <jhi-build-job-statistics [buildJobStatisticsInput]="buildJobStatistics" class="mb-4" />
 

@@ -32,11 +32,13 @@ import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentCapacityAdjustmentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
@@ -111,6 +113,40 @@ public class SharedQueueManagementService {
 
     public void resumeAllBuildAgents() {
         distributedDataAccessService.getBuildAgentInformation().forEach(agent -> resumeBuildAgent(agent.buildAgent().name()));
+    }
+
+    /**
+     * Adjust the concurrent build size of a specific build agent.
+     *
+     * @param agentName   the name of the build agent to adjust concurrent build size for
+     * @param newCapacity the new capacity for the build agent
+     */
+    public void adjustBuildAgentCapacity(String agentName, int newCapacity) {
+        if (newCapacity <= 0) {
+            throw new BadRequestAlertException("Concurrent build size must be at least 1", "buildAgent", "invalidCapacityBelowMinimum");
+        }
+
+        if (agentName == null || agentName.trim().isEmpty()) {
+            throw new BadRequestAlertException("Agent name cannot be null or empty", "buildAgent", "invalidAgentName");
+        }
+
+        BuildAgentInformation targetAgent = getBuildAgentByName(agentName);
+
+        if (newCapacity > targetAgent.maxConcurrentBuildsAllowed()) {
+            throw new BadRequestAlertException("Concurrent build size must not exceed maximum of " + targetAgent.maxConcurrentBuildsAllowed(), "buildAgent",
+                    "invalidCapacityExceedsMax");
+        }
+
+        distributedDataAccessService.getAdjustBuildAgentCapacityTopic().publish(new BuildAgentCapacityAdjustmentDTO(agentName, newCapacity));
+    }
+
+    /**
+     * Gets the build agent information by name from the distributed data.
+     */
+    private BuildAgentInformation getBuildAgentByName(String agentName) {
+        List<BuildAgentInformation> buildAgents = distributedDataAccessService.getBuildAgentInformation();
+        return buildAgents.stream().filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst()
+                .orElseThrow(() -> new BadRequestAlertException("Build agent '" + agentName + "' not found", "buildAgent", "invalidAgentName"));
     }
 
     /**

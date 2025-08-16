@@ -114,8 +114,9 @@ public class BuildAgentInformationService {
         BuildAgentDetailsDTO agentDetails = getBuildAgentDetails(agent, recentBuildJob, consecutiveFailures);
 
         int pauseAfterConsecutiveFailedJobs = buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs();
+        int maxConcurrentBuildsAllowed = buildAgentConfiguration.getConcurrentBuildsMaximum();
         return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, publicSshKey, agentDetails,
-                pauseAfterConsecutiveFailedJobs);
+                pauseAfterConsecutiveFailedJobs, maxConcurrentBuildsAllowed);
     }
 
     private BuildAgentDetailsDTO getBuildAgentDetails(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob, int consecutiveFailures) {

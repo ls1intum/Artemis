@@ -32,12 +32,15 @@
                 "buildAgentsPaused": "Anfrage zum Anhalten aller Build-Agenten erfolgreich gesendet. Die Agenten akzeptieren keine neuen Build-Jobs und werden die aktuellen Build-Jobs entweder ordnungsgemäß beenden oder nach einer konfigurierbaren Anzahl von Sekunden abbrechen.",
                 "buildAgentsResumed": "Anfrage zum Fortsetzen aller Build-Agenten erfolgreich gesendet. Die Agenten werden wieder neue Build-Jobs annehmen.",
                 "distributedDataCleared": "Verteilte Daten erfolgreich gelöscht.",
-                "distributedDataClearFailed": "Löschen der verteilten Daten fehlgeschlagen."
+                "distributedDataClearFailed": "Löschen der verteilten Daten fehlgeschlagen.",
+                "buildAgentCapacityAdjustFailed": "Anpassung der Build-Agent-Kapazität fehlgeschlagen."
             },
             "pause": "Anhalten",
             "resume": "Fortsetzen",
             "pauseAll": "Alle Agenten Anhalten",
             "resumeAll": "Alle Agenten fortsetzen",
+            "concurrency": "Parallelität",
+            "concurrencyLabel": "Parallele Jobs:",
             "pauseAllWarning": "Du bist dabei, alle Build-Agenten anzuhalten. Dies wird verhindern, dass sie neue Build-Jobs verarbeiten.\nBist du sicher, dass du fortfahren möchtest?",
             "clearDistributedData": {
                 "title": "Verteilte Daten löschen",
@@ -45,6 +48,10 @@
                 "descriptionSecond": "Diese Aktion ist irreversibel und führt zu Datenverlust. Das System benötigt einige Minuten, um wieder in den Normalbetrieb zurückzukehren.",
                 "descriptionThird": "Wenn du sicher bist, dass du fortfahren möchtest, gib bitte 'CLEAR DATA' in das untenstehende Eingabefeld ein und klicke auf die Schaltfläche 'Daten löschen'.",
                 "clearData": "Daten löschen"
+            },
+            "concurrencyResetWarning": {
+                "title": "Warnung: ",
+                "message": "Das Neustarten des Clusters oder das Bereitstellen einer neuen Version setzt die Parallelitätseinstellungen der Build-Agenten auf ihre Standardwerte zurück. Bitte konfigurieren Sie die Parallelitätseinstellungen nach jedem Cluster-Neustart oder jeder Bereitstellung neu."
             }
         }
     }

@@ -13,6 +13,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -109,8 +110,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
         job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
         job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
-        agent1 = new BuildAgentInformation(buildAgent, 2, 1, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE, null, null,
-                buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs());
+        agent1 = new BuildAgentInformation(buildAgent, 2, 2, new ArrayList<>(List.of(job1, job2)), BuildAgentInformation.BuildAgentStatus.ACTIVE, null, null,
+                buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs(), 4);
         BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", buildAgent, 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
                 buildConfig, null);
         BuildJobQueueItem finishedJobQueueItem2 = new BuildJobQueueItem("4", "job4", buildAgent, 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo2,
@@ -467,10 +468,69 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         queuedJobs.put(job5);
 
         agent1 = new BuildAgentInformation(buildAgent, 2, 2, new ArrayList<>(List.of(job1, job2)), BuildAgentInformation.BuildAgentStatus.ACTIVE, null, null,
-                buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs());
+                buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs(), 8);
         buildAgentInformation.put(buildAgent.memberAddress(), agent1);
 
         var queueDurationEstimation = sharedQueueManagementService.getBuildJobEstimatedStartDate(job4.participationId());
         assertThat(queueDurationEstimation).isCloseTo(now.plusSeconds(48), within(1, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testAdjustBuildAgentCapacity_success() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        int newCapacity = 3;
+
+        // The test verifies that the endpoint call doesn't throw an exception
+        request.put("/api/core/admin/agents/" + agentName + "/capacity", Map.of("buildAgentName", agentName, "newCapacity", newCapacity), HttpStatus.NO_CONTENT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testAdjustBuildAgentCapacity_invalidCapacity() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        int invalidCapacity = 0;
+
+        // This should fail due to validation in the service layer
+        request.put("/api/core/admin/agents/" + agentName + "/capacity", Map.of("buildAgentName", agentName, "newCapacity", invalidCapacity), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testAdjustBuildAgentCapacity_negativeCapacity() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        int negativeCapacity = -1;
+
+        // This should fail due to validation in the service layer
+        request.put("/api/core/admin/agents/" + agentName + "/capacity", Map.of("buildAgentName", agentName, "newCapacity", negativeCapacity), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAdjustBuildAgentCapacity_forbiddenForInstructor() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        int newCapacity = 3;
+
+        // The test verifies that the endpoint call returns a forbidden status
+        request.put("/api/core/admin/agents/" + agentName + "/capacity", Map.of("buildAgentName", agentName, "newCapacity", newCapacity), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testAdjustBuildAgentCapacity_exceedsMaximum() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        int exceedsMaxCapacity = 20; // This should exceed the configured maximum of 8
+
+        // This should fail due to validation against the maximum value
+        request.put("/api/core/admin/agents/" + agentName + "/capacity", Map.of("buildAgentName", agentName, "newCapacity", exceedsMaxCapacity), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAdjustBuildAgentCapacity_forbiddenForStudent() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        int newCapacity = 3;
+
+        request.put("/api/core/admin/agents/" + agentName + "/capacity", Map.of("buildAgentName", agentName, "newCapacity", newCapacity), HttpStatus.FORBIDDEN);
     }
 }
