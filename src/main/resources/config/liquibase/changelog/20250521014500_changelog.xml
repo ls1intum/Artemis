@@ -53,8 +53,8 @@
         </rollback>
     </changeSet>
 
-    <!-- Atomic step 4 (H2 tests): status as VARCHAR (keeps CI green) -->
-    <changeSet id="220250521014500-h2-status-varchar" author="goyal">
+    <!-- Atomic step 4 (H2 tests): -->
+    <changeSet id="20250521014500-h2-status-varchar" author="goyal">
         <preConditions onFail="MARK_RAN"><dbms type="h2"/></preConditions>
         <addColumn tableName="lecture_transcription">
             <column name="transcription_status" type="VARCHAR(32)" defaultValue="PENDING">
