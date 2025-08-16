@@ -194,9 +194,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     List<ProgrammingExercise> findAllByRecentExamEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
 
-    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.team", "studentParticipations.team.students" })
-    Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(long exerciseId);
-
     @Query("""
             SELECT pe
             FROM ProgrammingExercise pe

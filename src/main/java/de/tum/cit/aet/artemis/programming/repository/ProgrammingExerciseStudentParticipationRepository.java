@@ -53,12 +53,13 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
                 LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results pr
+                LEFT JOIN FETCH s.results r
             WHERE p.id = :participationId
-                AND (pr.assessmentType = 'AUTOMATIC'
-                        OR (pr.completionDate IS NOT NULL
-                            AND (p.exercise.assessmentDueDate IS NULL
-                                OR p.exercise.assessmentDueDate < :dateTime))) OR pr.id IS NULL
+                AND (
+                    r.assessmentType = 'AUTOMATIC'
+                    OR (r.completionDate IS NOT NULL AND (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :dateTime))
+                    OR r.id IS NULL
+                    )
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(@Param("participationId") long participationId,
             @Param("dateTime") ZonedDateTime dateTime);

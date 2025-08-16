@@ -49,6 +49,9 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
             """)
     ProgrammingExercise findOneWithEagerEverything(@Param("exerciseId") long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.team", "studentParticipations.team.students" })
+    Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(long exerciseId);
+
     @Query("""
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
