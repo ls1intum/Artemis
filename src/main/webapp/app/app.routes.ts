@@ -200,6 +200,13 @@ const routes: Routes = [
         },
     },
     {
+        path: 'demo/text-exercise-feedback',
+        loadComponent: () => import('app/shared/components/unified-feedback/text-exercise-demo.component').then((m) => m.TextExerciseDemoComponent),
+        data: {
+            pageTitle: 'Text Exercise Feedback Demo',
+        },
+    },
+    {
         path: 'lti',
         loadChildren: () => import('./lti/shared/lti.route').then((m) => m.ltiLaunchRoutes),
     },
