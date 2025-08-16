@@ -22,6 +22,7 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     isExamMode: false,
     isImportFromExistingExercise: false,
     isImportFromFile: false,
+    isImportFromSharing: false,
     maxPenaltyPattern: '',
     modePickerOptions: [],
     onProgrammingLanguageChange(language: ProgrammingLanguage): ProgrammingLanguage {

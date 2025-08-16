@@ -40,6 +40,7 @@ import org.springframework.core.env.Profiles;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.EvictionConfig;
 import com.hazelcast.config.EvictionPolicy;
+import com.hazelcast.config.InvalidConfigurationException;
 import com.hazelcast.config.MapConfig;
 import com.hazelcast.config.MaxSizePolicy;
 import com.hazelcast.config.NetworkConfig;
@@ -134,6 +135,11 @@ public class CacheConfiguration {
     public void destroy() {
         log.info("Closing Cache Manager");
         Hazelcast.shutdownAll();
+
+        boolean running = !Hazelcast.getAllHazelcastInstances().isEmpty();
+        if (running) {
+            log.info("There are still {} instances running", Hazelcast.getAllHazelcastInstances().size(), new Exception());
+        }
     }
 
     @Bean
@@ -177,8 +183,13 @@ public class CacheConfiguration {
             networkConfig.setPortAutoIncrement(false);
             testConfig.setProperty("hazelcast.local.localAddress", "127.0.0.1");
 
-            // testConfig.setLiteMember(true); // Run as a lite member to avoid forming a full cluster
-            return Hazelcast.newHazelcastInstance(testConfig);
+            try {
+                // testConfig.setLiteMember(true); // Run as a lite member to avoid forming a full cluster
+                return Hazelcast.newHazelcastInstance(testConfig);
+            }
+            catch (InvalidConfigurationException e) {
+                log.error("Hazelcast is already running!", e);
+            }
         }
         // ========================= TESTING ONLY =========================
 
