@@ -12,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -83,7 +82,6 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void testSetExamProperties() {
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setTestRun(true);
@@ -107,7 +105,6 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void testForNullIndexColumnError() {
         Exam examResult = examRepository.findByIdElseThrow(exam1.getId());
         assertThat(examResult).isEqualTo(exam1);
@@ -117,14 +114,12 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void testCanGetCurrentAndUpcomingExams() {
         List<Exam> exams = examRepository.findAllCurrentAndUpcomingExams();
         assertThat(exams).hasSize(countExamsBeforeTests + 2).contains(exam1, examInTheFuture).doesNotContain(examInThePast);
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void validateForStudentExamGeneration_differentCalculationTypesInExerciseGroup_shouldThrowException() {
         Exam exam = createExam(1, 1L, 10);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
@@ -139,7 +134,6 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void validateForStudentExamGeneration_differentPointsInExerciseGroup_shouldThrowException() {
         Exam exam = createExam(1, 1L, 9);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
@@ -154,7 +148,6 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void validateForStudentExamGeneration_differentBonusInExerciseGroup_shouldThrowException() {
         Exam exam = createExam(1, 1L, 10);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
@@ -169,7 +162,6 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void validateForStudentExamGeneration_tooManyPointsInMandatoryExercises_shouldThrowException() {
         Exam exam = createExam(1, 1L, 10);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
@@ -184,7 +176,6 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void validateForStudentExamGeneration_tooFewPointsInExercisesGroups_shouldThrowException() {
         Exam exam = createExam(1, 1L, 10);
         ExerciseGroup exerciseGroup = addExerciseGroupToExam(exam, 1L, true);
@@ -199,7 +190,6 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void getChecklistStatsEmpty() {
         // check if general method works. More sophisticated test are within the ExamIntegrationTests
         ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam1, true);
@@ -240,7 +230,6 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        @WithMockUser(username = "student1", roles = "STUDENT")
         void testThrowsExceptionIfNotSubmitted() {
             studentExam.setSubmitted(false);
             boolean isInstructor = false;
@@ -250,7 +239,6 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        @WithMockUser(username = "student1", roles = "STUDENT")
         void testThrowsExceptionIfNotPublished() {
             studentExam.setSubmitted(true);
             studentExam.getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(5));
@@ -261,7 +249,6 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
         void testDoesNotThrowExceptionForInstructors() {
             studentExam.setId(1L);
             studentExam.setSubmitted(false);
