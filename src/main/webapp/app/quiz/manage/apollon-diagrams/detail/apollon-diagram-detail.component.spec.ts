@@ -88,6 +88,7 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.apollonDiagram = diagram;
         // setup
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
+        fixture.componentInstance.course = course;
         const updateStub = jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
 
         fixture.componentInstance.initializeApollonEditor(model);
@@ -119,6 +120,7 @@ describe('ApollonDiagramDetail Component', () => {
 
         // test
         await fixture.componentInstance.apollonEditor?.nextRender;
+        fixture.componentInstance.course = course;
         await fixture.componentInstance.generateExercise();
 
         expect(emitSpy).toHaveBeenCalledOnce();

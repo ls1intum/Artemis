@@ -46,7 +46,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         });
         fixture = TestBed.createComponent(MultipleChoiceQuestionEditComponent);
         component = fixture.componentInstance;
-        component.question = question;
+        fixture.componentRef.setInput('question', question);
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
@@ -72,15 +72,15 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should store scoring type when changed', () => {
-        component.question = { ...question };
-        component.question.scoringType = undefined;
-        component.question.singleChoice = true;
+        fixture.componentRef.setInput('question', { ...question });
+        component.question().scoringType = undefined;
+        component.question().singleChoice = true;
 
         fixture.detectChanges();
 
-        expect(component.question.scoringType).toBeUndefined();
+        expect(component.question().scoringType).toBeUndefined();
         component.onSingleChoiceChanged();
-        expect(component.question.scoringType).toBe(ScoringType.ALL_OR_NOTHING);
+        expect(component.question().scoringType).toBe(ScoringType.ALL_OR_NOTHING);
     });
 
     it('should parse answer options but not question titles', () => {
@@ -117,7 +117,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             ],
         };
 
-        expect(component.question).toEqual(expected);
+        expect(component.question()).toEqual(expected);
         expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
     });
 
@@ -153,7 +153,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             ],
         };
 
-        expect(component.question).toEqual(expected);
+        expect(component.question()).toEqual(expected);
         expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
     });
 
@@ -172,7 +172,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
             answerOptions: [],
         };
 
-        expect(component.question).toEqual(expected);
+        expect(component.question()).toEqual(expected);
         expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
     });
 
@@ -194,11 +194,11 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     function expectCleanupQuestion() {
-        expect(component.question.answerOptions).toHaveLength(0);
-        expect(component.question.text).toBeUndefined();
-        expect(component.question.explanation).toBeUndefined();
-        expect(component.question.hint).toBeUndefined();
-        expect(component.question.hasCorrectOption).toBeUndefined();
+        expect(component.question().answerOptions).toHaveLength(0);
+        expect(component.question().text).toBeUndefined();
+        expect(component.question().explanation).toBeUndefined();
+        expect(component.question().hint).toBeUndefined();
+        expect(component.question().hasCorrectOption).toBeUndefined();
     }
 
     it('should trigger delete button', () => {
