@@ -2,13 +2,12 @@ import { Component } from '@angular/core';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
 import { UnifiedTextResultComponent } from 'app/text/overview/text-result/unified-text-result.component';
-import { UnifiedAdditionalFeedbackComponent } from 'app/exercise/additional-feedback/unified-additional-feedback.component';
 
 @Component({
     selector: 'jhi-text-exercise-demo',
     templateUrl: './text-exercise-demo.component.html',
     styleUrls: ['./text-exercise-demo.component.scss'],
-    imports: [UnifiedFeedbackComponent, UnifiedTextResultComponent, UnifiedAdditionalFeedbackComponent],
+    imports: [UnifiedFeedbackComponent, UnifiedTextResultComponent],
 })
 export class TextExerciseDemoComponent {
     // Sample feedback data for demonstration

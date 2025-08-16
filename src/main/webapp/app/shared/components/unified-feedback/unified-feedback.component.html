@@ -1,4 +1,4 @@
-<div class="alert unified-feedback" [ngClass]="getAlertClass()">
+<div class="alert unified-feedback" [ngClass]="inferredAlertClass()">
     <div class="unified-feedback__content">
         <!-- Reference (optional) -->
         @if (reference()) {
@@ -12,9 +12,9 @@
             <!-- Icon, title, and points in header -->
             <div class="unified-feedback__header">
                 <div class="unified-feedback__header-left">
-                    <fa-icon [icon]="getIconForType()" class="unified-feedback__icon" />
-                    @if (title()) {
-                        <span class="unified-feedback__title">{{ title() }}</span>
+                    <fa-icon [icon]="inferredIcon()" class="unified-feedback__icon" />
+                    @if (inferredTitle()) {
+                        <span class="unified-feedback__title">{{ inferredTitle() }}</span>
                     }
                 </div>
                 <div class="unified-feedback__points">{{ points() }} points</div>
@@ -22,9 +22,7 @@
 
             <!-- Feedback content -->
             @if (feedbackContent()) {
-                <div class="unified-feedback__text">
-                    {{ feedbackContent() }}
-                </div>
+                <div class="unified-feedback__text" [innerHTML]="feedbackContent()"></div>
             }
         </div>
     </div>

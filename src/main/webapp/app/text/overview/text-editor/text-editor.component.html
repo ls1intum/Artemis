@@ -125,7 +125,7 @@
                                 <div class="col-md-12 col-lg-10 col-xl-8">
                                     <b [jhiTranslate]="'artemisApp.textExercise.submission'">Submission:</b>
                                     <hr />
-                                    <jhi-text-result [result]="result" [course]="course" />
+                                    <jhi-unified-text-result [result]="result" [course]="course" />
                                     <hr />
                                     <i [jhiTranslate]="'artemisApp.textExercise.assessmentPending'">Assessment pending</i>
                                 </div>
@@ -144,16 +144,28 @@
                                         <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
                                     }
                                     <hr />
-                                    <jhi-text-result [result]="result" [course]="course" />
+                                    <jhi-unified-text-result [result]="result" [course]="course" />
                                     <hr />
                                 </div>
                                 @if (unreferencedFeedback && unreferencedFeedback!.length > 0) {
-                                    <jhi-additional-feedback
-                                        class="col-xl-8 alert unreferencedFeedback"
-                                        [feedback]="unreferencedFeedback || []"
-                                        [additional]="true"
-                                        [course]="course"
-                                    />
+                                    <div class="col-xl-8">
+                                        @for (feedback of unreferencedFeedback; track feedback.id) {
+                                            <jhi-unified-feedback
+                                                [feedbackContent]="feedback.detailText || ''"
+                                                [points]="feedback.credits || 0"
+                                                [icon]="(feedback.credits || 0) > 0 ? 'success' : (feedback.credits || 0) < 0 ? 'error' : feedback.positive ? 'success' : 'retry'"
+                                                [title]="
+                                                    (feedback.credits || 0) > 0
+                                                        ? 'Good job!'
+                                                        : (feedback.credits || 0) < 0
+                                                          ? 'Incorrect'
+                                                          : feedback.positive
+                                                            ? 'Good effort!'
+                                                            : 'Needs revision'
+                                                "
+                                            />
+                                        }
+                                    </div>
                                 }
                                 @if (isOwnerOfParticipation) {
                                     <jhi-rating class="col-md-12 col-lg-10 col-xl-8 mt-2 alert alert-info" [result]="result" />

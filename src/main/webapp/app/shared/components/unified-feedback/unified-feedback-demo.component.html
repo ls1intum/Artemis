@@ -1,18 +1,18 @@
 <div class="unified-feedback-demo">
     <div class="container">
         <h1>Unified Feedback Component Demo</h1>
-        <p class="lead">This page showcases different variations of the unified feedback component.</p>
+        <p class="lead">This page showcases different variations of the unified feedback component with automatic type inference.</p>
 
         <div class="demo-section">
             <h2>All Feedback Variations</h2>
             <div class="demo-grid">
                 @for (feedback of demoFeedbacks; track feedback.title || feedback.feedbackContent) {
                     <div class="demo-item">
-                        <h3>{{ feedback.title || 'No Title' }}</h3>
+                        <h3>{{ feedback.title || 'Auto-generated Title' }}</h3>
                         <jhi-unified-feedback
                             [feedbackContent]="feedback.feedbackContent"
                             [points]="feedback.points"
-                            [icon]="feedback.icon"
+                            [type]="feedback.type"
                             [title]="feedback.title"
                             [reference]="feedback.reference"
                         />
@@ -22,21 +22,44 @@
         </div>
 
         <div class="demo-section">
-            <h2>Individual Icon Types</h2>
+            <h2>Individual Type Examples</h2>
 
             <div class="icon-demo">
-                <h3>Success Feedback</h3>
-                <jhi-unified-feedback feedbackContent="This is a success feedback example with positive points." [points]="5" icon="success" title="Great job!" />
+                <h3>Correct Type (Explicit)</h3>
+                <jhi-unified-feedback feedbackContent="This is a correct feedback example with positive points." [points]="5" type="correct" title="Great job!" />
             </div>
 
             <div class="icon-demo">
-                <h3>Error Feedback</h3>
-                <jhi-unified-feedback feedbackContent="This is an error feedback example with zero points." [points]="0" icon="error" title="Incorrect" />
+                <h3>Needs Revision Type (Explicit)</h3>
+                <jhi-unified-feedback
+                    feedbackContent="This is a needs revision feedback example that requires improvement."
+                    [points]="2"
+                    type="needs_revision"
+                    title="Needs revision"
+                />
             </div>
 
             <div class="icon-demo">
-                <h3>Retry Feedback</h3>
-                <jhi-unified-feedback feedbackContent="This is a retry feedback example that needs improvement." [points]="2" icon="retry" title="Needs revision" />
+                <h3>Not Attempted Type (Explicit)</h3>
+                <jhi-unified-feedback feedbackContent="This is a not attempted feedback example with zero points." [points]="0" type="not_attempted" title="Not attempted" />
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>Auto-inferred Types</h2>
+
+            <div class="icon-demo">
+                <h3>Auto-inferred Correct (points > 0)</h3>
+                <jhi-unified-feedback feedbackContent="This feedback will be automatically inferred as 'correct' because points > 0." [points]="3" title="Auto-correct" />
+            </div>
+
+            <div class="icon-demo">
+                <h3>Auto-inferred Not Attempted (points = 0)</h3>
+                <jhi-unified-feedback
+                    feedbackContent="This feedback will be automatically inferred as 'not_attempted' because points = 0."
+                    [points]="0"
+                    title="Auto-not-attempted"
+                />
             </div>
         </div>
 
@@ -45,15 +68,15 @@
             <jhi-unified-feedback
                 feedbackContent="This feedback includes a reference to specific code."
                 [points]="3"
-                icon="retry"
+                type="needs_revision"
                 title="Code Review"
                 reference="src/main/java/com/example/Service.java:42-45"
             />
         </div>
 
         <div class="demo-section">
-            <h2>Without Title</h2>
-            <jhi-unified-feedback feedbackContent="This feedback doesn't have a title, just content and points." [points]="4" icon="success" />
+            <h2>Without Title (Auto-generated)</h2>
+            <jhi-unified-feedback feedbackContent="This feedback doesn't have a title, so it will be auto-generated based on the type." [points]="4" />
         </div>
     </div>
 </div>

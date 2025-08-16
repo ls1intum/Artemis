@@ -42,8 +42,8 @@ import { ResultHistoryComponent } from 'app/exercise/result-history/result-histo
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { TextResultComponent } from '../text-result/text-result.component';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { UnifiedTextResultComponent } from '../text-result/unified-text-result.component';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
@@ -69,8 +69,8 @@ import { TranslateService } from '@ngx-translate/core';
         TranslateDirective,
         FormsModule,
         TeamSubmissionSyncComponent,
-        TextResultComponent,
-        AdditionalFeedbackComponent,
+        UnifiedTextResultComponent,
+        UnifiedFeedbackComponent,
         RatingComponent,
         ComplaintsStudentViewComponent,
         FaIconComponent,

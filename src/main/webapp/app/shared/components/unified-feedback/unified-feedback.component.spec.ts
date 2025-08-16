@@ -1,7 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
 
 describe('UnifiedFeedbackComponent', () => {
     let component: UnifiedFeedbackComponent;
@@ -9,7 +7,7 @@ describe('UnifiedFeedbackComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [UnifiedFeedbackComponent, FaIconComponent],
+            imports: [UnifiedFeedbackComponent],
         }).compileComponents();
 
         fixture = TestBed.createComponent(UnifiedFeedbackComponent);
@@ -24,16 +22,28 @@ describe('UnifiedFeedbackComponent', () => {
     it('should have default values', () => {
         expect(component.feedbackContent()).toBe('');
         expect(component.points()).toBe(0);
-        expect(component.icon()).toBe('success');
+        expect(component.type()).toBeUndefined();
         expect(component.title()).toBeUndefined();
         expect(component.reference()).toBeUndefined();
     });
 
-    it('should return correct default icon', () => {
-        expect(component.getIconForType()).toBe(faCheck);
+    it('should infer not_attempted type by default when points = 0', () => {
+        expect(component.inferredType()).toBe('not_attempted');
+        expect(component.inferredTitle()).toBe('Not Attempted');
+        expect(component.inferredAlertClass()).toBe('alert-danger');
     });
 
-    it('should return correct default alert class', () => {
-        expect(component.getAlertClass()).toBe('alert-success');
+    it('should return correct icons for each type', () => {
+        expect(component.inferredIcon()).toBe(component.faTimes); // default for not_attempted
+    });
+
+    it('should return correct alert classes for each type', () => {
+        expect(component.inferredAlertClass()).toBe('alert-danger'); // default for not_attempted
+    });
+
+    it('should have legacy icon support', () => {
+        expect(component.icon()).toBe('success');
+        expect(component.getIconForType()).toBe(component.inferredIcon());
+        expect(component.getAlertClass()).toBe(component.inferredAlertClass());
     });
 });

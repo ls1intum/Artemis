@@ -207,6 +207,13 @@ const routes: Routes = [
         },
     },
     {
+        path: 'demo/text-exercise-integration-test',
+        loadComponent: () => import('app/shared/components/unified-feedback/text-exercise-integration-test.component').then((m) => m.TextExerciseIntegrationTestComponent),
+        data: {
+            pageTitle: 'Text Exercise Integration Test',
+        },
+    },
+    {
         path: 'lti',
         loadChildren: () => import('./lti/shared/lti.route').then((m) => m.ltiLaunchRoutes),
     },

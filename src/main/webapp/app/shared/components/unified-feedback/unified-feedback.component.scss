@@ -1,7 +1,8 @@
 .unified-feedback {
     border-radius: 8px;
     border-left: 8px solid;
-    margin-bottom: 1rem;
+    margin-bottom: 0.25rem;
+    margin-top: 0.25rem;
     background-color: var(--bs-modal-bg, var(--bs-card-bg, var(--bs-body-bg)));
     border-top: 1px solid var(--bs-border-color);
     border-right: 1px solid var(--bs-border-color);
@@ -27,7 +28,7 @@
 .unified-feedback__content {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.125rem;
 }
 
 .unified-feedback__reference {
@@ -44,7 +45,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.125rem;
 }
 
 .unified-feedback__header-left {
@@ -54,7 +55,7 @@
 }
 
 .unified-feedback__icon {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
 }
 
 .unified-feedback.alert-success .unified-feedback__icon {
@@ -75,7 +76,7 @@
 
 .unified-feedback__title {
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: inherit;
 }
 
@@ -96,14 +97,38 @@
 }
 
 .unified-feedback__text {
-    line-height: 1.5;
-    margin-bottom: 0.5rem;
+    line-height: 1.2;
+    margin-bottom: 0;
     color: var(--bs-body-color);
+
+    // Style HTML content properly
+    br {
+        margin-bottom: 0.0625rem;
+    }
+
+    p {
+        margin-bottom: 0.0625rem;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    // Ensure proper spacing for lists
+    ul,
+    ol {
+        margin-bottom: 0.0625rem;
+        padding-left: 1.5rem;
+    }
+
+    li {
+        margin-bottom: 0.0625rem;
+    }
 }
 
 .unified-feedback__points {
     font-weight: 600;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     color: var(--bs-body-color);
 }
 

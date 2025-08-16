@@ -30,9 +30,18 @@
         </div>
 
         <div class="demo-section">
-            <h2>Unified Additional Feedback Component</h2>
-            <p>This shows how additional feedback appears:</p>
-            <jhi-unified-additional-feedback [feedback]="additionalFeedbacks" [additional]="true" />
+            <h2>Additional Feedback Examples</h2>
+            <p>This shows how additional feedback appears using individual unified feedback components:</p>
+            <div class="additional-feedback-demo">
+                @for (feedback of additionalFeedbacks; track feedback.id) {
+                    <jhi-unified-feedback
+                        [feedbackContent]="feedback.detailText || ''"
+                        [points]="feedback.credits || 0"
+                        [icon]="(feedback.credits || 0) > 0 ? 'success' : (feedback.credits || 0) < 0 ? 'error' : 'retry'"
+                        [title]="(feedback.credits || 0) > 0 ? 'Good job!' : (feedback.credits || 0) < 0 ? 'Incorrect' : 'Needs revision'"
+                    />
+                }
+            </div>
         </div>
 
         <div class="demo-section">
