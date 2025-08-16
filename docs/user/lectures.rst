@@ -104,9 +104,8 @@ Lectures can be divided into lecture units, which can be of the following types:
 
     * **Text unit:** A text with markup.
     * **Exercise unit:** An exercise from the same course.
-    * **Video unit:** An embedded video stream or video from an external source.
+    * **Attachment Video unit:** A file that the student may download and an embedded video stream or video from an external source.
     * **Online unit:** A link to an external website.
-    * **Attachment unit:** A file that the student may download.
 
 Students see all released lecture units on the lecture details page.
 Clicking on a unit opens its contents.
@@ -124,12 +123,22 @@ Using the arrow buttons, the order of the lecture units can be changed.
 
 |units-management|
 
-Attachment Unit
-^^^^^^^^^^^^^^^
-An attachment unit consists of a name, file, and optionally a description and release date.
-Students complete this unit once they download the file.
+Attachment Video Unit
+^^^^^^^^^^^^^^^^^^^^^
+An attachment video unit consists of a name, file, an embedded video link, and optionally a description, a release date and a transcription.
+Artemis can convert the website link from common video sources to an embeddable URL using the arrow button.
+Students complete this unit when they watch the video for at least five minutes and download the attachment.
 
-|create-attachment-unit|
+For Attachment Video Units that contain a lecture recording, transcriptions can be generated using the supporting script
+according to the README.md under supporting_scripts/lecture-transcriptions.
+
+|create-attachment-video-unit|
+
+Either all Attachment Video Units of a lecture or specific Attachment Video Units can be sent to Iris, over the ingestion button in the lecture unit overview.
+Those transcriptions can be used to answer students' questions in the Iris chat.
+
+|send-all-lectures-to-iris|
+|send-one-unit-iris|
 
 Attachment Unit Management
 """"""""""""""""""""""""""
@@ -180,14 +189,6 @@ Students complete this unit as soon as they open it.
 
 |create-text-unit|
 
-Video Unit
-^^^^^^^^^^
-A video unit consists of a name, an embeddable video link, and optionally a description and release date.
-Artemis can convert the website link from common video sources to an embeddable URL using the arrow button.
-Students complete this unit when they watch the video for at least five minutes.
-
-|create-video-unit|
-
 Competencies
 --------------
 
@@ -231,7 +232,11 @@ See :ref:`Adaptive Learning <adaptive-learning>` for more information.
     :width: 1000
 .. |create-video-unit| image:: lectures/create-video-unit.png
     :width: 1000
-.. |create-attachment-unit| image:: lectures/create-attachment-unit.png
+.. |create-attachment-video-unit| image:: lectures/create-attachment-video-unit.png
+    :width: 1000
+.. |send-all-lectures-to-iris| image:: lectures/send-all-lectures-to-iris.png
+    :width: 1000
+.. |send-one-unit-iris| image:: lectures/send-one-unit-iris.png
     :width: 1000
 .. |view-attachment-unit-btn| image:: lectures/view-attachment-unit-btn.png
     :width: 80
