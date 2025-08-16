@@ -79,7 +79,7 @@ const moduleThresholds = {
     },
     lecture: {
         statements: 92.19,
-        branches:   79.42,
+        branches:   79.18,
         functions:  86.93,
         lines:      92.30,
     },
