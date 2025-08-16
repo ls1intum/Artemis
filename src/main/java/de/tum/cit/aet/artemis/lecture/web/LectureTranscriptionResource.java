@@ -16,11 +16,13 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -30,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -41,6 +44,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
+import de.tum.cit.aet.artemis.lecture.service.TumLiveService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -56,6 +60,8 @@ public class LectureTranscriptionResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final TumLiveService tumLiveService;
+
     private final UserRepository userRepository;
 
     private final AuthorizationCheckService authCheckService;
@@ -67,10 +73,11 @@ public class LectureTranscriptionResource {
 
     private final LectureService lectureService;
 
-    public LectureTranscriptionResource(LectureTranscriptionRepository transcriptionRepository, LectureUnitRepository lectureUnitRepository,
+    public LectureTranscriptionResource(LectureTranscriptionRepository transcriptionRepository, LectureUnitRepository lectureUnitRepository, TumLiveService tumLiveService,
             AuthorizationCheckService authCheckService, UserRepository userRepository, LectureRepository lectureRepository, LectureService lectureService) {
         this.lectureTranscriptionRepository = transcriptionRepository;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.tumLiveService = tumLiveService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.lectureRepository = lectureRepository;
@@ -171,5 +178,58 @@ public class LectureTranscriptionResource {
         log.debug("REST request to delete Lecture Transcription : {}", lectureTranscription.get().getId());
         lectureService.deleteLectureTranscriptionInPyris(lectureTranscription.get());
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureTranscription.get().getId().toString())).build();
+    }
+
+    /**
+     * Retrieves the transcript for a given lecture unit.
+     *
+     * <p>
+     * This endpoint returns the transcript associated with the specified {@code lectureUnitId}, including
+     * the language and individual transcript segments.
+     * </p>
+     *
+     * @param lectureUnitId the ID of the lecture unit for which to retrieve the transcript
+     * @return {@link ResponseEntity} containing the {@link LectureTranscriptionDTO} if found, or 404 Not Found if no transcript exists
+     */
+    @GetMapping("lecture-unit/{lectureUnitId}/transcript")
+    @EnforceAtLeastStudentInLectureUnit
+    public ResponseEntity<LectureTranscriptionDTO> getTranscript(@PathVariable Long lectureUnitId) {
+        Optional<LectureTranscription> transcriptionOpt = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
+
+        if (transcriptionOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        LectureTranscription transcription = transcriptionOpt.get();
+        LectureTranscriptionDTO dto = new LectureTranscriptionDTO(lectureUnitId, transcription.getLanguage(), transcription.getSegments());
+
+        return ResponseEntity.ok(dto);
+    }
+
+    /**
+     * REST endpoint to fetch the TUM Live playlist URL for a given TUM Live video page URL.
+     * <p>
+     * This endpoint checks whether a playlist (e.g., an .m3u8 stream) is available for the
+     * specified video URL from TUM Live and returns it if found.
+     * </p>
+     *
+     * @param url the full TUM Live video page URL
+     * @return {@code 200 OK} with the playlist URL if available,
+     *         or {@code 404 Not Found} if no playlist could be retrieved.
+     */
+    @GetMapping("video-utils/tum-live-playlist")
+    public ResponseEntity<String> getTumLivePlaylist(@RequestParam String url) {
+        log.info("Received request to fetch playlist for TUM Live URL: {}", url);
+
+        Optional<String> playlistUrl = tumLiveService.getTumLivePlaylistLink(url);
+
+        if (playlistUrl.isPresent()) {
+            log.info("Playlist URL found: {}", playlistUrl.get());
+            return ResponseEntity.ok(playlistUrl.get());
+        }
+        else {
+            log.warn("No playlist URL found for: {}", url);
+            return ResponseEntity.notFound().build();
+        }
     }
 }
