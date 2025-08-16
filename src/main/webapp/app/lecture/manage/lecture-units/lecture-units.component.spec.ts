@@ -47,10 +47,7 @@ describe('LectureUpdateUnitsComponent', () => {
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(LectureUnitManagementComponent),
                 { provide: Router, useClass: MockRouter },
-                {
-                    provide: ActivatedRoute,
-                    useValue: { queryParams: of({}) },
-                },
+                { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
@@ -74,57 +71,57 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
         const unitCreationCard: UnitCreationCardComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardComponent)).componentInstance;
-        unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.ONLINE);
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isOnlineUnitFormOpen()).toBeTrue();
-        });
+        unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.ONLINE);
+        tick();
+
+        expect(wizardUnitComponent.isOnlineUnitFormOpen()).toBeTrue();
     }));
 
     it('should open attachment form when clicked', fakeAsync(() => {
         wizardUnitComponentFixture.detectChanges();
         tick();
         const unitCreationCard: UnitCreationCardComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardComponent)).componentInstance;
-        unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.ATTACHMENT_VIDEO);
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
-        });
+        unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.ATTACHMENT_VIDEO);
+        tick();
+
+        expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
     }));
 
     it('should open text form when clicked', fakeAsync(() => {
         wizardUnitComponentFixture.detectChanges();
         tick();
         const unitCreationCard: UnitCreationCardComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardComponent)).componentInstance;
-        unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.TEXT);
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isTextUnitFormOpen()).toBeTrue();
-        });
+        unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.TEXT);
+        tick();
+
+        expect(wizardUnitComponent.isTextUnitFormOpen()).toBeTrue();
     }));
 
     it('should open exercise form when clicked', fakeAsync(() => {
         wizardUnitComponentFixture.detectChanges();
         tick();
         const unitCreationCard: UnitCreationCardComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardComponent)).componentInstance;
-        unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.EXERCISE);
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBeTrue();
-        });
+        unitCreationCard.onUnitCreationCardClicked.emit(LectureUnitType.EXERCISE);
+        tick();
+
+        expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBeTrue();
     }));
 
     it('should close all forms when clicked', fakeAsync(() => {
         wizardUnitComponentFixture.detectChanges();
         tick();
-        wizardUnitComponent.onCloseLectureUnitForms();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isOnlineUnitFormOpen()).toBeFalse();
-            expect(wizardUnitComponent.isTextUnitFormOpen()).toBeFalse();
-            expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBeFalse();
-            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeFalse();
-        });
+        wizardUnitComponent.onCloseLectureUnitForms();
+        tick();
+
+        expect(wizardUnitComponent.isOnlineUnitFormOpen()).toBeFalse();
+        expect(wizardUnitComponent.isTextUnitFormOpen()).toBeFalse();
+        expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBeFalse();
+        expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeFalse();
     }));
 
     it('should send POST request upon text form submission and update units', fakeAsync(() => {
@@ -134,19 +131,7 @@ describe('LectureUpdateUnitsComponent', () => {
             name: 'Test',
             releaseDate: dayjs().year(2010).month(3).date(5),
             content: 'Lorem Ipsum',
-            competencyLinks: [
-                new CompetencyLectureUnitLink(
-                    {
-                        id: 1,
-                        masteryThreshold: 0,
-                        optional: false,
-                        taxonomy: undefined,
-                        title: 'Test',
-                    },
-                    undefined,
-                    1,
-                ),
-            ],
+            competencyLinks: [new CompetencyLectureUnitLink({ id: 1, masteryThreshold: 0, optional: false, taxonomy: undefined, title: 'Test' }, undefined, 1)],
         };
 
         const persistedTextUnit: TextUnit = new TextUnit();
@@ -155,10 +140,7 @@ describe('LectureUpdateUnitsComponent', () => {
         persistedTextUnit.releaseDate = formData.releaseDate;
         persistedTextUnit.content = formData.content;
 
-        const response: HttpResponse<TextUnit> = new HttpResponse({
-            body: persistedTextUnit,
-            status: 200,
-        });
+        const response: HttpResponse<TextUnit> = new HttpResponse({ body: persistedTextUnit, status: 200 });
 
         const createStub = jest.spyOn(textUnitService, 'create').mockReturnValue(of(response));
 
@@ -166,28 +148,25 @@ describe('LectureUpdateUnitsComponent', () => {
         tick();
 
         wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         wizardUnitComponent.isTextUnitFormOpen.set(true);
-
         wizardUnitComponent.createEditTextUnit(formData);
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            const textUnitCallArgument: TextUnit = createStub.mock.calls[0][0];
-            const lectureIdCallArgument: number = createStub.mock.calls[0][1];
+        const textUnitCallArgument: TextUnit = createStub.mock.calls[0][0];
+        const lectureIdCallArgument: number = createStub.mock.calls[0][1];
 
-            expect(textUnitCallArgument.name).toEqual(formData.name);
-            expect(textUnitCallArgument.content).toEqual(formData.content);
-            expect(textUnitCallArgument.releaseDate).toEqual(formData.releaseDate);
-            expect(textUnitCallArgument.competencyLinks).toEqual(formData.competencyLinks);
-            expect(lectureIdCallArgument).toBe(1);
+        expect(textUnitCallArgument.name).toEqual(formData.name);
+        expect(textUnitCallArgument.content).toEqual(formData.content);
+        expect(textUnitCallArgument.releaseDate).toEqual(formData.releaseDate);
+        expect(textUnitCallArgument.competencyLinks).toEqual(formData.competencyLinks);
+        expect(lectureIdCallArgument).toBe(1);
 
-            expect(createStub).toHaveBeenCalledOnce();
-            expect(updateSpy).toHaveBeenCalledOnce();
+        expect(createStub).toHaveBeenCalledOnce();
+        expect(updateSpy).toHaveBeenCalledOnce();
 
-            updateSpy.mockRestore();
-        });
+        updateSpy.mockRestore();
     }));
 
     it('should not send POST request upon empty text form submission', fakeAsync(() => {
@@ -201,12 +180,10 @@ describe('LectureUpdateUnitsComponent', () => {
         tick();
 
         wizardUnitComponent.isTextUnitFormOpen.set(true);
-
         wizardUnitComponent.createEditTextUnit(formData);
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).not.toHaveBeenCalled();
-        });
+        expect(createStub).not.toHaveBeenCalled();
     }));
 
     it('should show alert upon unsuccessful text form submission', fakeAsync(() => {
@@ -226,13 +203,11 @@ describe('LectureUpdateUnitsComponent', () => {
         tick();
 
         wizardUnitComponent.isTextUnitFormOpen.set(true);
-
         wizardUnitComponent.createEditTextUnit(formData);
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).toHaveBeenCalledOnce();
-            expect(alertStub).toHaveBeenCalledOnce();
-        });
+        expect(createStub).toHaveBeenCalledOnce();
+        expect(alertStub).toHaveBeenCalledOnce();
     }));
 
     it('should show alert upon unsuccessful online form submission', fakeAsync(() => {
@@ -253,13 +228,11 @@ describe('LectureUpdateUnitsComponent', () => {
         tick();
 
         wizardUnitComponent.isOnlineUnitFormOpen.set(true);
-
         wizardUnitComponent.createEditOnlineUnit(formData);
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).toHaveBeenCalledOnce();
-            expect(alertStub).toHaveBeenCalledOnce();
-        });
+        expect(createStub).toHaveBeenCalledOnce();
+        expect(alertStub).toHaveBeenCalledOnce();
     }));
 
     it('should send POST request upon online form submission and update units', fakeAsync(() => {
@@ -270,25 +243,10 @@ describe('LectureUpdateUnitsComponent', () => {
             releaseDate: dayjs().year(2010).month(3).date(5),
             description: 'Lorem Ipsum',
             source: 'https://www.example.com',
-            competencyLinks: [
-                new CompetencyLectureUnitLink(
-                    {
-                        id: 1,
-                        masteryThreshold: 0,
-                        optional: false,
-                        taxonomy: undefined,
-                        title: 'Test',
-                    },
-                    undefined,
-                    1,
-                ),
-            ],
+            competencyLinks: [new CompetencyLectureUnitLink({ id: 1, masteryThreshold: 0, optional: false, taxonomy: undefined, title: 'Test' }, undefined, 1)],
         };
 
-        const response: HttpResponse<OnlineUnit> = new HttpResponse({
-            body: new OnlineUnit(),
-            status: 201,
-        });
+        const response: HttpResponse<OnlineUnit> = new HttpResponse({ body: new OnlineUnit(), status: 201 });
 
         const createStub = jest.spyOn(onlineUnitService, 'create').mockReturnValue(of(response));
 
@@ -296,29 +254,26 @@ describe('LectureUpdateUnitsComponent', () => {
         tick();
 
         wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         wizardUnitComponent.isOnlineUnitFormOpen.set(true);
-
         wizardUnitComponent.createEditOnlineUnit(formDate);
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            const onlineUnitCallArgument: OnlineUnit = createStub.mock.calls[0][0];
-            const lectureIdCallArgument: number = createStub.mock.calls[0][1];
+        const onlineUnitCallArgument: OnlineUnit = createStub.mock.calls[0][0];
+        const lectureIdCallArgument: number = createStub.mock.calls[0][1];
 
-            expect(onlineUnitCallArgument.name).toEqual(formDate.name);
-            expect(onlineUnitCallArgument.description).toEqual(formDate.description);
-            expect(onlineUnitCallArgument.releaseDate).toEqual(formDate.releaseDate);
-            expect(onlineUnitCallArgument.source).toEqual(formDate.source);
-            expect(onlineUnitCallArgument.competencyLinks).toEqual(formDate.competencyLinks);
-            expect(lectureIdCallArgument).toBe(1);
+        expect(onlineUnitCallArgument.name).toEqual(formDate.name);
+        expect(onlineUnitCallArgument.description).toEqual(formDate.description);
+        expect(onlineUnitCallArgument.releaseDate).toEqual(formDate.releaseDate);
+        expect(onlineUnitCallArgument.source).toEqual(formDate.source);
+        expect(onlineUnitCallArgument.competencyLinks).toEqual(formDate.competencyLinks);
+        expect(lectureIdCallArgument).toBe(1);
 
-            expect(createStub).toHaveBeenCalledOnce();
-            expect(updateSpy).toHaveBeenCalledOnce();
+        expect(createStub).toHaveBeenCalledOnce();
+        expect(updateSpy).toHaveBeenCalledOnce();
 
-            updateSpy.mockRestore();
-        });
+        updateSpy.mockRestore();
     }));
 
     it('should not send POST request upon empty online form submission', fakeAsync(() => {
@@ -332,12 +287,10 @@ describe('LectureUpdateUnitsComponent', () => {
         tick();
 
         wizardUnitComponent.isOnlineUnitFormOpen.set(true);
-
         wizardUnitComponent.createEditOnlineUnit(formData);
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).not.toHaveBeenCalled();
-        });
+        expect(createStub).not.toHaveBeenCalled();
     }));
 
     it('should send POST request upon attachment form submission and update units', fakeAsync(() => {
@@ -352,19 +305,7 @@ describe('LectureUpdateUnitsComponent', () => {
                 releaseDate: dayjs().year(2010).month(3).date(5),
                 version: 2,
                 updateNotificationText: 'lorem ipsum',
-                competencyLinks: [
-                    new CompetencyLectureUnitLink(
-                        {
-                            id: 1,
-                            masteryThreshold: 0,
-                            optional: false,
-                            taxonomy: undefined,
-                            title: 'Test',
-                        },
-                        undefined,
-                        1,
-                    ),
-                ],
+                competencyLinks: [new CompetencyLectureUnitLink({ id: 1, masteryThreshold: 0, optional: false, taxonomy: undefined, title: 'Test' }, undefined, 1)],
             },
             fileProperties: {
                 file: fakeFile,
@@ -390,33 +331,26 @@ describe('LectureUpdateUnitsComponent', () => {
         formData.append('attachment', objectToJsonBlob(attachment));
         formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
 
-        const attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
-            body: attachmentVideoUnit,
-            status: 201,
-        });
+        const attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({ body: attachmentVideoUnit, status: 201 });
         const createAttachmentVideoUnitStub = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
 
         wizardUnitComponentFixture.detectChanges();
         tick();
 
         wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
-
         wizardUnitComponent.createEditAttachmentVideoUnit(attachmentVideoUnitFormData);
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            const lectureIdCallArgument: number = createAttachmentVideoUnitStub.mock.calls[0][1];
+        const lectureIdCallArgument: number = createAttachmentVideoUnitStub.mock.calls[0][1];
 
-            expect(lectureIdCallArgument).toBe(1);
-            expect(createAttachmentVideoUnitStub).toHaveBeenCalledWith(formData, 1);
+        expect(lectureIdCallArgument).toBe(1);
+        expect(createAttachmentVideoUnitStub).toHaveBeenCalledWith(formData, 1);
+        expect(updateSpy).toHaveBeenCalledOnce();
 
-            expect(updateSpy).toHaveBeenCalledOnce();
-
-            updateSpy.mockRestore();
-        });
+        updateSpy.mockRestore();
     }));
 
     it('should send POST request upon attachment form submission and update units when editing lecture', fakeAsync(() => {
@@ -456,17 +390,13 @@ describe('LectureUpdateUnitsComponent', () => {
         formData.append('attachment', objectToJsonBlob(attachment));
         formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
 
-        const attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
-            body: attachmentVideoUnit,
-            status: 201,
-        });
+        const attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({ body: attachmentVideoUnit, status: 201 });
         const createAttachmentVideoUnitStub = jest.spyOn(attachmentVideoUnitService, 'update').mockReturnValue(of(attachmentVideoUnitResponse));
 
         wizardUnitComponentFixture.detectChanges();
         tick();
 
         wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         wizardUnitComponent.isEditingLectureUnit = true;
@@ -475,13 +405,12 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditAttachmentVideoUnit(attachmentVideoUnitFormData);
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createAttachmentVideoUnitStub).toHaveBeenCalledOnce();
-            expect(updateSpy).toHaveBeenCalledOnce();
+        expect(createAttachmentVideoUnitStub).toHaveBeenCalledOnce();
+        expect(updateSpy).toHaveBeenCalledOnce();
 
-            updateSpy.mockRestore();
-        });
+        updateSpy.mockRestore();
     }));
 
     it('should show alert upon unsuccessful attachment form submission', fakeAsync(() => {
@@ -529,13 +458,11 @@ describe('LectureUpdateUnitsComponent', () => {
         tick();
 
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
-
         wizardUnitComponent.createEditAttachmentVideoUnit(attachmentVideoUnitFormData);
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createAttachmentVideoUnitStub).toHaveBeenCalledOnce();
-            expect(alertStub).toHaveBeenCalledOnce();
-        });
+        expect(createAttachmentVideoUnitStub).toHaveBeenCalledOnce();
+        expect(alertStub).toHaveBeenCalledOnce();
     }));
 
     it('should show alert upon unsuccessful attachment form submission with error information', fakeAsync(() => {
@@ -585,13 +512,11 @@ describe('LectureUpdateUnitsComponent', () => {
         tick();
 
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
-
         wizardUnitComponent.createEditAttachmentVideoUnit(attachmentVideoUnitFormData);
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createAttachmentVideoUnitStub).toHaveBeenCalledOnce();
-            expect(alertStub).toHaveBeenCalledOnce();
-        });
+        expect(createAttachmentVideoUnitStub).toHaveBeenCalledOnce();
+        expect(alertStub).toHaveBeenCalledOnce();
     }));
 
     it('should not send POST request upon empty attachment form submission', fakeAsync(() => {
@@ -608,12 +533,10 @@ describe('LectureUpdateUnitsComponent', () => {
         tick();
 
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
-
         wizardUnitComponent.createEditAttachmentVideoUnit(formData);
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(createStub).not.toHaveBeenCalled();
-        });
+        expect(createStub).not.toHaveBeenCalled();
     }));
 
     it('should update units upon exercise unit creation', fakeAsync(() => {
@@ -621,26 +544,23 @@ describe('LectureUpdateUnitsComponent', () => {
         tick();
 
         wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-
         const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         wizardUnitComponent.onExerciseUnitCreated();
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(updateSpy).toHaveBeenCalledOnce();
-
-            updateSpy.mockRestore();
-        });
+        expect(updateSpy).toHaveBeenCalledOnce();
+        updateSpy.mockRestore();
     }));
 
     it('should be in edit mode when clicked', fakeAsync(() => {
         wizardUnitComponentFixture.detectChanges();
         tick();
-        wizardUnitComponent.startEditLectureUnit(new TextUnit());
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isEditingLectureUnit).toBeTrue();
-        });
+        wizardUnitComponent.startEditLectureUnit(new TextUnit());
+        tick();
+
+        expect(wizardUnitComponent.isEditingLectureUnit).toBeTrue();
     }));
 
     it('should open edit online form when clicked', fakeAsync(() => {
@@ -648,10 +568,9 @@ describe('LectureUpdateUnitsComponent', () => {
         tick();
 
         wizardUnitComponent.startEditLectureUnit(new OnlineUnit());
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isOnlineUnitFormOpen).toBeTrue();
-        });
+        expect(wizardUnitComponent.isOnlineUnitFormOpen()).toBeTrue();
     }));
 
     it('should open edit attachment form when clicked', fakeAsync(() => {
@@ -669,10 +588,9 @@ describe('LectureUpdateUnitsComponent', () => {
         attachmentVideoUnit.attachment = attachment;
 
         wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen).toBeTrue();
-        });
+        expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
     }));
 
     it('should open edit text form when clicked', fakeAsync(() => {
@@ -680,10 +598,9 @@ describe('LectureUpdateUnitsComponent', () => {
         tick();
 
         wizardUnitComponent.startEditLectureUnit(new TextUnit());
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isTextUnitFormOpen).toBeTrue();
-        });
+        expect(wizardUnitComponent.isTextUnitFormOpen()).toBeTrue();
     }));
 
     it('should open exercise form upon init when requested', fakeAsync(() => {
@@ -691,8 +608,155 @@ describe('LectureUpdateUnitsComponent', () => {
         route.queryParams = of({ shouldOpenCreateExercise: true });
 
         wizardUnitComponentFixture.detectChanges();
+        tick();
 
         expect(wizardUnitComponent).not.toBeNull();
         expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBeTrue();
+    }));
+
+    // --- transcription branch tests ---
+
+    it('createEditAttachmentVideoUnit: triggers transcription when enabled (200 -> success)', fakeAsync(() => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const alertService = TestBed.inject(AlertService);
+
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        const formData: AttachmentVideoUnitFormData = {
+            formProperties: { name: 'AVU', releaseDate: dayjs(), generateTranscript: true },
+            fileProperties: { file: fakeFile, fileName: 'Test-File.pdf' },
+            playlistUrl: 'https://live.rbg.tum.de/playlist.m3u8',
+        };
+
+        const created = new AttachmentVideoUnit();
+        created.id = 777;
+        created.videoSource = 'https://example.com/embed';
+        jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse<AttachmentVideoUnit>({ body: created, status: 201 })));
+
+        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse<string>({ status: 200, statusText: 'OK', body: 'ok' })));
+
+        const successSpy = jest.spyOn(alertService, 'success');
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
+
+        wizardUnitComponent.createEditAttachmentVideoUnit(formData);
+        tick();
+
+        expect(startSpy).toHaveBeenCalledWith(1, 777, 'https://live.rbg.tum.de/playlist.m3u8');
+        expect(successSpy).toHaveBeenCalled();
+        expect(errorSpy).not.toHaveBeenCalled();
+    }));
+
+    it('createEditAttachmentVideoUnit: transcription non-200 (202) shows error alert', fakeAsync(() => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const alertService = TestBed.inject(AlertService);
+
+        const formData: AttachmentVideoUnitFormData = {
+            formProperties: { name: 'AVU', releaseDate: dayjs(), generateTranscript: true },
+            fileProperties: { file: new File([''], 'f.pdf'), fileName: 'f.pdf' },
+            playlistUrl: 'https://live.rbg.tum.de/playlist.m3u8',
+        };
+
+        const created = new AttachmentVideoUnit();
+        created.id = 42;
+        jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse<AttachmentVideoUnit>({ body: created, status: 201 })));
+
+        jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse<string>({ status: 202, statusText: 'Accepted', body: 'accepted' })));
+
+        const successSpy = jest.spyOn(alertService, 'success');
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
+
+        wizardUnitComponent.createEditAttachmentVideoUnit(formData);
+        tick();
+
+        expect(errorSpy).toHaveBeenCalled();
+        expect(successSpy).not.toHaveBeenCalled();
+    }));
+
+    it('createEditAttachmentVideoUnit: transcription error shows error alert', fakeAsync(() => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+        const alertService = TestBed.inject(AlertService);
+
+        const formData: AttachmentVideoUnitFormData = {
+            formProperties: { name: 'AVU', releaseDate: dayjs(), generateTranscript: true },
+            fileProperties: { file: new File([''], 'f.pdf'), fileName: 'f.pdf' },
+            playlistUrl: 'https://live.rbg.tum.de/playlist.m3u8',
+        };
+
+        const created = new AttachmentVideoUnit();
+        created.id = 11;
+        jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse<AttachmentVideoUnit>({ body: created, status: 201 })));
+
+        jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(throwError(() => new Error('boom')));
+
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
+
+        wizardUnitComponent.createEditAttachmentVideoUnit(formData);
+        tick();
+
+        expect(errorSpy).toHaveBeenCalled();
+    }));
+
+    it('createEditAttachmentVideoUnit: does not start transcription when no URL available', fakeAsync(() => {
+        const avuService = TestBed.inject(AttachmentVideoUnitService);
+
+        const formData: AttachmentVideoUnitFormData = {
+            formProperties: { name: 'AVU', releaseDate: dayjs(), generateTranscript: true },
+            fileProperties: { file: new File([''], 'f.pdf'), fileName: 'f.pdf' },
+            // playlistUrl intentionally omitted
+        };
+
+        const created = new AttachmentVideoUnit();
+        created.id = 5; // has id
+        created.videoSource = undefined; // no URL
+        jest.spyOn(avuService, 'create').mockReturnValue(of(new HttpResponse<AttachmentVideoUnit>({ body: created, status: 201 })));
+
+        const startSpy = jest.spyOn(avuService, 'startTranscription');
+
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
+
+        wizardUnitComponent.createEditAttachmentVideoUnit(formData);
+        tick();
+
+        expect(startSpy).not.toHaveBeenCalled();
+    }));
+
+    it('createEditAttachmentVideoUnit: does not start transcription in edit mode', fakeAsync(() => {
+        const avuService = TestBed.inject(AttachmentVideoUnitService);
+
+        const formData: AttachmentVideoUnitFormData = {
+            formProperties: { name: 'AVU', releaseDate: dayjs(), generateTranscript: true },
+            fileProperties: { file: new File([''], 'f.pdf'), fileName: 'f.pdf' },
+            playlistUrl: 'https://live.rbg.tum.de/playlist.m3u8',
+        };
+
+        const created = new AttachmentVideoUnit();
+        created.id = 8;
+        jest.spyOn(avuService, 'update').mockReturnValue(of(new HttpResponse<AttachmentVideoUnit>({ body: created, status: 200 })));
+        const startSpy = jest.spyOn(avuService, 'startTranscription');
+
+        wizardUnitComponentFixture.detectChanges();
+        wizardUnitComponent.isEditingLectureUnit = true;
+        wizardUnitComponent.currentlyProcessedAttachmentVideoUnit = new AttachmentVideoUnit();
+        wizardUnitComponent.currentlyProcessedAttachmentVideoUnit.attachment = new Attachment();
+        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
+        wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
+
+        wizardUnitComponent.createEditAttachmentVideoUnit(formData);
+        tick();
+
+        expect(startSpy).not.toHaveBeenCalled();
     }));
 });
