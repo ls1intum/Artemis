@@ -21,12 +21,16 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import {
     mockClientMessage,
+    mockClientMessageWithMemories,
     mockServerMessage,
+    mockServerMessageWithMemories,
     mockServerSessionHttpResponse,
     mockServerSessionHttpResponseWithEmptyConversation,
     mockServerSessionHttpResponseWithId,
     mockUserMessageWithContent,
+    mockWebsocketClientMessageWithMemories,
     mockWebsocketServerMessage,
+    mockWebsocketServerMessageWithMemories,
 } from 'test/helpers/sample/iris-sample-data';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
@@ -326,6 +330,40 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component.checkUnreadMessageScroll).toHaveBeenCalledTimes(2);
         expect(component.scrollToBottom).toHaveBeenCalled();
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
+    }));
+
+    it('should log accessed memories to console', fakeAsync(() => {
+        // given
+        jest.spyOn(console, 'log').mockImplementation(() => {});
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
+        jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketServerMessageWithMemories));
+        jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        // when
+        component.ngAfterViewInit();
+        fixture.whenStable();
+        tick();
+
+        // then
+        expect(console.log).toHaveBeenCalledWith('Accessed memories found in message:', mockServerMessageWithMemories.accessedMemories);
+    }));
+
+    it('should log created memories to console', fakeAsync(() => {
+        // given
+        jest.spyOn(console, 'log').mockImplementation(() => {});
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithEmptyConversation));
+        jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(mockWebsocketClientMessageWithMemories));
+        jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        // when
+        component.ngAfterViewInit();
+        fixture.whenStable();
+        tick();
+
+        // then
+        expect(console.log).toHaveBeenCalledWith('Created memories found in message:', mockClientMessageWithMemories.createdMemories);
     }));
 
     it('should disable enter key if isLoading and active', () => {
