@@ -7,7 +7,6 @@ import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-q
 import { QuizScoringInfoModalComponent } from 'app/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { MatchPercentageInfoModalComponent } from 'app/quiz/manage/match-percentage-info-modal/match-percentage-info-modal.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { SimpleChange } from '@angular/core';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
@@ -85,9 +84,9 @@ describe('ShortAnswerQuestionEditComponent', () => {
     });
 
     beforeEach(() => {
-        component.shortAnswerQuestion = question;
+        fixture.componentRef.setInput('question', question);
         fixture.componentRef.setInput('questionIndex', 0);
-        component.reEvaluationInProgress = false;
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
 
         fixture.detectChanges();
     });
@@ -261,10 +260,11 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts).toEqual(expectedTextParts);
     });
 
-    it('should invoke ngOnChanges', () => {
-        component.ngOnChanges({
-            question: { currentValue: question2, previousValue: question } as SimpleChange,
-        });
+    it('should react to question change', () => {
+        const emitSpy = jest.spyOn(component.questionUpdated, 'emit');
+        fixture.componentRef.setInput('question', question2);
+        fixture.detectChanges();
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 
     it('should react to a solution being dropped on a spot', () => {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, OnInit, Output, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -47,9 +47,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
 
     readonly visualChild = viewChild.required<MultipleChoiceVisualQuestionComponent>('visual');
 
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() question: MultipleChoiceQuestion;
+    readonly question = input.required<MultipleChoiceQuestion>();
     readonly questionIndex = input<number>(undefined!);
 
     @Output() questionUpdated = new EventEmitter();
@@ -95,15 +93,17 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
      */
     generateMarkdown(): string {
         const markdownText =
-            generateExerciseHintExplanation(this.question) +
+            generateExerciseHintExplanation(this.question()) +
             '\n\n' +
-            this.question.answerOptions!.map((answerOption) => (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + generateExerciseHintExplanation(answerOption)).join('\n');
+            this.question()
+                .answerOptions!.map((answerOption) => (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + generateExerciseHintExplanation(answerOption))
+                .join('\n');
         return markdownText;
     }
 
     onSingleChoiceChanged(): void {
-        if (this.question.singleChoice) {
-            this.question.scoringType = ScoringType.ALL_OR_NOTHING;
+        if (this.question().singleChoice) {
+            this.question().scoringType = ScoringType.ALL_OR_NOTHING;
         }
     }
 
@@ -165,11 +165,11 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
      */
     private cleanupQuestion() {
         // Reset Question Object
-        this.question.answerOptions = [];
-        this.question.text = undefined;
-        this.question.explanation = undefined;
-        this.question.hint = undefined;
-        this.question.hasCorrectOption = undefined;
+        this.question().answerOptions = [];
+        this.question().text = undefined;
+        this.question().explanation = undefined;
+        this.question().hint = undefined;
+        this.question().hasCorrectOption = undefined;
     }
 
     /**
@@ -187,24 +187,24 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
 
         for (const { text, action } of textWithDomainActions) {
             if (action === undefined && text.length > 0) {
-                this.question.text = text;
+                this.question().text = text;
             }
             if (action instanceof CorrectMultipleChoiceAnswerAction || action instanceof WrongMultipleChoiceAnswerAction) {
                 currentAnswerOption = new AnswerOption();
                 currentAnswerOption.isCorrect = action instanceof CorrectMultipleChoiceAnswerAction;
                 currentAnswerOption.text = text;
-                this.question.answerOptions!.push(currentAnswerOption);
+                this.question().answerOptions!.push(currentAnswerOption);
             } else if (action instanceof QuizExplanationAction) {
                 if (currentAnswerOption) {
                     currentAnswerOption.explanation = text;
                 } else {
-                    this.question.explanation = text;
+                    this.question().explanation = text;
                 }
             } else if (action instanceof QuizHintAction) {
                 if (currentAnswerOption) {
                     currentAnswerOption.hint = text;
                 } else {
-                    this.question.hint = text;
+                    this.question().hint = text;
                 }
             }
         }

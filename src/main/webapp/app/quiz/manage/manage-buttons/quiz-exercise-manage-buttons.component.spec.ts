@@ -61,7 +61,7 @@ describe('QuizExercise Management Buttons Component', () => {
                 }),
             ),
         );
-        comp.quizExercise = quizExercise;
+        fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
         comp.resetQuizExercise();
         expect(exerciseService.reset).toHaveBeenCalledWith(456);
@@ -77,7 +77,7 @@ describe('QuizExercise Management Buttons Component', () => {
             ),
         );
 
-        comp.quizExercise = quizExercise;
+        fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
         comp.deleteQuizExercise();
         expect(quizExerciseService.delete).toHaveBeenCalledWith(456);
@@ -94,7 +94,7 @@ describe('QuizExercise Management Buttons Component', () => {
         );
         jest.spyOn(quizExerciseService, 'exportQuiz');
 
-        comp.quizExercise = quizExercise;
+        fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
         comp.exportQuizExercise(true);
         expect(quizExerciseService.exportQuiz).toHaveBeenCalledWith([], true, 'Quiz Exercise');

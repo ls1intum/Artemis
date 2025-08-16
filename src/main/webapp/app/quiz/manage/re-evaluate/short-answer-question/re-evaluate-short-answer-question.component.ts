@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, input } from '@angular/core';
+import { Component, EventEmitter, Output, effect, input } from '@angular/core';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-question/short-answer-question-edit.component';
@@ -20,14 +20,16 @@ import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-q
     imports: [ShortAnswerQuestionEditComponent],
 })
 export class ReEvaluateShortAnswerQuestionComponent {
-    shortAnswerQuestion: ShortAnswerQuestion;
+    shortAnswerQuestion!: ShortAnswerQuestion;
 
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input() set question(question: QuizQuestion) {
-        this.shortAnswerQuestion = question as ShortAnswerQuestion;
-    }
+    readonly question = input<QuizQuestion>(undefined!);
     readonly questionIndex = input<number>(undefined!);
+
+    constructor() {
+        effect(() => {
+            this.shortAnswerQuestion = this.question() as ShortAnswerQuestion;
+        });
+    }
 
     @Output()
     questionUpdated = new EventEmitter();
