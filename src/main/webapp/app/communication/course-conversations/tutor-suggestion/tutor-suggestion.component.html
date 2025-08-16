@@ -1,33 +1,46 @@
 @if (irisEnabled) {
     <div class="iris-suggestion">
         <div class="iris-suggestion-field">
-            <div class="iris-text-content">
-                <div class="iris-logo">
-                    <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
+            @if (suggestion) {
+                <div class="iris-suggestion-wrapper">
+                    <div class="iris-text-content">
+                        <div class="iris-logo">
+                            <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
+                            <span class="fw-semibold">Iris-Suggestion:</span>
+                        </div>
+                        @for (content of suggestion?.content; track content.id) {
+                            <div>
+                                @for (line of (content | as: IrisTextMessageContent).textContent.split('\n'); track line) {
+                                    <div [innerHTML]="line" class="iris-suggestion-text"></div>
+                                }
+                            </div>
+                        }
+                        <div class="timestamp-container">
+                            <span [ngbTooltip]="suggestion.sentAt | artemisDate"> ({{ suggestion.sentAt | artemisTimeAgo }}) </span>
+                        </div>
+                    </div>
+                    <div class="iris-suggestion-buttons">
+                        @if (upDisabled && irisIsActive) {
+                            <jhi-button id="search-submit" class="ms-1" [icon]="faArrowsRotate" (onClick)="userRequestedNewSuggestion()" />
+                        } @else {
+                            <jhi-button id="search-submit" class="ms-1" [icon]="faArrowUp" (onClick)="switchSuggestion(true)" [disabled]="upDisabled" />
+                        }
+                        <jhi-button id="search-submit" class="ms-1" [icon]="faArrowDown" (onClick)="switchSuggestion(false)" [disabled]="downDisabled" />
+                    </div>
                 </div>
-                @if (suggestion) {
-                    @for (content of suggestion?.content; track content.id) {
-                        <div>
-                            @for (line of (content | as: IrisTextMessageContent).textContent.split('\n'); track line) {
-                                <div [innerHTML]="line" class="iris-suggestion-text"></div>
-                            }
+            } @else {
+                @if (irisIsActive) {
+                    @if (error) {
+                        <div class="iris-suggestion-text">
+                            {{ error }}
                         </div>
                     }
-                    <jhi-chat-status-bar [stages]="stages" />
                 } @else {
-                    @if (irisIsActive) {
-                        @if (error) {
-                            <div class="iris-suggestion-text">
-                                {{ error }}
-                            </div>
-                        } @else {
-                            <div class="iris-suggestion-text" jhiTranslate="artemisApp.iris.tutorSuggestion.loading"></div>
-                        }
-                        <jhi-chat-status-bar [stages]="stages" />
-                    } @else {
-                        <div class="iris-suggestion-text" jhiTranslate="artemisApp.iris.tutorSuggestion.noIris"></div>
-                    }
+                    <div class="iris-suggestion-text" jhiTranslate="artemisApp.iris.tutorSuggestion.noIris"></div>
                 }
+            }
+            <div class="iris-tutor-suggestion-chat-container">
+                <jhi-iris-base-chatbot [isEmbeddedChat]="true" [fullSize]="false" />
             </div>
         </div>
     </div>
