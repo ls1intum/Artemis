@@ -21,7 +21,6 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Organization;
@@ -53,18 +52,14 @@ public class UserCreationService {
 
     private final CacheManager cacheManager;
 
-    private final Optional<LearnerProfileApi> learnerProfileApi;
-
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
-            Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager, OrganizationRepository organizationRepository,
-            Optional<LearnerProfileApi> learnerProfileApi) {
+            Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager, OrganizationRepository organizationRepository) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.cacheManager = cacheManager;
         this.organizationRepository = organizationRepository;
-        this.learnerProfileApi = learnerProfileApi;
     }
 
     /**
@@ -125,12 +120,10 @@ public class UserCreationService {
         catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
             log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
-        User savedUser = saveUser(newUser);
-
-        learnerProfileApi.ifPresent(api -> api.createProfile(savedUser));
-
-        log.debug("Created user: {}", savedUser);
-        return savedUser;
+        newUser = saveUser(newUser);
+        final User finalNewUser = newUser;
+        log.debug("Created user: {}", newUser);
+        return newUser;
     }
 
     /**
@@ -175,16 +168,14 @@ public class UserCreationService {
         if (StringUtils.hasText(userDTO.getVisibleRegistrationNumber())) {
             user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         }
-        User savedUser = saveUser(user);
+        saveUser(user);
 
-        learnerProfileApi.ifPresent(api -> api.createProfile(savedUser));
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
 
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(savedUser, password));
+        addUserToGroupsInternal(user, userDTO.getGroups());
 
-        addUserToGroupsInternal(savedUser, userDTO.getGroups());
-
-        log.debug("Created Information for User: {}", savedUser);
-        return savedUser;
+        log.debug("Created Information for User: {}", user);
+        return user;
     }
 
     /**

@@ -42,7 +42,8 @@ public class CourseLearnerProfileService {
      */
     public CourseLearnerProfile createCourseLearnerProfile(Course course, User user) {
 
-        if (learnerProfileRepository.findByUser(user).isEmpty()) {
+        // Ensure that the user has a learner profile (lazy creation)
+        if (user.getLearnerProfile() == null) {
             learnerProfileService.createProfile(user);
         }
 
@@ -68,7 +69,8 @@ public class CourseLearnerProfileService {
      */
     public void createCourseLearnerProfiles(Course course, Set<User> users) {
 
-        users.stream().filter(user -> learnerProfileRepository.findByUser(user).isEmpty()).forEach(learnerProfileService::createProfile);
+        // Ensure that all users have a learner profile (lazy creation)
+        users.stream().filter(user -> user.getLearnerProfile() == null).forEach(learnerProfileService::createProfile);
 
         Set<LearnerProfile> learnerProfiles = learnerProfileRepository.findAllByUserIn(users);
 

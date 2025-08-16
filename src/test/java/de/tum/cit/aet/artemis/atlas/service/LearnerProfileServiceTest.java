@@ -42,7 +42,6 @@ class LearnerProfileServiceTest {
     void createProfile_shouldCreateAndSaveProfile() {
         User user = new User();
         user.setId(1L);
-        when(learnerProfileRepository.findByUser(user)).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         LearnerProfile profile = learnerProfileService.createProfile(user);
@@ -51,23 +50,6 @@ class LearnerProfileServiceTest {
         assertThat(profile.getUser()).isEqualTo(user);
         assertThat(user.getLearnerProfile()).isEqualTo(profile);
         verify(userRepository).save(user);
-    }
-
-    @Test
-    void createProfile_shouldReturnExistingProfileIfAlreadyExists() {
-        User user = new User();
-        user.setId(1L);
-        LearnerProfile existingProfile = new LearnerProfile();
-        existingProfile.setId(10L);
-        existingProfile.setUser(user);
-        when(learnerProfileRepository.findByUser(user)).thenReturn(Optional.of(existingProfile));
-
-        LearnerProfile profile = learnerProfileService.createProfile(user);
-
-        assertThat(profile).isEqualTo(existingProfile);
-        assertThat(profile.getId()).isEqualTo(10L);
-        verify(learnerProfileRepository).findByUser(user);
-        verifyNoInteractions(userRepository);
     }
 
     @Test
