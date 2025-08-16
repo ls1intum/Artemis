@@ -157,8 +157,8 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
      * tests the import of a basket from the sharing platform. This test is also reused for priming of other tests
      *
      */
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnNotFoundWhenBasketImportFails() throws Exception {
         URI basketURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + SAMPLE_BASKET_TOKEN);
         MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
@@ -177,8 +177,8 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     /**
      * tests the import of a basket from the sharing platform
      */
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnNotFoundWhenBasketDoesNotExist() throws Exception {
 
         URI basketURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/undefinedBasketToken");
@@ -231,16 +231,16 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     /**
      * tests the import of a basket from the sharing platform
      */
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnBadRequestWhenChecksumIsInvalid() throws Exception {
         requestUtilService.performMvcRequest(get("/api/programming/sharing/import/basket").queryParam("basketToken", "sampleBasket.json")
                 .queryParam("returnURL", "http://testing/xyz1").queryParam("apiBaseURL", sharingConnectorService.getSharingApiBaseUrlOrNull().toString())
                 .queryParam("checksum", "wrongChecksum").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
     }
 
-    // @Test
-    // @WithMockUser(username = INSTRUCTORNAME, roles = "INSTRUCTOR")
+    @Test
+    @WithMockUser(username = INSTRUCTORNAME, roles = "INSTRUCTOR")
     void importExerciseCompleteProcess() throws Exception {
         userUtilService.addInstructor("Sharing", INSTRUCTORNAME);
 
@@ -359,8 +359,8 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
         }); // just to make it json serializable
     }
 
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void setUpWithMissingExercise() throws Exception {
 
         SharingSetupInfo emptySetupInfo = new SharingSetupInfo(null, null, null);
@@ -371,8 +371,8 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
     }
 
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseInfosWrongChecksum() throws Exception {
 
         SharingInfoDTO sharingInfo = new SharingInfoDTO("Some Basket Token", TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN, "Invalid Checksum", 0);
