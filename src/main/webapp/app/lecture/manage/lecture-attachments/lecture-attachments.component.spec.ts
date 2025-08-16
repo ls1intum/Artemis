@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -21,8 +22,6 @@ import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angul
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { SessionStorageService } from 'ngx-webstorage';
 import { FileService } from 'app/shared/service/file.service';
 
 describe('LectureAttachmentsComponent', () => {
@@ -100,7 +99,7 @@ describe('LectureAttachmentsComponent', () => {
                 { provide: ActivatedRoute, useValue: { parent: { data: of({ lecture }) } } },
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 MockProvider(AttachmentService),
                 provideHttpClient(),
                 provideHttpClientTesting(),

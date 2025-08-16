@@ -1,10 +1,8 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { LocalStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from '../../../layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
@@ -30,12 +28,7 @@ describe('ScienceSettingsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
-                { provide: ProfileService, useClass: MockProfileService },
-            ],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ProfileService, useClass: MockProfileService }],
         })
             .compileComponents()
             .then(() => {
@@ -54,17 +47,21 @@ describe('ScienceSettingsService', () => {
     });
 
     it('should refresh settings after user settings changed', () => {
-        userSettingsService.userSettingsChangeEvent.subscribe = jest.fn().mockImplementation((callback) => {
-            callback();
-        });
+        const changes$ = new Subject<string>();
+        // Point the service’s observable to our controllable subject
+        userSettingsService.userSettingsChangeEvent = changes$.asObservable();
 
         const spy = jest.spyOn(userSettingsService, 'loadSettings').mockReturnValue(of(new HttpResponse<Setting[]>({ body: scienceSettingsForTesting })));
 
         scienceSettingsService['listenForScienceSettingsChanges']();
-        expect(spy).toHaveBeenCalledOnce();
 
-        const settings = scienceSettingsService.getScienceSettings();
-        expect(settings).toEqual(scienceSettingsForTesting);
+        expect(spy).not.toHaveBeenCalled();
+
+        // Simulate the user settings change
+        changes$.next('');
+
+        expect(spy).toHaveBeenCalledOnce();
+        expect(scienceSettingsService.getScienceSettings()).toEqual(scienceSettingsForTesting);
     });
 
     it('should provide getters for science settings and updates to it', () => {
