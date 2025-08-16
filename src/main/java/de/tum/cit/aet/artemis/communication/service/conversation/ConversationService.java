@@ -199,9 +199,9 @@ public class ConversationService {
 
         var conversationIds = conversationsOfUser.stream().map(Conversation::getId).toList();
         var userConversationInfos = conversationRepository.getUserInformationForConversations(conversationIds, requestingUser.getId()).stream()
-                .collect(Collectors.toMap(UserConversationInfo::getConversationId, Function.identity()));
+                .collect(Collectors.toMap(UserConversationInfo::conversationId, Function.identity()));
         var generalConversationInfos = conversationRepository.getGeneralInformationForConversations(conversationIds).stream()
-                .collect(Collectors.toMap(GeneralConversationInfo::getConversationId, Function.identity()));
+                .collect(Collectors.toMap(GeneralConversationInfo::conversationId, Function.identity()));
 
         Integer numberOfCourseMembers = null;
         for (Channel channel : filteredChannels) {
@@ -209,7 +209,8 @@ public class ConversationService {
                 if (numberOfCourseMembers == null) {
                     numberOfCourseMembers = courseRepository.countCourseMembers(course.getId());
                 }
-                generalConversationInfos.get(channel.getId()).setNumberOfParticipants(numberOfCourseMembers);
+                GeneralConversationInfo generalConversationInfo = generalConversationInfos.get(channel.getId()).withNumberOfParticipants(numberOfCourseMembers);
+                generalConversationInfos.put(channel.getId(), generalConversationInfo);
             }
         }
 

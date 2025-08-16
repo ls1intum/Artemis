@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationSer
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -278,12 +277,12 @@ public class ConversationResource extends ConversationManagementResource {
 
         var resultDTO = new ArrayList<ConversationUserDTO>();
         for (var user : originalPage) {
-            var dto = new ConversationUserDTO(user);
-            UserPublicInfoDTO.assignRoleProperties(course, user, dto);
+            var userDTO = new ConversationUserDTO(user);
+            userDTO = userDTO.withRoles(course, user);
             if (conversationFromDatabase instanceof Channel channel) {
-                dto.setIsChannelModerator(channelAuthorizationService.isChannelModerator(channel.getId(), user.getId()));
+                userDTO = userDTO.withChannelModerator(channelAuthorizationService.isChannelModerator(channel.getId(), user.getId()));
             }
-            resultDTO.add(dto);
+            resultDTO.add(userDTO);
         }
         var dtoPage = new PageImpl<>(resultDTO, originalPage.getPageable(), originalPage.getTotalElements());
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), dtoPage);

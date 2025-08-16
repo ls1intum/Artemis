@@ -215,10 +215,10 @@ public class CourseAccessResource {
 
         var resultDTOs = new ArrayList<UserPublicInfoDTO>();
         for (var user : originalPage) {
-            var dto = new UserPublicInfoDTO(user);
-            UserPublicInfoDTO.assignRoleProperties(course, user, dto);
-            if (!resultDTOs.contains(dto)) {
-                resultDTOs.add(dto);
+            var userDTO = new UserPublicInfoDTO(user);
+            userDTO = userDTO.withRoles(course, user);
+            if (!resultDTOs.contains(userDTO)) {
+                resultDTOs.add(userDTO);
             }
         }
         var dtoPage = new PageImpl<>(resultDTOs, originalPage.getPageable(), originalPage.getTotalElements());
