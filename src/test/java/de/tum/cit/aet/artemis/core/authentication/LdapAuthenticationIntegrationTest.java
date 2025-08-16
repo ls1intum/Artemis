@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.crypto.codec.Utf8;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -88,8 +87,8 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         doReturn(Optional.of(ldapUserDTO)).when(ldapUserService).findByLogin(LOGIN);
         doReturn(Optional.empty()).when(ldapUserService).findByLogin(NONEXISTENT_LOGIN);
-        doReturn(true).when(ldapTemplate).compare(ldapUserDTO.getUid().toString(), "userPassword", Utf8.encode(USER_PASSWORD));
-        doReturn(false).when(ldapTemplate).compare(ldapUserDTO.getUid().toString(), "userPassword", Utf8.encode(INCORRECT_PASSWORD));
+        doReturn(true).when(ldapTemplate).authenticate("", String.format("(uid=%s)", ldapUserDTO.getLogin()), USER_PASSWORD);
+        doReturn(false).when(ldapTemplate).authenticate("", String.format("(uid=%s)", ldapUserDTO.getLogin()), INCORRECT_PASSWORD);
     }
 
     @Test
