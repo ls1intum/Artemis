@@ -26,6 +26,7 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
@@ -48,6 +49,9 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     private LocalRepository solutionRepository;
 
     private LocalRepository testsRepository;
+
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
 
     @BeforeEach
     void initRepositories() throws GitAPIException, IOException, URISyntaxException {
@@ -287,7 +291,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             throws Exception {
 
         // Create a second local repository and push a file from there
-        Path tempDirectory = Files.createTempDirectory("tempDirectory");
+        Path tempDirectory = Files.createTempDirectory(tempPath, "tempDirectory");
         Git secondLocalGit = Git.cloneRepository().setURI(repositoryUri).setDirectory(tempDirectory.toFile()).call();
         localVCLocalCITestService.commitFile(tempDirectory, secondLocalGit);
         localVCLocalCITestService.testPushSuccessful(secondLocalGit, login, projectKey, repositorySlug);
