@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.communication.dto.MailUserDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
@@ -47,8 +48,8 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
         artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, null);
-        await().atMost(5, SECONDS)
-                .untilAsserted(() -> verify(mailSendingService).buildAndSendAsync(eq(user), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), anyMap()));
+        await().atMost(5, SECONDS).untilAsserted(() -> verify(mailSendingService).buildAndSendAsync(eq(new MailUserDTO(user)), eq("email.notification.login.title"),
+                eq("mail/notification/newLoginEmail"), anyMap()));
     }
 
     @Test
@@ -60,8 +61,8 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
         artemisSuccessfulLoginService.sendLoginEmail(user.getEmail(), AuthenticationMethod.PASSWORD, null);
-        await().atMost(5, SECONDS)
-                .untilAsserted(() -> verify(mailSendingService).buildAndSendAsync(eq(user), eq("email.notification.login.title"), eq("mail/notification/newLoginEmail"), anyMap()));
+        await().atMost(5, SECONDS).untilAsserted(() -> verify(mailSendingService).buildAndSendAsync(eq(new MailUserDTO(user)), eq("email.notification.login.title"),
+                eq("mail/notification/newLoginEmail"), anyMap()));
     }
 
     @Test
@@ -72,6 +73,6 @@ class ArtemisSuccessfulLoginServiceTest extends AbstractSpringIntegrationIndepen
 
         artemisSuccessfulLoginService.sendLoginEmail(username, AuthenticationMethod.PASSWORD, null);
 
-        await().atMost(5, SECONDS).untilAsserted(() -> verify(mailSendingService, never()).buildAndSendAsync(any(User.class), anyString(), anyString(), anyMap()));
+        await().atMost(5, SECONDS).untilAsserted(() -> verify(mailSendingService, never()).buildAndSendAsync(any(MailUserDTO.class), anyString(), anyString(), anyMap()));
     }
 }

@@ -22,6 +22,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import de.tum.cit.aet.artemis.communication.dto.MailUserDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -109,7 +110,7 @@ class MailServiceTest {
      */
     @Test
     void testSendEmail() {
-        mailSendingService.sendEmail(student1, subject, content, false, true);
+        mailSendingService.sendEmail(new MailUserDTO(student1), subject, content, false, true);
         verify(javaMailSender).send(any(MimeMessage.class));
     }
 
@@ -119,6 +120,6 @@ class MailServiceTest {
     @Test
     void testNoMailSendExceptionThrown() {
         doThrow(new MailSendException("Some error occurred during mail send")).when(javaMailSender).send(any(MimeMessage.class));
-        assertThatNoException().isThrownBy(() -> mailSendingService.sendEmail(student1, subject, content, false, true));
+        assertThatNoException().isThrownBy(() -> mailSendingService.sendEmail(new MailUserDTO(student1), subject, content, false, true));
     }
 }

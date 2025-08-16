@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.dto.MailUserDTO;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -92,7 +93,7 @@ public class DataExportScheduleService {
                 executor.shutdownNow();
             }
             if (!successfulDataExports.isEmpty()) {
-                mailService.sendSuccessfulDataExportsEmailToAdmin(admin.get(), successfulDataExports);
+                mailService.sendSuccessfulDataExportsEmailToAdmin(new MailUserDTO(admin.get()), successfulDataExports);
             }
         }
     }

@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.science.util.ScienceUtilService;
+import de.tum.cit.aet.artemis.communication.dto.MailUserDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
@@ -53,7 +54,6 @@ import de.tum.cit.aet.artemis.core.connector.apollon.ApollonRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.export.DataExportCreationService;
 import de.tum.cit.aet.artemis.core.test_repository.DataExportTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -613,7 +613,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.FAILED);
-        verify(mailService).sendDataExportFailedEmailToAdmin(any(User.class), eq(dataExportFromDb), eq(exception));
+        verify(mailService).sendDataExportFailedEmailToAdmin(any(MailUserDTO.class), eq(dataExportFromDb), eq(exception));
     }
 
     @Test

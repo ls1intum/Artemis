@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.communication.dto.MailUserDTO;
 import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -146,7 +147,7 @@ public class ArtemisSuccessfulLoginService {
                 }
             }
 
-            mailSendingService.buildAndSendAsync(recipient, "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
+            mailSendingService.buildAndSendAsync(new MailUserDTO(recipient), "email.notification.login.title", "mail/notification/newLoginEmail", contextVariables);
         }
         catch (EntityNotFoundException ignored) {
             log.error("User with login {} not found when trying to send newLoginEmail", loginOrEmail);
