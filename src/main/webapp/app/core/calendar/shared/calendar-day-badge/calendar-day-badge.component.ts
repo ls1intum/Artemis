@@ -1,16 +1,18 @@
-import { Component, InputSignal, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
 
 @Component({
-    selector: 'day-badge',
+    selector: 'jhi-calendar-day-badge',
     standalone: true,
     imports: [NgClass],
     templateUrl: './calendar-day-badge.component.html',
     styleUrls: ['./calendar-day-badge.component.scss'],
 })
 export class CalendarDayBadgeComponent {
-    day: InputSignal<Dayjs> = input.required<Dayjs>();
+    day = input.required<Dayjs>();
+    minimalTodayIndication = input(false);
+    isSelectedDay = input(false);
 
     get dayNumber(): number {
         return this.day().date();
