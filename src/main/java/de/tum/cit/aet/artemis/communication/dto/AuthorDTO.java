@@ -10,4 +10,8 @@ public record AuthorDTO(Long id, String name, String imageUrl) {
     public AuthorDTO(User user) {
         this(user.getId(), user.getName(), user.getImageUrl());
     }
+
+    public static AuthorDTO fromUser(User user) {
+        return user == null ? null : new AuthorDTO(user);
+    }
 }
