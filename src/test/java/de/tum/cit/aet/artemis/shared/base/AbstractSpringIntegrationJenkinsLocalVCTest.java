@@ -136,7 +136,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
             }
             jenkinsRequestMockProvider.mockCreateCustomBuildPlan(projectKey, TEMPLATE.getName());
             jenkinsRequestMockProvider.mockCreateCustomBuildPlan(projectKey, SOLUTION.getName());
-
         }
         else {
             jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, TEMPLATE.getName(), false);

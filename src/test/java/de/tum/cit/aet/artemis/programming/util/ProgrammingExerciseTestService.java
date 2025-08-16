@@ -609,19 +609,19 @@ public class ProgrammingExerciseTestService {
 
     public void importFromFile_validExercise_isSuccessfullyImported(ProgrammingLanguage language) throws Exception {
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
-        Resource resource = null;
         exercise.programmingLanguage(language);
         exercise.setProjectType(null);
-        switch (language) {
-            case PYTHON -> resource = new ClassPathResource("test-data/import-from-file/valid-import-python.zip");
+        Resource resource = switch (language) {
+            case PYTHON -> new ClassPathResource("test-data/import-from-file/valid-import-python.zip");
             case C -> {
-                resource = new ClassPathResource("test-data/import-from-file/valid-import-c.zip");
                 exercise.setProjectType(ProjectType.FACT);
+                yield new ClassPathResource("test-data/import-from-file/valid-import-c.zip");
             }
-            case HASKELL -> resource = new ClassPathResource("test-data/import-from-file/valid-import-haskell.zip");
-            case OCAML -> resource = new ClassPathResource("test-data/import-from-file/valid-import-ocaml.zip");
-            case ASSEMBLER -> resource = new ClassPathResource("test-data/import-from-file/valid-import-assembler.zip");
-        }
+            case HASKELL -> new ClassPathResource("test-data/import-from-file/valid-import-haskell.zip");
+            case OCAML -> new ClassPathResource("test-data/import-from-file/valid-import-ocaml.zip");
+            case ASSEMBLER -> new ClassPathResource("test-data/import-from-file/valid-import-assembler.zip");
+            default -> new ClassPathResource("test-data/import-from-file/valid-import.zip");
+        };
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         exercise.setChannelName("testchannel-pe");
