@@ -3,14 +3,14 @@ import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { LoginService } from 'app/core/login/login.service';
-import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 @Injectable()
 export class AuthExpiredInterceptor implements HttpInterceptor {
     private loginService = inject(LoginService);
-    private stateStorageService = inject(StateStorageService);
+    private sessionStorageService = inject(SessionStorageService);
     private router = inject(Router);
     private accountService = inject(AccountService);
 
@@ -35,7 +35,7 @@ export class AuthExpiredInterceptor implements HttpInterceptor {
                             // In such a case the error message should be different or we should even send one additional message to the user
                             // store url so that the user could navigate directly to it after login
                             // store the url in the session storage after the logout, because the logout will redirect the user
-                            this.stateStorageService.storeUrl(currentUrl);
+                            this.sessionStorageService.store('previousUrl', currentUrl);
                         }
                     }
                 },
