@@ -77,11 +77,11 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
     private static final String TEST_PREFIX = "exercisesharingimporttests";
 
-    public static final String INSTRUCTORNAME = TEST_PREFIX + "instructor1";
+    private static final String INSTRUCTORNAME = TEST_PREFIX + "instructor1";
 
-    public static final String SAMPLE_BASKET_TOKEN = "sampleBasketToken";
+    private static final String SAMPLE_BASKET_TOKEN = "sampleBasketToken";
 
-    public static final String TEST_RETURN_URL = "http://testing/xyz1";
+    private static final String TEST_RETURN_URL = "http://testing/xyz1";
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseSharingResourceImportTest.class);
 
@@ -119,7 +119,6 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     @BeforeEach
     void startUp() throws Exception {
         log.info("Mocking connect from Sharing Platform");
-
         sharingPlatformMockProvider.connectRequestFromSharingPlatform();
     }
 
@@ -148,7 +147,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     /**
      * Tests the import of a basket from the sharing platform. This test is also reused for priming of other tests
      */
-    // @Test
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldSuccessfullyImportBasketFromSharingPlatform() throws Exception {
         importBasket();
@@ -159,7 +158,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
      *
      */
     // @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnNotFoundWhenBasketImportFails() throws Exception {
         URI basketURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + SAMPLE_BASKET_TOKEN);
         MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
@@ -179,7 +178,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
      * tests the import of a basket from the sharing platform
      */
     // @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnNotFoundWhenBasketDoesNotExist() throws Exception {
 
         URI basketURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/undefinedBasketToken");
@@ -233,7 +232,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
      * tests the import of a basket from the sharing platform
      */
     // @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnBadRequestWhenChecksumIsInvalid() throws Exception {
         requestUtilService.performMvcRequest(get("/api/programming/sharing/import/basket").queryParam("basketToken", "sampleBasket.json")
                 .queryParam("returnURL", "http://testing/xyz1").queryParam("apiBaseURL", sharingConnectorService.getSharingApiBaseUrlOrNull().toString())
@@ -241,7 +240,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     }
 
     // @Test
-    @WithMockUser(username = INSTRUCTORNAME, roles = "INSTRUCTOR")
+    // @WithMockUser(username = INSTRUCTORNAME, roles = "INSTRUCTOR")
     void importExerciseCompleteProcess() throws Exception {
         userUtilService.addInstructor("Sharing", INSTRUCTORNAME);
 
@@ -361,7 +360,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     }
 
     // @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void setUpWithMissingExercise() throws Exception {
 
         SharingSetupInfo emptySetupInfo = new SharingSetupInfo(null, null, null);
@@ -373,7 +372,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     }
 
     // @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseInfosWrongChecksum() throws Exception {
 
         SharingInfoDTO sharingInfo = new SharingInfoDTO("Some Basket Token", TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN, "Invalid Checksum", 0);
@@ -390,18 +389,24 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
         builder.ignoreExpectOrder(true);
         mockServer = builder.build();
 
-        final ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(basketURI)).andExpect(method(HttpMethod.GET));
-        responseActions.andRespond(MockRestResponseCreators.withSuccess(sampleBasket, MediaType.APPLICATION_JSON));
+        try {
+            final ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(basketURI)).andExpect(method(HttpMethod.GET));
+            responseActions.andRespond(MockRestResponseCreators.withSuccess(sampleBasket, MediaType.APPLICATION_JSON));
 
-        MvcResult result = requestUtilService
-                .performMvcRequest(addCorrectChecksum(get("/api/programming/sharing/import/basket").queryParam("basketToken", SAMPLE_BASKET_TOKEN), "returnURL", TEST_RETURN_URL,
-                        "apiBaseURL", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
-        String content = result.getResponse().getContentAsString();
+            MvcResult result = requestUtilService
+                    .performMvcRequest(addCorrectChecksum(get("/api/programming/sharing/import/basket").queryParam("basketToken", SAMPLE_BASKET_TOKEN), "returnURL",
+                            TEST_RETURN_URL, "apiBaseURL", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN).contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+            String content = result.getResponse().getContentAsString();
 
-        ShoppingBasket sb = objectMapper.readerFor(ShoppingBasket.class).readValue(content);
-        assertThat(sb.userInfo.email).isEqualTo("test.user@example.com");
-        return SAMPLE_BASKET_TOKEN;
+            ShoppingBasket sb = objectMapper.readerFor(ShoppingBasket.class).readValue(content);
+            assertThat(sb.userInfo.email).isEqualTo("test.user@example.com");
+            return SAMPLE_BASKET_TOKEN;
+        }
+        finally {
+            if (mockServer != null)
+                mockServer.reset();
+        }
     }
 
 }
