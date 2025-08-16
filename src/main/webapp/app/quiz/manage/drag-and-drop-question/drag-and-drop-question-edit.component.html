@@ -1,5 +1,5 @@
 <div class="edit-dnd-question" [hidden]="showPreview" (mousemove)="mouseMove($event)" (mouseup)="mouseUp()">
-    @if (!reEvaluationInProgress) {
+    @if (!reEvaluationInProgress()) {
         <div class="question-options card-header question-card-header">
             <button
                 class="btn question-collapse"
@@ -29,7 +29,7 @@
             </div>
         </div>
     }
-    @if (reEvaluationInProgress) {
+    @if (reEvaluationInProgress()) {
         <div class="question-options card-header question-card-header-reevaluation">
             <div class="row">
                 <div class="col-3 col-lg-1 mt-1">
@@ -105,7 +105,7 @@
         </div>
     }
     <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex() }}">
-        @if (!reEvaluationInProgress) {
+        @if (!reEvaluationInProgress()) {
             <div class="question-options">
                 <div class="form-group">
                     <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
@@ -138,7 +138,7 @@
                 </div>
             </div>
         }
-        @if (reEvaluationInProgress) {
+        @if (reEvaluationInProgress()) {
             <div class="question-options" class="row align-items-center" style="width: 100%">
                 <div class="col-12 col-lg-4">
                     <div class="form-group">
@@ -198,7 +198,7 @@
             </div>
         }
         <div class="markupEditorArea">
-            @if (!reEvaluationInProgress) {
+            @if (!reEvaluationInProgress()) {
                 <div class="question-content">
                     <jhi-markdown-editor-monaco
                         #markdownEditor
@@ -244,23 +244,23 @@
         </div>
         <hr />
         <!--    TODO: Fix the background change for reevaluation -->
-        @if (!reEvaluationInProgress) {
+        @if (!reEvaluationInProgress()) {
             <div class="question-options row d-flex justify-content-start">
                 <div class="input-group col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
                     <div class="input-group-prepend">
                         <button class="btn btn-outline-secondary" id="background-file-input-button" (click)="backgroundFileInput.click()">
                             <fa-icon [icon]="faPlus" />
-                            @if (!reEvaluationInProgress) {
+                            @if (!reEvaluationInProgress()) {
                                 <span jhiTranslate="artemisApp.dragAndDropQuestion.selectBackgroundPicture" class="no-flex-shrink"></span>
                             }
-                            @if (reEvaluationInProgress) {
+                            @if (reEvaluationInProgress()) {
                                 <span jhiTranslate="artemisApp.dragAndDropQuestion.changeBackgroundPicture" class="no-flex-shrink"></span>
                             }
                         </button>
                     </div>
                     <input #backgroundFileInput id="backgroundFileInput{{ questionIndex() }}" type="file" accept="image/*" [hidden]="true" (change)="setBackgroundFile($event)" />
                 </div>
-                @if (reEvaluationInProgress) {
+                @if (reEvaluationInProgress()) {
                     <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetBackground()">
                         <fa-icon [icon]="faUndo" />
                     </button>
@@ -272,7 +272,7 @@
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.uploadBackgroundInstructions"></span>
             </div>
         }
-        @if (question().backgroundFilePath && !reEvaluationInProgress) {
+        @if (question().backgroundFilePath && !reEvaluationInProgress()) {
             <div class="dnd-instructions">
                 <span jhiTranslate="artemisApp.dragAndDropQuestion.drawOnBackgroundInstructions"></span>
             </div>
@@ -474,7 +474,7 @@
                 </div>
             </div>
         }
-        @if (!reEvaluationInProgress) {
+        @if (!reEvaluationInProgress()) {
             <hr />
             <div class="question-options">
                 <div ngbTooltip="{{ 'artemisApp.dragAndDropQuestion.disabledPreviewTooltip' | artemisTranslate }}" [disableTooltip]="!!question().backgroundFilePath">
@@ -487,7 +487,7 @@
         }
     </div>
 </div>
-@if (!reEvaluationInProgress && showPreview) {
+@if (!reEvaluationInProgress() && showPreview) {
     <div class="preview-dnd-question">
         <jhi-drag-and-drop-question [question]="question()" [mappings]="[]" [questionIndex]="questionIndex()" [filePreviewPaths]="filePreviewPaths" />
         <hr />
