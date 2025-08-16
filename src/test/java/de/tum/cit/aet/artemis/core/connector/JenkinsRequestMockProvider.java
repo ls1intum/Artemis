@@ -93,7 +93,7 @@ public class JenkinsRequestMockProvider {
         mockServer.verify();
     }
 
-    private String buildJobName(final String projectKey, final String planName) {
+    public static String buildJobName(final String projectKey, final String planName) {
         // the build plan ID can be provided either as the full name already (contains -), or only the participation ID suffix.
         if (planName.contains("-")) {
             return planName;

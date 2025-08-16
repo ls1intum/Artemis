@@ -122,27 +122,31 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
             throws Exception {
         final var projectKey = exercise.getProjectKey();
         jenkinsRequestMockProvider.mockCreateProjectForExercise(exercise, failToCreateCiProject);
+        String templatePlanKey = TEMPLATE.getName();
+        String solutionPlanKey = SOLUTION.getName();
+        String templateBuildJobName = projectKey + "-" + templatePlanKey;
+        String solutionBuildJobName = projectKey + "-" + solutionPlanKey;
         if (useCustomBuildPlanDefinition) {
             aeolusRequestMockProvider.enableMockingOfRequests();
             if (useCustomBuildPlanWorked) {
-                aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.JENKINS, projectKey + "-" + TEMPLATE.getName());
-                aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.JENKINS, projectKey + "-" + SOLUTION.getName());
+                aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.JENKINS, templateBuildJobName);
+                aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.JENKINS, solutionBuildJobName);
             }
             else {
                 aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
                 aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
-                jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, TEMPLATE.getName(), false);
-                jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, SOLUTION.getName(), false);
+                jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, templateBuildJobName, false);
+                jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, solutionBuildJobName, false);
             }
-            jenkinsRequestMockProvider.mockCreateCustomBuildPlan(projectKey, TEMPLATE.getName());
-            jenkinsRequestMockProvider.mockCreateCustomBuildPlan(projectKey, SOLUTION.getName());
+            jenkinsRequestMockProvider.mockCreateCustomBuildPlan(projectKey, templateBuildJobName);
+            jenkinsRequestMockProvider.mockCreateCustomBuildPlan(projectKey, solutionBuildJobName);
         }
         else {
-            jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, TEMPLATE.getName(), false);
-            jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, SOLUTION.getName(), false);
+            jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, templateBuildJobName, false);
+            jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, solutionBuildJobName, false);
         }
-        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, TEMPLATE.getName(), false);
-        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, SOLUTION.getName(), false);
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, templateBuildJobName, false);
+        jenkinsRequestMockProvider.mockTriggerBuild(projectKey, solutionBuildJobName, false);
     }
 
     @Override
