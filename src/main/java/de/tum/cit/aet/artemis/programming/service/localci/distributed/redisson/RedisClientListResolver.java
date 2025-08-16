@@ -34,13 +34,12 @@ public class RedisClientListResolver {
         }
         for (RedisClientInfo clientInfo : clients) {
             String clientName = clientInfo.getName();
-            // TODO jfr: this requirement should be documented in the documentation of the local CI!?
-            // also make this configurable via application properties
+            // TODO: also make this configurable via application properties
             if (clientName.toLowerCase().startsWith("artemis")) {
                 uniqueClients.add(clientName);
             }
         }
-        log.info("Redis client list based on names: {}", uniqueClients);
+        log.debug("Redis client list based on names: {}", uniqueClients);
 
         return uniqueClients;
     }
