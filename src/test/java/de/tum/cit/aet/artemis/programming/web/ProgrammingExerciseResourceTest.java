@@ -1,34 +1,52 @@
 package de.tum.cit.aet.artemis.programming.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
 
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
+import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final String TEST_PREFIX = "programmingexerciseresource";
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResourceTest.class);
 
-    @Autowired
-    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+    private static final String TEST_PREFIX = "programmingexerciseresource";
 
     @Autowired
     private UserUtilService userUtilService;
@@ -40,14 +58,35 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
+    protected ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
+
+    @Autowired
     protected ParticipationUtilService participationUtilService;
 
     @Autowired
     protected RequestUtilService request;
 
+    @Autowired
+    private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationTestRepo;
+
+    @Autowired
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Autowired
+    private CourseTestRepository courseRepository;
+
+    @Autowired
+    private GitService gitService;
+
+    @MockBean
+    private GitRepositoryExportService gitRepositoryExportService;
+
     protected Course course;
 
     protected ProgrammingExercise programmingExercise;
+
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
 
     @BeforeEach
     void setup() {
@@ -78,4 +117,94 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         // Count the number of fields in the record, this makes sure that only the expected fields are returned
         assertThat(imageDTO.getClass().getDeclaredFields().length).isEqualTo(1);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testExportTemplateRepositoryAsInMemoryZip_shouldReturnValidZipWithContent(@TempDir Path tempDir) throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        course.setInstructorGroupName(instructor.getGroups().iterator().next());
+        courseRepository.save(course);
+
+        var localRepo = new LocalRepository(defaultBranch);
+        var originRepoPath = tempDir.resolve("testOriginRepo");
+        localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
+
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        templateParticipation
+                .setRepositoryUri(new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, originRepoPath)).getURI().toString());
+        templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
+
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
+
+        // Mock the export methods to return valid resources
+        var files = java.util.Map.of("test.txt", "test content");
+        byte[] mockZipData = ZipTestUtil.createTestZipFile(files);
+        InputStreamResource mockZipResource = ZipTestUtil.createMockZipResource(mockZipData, "mock-repo.zip");
+        doReturn(mockZipResource).when(gitRepositoryExportService).exportInstructorRepositoryForExerciseInMemory(any(), any(), any());
+
+        byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-repository/" + RepositoryType.TEMPLATE.name(),
+                HttpStatus.OK, byte[].class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.length).isGreaterThan(0);
+
+        // Verify that file is a valid ZIP file
+        assertThat(result[0]).isEqualTo((byte) 0x50); // 'P'
+        assertThat(result[1]).isEqualTo((byte) 0x4B); // 'K'
+
+        ZipTestUtil.verifyZipStructureAndContent(result);
+
+        // Clean up
+        localRepo.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testExportRepositoryWithFullHistory(@TempDir Path tempDir) throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        course.setInstructorGroupName(instructor.getGroups().iterator().next());
+        courseRepository.save(course);
+
+        var localRepo = new LocalRepository(defaultBranch);
+        var originRepoPath = tempDir.resolve("testOriginRepo");
+        localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
+
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        templateParticipation
+                .setRepositoryUri(new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, originRepoPath)).getURI().toString());
+        templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
+
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
+
+        // Mock the export methods to return valid resources
+        var files = java.util.Map.of(".git/config", "[core]\nrepositoryformatversion = 0", ".git/HEAD", "ref: refs/heads/main", ".git/refs/heads/main",
+                "1234567890abcdef1234567890abcdef12345678", ".git/objects/12/34567890abcdef1234567890abcdef12345678", "mock git object content", "test.txt", "test content");
+
+        byte[] mockZipData = ZipTestUtil.createTestZipFile(files);
+        InputStreamResource mockZipResource = ZipTestUtil.createMockZipResource(mockZipData, "mock-repo-with-git.zip");
+        doReturn(mockZipResource).when(gitRepositoryExportService).exportInstructorRepositoryForExerciseInMemory(any(), any(), any());
+
+        byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-repository/" + RepositoryType.TEMPLATE.name(),
+                HttpStatus.OK, byte[].class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.length).isGreaterThan(0);
+
+        // Verify it's a valid ZIP file
+        assertThat(result[0]).isEqualTo((byte) 0x50); // 'P'
+        assertThat(result[1]).isEqualTo((byte) 0x4B); // 'K'
+
+        // Verify that the zip contains the .git directory
+        ZipTestUtil.verifyZipContainsGitDirectory(result);
+
+        // Clean up
+        localRepo.resetLocalRepo();
+    }
+
 }
