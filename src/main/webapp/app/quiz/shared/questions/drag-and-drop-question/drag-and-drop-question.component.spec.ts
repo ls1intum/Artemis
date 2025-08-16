@@ -28,19 +28,17 @@ describe('DragAndDropQuestionComponent', () => {
         question.backgroundFilePath = '';
         fixture.componentRef.setInput('question', question);
         fixture.detectChanges();
-        //comp.question = question;
     };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [DragAndDropQuestionComponent, DragDropModule, FitTextDirective, FontAwesomeModule, DragItemComponent],
+            imports: [DragDropModule, FitTextDirective, FontAwesomeModule],
             declarations: [
-                //DragAndDropQuestionComponent,
+                DragAndDropQuestionComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(SecuredImageComponent),
-                //MockComponent(DragAndDropQuestionComponent),
                 MockComponent(QuizScoringInfoStudentModalComponent),
-                //DragItemComponent,
+                DragItemComponent,
             ],
             providers: [MockProvider(DragAndDropQuestionUtil), { provide: ProfileService, useClass: MockProfileService }],
         })
@@ -64,7 +62,6 @@ describe('DragAndDropQuestionComponent', () => {
         question.hint = 'Test hint';
         question.explanation = 'Test explanation';
         const markdownSpy = jest.spyOn(markdownService, 'safeHtmlForMarkdown').mockImplementation((arg) => `${arg}markdown`);
-        //comp.question = question;
         fixture.componentRef.setInput('question', question);
         fixture.detectChanges();
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
@@ -129,7 +126,6 @@ describe('DragAndDropQuestionComponent', () => {
         comp.mappings.set(mappings);
         fixture.componentRef.setInput('forceSampleSolution', true);
         fixture.detectChanges();
-        //comp.forceSampleSolution = true;
         expect(comp.forceSampleSolution()).toBeTrue();
         expect(solveSpy).toHaveBeenCalledWith(comp.question(), mappings);
         expect(comp.sampleSolutionMappings).toEqual(mappings);

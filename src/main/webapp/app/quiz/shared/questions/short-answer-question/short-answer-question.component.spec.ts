@@ -34,15 +34,6 @@ describe('ShortAnswerQuestionComponent', () => {
         fixture.componentRef.setInput('score', 0);
     });
 
-    /*beforeEach(() => {
-        component.submittedTexts = [];
-        component.clickDisabled = false;
-        component.showResult = true;
-        component.questionIndex = 0;
-        component.score = 0;
-        component.shortAnswerQuestion = question;
-    });*/
-
     afterEach(() => {
         jest.restoreAllMocks();
     });
@@ -60,7 +51,6 @@ describe('ShortAnswerQuestionComponent', () => {
         const explanation = 'This is a very good explanation!';
         alternativeQuestion.explanation = explanation;
 
-        //component.question = alternativeQuestion;
         fixture.componentRef.setInput('question', alternativeQuestion);
         fixture.detectChanges();
 
@@ -81,16 +71,12 @@ describe('ShortAnswerQuestionComponent', () => {
         const spot = new ShortAnswerSpot();
         spot.spotNr = 1;
         alternativeQuestion.spots = [spot];
-        /*component.fnOnSubmittedTextUpdate = () => {
-            return true;
-        };*/
         fixture.componentRef.setInput('fnOnSubmittedTextUpdate', () => {
             return true;
         });
         const returnValue = { value: text } as unknown as HTMLElement;
         const getNavigationStub = jest.spyOn(document, 'getElementById').mockReturnValue(returnValue);
 
-        //component.question = alternativeQuestion;
         fixture.componentRef.setInput('question', alternativeQuestion);
         fixture.detectChanges();
         component.setSubmittedText();
@@ -114,7 +100,6 @@ describe('ShortAnswerQuestionComponent', () => {
         const mapping = new ShortAnswerMapping(spot, solution);
         alternativeQuestion.correctMappings = [mapping];
 
-        //component.shortAnswerQuestion = alternativeQuestion;
         fixture.componentRef.setInput('question', alternativeQuestion);
         fixture.detectChanges();
         component.showSampleSolution();
@@ -128,16 +113,15 @@ describe('ShortAnswerQuestionComponent', () => {
         const alternativeQuestion = new ShortAnswerQuestion();
         alternativeQuestion.text = 'Some text';
         alternativeQuestion.spots = [];
-        //component.shortAnswerQuestion = alternativeQuestion;
-        //component.showResult = true;
+
         fixture.componentRef.setInput('question', alternativeQuestion);
         fixture.componentRef.setInput('showResult', true);
         component.showingSampleSolution = true;
-        //component.forceSampleSolution = true;
+
         fixture.componentRef.setInput('forceSampleSolution', true);
         fixture.detectChanges();
         expect(component.showingSampleSolution).toBeTrue();
-        //component.forceSampleSolution = false;
+
         fixture.componentRef.setInput('forceSampleSolution', false);
         fixture.detectChanges();
         component.hideSampleSolution();
@@ -153,7 +137,7 @@ describe('ShortAnswerQuestionComponent', () => {
         spot.spotNr = 1;
         submitted.spot = spot;
         const tag = '[-spot 1]';
-        //component.submittedTexts = [submitted];
+
         fixture.componentRef.setInput('submittedTexts', [submitted]);
         fixture.detectChanges();
 
@@ -167,7 +151,7 @@ describe('ShortAnswerQuestionComponent', () => {
         const spot = new ShortAnswerSpot();
         spot.spotNr = 1;
         alternativeQuestion.spots = [new ShortAnswerSpot(), spot];
-        //component.shortAnswerQuestion = alternativeQuestion;
+
         fixture.componentRef.setInput('question', alternativeQuestion);
         fixture.detectChanges();
 
