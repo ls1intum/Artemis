@@ -87,7 +87,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
@@ -157,8 +156,6 @@ public class ProgrammingExerciseResource {
 
     private final CourseRepository courseRepository;
 
-    private final GitService gitService;
-
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
@@ -182,7 +179,7 @@ public class ProgrammingExerciseResource {
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseTaskService programmingExerciseTaskService,
             StudentParticipationRepository studentParticipationRepository, StaticCodeAnalysisService staticCodeAnalysisService,
-            GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService, AuxiliaryRepositoryService auxiliaryRepositoryService,
+            GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ChannelRepository channelRepository,
             Optional<AthenaApi> athenaApi, Environment environment, RepositoryCheckoutService repositoryCheckoutService, Optional<SlideApi> slideApi,
@@ -206,7 +203,6 @@ public class ProgrammingExerciseResource {
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.courseRepository = courseRepository;
-        this.gitService = gitService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;

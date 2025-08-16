@@ -30,15 +30,35 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends ArtemisJpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
+    /**
+     * Loads a participation with:
+     * - all submissions, and
+     * - only those results that are either
+     * (a) AUTOMATIC, or
+     * (b) completed (non-null completionDate) and whose exercise has no assessmentDueDate
+     * or an assessmentDueDate before the given {@code dateTime}.
+     *
+     * Implementation notes:
+     * - Uses FETCH JOINs to materialize the object graph in one round trip.
+     * - Predicates are applied in the LEFT JOIN ... ON clause so the join remains outer,
+     * avoiding accidental inner-join semantics and reducing row count.
+     * - DISTINCT is required to collapse duplicates introduced by fetch joins.
+     * - Works on providers supporting JPQL JOIN ... ON (e.g., Hibernate).
+     *
+     * @param participationId the id of the participation to load
+     * @param dateTime        the cutoff instant to compare against assessmentDueDate
+     * @return the participation with submissions and the filtered results
+     */
     @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results pr
-            WHERE p.id = :participationId AND ((pr.assessmentType = 'AUTOMATIC'
+            WHERE p.id = :participationId
+                AND (pr.assessmentType = 'AUTOMATIC'
                         OR (pr.completionDate IS NOT NULL
                             AND (p.exercise.assessmentDueDate IS NULL
-                                OR p.exercise.assessmentDueDate < :#{#dateTime}))) OR pr.id IS NULL)
+                                OR p.exercise.assessmentDueDate < :dateTime))) OR pr.id IS NULL
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllResultsAndRelatedSubmissions(@Param("participationId") long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
