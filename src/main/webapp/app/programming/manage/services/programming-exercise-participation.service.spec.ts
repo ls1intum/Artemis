@@ -156,19 +156,6 @@ describe('ProgrammingExerciseParticipation Service', () => {
         }));
     });
 
-    it('should make GET request to retrieve commits infos for participation', fakeAsync(() => {
-        const participationId = 42;
-        const commitInfos = [{ hash: '123', author: 'author', timestamp: dayjs('2021-01-01'), message: 'commit message' }];
-        service.retrieveCommitsInfoForParticipation(participationId).subscribe((resp) => {
-            expect(resp).toEqual(commitInfos);
-        });
-
-        const expectedURL = `${resourceUrlParticipations}${participationId}/commits-info`;
-        const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
-        req.flush(commitInfos);
-        tick();
-    }));
-
     it('should make GET request to retrieve files with content at commit', fakeAsync(() => {
         const participationId = 42;
         const commitId = 'commitId';

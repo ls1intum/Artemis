@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -38,7 +37,6 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import tech.jhipster.security.RandomUtil;
 
 @Lazy
@@ -63,15 +61,12 @@ public class LtiService {
 
     private final JWTCookieService jwtCookieService;
 
-    private final Optional<CIUserManagementService> optionalCIUserManagementService;
-
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, ArtemisAuthenticationProvider artemisAuthenticationProvider,
-            JWTCookieService jwtCookieService, Optional<CIUserManagementService> optionalCIUserManagementService) {
+            JWTCookieService jwtCookieService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.jwtCookieService = jwtCookieService;
-        this.optionalCIUserManagementService = optionalCIUserManagementService;
     }
 
     /**
@@ -141,8 +136,6 @@ public class LtiService {
             newUser = userCreationService.createUser(login, password, groups, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
             newUser.setActivationKey(null);
             userRepository.save(newUser);
-
-            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(newUser, password));
 
             log.info("Created new user {}", newUser);
             return newUser;

@@ -38,7 +38,7 @@ class JenkinsJobServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVC
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         // create the document before the mock so that it still works correctly
         invalidDocument = createEmptyDOMDocument();
         validDocument = createEmptyDOMDocument();

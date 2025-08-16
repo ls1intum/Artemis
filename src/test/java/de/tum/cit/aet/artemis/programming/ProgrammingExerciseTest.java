@@ -46,7 +46,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     }
 
     void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         programmingExercise.setProblemStatement(newProblem);
         programmingExercise.setTitle(newTitle);
 
@@ -165,7 +165,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         programmingExercise.setAssessmentType(assessmentType);
 
         if (assessmentType == AssessmentType.AUTOMATIC) {
-            jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+            jenkinsRequestMockProvider.enableMockingOfRequests();
             jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
             jenkinsRequestMockProvider.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
         }

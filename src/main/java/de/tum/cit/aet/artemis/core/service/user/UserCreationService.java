@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import tech.jhipster.security.RandomUtil;
 
 @Profile(PROFILE_CORE)
@@ -48,16 +47,13 @@ public class UserCreationService {
 
     private final OrganizationRepository organizationRepository;
 
-    private final Optional<CIUserManagementService> optionalCIUserManagementService;
-
     private final CacheManager cacheManager;
 
-    public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
-            Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager, OrganizationRepository organizationRepository) {
+    public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository, CacheManager cacheManager,
+            OrganizationRepository organizationRepository) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
-        this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.cacheManager = cacheManager;
         this.organizationRepository = organizationRepository;
     }
@@ -121,7 +117,6 @@ public class UserCreationService {
             log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
         newUser = saveUser(newUser);
-        final User finalNewUser = newUser;
         log.debug("Created user: {}", newUser);
         return newUser;
     }
@@ -170,8 +165,6 @@ public class UserCreationService {
         }
         saveUser(user);
 
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
-
         addUserToGroupsInternal(user, userDTO.getGroups());
 
         log.debug("Created Information for User: {}", user);
@@ -217,7 +210,6 @@ public class UserCreationService {
             }
             saveUser(user);
             log.info("Changed Information for User: {}", user);
-            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user, null));
         });
     }
 
@@ -303,9 +295,6 @@ public class UserCreationService {
         user.setPassword(passwordService.hashPassword(newPassword));
         user.setActivated(true);
         userRepository.save(user);
-
-        optionalCIUserManagementService.ifPresent(service -> service.updateUser(user, newPassword));
-
         return newPassword;
     }
 

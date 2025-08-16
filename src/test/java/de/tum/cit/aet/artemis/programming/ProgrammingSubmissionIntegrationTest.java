@@ -95,7 +95,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void triggerBuildStudent() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
         String login = TEST_PREFIX + "student2";
@@ -135,7 +135,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildInstructor() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         String login = TEST_PREFIX + "student2";
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
@@ -168,7 +168,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildInstructor_cannotGetLastCommitHash() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         doThrow(EntityNotFoundException.class).when(gitService).getLastCommitHash(any());
         String login = TEST_PREFIX + "student1";
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
@@ -212,7 +212,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForExerciseAsInstructor() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
         String login1 = TEST_PREFIX + "student1";
@@ -283,7 +283,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForParticipationsInstructorEmpty() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         String login1 = TEST_PREFIX + "student2";
         String login2 = TEST_PREFIX + "student3";
         String login3 = TEST_PREFIX + "student4";
@@ -361,7 +361,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         var optionalParticipation = participationRepository.findById(submission.getParticipation().getId());
         assertThat(optionalParticipation).isPresent();
         final var participation = optionalParticipation.get();
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
         mockGetBuildPlan(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId(), true, true, false, false);
         // Mock again because we call the trigger request two times
@@ -394,7 +394,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void triggerFailedBuild_CIException() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation(TEST_PREFIX + "student2");
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         var repoUri = uriService.getRepositorySlugFromRepositoryUri(participation.getVcsRepositoryUri());
         doReturn(participation.getVcsRepositoryUri()).when(versionControlService).getCloneRepositoryUri(exercise.getProjectKey(), repoUri);
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
@@ -429,7 +429,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerFailedBuildEmptyLatestPendingSubmission() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
         String login = TEST_PREFIX + "student1";

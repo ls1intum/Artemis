@@ -189,7 +189,7 @@ public class ProgrammingExerciseImportFromFileService {
      * @param basePath    the path to the extracted zip file
      * @param user        the user performing the import
      */
-    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, User user) throws IOException, GitAPIException, URISyntaxException {
+    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, User user) throws IOException, GitAPIException {
         Repository templateRepo = gitService.getOrCheckoutRepository(new LocalVCRepositoryUri(newExercise.getTemplateRepositoryUri()), false, true);
         Repository solutionRepo = gitService.getOrCheckoutRepository(new LocalVCRepositoryUri(newExercise.getSolutionRepositoryUri()), false, true);
         Repository testRepo = gitService.getOrCheckoutRepository(new LocalVCRepositoryUri(newExercise.getTestRepositoryUri()), false, true);
