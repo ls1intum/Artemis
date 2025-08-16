@@ -53,6 +53,7 @@ import { captureException } from '@sentry/angular';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -80,6 +81,7 @@ import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.c
         DecimalPipe,
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
+        UnifiedFeedbackComponent,
     ],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -887,4 +889,45 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     protected readonly hasExerciseDueDatePassed = hasExerciseDueDatePassed;
+
+    // TODO: This part can be in unified feedback component
+    /**
+     * Generates a title for referenced feedback based on the element type and name
+     */
+    getReferencedFeedbackTitle(feedback: Feedback): string {
+        if (feedback.text) {
+            return feedback.text;
+        }
+
+        if (this.assessmentsNames && feedback.referenceId) {
+            const assessmentName = this.assessmentsNames[feedback.referenceId];
+            if (assessmentName) {
+                return `${assessmentName.type}: ${assessmentName.name}`;
+            }
+        }
+
+        if (feedback.credits && feedback.credits > 0) {
+            return 'Good job!';
+        } else if (feedback.credits && feedback.credits < 0) {
+            return 'Incorrect';
+        } else {
+            return feedback.positive ? 'Good effort!' : 'Needs revision';
+        }
+    }
+
+    /**
+     * Generates a reference string for referenced feedback
+     */
+    getReferencedFeedbackReference(feedback: Feedback): string | undefined {
+        if (this.assessmentsNames && feedback.referenceId) {
+            const assessmentName = this.assessmentsNames[feedback.referenceId];
+            if (assessmentName) {
+                return `Reference: ${assessmentName.name}`;
+            }
+        }
+        if (feedback.reference) {
+            return `Reference: ${feedback.reference}`;
+        }
+        return undefined;
+    }
 }

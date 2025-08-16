@@ -193,27 +193,6 @@ const routes: Routes = [
         loadChildren: () => import('app/core/feature-overview/feature-overview.route').then((m) => m.routes),
     },
     {
-        path: 'demo/unified-feedback',
-        loadComponent: () => import('app/shared/components/unified-feedback/unified-feedback-demo.component').then((m) => m.UnifiedFeedbackDemoComponent),
-        data: {
-            pageTitle: 'Unified Feedback Component Demo',
-        },
-    },
-    {
-        path: 'demo/text-exercise-feedback',
-        loadComponent: () => import('app/shared/components/unified-feedback/text-exercise-demo.component').then((m) => m.TextExerciseDemoComponent),
-        data: {
-            pageTitle: 'Text Exercise Feedback Demo',
-        },
-    },
-    {
-        path: 'demo/text-exercise-integration-test',
-        loadComponent: () => import('app/shared/components/unified-feedback/text-exercise-integration-test.component').then((m) => m.TextExerciseIntegrationTestComponent),
-        data: {
-            pageTitle: 'Text Exercise Integration Test',
-        },
-    },
-    {
         path: 'lti',
         loadChildren: () => import('./lti/shared/lti.route').then((m) => m.ltiLaunchRoutes),
     },

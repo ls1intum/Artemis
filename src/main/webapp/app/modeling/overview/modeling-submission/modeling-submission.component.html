@@ -145,53 +145,54 @@
                                                 }
                                                 @if (assessmentResult && assessmentResult!.feedbacks && assessmentResult!.feedbacks!.length > 0) {
                                                     <p jhiTranslate="artemisApp.modelingSubmission.assessment.instructions"></p>
-                                                    <table class="table" id="component-feedback-table">
-                                                        <thead class="thead-light">
-                                                            <tr>
-                                                                <th jhiTranslate="artemisApp.modelingSubmission.assessment.element"></th>
-                                                                <th class="text-center" jhiTranslate="artemisApp.modelingSubmission.assessment.score"></th>
-                                                            </tr>
-                                                        </thead>
-                                                        @if (assessmentsNames) {
-                                                            <tbody>
-                                                                @for (feedback of referencedFeedback; track feedback) {
-                                                                    <tr [hidden]="!shouldBeDisplayed(feedback)">
-                                                                        <td>
-                                                                            @if (feedback.reference) {
-                                                                                <span>{{ assessmentsNames[feedback.referenceId!]?.type }} </span>
-                                                                            }
-                                                                            @if (feedback.reference) {
-                                                                                <code class="text-primary">{{ assessmentsNames[feedback.referenceId!]?.name }}</code>
-                                                                            }
-                                                                            @if (feedback.reference) {
-                                                                                <br />
-                                                                            }
-                                                                            @if (feedback.text || feedback.detailText || feedback.gradingInstruction) {
-                                                                                <span
-                                                                                    [ngClass]="{
-                                                                                        'text-secondary': feedback.isSubsequent,
-                                                                                        'text-success': feedback.credits! > 0 && feedback.isSubsequent === undefined,
-                                                                                        'text-danger': feedback.credits! < 0 && feedback.isSubsequent === undefined,
-                                                                                    }"
-                                                                                    ><strong>Feedback:</strong> <span [innerHTML]="buildFeedbackTextForReview(feedback)"></span
-                                                                                ></span>
-                                                                            }
-                                                                        </td>
-                                                                        <td class="text-center">
-                                                                            {{ feedback.credits | number: '1.0-1' }}
-                                                                            @if (feedback.isSubsequent) {
-                                                                                <fa-icon
-                                                                                    class="text-secondary"
-                                                                                    [icon]="faExclamationTriangle"
-                                                                                    [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
-                                                                                />
-                                                                            }
-                                                                        </td>
-                                                                    </tr>
-                                                                }
-                                                            </tbody>
+                                                    <div class="feedback-list">
+                                                        @for (feedback of referencedFeedback; track feedback) {
+                                                            @if (shouldBeDisplayed(feedback)) {
+                                                                <jhi-unified-feedback
+                                                                    [feedbackContent]="buildFeedbackTextForReview(feedback)"
+                                                                    [points]="feedback.credits || 0"
+                                                                    [icon]="
+                                                                        (feedback.credits || 0) > 0
+                                                                            ? 'success'
+                                                                            : (feedback.credits || 0) < 0
+                                                                              ? 'error'
+                                                                              : feedback.positive
+                                                                                ? 'success'
+                                                                                : 'retry'
+                                                                    "
+                                                                    [title]="getReferencedFeedbackTitle(feedback)"
+                                                                    [reference]="getReferencedFeedbackReference(feedback)"
+                                                                />
+                                                            }
                                                         }
-                                                    </table>
+
+                                                        @for (feedback of unreferencedFeedback; track feedback.id) {
+                                                            @if (shouldBeDisplayed(feedback)) {
+                                                                <jhi-unified-feedback
+                                                                    [feedbackContent]="feedback.detailText || ''"
+                                                                    [points]="feedback.credits || 0"
+                                                                    [icon]="
+                                                                        (feedback.credits || 0) > 0
+                                                                            ? 'success'
+                                                                            : (feedback.credits || 0) < 0
+                                                                              ? 'error'
+                                                                              : feedback.positive
+                                                                                ? 'success'
+                                                                                : 'retry'
+                                                                    "
+                                                                    [title]="
+                                                                        (feedback.credits || 0) > 0
+                                                                            ? 'Good job!'
+                                                                            : (feedback.credits || 0) < 0
+                                                                              ? 'Incorrect'
+                                                                              : feedback.positive
+                                                                                ? 'Good effort!'
+                                                                                : 'Needs revision'
+                                                                    "
+                                                                />
+                                                            }
+                                                        }
+                                                    </div>
                                                 }
                                             </div>
                                         }
@@ -199,18 +200,7 @@
                                 </div>
                             </jhi-fullscreen>
                         </div>
-                        @if ((submission?.submitted && (!isActive || result)) || isFeedbackView) {
-                            <div class="row">
-                                @if (unreferencedFeedback && unreferencedFeedback!.length > 0) {
-                                    <jhi-additional-feedback
-                                        class="col-xl-8 mt-3 alert unreferencedFeedback"
-                                        [feedback]="unreferencedFeedback || []"
-                                        [additional]="true"
-                                        [course]="course"
-                                    />
-                                }
-                            </div>
-                        }
+
                         @if (result) {
                             <div class="row">
                                 <jhi-rating class="mt-2 alert alert-info" [result]="result" />
