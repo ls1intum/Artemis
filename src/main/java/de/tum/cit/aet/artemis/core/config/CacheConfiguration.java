@@ -87,7 +87,7 @@ import tech.jhipster.config.cache.PrefixedKeyGenerator;
  * dynamically connecting cluster nodes at runtime based on service discovery. By decoupling static
  * configuration from runtime coordination, the system ensures better modularity, testability, and maintainability.
  */
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Profile(PROFILE_CORE + " | (" + PROFILE_BUILDAGENT + " & !redis)")
 @Lazy(value = false)
 @Configuration
 @EnableCaching

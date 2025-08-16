@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingServ
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueItemListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueListener;
 
 @Profile(PROFILE_LOCALCI)
 @Lazy
@@ -100,7 +100,7 @@ public class LocalCIResultProcessingService {
      */
     @PostConstruct
     public void init() {
-        this.listenerId = distributedDataAccessService.getDistributedBuildResultQueue().addItemListener(new ResultQueueListener());
+        this.listenerId = distributedDataAccessService.getDistributedBuildResultQueue().addListener(new ResultQueueListener());
     }
 
     /**
@@ -280,17 +280,17 @@ public class LocalCIResultProcessingService {
         }
     }
 
-    public class ResultQueueListener implements QueueItemListener<ResultQueueItem> {
+    public class ResultQueueListener implements QueueListener {
 
         @Override
-        public void itemAdded(ResultQueueItem item) {
-            log.debug("Result of build job with id {} added to queue", item.buildJobQueueItem().id());
+        public void itemAdded() {
+            log.debug("Result of build job added to queue");
             processResult();
         }
 
         @Override
-        public void itemRemoved(ResultQueueItem item) {
-            log.debug("Result of build job with id {} removed from queue", item.buildJobQueueItem().id());
+        public void itemRemoved() {
+            log.debug("Result of build job removed from queue");
         }
     }
 

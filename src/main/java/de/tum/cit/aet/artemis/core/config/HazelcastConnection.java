@@ -43,7 +43,7 @@ import com.hazelcast.core.Hazelcast;
  * The class avoids connection logic in test environments and handles potential split-brain scenarios
  * by periodically verifying and initiating connections to all expected cluster members.
  */
-@Profile({ PROFILE_BUILDAGENT, PROFILE_CORE })
+@Profile(PROFILE_CORE + " | (" + PROFILE_BUILDAGENT + " & !redis)")
 @Lazy
 @Configuration
 public class HazelcastConnection {
