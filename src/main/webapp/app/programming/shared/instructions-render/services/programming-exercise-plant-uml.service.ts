@@ -1,33 +1,16 @@
-import { Injectable, effect, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
-import { Observable, Subject } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map, retry } from 'rxjs/operators';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-
-const themeChangedSubject = new Subject<void>();
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlService {
     private resourceUrl = 'api/programming/plantuml';
-    private encoder: HttpParameterCodec;
+    private encoder = new HttpUrlCustomEncoder();
 
     private readonly themeService = inject(ThemeService);
     private readonly http = inject(HttpClient);
-
-    /**
-     * Cacheable configuration
-     */
-
-    constructor() {
-        this.encoder = new HttpUrlCustomEncoder();
-        effect(() => {
-            // Apply the theme as soon as the currentTheme changes
-            this.themeService.currentTheme();
-            themeChangedSubject.next();
-        });
-    }
-
-    // TODO: consider to reimplement this differently, let the browser fetch and cache the image and just make sure to retry it once or twice in case it fails
 
     /**
      * Requests the plantuml png file as arraybuffer and converts it to base64.
@@ -35,13 +18,16 @@ export class ProgrammingExercisePlantUmlService {
      *
      * Note: we cache up to 100 results in 1 hour so that they do not need to be loaded several time
      */
-    getPlantUmlImage(plantUml: string) {
+    getPlantUmlImage(plantUml: string): Observable<string> {
         return this.http
             .get(`${this.resourceUrl}/png`, {
                 params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml).set('useDarkTheme', this.themeService.currentTheme() === Theme.DARK),
                 responseType: 'arraybuffer',
             })
-            .pipe(map((res) => this.convertPlantUmlResponseToBase64(res)));
+            .pipe(
+                map((res) => this.convertPlantUmlResponseToBase64(res)),
+                retry(1),
+            );
     }
 
     /**
@@ -51,10 +37,12 @@ export class ProgrammingExercisePlantUmlService {
      * Note: we cache up to 100 results in 1 hour so that they do not need to be loaded several time
      */
     getPlantUmlSvg(plantUml: string): Observable<string> {
-        return this.http.get(`${this.resourceUrl}/svg`, {
-            params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml).set('useDarkTheme', this.themeService.currentTheme() === Theme.DARK),
-            responseType: 'text',
-        });
+        return this.http
+            .get(`${this.resourceUrl}/svg`, {
+                params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml).set('useDarkTheme', this.themeService.currentTheme() === Theme.DARK),
+                responseType: 'text',
+            })
+            .pipe(retry(1));
     }
 
     private convertPlantUmlResponseToBase64(res: any): string {
