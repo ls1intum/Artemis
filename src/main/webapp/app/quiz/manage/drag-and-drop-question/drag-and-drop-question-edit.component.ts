@@ -160,31 +160,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
 
     private previousQuestion?: DragAndDropQuestion;
 
-    /**
-     * Actions when initializing component.
-     */
-    ngOnInit(): void {
-        // create deep copy as backup
-        this.backupQuestion = cloneDeep(this.question());
-
-        /** Initialize DropLocation and MouseEvent objects **/
-        this.currentDropLocation = new DropLocation();
-        this.mouse = new DragAndDropMouseEvent();
-        this.questionEditorText = generateExerciseHintExplanation(this.question());
-
-        // check if question was generated with an ApollonDiagram
-        const importedFiles = this.question().importedFiles;
-        if (importedFiles) {
-            this.setBackgroundFile({ target: { files: [new File([importedFiles.get('diagram-background.png')!], 'diagram-background.png')] } });
-            for (const dragItem of this.question().dragItems ?? []) {
-                if (dragItem.pictureFilePath && importedFiles.has(dragItem.pictureFilePath)) {
-                    this.changeToPictureDragItem(dragItem, {
-                        target: { files: [new File([importedFiles.get(dragItem.pictureFilePath!)!], dragItem.pictureFilePath!)] },
-                    });
-                }
-            }
-        }
-
+    constructor() {
         effect(() => {
             const q = this.question();
             if (this.previousQuestion) {
@@ -205,6 +181,29 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
                 }
             });
         });
+    }
+
+    /**
+     * Actions when initializing component.
+     */
+    ngOnInit(): void {
+        /** Initialize DropLocation and MouseEvent objects **/
+        this.currentDropLocation = new DropLocation();
+        this.mouse = new DragAndDropMouseEvent();
+        this.questionEditorText = generateExerciseHintExplanation(this.question());
+
+        // check if question was generated with an ApollonDiagram
+        const importedFiles = this.question().importedFiles;
+        if (importedFiles) {
+            this.setBackgroundFile({ target: { files: [new File([importedFiles.get('diagram-background.png')!], 'diagram-background.png')] } });
+            for (const dragItem of this.question().dragItems ?? []) {
+                if (dragItem.pictureFilePath && importedFiles.has(dragItem.pictureFilePath)) {
+                    this.changeToPictureDragItem(dragItem, {
+                        target: { files: [new File([importedFiles.get(dragItem.pictureFilePath!)!], dragItem.pictureFilePath!)] },
+                    });
+                }
+            }
+        }
     }
 
     ngAfterViewInit(): void {
@@ -411,8 +410,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
      */
     backgroundMouseDown(): void {
         const backgroundFilePath = this.question().backgroundFilePath;
-        const dropLocations = this.question().dropLocations;
-        if (backgroundFilePath && dropLocations && this.draggingState === DragState.NONE) {
+        if (backgroundFilePath && this.draggingState === DragState.NONE) {
             // Save current mouse position as starting position
             this.mouse.startX = this.mouse.x;
             this.mouse.startY = this.mouse.y;
@@ -428,7 +426,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
             if (!this.question().dropLocations) {
                 this.question().dropLocations = [];
             }
-            dropLocations.push(this.currentDropLocation);
+            this.question().dropLocations!.push(this.currentDropLocation);
 
             // Update state
             this.draggingState = DragState.CREATE;

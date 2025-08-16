@@ -145,7 +145,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
                 .spyOn(courseService, 'getAllCoursesWithQuizExercises')
                 .mockReturnValue(of(new HttpResponse<Course[]>({ body: [course] })));
             const findAllExamsAccessibleToUserSpy = jest.spyOn(examService, 'findAllExamsAccessibleToUser').mockReturnValue(of(new HttpResponse<Exam[]>({ body: [exam] })));
-            component.show = true;
+            fixture.componentRef.setInput('show', true);
             component.ngOnChanges();
             expect(getAllCoursesWithQuizExercisesSpy).toHaveBeenCalledOnce();
             expect(findAllExamsAccessibleToUserSpy).toHaveBeenCalledOnce();
@@ -158,7 +158,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
         it('should not load exams when show is false', () => {
             const getAllCoursesWithQuizExercisesSpy = jest.spyOn(courseService, 'getAllCoursesWithQuizExercises');
             const findAllExamsAccessibleToUserSpy = jest.spyOn(examService, 'findAllExamsAccessibleToUser');
-            component.show = false;
+            fixture.componentRef.setInput('show', false);
             component.exams = [];
             component.courses = [];
             component.ngOnChanges();

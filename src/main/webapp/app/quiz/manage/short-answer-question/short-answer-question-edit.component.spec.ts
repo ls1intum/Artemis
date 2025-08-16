@@ -86,7 +86,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     beforeEach(() => {
         component.shortAnswerQuestion = question;
-        component.questionIndex = 0;
+        fixture.componentRef.setInput('questionIndex', 0);
         component.reEvaluationInProgress = false;
 
         fixture.detectChanges();
