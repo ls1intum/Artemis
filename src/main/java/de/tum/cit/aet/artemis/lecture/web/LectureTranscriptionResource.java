@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -15,32 +14,22 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -56,25 +45,12 @@ public class LectureTranscriptionResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
-    private final UserRepository userRepository;
-
-    private final AuthorizationCheckService authCheckService;
-
-    private final LectureRepository lectureRepository;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final LectureService lectureService;
-
-    public LectureTranscriptionResource(LectureTranscriptionRepository transcriptionRepository, LectureUnitRepository lectureUnitRepository,
-            AuthorizationCheckService authCheckService, UserRepository userRepository, LectureRepository lectureRepository, LectureService lectureService) {
+    public LectureTranscriptionResource(LectureTranscriptionRepository transcriptionRepository, LectureUnitRepository lectureUnitRepository) {
         this.lectureTranscriptionRepository = transcriptionRepository;
         this.lectureUnitRepository = lectureUnitRepository;
-        this.authCheckService = authCheckService;
-        this.userRepository = userRepository;
-        this.lectureRepository = lectureRepository;
-        this.lectureService = lectureService;
     }
 
     /**
@@ -108,68 +84,28 @@ public class LectureTranscriptionResource {
     }
 
     /**
-     * POST lecture/{lectureId}/lecture-unit/{lectureUnitId}/ingest-transcription
-     * This endpoint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
+     * Retrieves the transcript for a given lecture unit.
      *
-     * @param lectureId     The id of the lecture of the transcription
-     * @param lectureUnitId The id of the lectureUnit that should be ingested
-     * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
-     */
-    @Profile(PROFILE_IRIS)
-    @PutMapping("{lectureId}/lecture-unit/{lectureUnitId}/ingest-transcription")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Void> ingestTranscriptions(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
-        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
-        Course course = lecture.getCourse();
-        authCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course.getId());
-        LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
-        if (!lectureUnit.getLecture().getId().equals(lectureId)) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureUnitDoesNotMatchLecture")).body(null);
-        }
-        Optional<LectureTranscription> transcription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
-        if (transcription.isEmpty()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "noTranscription"))
-                    .body(null);
-        }
-        if (!(lectureUnit instanceof AttachmentVideoUnit)) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureUnitIsNotAAttachmentVideoUnit"))
-                    .body(null);
-        }
-        LectureTranscription transcriptionToIngest = transcription.get();
-        lectureService.ingestTranscriptionInPyris(transcriptionToIngest, course, lecture, (AttachmentVideoUnit) lectureUnit);
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * DELETE /lecture/:lectureId/lecture-unit/:lectureUnitId : delete the "id" lecture transcription.
+     * <p>
+     * This endpoint returns the transcript associated with the specified {@code lectureUnitId}, including
+     * the language and individual transcript segments.
+     * </p>
      *
-     * @param lectureId     the id of the lecture containing the lecture transcription
-     * @param lectureUnitId the id of the lecture unit containing the lecture transcription
-     * @return the ResponseEntity with status 200 (OK)
+     * @param lectureUnitId the ID of the lecture unit for which to retrieve the transcript
+     * @return {@link ResponseEntity} containing the {@link LectureTranscriptionDTO} if found, or 404 Not Found if no transcript exists
      */
-    @DeleteMapping("{lectureId}/lecture-unit/{lectureUnitId}/transcription")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Void> deleteLectureTranscription(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
-        LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
-        if (!lectureUnit.getLecture().getId().equals(lectureId)) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureUnitDoesNotMatchLecture")).body(null);
+    @GetMapping("lecture-unit/{lectureUnitId}/transcript")
+    @EnforceAtLeastInstructorInLectureUnit
+    public ResponseEntity<LectureTranscriptionDTO> getTranscript(@PathVariable Long lectureUnitId) {
+        Optional<LectureTranscription> transcriptionOpt = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
+
+        if (transcriptionOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
         }
 
-        Course course = lectureUnit.getLecture().getCourse();
-        authCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course.getId());
+        LectureTranscription transcription = transcriptionOpt.get();
+        LectureTranscriptionDTO dto = new LectureTranscriptionDTO(lectureUnitId, transcription.getLanguage(), transcription.getSegments());
 
-        Optional<LectureTranscription> lectureTranscription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
-        if (lectureTranscription.isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "noTranscriptionForId")).body(null);
-        }
-        log.debug("REST request to delete Lecture Transcription : {}", lectureTranscription.get().getId());
-        lectureService.deleteLectureTranscriptionInPyris(lectureTranscription.get());
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureTranscription.get().getId().toString())).build();
+        return ResponseEntity.ok(dto);
     }
 }

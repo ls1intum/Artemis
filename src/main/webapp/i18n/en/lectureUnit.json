@@ -84,6 +84,7 @@
             "created": "New attachment unit created",
             "updated": "Attachment unit updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
+            "transcriptionInvalidJson": "The transcription JSON is invalid and was ignored.",
             "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis searches for the Outline (slide with title 'Outline' and bullet points with unit headings) to split the PDF into units.",
@@ -152,7 +153,9 @@
                 "sourceURLValidationError": "Not a valid URL",
                 "urlVideoHelper": "Transform into embeddable format ",
                 "urlHelperPlaceholder": "You can enter a Video URL here and use the arrow to create the correct embeddable URL from it",
-                "urlHelperValidationError": "Automatic embed link generation is not possible for this URL"
+                "urlHelperValidationError": "Automatic embed link generation is not possible for this URL",
+                "videoTranscription": "Video Transcription",
+                "videoTranscriptionPlaceholder": "Insert the transcription of the video here."
             },
             "editAttachmentVideoUnit": {
                 "title": "Edit Attachment Unit"
@@ -165,7 +168,7 @@
             "download": "Download attachment",
             "delete": {
                 "question": "Do you really want to delete the attachment unit <strong>{{ title }}</strong>? The attachment will also be removed! You can not undo this action!",
-                "typeNameToConfirm": "Please enter the name of the attachment for confirmation.",
+                "typeNameToConfirm": "Please enter the name of the attachment/video unit for confirmation.",
                 "buttonText": "Delete"
             }
         },
