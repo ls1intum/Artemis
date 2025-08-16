@@ -74,3 +74,28 @@ Object.assign(global, { TextDecoder, TextEncoder });
 // Custom language definitions load clipboardService.js, which depends on ClipboardItem. This must be mocked for the tests.
 Object.assign(window.navigator, { clipboard: { writeText: () => Promise.resolve(), write: () => Promise.resolve() } });
 Object.assign(global, { ClipboardItem: jest.fn().mockImplementation(() => new MockClipboardItem()) });
+
+jest.mock('pdfjs-dist', () => {
+    let mockWorkerSrc = '';
+    return {
+        getDocument: jest.fn(() => ({
+            promise: Promise.resolve({
+                numPages: 1,
+                getPage: jest.fn(() =>
+                    Promise.resolve({
+                        getViewport: jest.fn(() => ({ width: 600, height: 800, scale: 1 })),
+                        render: jest.fn(() => ({ promise: Promise.resolve() })),
+                    }),
+                ),
+            }),
+        })),
+        GlobalWorkerOptions: {
+            get workerSrc() {
+                return mockWorkerSrc;
+            },
+            set workerSrc(v: string) {
+                mockWorkerSrc = v;
+            },
+        },
+    };
+});
