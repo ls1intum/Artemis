@@ -17,6 +17,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -56,6 +57,17 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
             """)
     List<ProgrammingExercise> findAllWithEagerTemplateAndSolutionParticipations();
 
+    // Note: we have to use left join here to avoid issues in the where clause, see the explanation above
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.exerciseGroup eg
+                LEFT JOIN eg.exam ex
+            WHERE pe.course = :course
+                OR ex.course = :course
+            """)
+    List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
+
     /**
      * Returns the programming exercises that have a buildAndTestStudentSubmissionsAfterDueDate higher than the provided date.
      * This can't be done as a standard query as the property contains the word 'And'.
@@ -81,12 +93,6 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     List<ProgrammingExercise> findAllWithTemplateAndSolutionParticipationByIdIn(Set<Long> exerciseIds);
-
-    List<ProgrammingExercise> findAllByCourse_InstructorGroupNameIn(Set<String> groupNames);
-
-    List<ProgrammingExercise> findAllByCourse_EditorGroupNameIn(Set<String> groupNames);
-
-    List<ProgrammingExercise> findAllByCourse_TeachingAssistantGroupNameIn(Set<String> groupNames);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
     Optional<ProgrammingExercise> findWithAllParticipationsAndBuildConfigById(long exerciseId);

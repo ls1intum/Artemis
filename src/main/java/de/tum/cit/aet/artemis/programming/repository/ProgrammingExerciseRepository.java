@@ -452,17 +452,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     Set<Long> findProgrammingExerciseIdsByExamId(@Param("examId") long examId);
 
-    // Note: we have to use left join here to avoid issues in the where clause, see the explanation above
-    @Query("""
-            SELECT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN pe.exerciseGroup eg
-                LEFT JOIN eg.exam ex
-            WHERE pe.course = :course
-                OR ex.course = :course
-            """)
-    List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
-
     @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig", "gradingCriteria" })
     Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(long exerciseId);
 
