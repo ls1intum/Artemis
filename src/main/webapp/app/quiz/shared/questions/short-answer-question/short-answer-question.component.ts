@@ -36,6 +36,8 @@ export class ShortAnswerQuestionComponent {
         this.watchCollection();
     }
 
+    @Input() disableAutocomplete = false;
+
     // TODO: Map vs. Array --> consistency
     @Input()
     submittedTexts: ShortAnswerSubmittedText[];
