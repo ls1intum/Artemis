@@ -41,7 +41,6 @@ import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-ass
 import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
 import { Fixtures } from '../../fixtures/fixtures';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
-
 type PatchProgrammingExerciseTestVisibilityDto = {
     id: number;
     weight: number;
@@ -91,6 +90,8 @@ export class ExerciseAPIRequests {
         assessmentType?: ProgrammingExerciseAssessmentType;
         mode?: ExerciseMode;
         teamAssignmentConfig?: TeamAssignmentConfig;
+        allowOnlineIDE?: boolean;
+        buildConfig?: ProgrammingExerciseBuildConfig;
     }): Promise<ProgrammingExercise> {
         const {
             course,
@@ -106,6 +107,8 @@ export class ExerciseAPIRequests {
             assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
             mode = ExerciseMode.INDIVIDUAL,
             teamAssignmentConfig,
+            allowOnlineIDE = false,
+            buildConfig = {},
         } = options;
 
         let programmingExerciseTemplate = {};
@@ -127,6 +130,8 @@ export class ExerciseAPIRequests {
             assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
             ...(course ? { course } : {}),
             ...(exerciseGroup ? { exerciseGroup } : {}),
+            allowOnlineIde: allowOnlineIDE,
+            buildConfig: buildConfig,
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {

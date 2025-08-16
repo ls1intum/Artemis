@@ -69,6 +69,7 @@ import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
 import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationActions';
 import { AccountManagementAPIRequests } from './requests/AccountManagementAPIRequests';
 import { ProgrammingExerciseSubmissionsPage } from './pageobjects/exercises/programming/ProgrammingExercisesSubmissionsPage';
+import { TheiaLandingPage } from './pageobjects/theia/TheiaLandingPage';
 
 /*
  * Define custom types for fixtures
@@ -142,6 +143,7 @@ export type ArtemisPageObjects = {
     textExerciseFeedback: TextExerciseFeedbackPage;
     exerciseResult: ExerciseResultPage;
     exerciseTeams: ExerciseTeamsPage;
+    theiaLandingPage: TheiaLandingPage;
 };
 
 export type ArtemisRequests = {
@@ -391,5 +393,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     communicationAPIRequests: async ({ page }, use) => {
         await use(new CommunicationAPIRequests(page));
+    },
+    theiaLandingPage: async ({ page }, use) => {
+        await use(new TheiaLandingPage(page));
     },
 });
