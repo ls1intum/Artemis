@@ -125,7 +125,7 @@
                                 <div class="col-md-12 col-lg-10 col-xl-8">
                                     <b [jhiTranslate]="'artemisApp.textExercise.submission'">Submission:</b>
                                     <hr />
-                                    <jhi-unified-text-result [result]="result" [course]="course" />
+                                    <jhi-text-result [result]="result" [course]="course" />
                                     <hr />
                                     <i [jhiTranslate]="'artemisApp.textExercise.assessmentPending'">Assessment pending</i>
                                 </div>
@@ -144,7 +144,7 @@
                                         <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
                                     }
                                     <hr />
-                                    <jhi-unified-text-result [result]="result" [course]="course" />
+                                    <jhi-text-result [result]="result" [course]="course" />
                                     <hr />
                                 </div>
                                 @if (unreferencedFeedback && unreferencedFeedback!.length > 0) {

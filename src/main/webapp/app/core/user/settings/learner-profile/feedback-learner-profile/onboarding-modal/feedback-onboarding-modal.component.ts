@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { UnifiedTextResultComponent } from 'app/text/overview/text-result/unified-text-result.component';
+import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { FEEDBACK_EXAMPLES } from 'app/core/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-examples';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { LearnerProfileApiService } from 'app/core/user/settings/learner-profile/learner-profile-api.service';
@@ -17,7 +17,7 @@ import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/b
     standalone: true,
     templateUrl: './feedback-onboarding-modal.component.html',
     styleUrls: ['./feedback-onboarding-modal.component.scss'],
-    imports: [CommonModule, UnifiedTextResultComponent, TranslateDirective, ButtonComponent],
+    imports: [CommonModule, TextResultComponent, TranslateDirective, ButtonComponent],
 })
 export class FeedbackOnboardingModalComponent {
     onboardingCompleted = signal<undefined>(undefined);

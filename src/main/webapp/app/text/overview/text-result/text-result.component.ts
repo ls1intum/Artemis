@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, effect, input } from '@angular/core';
 import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -9,31 +9,34 @@ import { NgClass } from '@angular/common';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
 @Component({
-    selector: 'jhi-unified-text-result',
-    templateUrl: './unified-text-result.component.html',
-    styleUrls: ['./unified-text-result.component.scss'],
+    selector: 'jhi-text-result',
+    templateUrl: './text-result.component.html',
+    styleUrls: ['./text-result.component.scss'],
     imports: [NgClass, UnifiedFeedbackComponent],
 })
-export class UnifiedTextResultComponent {
-    public submissionText: string;
-    public textResults: TextResultBlock[];
+export class TextResultComponent {
+    result = input<Result>();
+    course = input<Course>();
+
+    submissionText = '';
+    textResults: TextResultBlock[] = [];
     private submission: TextSubmission;
 
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
     private readonly SHA1_REGEX = /^[a-f0-9]{40}$/i;
 
-    @Input()
-    public set result(result: Result) {
-        if (!result || !result.submission || !(result.submission as TextSubmission)) {
-            return;
-        }
+    constructor() {
+        effect(() => {
+            const result = this.result();
+            if (!result?.submission || !(result.submission as TextSubmission)) {
+                return;
+            }
 
-        this.submission = result.submission as TextSubmission;
-        this.submissionText = this.submission.text || '';
-        this.convertTextToResultBlocks(result.feedbacks);
+            this.submission = result.submission as TextSubmission;
+            this.submissionText = this.submission.text || '';
+            this.convertTextToResultBlocks(result.feedbacks);
+        });
     }
-    @Input()
-    course?: Course;
 
     private convertTextToResultBlocks(feedbacks: Feedback[] = []): void {
         const [referenceBasedFeedback, blockBasedFeedback]: [Feedback[], Feedback[]] = feedbacks.reduce(
@@ -52,6 +55,7 @@ export class UnifiedTextResultComponent {
         let startIndex = 0;
         const endIndex = this.submissionText.length;
         this.textResults = [];
+
         while (startIndex < endIndex) {
             if (nextBlock && nextBlock.startIndex === startIndex) {
                 this.textResults.push(nextBlock);
@@ -76,7 +80,6 @@ export class UnifiedTextResultComponent {
             return undefined;
         }
 
-        // Try to parse as numeric reference (character position)
         const startIndex = parseInt(feedback.reference, 10);
         if (!isNaN(startIndex) && startIndex >= 0 && startIndex < this.submissionText.length) {
             const textBlock = new TextBlock();
@@ -86,7 +89,6 @@ export class UnifiedTextResultComponent {
             return new TextResultBlock(textBlock, feedback);
         }
 
-        // Handle string reference by finding it in the text
         const indexOfReference = this.submissionText.indexOf(feedback.reference);
         if (indexOfReference !== -1) {
             const textBlock = new TextBlock();
