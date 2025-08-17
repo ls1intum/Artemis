@@ -28,7 +28,7 @@ import org.springframework.web.client.RestClient;
  * It provides the RestClientTransportClientFactories and RestClientDiscoveryClientOptionalArgs that would normally not be instantiated
  * when Jersey is found by Eureka.
  */
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Profile(PROFILE_CORE + " | (" + PROFILE_BUILDAGENT + " & !redis)")
 @Configuration
 @Lazy
 public class EurekaClientConfiguration {
