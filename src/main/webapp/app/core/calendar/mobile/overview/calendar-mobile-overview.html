@@ -14,30 +14,37 @@
             </div>
         </button>
     </div>
-    <div class="header">
-        <div class="title-close-button-row">
-            <div class="header-spacer">
-                @if (selectedDate()) {
-                    <button type="button" class="close-button" (click)="unselectDate()">
-                        <fa-icon [icon]="faXmark" />
-                    </button>
+    <div class="calendar-presentation-container">
+        <div class="header">
+            <div class="title-close-button-row">
+                <div class="header-spacer">
+                    @if (selectedDate()) {
+                        <button type="button" class="close-button" (click)="unselectDate()">
+                            <fa-icon [icon]="faXmark" />
+                        </button>
+                    }
+                </div>
+                <div class="month-title">{{ firstDateOfCurrentMonth().format('MMMM YYYY') }}</div>
+                <div class="header-spacer">
+                    <jhi-calendar-event-filter [variant]="CalendarEventFilterComponentVariant.MOBILE" />
+                </div>
+            </div>
+            <div class="day-name-row">
+                @for (dayNameKey of weekdayNameKeys; track dayNameKey) {
+                    <div class="weekday-label" jhiTranslate="{{ dayNameKey }}"></div>
                 }
             </div>
-            <div class="month-title">{{ firstDateOfCurrentMonth().format('MMMM YYYY') }}</div>
-            <div class="header-spacer">
-                <jhi-calendar-event-filter [variant]="CalendarEventFilterComponentVariant.MOBILE" />
+        </div>
+        @let day = selectedDate();
+        @if (day) {
+            <jhi-calendar-mobile-day-presentation [selectedDate]="day" />
+        } @else {
+            <jhi-calendar-mobile-month-presentation [firstDateOfMonth]="firstDateOfCurrentMonth()" (selectDate)="selectDate($event)" />
+        }
+        @if (isLoading()) {
+            <div class="loading-overlay">
+                <div class="spinner-border" role="status"></div>
             </div>
-        </div>
-        <div class="day-name-row">
-            @for (dayNameKey of weekdayNameKeys; track dayNameKey) {
-                <div class="weekday-label" jhiTranslate="{{ dayNameKey }}"></div>
-            }
-        </div>
+        }
     </div>
-    @let day = selectedDate();
-    @if (day) {
-        <jhi-calendar-mobile-day-presentation [selectedDate]="day" />
-    } @else {
-        <jhi-calendar-mobile-month-presentation [firstDateOfMonth]="firstDateOfCurrentMonth()" (selectDate)="selectDate($event)" />
-    }
 </div>

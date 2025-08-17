@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
 import { NgClass, NgStyle } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
@@ -42,6 +43,7 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     firstDateOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     selectedDate = signal<Dayjs | undefined>(undefined);
     weekdayNameKeys = utils.getWeekDayNameKeys();
+    isLoading = signal<boolean>(false);
 
     ngOnInit(): void {
         this.activatedRouteSubscription = this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
@@ -102,6 +104,10 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
 
     private loadEventsForCurrentMonth(): void {
         if (!this.courseId) return;
-        this.calendarEventService.loadEventsForCurrentMonth(this.courseId, this.firstDateOfCurrentMonth()).subscribe();
+        this.isLoading.set(true);
+        this.calendarEventService
+            .loadEventsForCurrentMonth(this.courseId, this.firstDateOfCurrentMonth())
+            .pipe(finalize(() => this.isLoading.set(false)))
+            .subscribe();
     }
 }
