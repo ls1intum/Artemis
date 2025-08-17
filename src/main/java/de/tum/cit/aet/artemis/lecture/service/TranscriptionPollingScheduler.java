@@ -33,7 +33,7 @@ public class TranscriptionPollingScheduler {
      * For each job, calls the transcription service to fetch status and update accordingly.
      * Runs every 60 seconds.
      */
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 30000)
     public void pollPendingTranscriptions() {
         List<LectureTranscription> pendingTranscriptions = transcriptionRepository.findByTranscriptionStatusAndJobIdIsNotNull(TranscriptionStatus.PENDING);
 
