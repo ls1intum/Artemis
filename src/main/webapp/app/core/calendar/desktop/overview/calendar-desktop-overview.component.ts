@@ -9,7 +9,6 @@ import 'dayjs/esm/locale/de';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarDesktopMonthPresentationComponent } from 'app/core/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
 import { CalendarDesktopWeekPresentationComponent } from 'app/core/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
@@ -17,15 +16,7 @@ import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } fro
 
 @Component({
     selector: 'jhi-calendar-desktop-overview',
-    imports: [
-        CalendarDesktopMonthPresentationComponent,
-        CalendarDesktopWeekPresentationComponent,
-        CalendarEventFilterComponent,
-        NgClass,
-        FaIconComponent,
-        TranslateDirective,
-        TranslateDirective,
-    ],
+    imports: [CalendarDesktopMonthPresentationComponent, CalendarDesktopWeekPresentationComponent, CalendarEventFilterComponent, NgClass, FaIconComponent],
     templateUrl: './calendar-desktop-overview.component.html',
     styleUrl: './calendar-desktop-overview.component.scss',
 })

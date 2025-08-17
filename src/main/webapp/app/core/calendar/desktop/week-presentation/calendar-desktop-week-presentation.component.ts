@@ -6,7 +6,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
-import { CalendarOverviewComponent } from 'app/core/calendar/calendar-overview/calendar-overview.component';
 
 @Component({
     selector: 'jhi-calendar-desktop-week-presentation',
@@ -15,6 +14,9 @@ import { CalendarOverviewComponent } from 'app/core/calendar/calendar-overview/c
     styleUrl: './calendar-desktop-week-presentation.component.scss',
 })
 export class CalendarDesktopWeekPresentationComponent implements AfterViewInit {
+    private static readonly INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT = 7.5;
+    private static readonly INITIAL_SCROLL_POSITION =
+        CalendarDesktopWeekPresentationComponent.INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT * CalendarEventsPerDaySectionComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL;
     firstDayOfCurrentWeek = input.required<Dayjs>();
     isEventSelected = signal<boolean>(false);
     scrollContainer = viewChild<ElementRef>('scrollContainer');
@@ -25,7 +27,7 @@ export class CalendarDesktopWeekPresentationComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         const container = this.scrollContainer();
         if (container) {
-            container.nativeElement.scrollTop = CalendarOverviewComponent.INITIAL_SCROLL_POSITION;
+            container.nativeElement.scrollTop = CalendarDesktopWeekPresentationComponent.INITIAL_SCROLL_POSITION;
         }
     }
 

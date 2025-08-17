@@ -3,7 +3,6 @@ import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day
 import { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
-import { CalendarOverviewComponent } from 'app/core/calendar/calendar-overview/calendar-overview.component';
 
 type Day = { date: Dayjs; isSelected: boolean; id: string };
 
@@ -14,6 +13,9 @@ type Day = { date: Dayjs; isSelected: boolean; id: string };
     styleUrl: './calendar-mobile-day-presentation.component.scss',
 })
 export class CalendarMobileDayPresentationComponent implements AfterViewInit {
+    private static readonly INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT = 7.5;
+    private static readonly INITIAL_SCROLL_POSITION =
+        CalendarMobileDayPresentationComponent.INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT * CalendarEventsPerDaySectionComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL;
     readonly utils = utils;
     private scrollContainer = viewChild<ElementRef>('scrollContainer');
 
@@ -28,7 +30,7 @@ export class CalendarMobileDayPresentationComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         const container = this.scrollContainer();
         if (container) {
-            container.nativeElement.scrollTop = CalendarOverviewComponent.INITIAL_SCROLL_POSITION;
+            container.nativeElement.scrollTop = CalendarMobileDayPresentationComponent.INITIAL_SCROLL_POSITION;
         }
     }
 }
