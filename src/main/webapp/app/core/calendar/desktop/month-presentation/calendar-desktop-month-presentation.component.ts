@@ -64,13 +64,9 @@ export class CalendarDesktopMonthPresentationComponent {
         const calendar: Dayjs[][] = [];
         let current = startDay;
 
-        while (current.isBefore(endOfMonth) || current.isSame(endOfMonth, 'day')) {
-            const week: Dayjs[] = [];
-            for (let i = 0; i < 7; i++) {
-                week.push(current.clone());
-                current = current.add(1, 'day');
-            }
-            calendar.push(week);
+        while (!current.isAfter(endOfMonth)) {
+            calendar.push(utils.getDatesInWeekOf(current));
+            current = current.add(7, 'day');
         }
 
         return calendar;

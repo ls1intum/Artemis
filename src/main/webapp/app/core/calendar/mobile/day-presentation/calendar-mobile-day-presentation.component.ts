@@ -3,6 +3,7 @@ import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day
 import { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
+import { CalendarOverviewComponent } from 'app/core/calendar/calendar-overview/calendar-overview.component';
 
 type Day = { date: Dayjs; isSelected: boolean; id: string };
 
@@ -27,7 +28,7 @@ export class CalendarMobileDayPresentationComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         const container = this.scrollContainer();
         if (container) {
-            container.nativeElement.scrollTop = 7.5 * CalendarEventsPerDaySectionComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL;
+            container.nativeElement.scrollTop = CalendarOverviewComponent.INITIAL_SCROLL_POSITION;
         }
     }
 }

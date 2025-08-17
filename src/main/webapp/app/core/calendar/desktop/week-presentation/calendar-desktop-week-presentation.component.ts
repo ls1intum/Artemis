@@ -6,6 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
+import { CalendarOverviewComponent } from 'app/core/calendar/calendar-overview/calendar-overview.component';
 
 @Component({
     selector: 'jhi-calendar-desktop-week-presentation',
@@ -24,7 +25,7 @@ export class CalendarDesktopWeekPresentationComponent implements AfterViewInit {
     ngAfterViewInit(): void {
         const container = this.scrollContainer();
         if (container) {
-            container.nativeElement.scrollTop = 7.5 * CalendarEventsPerDaySectionComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL;
+            container.nativeElement.scrollTop = CalendarOverviewComponent.INITIAL_SCROLL_POSITION;
         }
     }
 

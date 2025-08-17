@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CalendarOverviewComponent } from './calendar-overview.component';
-import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
+import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { BehaviorSubject } from 'rxjs';
 import { MockComponent } from 'ng-mocks';
 import { CalendarDesktopOverviewComponent } from 'app/core/calendar/desktop/overview/calendar-desktop-overview.component';
@@ -14,7 +14,7 @@ describe('CalendarOverview', () => {
     beforeEach(async () => {
         breakpoint$ = new BehaviorSubject<BreakpointState>({
             matches: false,
-            breakpoints: { '(max-width: 600px)': false },
+            breakpoints: { [Breakpoints.Handset]: false },
         });
 
         await TestBed.configureTestingModule({
@@ -41,7 +41,7 @@ describe('CalendarOverview', () => {
     it('should render mobile overview when screen is small', () => {
         breakpoint$.next({
             matches: true,
-            breakpoints: { '(max-width: 600px)': true },
+            breakpoints: { [Breakpoints.Handset]: true },
         });
 
         fixture.detectChanges();
