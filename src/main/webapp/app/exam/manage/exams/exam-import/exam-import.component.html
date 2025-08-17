@@ -17,7 +17,7 @@
                 @if (loading) {
                     <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
                 }
-                @if (importingItemId !== null) {
+                @if (isImporting) {
                     <span class="ms-3" jhiTranslate="artemisApp.exercise.import.importing"></span>
                 }
             </div>
@@ -68,7 +68,7 @@
                                     <jhi-button
                                         (onClick)="selectImport(exam)"
                                         [title]="'artemisApp.exercise.import.table.doImport'"
-                                        [disabled]="importingItemId === exam.id"
+                                        [disabled]="isImporting"
                                         [isLoading]="importingItemId === exam.id"
                                     />
                                 }

@@ -28,6 +28,8 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected activeModal = inject(NgbActiveModal);
 
     loading = false;
+    importingItemId: number | null = null; // Track which item is being imported
+    isImporting = false; // Track if any import is in progress
     content: SearchResult<T>;
     total = 0;
     state: SearchTermPageableSearch = {
@@ -118,11 +120,17 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
 
     /**
      * Closes the modal in which the import component is opened. Gives the selected item as a result.
+     * Shows loading indicator to provide user feedback during import process.
      *
      * @param item The item which was selected by the user for the import.
      */
     selectImport(item: T) {
-        this.activeModal.close(item);
+        this.importingItemId = item.id!; // Set the ID of the item being imported
+        this.isImporting = true; // Set global import flag
+        // Add a small delay to demonstrate the loading indicator (remove in production)
+        setTimeout(() => {
+            this.activeModal.close(item);
+        }, 2000); // 2 second delay for testing
     }
 
     /**
