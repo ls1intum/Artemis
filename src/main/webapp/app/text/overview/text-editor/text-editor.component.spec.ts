@@ -10,7 +10,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
+import { UnifiedTextResultComponent } from 'app/text/overview/text-result/unified-text-result.component';
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
 import { textEditorRoute } from 'app/text/overview/text-editor.route';
@@ -80,7 +80,7 @@ describe('TextEditorComponent', () => {
                 TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ButtonComponent),
-                MockComponent(TextResultComponent),
+                MockComponent(UnifiedTextResultComponent),
                 MockComponent(ComplaintsFormComponent),
                 MockComponent(ComplaintsStudentViewComponent),
                 MockPipe(HtmlForMarkdownPipe),

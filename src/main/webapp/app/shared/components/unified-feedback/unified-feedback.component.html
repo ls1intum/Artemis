@@ -1,9 +1,11 @@
 <div class="alert unified-feedback" [ngClass]="inferredAlertClass()">
     <div class="unified-feedback__content">
         <!-- Reference (optional) -->
-        @if (reference()) {
+        @if (inferredReference() && showReference()) {
             <div class="unified-feedback__reference">
-                <small class="text-muted">{{ reference() }}</small>
+                <small class="text-muted">
+                    <code class="text-primary">{{ inferredReference() }}</code>
+                </small>
             </div>
         }
 

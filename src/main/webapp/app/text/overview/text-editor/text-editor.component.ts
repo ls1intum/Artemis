@@ -43,7 +43,7 @@ import { ResizeableContainerComponent } from 'app/shared/resizeable-container/re
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { UnifiedTextResultComponent } from '../text-result/unified-text-result.component';
-import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';

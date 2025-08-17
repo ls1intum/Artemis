@@ -4,8 +4,8 @@
         <jhi-unified-feedback
             [feedbackContent]="buildFeedbackTextForReview(block.feedback)"
             [points]="block.feedback.credits || 0"
-            [icon]="getFeedbackIconType(block.feedback)"
-            [title]="getFeedbackTitle(block.feedback)"
+            [feedback]="block.feedback"
+            [showReference]="false"
         />
     }
 }

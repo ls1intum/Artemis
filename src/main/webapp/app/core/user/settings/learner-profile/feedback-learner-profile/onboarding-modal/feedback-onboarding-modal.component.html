@@ -18,7 +18,7 @@
                         <span class="feedback-choice-title" jhiTranslate="artemisApp.learnerProfile.onboardingModal.briefFeedback.title"></span>
                     </div>
                     <div class="feedback-choice-subtitle" jhiTranslate="artemisApp.learnerProfile.onboardingModal.briefFeedback.subtitle"></div>
-                    <jhi-text-result [result]="feedbackExamples[0][0]" />
+                    <jhi-unified-text-result [result]="feedbackExamples[0][0]" />
                 </div>
                 <div class="feedback-choice-box" [ngClass]="{ selected: selected[0] === 1 }" (click)="select(0, 1)">
                     <div class="feedback-choice-header">
@@ -26,7 +26,7 @@
                         <span class="feedback-choice-title" jhiTranslate="artemisApp.learnerProfile.onboardingModal.detailedFeedback.title"></span>
                     </div>
                     <div class="feedback-choice-subtitle" jhiTranslate="artemisApp.learnerProfile.onboardingModal.detailedFeedback.subtitle"></div>
-                    <jhi-text-result [result]="feedbackExamples[0][1]" />
+                    <jhi-unified-text-result [result]="feedbackExamples[0][1]" />
                 </div>
             </div>
         }
@@ -38,7 +38,7 @@
                         <span class="feedback-choice-title" jhiTranslate="artemisApp.learnerProfile.onboardingModal.formalToneFeedback.title"></span>
                     </div>
                     <div class="feedback-choice-subtitle" jhiTranslate="artemisApp.learnerProfile.onboardingModal.formalToneFeedback.subtitle"></div>
-                    <jhi-text-result [result]="feedbackExamples[1][0]" />
+                    <jhi-unified-text-result [result]="feedbackExamples[1][0]" />
                 </div>
                 <div class="feedback-choice-box" [ngClass]="{ selected: selected[1] === 1 }" (click)="select(1, 1)">
                     <div class="feedback-choice-header">
@@ -46,7 +46,7 @@
                         <span class="feedback-choice-title" jhiTranslate="artemisApp.learnerProfile.onboardingModal.friendlyToneFeedback.title"></span>
                     </div>
                     <div class="feedback-choice-subtitle" jhiTranslate="artemisApp.learnerProfile.onboardingModal.friendlyToneFeedback.subtitle"></div>
-                    <jhi-text-result [result]="feedbackExamples[1][1]" />
+                    <jhi-unified-text-result [result]="feedbackExamples[1][1]" />
                 </div>
             </div>
         }

@@ -151,17 +151,8 @@
                                                                 <jhi-unified-feedback
                                                                     [feedbackContent]="buildFeedbackTextForReview(feedback)"
                                                                     [points]="feedback.credits || 0"
-                                                                    [icon]="
-                                                                        (feedback.credits || 0) > 0
-                                                                            ? 'success'
-                                                                            : (feedback.credits || 0) < 0
-                                                                              ? 'error'
-                                                                              : feedback.positive
-                                                                                ? 'success'
-                                                                                : 'retry'
-                                                                    "
-                                                                    [title]="getReferencedFeedbackTitle(feedback)"
-                                                                    [reference]="getReferencedFeedbackReference(feedback)"
+                                                                    [feedback]="feedback"
+                                                                    [assessmentsNames]="assessmentsNames"
                                                                 />
                                                             }
                                                         }
@@ -171,24 +162,7 @@
                                                                 <jhi-unified-feedback
                                                                     [feedbackContent]="feedback.detailText || ''"
                                                                     [points]="feedback.credits || 0"
-                                                                    [icon]="
-                                                                        (feedback.credits || 0) > 0
-                                                                            ? 'success'
-                                                                            : (feedback.credits || 0) < 0
-                                                                              ? 'error'
-                                                                              : feedback.positive
-                                                                                ? 'success'
-                                                                                : 'retry'
-                                                                    "
-                                                                    [title]="
-                                                                        (feedback.credits || 0) > 0
-                                                                            ? 'Good job!'
-                                                                            : (feedback.credits || 0) < 0
-                                                                              ? 'Incorrect'
-                                                                              : feedback.positive
-                                                                                ? 'Good effort!'
-                                                                                : 'Needs revision'
-                                                                    "
+                                                                    [feedback]="feedback"
                                                                 />
                                                             }
                                                         }

@@ -6,7 +6,7 @@ import { TextResultBlock } from './text-result-block';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { NgClass } from '@angular/common';
-import { FeedbackIconType, UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
 @Component({
     selector: 'jhi-unified-text-result',
@@ -76,17 +76,27 @@ export class UnifiedTextResultComponent {
             return undefined;
         }
 
+        // Try to parse as numeric reference (character position)
         const startIndex = parseInt(feedback.reference, 10);
-        if (isNaN(startIndex) || startIndex < 0 || startIndex >= this.submissionText.length) {
-            return undefined;
+        if (!isNaN(startIndex) && startIndex >= 0 && startIndex < this.submissionText.length) {
+            const textBlock = new TextBlock();
+            textBlock.startIndex = startIndex;
+            textBlock.endIndex = startIndex + 1;
+            textBlock.text = this.submissionText.charAt(startIndex);
+            return new TextResultBlock(textBlock, feedback);
         }
 
-        const textBlock = new TextBlock();
-        textBlock.startIndex = startIndex;
-        textBlock.endIndex = startIndex + 1;
-        textBlock.text = this.submissionText.charAt(startIndex);
+        // Handle string reference by finding it in the text
+        const indexOfReference = this.submissionText.indexOf(feedback.reference);
+        if (indexOfReference !== -1) {
+            const textBlock = new TextBlock();
+            textBlock.text = feedback.reference;
+            textBlock.startIndex = indexOfReference;
+            textBlock.endIndex = indexOfReference + feedback.reference.length;
+            return new TextResultBlock(textBlock, feedback);
+        }
 
-        return new TextResultBlock(textBlock, feedback);
+        return undefined;
     }
 
     private textBlockToTextResultBlock(feedback: Feedback): TextResultBlock | undefined {
@@ -100,31 +110,5 @@ export class UnifiedTextResultComponent {
         textBlock.text = this.submissionText;
 
         return new TextResultBlock(textBlock, feedback);
-    }
-
-    // TODO: This is a temporary solution to get the feedback icon type. We need to find a better way to do this.
-    getFeedbackIconType(feedback: Feedback): FeedbackIconType {
-        if (feedback.credits && feedback.credits > 0) {
-            return 'success';
-        } else if (feedback.credits && feedback.credits < 0) {
-            return 'error';
-        } else {
-            // For 0 credits, check if it's positive feedback (encouraging) or needs improvement
-            return feedback.positive ? 'success' : 'retry';
-        }
-    }
-
-    getFeedbackTitle(feedback: Feedback): string {
-        if (feedback.text) {
-            return feedback.text;
-        }
-        if (feedback.credits && feedback.credits > 0) {
-            return 'Good job!';
-        } else if (feedback.credits && feedback.credits < 0) {
-            return 'Incorrect';
-        } else {
-            // For 0 credits, check if it's positive feedback (encouraging) or needs improvement
-            return feedback.positive ? 'Good effort!' : 'Needs revision';
-        }
     }
 }
