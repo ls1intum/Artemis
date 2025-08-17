@@ -5,8 +5,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
-import de.tum.cit.aet.artemis.atlas.dto.AgentChatRequestDto;
-import de.tum.cit.aet.artemis.atlas.dto.AgentChatResponseDto;
+import de.tum.cit.aet.artemis.atlas.dto.AgentChatRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.AgentChatResponseDTO;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
@@ -19,7 +19,7 @@ public class AgentService {
         this.agentHttpClient = agentHttpClient;
     }
 
-    public AgentChatResponseDto forwardMessageToAgent(AgentChatRequestDto request) {
+    public AgentChatResponseDTO forwardMessageToAgent(AgentChatRequestDTO request) {
         return agentHttpClient.sendMessageToAgent(request);
     }
 }

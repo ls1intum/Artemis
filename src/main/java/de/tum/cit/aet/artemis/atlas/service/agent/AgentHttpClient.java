@@ -3,14 +3,19 @@ package de.tum.cit.aet.artemis.atlas.service.agent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.cit.aet.artemis.atlas.dto.AgentChatRequestDto;
-import de.tum.cit.aet.artemis.atlas.dto.AgentChatResponseDto;
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.dto.AgentChatRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.AgentChatResponseDTO;
 
 @Component
+@Lazy
+@Conditional(AtlasEnabled.class)
 public class AgentHttpClient {
 
     private final RestTemplate restTemplate;
@@ -28,11 +33,11 @@ public class AgentHttpClient {
         this.restTemplate = restTemplate;
     }
 
-    public AgentChatResponseDto sendMessageToAgent(AgentChatRequestDto request) {
+    public AgentChatResponseDTO sendMessageToAgent(AgentChatRequestDTO request) {
         try {
             String url = agentApiUrl + "/chat";
             log.debug("Sending request to agent API: {}", url);
-            return restTemplate.postForObject(url, request, AgentChatResponseDto.class);
+            return restTemplate.postForObject(url, request, AgentChatResponseDTO.class);
         }
         catch (RestClientException e) {
             log.error("Failed to communicate with agent API", e);

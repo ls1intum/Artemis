@@ -12,8 +12,8 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.cit.aet.artemis.atlas.dto.AgentChatRequestDto;
-import de.tum.cit.aet.artemis.atlas.dto.AgentChatResponseDto;
+import de.tum.cit.aet.artemis.atlas.dto.AgentChatRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.AgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.service.agent.AgentHttpClient;
 
 class AgentHttpClientTest {
@@ -36,16 +36,16 @@ class AgentHttpClientTest {
     @Test
     void testSendMessageToAgent() {
         // Arrange
-        AgentChatRequestDto request = new AgentChatRequestDto("Hello, Agent!", 10L, "session1");
-        AgentChatResponseDto expectedResponse = new AgentChatResponseDto("Agent response to: Hello, Agent!", "session1");
+        AgentChatRequestDTO request = new AgentChatRequestDTO("Hello, Agent!", 10L, "session1");
+        AgentChatResponseDTO expectedResponse = new AgentChatResponseDTO("Agent response to: Hello, Agent!", "session1");
         String url = agentApiUrl + "/chat";
-        when(restTemplate.postForObject(url, request, AgentChatResponseDto.class)).thenReturn(expectedResponse);
+        when(restTemplate.postForObject(url, request, AgentChatResponseDTO.class)).thenReturn(expectedResponse);
 
         // Act
-        AgentChatResponseDto actualResponse = agentHttpClient.sendMessageToAgent(request);
+        AgentChatResponseDTO actualResponse = agentHttpClient.sendMessageToAgent(request);
 
         // Assert
         assertThat(actualResponse).isEqualTo(expectedResponse);
-        verify(restTemplate, times(1)).postForObject(url, request, AgentChatResponseDto.class);
+        verify(restTemplate, times(1)).postForObject(url, request, AgentChatResponseDTO.class);
     }
 }

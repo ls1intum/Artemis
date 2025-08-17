@@ -11,14 +11,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
-import de.tum.cit.aet.artemis.atlas.dto.AgentChatRequestDto;
-import de.tum.cit.aet.artemis.atlas.dto.AgentChatResponseDto;
+import de.tum.cit.aet.artemis.atlas.dto.AgentChatRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.AgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.service.agent.AgentService;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
 @RestController
-@RequestMapping("api/atlas/agent")
+@RequestMapping("api/atlas/agent/")
 public class AgentResource {
 
     private static final Logger log = LoggerFactory.getLogger(AgentResource.class);
@@ -30,9 +30,9 @@ public class AgentResource {
     }
 
     @PostMapping("chat-with-agent")
-    public ResponseEntity<AgentChatResponseDto> chatWithAgent(@RequestBody AgentChatRequestDto request) {
+    public ResponseEntity<AgentChatResponseDTO> chatWithAgent(@RequestBody AgentChatRequestDTO request) {
         log.info("REST request to chat with agent: {}", request.message());
-        AgentChatResponseDto response = agentService.forwardMessageToAgent(request);
+        AgentChatResponseDTO response = agentService.forwardMessageToAgent(request);
         return ResponseEntity.ok(response);
     }
 }
