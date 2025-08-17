@@ -17,6 +17,9 @@
                 @if (loading) {
                     <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
                 }
+                @if (importingItemId !== null) {
+                    <span class="ms-3" jhiTranslate="artemisApp.exercise.import.importing"></span>
+                }
             </div>
             <table class="table table-striped flex">
                 <thead class="thead-dark">
@@ -62,7 +65,12 @@
                             </td>
                             <td class="col-1">
                                 @if (!subsequentExerciseGroupSelection()) {
-                                    <jhi-button (onClick)="selectImport(exam)" [title]="'artemisApp.exercise.import.table.doImport'" />
+                                    <jhi-button
+                                        (onClick)="selectImport(exam)"
+                                        [title]="'artemisApp.exercise.import.table.doImport'"
+                                        [disabled]="importingItemId === exam.id"
+                                        [isLoading]="importingItemId === exam.id"
+                                    />
                                 }
                                 @if (subsequentExerciseGroupSelection()) {
                                     <jhi-button (onClick)="openExerciseSelection(exam)" [title]="'artemisApp.examManagement.exerciseGroup.selectExerciseGroup'" />

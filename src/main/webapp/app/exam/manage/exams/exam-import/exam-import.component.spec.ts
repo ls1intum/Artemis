@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -207,6 +207,127 @@ describe('Exam Import Component', () => {
 
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(modalSpy).not.toHaveBeenCalled();
+    });
+
+    it('should show loading indicator for specific exam during direct import', () => {
+        // GIVEN
+        const exam = { id: 3 } as Exam;
+
+        // WHEN
+        component.selectImport(exam);
+
+        // THEN
+        expect(component.importingItemId).toBe(3);
+    });
+
+    it('should handle loading state for exam import correctly', () => {
+        // GIVEN
+        const exam1 = { id: 1 } as Exam;
+        const exam2 = { id: 2 } as Exam;
+
+        // Initially no exam is importing
+        expect(component.importingItemId).toBeNull();
+
+        // WHEN starting import of exam1
+        component.selectImport(exam1);
+
+        // THEN only exam1 should be importing
+        expect(component.importingItemId).toBe(1);
+    });
+
+    it('should set isImportingExercises during exercise group import', () => {
+        const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(
+            of(
+                new HttpResponse({
+                    status: 200,
+                    body: [exerciseGroup1],
+                }),
+            ),
+        );
+
+        // GIVEN
+        component.exam = exam1WithExercises;
+        component.subsequentExerciseGroupSelection.set(true);
+        component.targetCourseId.set(1);
+        component.targetExamId.set(2);
+        fixture.detectChanges();
+
+        // WHEN
+        component.performImportOfExerciseGroups();
+
+        // THEN loading state should be set during import
+        expect(component.isImportingExercises).toBeTrue();
+
+        // Wait for the observable to complete
+        setTimeout(() => {
+            expect(component.isImportingExercises).toBeFalse();
+        }, 0);
+    });
+
+    it('should reset isImportingExercises on import error', () => {
+        const error = new HttpErrorResponse({
+            status: 400,
+        });
+        const importSpy = jest.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(throwError(() => error));
+
+        // GIVEN
+        component.exam = exam1WithExercises;
+        component.subsequentExerciseGroupSelection.set(true);
+        component.targetCourseId.set(1);
+        component.targetExamId.set(2);
+        fixture.detectChanges();
+
+        // WHEN
+        component.performImportOfExerciseGroups();
+
+        // THEN loading state should be reset even on error
+        expect(component.isImportingExercises).toBeFalse();
+    });
+
+    it('should display correct button states based on importing status', fakeAsync(() => {
+        // GIVEN - Setup search results with multiple exams
+        component.content = {
+            resultsOnPage: [{ id: 1, title: 'Exam 1' } as Exam, { id: 2, title: 'Exam 2' } as Exam, { id: 3, title: 'Exam 3' } as Exam],
+            numberOfPages: 1,
+        };
+        component.subsequentExerciseGroupSelection.set(false);
+        fixture.detectChanges();
+
+        // Find the first import button
+        const buttons = fixture.debugElement.nativeElement.querySelectorAll('jhi-button');
+        expect(buttons.length).toBeGreaterThan(0);
+
+        // WHEN - Start importing exam with id 2
+        component.selectImport({ id: 2 } as Exam);
+        fixture.detectChanges();
+
+        // THEN - Check that the component state is correct
+        expect(component.importingItemId).toBe(2);
+
+        // Fast forward through the timeout
+        tick(2000);
+
+        // Modal should be closed after the timeout
+        expect(activeModal.close).toHaveBeenCalledWith({ id: 2 });
+    }));
+
+    it('should show importing message when any item is importing', () => {
+        // GIVEN - Setup component in initial state
+        component.content = {
+            resultsOnPage: [{ id: 1, title: 'Exam 1' } as Exam],
+            numberOfPages: 1,
+        };
+        fixture.detectChanges();
+
+        // Initially no importing message should be shown
+        expect(component.importingItemId).toBeNull();
+
+        // WHEN - Start importing
+        component.selectImport({ id: 1 } as Exam);
+        fixture.detectChanges();
+
+        // THEN - Importing message should be shown
+        expect(component.importingItemId).toBe(1);
     });
 
     function performImport(importSpy: jest.SpyInstance): void {
