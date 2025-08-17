@@ -28,15 +28,15 @@ describe('ProgrammingExercisePlantUmlService retry (minimal)', () => {
 
     afterEach(() => httpTestingController.verify());
 
-    it('getPlantUmlSvg should retry when first request fails)', async () => {
+    it('getPlantUmlSvg should retry when first request fails', async () => {
         const plantUmlSource = '@startuml\nA->B\n@enduml';
         const resultPromise = firstValueFrom(service.getPlantUmlSvg(plantUmlSource));
 
-        let request = httpTestingController.expectOne(/api\/programming\/plantuml\/svg/);
+        let request = httpTestingController.expectOne((req) => req.method === 'GET' && req.url.includes('api/programming/plantuml/svg'));
         expect(request.request.responseType).toBe('text');
         request.flush('err', { status: 500, statusText: 'ERR' });
 
-        request = httpTestingController.expectOne(/api\/programming\/plantuml\/svg/);
+        request = httpTestingController.expectOne((req) => req.method === 'GET' && req.url.includes('api/programming/plantuml/svg'));
         request.flush('<svg/>');
 
         await expect(resultPromise).resolves.toBe('<svg/>');
@@ -46,11 +46,11 @@ describe('ProgrammingExercisePlantUmlService retry (minimal)', () => {
         const plantUmlSource = '@startuml\nPNG\n@enduml';
         const resultPromise = firstValueFrom(service.getPlantUmlImage(plantUmlSource));
 
-        let request = httpTestingController.expectOne(/api\/programming\/plantuml\/png/);
+        let request = httpTestingController.expectOne((req) => req.method === 'GET' && req.url.includes('api/programming/plantuml/png'));
         expect(request.request.responseType).toBe('arraybuffer');
         request.flush(new ArrayBuffer(0), { status: 500, statusText: 'ERR' });
 
-        request = httpTestingController.expectOne(/api\/programming\/plantuml\/png/);
+        request = httpTestingController.expectOne((req) => req.method === 'GET' && req.url.includes('api/programming/plantuml/png'));
         expect(request.request.responseType).toBe('arraybuffer');
         request.flush(new Uint8Array([1, 2, 3]).buffer);
 
