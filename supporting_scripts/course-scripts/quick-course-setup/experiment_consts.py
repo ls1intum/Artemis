@@ -23,7 +23,7 @@ SPAMMY_BUILD_GRADLE = """
 
     spam_logs() {
         log_line="📣 This is a test log message meant to spam the output. 📣"
-        for ((i = 1; i <= 20000; i++)); do
+        for ((i = 1; i <= 100000; i++)); do
             printf "Log line %d: %s\n" "$i" "$log_line"
         done
     exit 1
@@ -90,7 +90,7 @@ SORT_STRATEGY_JAVA = """
 
     import java.util.Date;
     import java.util.List;
-    
+
     public interface SortStrategy {{
         void performSort(List<Date> input);
     }}
@@ -213,7 +213,7 @@ C_CORRECT = """
         printf("%d\\n", x * x + 5 * y - 4);
         return EXIT_SUCCESS;
     }
-""" 
+"""
 
 START_ARTEMIS_COMMAND = "sudo systemctl start artemis.service"
 STOP_ARTEMIS_COMMAND = "sudo systemctl stop artemis.service"
@@ -221,5 +221,9 @@ STOP_ARTEMIS_COMMAND = "sudo systemctl stop artemis.service"
 START_DOCKER_COMMAND = "sudo systemctl start docker.service"
 STOP_DOCKER_SOCKET_COMMAND = "sudo systemctl stop docker.socket"
 STOP_DOCKER_SERVICE_COMMAND = "sudo systemctl stop docker.service"
-NETWORK_STRESS_COMMAND = "docker run --rm -it --network host --name stress-ng alpinelinux/stress-ng stress-ng --tcp 2 --udp 2 --timeout 60s"
-CPU_STRESS_COMMAND = "docker run --rm -it alpinelinux/stress-ng stress-ng --cpu 4 --timeout 60s"
+NETWORK_STRESS_COMMAND = "stress-ng --tcp 2 --udp 2 --timeout 120s"
+CPU_STRESS_COMMAND = "stress-ng --cpu 4 --timeout 120s"
+MEMORY_STRESS_COMMAND = "stress-ng --vm 1 --vm-bytes 6000M --vm-keep --timeout 120s"
+
+NETWORK_UNSTABLE_COMMAND = "sudo tc qdisc add dev ens18 root netem delay 500ms 100ms loss 10% && sleep 120 && sudo tc qdisc del dev ens18 root"
+SEVERE_NETWORK_UNSTABLE_COMMAND = "sudo tc qdisc add dev ens18 root netem delay 1000ms 200ms loss 50% && sleep 120 && sudo tc qdisc del dev ens18 root"

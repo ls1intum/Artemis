@@ -1,3 +1,4 @@
+import time
 from typing import Any, Dict, List
 from requests import Session
 from logging_config import logging
@@ -9,13 +10,14 @@ config.read('config.ini')
 SERVER_URL: str = config.get('Settings', 'server_url')
 
 def get_submissions_for_exercise(session: Session, exercise_id: int):
+    start_time = time.time()
     participations = get_participations(session, exercise_id)
     
     if not participations:
         return []
     
     submissions = []
-    max_workers = min(15, len(participations))  # Reduced from 20 to 15 to be more conservative
+    max_workers = min(20, len(participations)) 
     
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_participation = {
@@ -29,8 +31,8 @@ def get_submissions_for_exercise(session: Session, exercise_id: int):
             except Exception as e:
                 participation_id = future_to_participation[future]
                 logging.error(f"Failed to get submissions for participation {participation_id}: {e}")
-    
-    logging.debug(f"Retrieved {len(submissions)} submissions from {len(participations)} participations")
+
+    logging.info(f"Retrieved {len(submissions)} submissions from {len(participations)} participations in {time.time() - start_time:.2f} seconds")
     return submissions
 
 # todo wenn nur 1 submisison pro student könnte reichen mit ?withLatestResult=true zu queryn hier anstatt einzeln submissions zu fetchen

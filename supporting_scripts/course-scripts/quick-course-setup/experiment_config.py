@@ -1,5 +1,5 @@
 import configparser
-from experiment_consts import BUBBLE_SORT_JAVA_ALLOCATE_MEMORY, BUBBLE_SORT_JAVA_CORRECT, BUBBLE_SORT_JAVA_INFINITE_LOOP, C_CORRECT, C_FACT_BUILD_SCRIPT, CPU_STRESS_COMMAND, GRADLE_BUILD_SCRIPT, INFINITE_BUILD_SCRIPT, FAILING_BUILD_SCRIPT, MEMORY_ALLOCATE_BUILD_SCRIPT, NETWORK_STRESS_COMMAND, SORT_STRATEGY_JAVA, SPAMMY_BUILD_GRADLE, START_ARTEMIS_COMMAND, START_DOCKER_COMMAND, STOP_ARTEMIS_COMMAND, STOP_DOCKER_SERVICE_COMMAND, STOP_DOCKER_SOCKET_COMMAND, WRITE_FILE_JAVA
+from experiment_consts import BUBBLE_SORT_JAVA_ALLOCATE_MEMORY, BUBBLE_SORT_JAVA_CORRECT, BUBBLE_SORT_JAVA_INFINITE_LOOP, C_CORRECT, C_FACT_BUILD_SCRIPT, CPU_STRESS_COMMAND, GRADLE_BUILD_SCRIPT, INFINITE_BUILD_SCRIPT, FAILING_BUILD_SCRIPT, MEMORY_ALLOCATE_BUILD_SCRIPT, MEMORY_STRESS_COMMAND, NETWORK_STRESS_COMMAND, NETWORK_UNSTABLE_COMMAND, SEVERE_NETWORK_UNSTABLE_COMMAND, SORT_STRATEGY_JAVA, SPAMMY_BUILD_GRADLE, START_ARTEMIS_COMMAND, START_DOCKER_COMMAND, STOP_ARTEMIS_COMMAND, STOP_DOCKER_SERVICE_COMMAND, STOP_DOCKER_SOCKET_COMMAND, WRITE_FILE_JAVA
 from enum import Enum
 
 config = configparser.ConfigParser()
@@ -39,7 +39,7 @@ class ExperimentConfig:
         self.target_node_type = target_node_type
 
     def get_target_node_address(self) -> str | None:
-        if self.remote_command == None: 
+        if self.remote_command == None:
             return None
         host = EXPERIMENT_TARGET_NODE_AGENT if self.target_node_type == NodeTargetType.AGENT else EXPERIMENT_TARGET_NODE_CORE
         return f"{USER_NAME_SSH}@{host}"
@@ -65,7 +65,7 @@ JAVA_SPAMMY_BUILD = ExperimentConfig(
         "src/experiment/BubbleSort.java": BUBBLE_SORT_JAVA_CORRECT.format("experiment")
     },
     identifier="java_spammy_build",
-    timeout_experiment=60 * 20
+    timeout_experiment=60 * 15
 )
 
 JAVA_TIMEOUT_BUILD = ExperimentConfig(
@@ -195,7 +195,7 @@ C_WITH_NODE_FAILURE = ExperimentConfig(
     , identifier="c_node_failure",
     remote_command=STOP_ARTEMIS_COMMAND,
     execute_after_seconds=30,
-    timeout_experiment=60 * 6,
+    timeout_experiment=60 * 5,
     final_command=START_ARTEMIS_COMMAND
 )
 
@@ -225,7 +225,7 @@ DOCKER_CLIENT_FAILURE_JAVA = ExperimentConfig(
     identifier="docker_client_failure_java",
     remote_command=f"{STOP_DOCKER_SERVICE_COMMAND} && {STOP_DOCKER_SOCKET_COMMAND}",
     execute_after_seconds=30,
-    timeout_experiment=60 * 15,
+    timeout_experiment=60 * 10,
     final_command=START_DOCKER_COMMAND
 )
 
@@ -240,8 +240,67 @@ NETWORK_STRESS_AGENT = ExperimentConfig(
     , identifier="network_stress_agent"
     , remote_command=NETWORK_STRESS_COMMAND
     , execute_after_seconds=30
-    , timeout_experiment=60 * 15
+    , timeout_experiment=60 * 5
 )
+
+NETWORK_UNSTABLE_AGENT = ExperimentConfig(
+    programming_language="C",
+    project_type="FACT",
+    build_script=C_FACT_BUILD_SCRIPT,
+    package_name="experiment",
+    commit_files={
+        "exercise.c": C_CORRECT
+    }
+    , identifier="network_unstable_agent"
+    , remote_command=NETWORK_UNSTABLE_COMMAND
+    , execute_after_seconds=30
+    , timeout_experiment=60 * 5
+)
+
+NETWORK_SEVERE_UNSTABLE_AGENT = ExperimentConfig(
+    programming_language="C",
+    project_type="FACT",
+    build_script=C_FACT_BUILD_SCRIPT,
+    package_name="experiment",
+    commit_files={
+        "exercise.c": C_CORRECT
+    }
+    , identifier="network_severe_unstable_agent"
+    , remote_command=SEVERE_NETWORK_UNSTABLE_COMMAND
+    , execute_after_seconds=30
+    , timeout_experiment=60 * 5
+)
+
+NETWORK_UNSTABLE_CORE = ExperimentConfig(
+    programming_language="C",
+    project_type="FACT",
+    build_script=C_FACT_BUILD_SCRIPT,
+    package_name="experiment",
+    commit_files={
+        "exercise.c": C_CORRECT
+    }
+    , identifier="network_unstable_core"
+    , remote_command=NETWORK_UNSTABLE_COMMAND
+    , execute_after_seconds=30
+    , timeout_experiment=60 * 5
+    , target_node_type=NodeTargetType.CORE
+)
+
+NETWORK_SEVERE_UNSTABLE_CORE = ExperimentConfig(
+    programming_language="C",
+    project_type="FACT",
+    build_script=C_FACT_BUILD_SCRIPT,
+    package_name="experiment",
+    commit_files={
+        "exercise.c": C_CORRECT
+    }
+    , identifier="network_severe_unstable_core"
+    , remote_command=SEVERE_NETWORK_UNSTABLE_COMMAND
+    , execute_after_seconds=30
+    , timeout_experiment=60 * 5
+    , target_node_type=NodeTargetType.CORE
+)
+
 
 CPU_STRESS_AGENT = ExperimentConfig(
     programming_language="C",
@@ -254,7 +313,22 @@ CPU_STRESS_AGENT = ExperimentConfig(
     , identifier="cpu_stress_agent"
     , remote_command=CPU_STRESS_COMMAND
     , execute_after_seconds=30
-    , timeout_experiment=60 * 15
+    , timeout_experiment=60 * 5
+)
+
+CPU_STRESS_CORE = ExperimentConfig(
+    programming_language="C",
+    project_type="FACT",
+    build_script=C_FACT_BUILD_SCRIPT,
+    package_name="experiment",
+    commit_files={
+        "exercise.c": C_CORRECT
+    }
+    , identifier="cpu_stress_core"
+    , remote_command=CPU_STRESS_COMMAND
+    , execute_after_seconds=30
+    , timeout_experiment=60 * 5
+    , target_node_type=NodeTargetType.CORE
 )
 
 NETWORK_STRESS_CORE = ExperimentConfig(
@@ -265,14 +339,15 @@ NETWORK_STRESS_CORE = ExperimentConfig(
     commit_files={
         "exercise.c": C_CORRECT
     }
-    , identifier="network_stress_agent"
+    , identifier="network_stress_core"
     , remote_command=NETWORK_STRESS_COMMAND
     , execute_after_seconds=30
-    , timeout_experiment=60 * 15
+    , timeout_experiment=60 * 5
     , target_node_type=NodeTargetType.CORE
 )
 
-CPU_STRESS_NODE = ExperimentConfig(
+
+MEMORY_STRESS_AGENT = ExperimentConfig(
     programming_language="C",
     project_type="FACT",
     build_script=C_FACT_BUILD_SCRIPT,
@@ -280,9 +355,23 @@ CPU_STRESS_NODE = ExperimentConfig(
     commit_files={
         "exercise.c": C_CORRECT
     }
-    , identifier="cpu_stress_agent"
-    , remote_command=CPU_STRESS_COMMAND
+    , identifier="memory_stress_agent"
+    , remote_command=MEMORY_STRESS_COMMAND
     , execute_after_seconds=30
-    , timeout_experiment=60 * 15
+    , timeout_experiment=60 * 5
+)
+
+MEMORY_STRESS_CORE = ExperimentConfig(
+    programming_language="C",
+    project_type="FACT",
+    build_script=C_FACT_BUILD_SCRIPT,
+    package_name="experiment",
+    commit_files={
+        "exercise.c": C_CORRECT
+    }
+    , identifier="memory_stress_core"
+    , remote_command=MEMORY_STRESS_COMMAND
+    , execute_after_seconds=30
+    , timeout_experiment=60 * 5
     , target_node_type=NodeTargetType.CORE
 )

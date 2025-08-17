@@ -6,7 +6,7 @@ from uuid import uuid4
 import json
 from typing import Any, Callable, Dict, Tuple, List
 from requests import Session
-from requests.adapters import HTTPAdapter 
+from requests.adapters import HTTPAdapter
 from student_operations import participate_programming_exercise
 from ssh_helper import run_ssh_command
 from utils import add_user_to_course, login_as_admin, authenticate_user
@@ -168,7 +168,7 @@ class ExperimentRunner:
     def _collect_polling_data_point(self, start_time: float):
         current_time = time.time()
         elapsed_time = current_time - start_time
-
+        logging.debug(f"Starting to poll data at {current_time}")
         submissions = get_submissions_for_exercise(self.admin_session, self.exercise_id)
         results = get_all_results(submissions)
         running_jobs = get_running_build_jobs_for_course(self.admin_session, self.course_id)
@@ -222,7 +222,6 @@ class ExperimentRunner:
                 f"Submissions: {data_point['submissions_count']}, Results: {data_point['results_count']}, "
                 f"Running: {data_point['running_jobs_count']}, Queued: {data_point['queued_jobs_count']}, "
             )
-            
             if data_point['submissions_count'] == expected_submissions and data_point["queued_jobs_count"] == 0 and data_point and data_point['running_jobs_count'] == 0:
                 logging.info("No jobs processing or queued anymore. Returning results")
                 return self.get_current_results()
@@ -314,6 +313,10 @@ class ExperimentRunner:
 
     def run_experiment(self, experiment_config: ExperimentConfig, number_of_commits: int = 1):
         """Run the experiment with students participating."""
+        logging.info(f"Running {experiment_config.identifier} experiment with {len(self.user_sessions)} students.")
+        if experiment_config.remote_command:
+            logging.info(f"Remote command to be executed: {experiment_config.remote_command} after {experiment_config.execute_after_seconds} seconds on {experiment_config.get_target_node_address()}")
+
         version_info = get_server_artemis_version_info(self.admin_session)
         initial_sleep = 10
         start_time = time.time()
@@ -339,23 +342,26 @@ class ExperimentRunner:
                 timeout_seconds=experiment_config.timeout_experiment,
                 interval_seconds=10,
             )
-            
+
             try:
                 student_operations_future.result(timeout=10)
-                logging.info(f"Student operations completed successfully")            
+                logging.info(f"Student operations completed successfully")
             except Exception as e:
                 logging.error(f"Student operations encountered an error: {e}")
-            try: 
-                remote_future.result(timeout=10)
-                logging.info(f"Remote command executed successfully")
+            try:
+                if remote_future is not None:
+                    remote_future.result(timeout=60)
+                    logging.info(f"Remote command executed successfully")
+                else:
+                    logging.debug("No remote command was executed")
             except Exception as e:
                 logging.error(f"Remote command encountered an error: {e}")
-        
+
         logging.info(f"Results collected: {len(results)} results for {len(self.user_sessions)} students.")
         end_time = time.time()
         logging.info(f"Experiment completed in {(end_time - start_time - initial_sleep):.2f} seconds")
 
-        time.sleep(10) # wait fot the stats to update 
+        time.sleep(10) # wait fot the stats to update
         stats = get_build_job_statistics_for_course(self.admin_session, self.course_id)
         logging.info(f"Build job statistics for course {self.course_id}: {stats}")
 
@@ -369,14 +375,14 @@ class ExperimentRunner:
         file_Name = self.save_polling_data(filename_base=filename_base, grafana_link=grafana_link, experiment_config=experiment_config if remote_node_execute else None, start=start_time, end=end_time, initial_sleep=initial_sleep, stats=stats)
         self._generate_experiment_plots(filename=file_Name)
 
-       
+
         if remote_node_execute and experiment_config.final_command:
             logging.info(f"Executing final command: {experiment_config.final_command} on node {remote_node_execute}")
             run_ssh_command(remote_node_execute, experiment_config.final_command, verbose=True)
 
         return results, stats
 
-    def execute_remote_command(self, experiment_config: ExperimentConfig, remote_node_execute: str): 
+    def execute_remote_command(self, experiment_config: ExperimentConfig, remote_node_execute: str):
         command = experiment_config.remote_command
         if command:
             time.sleep(experiment_config.execute_after_seconds)
@@ -388,7 +394,7 @@ class ExperimentRunner:
         """Save the collected polling data to a JSON file."""
         import os
         os.makedirs(os.path.dirname(filename_base), exist_ok=True)
-        
+
         json_filename = filename_base + ".json"
         with open(json_filename, 'w') as f:
             json.dump(self.polling_data, f, indent=2)
@@ -414,31 +420,31 @@ class ExperimentRunner:
                     "injected_command_after": experiment_config.execute_after_seconds,
                     "serverProfiles": profiles
                 }, f)
-       
+
         return json_filename
 
     def _generate_experiment_plots(self, filename:str):
         """Automatically generate plots for the experiment data."""
         try:
             import subprocess
-            import os  
+            import os
             plot_script = "plot_experiment_data.py"
             if os.path.exists(plot_script):
                 logging.info(f"Generating plots for {filename}...")
                 result = subprocess.run(
-                    ["python", plot_script, filename], 
-                    capture_output=True, 
+                    ["python", plot_script, filename],
+                    capture_output=True,
                     text=True,
                     cwd=os.getcwd()
                 )
-                
+
                 if result.returncode == 0:
                     logging.info("Plots generated successfully!")
                 else:
                     logging.error(f"Failed to generate plots: {result.stderr} {result.stdout}")
             else:
                 logging.warning(f"Plot script {plot_script} not found")
-                
+
         except Exception as e:
             logging.error(f"Error generating plots: {e}")
 
