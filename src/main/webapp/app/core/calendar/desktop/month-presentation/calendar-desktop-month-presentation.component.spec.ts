@@ -11,7 +11,7 @@ import { CalendarDesktopMonthPresentationComponent } from './calendar-desktop-mo
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 
-describe('CalendarMonthPresentationComponent', () => {
+describe('CalendarDesktopMonthPresentationComponent', () => {
     let fixture: ComponentFixture<CalendarDesktopMonthPresentationComponent>;
     let component: CalendarDesktopMonthPresentationComponent;
     let mockMap: Map<string, CalendarEvent[]>;
