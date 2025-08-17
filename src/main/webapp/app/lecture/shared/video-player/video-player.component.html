@@ -1,6 +1,7 @@
 <div class="video-wrapper">
     <div class="video-column">
-        <video #videoRef id="video-player" class="video-js vjs-default-skin" controls preload="auto" playsinline></video>
+        <!-- add vjs-fluid so it keeps aspect ratio; id & ref unchanged -->
+        <video #videoRef id="video-player" class="video-js vjs-default-skin vjs-fluid" controls preload="auto" playsinline></video>
     </div>
 
     <div class="transcript-column">
@@ -11,7 +12,7 @@
                     class="transcript-line"
                     [id]="'segment-' + segment.startTime"
                     (click)="seekTo(segment.startTime)"
-                    [class.active]="segment.startTime === transcriptSegments()[currentSegmentIndex()]?.startTime"
+                    [class.active]="currentSegmentIndex() >= 0 && segment.startTime === transcriptSegments()[currentSegmentIndex()].startTime"
                 >
                     {{ segment.text }}
                 </div>

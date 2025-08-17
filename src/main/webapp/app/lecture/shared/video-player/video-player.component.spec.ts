@@ -2,10 +2,9 @@
  * video-player.component.spec.ts
  * Tests for VideoPlayerComponent (video.js + transcript sync)
  *
- * - Mocks `video.js`
+ * - Mocks `video.js` (works with dynamic import)
  * - Minimal template with <video #videoRef>
  * - Covers init/no-init, timeupdate syncing + scrolling, seeking, and teardown
- * - Defines per-element scrollIntoView mock (no global polyfill)
  */
 
 // ---- Mock video.js BEFORE importing the component ----
@@ -43,6 +42,7 @@ jest.mock('video.js', () => {
     return { __esModule: true, default: fn };
 });
 
+// ---- Imports AFTER the mock ----
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import videojs from 'video.js';
 import { TranscriptSegment, VideoPlayerComponent } from './video-player.component';
@@ -59,17 +59,15 @@ describe('VideoPlayerComponent', () => {
     beforeEach(async () => {
         vjs.__reset();
 
-        // Step 1: configure
         TestBed.configureTestingModule({
             imports: [VideoPlayerComponent],
         });
 
-        // Step 2: override template (no chaining)
+        // Override template to a minimal one for testing
         TestBed.overrideComponent(VideoPlayerComponent, {
             set: { template: '<video #videoRef></video>' },
         });
 
-        // Step 3: compile
         await TestBed.compileComponents();
 
         fixture = TestBed.createComponent(VideoPlayerComponent);
@@ -86,7 +84,14 @@ describe('VideoPlayerComponent', () => {
         fixture.componentRef.setInput('transcriptSegments', segments);
     }
 
-    // Helper to read the current index regardless of signal/getter/number shape
+    // Waits for dynamic import + init to finish
+    async function render(): Promise<void> {
+        fixture.detectChanges();
+        await fixture.whenStable(); // wait for microtasks from dynamic import
+        await Promise.resolve(); // extra tick just in case
+    }
+
+    // Helper to read currentSegmentIndex regardless of signal/getter/number shape
     function getIndex(): number | undefined {
         const val: unknown = (component as unknown as { currentSegmentIndex: unknown }).currentSegmentIndex;
         if (typeof val === 'function') return (val as () => number)();
@@ -95,18 +100,18 @@ describe('VideoPlayerComponent', () => {
         return undefined;
     }
 
-    it('does not initialize video.js when no videoUrl is provided', () => {
+    it('does not initialize video.js when no videoUrl is provided', async () => {
         setInputs(undefined, []);
-        fixture.detectChanges();
+        await render();
 
         expect(vjs).not.toHaveBeenCalled();
-        expect(component.player).toBeNull();
+        expect((component as any).player).toBeNull();
     });
 
-    it('initializes video.js when videoUrl is provided', () => {
+    it('initializes video.js when videoUrl is provided', async () => {
         const url = 'https://cdn.example.com/master.m3u8';
         setInputs(url, []);
-        fixture.detectChanges();
+        await render();
 
         expect(vjs).toHaveBeenCalledOnce();
         const [el, options] = (vjs as jest.Mock).mock.calls[0];
@@ -123,17 +128,17 @@ describe('VideoPlayerComponent', () => {
                 ],
             }),
         );
-        expect(component.player).toBe(vjs.__player);
+        expect((component as any).player).toBe(vjs.__player);
         expect(vjs.__player.on).toHaveBeenCalledWith('timeupdate', expect.any(Function));
     });
 
-    it('timeupdate sets active segment and scrolls the element into view', () => {
+    it('timeupdate sets active segment and scrolls the element into view', async () => {
         const segments: TranscriptSegment[] = [
             { startTime: 10, endTime: 12, text: 'A' },
             { startTime: 20, endTime: 22, text: 'B' },
         ];
         setInputs('https://cdn.example.com/m.m3u8', segments);
-        fixture.detectChanges();
+        await render();
 
         // Return a dummy element for the id the component will look up
         const el = document.createElement('div');
@@ -147,28 +152,23 @@ describe('VideoPlayerComponent', () => {
         // Simulate timeupdate at 10.1s (inside first segment)
         vjs.__player.currentTime(10.1);
         const handler = vjs.__player.__handlers.get('timeupdate') as ((...args: unknown[]) => void) | undefined;
-
         expect(typeof handler).toBe('function');
-        if (handler) {
-            handler();
-        }
+        if (handler) handler();
 
         expect(getIndex()).toBe(0);
         expect(scrollSpy).toHaveBeenCalledOnce();
 
         // Same time again -> index unchanged, no extra scroll
-        if (handler) {
-            handler();
-        }
+        if (handler) handler();
         expect(scrollSpy).toHaveBeenCalledOnce();
 
         getById.mockRestore();
     });
 
-    it('timeupdate outside any segment leaves index at -1 and does not scroll', () => {
+    it('timeupdate outside any segment leaves index at -1 and does not scroll', async () => {
         const segments: TranscriptSegment[] = [{ startTime: 10, endTime: 12, text: 'A' }];
         setInputs('https://cdn.example.com/m.m3u8', segments);
-        fixture.detectChanges();
+        await render();
 
         const el = document.createElement('div');
         const scrollSpy = jest.fn();
@@ -177,10 +177,7 @@ describe('VideoPlayerComponent', () => {
 
         vjs.__player.currentTime(0); // outside any segment
         const handler = vjs.__player.__handlers.get('timeupdate') as ((...args: unknown[]) => void) | undefined;
-
-        if (handler) {
-            handler();
-        }
+        if (handler) handler();
 
         expect(getIndex()).toBe(-1);
         expect(scrollSpy).not.toHaveBeenCalled();
@@ -188,10 +185,10 @@ describe('VideoPlayerComponent', () => {
         getById.mockRestore();
     });
 
-    it('updateCurrentSegment: within margin updates; far outside does not clear back to -1', () => {
+    it('updateCurrentSegment: within margin updates; far outside does not clear back to -1', async () => {
         const segments: TranscriptSegment[] = [{ startTime: 5, endTime: 10, text: 'edge' }];
         setInputs('https://cdn.example.com/m.m3u8', segments);
-        fixture.detectChanges();
+        await render();
 
         // Within margin (10.2 <= 10 + 0.3)
         component.updateCurrentSegment(10.2);
@@ -202,9 +199,9 @@ describe('VideoPlayerComponent', () => {
         expect(getIndex()).toBe(0);
     });
 
-    it('seekTo sets current time and plays', () => {
+    it('seekTo sets current time and plays', async () => {
         setInputs('https://cdn.example.com/m.m3u8', []);
-        fixture.detectChanges();
+        await render();
 
         component.seekTo(42);
 
@@ -212,9 +209,9 @@ describe('VideoPlayerComponent', () => {
         expect(vjs.__player.play).toHaveBeenCalled();
     });
 
-    it('ngOnDestroy disposes the player', () => {
+    it('ngOnDestroy disposes the player', async () => {
         setInputs('https://cdn.example.com/m.m3u8', []);
-        fixture.detectChanges();
+        await render();
 
         fixture.destroy();
         expect(vjs.__player.dispose).toHaveBeenCalledOnce();
