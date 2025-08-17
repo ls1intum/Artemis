@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, model } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
@@ -14,7 +14,7 @@ import { ApollonDiagramDetailComponent } from '../detail/apollon-diagram-detail.
 export class ApollonDiagramImportDialogComponent {
     private activeModal = inject(NgbActiveModal);
 
-    readonly courseId = input<number>(undefined!);
+    readonly courseId = model<number>(undefined!);
 
     isInEditView = false;
     apollonDiagramDetailId: number;
