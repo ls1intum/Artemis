@@ -20,9 +20,6 @@ describe('TextUnitComponent', () => {
     let component: TextUnitComponent;
     let fixture: ComponentFixture<TextUnitComponent>;
 
-    let writeStub: jest.SpyInstance;
-    let closeStub: jest.SpyInstance;
-    let focusStub: jest.SpyInstance;
     let openStub: jest.SpyInstance;
 
     const textUnit: TextUnit = {
@@ -34,6 +31,34 @@ describe('TextUnitComponent', () => {
     };
 
     const exampleHtml = '<h1>Sample Markdown</h1>';
+
+    // minimal fake window & document for the isolated view
+    function makeStubWindow() {
+        const created: any[] = [];
+        const head = { children: [] as any[], appendChild: (n: any) => head.children.push(n) };
+        const body = { className: '', innerHTML: '' };
+        const doc = {
+            title: '',
+            head,
+            body,
+            readyState: 'complete', // ensures immediate run (no load listener needed)
+            createElement: (tag: string) => {
+                const el: any = { tagName: tag.toUpperCase() };
+                // minimal link support
+                el.rel = '';
+                el.href = '';
+                created.push(el);
+                return el;
+            },
+            addEventListener: jest.fn(), // not used when readyState === 'complete'
+        };
+
+        return {
+            document: doc as unknown as Document,
+            focus: jest.fn(),
+            __created: created, // for assertions if needed
+        } as unknown as Window;
+    }
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -55,9 +80,6 @@ describe('TextUnitComponent', () => {
 
         scienceService = TestBed.inject(ScienceService);
 
-        writeStub = jest.spyOn(window.document, 'write').mockImplementation();
-        closeStub = jest.spyOn(window.document, 'close').mockImplementation();
-        focusStub = jest.spyOn(window, 'focus').mockImplementation();
         openStub = jest.spyOn(window, 'open').mockReturnValue(window);
 
         fixture = TestBed.createComponent(TextUnitComponent);
@@ -87,27 +109,37 @@ describe('TextUnitComponent', () => {
         expect(markdown.nativeElement.innerHTML).toEqual(exampleHtml);
     });
 
-    it('should display html in new window on isolatedView click', () => {
-        const innerHtmlCopy = window.document.body.innerHTML;
+    it('should display html in a new window on isolated view click', () => {
+        const fakeWin = makeStubWindow();
+        openStub = jest.spyOn(window, 'open').mockReturnValue(fakeWin);
 
         fixture.detectChanges();
 
         const isolatedViewButton = fixture.debugElement.query(By.css('#view-isolated-button'));
         isolatedViewButton.nativeElement.click();
 
-        fixture.detectChanges();
-
+        // assertions against the stub window (not the real document)
         expect(openStub).toHaveBeenCalledOnce();
-        expect(writeStub).toHaveBeenCalledTimes(4);
-        expect(closeStub).toHaveBeenCalledOnce();
-        expect(focusStub).toHaveBeenCalledOnce();
-        expect(window.document.body.innerHTML).toEqual(exampleHtml);
-        window.document.body.innerHTML = innerHtmlCopy;
+        expect((fakeWin as any).focus).toHaveBeenCalledOnce();
+        expect(fakeWin.document.title).toBe(textUnit.name);
+        expect(fakeWin.document.body.className).toBe('markdown-body');
+        expect(fakeWin.document.body.innerHTML).toBe(exampleHtml);
+
+        // optional: verify stylesheet link was appended
+        const links = (fakeWin.document.head as any).children.filter((n: any) => n.tagName === 'LINK');
+        expect(links).toHaveLength(1);
+        expect(links[0].rel).toBe('stylesheet');
+        expect(links[0].href).toContain('public/content/github-markdown.css');
     });
 
     it('should log event on isolated view', () => {
         const logEventSpy = jest.spyOn(scienceService, 'logEvent');
+        // use a fresh stub window so handleIsolatedView() can run without touching real window
+        const fakeWin = makeStubWindow();
+        jest.spyOn(window, 'open').mockReturnValue(fakeWin);
+
         component.handleIsolatedView();
+
         expect(logEventSpy).toHaveBeenCalledOnce();
     });
 });
