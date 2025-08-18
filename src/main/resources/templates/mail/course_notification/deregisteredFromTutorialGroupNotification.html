@@ -13,7 +13,7 @@
 <div id="message-body">
     <th:block>
         <span th:text="#{email.greetings}">Dear </span>
-        <span class="bold-text" th:text="${recipient.getName()}">fullName</span>
+        <span class="bold-text" th:text="${recipient.name()}">fullName</span>
         <br>
     </th:block>
     <div class="notification-content">
