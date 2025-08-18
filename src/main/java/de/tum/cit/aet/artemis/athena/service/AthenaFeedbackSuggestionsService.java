@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.athena.dto.ExerciseBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
@@ -72,6 +73,8 @@ public class AthenaFeedbackSuggestionsService {
 
     private final LLMTokenUsageService llmTokenUsageService;
 
+    private final ResultRepository resultRepository;
+
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
     @Value("${artemis.athena.allowed-feedback-requests:10}")
@@ -91,7 +94,8 @@ public class AthenaFeedbackSuggestionsService {
      * @param learnerProfileApi         API for learner profile operations
      */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
-            AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, Optional<LearnerProfileApi> learnerProfileApi) {
+            AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, ResultRepository resultRepository,
+            Optional<LearnerProfileApi> learnerProfileApi) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
         modelingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOModeling.class);
@@ -99,10 +103,12 @@ public class AthenaFeedbackSuggestionsService {
         this.athenaModuleService = athenaModuleService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.learnerProfileApi = learnerProfileApi;
+        this.resultRepository = resultRepository;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record RequestDTO(@NotNull ExerciseBaseDTO exercise, @NotNull SubmissionBaseDTO submission, @Nullable LearnerProfileDTO learnerProfile, @NotNull boolean isGraded) {
+    private record RequestDTO(@NotNull ExerciseBaseDTO exercise, @NotNull SubmissionBaseDTO submission, @Nullable LearnerProfileDTO learnerProfile, @NotNull boolean isGraded,
+            @Nullable SubmissionBaseDTO latestSubmission) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -115,6 +121,15 @@ public class AthenaFeedbackSuggestionsService {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private record ResponseDTOModeling(List<ModelingFeedbackDTO> data, ResponseMetaDTO meta) {
+    }
+
+    private Submission getLatestSubmission(StudentParticipation participation) {
+        var latestResult = resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
+        Submission latestSubmission = null;
+        if (latestResult != null) {
+            latestSubmission = latestResult.getSubmission();
+        }
+        return latestSubmission;
     }
 
     /**
@@ -157,11 +172,14 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Calls the remote Athena service to get feedback suggestions for a given submission.
+     * Calls the remote Athena service to get feedback suggestions for a given
+     * submission.
      *
      * @param exercise      the {@link TextExercise} the suggestions are fetched for
-     * @param submission    the {@link TextSubmission} the suggestions are fetched for
-     * @param isPreliminary the {@link Boolean} should Athena generate grade suggestions or not
+     * @param submission    the {@link TextSubmission} the suggestions are fetched
+     *                          for
+     * @param isPreliminary the {@link Boolean} should Athena generate grade
+     *                          suggestions or not
      * @return a list of feedback suggestions
      */
     public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isPreliminary) throws NetworkingException {
@@ -173,14 +191,18 @@ public class AthenaFeedbackSuggestionsService {
                     "Exercise", "exerciseIdDoesNotMatch");
         }
 
+        Submission latestSubmission = getLatestSubmission((StudentParticipation) submission.getParticipation());
+        SubmissionBaseDTO latestSubmissionDTO = latestSubmission != null ? athenaDTOConverterService.ofSubmission(exercise.getId(), latestSubmission) : null;
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
-                LearnerProfileDTO.of(extractLearnerProfile(submission)), !isPreliminary);
+
+                LearnerProfileDTO.of(extractLearnerProfile(submission)), !isPreliminary, latestSubmissionDTO);
         ResponseDTOText response = textAthenaConnector.invokeWithRetry(
                 athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
                         + "/feedback_suggestions",
                 request, 0);
         log.info("Athena responded to '{}' feedback suggestions request: {}", isPreliminary ? "Non Graded" : "Graded", response.data);
         storeTokenUsage(exercise, submission, response.meta, !isPreliminary);
+
         return response.data.stream().toList();
     }
 
@@ -200,7 +222,7 @@ public class AthenaFeedbackSuggestionsService {
             throws NetworkingException {
         log.debug("Start Athena {} Feedback Suggestions Service for Exercise '{}' (#{}).", isPreliminary ? "Non Graded" : "Graded", exercise.getTitle(), exercise.getId());
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
-                !isPreliminary);
+                !isPreliminary, null);
         ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(
                 athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
                         + "/feedback_suggestions",
@@ -231,7 +253,7 @@ public class AthenaFeedbackSuggestionsService {
         }
 
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
-                !isPreliminary);
+                !isPreliminary, null);
         ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(
                 athenaModuleService.getAthenaModuleUrl(exercise.getExerciseType(), isPreliminary ? exercise.getPreliminaryFeedbackModule() : exercise.getFeedbackSuggestionModule())
                         + "/feedback_suggestions",

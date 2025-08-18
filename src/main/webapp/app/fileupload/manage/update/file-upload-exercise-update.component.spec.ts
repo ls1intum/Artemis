@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Subject, of } from 'rxjs';
 
 import { FileUploadExerciseUpdateComponent } from 'app/fileupload/manage/update/file-upload-exercise-update.component';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -41,8 +41,8 @@ describe('FileUploadExerciseUpdateComponent', () => {
         TestBed.configureTestingModule({
             imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
             providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: Router, useClass: MockRouter },

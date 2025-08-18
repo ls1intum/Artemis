@@ -5,13 +5,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import type { EntityResponseType, ExerciseDetailsType } from 'app/exercise/services/exercise.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import dayjs from 'dayjs/esm';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -69,8 +69,8 @@ describe('Exercise Service', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: Router, useClass: MockRouter },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ArtemisMarkdownService),
                 MockProvider(AccountService),
