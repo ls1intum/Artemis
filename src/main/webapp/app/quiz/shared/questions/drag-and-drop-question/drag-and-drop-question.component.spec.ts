@@ -27,7 +27,6 @@ describe('DragAndDropQuestionComponent', () => {
         question.id = 1;
         question.backgroundFilePath = '';
         fixture.componentRef.setInput('question', question);
-        fixture.detectChanges();
     };
 
     beforeEach(() => {
@@ -194,7 +193,6 @@ describe('DragAndDropQuestionComponent', () => {
         const event = { item: { data: dragItem } } as CdkDragDrop<DragItem, DragItem>;
         const onMappingUpdate = jest.fn();
         fixture.componentRef.setInput('onMappingUpdate', onMappingUpdate);
-        fixture.detectChanges();
         comp.onDragDrop(dropLocation, event);
         expect(comp.mappings()).toEqual(expectedMappings);
         expect(onMappingUpdate.mock.calls).toHaveLength(callCount);
