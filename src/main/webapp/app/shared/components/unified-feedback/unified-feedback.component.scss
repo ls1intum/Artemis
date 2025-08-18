@@ -1,6 +1,6 @@
 .unified-feedback {
-    border-radius: 8px;
-    border-left: 8px solid;
+    border-radius: var(--bs-border-radius);
+    border-left: 5px solid;
     margin-bottom: 0.25rem;
     margin-top: 0.25rem;
     background-color: var(--bs-modal-bg, var(--bs-card-bg, var(--bs-body-bg)));
