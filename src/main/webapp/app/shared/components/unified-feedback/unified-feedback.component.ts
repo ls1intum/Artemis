@@ -154,11 +154,11 @@ export class UnifiedFeedbackComponent {
         if (this.assessmentsNames() && feedback.referenceId) {
             const assessmentName = this.assessmentsNames()![feedback.referenceId];
             if (assessmentName) {
-                return `Reference: ${assessmentName.name}`;
+                return assessmentName.name;
             }
         }
         if (feedback.reference) {
-            return `Reference: ${feedback.reference}`;
+            return feedback.reference;
         }
         return undefined;
     }

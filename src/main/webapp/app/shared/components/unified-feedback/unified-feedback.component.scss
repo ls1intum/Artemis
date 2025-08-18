@@ -2,7 +2,6 @@
     border-radius: var(--bs-border-radius);
     border-left: 5px solid;
     margin-bottom: 0.25rem;
-    margin-top: 0.25rem;
     background-color: var(--bs-modal-bg, var(--bs-card-bg, var(--bs-body-bg)));
     border-top: 1px solid var(--bs-border-color);
     border-right: 1px solid var(--bs-border-color);
@@ -33,8 +32,26 @@
 
 .unified-feedback__reference {
     font-size: 0.875rem;
-    padding-bottom: 0.25rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--bs-border-color);
+}
+
+.unified-feedback__reference-label {
+    color: var(--bs-body-color);
+    font-weight: 500;
+}
+
+.unified-feedback__reference-text {
+    background-color: var(--bs-gray-100);
+    border-radius: var(--bs-border-radius-lg);
+    padding: 0.25rem 0.5rem;
+    font-family: var(--bs-font-monospace);
+    font-size: 0.75rem;
+    color: var(--bs-black);
 }
 
 .unified-feedback__main {

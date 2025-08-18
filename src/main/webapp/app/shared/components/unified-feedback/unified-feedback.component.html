@@ -3,9 +3,8 @@
         <!-- Reference (optional) -->
         @if (inferredReference() && showReference()) {
             <div class="unified-feedback__reference">
-                <small class="text-muted">
-                    <code class="text-primary">{{ inferredReference() }}</code>
-                </small>
+                <span class="unified-feedback__reference-label">Reference:</span>
+                <span class="unified-feedback__reference-text">{{ inferredReference() }}</span>
             </div>
         }
 
