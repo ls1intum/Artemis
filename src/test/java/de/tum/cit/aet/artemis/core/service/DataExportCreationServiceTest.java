@@ -12,6 +12,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -71,6 +72,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
@@ -276,7 +278,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
             programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().minusMinutes(1));
         }
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin,
-                programmingExerciseTestService.studentRepo.workingCopyGitRepoFile.toURI());
+                URI.create(LocalRepositoryUriUtil.convertToLocalVcUriString(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile, localVCRepoPath)));
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false, "abc");
         var submission2 = programmingExerciseUtilService.createProgrammingSubmission(participation, true, "def");
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusMinutes(1));
@@ -348,7 +350,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).orElseThrow();
         var studentExam = examUtilService.addStudentExamWithUser(exam, userForExport);
         examUtilService.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel,
-                programmingExerciseTestService.studentRepo.workingCopyGitRepoFile.toURI());
+                URI.create(LocalRepositoryUriUtil.convertToLocalVcUriString(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile, localVCRepoPath)));
         Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userForExport.getId());
         var submission = studentExams.iterator().next().getExercises().getFirst().getStudentParticipations().iterator().next().getSubmissions().iterator().next();
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));

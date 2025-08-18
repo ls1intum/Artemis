@@ -37,9 +37,6 @@ class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationIndepen
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
     private ParticipationUtilService participationUtilService;
 
     private ProgrammingExercise programmingExercise;

@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackFilterModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
-import { LocalStorageService } from 'ngx-webstorage';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 describe('FeedbackFilterModalComponent', () => {
     let fixture: ComponentFixture<FeedbackFilterModalComponent>;
@@ -15,7 +15,7 @@ describe('FeedbackFilterModalComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), RangeSliderComponent, FeedbackFilterModalComponent],
-            providers: [{ provide: LocalStorageService, useValue: { store: jest.fn(), clear: jest.fn(), retrieve: jest.fn() } }, NgbActiveModal],
+            providers: [{ provide: LocalStorageService, useValue: { store: jest.fn(), remove: jest.fn(), retrieve: jest.fn() } }, NgbActiveModal],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FeedbackFilterModalComponent);
@@ -61,16 +61,16 @@ describe('FeedbackFilterModalComponent', () => {
     });
 
     it('should clear filters and reset them correctly', () => {
-        const clearSpy = jest.spyOn(localStorageService, 'clear');
+        const removeSpy = jest.spyOn(localStorageService, 'remove');
         const emitSpy = jest.spyOn(component.filterApplied, 'emit');
         const closeSpy = jest.spyOn(activeModal, 'close');
 
         component.clearFilter();
 
-        expect(clearSpy).toHaveBeenCalledWith(component.FILTER_TASKS_KEY);
-        expect(clearSpy).toHaveBeenCalledWith(component.FILTER_TEST_CASES_KEY);
-        expect(clearSpy).toHaveBeenCalledWith(component.FILTER_OCCURRENCE_KEY);
-        expect(clearSpy).toHaveBeenCalledWith(component.FILTER_ERROR_CATEGORIES_KEY);
+        expect(removeSpy).toHaveBeenCalledWith(component.FILTER_TASKS_KEY);
+        expect(removeSpy).toHaveBeenCalledWith(component.FILTER_TEST_CASES_KEY);
+        expect(removeSpy).toHaveBeenCalledWith(component.FILTER_OCCURRENCE_KEY);
+        expect(removeSpy).toHaveBeenCalledWith(component.FILTER_ERROR_CATEGORIES_KEY);
 
         expect(component.filters).toEqual({
             tasks: [],
