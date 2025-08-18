@@ -215,6 +215,12 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      */
     loadCourse(refresh = false): Observable<void> {
         this.refreshingCourse.set(refresh);
+
+        // If refreshing and we're on the communication page, clear search results
+        if (refresh && this.activatedComponentReference() instanceof CourseConversationsComponent) {
+            (this.activatedComponentReference() as CourseConversationsComponent).clearSearchAndRevertToOriginalView();
+        }
+
         const observable = this.courseManagementService.findOneForDashboard(this.courseId()).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
