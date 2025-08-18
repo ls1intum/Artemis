@@ -21,7 +21,7 @@ public record LearnerProfileDTO(long id, @Min(MIN_PROFILE_VALUE) @Max(MAX_PROFIL
      * @return LearnerProfile DTO for transfer
      */
     public static LearnerProfileDTO of(LearnerProfile learnerProfile) {
-        if (learnerProfile == null) {
+        if (learnerProfile == null || learnerProfile.getId() == null) {
             return null;
         }
         return new LearnerProfileDTO(learnerProfile.getId(), clamp(learnerProfile.getFeedbackDetail()), clamp(learnerProfile.getFeedbackFormality()),
