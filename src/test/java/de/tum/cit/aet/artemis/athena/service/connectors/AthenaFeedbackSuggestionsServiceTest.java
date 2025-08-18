@@ -307,7 +307,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFeedbackSuggestionsTextWithNullLatestSubmission() throws NetworkingException {
         // Test that the service handles null latest submission gracefully
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text", true, null, jsonPath("$.exercise.id").value(textExercise.getId()),
                 jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.submission.id").value(textSubmission.getId()),
                 jsonPath("$.submission.text").value(textSubmission.getText()));
 
