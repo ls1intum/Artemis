@@ -1,5 +1,5 @@
 Reviewer Guidelines
-==================
+===================
 
 This document provides best-practice guidelines for reviewers participating in code reviews for the Artemis project. These guidelines are intended to ensure high-quality, constructive, and efficient reviews, and are based on open source best practices as well as the Artemis development process.
 
