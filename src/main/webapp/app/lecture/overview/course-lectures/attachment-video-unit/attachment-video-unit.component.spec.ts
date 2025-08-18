@@ -222,42 +222,23 @@ describe('AttachmentVideoUnitComponent', () => {
     }));
 
     it('fetchTranscript: handles server error and keeps segments empty', fakeAsync(() => {
-        // Mock console.error so jest-fail-on-console doesn’t fail this test
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        fixture.detectChanges();
 
-        try {
-            fixture.detectChanges();
+        // Call the private method directly to isolate error handling
+        (component as any).fetchTranscript();
 
-            // Call the private method directly to isolate error handling
-            (component as any).fetchTranscript();
+        const req = httpMock.expectOne((r) => r.url.includes('/api/lecture/lecture-unit/') && r.url.endsWith('/transcript'));
+        expect(req.request.method).toBe('GET');
 
-            const req = httpMock.expectOne((r) => r.url.includes('/api/lecture/lecture-unit/') && r.url.endsWith('/transcript'));
-            expect(req.request.method).toBe('GET');
+        // Simulate server error; catchError turns it into { segments: [] }
+        req.flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
 
-            // Simulate server error; catchError will turn it into {segments: []}
-            req.flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
+        // Let the Promise chain settle
+        flushMicrotasks();
 
-            // Let the Promise chain (firstValueFrom(...).then(...)) settle
-            flushMicrotasks();
-
-            // Component state remains empty
-            expect(component.transcriptSegments()).toEqual([]);
-            expect(component.hasTranscript()).toBeFalse();
-
-            // Assert the error was logged as expected
-            expect(consoleErrorSpy).toHaveBeenCalledOnce();
-            const [msg, err] = consoleErrorSpy.mock.calls[0];
-            expect(String(msg)).toContain('Transcript fetch failed');
-            expect(err).toEqual(
-                expect.objectContaining({
-                    status: 500,
-                    statusText: 'Server Error',
-                    url: expect.stringContaining('/api/lecture/lecture-unit/1/transcript'),
-                }),
-            );
-        } finally {
-            consoleErrorSpy.mockRestore();
-        }
+        // Component state remains empty; no console expectations anymore
+        expect(component.transcriptSegments()).toEqual([]);
+        expect(component.hasTranscript()).toBeFalse();
     }));
 
     it('toggleCollapse(false): playlist resolve fails -> no transcript fetch', fakeAsync(() => {
