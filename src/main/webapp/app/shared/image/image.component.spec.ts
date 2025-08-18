@@ -3,7 +3,7 @@ import { provideHttpClient, withFetch } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ImageComponent, ImageLoadingStatus } from './image.component';
 
-describe('SecuredImageComponent', () => {
+describe('ImageComponent', () => {
     let fixture: any;
     let component: ImageComponent;
     let httpMock: HttpTestingController;
