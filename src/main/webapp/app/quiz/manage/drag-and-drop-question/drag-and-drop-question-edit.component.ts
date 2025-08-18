@@ -6,6 +6,7 @@ import {
     EventEmitter,
     Input,
     OnChanges,
+    OnDestroy,
     OnInit,
     Output,
     SimpleChanges,
@@ -13,6 +14,7 @@ import {
     inject,
     viewChild,
 } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/quiz/shared/entities/drag-state.enum';
@@ -88,7 +90,7 @@ import { FileService } from 'app/shared/service/file.service';
         ArtemisTranslatePipe,
     ],
 })
-export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
+export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit, OnDestroy {
     protected readonly faBan = faBan;
     protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
@@ -117,6 +119,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     private readonly clickLayer = viewChild.required<ElementRef>('clickLayer');
     private readonly backgroundImage = viewChild.required<ImageComponent>('backgroundImage');
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
+
+    private adjustClickLayerWidthSubscription?: Subscription;
 
     @Input() question: DragAndDropQuestion;
     @Input() questionIndex: number;
@@ -188,6 +192,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         }
     }
 
+    ngOnDestroy(): void {
+        this.adjustClickLayerWidthSubscription?.unsubscribe();
+    }
+
     /**
      * Watch for any changes to the question model and notify listener
      * @param changes {SimpleChanges}
@@ -232,11 +240,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             }
         }
 
-        this.backgroundImage().loadingStatus.subscribe((loadingStatus) => {
+        this.adjustClickLayerWidthSubscription = this.backgroundImage().loadingStatus.subscribe((loadingStatus) => {
             if (loadingStatus === ImageLoadingStatus.SUCCESS) {
                 setTimeout(() => this.adjustClickLayerWidth(), 300);
             }
         });
+
         // render import images on UI immediatly
         this.makeFileMapPreview();
         // Trigger click layer width adjustment upon window resize.
