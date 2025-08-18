@@ -629,7 +629,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         window.clearInterval(this.autoSaveInterval);
     }
 
-    handleStudentExam(studentExam: StudentExam) {
+    handleStudentExam(studentExam: StudentExam | undefined) {
+        if (!studentExam) {
+            return;
+        }
         this.studentExam = studentExam;
         this.exam = studentExam.exam!;
         this.testExam = this.exam.testExam!;
@@ -644,12 +647,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Directly start the exam when we continue from a failed save
             if (this.examParticipationService.lastSaveFailed(this.courseId(), this.examId())) {
                 this.examParticipationService.loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId(), this.examId()).subscribe((localExam: StudentExam) => {
-                    // Keep the working time from the server
-                    localExam.workingTime = this.studentExam.workingTime ?? localExam.workingTime;
-
-                    this.studentExam = localExam;
-                    this.loadingExam = false;
-                    this.examStarted(this.studentExam);
+                    if (localExam) {
+                        // Keep the working time from the server
+                        localExam.workingTime = this.studentExam.workingTime ?? localExam.workingTime;
+                        this.studentExam = localExam;
+                        this.loadingExam = false;
+                        this.examStarted(this.studentExam);
+                    }
                 });
             } else {
                 this.loadingExam = false;
