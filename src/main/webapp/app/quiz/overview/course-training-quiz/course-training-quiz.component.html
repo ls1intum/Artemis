@@ -1,35 +1,37 @@
 <div>
     @if (questions().length > 0) {
         @if (currentQuestion(); as question) {
-            @if (question.type === MULTIPLE_CHOICE) {
-                <jhi-multiple-choice-question
-                    [question]="question"
-                    [selectedAnswerOptions]="selectedAnswerOptions"
-                    (selectedAnswerOptionsChange)="selectedAnswerOptions = $event"
-                    [questionIndex]="currentIndex() + 1"
-                    [showResult]="showingResult"
-                    [score]="questionScores"
-                />
-            }
-            @if (question.type === SHORT_ANSWER) {
-                <jhi-short-answer-question
-                    [question]="question"
-                    [submittedTexts]="shortAnswerSubmittedTexts"
-                    (submittedTextsChange)="shortAnswerSubmittedTexts = $event"
-                    [questionIndex]="currentIndex() + 1"
-                    [showResult]="showingResult"
-                    [score]="questionScores"
-                />
-            }
-            @if (question.type === DRAG_AND_DROP) {
-                <jhi-drag-and-drop-question
-                    [question]="question"
-                    [mappings]="dragAndDropMappings"
-                    (mappingsChange)="dragAndDropMappings = $event"
-                    [questionIndex]="currentIndex() + 1"
-                    [showResult]="showingResult"
-                    [score]="questionScores"
-                />
+            @for (item of [question.id]; track item) {
+                @if (question.type === MULTIPLE_CHOICE) {
+                    <jhi-multiple-choice-question
+                        [question]="question"
+                        [selectedAnswerOptions]="selectedAnswerOptions"
+                        (selectedAnswerOptionsChange)="selectedAnswerOptions = $event"
+                        [questionIndex]="currentIndex() + 1"
+                        [showResult]="showingResult"
+                        [score]="questionScores"
+                    />
+                }
+                @if (question.type === SHORT_ANSWER) {
+                    <jhi-short-answer-question
+                        [question]="question"
+                        [submittedTexts]="shortAnswerSubmittedTexts"
+                        (submittedTextsChange)="shortAnswerSubmittedTexts = $event"
+                        [questionIndex]="currentIndex() + 1"
+                        [showResult]="showingResult"
+                        [score]="questionScores"
+                    />
+                }
+                @if (question.type === DRAG_AND_DROP) {
+                    <jhi-drag-and-drop-question
+                        [question]="question"
+                        [mappings]="dragAndDropMappings"
+                        (mappingsChange)="dragAndDropMappings = $event"
+                        [questionIndex]="currentIndex() + 1"
+                        [showResult]="showingResult"
+                        [score]="questionScores"
+                    />
+                }
             }
         }
         @if (!submitted) {
