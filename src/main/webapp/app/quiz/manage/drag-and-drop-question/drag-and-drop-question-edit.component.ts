@@ -9,12 +9,12 @@ import {
     OnDestroy,
     OnInit,
     Output,
+    OutputRefSubscription,
     SimpleChanges,
     ViewEncapsulation,
     inject,
     viewChild,
 } from '@angular/core';
-import { Subscription } from 'rxjs';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/quiz/shared/entities/drag-state.enum';
@@ -120,7 +120,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     private readonly backgroundImage = viewChild.required<ImageComponent>('backgroundImage');
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
 
-    private adjustClickLayerWidthSubscription?: Subscription;
+    private adjustClickLayerWidthSubscription?: OutputRefSubscription;
 
     @Input() question: DragAndDropQuestion;
     @Input() questionIndex: number;
