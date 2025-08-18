@@ -51,8 +51,3 @@ html {
 .btn-outline-primary:not(.list-group-item):hover {
     color: $white;
 }
-
-html.light-theme {
-    --transcript-active-bg: #dceeff;
-    --transcript-active-text: #003366;
-}

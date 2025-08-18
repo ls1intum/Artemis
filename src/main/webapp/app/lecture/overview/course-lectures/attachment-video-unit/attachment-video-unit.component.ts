@@ -74,7 +74,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.transcriptSegments.set([]);
             this.playlistUrl.set(undefined);
 
-            const src = this.videoUrl();
+            const src = this.lectureUnit().videoSource;
             if (!src) return;
             // Always try to resolve a TUM Live playlist.
             this.resolveTumLivePlaylist(src).then((url) => {
