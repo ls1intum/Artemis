@@ -103,8 +103,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         void firstValueFrom(
             this.http.get<{ segments: TranscriptSegment[] }>(url).pipe(
                 catchError((err) => {
-                    // eslint-disable-next-line no-undef
-                    console.error('Transcript fetch failed', err);
                     return of({ segments: [] });
                 }),
             ),
