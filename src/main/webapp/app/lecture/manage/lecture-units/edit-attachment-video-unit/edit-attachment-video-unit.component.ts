@@ -50,7 +50,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                 switchMap((attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
                     const attachmentVideoUnit = attachmentVideoUnitResponse.body!;
                     if (!this.accountService.isAdmin()) {
-                        return of({ attachmentVideoUnit, transcription: null });
+                        return of({ attachmentVideoUnit, transcription: undefined });
                     }
                     return this.lectureTranscriptionService.getTranscription(attachmentVideoUnit.id!).pipe(
                         map((transcription) => ({
