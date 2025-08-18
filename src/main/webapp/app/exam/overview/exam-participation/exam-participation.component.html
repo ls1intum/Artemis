@@ -30,14 +30,14 @@
                 />
 
                 <div class="d-flex justify-content-between gap-3">
-                    <div class="bg-body" [class.ms-3]="!testRunId">
+                    <div class="bg-body" [class.ms-3]="!testRunId()">
                         <jhi-exam-navigation-sidebar
                             [sidebarData]="sidebarData"
                             [exercises]="studentExam.exercises!"
                             [exerciseIndex]="exerciseIndex"
                             [overviewPageOpen]="activePageIndex === -1"
                             [examSessions]="studentExam.examSessions"
-                            [isTestRun]="testRunId"
+                            [isTestRun]="testRunId()"
                             (onPageChanged)="onPageChange($event)"
                         />
                     </div>
@@ -95,7 +95,7 @@
                                                     <jhi-programming-submission-exam
                                                         [exercise]="exercise"
                                                         [studentParticipation]="exercise.studentParticipations[0]"
-                                                        [courseId]="courseId"
+                                                        [courseId]="courseId()"
                                                     />
                                                 }
                                             }

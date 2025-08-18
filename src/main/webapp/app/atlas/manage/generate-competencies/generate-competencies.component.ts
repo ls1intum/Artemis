@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild, inject, input } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -73,7 +73,6 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
 
     @ViewChild(CourseDescriptionFormComponent) courseDescriptionForm: CourseDescriptionFormComponent;
 
-    courseId: number;
     isLoading = false;
     submitted = false;
     form = new FormGroup({ competencies: new FormArray<FormGroup<CompetencyFormControlsWithViewed>>([]) });
@@ -87,13 +86,12 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     protected readonly ButtonType = ButtonType;
     readonly documentationType: DocumentationType = 'GenerateCompetencies';
 
+    courseId = input.required<number>();
+
     ngOnInit(): void {
-        this.activatedRoute.params.subscribe((params) => {
-            this.courseId = Number(params['courseId']);
-            firstValueFrom(this.courseManagementService.find(this.courseId))
-                .then((course) => this.courseDescriptionForm.setCourseDescription(course.body?.description ?? ''))
-                .catch((res: HttpErrorResponse) => onError(this.alertService, res));
-        });
+        firstValueFrom(this.courseManagementService.find(this.courseId()))
+            .then((course) => this.courseDescriptionForm.setCourseDescription(course.body?.description ?? ''))
+            .catch((res: HttpErrorResponse) => onError(this.alertService, res));
     }
 
     /**
@@ -103,7 +101,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     getCompetencyRecommendations(courseDescription: string) {
         this.isLoading = true;
         this.getCurrentCompetencies().subscribe((currentCompetencies) => {
-            this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription, currentCompetencies).subscribe({
+            this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId(), courseDescription, currentCompetencies).subscribe({
                 next: () => {
                     const websocketTopic = `/user/topic/iris/competencies/${this.courseId}`;
                     this.websocketService.subscribe(websocketTopic);
@@ -146,7 +144,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      */
     private getCurrentCompetencies(): Observable<CompetencyRecommendation[]> {
         const currentCompetencySuggestions = this.competencies.getRawValue().map((c) => c.competency);
-        const courseCompetenciesObservable = this.courseCompetencyService.getAllForCourse(this.courseId);
+        const courseCompetenciesObservable = this.courseCompetencyService.getAllForCourse(this.courseId());
         if (courseCompetenciesObservable) {
             return courseCompetenciesObservable.pipe(
                 map((competencies) => competencies.body?.map((c) => ({ title: c.title, description: c.description, taxonomy: c.taxonomy }))),
@@ -214,7 +212,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
      */
     save() {
         const competenciesToSave = this.competencies.getRawValue().map((c) => Object.assign(new Competency(), c.competency));
-        this.competencyService.createBulk(competenciesToSave, this.courseId).subscribe({
+        this.competencyService.createBulk(competenciesToSave, this.courseId()).subscribe({
             next: () => {
                 this.submitted = true;
                 this.router.navigate(['../'], { relativeTo: this.activatedRoute });

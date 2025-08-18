@@ -1,5 +1,5 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Component, Input, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -30,7 +30,6 @@ import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
     imports: [NgbDropdown, NgbDropdownToggle, FaIconComponent, TranslateDirective, NgbDropdownMenu, RouterLink, NgClass, JhiConnectionStatusComponent, TruncatePipe],
 })
 export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
-    private route = inject(ActivatedRoute);
     private router = inject(Router);
     private accountService = inject(AccountService);
     private translateService = inject(TranslateService);
@@ -50,7 +49,6 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     question: QuizQuestion;
     quizPointStatistic: QuizPointStatistic;
     questionStatistic: MultipleChoiceQuestionStatistic;
-    questionIdParam: number;
     private websocketChannelForData: string;
     // timer
     waitingForQuizStart = false;
@@ -61,15 +59,16 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     // Icons
     farListAlt = faListAlt;
 
+    questionId = input<number>();
+    exerciseId = input<number>();
+
     ngOnInit() {
-        this.route.params.subscribe((params) => {
-            this.questionIdParam = +params['questionId'];
-            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
-                    this.loadQuiz(res.body!);
-                });
-            }
-        });
+        const internExerciseId = this.exerciseId();
+        if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA]) && internExerciseId) {
+            this.quizExerciseService.find(internExerciseId).subscribe((res: HttpResponse<QuizExercise>) => {
+                this.loadQuiz(res.body!);
+            });
+        }
 
         // update displayed times in UI regularly
         this.interval = setInterval(() => {
@@ -134,7 +133,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionId() === question.id)[0];
         this.question = updatedQuestion as QuizQuestion;
         this.waitingForQuizStart = !this.quizExercise.quizStarted;
     }

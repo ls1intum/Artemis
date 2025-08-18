@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -44,7 +44,6 @@ export class Lti13DeepLinkingComponent implements OnInit {
     private alertService = inject(AlertService);
     private sessionStorageService = inject(SessionStorageService);
 
-    courseId: number;
     exercises: Exercise[];
     lectures: Lecture[];
     selectedExercises?: Set<number> = new Set();
@@ -56,7 +55,6 @@ export class Lti13DeepLinkingComponent implements OnInit {
 
     predicate = 'type';
     reverse = false;
-    isLinking = true;
 
     //grouping
     isExerciseGroupingActive = false;
@@ -67,6 +65,9 @@ export class Lti13DeepLinkingComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faWrench = faWrench;
 
+    courseId = input.required<number>();
+    isLinking = this.courseId === undefined;
+
     /**
      * Initializes the component.
      * - Retrieves the course ID from the route parameters.
@@ -74,35 +75,31 @@ export class Lti13DeepLinkingComponent implements OnInit {
      * - Retrieves the course details and exercises.
      * - Redirects unauthenticated users to the login page.
      */
+    // Replace the entire ngOnInit method with:
     ngOnInit() {
-        this.route.params.subscribe((params) => {
-            this.courseId = Number(params['courseId']);
-
-            if (!this.courseId) {
-                this.isLinking = false;
-                return;
-            }
-            if (!this.isLinking) {
-                return;
-            }
-
-            this.accountService.identity().then((user) => {
-                if (user) {
-                    this.courseManagementService.findWithExercisesAndLecturesAndCompetencies(this.courseId).subscribe((findWithExercisesResult) => {
-                        if (findWithExercisesResult?.body) {
-                            this.course = findWithExercisesResult.body;
-                            if (findWithExercisesResult?.body?.exercises) {
-                                this.exercises = findWithExercisesResult.body.exercises;
-                            }
-                            if (findWithExercisesResult?.body?.lectures) {
-                                this.lectures = findWithExercisesResult.body.lectures;
-                            }
+        if (!this.courseId()) {
+            this.isLinking = false;
+            return;
+        }
+        if (!this.isLinking) {
+            return;
+        }
+        this.accountService.identity().then((user) => {
+            if (user) {
+                this.courseManagementService.findWithExercisesAndLecturesAndCompetencies(this.courseId()).subscribe((findWithExercisesResult) => {
+                    if (findWithExercisesResult?.body) {
+                        this.course = findWithExercisesResult.body;
+                        if (findWithExercisesResult?.body?.exercises) {
+                            this.exercises = findWithExercisesResult.body.exercises;
                         }
-                    });
-                } else {
-                    this.redirectUserToLoginThenTargetLink(window.location.href);
-                }
-            });
+                        if (findWithExercisesResult?.body?.lectures) {
+                            this.lectures = findWithExercisesResult.body.lectures;
+                        }
+                    }
+                });
+            } else {
+                this.redirectUserToLoginThenTargetLink(window.location.href);
+            }
         });
     }
 
@@ -252,7 +249,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
                 .set('contentIds', contentIds || '');
 
             this.http
-                .post<DeepLinkingResponse>(`api/lti/lti13/deep-linking/${this.courseId}`, null, {
+                .post<DeepLinkingResponse>(`api/lti/lti13/deep-linking/${this.courseId()}`, null, {
                     observe: 'response',
                     params: httpParams,
                 })

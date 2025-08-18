@@ -1,8 +1,8 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, inject, input } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { Observable, Subscription, firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -65,7 +65,7 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
         UnreferencedFeedbackComponent,
     ],
 })
-export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
+export class CodeEditorTutorAssessmentContainerComponent implements OnInit {
     private manualResultService = inject(ProgrammingAssessmentManualResultService);
     private router = inject(Router);
     private location = inject(Location);
@@ -89,7 +89,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly getCourseFromExercise = getCourseFromExercise;
 
-    paramSub: Subscription;
     participation: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
     submission?: ProgrammingSubmission;
@@ -112,10 +111,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     showEditorInstructions = true;
     hasAssessmentDueDatePassed: boolean;
     correctionRound: number;
-    courseId: number;
-    examId = 0;
-    exerciseId: number;
-    exerciseGroupId: number;
     exerciseDashboardLink: string[];
     localRepositoryLink: string[];
     loadingInitialSubmission = true;
@@ -158,6 +153,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
     }
 
+    courseId = input.required<number>();
+    exerciseId = input.required<number>();
+    examId = input<number>();
+    exerciseGroupId = input<number>();
+    submissionId = input.required();
+
     /**
      * On init set up the route param subscription.
      * Will load the participation according to participation id with the latest result and result details.
@@ -171,74 +172,54 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.isTestRun = queryParams.get('testRun') === 'true';
             this.correctionRound = Number(queryParams.get('correction-round'));
         });
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.loadingParticipation = true;
-            this.participationCouldNotBeFetched = false;
+        this.loadingParticipation = true;
+        this.participationCouldNotBeFetched = false;
 
-            this.courseId = Number(params['courseId']);
-            this.exerciseId = Number(params['exerciseId']);
-            const examId = params['examId'];
-            if (examId) {
-                this.examId = Number(examId);
-                this.exerciseGroupId = Number(params['exerciseGroupId']);
-            }
+        this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId(), this.exerciseId(), this.examId(), this.isTestRun);
 
-            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
-
-            const submissionId = params['submissionId'];
-            const submissionObservable = submissionId === 'new' ? this.loadRandomSubmission(this.exerciseId) : this.loadSubmission(Number(submissionId));
-            submissionObservable
-                .pipe(
-                    tap({
-                        next: async (submission?: ProgrammingSubmission) => {
-                            await this.onSubmissionReceived(submissionId, submission);
-                        },
-                        error: (error: HttpErrorResponse) => {
-                            this.handleErrorResponse(error);
-                        },
-                        complete: () => (this.loadingParticipation = false),
-                    }),
-                    // The following is needed for highlighting changed code lines
-                    switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!, false, true)),
-                    tap((response) => {
-                        const programmingExercise = response.body!;
-                        this.templateParticipation = programmingExercise.templateParticipation!;
-                        this.exercise.gradingCriteria = programmingExercise.gradingCriteria;
-                        this.isAtLeastEditor = !!this.exercise.isAtLeastEditor;
-                    }),
-                    switchMap(() => {
-                        // Get all files with content from template repository
-                        this.domainService.setDomain([DomainType.PARTICIPATION, this.templateParticipation]);
-                        const observable = this.repositoryFileService.getFilesWithContent();
-                        // Set back to student participation
-                        this.domainService.setDomain([DomainType.PARTICIPATION, this.participation]);
-                        this.localRepositoryLink = getLocalRepositoryLink(
-                            this.courseId,
-                            this.exerciseId,
-                            RepositoryType.USER,
-                            this.participation.id!,
-                            this.exerciseGroupId,
-                            this.examId,
-                        );
-                        return observable;
-                    }),
-                    tap((templateFilesObj) => {
-                        if (templateFilesObj) {
-                            this.templateFileSession = templateFilesObj;
-                        }
-                    }),
-                )
-                .subscribe();
-        });
-    }
-
-    /**
-     * If a subscription exists for paramSub, unsubscribe
-     */
-    ngOnDestroy() {
-        if (this.paramSub) {
-            this.paramSub.unsubscribe();
-        }
+        const submissionObservable = this.submissionId() === 'new' ? this.loadRandomSubmission(this.exerciseId()) : this.loadSubmission(Number(this.submissionId()));
+        submissionObservable
+            .pipe(
+                tap({
+                    next: async (submission?: ProgrammingSubmission) => {
+                        await this.onSubmissionReceived(String(this.submissionId()), submission);
+                    },
+                    error: (error: HttpErrorResponse) => {
+                        this.handleErrorResponse(error);
+                    },
+                    complete: () => (this.loadingParticipation = false),
+                }),
+                // The following is needed for highlighting changed code lines
+                switchMap(() => this.programmingExerciseService.findWithTemplateAndSolutionParticipation(this.exercise.id!, false, true)),
+                tap((response) => {
+                    const programmingExercise = response.body!;
+                    this.templateParticipation = programmingExercise.templateParticipation!;
+                    this.exercise.gradingCriteria = programmingExercise.gradingCriteria;
+                    this.isAtLeastEditor = !!this.exercise.isAtLeastEditor;
+                }),
+                switchMap(() => {
+                    // Get all files with content from template repository
+                    this.domainService.setDomain([DomainType.PARTICIPATION, this.templateParticipation]);
+                    const observable = this.repositoryFileService.getFilesWithContent();
+                    // Set back to student participation
+                    this.domainService.setDomain([DomainType.PARTICIPATION, this.participation]);
+                    this.localRepositoryLink = getLocalRepositoryLink(
+                        this.courseId(),
+                        this.exerciseId(),
+                        RepositoryType.USER,
+                        this.participation.id!,
+                        this.exerciseGroupId(),
+                        this.examId(),
+                    );
+                    return observable;
+                }),
+                tap((templateFilesObj) => {
+                    if (templateFilesObj) {
+                        this.templateFileSession = templateFilesObj;
+                    }
+                }),
+            )
+            .subscribe();
     }
 
     private async onSubmissionReceived(submissionId: string, submission?: ProgrammingSubmission) {
@@ -453,12 +434,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
                 const url = getLinkToSubmissionAssessment(
                     ExerciseType.PROGRAMMING,
-                    this.courseId,
-                    this.exerciseId,
+                    this.courseId(),
+                    this.exerciseId(),
                     response.participation?.id,
                     response.id!,
-                    this.examId,
-                    this.exerciseGroupId,
+                    this.examId(),
+                    this.exerciseGroupId(),
                     undefined,
                 );
                 this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });

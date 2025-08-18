@@ -1,5 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, inject, viewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, inject, input, viewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -34,13 +33,9 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private languageHelper = inject(JhiLanguageHelper);
     private modalService = inject(NgbModal);
-    private route = inject(ActivatedRoute);
 
     readonly editorContainer = viewChild.required<ElementRef>('editorContainer');
     readonly titleField = viewChild<NgModel>('titleField');
-
-    @Input() courseId: number;
-    @Input() apollonDiagramId: number;
 
     @Output() closeEdit = new EventEmitter<DragAndDropQuestion | undefined>();
     @Output() closeModal = new EventEmitter();
@@ -83,44 +78,42 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     faArrow = faArrowLeft;
     faX = faX;
 
+    apollonDiagramId = input.required<number>();
+    courseId = input.required<number>();
+
     /**
      * Initializes Apollon Editor and sets auto save timer
      */
     ngOnInit() {
-        this.route.params.subscribe((params) => {
-            this.apollonDiagramId ??= Number(params['id']);
-            this.courseId ??= Number(params['courseId']);
+        this.courseService.find(this.courseId()).subscribe({
+            next: (response) => {
+                this.course = response.body!;
+            },
+            error: () => {
+                this.alertService.error('artemisApp.apollonDiagram.detail.error.loading');
+            },
+        });
 
-            this.courseService.find(this.courseId).subscribe({
-                next: (response) => {
-                    this.course = response.body!;
-                },
-                error: () => {
-                    this.alertService.error('artemisApp.apollonDiagram.detail.error.loading');
-                },
-            });
+        this.apollonDiagramService.find(this.apollonDiagramId(), this.courseId()).subscribe({
+            next: (response) => {
+                const diagram = response.body!;
 
-            this.apollonDiagramService.find(this.apollonDiagramId, this.courseId).subscribe({
-                next: (response) => {
-                    const diagram = response.body!;
+                this.apollonDiagram = diagram;
 
-                    this.apollonDiagram = diagram;
+                const model: UMLModel = diagram.jsonRepresentation && JSON.parse(diagram.jsonRepresentation);
+                this.initializeApollonEditor(model);
+                this.setAutoSaveTimer();
+            },
+            error: () => {
+                this.alertService.error('artemisApp.apollonDiagram.detail.error.loading');
+            },
+        });
 
-                    const model: UMLModel = diagram.jsonRepresentation && JSON.parse(diagram.jsonRepresentation);
-                    this.initializeApollonEditor(model);
-                    this.setAutoSaveTimer();
-                },
-                error: () => {
-                    this.alertService.error('artemisApp.apollonDiagram.detail.error.loading');
-                },
-            });
-
-            this.languageHelper.language.subscribe(async (languageKey: string) => {
-                if (this.apollonEditor) {
-                    await this.apollonEditor.nextRender;
-                    this.apollonEditor.locale = languageKey as Locale;
-                }
-            });
+        this.languageHelper.language.subscribe(async (languageKey: string) => {
+            if (this.apollonEditor) {
+                await this.apollonEditor.nextRender;
+                this.apollonEditor.locale = languageKey as Locale;
+            }
         });
     }
 
@@ -167,7 +160,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             jsonRepresentation: JSON.stringify(umlModel),
         };
 
-        const result = await lastValueFrom(this.apollonDiagramService.update(updatedDiagram, this.courseId));
+        const result = await lastValueFrom(this.apollonDiagramService.update(updatedDiagram, this.courseId()));
         if (result?.ok) {
             this.alertService.success('artemisApp.apollonDiagram.updated', { title: this.apollonDiagram?.title });
             this.isSaved = true;

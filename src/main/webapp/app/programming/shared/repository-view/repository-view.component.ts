@@ -1,6 +1,6 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject, input, linkedSignal } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -43,7 +43,6 @@ import { DomainType, RepositoryType } from 'app/programming/shared/code-editor/m
 export class RepositoryViewComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     domainService = inject(DomainService);
-    private route = inject(ActivatedRoute);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private router = inject(Router);
@@ -57,7 +56,6 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
 
     readonly getCourseFromExercise = getCourseFromExercise;
 
-    paramSub: Subscription;
     participation: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
     userId: number;
@@ -68,7 +66,6 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     routeCommitHistory: string;
     vcsAccessLogRoute: string;
     repositoryUri: string;
-    repositoryType: RepositoryType;
     enableVcsAccessLog = false;
     allowVcsAccessLog = false;
     result: Result;
@@ -83,10 +80,14 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
      * Unsubscribe from all subscriptions when the component is destroyed
      */
     ngOnDestroy() {
-        this.paramSub?.unsubscribe();
         this.participationWithLatestResultSub?.unsubscribe();
         this.differentParticipationSub?.unsubscribe();
     }
+
+    exerciseId = input.required<number>();
+    repositoryId = input.required<number>();
+    repositoryType = input();
+    internalRepositoryType = linkedSignal<RepositoryType>(() => (this.repositoryType() || RepositoryType.USER) as RepositoryType);
 
     /**
      * On init, subscribe to the route params to get the participation and exercise id
@@ -99,22 +100,17 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             this.userId = user!.id!;
         });
         this.routeCommitHistory = this.router.url + '/commit-history';
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.loadingParticipation = true;
-            this.participationCouldNotBeFetched = false;
-            const exerciseId = Number(params['exerciseId']);
-            const repositoryId = Number(params['repositoryId']);
-            this.repositoryType = params['repositoryType'] ?? RepositoryType.USER;
-            this.vcsAccessLogRoute = this.router.url + '/vcs-access-log';
-            this.enableVcsAccessLog = this.router.url.includes('course-management') && params['repositoryType'] !== RepositoryType.TESTS;
-            if (this.repositoryType === RepositoryType.USER) {
-                this.loadStudentParticipation(repositoryId);
-            } else if (this.repositoryType === RepositoryType.AUXILIARY) {
-                this.loadAuxiliaryRepository(exerciseId, repositoryId);
-            } else {
-                this.loadDifferentParticipation(this.repositoryType, exerciseId);
-            }
-        });
+        this.loadingParticipation = true;
+        this.participationCouldNotBeFetched = false;
+        this.vcsAccessLogRoute = this.router.url + '/vcs-access-log';
+        this.enableVcsAccessLog = this.router.url.includes('course-management') && this.internalRepositoryType() !== RepositoryType.TESTS;
+        if (this.internalRepositoryType() === RepositoryType.USER) {
+            this.loadStudentParticipation(this.repositoryId());
+        } else if (this.internalRepositoryType() === RepositoryType.AUXILIARY) {
+            this.loadAuxiliaryRepository(this.exerciseId(), this.repositoryId());
+        } else {
+            this.loadDifferentParticipation(this.internalRepositoryType(), this.exerciseId());
+        }
     }
 
     /**

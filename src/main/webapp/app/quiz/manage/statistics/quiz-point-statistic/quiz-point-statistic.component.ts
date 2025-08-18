@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Router } from '@angular/router';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -27,7 +27,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FaIconComponent, TranslateDirective, BarChartModule, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
-    private route = inject(ActivatedRoute);
     private router = inject(Router);
     private accountService = inject(AccountService);
     private quizExerciseService = inject(QuizExerciseService);
@@ -69,38 +68,39 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     // Icons
     faSync = faSync;
 
+    exerciseId = input.required<number>();
+    courseId = input.required<number>();
+
     ngOnInit() {
         this.translateService.onLangChange.subscribe(() => {
             this.setAxisLabels('showStatistic.quizPointStatistic.xAxes', 'showStatistic.quizPointStatistic.yAxes');
         });
-        this.route.params.subscribe((params) => {
-            // use different REST-call if the User is a Student
-            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
-                    this.loadQuizSuccess(res.body!);
-                });
-            }
-
-            // subscribe websocket for new statistical data
-            this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            this.websocketService.subscribe(this.websocketChannelForData);
-
-            if (!this.quizExerciseChannel) {
-                this.quizExerciseChannel = '/topic/courses/' + params['courseId'] + '/quizExercises';
-
-                // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-                this.websocketService.subscribe(this.quizExerciseChannel);
-                this.websocketService.receive(this.quizExerciseChannel).subscribe((quiz) => {
-                    if (this.waitingForQuizStart && params['exerciseId'] === quiz.id) {
-                        this.loadQuizSuccess(quiz);
-                    }
-                });
-            }
-
-            // ask for new Data if the websocket for new statistical data was notified
-            this.websocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
-                this.loadNewData(quiz.quizPointStatistic);
+        // use different REST-call if the User is a Student
+        if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+            this.quizExerciseService.find(this.exerciseId()).subscribe((res) => {
+                this.loadQuizSuccess(res.body!);
             });
+        }
+
+        // subscribe websocket for new statistical data
+        this.websocketChannelForData = '/topic/statistic/' + this.exerciseId();
+        this.websocketService.subscribe(this.websocketChannelForData);
+
+        if (!this.quizExerciseChannel) {
+            this.quizExerciseChannel = '/topic/courses/' + this.courseId() + '/quizExercises';
+
+            // quizExercise channel => react to changes made to quizExercise (e.g. start date)
+            this.websocketService.subscribe(this.quizExerciseChannel);
+            this.websocketService.receive(this.quizExerciseChannel).subscribe((quiz) => {
+                if (this.waitingForQuizStart && this.exerciseId() === quiz.id) {
+                    this.loadQuizSuccess(quiz);
+                }
+            });
+        }
+
+        // ask for new Data if the websocket for new statistical data was notified
+        this.websocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
+            this.loadNewData(quiz.quizPointStatistic);
         });
 
         // update displayed times in UI regularly

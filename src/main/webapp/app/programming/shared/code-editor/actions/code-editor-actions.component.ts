@@ -1,10 +1,10 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject, input } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject, input, linkedSignal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { isEmpty as _isEmpty } from 'lodash-es';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { faCircleNotch, faExternalLink, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -19,7 +19,7 @@ import { getLocalRepositoryLink } from 'app/shared/util/navigation.utils';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/services/code-editor-submission.service';
-import { CommitState, EditorState, FileSubmission, GitConflictState } from '../model/code-editor.model';
+import { CommitState, EditorState, FileSubmission, GitConflictState, RepositoryType } from '../model/code-editor.model';
 import { CodeEditorConfirmRefreshModalComponent } from 'app/programming/shared/code-editor/actions/refresh-modal/code-editor-confirm-refresh-modal.component';
 import { CodeEditorResolveConflictModalComponent } from 'app/programming/shared/code-editor/actions/conflict-modal/code-editor-resolve-conflict-modal.component';
 
@@ -34,7 +34,6 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     private conflictService = inject(CodeEditorConflictStateService);
     private modalService = inject(NgbModal);
     private submissionService = inject(CodeEditorSubmissionService);
-    private route = inject(ActivatedRoute);
     private router = inject(Router);
 
     CommitState = CommitState;
@@ -92,16 +91,24 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
         this.editorStateChange.emit(editorState);
     }
 
+    repositoryType = input<RepositoryType>();
+    internalRepositoryType = linkedSignal<RepositoryType>(() => (this.repositoryType() || RepositoryType.USER) as RepositoryType);
+    courseId = input<number>();
+    repositoryId = input<number>();
+    exerciseId = input<number>();
+    examId = input<number>();
+    exerciseGroupId = input<number>();
+
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
-            const repositoryType = params['repositoryType'] ?? 'USER';
-            const courseId = Number(params['courseId']);
-            const repositoryId = Number(params['repositoryId']);
-            const exerciseId = Number(params['exerciseId']);
-            const examId = Number(params['examId']);
-            const exerciseGroupId = Number(params['exerciseGroupId']);
-            this.repositoryLink = getLocalRepositoryLink(courseId, exerciseId, repositoryType, repositoryId, examId, exerciseGroupId);
-        });
+        const courseId = this.courseId();
+        const exerciseId = this.exerciseId();
+        const repositoryId = this.repositoryId();
+        const examId = this.examId();
+        const exerciseGroupId = this.exerciseGroupId();
+
+        if (courseId !== undefined && exerciseId !== undefined && repositoryId !== undefined && examId !== undefined && exerciseGroupId !== undefined) {
+            this.repositoryLink = getLocalRepositoryLink(courseId, exerciseId, this.internalRepositoryType(), repositoryId, examId, exerciseGroupId);
+        }
         this.isInCourseManagement = this.router.url.includes('course-management');
 
         this.conflictStateSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {

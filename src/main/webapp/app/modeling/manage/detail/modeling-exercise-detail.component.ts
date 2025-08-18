@@ -1,6 +1,5 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@ls1intum/apollon';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
@@ -37,7 +36,6 @@ import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/det
 export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);
     private modelingExerciseService = inject(ModelingExerciseService);
-    private route = inject(ActivatedRoute);
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private statisticsService = inject(StatisticsService);
     private profileService = inject(ProfileService);
@@ -48,7 +46,6 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
 
     modelingExercise: ModelingExercise;
     course?: Course;
-    private subscription: Subscription;
     private eventSubscriber: Subscription;
     problemStatement: SafeHtml;
     gradingInstructions: SafeHtml;
@@ -61,12 +58,12 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
 
     isApollonProfileActive = false;
 
+    exerciseId = input.required<number>();
+
     ngOnInit() {
-        this.subscription = this.route.params.subscribe((params) => {
-            // Checks if the current environment includes "apollon" profile
-            this.isApollonProfileActive = this.profileService.isProfileActive('apollon');
-            this.load(params['exerciseId']);
-        });
+        // Checks if the current environment includes "apollon" profile
+        this.isApollonProfileActive = this.profileService.isProfileActive('apollon');
+        this.load(this.exerciseId());
         this.registerChangeInModelingExercises();
     }
 
@@ -131,7 +128,6 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.subscription.unsubscribe();
         this.eventManager.destroy(this.eventSubscriber);
     }
 

@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { AfterViewInit, Component, OnDestroy, OnInit, effect, inject, input } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
@@ -19,10 +19,11 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     imports: [TranslateDirective, RouterLink, HtmlForMarkdownPipe],
 })
 export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
-    private route = inject(ActivatedRoute);
     private legalDocumentService = inject(LegalDocumentService);
     private languageHelper = inject(JhiLanguageHelper);
     private accountService = inject(AccountService);
+
+    fragment = input<string>();
 
     privacyStatement?: string;
     private languageChangeSubscription?: Subscription;
@@ -49,15 +50,28 @@ export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
      * After view initialization scroll the fragment of the current route into view.
      */
     ngAfterViewInit(): void {
-        this.route.params.subscribe((params) => {
-            try {
-                const fragment = document.querySelector('#' + params['fragment']);
-                if (fragment !== null) {
-                    fragment.scrollIntoView();
-                }
-            } catch (e) {
-                /* empty */
-            }
+        // Initial scroll if fragment exists
+        this.scrollToFragment();
+    }
+
+    constructor() {
+        effect(() => {
+            this.scrollToFragment();
         });
+    }
+
+    scrollToFragment(): void {
+        const fragmentValue = this.fragment();
+        if (fragmentValue) {
+            // Use setTimeout to ensure DOM is updated
+            setTimeout(() => {
+                try {
+                    const element = document.querySelector('#' + fragmentValue);
+                    element?.scrollIntoView();
+                } catch (e) {
+                    /* empty */
+                }
+            });
+        }
     }
 }

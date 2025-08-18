@@ -9,7 +9,7 @@
         <jhi-statistics-average-score-graph
             [exerciseAverageScores]="courseStatistics.averageScoresOfExercises"
             [courseAverage]="courseStatistics.averageScoreOfCourse"
-            [courseId]="courseId"
+            [courseId]="courseId()"
         />
     }
     <div class="row mb-5">
@@ -37,7 +37,7 @@
             @if (i !== 0) {
                 <hr />
             }
-            <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" [entityId]="courseId" />
+            <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" [entityId]="courseId()" />
         </div>
     }
 </div>

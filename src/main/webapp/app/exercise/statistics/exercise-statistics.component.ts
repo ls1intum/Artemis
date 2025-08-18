@@ -1,8 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
-import { Subscription } from 'rxjs';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -22,7 +20,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 })
 export class ExerciseStatisticsComponent implements OnInit {
     private service = inject(StatisticsService);
-    private route = inject(ActivatedRoute);
     private exerciseService = inject(ExerciseService);
 
     // html properties
@@ -30,22 +27,19 @@ export class ExerciseStatisticsComponent implements OnInit {
     graphTypes = [Graphs.SUBMISSIONS, Graphs.ACTIVE_USERS, Graphs.ACTIVE_TUTORS, Graphs.CREATED_RESULTS, Graphs.CREATED_FEEDBACKS];
     currentSpan: SpanType = SpanType.WEEK;
     statisticsView: StatisticsView = StatisticsView.EXERCISE;
-    paramSub: Subscription;
 
     exercise: Exercise;
     course: Course;
     exerciseStatistics: ExerciseManagementStatisticsDto;
 
+    exerciseId = input.required<number>();
+
     ngOnInit() {
-        let exerciseId = 0;
-        this.paramSub = this.route.params.subscribe((params) => {
-            exerciseId = params['exerciseId'];
-        });
-        this.exerciseService.find(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+        this.exerciseService.find(this.exerciseId()).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.exercise = exerciseResponse.body!;
             this.course = getCourseFromExercise(this.exercise)!;
         });
-        this.service.getExerciseStatistics(exerciseId).subscribe((res: ExerciseManagementStatisticsDto) => {
+        this.service.getExerciseStatistics(this.exerciseId()).subscribe((res: ExerciseManagementStatisticsDto) => {
             this.exerciseStatistics = res;
         });
     }

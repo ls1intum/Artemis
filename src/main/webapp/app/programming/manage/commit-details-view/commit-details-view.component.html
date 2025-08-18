@@ -27,7 +27,7 @@
             [diffForTemplateAndSolution]="false"
             [leftCommitHash]="previousCommit.hash"
             [rightCommitHash]="currentCommit.hash"
-            [participationId]="repositoryId"
+            [participationId]="repositoryId?.()"
             [isRepositoryView]="true"
             [diffForTemplateAndEmptyRepository]="isTemplate"
         />

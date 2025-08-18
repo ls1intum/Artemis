@@ -1,9 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
-import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { ResultTemplateStatus, evaluateTemplateStatus } from 'app/exercise/result/result.utils';
@@ -18,7 +17,6 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
     imports: [FeedbackComponent],
 })
 export class StandaloneFeedbackComponent implements OnInit {
-    private route = inject(ActivatedRoute);
     private exerciseService = inject(ExerciseService);
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
 
@@ -32,39 +30,37 @@ export class StandaloneFeedbackComponent implements OnInit {
 
     latestDueDate?: dayjs.Dayjs;
 
+    exerciseId = input.required<number>();
+    participationId = input.required<number>();
+    resultId = input.required<number>();
+
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
-            const exerciseId = parseInt(params['exerciseId'], 10);
-            const participationId = parseInt(params['participationId'], 10);
-            const resultId = parseInt(params['resultId'], 10);
+        this.exerciseService.getExerciseDetails(this.exerciseId()).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
+            this.exercise = exerciseResponse.body!.exercise;
+            const participation = this.exercise?.studentParticipations?.find((participation) => participation.id === this.participationId());
+            if (participation) {
+                participation.exercise = this.exercise;
+                this.participation = participation;
+            }
 
-            this.exerciseService.getExerciseDetails(exerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
-                this.exercise = exerciseResponse.body!.exercise;
-                const participation = this.exercise?.studentParticipations?.find((participation) => participation.id === participationId);
-                if (participation) {
-                    participation.exercise = this.exercise;
-                    this.participation = participation;
-                }
+            const relevantResult = getAllResultsOfAllSubmissions(participation?.submissions).find((result) => result.id == this.resultId());
 
-                const relevantResult = getAllResultsOfAllSubmissions(participation?.submissions).find((result) => result.id == resultId);
+            this.result = relevantResult;
 
-                this.result = relevantResult;
+            // We set isBuilding here to false. It is the mobile applications responsibility to make the user aware if a participation is being built
+            const templateStatus = evaluateTemplateStatus(this.exercise, participation, relevantResult, false);
+            if (templateStatus == ResultTemplateStatus.MISSING) {
+                this.messageKey = 'artemisApp.result.notLatestSubmission';
+            } else {
+                this.messageKey = undefined;
+            }
 
-                // We set isBuilding here to false. It is the mobile applications responsibility to make the user aware if a participation is being built
-                const templateStatus = evaluateTemplateStatus(this.exercise, participation, relevantResult, false);
-                if (templateStatus == ResultTemplateStatus.MISSING) {
-                    this.messageKey = 'artemisApp.result.notLatestSubmission';
-                } else {
-                    this.messageKey = undefined;
-                }
+            this.setup();
+        });
 
-                this.setup();
-            });
-
-            (this.exerciseCacheService ?? this.exerciseService).getLatestDueDate(exerciseId).subscribe((latestDueDate) => {
-                this.latestDueDate = latestDueDate;
-                this.setup();
-            });
+        (this.exerciseCacheService ?? this.exerciseService).getLatestDueDate(this.exerciseId()).subscribe((latestDueDate) => {
+            this.latestDueDate = latestDueDate;
+            this.setup();
         });
     }
 

@@ -1,7 +1,6 @@
-import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewEncapsulation, inject, viewChildren } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewEncapsulation, inject, viewChildren, input } from '@angular/core';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { Subscription } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { QuizReEvaluateWarningComponent } from './warning/quiz-re-evaluate-warning.component';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
@@ -50,7 +49,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 })
 export class QuizReEvaluateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, OnDestroy {
     private quizExerciseService = inject(QuizExerciseService);
-    private route = inject(ActivatedRoute);
     private modalServiceC = inject(NgbModal);
     private quizExercisePopupService = inject(QuizExercisePopupService);
     private changeDetector = inject(ChangeDetectorRef);
@@ -71,14 +69,14 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     faExclamationCircle = faExclamationCircle;
     faExclamationTriangle = faExclamationTriangle;
 
+    exerciseId = input.required<number>();
+
     ngOnInit(): void {
-        this.subscription = this.route.params.subscribe((params) => {
-            this.quizExerciseService.find(params['exerciseId']).subscribe((response: HttpResponse<QuizExercise>) => {
-                this.quizExercise = response.body!;
-                this.prepareEntity(this.quizExercise);
-                this.savedEntity = cloneDeep(this.quizExercise);
-                this.updateDuration();
-            });
+        this.quizExerciseService.find(this.exerciseId()).subscribe((response: HttpResponse<QuizExercise>) => {
+            this.quizExercise = response.body!;
+            this.prepareEntity(this.quizExercise);
+            this.savedEntity = cloneDeep(this.quizExercise);
+            this.updateDuration();
         });
         this.quizIsValid = true;
         this.modalService = this.modalServiceC;

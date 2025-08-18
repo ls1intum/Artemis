@@ -1,5 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, input } from '@angular/core';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { BaseGradingSystemComponent } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
@@ -33,30 +33,18 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
         DocumentationButtonComponent,
     ],
 })
-export class GradingSystemComponent implements OnInit {
-    private route = inject(ActivatedRoute);
-
+export class GradingSystemComponent {
     readonly GradeType = GradeType;
 
-    courseId?: number;
-    examId?: number;
-    isExam = false;
+    courseId = input.required<number>();
+    examId = input.required<number>();
+    isExam = this.examId !== undefined;
     childComponent?: BaseGradingSystemComponent;
 
     readonly documentationType: DocumentationType = 'Grading';
 
     // Icons
     readonly faExclamationTriangle = faExclamationTriangle;
-
-    ngOnInit(): void {
-        this.route.params.subscribe((params) => {
-            this.courseId = Number(params['courseId']);
-            if (params['examId']) {
-                this.examId = Number(params['examId']);
-                this.isExam = true;
-            }
-        });
-    }
 
     /**
      * This function gets called if the router outlet gets activated. The sub routes

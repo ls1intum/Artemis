@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { PROFILE_ATHENA, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
@@ -86,6 +86,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private eventSubscriber: Subscription;
     paramSub: Subscription;
 
+    courseId = input.required<number>();
     /**
      * On init load the course information and subscribe to listen for changes in courses.
      */
@@ -109,11 +110,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             // TODO: Outdated, as we now have a bunch more sub settings
             this.irisChatEnabled = irisSettings?.irisProgrammingExerciseChatSettings?.enabled ?? false;
         }
-        this.paramSub = this.route.params.subscribe((params) => {
-            const courseId = params['courseId'];
-            this.fetchCourseStatistics(courseId);
-            this.registerChangeInCourses(courseId);
-        });
+
+        this.fetchCourseStatistics(this.courseId());
+        this.registerChangeInCourses(this.courseId());
     }
 
     getGeneralDetailSection(): DetailOverviewSection {

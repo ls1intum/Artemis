@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject, input } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -161,32 +161,33 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     localCIEnabled = true;
 
+    courseId = input.required<number>();
+    exerciseId = input.required<number>();
+
     /**
      * Fetches the course and exercise from the server
      */
     ngOnInit() {
         this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.isLoading = true;
-            const findCourse = this.courseService.find(params['courseId']);
-            const findExercise = this.exerciseService.find(params['exerciseId']);
-            const filterValue = this.route.snapshot.queryParamMap.get('scoreRangeFilter');
-            if (filterValue) {
-                this.rangeFilter = this.scoreRanges[Number(filterValue)];
-            }
+        this.isLoading = true;
+        const findCourse = this.courseService.find(this.courseId());
+        const findExercise = this.exerciseService.find(this.exerciseId());
+        const filterValue = this.route.snapshot.queryParamMap.get('scoreRangeFilter');
+        if (filterValue) {
+            this.rangeFilter = this.scoreRanges[Number(filterValue)];
+        }
 
-            forkJoin([findCourse, findExercise]).subscribe(([courseRes, exerciseRes]) => {
-                this.course = courseRes.body!;
-                this.exercise = exerciseRes.body!;
-                this.nameSortFieldProperty = this.exercise.teamMode ? 'team.name' : 'student.name';
-                this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
-                // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
-                this.participationService.findAllParticipationsByExercise(this.exercise.id!, true).subscribe((participationsResponse) => {
-                    this.handleNewParticipations(participationsResponse);
-                });
-
-                this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
+        forkJoin([findCourse, findExercise]).subscribe(([courseRes, exerciseRes]) => {
+            this.course = courseRes.body!;
+            this.exercise = exerciseRes.body!;
+            this.nameSortFieldProperty = this.exercise.teamMode ? 'team.name' : 'student.name';
+            this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
+            // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
+            this.participationService.findAllParticipationsByExercise(this.exercise.id!, true).subscribe((participationsResponse) => {
+                this.handleNewParticipations(participationsResponse);
             });
+
+            this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
         });
     }
 

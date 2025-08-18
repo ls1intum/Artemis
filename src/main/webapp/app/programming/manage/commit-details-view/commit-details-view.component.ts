@@ -1,7 +1,6 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, linkedSignal } from '@angular/core';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Subscription, forkJoin, of, throwError } from 'rxjs';
-import { ActivatedRoute } from '@angular/router';
 import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import dayjs from 'dayjs/esm';
 import { catchError, map, tap } from 'rxjs/operators';
@@ -17,12 +16,6 @@ import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programmin
 })
 export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
-    private route = inject(ActivatedRoute);
-
-    exerciseId: number;
-    repositoryId?: number; // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
-    commitHash: string;
-    isTemplate = false;
 
     errorWhileFetching = false;
     leftCommitFileContentByPath: Map<string, string> = new Map();
@@ -31,19 +24,25 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     commits: CommitInfo[] = [];
     currentCommit: CommitInfo;
     previousCommit: CommitInfo;
-    repositoryType: RepositoryType;
     diffReady = false;
+    isTemplate = false;
 
     participationRepoFilesSubscription: Subscription;
 
-    paramSub: Subscription;
     participationSub: Subscription;
 
     ngOnDestroy(): void {
         this.participationRepoFilesSubscription?.unsubscribe();
-        this.paramSub?.unsubscribe();
         this.participationSub?.unsubscribe();
     }
+
+    exerciseId = input.required<number>();
+
+    repositoryId? = input<number>(); // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
+    participationId? = input<number>(); // acts as both participationId (USER repositories) and repositoryId (AUXILIARY repositories), undefined for TEMPLATE, SOLUTION and TEST
+    commitHash = input.required<string>();
+    repositoryType = input<RepositoryType>();
+    internalRepositoryType = linkedSignal<RepositoryType>(() => (this.repositoryType() || RepositoryType.USER) as RepositoryType);
 
     /**
      * On init, subscribe to the route params to get the exercise id, participation id and commit hash.
@@ -51,13 +50,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
      * After that, retrieve and handle the commits.
      */
     ngOnInit(): void {
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.exerciseId = Number(params['exerciseId']);
-            this.repositoryId = Number(params['repositoryId']);
-            this.commitHash = params['commitHash'];
-            this.repositoryType = params['repositoryType'] ?? 'USER';
-            this.retrieveAndHandleCommits();
-        });
+        this.retrieveAndHandleCommits();
     }
 
     /**
@@ -69,14 +62,18 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
     private retrieveAndHandleCommits() {
         let commitInfoSubscription;
 
-        if (this.repositoryType === RepositoryType.TEMPLATE || this.repositoryType === RepositoryType.SOLUTION || this.repositoryType === RepositoryType.TESTS) {
-            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForTemplateSolutionOrTests(this.exerciseId, this.repositoryType);
+        if (
+            this.internalRepositoryType() === RepositoryType.TEMPLATE ||
+            this.internalRepositoryType() === RepositoryType.SOLUTION ||
+            this.internalRepositoryType() === RepositoryType.TESTS
+        ) {
+            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForTemplateSolutionOrTests(this.exerciseId(), this.internalRepositoryType());
         }
-        if (this.repositoryType === RepositoryType.AUXILIARY) {
-            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForAuxiliaryRepository(this.exerciseId, this.repositoryId!);
+        if (this.internalRepositoryType() === RepositoryType.AUXILIARY) {
+            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForAuxiliaryRepository(this.exerciseId(), this.repositoryId!()!);
         }
-        if (this.repositoryType === RepositoryType.USER) {
-            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.repositoryId!);
+        if (this.internalRepositoryType() === RepositoryType.USER) {
+            commitInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId!()!);
         }
         if (!commitInfoSubscription) {
             return;
@@ -87,7 +84,7 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
                 map((commits) => commits.sort((a, b) => (dayjs(b.timestamp).isAfter(dayjs(a.timestamp)) ? 1 : -1))),
                 tap((sortedCommits) => {
                     this.commits = sortedCommits;
-                    const foundIndex = this.commits.findIndex((commit) => commit.hash === this.commitHash);
+                    const foundIndex = this.commits.findIndex((commit) => commit.hash === this.commitHash());
                     if (foundIndex !== -1) {
                         this.currentCommit = this.commits[foundIndex];
                         this.previousCommit = foundIndex < this.commits.length - 1 ? this.commits[foundIndex + 1] : this.commits[this.commits.length - 1];
@@ -114,20 +111,22 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
         // Set ready state to false when starting diff processing
         this.diffReady = false;
 
+        const repoId = this.internalRepositoryType() === RepositoryType.USER ? this.participationId!() : this.repositoryId!();
+
         const leftCommitObservable = this.isTemplate
             ? of(new Map())
             : this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
-                  this.exerciseId,
-                  this.repositoryId!,
+                  this.exerciseId(),
+                  repoId,
                   this.previousCommit.hash!,
-                  this.repositoryType,
+                  this.internalRepositoryType(),
               );
 
         const rightCommitObservable = this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
-            this.exerciseId,
-            this.repositoryId!,
+            this.exerciseId(),
+            this.repositoryId!(),
             this.currentCommit.hash!,
-            this.repositoryType,
+            this.internalRepositoryType(),
         );
 
         this.participationRepoFilesSubscription = forkJoin({

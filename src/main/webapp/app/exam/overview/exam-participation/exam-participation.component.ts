@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, inject, input } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -123,9 +123,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // needed for recalculation of exam content height
     readonly EXAM_HEIGHT_OFFSET = 88;
 
-    courseId: number;
-    examId: number;
-    testRunId: number;
     testExam = false;
     studentExamId: number;
     testStartTime?: dayjs.Dayjs;
@@ -203,6 +200,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         });
     }
 
+    examId = input.required<number>();
+    courseId = input.required<number>();
+    testRunId = input.required<number>();
     /**
      * loads the exam from the server and initializes the view
      */
@@ -210,52 +210,45 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         combineLatest({
             parentParams: this.route.parent?.parent?.params ?? of({ courseId: undefined }),
             currentParams: this.route.params,
-        }).subscribe(({ parentParams, currentParams }) => {
-            const courseId = currentParams['courseId'] || parentParams['courseId'];
-            this.courseId = parseInt(courseId, 10);
         });
-        this.route.params.subscribe((params) => {
-            this.examId = parseInt(params['examId'], 10);
-            this.testRunId = parseInt(params['testRunId'], 10);
-            // As a student can have multiple test exams, the studentExamId is passed as a parameter.
-            const studentExamId = this.route.firstChild?.snapshot.params['studentExamId'];
-            if (studentExamId) {
-                this.testExam = true;
-                this.studentExamId = parseInt(studentExamId, 10);
-            }
-            this.loadingExam = true;
-            if (this.testRunId) {
-                this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
-                    next: (studentExam) => {
-                        this.studentExam = studentExam;
-                        this.studentExam.exam!.course = new Course();
-                        this.studentExam.exam!.course.id = this.courseId;
-                        this.exam = studentExam.exam!;
-                        this.testExam = this.exam.testExam!;
-                        this.loadingExam = false;
-                    },
-                    error: () => (this.loadingExam = false),
-                });
-            } else if (this.testExam && this.studentExamId) {
-                this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExamId).subscribe({
-                    next: (studentExam) => {
-                        this.handleStudentExam(studentExam);
-                    },
-                    error: () => {
-                        this.handleNoStudentExam();
-                    },
-                });
-            } else {
-                this.studentExamSubscription = this.examParticipationService.getOwnStudentExam(this.courseId, this.examId).subscribe({
-                    next: (studentExam) => {
-                        this.handleStudentExam(studentExam);
-                    },
-                    error: () => {
-                        this.handleNoStudentExam();
-                    },
-                });
-            }
-        });
+        // As a student can have multiple test exams, the studentExamId is passed as a parameter.
+        const studentExamId = this.route.firstChild?.snapshot.params['studentExamId'];
+        if (studentExamId) {
+            this.testExam = true;
+            this.studentExamId = parseInt(studentExamId, 10);
+        }
+        this.loadingExam = true;
+        if (this.testRunId()) {
+            this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()).subscribe({
+                next: (studentExam) => {
+                    this.studentExam = studentExam;
+                    this.studentExam.exam!.course = new Course();
+                    this.studentExam.exam!.course.id = this.courseId();
+                    this.exam = studentExam.exam!;
+                    this.testExam = this.exam.testExam!;
+                    this.loadingExam = false;
+                },
+                error: () => (this.loadingExam = false),
+            });
+        } else if (this.testExam && this.studentExamId) {
+            this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExamId).subscribe({
+                next: (studentExam) => {
+                    this.handleStudentExam(studentExam);
+                },
+                error: () => {
+                    this.handleNoStudentExam();
+                },
+            });
+        } else {
+            this.studentExamSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
+                next: (studentExam) => {
+                    this.handleStudentExam(studentExam);
+                },
+                error: () => {
+                    this.handleNoStudentExam();
+                },
+            });
+        }
 
         // listen to connect / disconnect events
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
@@ -281,7 +274,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     loadAndDisplaySummary() {
-        this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!).subscribe({
+        this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExam.id!).subscribe({
             next: (studentExamWithExercises: StudentExam) => {
                 this.studentExam = studentExamWithExercises;
                 this.showExamSummary = true;
@@ -325,13 +318,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             studentExam.workingTime = this.studentExam?.workingTime ?? studentExam.workingTime;
             this.studentExam = studentExam;
             // no need to change the whole page layout for test runs
-            if (this.testRunId) {
+            if (this.testRunId()) {
                 this.examParticipationService.setExamLayout(false, true);
             } else {
                 this.examParticipationService.setExamLayout();
             }
             // set endDate with workingTime
-            if (!!this.testRunId || this.testExam) {
+            if (!!this.testRunId() || this.testExam) {
                 this.testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
                 this.initIndividualEndDates(this.testStartTime);
             } else {
@@ -421,7 +414,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // Submit the exam with a timeout of 20s = 20000ms
         // If we don't receive a response within that time throw an error the subscription can then handle
         this.examParticipationService
-            .submitStudentExam(this.courseId, this.examId, this.studentExam)
+            .submitStudentExam(this.courseId(), this.examId(), this.studentExam)
             .pipe(
                 timeout({
                     each: 20000,
@@ -439,14 +432,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     // Publish it so other components are aware of the change
                     this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam);
 
-                    if (this.testRunId) {
+                    if (this.testRunId()) {
                         // If this is a test run, forward the user directly to the exam summary
-                        this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'summary']);
+                        this.router.navigate(['course-management', this.courseId(), 'exams', this.examId(), 'test-runs', this.testRunId(), 'summary']);
                     }
 
                     if (this.testExam) {
                         this.examParticipationService.resetExamLayout();
-                        this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'test-exam', this.studentExam.id]);
+                        this.router.navigate(['courses', this.courseId(), 'exams', this.examId(), 'test-exam', this.studentExam.id]);
                         this.examParticipationService.setShouldUpdateTestExams(true);
                     }
 
@@ -463,8 +456,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     // When we have already submitted load the existing submission
                     if (alreadySubmitted) {
-                        if (this.testRunId) {
-                            this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
+                        if (this.testRunId()) {
+                            this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()).subscribe({
                                 next: (studentExam: StudentExam) => {
                                     this.studentExam = studentExam;
                                 },
@@ -477,7 +470,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                                 },
                             });
                         } else {
-                            this.examParticipationService.getOwnStudentExam(this.courseId, this.examId).subscribe({
+                            this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
                                 next: (existingExam: StudentExam) => {
                                     this.studentExam = existingExam;
                                 },
@@ -518,7 +511,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (this.exam.testExam || !this.exam.examWithAttendanceCheck || this.handInEarly) {
             this.handleHandInEarly();
         } else {
-            this.examManagementService.isAttendanceChecked(this.courseId, this.examId).subscribe((res) => {
+            this.examManagementService.isAttendanceChecked(this.courseId(), this.examId()).subscribe((res) => {
                 if (res.body) {
                     this.attendanceChecked = res.body;
                 }
@@ -550,7 +543,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * Returns whether the student failed to submit on time. In this case the end page is adapted.
      */
     get studentFailedToSubmit(): boolean {
-        if (this.testRunId) {
+        if (this.testRunId()) {
             return false;
         }
         let individualStudentEndDate;
@@ -592,7 +585,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if exam is visible
      */
     isVisible(): boolean {
-        if (this.testRunId) {
+        if (this.testRunId()) {
             return true;
         }
         if (!this.exam) {
@@ -605,7 +598,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if exam has started
      */
     isActive(): boolean {
-        if (this.testRunId) {
+        if (this.testRunId()) {
             return true;
         }
         if (!this.exam) {
@@ -649,8 +642,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.loadAndDisplaySummary();
         } else {
             // Directly start the exam when we continue from a failed save
-            if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
-                this.examParticipationService.loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId).subscribe((localExam: StudentExam) => {
+            if (this.examParticipationService.lastSaveFailed(this.courseId(), this.examId())) {
+                this.examParticipationService.loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId(), this.examId()).subscribe((localExam: StudentExam) => {
                     // Keep the working time from the server
                     localExam.workingTime = this.studentExam.workingTime ?? localExam.workingTime;
 
@@ -669,9 +662,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * This check is not done in the normal case due to performance reasons of 2000 students sending additional requests
      */
     handleNoStudentExam() {
-        const course = this.courseStorageService.getCourse(this.courseId);
+        const course = this.courseStorageService.getCourse(this.courseId());
         if (!course) {
-            this.courseService.find(this.courseId).subscribe((courseResponse) => {
+            this.courseService.find(this.courseId()).subscribe((courseResponse) => {
                 this.isAtLeastTutor = courseResponse.body?.isAtLeastTutor;
                 this.isAtLeastInstructor = courseResponse.body?.isAtLeastInstructor;
             });
@@ -894,7 +887,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         });
 
         // save the studentExam in localStorage, so that we would be able to retrieve it later on, in case the student needs to reload the page while being offline
-        this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
+        this.examParticipationService.saveStudentExamToLocalStorage(this.courseId(), this.examId(), this.studentExam);
 
         // if no connection available -> don't try to sync, except it is forced
         // based on the submissions that need to be saved and the exercise, we perform different actions
@@ -935,13 +928,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private onSaveSubmissionSuccess(submission: Submission) {
-        this.examParticipationService.setLastSaveFailed(false, this.courseId, this.examId);
+        this.examParticipationService.setLastSaveFailed(false, this.courseId(), this.examId());
         submission.isSynced = true;
         submission.submitted = true;
     }
 
     private onSaveSubmissionError(error: HttpErrorResponse) {
-        this.examParticipationService.setLastSaveFailed(true, this.courseId, this.examId);
+        this.examParticipationService.setLastSaveFailed(true, this.courseId(), this.examId());
 
         if (error.status === 401) {
             // Unauthorized means the user needs to log in to resume

@@ -1,8 +1,8 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Subject, Subscription } from 'rxjs';
 import { ParticipationService } from './participation.service';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -66,7 +66,6 @@ enum FilterProp {
     ],
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
-    private readonly route = inject(ActivatedRoute);
     private readonly participationService = inject(ParticipationService);
     private readonly alertService = inject(AlertService);
     private readonly eventManager = inject(EventManager);
@@ -94,7 +93,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     participationsChangedPresentation: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
     filteredParticipationsSize = 0;
     eventSubscriber: Subscription;
-    paramSub: Subscription;
     exercise: Exercise;
     hasLoadedPendingSubmissions = false;
     basicPresentationEnabled = false;
@@ -124,11 +122,12 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         };
     }
 
+    exerciseId = input.required<number>();
     /**
      * Initialize component by calling loadAll and registerChangeInParticipation
      */
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe((params) => this.loadExercise(+params['exerciseId']));
+        this.loadExercise(this.exerciseId());
         this.registerChangeInParticipations();
         this.isAdmin = this.accountService.isAdmin();
         this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
@@ -141,9 +140,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise);
         this.eventManager.destroy(this.eventSubscriber);
         this.dialogErrorSource.unsubscribe();
-        if (this.paramSub) {
-            this.paramSub.unsubscribe();
-        }
         if (this.gradeStepsDTOSub) {
             this.gradeStepsDTOSub.unsubscribe();
         }

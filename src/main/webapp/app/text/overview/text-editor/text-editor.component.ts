@@ -149,6 +149,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     showHistory = false;
     submissionId: number | undefined;
 
+    exerciseId = input.required<number>();
+
     ngOnInit() {
         if (this.inputValuesArePresent()) {
             this.setupComponentWithInputValues();
@@ -208,10 +210,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private loadIrisSettings(): void {
         // only load the settings if Iris is available and this is not an exam exercise
         if (this.profileService.isProfileActive(PROFILE_IRIS) && !this.examMode) {
-            this.route.params.subscribe((params) => {
-                this.irisSettingsService.getCombinedExerciseSettings(params['exerciseId']).subscribe((irisSettings) => {
-                    this.irisSettings = irisSettings;
-                });
+            this.irisSettingsService.getCombinedExerciseSettings(this.exerciseId()).subscribe((irisSettings) => {
+                this.irisSettings = irisSettings;
             });
         }
     }
