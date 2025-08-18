@@ -1,16 +1,16 @@
-******
-Client
-******
+******************
+Client Development
+******************
 
 0. General
 ==========
 
-The Artemis client is an Angular project. Keep https://angular.io/guide/styleguide in mind.
+The Artemis client is an Angular project. Follow the official Angular style guide: https://angular.io/guide/styleguide
 
-Some general aspects:
+Key principles:
 
-* The Artemis client uses lazy loading to keep the initial bundle size as small as possible.
-* Code quality and test coverage are important. Try to reuse code and avoid code duplication. Write meaningful tests!
+* Use lazy loading to keep the initial bundle size small.
+* Prioritize code quality and test coverage. Reuse code and avoid duplication. Write meaningful tests.
 
 **Angular Migration**
 
@@ -29,10 +29,10 @@ Some general aspects:
         myInput = input<string>();
         myOutput = output<string>();
 
-* Use the new ``inject`` function, because it offers more accurate types and better compatibility with standard decorators, compared to constructor-based injection: https://angular.dev/reference/migrations/inject-function
-* Use the new way of defining queries for ``viewChild()``, ``contentChild()``, ``viewChildren()``, ``contentChildren()``: https://ngxtension.netlify.app/utilities/migrations/queries-migration
-* You can find an example for a migration in the pull request `9299 <https://github.com/ls1intum/Artemis/pull/9299>`_.
-* Use ``OnPush`` change detection strategy for components whenever possible: https://blog.angular-university.io/onpush-change-detection-how-it-works
+* Use the new ``inject`` function for dependency injection: https://angular.dev/reference/migrations/inject-function
+* Use the new query syntax for ``viewChild()``, ``contentChild()``, etc.: https://ngxtension.netlify.app/utilities/migrations/queries-migration
+* Prefer ``OnPush`` change detection for components: https://blog.angular-university.io/onpush-change-detection-how-it-works
+* See migration example: https://github.com/ls1intum/Artemis/pull/9299
 
 .. WARNING::
     **Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance!**
@@ -44,14 +44,12 @@ Some general aspects:
 1. Names
 ========
 
-1. Use PascalCase for type names.
-2. Do not use "I" as a prefix for interface names.
-3. Use PascalCase for enum values.
-4. Use camelCase for function names.
-5. Use camelCase for property names and local variables.
-6. Use SCREAMING_SNAKE_CASE for constants, i.e. properties with the ``readonly`` keyword.
-7. Do not use "_" as a prefix for private properties.
-8. Use whole words in names when possible.
+1. Use PascalCase for type and enum names.
+2. Do not prefix interfaces with "I".
+3. Use camelCase for functions, properties, and local variables.
+4. Use SCREAMING_SNAKE_CASE for constants (readonly properties).
+5. Do not prefix private properties with "_".
+6. Use descriptive, whole words for names.
 
 2. Components
 =============
@@ -124,9 +122,8 @@ Use **undefined**. **Never** use ``null``.
 6. Comments
 ============
 
-Use JSDoc style comments for functions, interfaces, enums, and classes.
-Provide extensive documentation inline and using JSDoc to make sure other developers can understand the code and the rationale behind the implementation
-without having to read the code.
+1. Use JSDoc style comments for functions, interfaces, enums, and classes.
+2. Provide extensive documentation inline and using JSDoc to make sure other developers can understand the code and the rationale behind the implementation without having to read the code.
 
 7. Strings
 ============
@@ -361,7 +358,7 @@ When creating a completely new route you will have to register the new paths in 
 15. Strict Template Check
 =========================
 
-To prevent errors for strict template rule in TypeScript, Artemis uses following approaches.
+To prevent errors for strict template rule in TypeScript, Artemis uses the following approaches:
 
 Use ArtemisTranslatePipe instead of TranslatePipe
 *************************************************
@@ -525,4 +522,3 @@ Within the component html files, we encourage the use of `bootstrap css <https:/
 .. code-block:: html
 
     <div class="d-flex ms-2">some content</div>
-
