@@ -1,0 +1,71 @@
+Reviewer Guidelines
+==================
+
+This document provides best-practice guidelines for reviewers participating in code reviews for the Artemis project. These guidelines are intended to ensure high-quality, constructive, and efficient reviews, and are based on open source best practices as well as the Artemis development process.
+
+General Principles
+------------------
+
+- Be respectful and constructive. Remember that code review is a collaborative process.
+- Focus on the code, not the coder. Avoid personal comments.
+- Be clear and specific in your feedback. Provide actionable suggestions.
+- Prioritize critical issues (correctness, security, stability) over minor style or preference issues.
+- Encourage learning and knowledge sharing.
+
+Review Workflow
+---------------
+1. **Preparation**
+
+   - Read the pull request (PR) description and related issue(s) to understand the context and requirements.
+   - Review the "Steps for Testing" and any provided documentation.
+   - Check that all relevant checklist items in the pull request template are checked by the developer and that non-applicable items have been removed. If you notice missing or incorrectly checked items, request clarification or corrections from the author.
+
+2. **Testing**
+
+   - Deploy the PR to a test server and verify its functionality. See :doc:`../testservers` for instructions.
+   - Follow the provided testing steps to verify new and changed functionality.
+   - Additionally, test related or potentially affected functionality beyond the provided steps to identify possible side effects or regressions.
+   - If possible, test on all relevant platforms and configurations.
+
+3. **Code Quality**
+
+   - Ensure code adheres to the project's :doc:`../guidelines`.
+   - Check for clear, self-explanatory code and adequate comments for complex logic.
+   - Look for sufficient documentation, especially for public APIs and new features.
+   - Verify that code is modular, maintainable, and avoids duplication.
+
+4. **Correctness and Functionality**
+
+   - Confirm that the code meets the requirements and solves the described problem.
+   - Check for proper error handling and edge case coverage.
+   - Ensure that tests (unit, integration, or end-to-end) are present and meaningful.
+
+5. **Performance and Security**
+
+   - Identify any performance bottlenecks or unnecessary resource usage.
+   - Check for potential security vulnerabilities or data leaks.
+
+6. **Scope and Relevance**
+
+   - Ensure the PR is focused and does not include unrelated changes.
+   - If unrelated issues are found, suggest addressing them in a separate PR.
+
+7. **Feedback and Communication**
+
+   - When requesting changes, explain your reasoning (e.g., "Please change X to Y, because this improves Z").
+   - Use GitHub's review tools to submit your status (Approve or Request Changes) and summarize your review.
+   - Respond to questions and clarifications from the author promptly.
+   - Mark conversations as resolved when addressed.
+
+8. **Approval and Follow-up**
+
+   - Approve the PR when all concerns are addressed and the code meets project standards.
+   - In your approval comment, specify whether you reviewed only the code, only tested the changes, or performed both.
+   - As a reviewer, check off the relevant review, test, and performance checklist items in the pull request template once you have completed them (e.g., code review, manual test, exam mode test, performance review).
+
+Additional Resources
+--------------------
+
+- :doc:`../guidelines`
+- :doc:`../development-process/development-process`
+- `GitHub Pull Request Review Documentation <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-reviews>`__
