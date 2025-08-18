@@ -528,13 +528,15 @@ public class BuildJobContainerService {
                         String[] logLines = splitBehindNewLines(payload);
                         ZonedDateTime now = ZonedDateTime.now();
 
-                        if (buildJobId != null) {
-                            for (String line : logLines) {
-                                if (!line.isEmpty()) {
-                                    BuildLogDTO buildLogEntry = new BuildLogDTO(now, line);
-                                    buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
-                                }
+                        if (buildJobId == null) {
+                            return;
+                        }
+                        for (String line : logLines) {
+                            if (line.isEmpty()) {
+                                continue;
                             }
+                            BuildLogDTO buildLogEntry = new BuildLogDTO(now, line);
+                            buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
                         }
                     }
 
