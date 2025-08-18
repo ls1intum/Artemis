@@ -2,13 +2,12 @@ import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { JudgementOfLearningRatingComponent } from 'app/atlas/overview/judgement-of-learning-rating/judgement-of-learning-rating.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { of, throwError } from 'rxjs';
 
 describe('JudgementOfLearningRatingComponent', () => {
@@ -32,10 +31,7 @@ describe('JudgementOfLearningRatingComponent', () => {
                     provide: TranslateService,
                     useClass: MockTranslateService,
                 },
-                {
-                    provide: SessionStorageService,
-                    useClass: MockSyncStorage,
-                },
+                SessionStorageService,
             ],
         }).compileComponents();
 

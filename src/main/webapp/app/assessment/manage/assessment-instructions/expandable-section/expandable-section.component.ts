@@ -1,9 +1,9 @@
 import { Component, OnInit, inject, input } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
-import { LocalStorageService } from 'ngx-webstorage';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 @Component({
     selector: 'jhi-expandable-section',

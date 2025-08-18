@@ -7,8 +7,6 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
@@ -54,9 +52,7 @@ describe('AssessmentHeaderComponent', () => {
                     provide: AlertService,
                     useClass: AlertService, // use the real one
                 },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
                 MockProvider(GradingSystemService, {
                     findGradingScaleForExam: () => {
                         return of(
