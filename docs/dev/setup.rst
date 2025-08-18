@@ -13,7 +13,7 @@ Running Artemis consists of two main steps:
 Artemis is based on `JHipster <https://jhipster.github.io>`__, combining:
 
 * `Spring Boot <http://projects.spring.io/spring-boot>`__ (Java 21) for the backend.
-* `Angular <https://angular.io>`__ (TypeScript) for the frontend.
+* `Angular <https://angular.dev>`__ (TypeScript) for the frontend.
 
 To get an overview of the technology stack, visit the `JHipster Technology Stack <https://jhipster.github.io/tech-stack>`__
 and refer to other tutorials on the JHipster homepage.

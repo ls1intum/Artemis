@@ -2,7 +2,7 @@
 Client Tests
 ************
 
-**If you are new to client testing, it is highly recommended that you work through the** `testing part <https://angular.io/guide/testing>`_ **of the angular tutorial.**
+**If you are new to client testing, it is highly recommended that you work through the** `testing part <https://angular.dev/guide/testing>`_ **of the angular tutorial.**
 
 We use `Jest <https://jestjs.io>`__ as our client testing framework.
 
@@ -49,7 +49,7 @@ The most basic test looks similar to this:
 Some guidelines:
 
 1. A component should be tested in isolation without any dependencies if possible. Do not simply import the whole production module. Only import real dependencies if it is essential for the test
-   that the real dependency is used. Instead, use mock pipes, mock directives and mock components that the component under test depends upon. A very useful technique is writing `stubs for child components <https://angular.io/guide/testing-components-scenarios#stubbing-unneeded-components>`_. This has the benefit of being able to test the interaction with the child components.
+   that the real dependency is used. Instead, use mock pipes, mock directives and mock components that the component under test depends upon. A very useful technique is writing `stubs for child components <https://angular.dev/guide/testing/components-scenarios#stubbing-unneeded-components>`_. This has the benefit of being able to test the interaction with the child components.
 
     Example of a bad test practice:
 
@@ -152,7 +152,7 @@ Some guidelines:
 
         *  Services should be mocked if they simply return some data from the server. However, if the service has some form of logic included (for example converting dates to datejs instances),
            and this logic is important for the component, do not mock the service methods, but mock the HTTP requests and responses from the API. This allows us to test the interaction
-           of the component with the service and in addition test that the service logic works correctly. A good explanation can be found in the `official angular documentation <https://angular.io/guide/http#testing-http-requests>`_.
+           of the component with the service and in addition test that the service logic works correctly. A good explanation can be found in the `official angular documentation <https://angular.dev/guide/http/testing>`_.
 
         .. code:: ts
 
@@ -190,7 +190,7 @@ Some guidelines:
                 }));
             });
 
-2. Do not use ``NO_ERRORS_SCHEMA`` (`angular documentation <https://angular.io/guide/testing-components-scenarios#no_errors_schema>`_). This tells angular to ignore the attributes and unrecognized elements, prefer to use component stubs as mentioned above.
+2. Do not use ``NO_ERRORS_SCHEMA`` (`angular documentation <https://angular.dev/guide/testing/components-scenarios#noerrorsschema>`_). This tells angular to ignore the attributes and unrecognized elements, prefer to use component stubs as mentioned above.
 
 3. Calling `jest.restoreAllMocks()` ensures that all mocks created with Jest get reset after each test. This is important if they get defined across multiple tests. This will only work if the mocks were created with `jest.spyOn`. Manually assigning `jest.fn()` should be avoided with this configuration.
 
