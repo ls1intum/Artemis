@@ -1,6 +1,5 @@
 <div class="alert unified-feedback" [ngClass]="inferredAlertClass()">
     <div class="unified-feedback__content">
-        <!-- Reference (optional) -->
         @if (inferredReference() && showReference()) {
             <div class="unified-feedback__reference">
                 <span class="unified-feedback__reference-label">Reference:</span>
@@ -8,9 +7,7 @@
             </div>
         }
 
-        <!-- Main content area -->
         <div class="unified-feedback__main">
-            <!-- Icon, title, and points in header -->
             <div class="unified-feedback__header">
                 <div class="unified-feedback__header-left">
                     <fa-icon [icon]="inferredIcon()" class="unified-feedback__icon" />
@@ -21,7 +18,6 @@
                 <div class="unified-feedback__points">{{ points() }} points</div>
             </div>
 
-            <!-- Feedback content -->
             @if (feedbackContent()) {
                 <div class="unified-feedback__text" [innerHTML]="feedbackContent()"></div>
             }

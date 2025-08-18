@@ -150,20 +150,7 @@
                                 @if (unreferencedFeedback && unreferencedFeedback!.length > 0) {
                                     <div class="col-xl-8">
                                         @for (feedback of unreferencedFeedback; track feedback.id) {
-                                            <jhi-unified-feedback
-                                                [feedbackContent]="feedback.detailText || ''"
-                                                [points]="feedback.credits || 0"
-                                                [icon]="(feedback.credits || 0) > 0 ? 'success' : (feedback.credits || 0) < 0 ? 'error' : feedback.positive ? 'success' : 'retry'"
-                                                [title]="
-                                                    (feedback.credits || 0) > 0
-                                                        ? 'Good job!'
-                                                        : (feedback.credits || 0) < 0
-                                                          ? 'Incorrect'
-                                                          : feedback.positive
-                                                            ? 'Good effort!'
-                                                            : 'Needs revision'
-                                                "
-                                            />
+                                            <jhi-unified-feedback [feedbackContent]="feedback.detailText || ''" [points]="feedback.credits || 0" />
                                         }
                                     </div>
                                 }

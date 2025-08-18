@@ -99,7 +99,6 @@
                 [feedbackContent]="buildFeedbackTextForCodeEditor(feedback)"
                 [points]="roundScoreSpecifiedByCourseSettings(feedback.credits, course) || 0"
                 [showReference]="false"
-                [title]="(feedback.credits || 0) > 0 ? 'Good job!' : 'Wrong'"
             />
             <div class="d-flex justify-content-end align-items-start gap-2 mt-2">
                 @if (!readOnly) {

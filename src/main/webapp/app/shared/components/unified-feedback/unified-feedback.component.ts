@@ -1,12 +1,17 @@
 import { Component, computed, input } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck, faExclamationTriangle, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-assessment.util';
 
 export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted';
-export type FeedbackIconType = 'retry' | 'success' | 'error';
+
+interface FeedbackTypeConfig {
+    icon: any;
+    alertClass: string;
+    defaultTitle: string;
+}
 
 @Component({
     selector: 'jhi-unified-feedback',
@@ -24,26 +29,32 @@ export class UnifiedFeedbackComponent {
     assessmentsNames = input<AssessmentNamesForModelId | undefined>(undefined);
     showReference = input<boolean>(true);
 
-    // Icons
-    readonly faCheck = faCheck;
-    readonly faExclamationTriangle = faExclamationTriangle;
-    readonly faRedo = faRedo;
-    readonly faTimes = faTimes;
+    private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
+        correct: {
+            icon: faCheck,
+            alertClass: 'alert-success',
+            defaultTitle: 'Correct',
+        },
+        needs_revision: {
+            icon: faRedo,
+            alertClass: 'alert-warning',
+            defaultTitle: 'Needs Revision',
+        },
+        not_attempted: {
+            icon: faTimes,
+            alertClass: 'alert-danger',
+            defaultTitle: 'Not Attempted',
+        },
+    };
 
-    // Computed properties for automatic type inference
     readonly inferredType = computed(() => {
         const explicitType = this.type();
         if (explicitType) {
             return explicitType;
         }
 
-        // Infer type based on points
         const points = this.points();
-        if (points > 0) {
-            return 'correct' as FeedbackType;
-        } else {
-            return 'not_attempted' as FeedbackType;
-        }
+        return points > 0 ? 'correct' : 'not_attempted';
     });
 
     readonly inferredTitle = computed(() => {
@@ -52,23 +63,12 @@ export class UnifiedFeedbackComponent {
             return explicitTitle;
         }
 
-        // If we have a feedback object, use the utility function
         const feedback = this.feedback();
         if (feedback) {
             return this.getReferencedFeedbackTitle(feedback);
         }
 
-        // Generate title based on inferred type
-        switch (this.inferredType()) {
-            case 'correct':
-                return 'Correct';
-            case 'needs_revision':
-                return 'Needs Revision';
-            case 'not_attempted':
-                return 'Not Attempted';
-            default:
-                return undefined;
-        }
+        return this.feedbackTypeConfigs[this.inferredType()].defaultTitle;
     });
 
     readonly inferredReference = computed(() => {
@@ -77,7 +77,6 @@ export class UnifiedFeedbackComponent {
             return explicitReference;
         }
 
-        // If we have a feedback object, use the utility function
         const feedback = this.feedback();
         if (feedback) {
             return this.getReferencedFeedbackReference(feedback);
@@ -87,46 +86,14 @@ export class UnifiedFeedbackComponent {
     });
 
     readonly inferredIcon = computed(() => {
-        switch (this.inferredType()) {
-            case 'correct':
-                return this.faCheck;
-            case 'needs_revision':
-                return this.faRedo;
-            case 'not_attempted':
-                return this.faTimes;
-            default:
-                return this.faCheck;
-        }
+        return this.feedbackTypeConfigs[this.inferredType()].icon;
     });
 
     readonly inferredAlertClass = computed(() => {
-        switch (this.inferredType()) {
-            case 'correct':
-                return 'alert-success';
-            case 'needs_revision':
-                return 'alert-warning';
-            case 'not_attempted':
-                return 'alert-danger';
-            default:
-                return 'alert-info';
-        }
+        return this.feedbackTypeConfigs[this.inferredType()].alertClass;
     });
 
-    // Legacy support for icon input (deprecated)
-    icon = input<FeedbackIconType>('success');
-
-    getIconForType(): any {
-        return this.inferredIcon();
-    }
-
-    getAlertClass(): string {
-        return this.inferredAlertClass();
-    }
-
-    /**
-     * Generates a title for referenced feedback based on the element type and name
-     */
-    getReferencedFeedbackTitle(feedback: Feedback): string {
+    private getReferencedFeedbackTitle(feedback: Feedback): string {
         if (feedback.text) {
             return feedback.text;
         }
@@ -137,20 +104,10 @@ export class UnifiedFeedbackComponent {
                 return `${assessmentName.type}: ${assessmentName.name}`;
             }
         }
-
-        if (feedback.credits && feedback.credits > 0) {
-            return 'Good job!';
-        } else if (feedback.credits && feedback.credits < 0) {
-            return 'Incorrect';
-        } else {
-            return feedback.positive ? 'Good effort!' : 'Needs revision';
-        }
+        return this.feedbackTypeConfigs[this.inferredType()].defaultTitle;
     }
 
-    /**
-     * Generates a reference string for referenced feedback
-     */
-    getReferencedFeedbackReference(feedback: Feedback): string | undefined {
+    private getReferencedFeedbackReference(feedback: Feedback): string | undefined {
         if (this.assessmentsNames() && feedback.referenceId) {
             const assessmentName = this.assessmentsNames()![feedback.referenceId];
             if (assessmentName) {
