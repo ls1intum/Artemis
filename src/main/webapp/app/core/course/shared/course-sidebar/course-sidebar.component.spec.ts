@@ -230,7 +230,7 @@ describe('CourseSidebarComponent', () => {
     it('should display course icon when available', () => {
         fixture.detectChanges();
 
-        const iconElement = fixture.nativeElement.querySelector('jhi-secured-image');
+        const iconElement = fixture.nativeElement.querySelector('jhi-image');
         expect(iconElement).not.toBeNull();
     });
 

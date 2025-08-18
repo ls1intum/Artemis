@@ -721,14 +721,14 @@ describe('Course Management Update Component', () => {
             let deleteIconButton = getDeleteIconButton();
             deleteIconButton.dispatchEvent(new Event('click'));
             fixture.detectChanges();
-            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-image');
             deleteIconButton = getDeleteIconButton();
             expect(iconImage).toBeNull();
             expect(deleteIconButton).toBeNull();
         });
 
         it('should not be able to delete icon if icon does not exist', () => {
-            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-image');
             const deleteIconButton = getDeleteIconButton();
             expect(iconImage).toBeNull();
             expect(deleteIconButton).toBeNull();
@@ -754,7 +754,7 @@ describe('Course Management Update Component', () => {
         });
 
         it('should not be able to edit icon if icon does not exist', () => {
-            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-image');
             const editIconButton = getEditIconButton();
             expect(iconImage).toBeNull();
             expect(editIconButton).toBeNull();
