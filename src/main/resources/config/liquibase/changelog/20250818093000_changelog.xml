@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20250818093000-add-course-calendar-subscription-tokens" author="marlonnienaber">
+        <comment>Add student and course staff calendar subscription tokens to course</comment>
+        <addColumn tableName="course">
+            <column name="course_staff_calendar_subscription_token" type="varchar(32)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="student_calendar_subscription_token" type="varchar(32)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="course" columnName="course_staff_calendar_subscription_token"/>
+            <dropColumn tableName="course" columnName="student_calendar_subscription_token"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

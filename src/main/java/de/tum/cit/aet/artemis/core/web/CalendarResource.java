@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.CalendarSubscriptionService;
 import de.tum.cit.aet.artemis.core.util.CalendarUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -68,8 +69,11 @@ public class CalendarResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final CalendarSubscriptionService calendarSubscriptionService;
+
     public CalendarResource(UserRepository userRepository, Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamApi> examApi, LectureApi lectureApi,
-            ExerciseService exerciseService, QuizExerciseService quizExerciseService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService) {
+            ExerciseService exerciseService, QuizExerciseService quizExerciseService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
+            CalendarSubscriptionService calendarSubscriptionService) {
         this.userRepository = userRepository;
         this.tutorialGroupApi = tutorialGroupApi;
         this.examApi = examApi;
@@ -78,22 +82,42 @@ public class CalendarResource {
         this.exerciseService = exerciseService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.calendarSubscriptionService = calendarSubscriptionService;
     }
 
-    @GetMapping("/subscriptionToken")
+    @GetMapping("/courses/{courseId}/subscription/token")
     @EnforceAtLeastStudent
-    public ResponseEntity<String> getSubscriptionToken() {
-        // TODO: retrieve or create token for user if none present yet
+    public ResponseEntity<String> getSubscriptionToken(@PathVariable long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUser();
+        String token;
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            token = calendarSubscriptionService.getCourseStaffToken(course);
+        }
+        else if (authorizationCheckService.isStudentInCourse(course, user)) {
+            token = calendarSubscriptionService.getStudentToken(course);
+        }
+        else {
+            throw new AccessForbiddenException("You are not allowed to access this course's resources!");
+        }
         return ResponseEntity.ok(token);
     }
 
     @GetMapping("/courses/{courseId}/subscription/calendarEvents.ics")
-    public ResponseEntity<String> getICalendarSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
-            @RequestParam("filterOptions") Set<CalendarEventFilterOption> filterOptions) {
-        // TODO: validate token
-        // TODO: retrieve user for token
-        // TODO: verify that user is part of course
-        // TODO: determine whether user is student in course
+    public ResponseEntity<String> getSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
+            @RequestParam("filterOptions") Set<CalendarSubscriptionService.CalendarEventFilterOption> filterOptions) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        boolean userIsStudent;
+        if (token.equals(course.getStudentCalendarSubscriptionToken())) {
+            userIsStudent = true;
+        }
+        else if (token.equals(course.getCourseStaffCalendarSubscriptionToken())) {
+            userIsStudent = false;
+        }
+        else {
+            throw new AccessForbiddenException("Invalid token!");
+        }
+
         String icsFileString = calendarSubscriptionService.getICSFileAsString(courseId, userIsStudent, filterOptions);
         return ResponseEntity.ok().contentType(MediaType.parseMediaType("text/calendar; charset=utf-8"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=calendarEvents.ics").body(icsFileString);
