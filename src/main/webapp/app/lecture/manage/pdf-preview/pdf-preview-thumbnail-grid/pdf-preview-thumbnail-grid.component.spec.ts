@@ -10,6 +10,7 @@ import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { onError } from 'app/shared/util/global.utils';
+import { HttpErrorResponse } from '@angular/common/http';
 
 jest.mock('pdfjs-dist/build/pdf.worker', () => {
     return {};
@@ -89,7 +90,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             },
         };
 
-        await component.ngOnChanges(changes);
+        component.ngOnChanges(changes);
 
         expect(spyRenderPages).toHaveBeenCalled();
     });
@@ -783,11 +784,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const originalRenderPages = component.renderPages;
 
             component.renderPages = async function () {
-                try {
-                    throw mockError;
-                } catch (error) {
-                    onError(this.alertService, error);
-                }
+                onError(this.alertService, mockError as HttpErrorResponse);
             };
 
             await component.renderPages();
@@ -867,7 +864,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             it.each([
                 { name: 'append pages and scroll to bottom when isAppendingFile is true', isAppending: true, shouldScroll: true },
                 { name: 'not scroll to bottom when isAppendingFile is false', isAppending: false, shouldScroll: false },
-            ])('$name', async ({ isAppending, shouldScroll }) => {
+            ])('$name', async ({ isAppending, shouldScroll }: { isAppending: boolean; shouldScroll: boolean }) => {
                 const mockPages = [
                     {
                         slideId: 'slide1',
@@ -886,7 +883,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 const originalConsoleError = console.error;
 
                 try {
-                    // silence console.error only in the non-appending case (keep behavior parity with old tests)
+                    // silence console.error only in the non-appending case
                     if (!isAppending) {
                         console.error = jest.fn();
                     }
