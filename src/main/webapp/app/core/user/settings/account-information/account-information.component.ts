@@ -2,7 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core'
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Observable } from 'rxjs';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -19,7 +19,7 @@ import { UserSettingsService } from 'app/core/user/settings/directive/user-setti
     selector: 'jhi-account-information',
     templateUrl: './account-information.component.html',
     styleUrls: ['../user-settings.scss'],
-    imports: [TranslateDirective, SecuredImageComponent, FaIconComponent, ArtemisDatePipe],
+    imports: [TranslateDirective, ImageComponent, FaIconComponent, ArtemisDatePipe],
 })
 export class AccountInformationComponent implements OnInit {
     protected readonly faPen = faPencil;

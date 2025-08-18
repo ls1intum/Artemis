@@ -13,7 +13,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faChalkboardUser, faChartColumn, faGraduationCap, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { SimpleChange, signal } from '@angular/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -104,7 +104,7 @@ describe('CourseSidebarComponent', () => {
                 RouterLink,
                 RouterLinkActive,
                 CourseSidebarComponent,
-                MockComponent(SecuredImageComponent),
+                MockComponent(ImageComponent),
                 MockDirective(NgbDropdown),
                 MockDirective(TranslateDirective),
                 FaIconComponent,
@@ -240,7 +240,7 @@ describe('CourseSidebarComponent', () => {
         fixture.componentRef.setInput('courses', [course2]);
         fixture.detectChanges();
 
-        const iconElement = fixture.debugElement.query(By.directive(SecuredImageComponent));
+        const iconElement = fixture.debugElement.query(By.directive(ImageComponent));
         const iconElement2 = fixture.nativeElement.querySelector('.course-circle');
         expect(iconElement).toBeNull();
         expect(iconElement2).not.toBeNull();

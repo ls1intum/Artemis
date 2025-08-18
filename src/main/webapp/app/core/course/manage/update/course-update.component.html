@@ -5,7 +5,7 @@
                 <input type="file" #fileInput style="display: none" (change)="setCourseImage($event)" />
                 @if (croppedImage) {
                     <div class="position-relative">
-                        <jhi-secured-image class="secured-image" [src]="croppedImage" />
+                        <jhi-image class="secured-image" [src]="croppedImage" />
 
                         <button id="delete-course-icon" type="button" class="btn icon-button-wrapper btn-danger position-absolute bottom-0 start-0" (click)="deleteCourseIcon()">
                             <fa-icon [icon]="faTrash" />

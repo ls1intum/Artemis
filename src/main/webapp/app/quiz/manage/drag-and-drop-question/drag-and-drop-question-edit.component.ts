@@ -26,7 +26,7 @@ import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and
 import { cloneDeep } from 'lodash-es';
 import { round } from 'app/shared/util/utils';
 import { MAX_SIZE_UNIT } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import { ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent, ImageLoadingStatus } from 'app/shared/image/image.component';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
@@ -76,7 +76,7 @@ import { FileService } from 'app/shared/service/file.service';
         QuizScoringInfoModalComponent,
         MarkdownEditorMonacoComponent,
         CdkDropListGroup,
-        SecuredImageComponent,
+        ImageComponent,
         NgClass,
         CdkDropList,
         NgStyle,
@@ -115,7 +115,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     private fileService = inject(FileService);
 
     private readonly clickLayer = viewChild.required<ElementRef>('clickLayer');
-    private readonly backgroundImage = viewChild.required<SecuredImageComponent>('backgroundImage');
+    private readonly backgroundImage = viewChild.required<ImageComponent>('backgroundImage');
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
 
     @Input() question: DragAndDropQuestion;

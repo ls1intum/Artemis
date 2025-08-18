@@ -96,7 +96,7 @@
         <div cdkDropListGroup class="drag-and-drop-area">
             <div class="background-area">
                 @if (question.backgroundFilePath) {
-                    <jhi-secured-image
+                    <jhi-image
                         [src]="addPublicFilePrefix(filePreviewPaths.get(question.backgroundFilePath!) || question.backgroundFilePath!)!"
                         (loadingStatus)="changeLoading($event)"
                     />

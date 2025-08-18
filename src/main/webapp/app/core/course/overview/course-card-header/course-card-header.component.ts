@@ -1,5 +1,5 @@
 import { Component, OnInit, input } from '@angular/core';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { RouterModule } from '@angular/router';
 import { CommonModule, SlicePipe } from '@angular/common';
@@ -10,7 +10,7 @@ import { CourseNotificationBubbleComponent } from 'app/communication/course-noti
     selector: 'jhi-course-card-header',
     templateUrl: './course-card-header.component.html',
     styleUrls: ['./course-card-header.component.scss'],
-    imports: [SecuredImageComponent, RouterModule, SlicePipe, CommonModule, CourseNotificationBubbleComponent],
+    imports: [ImageComponent, RouterModule, SlicePipe, CommonModule, CourseNotificationBubbleComponent],
 })
 export class CourseCardHeaderComponent implements OnInit {
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;

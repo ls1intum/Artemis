@@ -9,25 +9,26 @@ export const enum ImageLoadingStatus {
 }
 
 /**
- * Solution taken from: https://stackblitz.com/edit/secure-image-loads?file=app%2Fsecured-image.component.ts
- * Some browsers (i.e. Chrome) perform some toString function on the src attribute, which causes null to become 'null'
- * instead of '', thus triggering to the browser to look for //domain.com/null which results in an error
- * That's why I had to replace the attribute [src] with [attr.src]
- * This works because instead of setting src to either 'null' or '', the src attribute isn't set at all as long as the
- * variable/path used is not set/resolved, therefore not triggering the error.
+ * Fetches an image from the server and displays it.
+ * - Retries once if the initial request fails.
+ * - Relies on browser caching (Artemis serves images publicly with proper caching headers, see {@link PublicResourcesConfiguration.java}).
+ *
+ * Template note:
+ * - We used `[attr.src]="localImageUrl()"` → removes the `src` attribute if the value is `undefined`.
+ * - We did not use `[src]="localImageUrl()"` → some browsers (e.g. Chrome) convert `undefined` to the string `"undefined"`, causing broken requests.
  */
 @Component({
-    selector: 'jhi-secured-image',
+    selector: 'jhi-image',
     template: `
         @if (mobileDragAndDrop()) {
-            <img [attr.src]="localImageUrl() ?? null" class="dnd-drag-start" draggable="true" [attr.alt]="alt() ?? null" cdkDrag />
+            <img [attr.src]="localImageUrl()" class="dnd-drag-start" draggable="true" [attr.alt]="alt()" cdkDrag />
         } @else {
-            <img [attr.src]="localImageUrl() ?? null" [attr.alt]="alt() ?? null" />
+            <img [attr.src]="localImageUrl()" [attr.alt]="alt()" />
         }
     `,
     imports: [],
 })
-export class SecuredImageComponent {
+export class ImageComponent {
     private domSanitizer = inject(DomSanitizer);
     private retried = false;
 

@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ImageLoadingStatus, SecuredImageComponent } from './secured-image.component';
+import { ImageComponent, ImageLoadingStatus } from './image.component';
 
 describe('SecuredImageComponent', () => {
     let fixture: any;
-    let component: SecuredImageComponent;
+    let component: ImageComponent;
     let httpMock: HttpTestingController;
 
     const testLocalImageURL = 'blob:mock';
@@ -16,11 +16,11 @@ describe('SecuredImageComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [SecuredImageComponent], // standalone
+            imports: [ImageComponent], // standalone
             providers: [provideHttpClient(withFetch()), provideHttpClientTesting()],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(SecuredImageComponent);
+        fixture = TestBed.createComponent(ImageComponent);
         component = fixture.componentInstance;
         httpMock = TestBed.inject(HttpTestingController);
     });
@@ -98,5 +98,26 @@ describe('SecuredImageComponent', () => {
 
         const img: HTMLImageElement = fixture.nativeElement.querySelector('img');
         expect(img.getAttribute('src')).toBe(testLocalImageURL);
+    });
+
+    it('should have src and alt attributes unset while no value is available', () => {
+        const loadingStatusSpy = jest.fn();
+        component.loadingStatus.subscribe(loadingStatusSpy);
+
+        fixture.componentRef.setInput('src', '/delayed-image.png');
+        fixture.detectChanges();
+
+        const request = httpMock.expectOne('/delayed-image.png');
+        expect(loadingStatusSpy).toHaveBeenCalledWith(ImageLoadingStatus.LOADING);
+
+        const img: HTMLImageElement = fixture.nativeElement.querySelector('img');
+
+        expect(img.hasAttribute('src')).toBeFalse();
+        expect(img.getAttribute('src')).toBeNull();
+
+        expect(img.hasAttribute('alt')).toBeFalse();
+        expect(img.getAttribute('alt')).toBeNull();
+
+        request.flush(new Blob(['x'], { type: 'image/png' }));
     });
 });
