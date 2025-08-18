@@ -1,5 +1,5 @@
 <div class="sidebar-wrap">
-    <div class="d-flex sidebar rounded-3 px-2 sidebar-width hide-on_print" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
+    <div class="d-flex sidebar rounded-3 px-2 sidebar-width hide-on_print" [ngClass]="{ collapsed: isCollapsed }">
         <div class="w-100 bg-module">
             <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
                 @if (searchFieldEnabled) {
@@ -57,7 +57,6 @@
 
                 @if (!sidebarData?.ungroupedData || !(sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue)?.length) {
                     <div
-                        [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
                         [jhiTranslate]="
                             (sidebarDataBeforeFiltering?.ungroupedData?.length ?? 0) > 0 && sidebarData.ungroupedData?.length === 0
                                 ? 'artemisApp.courseOverview.general.noElementFoundWithAppliedFilter'
@@ -69,7 +68,6 @@
                     <div
                         class="scrollable-item-content my-2"
                         [ngClass]="{
-                            'content-height-dev': !isProduction || isTestServer,
                             'search-height-conversations': sidebarData?.sidebarType === 'conversation',
                             'search-height-normal': sidebarData?.sidebarType !== 'conversation',
                         }"

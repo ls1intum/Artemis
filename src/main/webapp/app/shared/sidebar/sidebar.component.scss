@@ -1,33 +1,22 @@
+@import 'src/main/webapp/content/scss/_artemis-mixins.scss'; //TODO Relative Path + search hights in mixin
+
 .search-height-normal {
     --search-height: 97px;
 }
 
 .search-height-conversations {
-    --search-height: 152px;
+    --search-height: 131px;
 }
 
 .scrollable-item-content {
     overflow-y: auto;
-    height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--header-height) - var(--search-height));
-    &.content-height-dev {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--header-height) - var(--search-height));
-    }
-    @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--header-height) - var(--search-height)) !important;
-        height: calc(100dvh - var(--sidebar-header-footer-combined-height) - var(--header-height) - var(--search-height)) !important;
-    }
+    @include dynamic-content-height(--header-height, --search-height);
 }
 
 .sidebar {
     background-color: var(--module-bg);
-    height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--header-height));
-    &.sidebar-height-dev {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--header-height));
-    }
-    @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--header-height)) !important;
-        height: calc(100dvh - var(--sidebar-header-footer-combined-height) - var(--header-height)) !important;
-    }
+    margin-right: 0.5rem;
+    @include dynamic-content-height(--header-height);
 }
 
 .bg-module {

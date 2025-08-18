@@ -35,7 +35,6 @@ import { CourseSidebarService } from 'app/core/course/overview/services/course-s
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -151,7 +150,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private metisService = inject(MetisService);
     private courseOverviewService = inject(CourseOverviewService);
     private modalService = inject(NgbModal);
-    private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
     private eventManager = inject(EventManager);
 
@@ -173,8 +171,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     accordionConversationGroups: AccordionGroups;
     sidebarConversations: SidebarCardElement[] = [];
     isCollapsed = false;
-    isProduction = true;
-    isTestServer = false;
     isMobile = false;
     focusPostId: number | undefined = undefined;
     openThreadOnFocus = false;
@@ -304,9 +300,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
             this.createChannelFn = (channel: ChannelDTO) => this.metisConversationService.createChannel(channel);
         });
-
-        this.isProduction = this.profileService.isProduction();
-        this.isTestServer = this.profileService.isTestServer();
     }
 
     performChannelAction(channelAction: ChannelAction) {

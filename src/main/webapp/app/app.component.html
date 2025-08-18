@@ -8,7 +8,7 @@
 >
     <jhi-page-ribbon />
     @if (showSkeleton && !isShownViaLti) {
-        <div class="sticky-top-navbar">
+        <div>
             <router-outlet name="navbar" />
         </div>
     }
@@ -18,8 +18,7 @@
                 <router-outlet />
             </div>
         </div>
-    }
-    @if (!showSkeleton) {
+    } @else {
         <router-outlet />
     }
     <jhi-course-notification-popup-overlay />
