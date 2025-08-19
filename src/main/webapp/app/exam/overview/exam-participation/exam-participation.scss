@@ -1,4 +1,4 @@
-$management-header-height: 230px;
+$management-header-height: 132px;
 
 .update-footer {
     margin-top: 1rem;
@@ -55,26 +55,6 @@ $management-header-height: 230px;
 
     &.content-exam-height-testRun {
         height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height);
-
-        &.content-exam-height-testRun-dev {
-            height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height);
-
-            @media (max-width: 1349px) {
-                height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 40px) !important;
-            }
-
-            @media (max-width: 768px) {
-                height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 20px) !important;
-            }
-        }
-
-        @media (max-width: 1349px) {
-            height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 40px) !important;
-        }
-
-        @media (max-width: 768px) {
-            height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 20px) !important;
-        }
     }
 }
 
