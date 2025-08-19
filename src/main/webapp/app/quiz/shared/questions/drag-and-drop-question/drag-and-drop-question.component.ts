@@ -80,20 +80,6 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
 
     forceSampleSolution = input<boolean>(false);
 
-    constructor() {
-        effect(() => {
-            if (this.forceSampleSolution()) {
-                this.showSampleSolution();
-            }
-        });
-        effect(() => {
-            const currentQuestion = this.dragAndDropQuestion();
-            if (currentQuestion) {
-                this.watchCollection();
-            }
-        });
-    }
-
     onMappingUpdate = input<any>();
     filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
 
@@ -117,6 +103,17 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
 
     ngOnInit(): void {
         this.evaluateDropLocations();
+        effect(() => {
+            if (this.forceSampleSolution()) {
+                this.showSampleSolution();
+            }
+        });
+        effect(() => {
+            const currentQuestion = this.dragAndDropQuestion();
+            if (currentQuestion) {
+                this.watchCollection();
+            }
+        });
     }
 
     ngOnChanges() {

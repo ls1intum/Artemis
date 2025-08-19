@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation, computed, effect, inject, input, model, output } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, computed, effect, inject, input, model, output } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
@@ -23,7 +23,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     encapsulation: ViewEncapsulation.None,
     imports: [NgClass, NgbTooltip, TranslateDirective, NgbPopover, FaIconComponent, QuizScoringInfoStudentModalComponent, ArtemisTranslatePipe],
 })
-export class ShortAnswerQuestionComponent {
+export class ShortAnswerQuestionComponent implements OnInit {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
 
@@ -38,7 +38,7 @@ export class ShortAnswerQuestionComponent {
     score = input<number>(0);
     forceSampleSolution = input<boolean>(false);
 
-    constructor() {
+    ngOnInit(): void {
         effect(() => {
             if (this.forceSampleSolution()) {
                 this.showSampleSolution();
