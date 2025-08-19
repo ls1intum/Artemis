@@ -103,8 +103,9 @@ export class ShortAnswerQuestionComponent {
         }
         this.submittedTextsChange.emit(this.submittedTexts());
         /** Only execute the onMappingUpdate function if we received such input **/
-        if (this.fnOnSubmittedTextUpdate) {
-            this.fnOnSubmittedTextUpdate();
+        const _fnOnSubmittedTextUpdate = this.fnOnSubmittedTextUpdate();
+        if (_fnOnSubmittedTextUpdate && typeof _fnOnSubmittedTextUpdate === 'function') {
+            _fnOnSubmittedTextUpdate();
         }
     }
 

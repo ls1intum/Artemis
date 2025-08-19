@@ -3,7 +3,7 @@
     <textarea
         id="mc-question"
         class="form-control form-group-narrow"
-        [(ngModel)]="this.question().text"
+        [(ngModel)]="question().text"
         rows="5"
         (input)="this.questionChanged.emit()"
         placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.textPlaceholder' | artemisTranslate }}"

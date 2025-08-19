@@ -224,7 +224,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
         this.mappingsChange.emit(this.mappings());
         /** Only execute the onMappingUpdate function if we received such input **/
         const onMappingUpdateFn = this.onMappingUpdate();
-        if (onMappingUpdateFn) {
+        if (onMappingUpdateFn && typeof onMappingUpdateFn === 'function') {
             onMappingUpdateFn();
         }
     }

@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation, effect, inject, input, model, output } from '@angular/core';
+import { Component, ViewEncapsulation, effect, inject, input, model } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -40,8 +40,6 @@ export class MultipleChoiceQuestionComponent {
             this.watchCollection();
         });
     }
-
-    selectedAnswerOptionsChange = output<AnswerOption[]>();
 
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
 
@@ -92,12 +90,11 @@ export class MultipleChoiceQuestionComponent {
         } else if (this.isSingleChoice) {
             this.selectedAnswerOptions.set([answerOption]);
         } else {
-            this.selectedAnswerOptions().push(answerOption);
+            this.selectedAnswerOptions.set([...this.selectedAnswerOptions(), answerOption]);
         }
-        this.selectedAnswerOptionsChange.emit(this.selectedAnswerOptions());
         /** Only execute the onSelection function if we received such input **/
         const fnOnSelectionFn = this.fnOnSelection();
-        if (fnOnSelectionFn) {
+        if (fnOnSelectionFn && typeof fnOnSelectionFn === 'function') {
             fnOnSelectionFn();
         }
     }
