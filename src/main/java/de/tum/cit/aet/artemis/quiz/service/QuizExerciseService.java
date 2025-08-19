@@ -48,7 +48,6 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
-import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
@@ -588,7 +587,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             return Optional.empty();
         }
 
-        return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.START_AND_END_DATE, dto.title(), synchronizedBatch.getStartTime(),
+        return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, dto.title(), synchronizedBatch.getStartTime(),
                 synchronizedBatch.getStartTime().plusSeconds(dto.duration()), null, null));
     }
 
@@ -618,16 +617,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     case ENGLISH -> "Release: ";
                     case GERMAN -> "Veröffentlichung: ";
                 };
-                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.RELEASE_DATE, releaseDateTitlePrefix + dto.title(),
-                        dto.releaseDate(), null, null, null));
+                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, releaseDateTitlePrefix + dto.title(), dto.releaseDate(), null, null, null));
             }
             if (dto.dueDate() != null) {
                 String dueDateTitlePrefix = switch (language) {
                     case ENGLISH -> "Due: ";
                     case GERMAN -> "Abgabefrist: ";
                 };
-                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.DUE_DATE, dueDateTitlePrefix + dto.title(), dto.dueDate(), null,
-                        null, null));
+                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, dueDateTitlePrefix + dto.title(), dto.dueDate(), null, null, null));
             }
         }
         return events;

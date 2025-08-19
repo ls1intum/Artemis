@@ -74,7 +74,6 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
-import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -1389,28 +1388,24 @@ public class ExamService {
         Set<CalendarEventDTO> events = new HashSet<>();
         boolean userIsCourseStaff = !userIsStudent;
         if (userIsCourseStaff || dto.visibleDate().isBefore(now())) {
-            events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.START_AND_END_DATE, dto.title(), dto.startDate(), dto.endDate(), null,
-                    dto.examiner()));
+            events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, dto.title(), dto.startDate(), dto.endDate(), null, dto.examiner()));
             if (dto.publishResultsDate() != null) {
                 String publishResultsDateTitlePrefix = switch (language) {
                     case ENGLISH -> "Results Release: ";
                     case GERMAN -> "Veröffentlichung Ergebnisse: ";
                 };
-                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.PUBLISH_RESULTS_DATE, publishResultsDateTitlePrefix + dto.title(),
-                        dto.publishResultsDate(), null, null, null));
+                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, publishResultsDateTitlePrefix + dto.title(), dto.publishResultsDate(), null, null, null));
                 if (dto.studentReviewStart() != null) {
                     String studentReviewStartDateTitlePrefix = switch (language) {
                         case ENGLISH -> "Review Start: ";
                         case GERMAN -> "Einsicht Start: ";
                     };
-                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_START_DATE,
-                            studentReviewStartDateTitlePrefix + dto.title(), dto.studentReviewStart(), null, null, null));
+                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, studentReviewStartDateTitlePrefix + dto.title(), dto.studentReviewStart(), null, null, null));
                     String studentReviewEndDateTitlePrefix = switch (language) {
                         case ENGLISH -> "Review End: ";
                         case GERMAN -> "Einsicht Ende: ";
                     };
-                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_END_DATE, studentReviewEndDateTitlePrefix + dto.title(),
-                            dto.studentReviewEnd(), null, null, null));
+                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, studentReviewEndDateTitlePrefix + dto.title(), dto.studentReviewEnd(), null, null, null));
                 }
             }
         }

@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
-import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
 import de.tum.cit.aet.artemis.core.util.DateUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -239,9 +238,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, CalendarEventSemantics.START_AND_END_DATE, "Tutorial Session",
-                    tutorialGroupSession.getStart(), tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(),
-                    tutor.getFirstName() + " " + tutor.getLastName());
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, "Tutorial Session", tutorialGroupSession.getStart(),
+                    tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -261,9 +259,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, CalendarEventSemantics.START_AND_END_DATE, "Tutorial Session",
-                    tutorialGroupSession.getStart(), tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(),
-                    tutor.getFirstName() + " " + tutor.getLastName());
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, "Tutorial Session", tutorialGroupSession.getStart(),
+                    tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -288,8 +285,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.START_DATE,
-                    START_DATE_TITLE_PREFIX + lecture.getTitle(), lecture.getStartDate(), null, null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, START_DATE_TITLE_PREFIX + lecture.getTitle(), lecture.getStartDate(), null,
+                    null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -306,8 +303,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.END_DATE, END_DATE_TITLE_PREFIX + lecture.getTitle(),
-                    lecture.getEndDate(), null, null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, END_DATE_TITLE_PREFIX + lecture.getTitle(), lecture.getEndDate(), null, null,
+                    null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -324,8 +321,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.START_AND_END_DATE, lecture.getTitle(),
-                    lecture.getStartDate(), lecture.getEndDate(), null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, lecture.getTitle(), lecture.getStartDate(), lecture.getEndDate(), null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -356,8 +352,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.START_DATE,
-                    START_DATE_TITLE_PREFIX + lecture.getTitle(), lecture.getStartDate(), null, null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, START_DATE_TITLE_PREFIX + lecture.getTitle(), lecture.getStartDate(), null,
+                    null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -374,8 +370,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.END_DATE, END_DATE_TITLE_PREFIX + lecture.getTitle(),
-                    lecture.getEndDate(), null, null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, END_DATE_TITLE_PREFIX + lecture.getTitle(), lecture.getEndDate(), null, null,
+                    null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -392,8 +388,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.START_AND_END_DATE, lecture.getTitle(),
-                    lecture.getStartDate(), lecture.getEndDate(), null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, lecture.getTitle(), lecture.getStartDate(), lecture.getEndDate(), null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -410,8 +405,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.START_AND_END_DATE, lecture.getTitle(),
-                    lecture.getStartDate(), lecture.getEndDate(), null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, lecture.getTitle(), lecture.getStartDate(), lecture.getEndDate(), null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -439,14 +433,14 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.START_AND_END_DATE, exam.getTitle(), exam.getStartDate(),
-                    exam.getEndDate(), null, exam.getExaminer());
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.PUBLISH_RESULTS_DATE,
-                    PUBLISH_RESULTS_TITLE_PREFIX + exam.getTitle(), exam.getPublishResultsDate(), null, null, null);
-            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_START_DATE,
-                    STUDENT_REVIEW_START_DATE_TITLE_PREFIX + exam.getTitle(), exam.getExamStudentReviewStart(), null, null, null);
-            CalendarEventDTO expectedEvent4 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_END_DATE,
-                    STUDENT_REVIEW_END_DATE_TITLE_PREFIX + exam.getTitle(), exam.getExamStudentReviewEnd(), null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
+                    exam.getExaminer());
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, PUBLISH_RESULTS_TITLE_PREFIX + exam.getTitle(), exam.getPublishResultsDate(),
+                    null, null, null);
+            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, STUDENT_REVIEW_START_DATE_TITLE_PREFIX + exam.getTitle(),
+                    exam.getExamStudentReviewStart(), null, null, null);
+            CalendarEventDTO expectedEvent4 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, STUDENT_REVIEW_END_DATE_TITLE_PREFIX + exam.getTitle(),
+                    exam.getExamStudentReviewEnd(), null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -463,8 +457,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.START_AND_END_DATE, exam.getTitle(), exam.getStartDate(),
-                    exam.getEndDate(), null, exam.getExaminer());
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
+                    exam.getExaminer());
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -498,14 +492,14 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.START_AND_END_DATE, exam.getTitle(), exam.getStartDate(),
-                    exam.getEndDate(), null, exam.getExaminer());
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.PUBLISH_RESULTS_DATE,
-                    PUBLISH_RESULTS_TITLE_PREFIX + exam.getTitle(), exam.getPublishResultsDate(), null, null, null);
-            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_START_DATE,
-                    STUDENT_REVIEW_START_DATE_TITLE_PREFIX + exam.getTitle(), exam.getExamStudentReviewStart(), null, null, null);
-            CalendarEventDTO expectedEvent4 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_END_DATE,
-                    STUDENT_REVIEW_END_DATE_TITLE_PREFIX + exam.getTitle(), exam.getExamStudentReviewEnd(), null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
+                    exam.getExaminer());
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, PUBLISH_RESULTS_TITLE_PREFIX + exam.getTitle(), exam.getPublishResultsDate(),
+                    null, null, null);
+            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, STUDENT_REVIEW_START_DATE_TITLE_PREFIX + exam.getTitle(),
+                    exam.getExamStudentReviewStart(), null, null, null);
+            CalendarEventDTO expectedEvent4 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, STUDENT_REVIEW_END_DATE_TITLE_PREFIX + exam.getTitle(),
+                    exam.getExamStudentReviewEnd(), null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -522,8 +516,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.START_AND_END_DATE, exam.getTitle(), exam.getStartDate(),
-                    exam.getEndDate(), null, exam.getExaminer());
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
+                    exam.getExaminer());
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -541,14 +535,14 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.START_AND_END_DATE, exam.getTitle(), exam.getStartDate(),
-                    exam.getEndDate(), null, exam.getExaminer());
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.PUBLISH_RESULTS_DATE,
-                    PUBLISH_RESULTS_TITLE_PREFIX + exam.getTitle(), exam.getPublishResultsDate(), null, null, null);
-            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_START_DATE,
-                    STUDENT_REVIEW_START_DATE_TITLE_PREFIX + exam.getTitle(), exam.getExamStudentReviewStart(), null, null, null);
-            CalendarEventDTO expectedEvent4 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_END_DATE,
-                    STUDENT_REVIEW_END_DATE_TITLE_PREFIX + exam.getTitle(), exam.getExamStudentReviewEnd(), null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
+                    exam.getExaminer());
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, PUBLISH_RESULTS_TITLE_PREFIX + exam.getTitle(), exam.getPublishResultsDate(),
+                    null, null, null);
+            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, STUDENT_REVIEW_START_DATE_TITLE_PREFIX + exam.getTitle(),
+                    exam.getExamStudentReviewStart(), null, null, null);
+            CalendarEventDTO expectedEvent4 = new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, STUDENT_REVIEW_END_DATE_TITLE_PREFIX + exam.getTitle(),
+                    exam.getExamStudentReviewEnd(), null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -573,8 +567,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.START_AND_END_DATE, quizExercise.getTitle(),
-                    PAST_DATE.plusDays(1), PAST_DATE.plusDays(1).plusSeconds(600), null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, quizExercise.getTitle(), PAST_DATE.plusDays(1),
+                    PAST_DATE.plusDays(1).plusSeconds(600), null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -621,8 +615,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.START_AND_END_DATE, quizExercise.getTitle(),
-                    PAST_DATE.plusDays(1), PAST_DATE.plusDays(1).plusSeconds(600), null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, quizExercise.getTitle(), PAST_DATE.plusDays(1),
+                    PAST_DATE.plusDays(1).plusSeconds(600), null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -639,8 +633,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.START_AND_END_DATE, quizExercise.getTitle(),
-                    FUTURE_DATE.plusHours(1), FUTURE_DATE.plusHours(1).plusSeconds(600), null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, quizExercise.getTitle(), FUTURE_DATE.plusHours(1),
+                    FUTURE_DATE.plusHours(1).plusSeconds(600), null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -672,8 +666,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.RELEASE_DATE,
-                    RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                    null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -690,8 +684,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.DUE_DATE,
-                    DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
+                    null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -708,10 +702,10 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.RELEASE_DATE,
-                    RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.DUE_DATE,
-                    DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                    null, null);
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE.plusDays(1),
+                    null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -758,8 +752,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.RELEASE_DATE,
-                    RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                    null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -776,8 +770,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.DUE_DATE,
-                    DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
+                    null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -794,10 +788,10 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.RELEASE_DATE,
-                    RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.DUE_DATE,
-                    DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                    null, null);
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE.plusDays(1),
+                    null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -829,10 +823,10 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.RELEASE_DATE,
-                    RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), FUTURE_DATE, null, null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.DUE_DATE,
-                    DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), FUTURE_DATE.plusDays(1), null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), FUTURE_DATE, null,
+                    null, null);
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(),
+                    FUTURE_DATE.plusDays(1), null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -849,8 +843,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.RELEASE_DATE,
-                    RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                    null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -867,8 +861,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.DUE_DATE,
-                    DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
+                    null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -885,10 +879,10 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.RELEASE_DATE,
-                    RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.DUE_DATE,
-                    DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                    null, null);
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE.plusDays(1),
+                    null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -935,8 +929,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.RELEASE_DATE,
-                    RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                    null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -953,8 +947,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.DUE_DATE,
-                    DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null, null);
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
+                    null);
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
 
@@ -971,10 +965,10 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.RELEASE_DATE,
-                    RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.DUE_DATE,
-                    DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                    null, null);
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE.plusDays(1),
+                    null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -1006,10 +1000,10 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.RELEASE_DATE,
-                    RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), FUTURE_DATE, null, null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.DUE_DATE,
-                    DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), FUTURE_DATE.plusDays(1), null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), FUTURE_DATE, null,
+                    null, null);
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(),
+                    FUTURE_DATE.plusDays(1), null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -1054,10 +1048,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(eventType, CalendarEventSemantics.RELEASE_DATE, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null,
-                    null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(eventType, CalendarEventSemantics.START_DATE, START_DATE_TITLE_PREFIX + exercise.getTitle(),
-                    PAST_DATE.plusDays(1), null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(eventType, START_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -1086,10 +1078,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(eventType, CalendarEventSemantics.RELEASE_DATE, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null,
-                    null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(eventType, CalendarEventSemantics.DUE_DATE, DUE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1),
-                    null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(eventType, DUE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -1118,10 +1108,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(eventType, CalendarEventSemantics.RELEASE_DATE, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null,
-                    null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(eventType, CalendarEventSemantics.ASSESSMENT_DUE_DATE, ASSESSMENT_DUE_DATE_TITLE_PREFIX + exercise.getTitle(),
-                    PAST_DATE.plusDays(1), null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(eventType, ASSESSMENT_DUE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -1173,10 +1161,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(eventType, CalendarEventSemantics.RELEASE_DATE, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null,
-                    null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(eventType, CalendarEventSemantics.START_DATE, START_DATE_TITLE_PREFIX + exercise.getTitle(),
-                    PAST_DATE.plusDays(1), null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(eventType, START_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -1205,10 +1191,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(eventType, CalendarEventSemantics.RELEASE_DATE, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null,
-                    null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(eventType, CalendarEventSemantics.DUE_DATE, DUE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1),
-                    null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(eventType, DUE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -1237,10 +1221,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(eventType, CalendarEventSemantics.RELEASE_DATE, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null,
-                    null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(eventType, CalendarEventSemantics.ASSESSMENT_DUE_DATE, ASSESSMENT_DUE_DATE_TITLE_PREFIX + exercise.getTitle(),
-                    PAST_DATE.plusDays(1), null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(eventType, ASSESSMENT_DUE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -1271,14 +1253,10 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(eventType, CalendarEventSemantics.RELEASE_DATE, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), FUTURE_DATE,
-                    null, null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(eventType, CalendarEventSemantics.START_DATE, START_DATE_TITLE_PREFIX + exercise.getTitle(),
-                    FUTURE_DATE.plusDays(1), null, null, null);
-            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(eventType, CalendarEventSemantics.DUE_DATE, DUE_DATE_TITLE_PREFIX + exercise.getTitle(), FUTURE_DATE.plusDays(2),
-                    null, null, null);
-            CalendarEventDTO expectedEvent4 = new CalendarEventDTO(eventType, CalendarEventSemantics.ASSESSMENT_DUE_DATE, ASSESSMENT_DUE_DATE_TITLE_PREFIX + exercise.getTitle(),
-                    FUTURE_DATE.plusDays(3), null, null, null);
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), FUTURE_DATE, null, null, null);
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(eventType, START_DATE_TITLE_PREFIX + exercise.getTitle(), FUTURE_DATE.plusDays(1), null, null, null);
+            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(eventType, DUE_DATE_TITLE_PREFIX + exercise.getTitle(), FUTURE_DATE.plusDays(2), null, null, null);
+            CalendarEventDTO expectedEvent4 = new CalendarEventDTO(eventType, ASSESSMENT_DUE_DATE_TITLE_PREFIX + exercise.getTitle(), FUTURE_DATE.plusDays(3), null, null, null);
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -1303,15 +1281,12 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 + TEST_LANGUAGE_STRING;
         Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-        CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, CalendarEventSemantics.START_AND_END_DATE, "Tutorial Session",
-                tutorialGroupSession1.getStart(), tutorialGroupSession1.getEnd(), tutorialGroupSession1.getLocation() + " - " + tutorialGroup.getCampus(),
-                tutor.getFirstName() + " " + tutor.getLastName());
-        CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, CalendarEventSemantics.START_AND_END_DATE, "Tutorial Session",
-                tutorialGroupSession2.getStart(), tutorialGroupSession2.getEnd(), tutorialGroupSession2.getLocation() + " - " + tutorialGroup.getCampus(),
-                tutor.getFirstName() + " " + tutor.getLastName());
-        CalendarEventDTO expectedEvent3 = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, CalendarEventSemantics.START_AND_END_DATE, "Tutorial Session",
-                tutorialGroupSession3.getStart(), tutorialGroupSession3.getEnd(), tutorialGroupSession3.getLocation() + " - " + tutorialGroup.getCampus(),
-                tutor.getFirstName() + " " + tutor.getLastName());
+        CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, "Tutorial Session", tutorialGroupSession1.getStart(),
+                tutorialGroupSession1.getEnd(), tutorialGroupSession1.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
+        CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, "Tutorial Session", tutorialGroupSession2.getStart(),
+                tutorialGroupSession2.getEnd(), tutorialGroupSession2.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
+        CalendarEventDTO expectedEvent3 = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, "Tutorial Session", tutorialGroupSession3.getStart(),
+                tutorialGroupSession3.getEnd(), tutorialGroupSession3.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
         Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3)
                 .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
 
@@ -1331,14 +1306,14 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
         ZoneId timezone = tutorialGroupSession.getStart().getZone();
-        CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, CalendarEventSemantics.START_AND_END_DATE, "Tutorial Session",
-                tutorialGroupSession.getStart(), tutorialGroupSession.getStart().toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone),
-                tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
-        CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, CalendarEventSemantics.START_AND_END_DATE, "Tutorial Session",
+        CalendarEventDTO expectedEvent1 = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, "Tutorial Session", tutorialGroupSession.getStart(),
+                tutorialGroupSession.getStart().toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(),
+                tutor.getFirstName() + " " + tutor.getLastName());
+        CalendarEventDTO expectedEvent2 = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, "Tutorial Session",
                 tutorialGroupSession.getStart().plusDays(1).toLocalDate().atStartOfDay(timezone),
                 tutorialGroupSession.getStart().plusDays(1).toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone),
                 tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
-        CalendarEventDTO expectedEvent3 = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, CalendarEventSemantics.START_AND_END_DATE, "Tutorial Session",
+        CalendarEventDTO expectedEvent3 = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, "Tutorial Session",
                 tutorialGroupSession.getStart().plusDays(2).toLocalDate().atStartOfDay(timezone), tutorialGroupSession.getEnd(),
                 tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
         Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3)
@@ -1362,9 +1337,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=2025-05&timeZone=" + otherTimeZone + "&language=" + TEST_LANGUAGE_STRING;
         Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-        CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, CalendarEventSemantics.START_AND_END_DATE, "Tutorial Session",
-                tutorialGroupSession.getStart(), tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(),
-                tutor.getFirstName() + " " + tutor.getLastName());
+        CalendarEventDTO expectedEvent = new CalendarEventDTO(CalendarEventRelatedEntity.TUTORIAL, "Tutorial Session", tutorialGroupSession.getStart(),
+                tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
         Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
         expectedResponse.put(tutorialGroupSession.getStart().withZoneSameInstant(ZoneId.of(otherTimeZone)).toLocalDate().toString(), List.of(expectedEvent));
 

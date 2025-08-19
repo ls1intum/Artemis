@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
-import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -362,15 +361,12 @@ public class LectureService {
                 case ENGLISH -> "End: ";
                 case GERMAN -> "Ende: ";
             };
-            return Optional
-                    .of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.END_DATE, titlePrefix + dto.title(), dto.endDate(), null, null, null));
+            return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, titlePrefix + dto.title(), dto.endDate(), null, null, null));
         }
         if (dto.startDate() != null && dto.endDate() == null) {
             titlePrefix = "Start: ";
-            return Optional
-                    .of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.START_DATE, titlePrefix + dto.title(), dto.startDate(), null, null, null));
+            return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, titlePrefix + dto.title(), dto.startDate(), null, null, null));
         }
-        return Optional
-                .of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, CalendarEventSemantics.START_AND_END_DATE, dto.title(), dto.startDate(), dto.endDate(), null, null));
+        return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, dto.title(), dto.startDate(), dto.endDate(), null, null));
     }
 }
