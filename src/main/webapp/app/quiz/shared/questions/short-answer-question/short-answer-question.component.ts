@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation, computed, effect, inject, input, model, output } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, computed, effect, inject, input, model } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
@@ -27,16 +27,17 @@ export class ShortAnswerQuestionComponent implements OnInit {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
 
-    question = input.required<QuizQuestion>();
+    readonly question = input.required<QuizQuestion>();
     shortAnswerQuestion = computed(() => this.question() as ShortAnswerQuestion);
 
     // TODO: Map vs. Array --> consistency
-    submittedTexts = model<ShortAnswerSubmittedText[]>([]);
-    clickDisabled = input<boolean>(false);
-    showResult = input<boolean>(false);
-    questionIndex = input<number>(0);
-    score = input<number>(0);
-    forceSampleSolution = input<boolean>(false);
+    readonly submittedTexts = model<ShortAnswerSubmittedText[]>([]);
+    readonly clickDisabled = input<boolean>(false);
+    readonly showResult = input<boolean>(false);
+    readonly questionIndex = input<number>(0);
+    readonly score = input<number>(0);
+    readonly forceSampleSolution = input<boolean>(false);
+    readonly fnOnSubmittedTextUpdate = input<any>();
 
     ngOnInit(): void {
         effect(() => {
@@ -51,10 +52,6 @@ export class ShortAnswerQuestionComponent implements OnInit {
             }
         });
     }
-
-    fnOnSubmittedTextUpdate = input<any>();
-
-    submittedTextsChange = output<ShortAnswerSubmittedText[]>();
 
     readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 

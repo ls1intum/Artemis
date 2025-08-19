@@ -28,17 +28,17 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     QuizQuestionType = QuizQuestionType;
     ScoringType = ScoringType;
 
-    score = model<number>(); // Score of the student that has been achieved
-    questionIndex = input<number>(); // Question Index of the question
-    question = input.required<QuizQuestion>();
-    dragAndDropMapping = input<DragAndDropMapping[]>([]);
-    incorrectlyMappedDragAndDropItems = input<number>();
-    mappedLocations = input<number>();
-    multipleChoiceMapping = input<AnswerOption[]>([]);
-    shortAnswerText = input<ShortAnswerSubmittedText[]>([]);
-    correctlyMappedDragAndDropItems = input<number>(); // Amount of correctly mapped drag and drop items
-    multipleChoiceSubmittedResult = input<Result>();
-    quizQuestions = input<QuizQuestion[] | undefined>();
+    readonly score = model<number>(); // Score of the student that has been achieved
+    readonly questionIndex = input<number>(); // Question Index of the question
+    readonly question = input.required<QuizQuestion>();
+    readonly dragAndDropMapping = input<DragAndDropMapping[]>([]);
+    readonly incorrectlyMappedDragAndDropItems = input<number>();
+    readonly mappedLocations = input<number>();
+    readonly multipleChoiceMapping = input<AnswerOption[]>([]);
+    readonly shortAnswerText = input<ShortAnswerSubmittedText[]>([]);
+    readonly correctlyMappedDragAndDropItems = input<number>(); // Amount of correctly mapped drag and drop items
+    readonly multipleChoiceSubmittedResult = input<Result>();
+    readonly quizQuestions = input<QuizQuestion[] | undefined>();
 
     /* Multiple Choice Counting Variables*/
     multipleChoiceCorrectAnswerCorrectlyChosen: number; // Amount of right options chosen by the student

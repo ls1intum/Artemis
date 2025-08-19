@@ -66,22 +66,22 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     /** needed to trigger a manual reload of the drag and drop background picture */
     readonly secureImageComponent = viewChild.required(SecuredImageComponent);
 
-    question = input.required<QuizQuestion>();
+    readonly question = input.required<QuizQuestion>();
     dragAndDropQuestion = computed(() => this.question() as DragAndDropQuestion);
 
     // TODO: Map vs. Array --> consistency
     //@Input()
     //mappings: DragAndDropMapping[];
-    mappings = model<DragAndDropMapping[]>([]);
-    clickDisabled = input<boolean>(false);
-    showResult = input<boolean>(false);
-    questionIndex = input<number>(0);
-    score = input<number>(0);
+    readonly mappings = model<DragAndDropMapping[]>([]);
+    readonly clickDisabled = input<boolean>(false);
+    readonly showResult = input<boolean>(false);
+    readonly questionIndex = input<number>(0);
+    readonly score = input<number>(0);
 
-    forceSampleSolution = input<boolean>(false);
+    readonly forceSampleSolution = input<boolean>(false);
 
-    onMappingUpdate = input<any>();
-    filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
+    readonly onMappingUpdate = input<any>();
+    readonly filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
 
     showingSampleSolution = false;
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
