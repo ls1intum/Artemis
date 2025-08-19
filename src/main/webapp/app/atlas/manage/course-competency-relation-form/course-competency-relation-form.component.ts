@@ -60,6 +60,8 @@ export class CourseCompetencyRelationFormComponent {
 
     readonly suggestedRelations = signal<SuggestedRelationDTO[]>([]);
     readonly isLoadingSuggestions = signal<boolean>(false);
+    readonly selectedSuggestions = signal<Set<number>>(new Set());
+    readonly selectedSuggestionsCount = computed(() => this.selectedSuggestions().size);
 
     constructor() {
         effect(() => this.selectRelation(this.selectedRelationId()));
@@ -75,6 +77,9 @@ export class CourseCompetencyRelationFormComponent {
             this.isLoadingSuggestions.set(true);
             const response = await this.courseCompetencyApiService.getSuggestedCompetencyRelations(courseId);
             this.suggestedRelations.set(response.relations ?? []);
+            // Auto-select all suggestions when fetched, but exclude existing relations
+            const allIndices = new Set((response.relations ?? []).map((_, index) => index).filter((index) => !this.doesSuggestionAlreadyExist(response.relations![index])));
+            this.selectedSuggestions.set(allIndices);
         } catch (error) {
             // Non-blocking: show toast but keep UI working
             this.alertService.warning('Failed to load suggested relations');
@@ -103,6 +108,88 @@ export class CourseCompetencyRelationFormComponent {
         this.relationType.set(type);
         const existing = this.getExactRelation(headId, tailId, type);
         this.selectedRelationId.set(existing?.id);
+    }
+
+    protected toggleSuggestionSelection(index: number): void {
+        // Don't allow selection of existing relations
+        const suggestion = this.suggestedRelations()[index];
+        if (this.doesSuggestionAlreadyExist(suggestion)) {
+            return;
+        }
+
+        this.selectedSuggestions.update((selected) => {
+            const newSelected = new Set(selected);
+            if (newSelected.has(index)) {
+                newSelected.delete(index);
+            } else {
+                newSelected.add(index);
+            }
+            return newSelected;
+        });
+    }
+
+    protected isSuggestionSelected(index: number): boolean {
+        return this.selectedSuggestions().has(index);
+    }
+
+    protected doesSuggestionAlreadyExist(s: SuggestedRelationDTO): boolean {
+        const headId = Number(s.head_id);
+        const tailId = Number(s.tail_id);
+        const uiKey = this.getUiRelationTypeKey(s);
+        const type = CompetencyRelationType[uiKey];
+        return this.getExactRelation(headId, tailId, type) !== undefined;
+    }
+
+    protected async addSelectedSuggestions(): Promise<void> {
+        const selectedIndices = Array.from(this.selectedSuggestions());
+        const selectedSuggestions = selectedIndices.map((index) => this.suggestedRelations()[index]);
+
+        if (selectedSuggestions.length === 0) {
+            return;
+        }
+
+        try {
+            this.isLoading.set(true);
+            const createdRelations: CompetencyRelationDTO[] = [];
+
+            for (const suggestion of selectedSuggestions) {
+                const headId = Number(suggestion.head_id);
+                const tailId = Number(suggestion.tail_id);
+                const uiKey = this.getUiRelationTypeKey(suggestion);
+                const type = CompetencyRelationType[uiKey];
+
+                // Check if relation already exists
+                const existing = this.getExactRelation(headId, tailId, type);
+                if (!existing) {
+                    try {
+                        const courseCompetencyRelation = await this.courseCompetencyApiService.createCourseCompetencyRelation(this.courseId(), {
+                            headCompetencyId: headId,
+                            tailCompetencyId: tailId,
+                            relationType: type,
+                        });
+                        createdRelations.push(courseCompetencyRelation);
+                    } catch (error) {
+                        // Continue with other suggestions even if one fails
+                        this.alertService.error(`Failed to create relation: ${this.getCompetencyTitleById(headId)} → ${this.getCompetencyTitleById(tailId)}`);
+                    }
+                }
+            }
+
+            // Update relations with all successfully created relations
+            this.relations.update((relations) => [...relations, ...createdRelations]);
+
+            // Clear selections and suggestions
+            this.selectedSuggestions.set(new Set());
+            this.suggestedRelations.set([]);
+
+            if (createdRelations.length > 0) {
+                this.alertService.success(`Successfully added ${createdRelations.length} relation(s)`);
+            }
+        } catch (error) {
+            this.alertService.error('Failed to add selected suggestions');
+        } finally {
+            this.isLoading.set(false);
+        }
     }
 
     protected getCompetencyTitleById(idLike: number | string): string {

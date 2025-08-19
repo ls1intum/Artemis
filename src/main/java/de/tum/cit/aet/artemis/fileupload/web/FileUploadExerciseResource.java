@@ -29,9 +29,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
-import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -116,14 +116,14 @@ public class FileUploadExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
-    private final Optional<AtlasMLService> atlasMLService;
+    private final Optional<AtlasMLApi> atlasMLApi;
 
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLService> atlasMLService) {
+            ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -141,7 +141,7 @@ public class FileUploadExerciseResource {
         this.channelRepository = channelRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
-        this.atlasMLService = atlasMLService;
+        this.atlasMLApi = atlasMLApi;
     }
 
     /**
@@ -174,9 +174,9 @@ public class FileUploadExerciseResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
         // Notify AtlasML about the new exercise
-        atlasMLService.ifPresent(service -> {
+        atlasMLApi.ifPresent(api -> {
             try {
-                service.saveExerciseWithCompetencies(result, OperationTypeDTO.UPDATE);
+                api.saveExerciseWithCompetencies(result, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about exercise creation: {}", e.getMessage());
@@ -219,9 +219,9 @@ public class FileUploadExerciseResource {
         final var newFileUploadExercise = fileUploadExerciseImportService.importFileUploadExercise(originalFileUploadExercise, importedFileUploadExercise);
 
         // Notify AtlasML about the new exercise
-        atlasMLService.ifPresent(service -> {
+        atlasMLApi.ifPresent(api -> {
             try {
-                service.saveExerciseWithCompetencies(newFileUploadExercise, OperationTypeDTO.UPDATE);
+                api.saveExerciseWithCompetencies(newFileUploadExercise, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about exercise creation: {}", e.getMessage());
@@ -323,9 +323,9 @@ public class FileUploadExerciseResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(fileUploadExerciseBeforeUpdate, Optional.of(fileUploadExercise)));
 
         // Notify AtlasML about the exercise update
-        atlasMLService.ifPresent(service -> {
+        atlasMLApi.ifPresent(api -> {
             try {
-                service.saveExerciseWithCompetencies(updatedExercise, OperationTypeDTO.UPDATE);
+                api.saveExerciseWithCompetencies(updatedExercise, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about exercise update: {}", e.getMessage());
@@ -404,9 +404,9 @@ public class FileUploadExerciseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // Notify AtlasML about the exercise deletion before actual deletion
-        atlasMLService.ifPresent(service -> {
+        atlasMLApi.ifPresent(api -> {
             try {
-                service.saveExerciseWithCompetencies(exercise, OperationTypeDTO.DELETE);
+                api.saveExerciseWithCompetencies(exercise, OperationTypeDTO.DELETE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about exercise deletion: {}", e.getMessage());

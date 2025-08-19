@@ -257,14 +257,27 @@ public class CourseCompetencyService {
         courseCompetencyRepository.saveAll(idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).toList());
 
         // Save imported competencies to AtlasML
+        List<Competency> regularCompetencies = new ArrayList<>();
+        List<CourseCompetency> courseCompetencies = new ArrayList<>();
+
         for (CompetencyWithTailRelationDTO competencyDTO : idToImportedCompetency.values()) {
             CourseCompetency importedCompetency = competencyDTO.competency();
             if (importedCompetency instanceof Competency competency) {
-                atlasMLService.saveCompetency(competency, OperationTypeDTO.UPDATE);
+                regularCompetencies.add(competency);
             }
             else {
-                atlasMLService.saveCourseCompetency(importedCompetency, OperationTypeDTO.UPDATE);
+                courseCompetencies.add(importedCompetency);
             }
+        }
+
+        // Batch save regular competencies
+        if (!regularCompetencies.isEmpty()) {
+            atlasMLService.saveCompetencies(regularCompetencies, OperationTypeDTO.UPDATE);
+        }
+
+        // Save course competencies individually (no batch method available yet)
+        for (CourseCompetency courseCompetency : courseCompetencies) {
+            atlasMLService.saveCourseCompetency(courseCompetency, OperationTypeDTO.UPDATE);
         }
 
         if (importOptions.importRelations()) {

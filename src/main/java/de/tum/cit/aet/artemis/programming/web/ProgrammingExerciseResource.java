@@ -44,8 +44,8 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
-import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -177,7 +177,7 @@ public class ProgrammingExerciseResource {
 
     private final Optional<SlideApi> slideApi;
 
-    private final Optional<AtlasMLService> atlasMLService;
+    private final Optional<AtlasMLApi> atlasMLApi;
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
@@ -190,7 +190,7 @@ public class ProgrammingExerciseResource {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ChannelRepository channelRepository,
             Optional<AthenaApi> athenaApi, Environment environment, RepositoryCheckoutService repositoryCheckoutService, Optional<SlideApi> slideApi,
-            Optional<AtlasMLService> atlasMLService, ProgrammingExerciseDeletionService programmingExerciseDeletionService) {
+            Optional<AtlasMLApi> atlasMLApi, ProgrammingExerciseDeletionService programmingExerciseDeletionService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
 
@@ -220,7 +220,7 @@ public class ProgrammingExerciseResource {
         this.environment = environment;
         this.repositoryCheckoutService = repositoryCheckoutService;
         this.slideApi = slideApi;
-        this.atlasMLService = atlasMLService;
+        this.atlasMLApi = atlasMLApi;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
     }
 
@@ -289,9 +289,9 @@ public class ProgrammingExerciseResource {
             }
 
             // Notify AtlasML about the new exercise
-            atlasMLService.ifPresent(service -> {
+            atlasMLApi.ifPresent(api -> {
                 try {
-                    service.saveExerciseWithCompetencies(newProgrammingExercise, OperationTypeDTO.UPDATE);
+                    api.saveExerciseWithCompetencies(newProgrammingExercise, OperationTypeDTO.UPDATE);
                 }
                 catch (Exception e) {
                     log.warn("Failed to notify AtlasML about exercise creation: {}", e.getMessage());
@@ -414,9 +414,9 @@ public class ProgrammingExerciseResource {
         slideApi.ifPresent(api -> api.handleDueDateChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise));
 
         // Notify AtlasML about the exercise update
-        atlasMLService.ifPresent(service -> {
+        atlasMLApi.ifPresent(api -> {
             try {
-                service.saveExerciseWithCompetencies(savedProgrammingExercise, OperationTypeDTO.UPDATE);
+                api.saveExerciseWithCompetencies(savedProgrammingExercise, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about exercise update: {}", e.getMessage());
@@ -629,9 +629,9 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
 
         // Notify AtlasML about the exercise deletion before actual deletion
-        atlasMLService.ifPresent(service -> {
+        atlasMLApi.ifPresent(api -> {
             try {
-                service.saveExerciseWithCompetencies(programmingExercise, OperationTypeDTO.DELETE);
+                api.saveExerciseWithCompetencies(programmingExercise, OperationTypeDTO.DELETE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about exercise deletion: {}", e.getMessage());

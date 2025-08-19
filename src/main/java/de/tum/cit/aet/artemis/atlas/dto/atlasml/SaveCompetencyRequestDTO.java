@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
  * Maps to the Python SaveCompetencyRequest model.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SaveCompetencyRequestDTO(@JsonProperty("competency") AtlasMLCompetencyDTO competency, @JsonProperty("exercise") AtlasMLExerciseDTO exercise,
+public record SaveCompetencyRequestDTO(@JsonProperty("competencies") List<AtlasMLCompetencyDTO> competencies, @JsonProperty("exercise") AtlasMLExerciseDTO exercise,
         @JsonProperty("operation_type") OperationTypeDTO operationType) {
 
     /**
@@ -26,8 +26,17 @@ public record SaveCompetencyRequestDTO(@JsonProperty("competency") AtlasMLCompet
      * Create a SaveCompetencyRequestDTO from domain objects for competency saving.
      */
     public static SaveCompetencyRequestDTO fromCompetency(Competency competency, OperationTypeDTO operationType) {
-        AtlasMLCompetencyDTO atlasMLCompetency = competency != null ? AtlasMLCompetencyDTO.fromDomain(competency) : null;
-        return new SaveCompetencyRequestDTO(atlasMLCompetency, null, operationType);
+        List<AtlasMLCompetencyDTO> competencies = competency != null ? List.of(AtlasMLCompetencyDTO.fromDomain(competency)) : null;
+        return new SaveCompetencyRequestDTO(competencies, null, operationType);
+    }
+
+    /**
+     * Create a SaveCompetencyRequestDTO from multiple competencies for batch saving.
+     */
+    public static SaveCompetencyRequestDTO fromCompetencies(List<Competency> competencies, OperationTypeDTO operationType) {
+        List<AtlasMLCompetencyDTO> atlasMLCompetencies = competencies != null && !competencies.isEmpty() ? competencies.stream().map(AtlasMLCompetencyDTO::fromDomain).toList()
+                : null;
+        return new SaveCompetencyRequestDTO(atlasMLCompetencies, null, operationType);
     }
 
     /**

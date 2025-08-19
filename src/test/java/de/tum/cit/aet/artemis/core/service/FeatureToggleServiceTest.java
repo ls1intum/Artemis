@@ -15,8 +15,8 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
-    // science is disabled by default
-    private static final int FEATURES_DISABLED_DEFAULT = 2;
+    // science, tutor suggestions, and atlasml are disabled by default
+    private static final int FEATURES_DISABLED_DEFAULT = 3;
 
     @Autowired
     private FeatureToggleService featureToggleService;

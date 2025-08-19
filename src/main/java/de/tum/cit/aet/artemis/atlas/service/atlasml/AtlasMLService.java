@@ -203,7 +203,8 @@ public class AtlasMLService {
         }
 
         try {
-            String requestId = request.competency() != null ? request.competency().id().toString() : (request.exercise() != null ? request.exercise().id().toString() : "unknown");
+            String requestId = request.competencies() != null && !request.competencies().isEmpty() ? "competencies[" + request.competencies().size() + "]"
+                    : (request.exercise() != null ? request.exercise().id().toString() : "unknown");
             log.debug("Saving competencies for id: {}", requestId);
 
             HttpHeaders headers = new HttpHeaders();
@@ -226,17 +227,20 @@ public class AtlasMLService {
             }
         }
         catch (HttpClientErrorException | HttpServerErrorException e) {
-            String requestId = request.competency() != null ? request.competency().id().toString() : (request.exercise() != null ? request.exercise().id().toString() : "unknown");
+            String requestId = request.competencies() != null && !request.competencies().isEmpty() ? "competencies[" + request.competencies().size() + "]"
+                    : (request.exercise() != null ? request.exercise().id().toString() : "unknown");
             log.error("HTTP error while saving request for id {}: {}", requestId, e.getMessage());
             throw new AtlasMLServiceException("Failed to save competencies due to client error", e);
         }
         catch (ResourceAccessException e) {
-            String requestId = request.competency() != null ? request.competency().id().toString() : (request.exercise() != null ? request.exercise().id().toString() : "unknown");
+            String requestId = request.competencies() != null && !request.competencies().isEmpty() ? "competencies[" + request.competencies().size() + "]"
+                    : (request.exercise() != null ? request.exercise().id().toString() : "unknown");
             log.error("Connection error while saving request for id {}: {}", requestId, e.getMessage());
             throw new AtlasMLServiceException("Failed to save competencies due to connection issue", e);
         }
         catch (Exception e) {
-            String requestId = request.competency() != null ? request.competency().id().toString() : (request.exercise() != null ? request.exercise().id().toString() : "unknown");
+            String requestId = request.competencies() != null && !request.competencies().isEmpty() ? "competencies[" + request.competencies().size() + "]"
+                    : (request.exercise() != null ? request.exercise().id().toString() : "unknown");
             log.error("Unexpected error while saving request for id {}", requestId, e);
             throw new AtlasMLServiceException("Unexpected error while saving competencies", e);
         }
@@ -304,6 +308,46 @@ public class AtlasMLService {
      */
     public boolean saveCompetency(Competency competency) {
         return saveCompetency(competency, OperationTypeDTO.UPDATE);
+    }
+
+    /**
+     * Saves multiple competencies using domain objects.
+     *
+     * @param competencies  the competencies to save
+     * @param operationType the operation type (UPDATE or DELETE)
+     * @return true if the save operation was successful, false otherwise
+     */
+    public boolean saveCompetencies(List<Competency> competencies, OperationTypeDTO operationType) {
+        // Check if AtlasML feature is enabled
+        if (!featureToggleService.isFeatureEnabled(Feature.AtlasML)) {
+            log.debug("AtlasML feature is disabled, skipping competencies save operation");
+            return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
+        }
+
+        if (competencies == null || competencies.isEmpty()) {
+            log.debug("No competencies to save, skipping operation");
+            return true;
+        }
+
+        try {
+            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromCompetencies(competencies, operationType);
+            saveCompetencies(request);
+            return true;
+        }
+        catch (Exception e) {
+            log.error("Failed to {} {} competencies", operationType.name().toLowerCase(), competencies.size(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Saves multiple competencies using domain objects with UPDATE operation type.
+     *
+     * @param competencies the competencies to save
+     * @return true if the save operation was successful, false otherwise
+     */
+    public boolean saveCompetencies(List<Competency> competencies) {
+        return saveCompetencies(competencies, OperationTypeDTO.UPDATE);
     }
 
     /**
