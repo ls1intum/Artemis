@@ -47,7 +47,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             FROM Lecture lecture
             WHERE lecture.course.id = :courseId AND (lecture.startDate IS NOT NULL OR lecture.endDate IS NOT NULL)
             """)
-    Set<LectureCalendarEventDTO> getLectureCalendarEventDAOsForCourseId(@Param("courseId") long courseId);
+    Set<LectureCalendarEventDTO> getLectureCalendarEventDTOsForCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT lecture

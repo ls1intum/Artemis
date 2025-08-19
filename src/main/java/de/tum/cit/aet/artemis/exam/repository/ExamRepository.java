@@ -530,7 +530,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             FROM Exam exam
             WHERE exam.course.id = :courseId
             """)
-    Set<ExamCalendarEventDTO> getExamCalendarEventDAOsForCourseId(@Param("courseId") long courseId);
+    Set<ExamCalendarEventDTO> getExamCalendarEventDTOsForCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO(

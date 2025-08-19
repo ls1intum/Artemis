@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
@@ -816,11 +817,12 @@ public class ExerciseService {
      *
      * @param courseId      the ID of the course
      * @param userIsStudent indicates whether the logged-in user is a student
+     * @param language      the language that will be used add context information to titles (e.g. the title of a release event will be prefixed with "Release: ")
      * @return the set of results
      */
-    public Set<CalendarEventDTO> getCalendarEventDTOsFromNonQuizExercises(long courseId, boolean userIsStudent) {
-        Set<NonQuizExerciseCalendarEventDTO> daos = exerciseRepository.getNonQuizExerciseCalendarEventsDAOsForCourseId(courseId);
-        return daos.stream().flatMap(dao -> deriveCalendarEventDTOs(dao, userIsStudent).stream()).collect(Collectors.toSet());
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromNonQuizExercises(long courseId, boolean userIsStudent, Language language) {
+        Set<NonQuizExerciseCalendarEventDTO> dtos = exerciseRepository.getNonQuizExerciseCalendarEventsDTOsForCourseId(courseId);
+        return dtos.stream().flatMap(dto -> deriveCalendarEventDTOs(dto, userIsStudent, language).stream()).collect(Collectors.toSet());
     }
 
     /**
@@ -832,28 +834,43 @@ public class ExerciseService {
      * <li>One event representing the assessment due date if not null</li>
      * </ul>
      *
-     * The events are only derived given that either the exercise represented by a dao is visible to students or the logged-in user is a course
+     * The events are only derived given that either the exercise represented by a dto is visible to students or the logged-in user is a course
      * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
      *
-     * @param dao           the exam for which to derive the events
-     * @param userIsStudent indicates whether the logged-in user is a student of the course associated to the exercise represented by the dao
+     * @param dto           the exam for which to derive the events
+     * @param userIsStudent indicates whether the logged-in user is a student of the course associated to the exercise represented by the dto
+     * @param language      the language that will be used add context information to titles (e.g. the title of a release event will be prefixed with "Release: ")
      * @return the derived events
      */
-    private Set<CalendarEventDTO> deriveCalendarEventDTOs(NonQuizExerciseCalendarEventDTO dao, boolean userIsStudent) {
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(NonQuizExerciseCalendarEventDTO dto, boolean userIsStudent, Language language) {
         Set<CalendarEventDTO> events = new HashSet<>();
         boolean userIsCourseStaff = !userIsStudent;
-        if (userIsCourseStaff || dao.releaseDate() == null || dao.releaseDate().isBefore(now())) {
-            if (dao.releaseDate() != null) {
-                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.RELEASE_DATE, dao.title(), dao.releaseDate(), null, null, null));
+        if (userIsCourseStaff || dto.releaseDate() == null || dto.releaseDate().isBefore(now())) {
+            if (dto.releaseDate() != null) {
+                String releaseDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Release: ";
+                    case GERMAN -> "Veröffentlichung: ";
+                };
+                events.add(new CalendarEventDTO(dto.type(), CalendarEventSemantics.RELEASE_DATE, releaseDateTitlePrefix + dto.title(), dto.releaseDate(), null, null, null));
             }
-            if (dao.startDate() != null) {
-                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.START_DATE, dao.title(), dao.startDate(), null, null, null));
+            if (dto.startDate() != null) {
+                String startDateTitlePrefix = "Start: ";
+                events.add(new CalendarEventDTO(dto.type(), CalendarEventSemantics.START_DATE, startDateTitlePrefix + dto.title(), dto.startDate(), null, null, null));
             }
-            if (dao.dueDate() != null) {
-                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.DUE_DATE, dao.title(), dao.dueDate(), null, null, null));
+            if (dto.dueDate() != null) {
+                String dueDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Due: ";
+                    case GERMAN -> "Abgabefrist: ";
+                };
+                events.add(new CalendarEventDTO(dto.type(), CalendarEventSemantics.DUE_DATE, dueDateTitlePrefix + dto.title(), dto.dueDate(), null, null, null));
             }
-            if (dao.assessmentDueDate() != null) {
-                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.ASSESSMENT_DUE_DATE, dao.title(), dao.assessmentDueDate(), null, null, null));
+            if (dto.assessmentDueDate() != null) {
+                String assessmentDueDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Assessment due: ";
+                    case GERMAN -> "Korrekturfrist: ";
+                };
+                events.add(new CalendarEventDTO(dto.type(), CalendarEventSemantics.ASSESSMENT_DUE_DATE, assessmentDueDateTitlePrefix + dto.title(), dto.assessmentDueDate(), null,
+                        null, null));
             }
         }
         return events;
