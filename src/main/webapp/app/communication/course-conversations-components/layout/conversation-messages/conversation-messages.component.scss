@@ -1,7 +1,7 @@
 @import '../../../../../../../../node_modules/bootstrap/scss/functions';
 @import '../../../../../../../../node_modules/bootstrap/scss/variables';
 @import '../../../../../../../../node_modules/bootstrap/scss/mixins';
-@import 'src/main/webapp/content/scss/_artemis-mixins.scss'; //TODO Relative Path + search hights in mixin
+@import '../../../../../content/scss/artemis-mixins';
 
 .conversation-messages {
     --message-input-height: 142px;

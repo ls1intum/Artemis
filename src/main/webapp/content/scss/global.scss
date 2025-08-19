@@ -1120,7 +1120,6 @@ $transition-in-between-delay: 0.05s;
     overflow: hidden;
     max-width: $sidebar-width;
     margin-right: 0.5rem;
-    //display: contents;
 
     transition:
         max-width $transition-sidebar-width-length 0s ease-in-out,
@@ -1130,7 +1129,6 @@ $transition-in-between-delay: 0.05s;
 .sidebar-collapsed .sidebar-wrap {
     max-width: 0;
     margin-right: 0;
-    //display: contents;
 
     transition:
         max-width $transition-sidebar-width-length 0s ease-in-out,

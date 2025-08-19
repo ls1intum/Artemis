@@ -2,7 +2,7 @@
 @import '../../../../../../../../node_modules/bootstrap/scss/variables';
 @import '../../../../../../../../node_modules/bootstrap/scss/mixins';
 @import './course-variables';
-@import 'src/main/webapp/content/scss/_artemis-mixins.scss'; //TODO Relative Path + search hights in mixin
+@import '../../../../../content/scss/artemis-mixins';
 
 // ng-deep needed to remove scrollbar from mat-sidebar
 ::ng-deep .mat-drawer-inner-container {

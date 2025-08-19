@@ -1,4 +1,4 @@
-@import 'src/main/webapp/content/scss/_artemis-mixins.scss'; //TODO Relative Path + search hights in mixin
+@import '../../../content/scss/artemis-mixins';
 
 .search-height-normal {
     --search-height: 97px;
