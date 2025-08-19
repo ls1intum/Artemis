@@ -12,24 +12,29 @@ import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angul
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { HttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('AttachmentVideoUnitFormComponent', () => {
     let attachmentVideoUnitFormComponentFixture: ComponentFixture<AttachmentVideoUnitFormComponent>;
     let attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent;
+    let accountService: AccountService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule), FontAwesomeTestingModule],
             declarations: [AttachmentVideoUnitFormComponent, FormDateTimePickerComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CompetencySelectionComponent)],
-            providers: [provideHttpClient(), { provide: TranslateService, useClass: MockTranslateService }, provideHttpClientTesting()],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         }).compileComponents();
 
         attachmentVideoUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
         attachmentVideoUnitFormComponent = attachmentVideoUnitFormComponentFixture.componentInstance;
+        accountService = TestBed.inject(AccountService);
     });
 
     afterEach(() => {
@@ -39,6 +44,55 @@ describe('AttachmentVideoUnitFormComponent', () => {
     it('should initialize', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
         expect(attachmentVideoUnitFormComponent).not.toBeNull();
+    });
+
+    it('should show transcription input for admin', () => {
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        expect(attachmentVideoUnitFormComponent.shouldShowTranscriptionCreation()).toBeTrue();
+        const transcriptionInput = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#video-transcription-row');
+        expect(transcriptionInput).not.toBeNull();
+    });
+
+    it('should not show transcription input for non-admin', () => {
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        expect(attachmentVideoUnitFormComponent.shouldShowTranscriptionCreation()).toBeFalse();
+        const transcriptionInput = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#video-transcription-row');
+        expect(transcriptionInput).toBeNull();
+    });
+
+    it('should include transcription in form submission when admin', () => {
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        const exampleName = 'test';
+        attachmentVideoUnitFormComponent.nameControl!.setValue(exampleName);
+        const exampleVideoUrl = 'https://live.rbg.tum.de/?video_only=1';
+        attachmentVideoUnitFormComponent.videoSourceControl!.setValue(exampleVideoUrl);
+        const exampleTranscription = '{"language": "en"}';
+        attachmentVideoUnitFormComponent.videoTranscriptionControl!.setValue(exampleTranscription);
+
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
+
+        const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+
+        const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        submitButton.click();
+
+        expect(submitFormSpy).toHaveBeenCalledOnce();
+        expect(submitFormEventSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                transcriptionProperties: {
+                    videoTranscription: exampleTranscription,
+                },
+            }),
+        );
+
+        submitFormSpy.mockRestore();
+        submitFormEventSpy.mockRestore();
     });
 
     it('should correctly set form values in edit mode', () => {
@@ -122,6 +176,9 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 fileName: exampleFileName,
             },
             playlistUrl: undefined,
+            transcriptionProperties: {
+                videoTranscription: null,
+            },
         });
 
         submitFormSpy.mockRestore();
@@ -261,6 +318,9 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 file: undefined,
                 fileName: undefined,
             },
+            transcriptionProperties: {
+                videoTranscription: null,
+            },
             playlistUrl: undefined,
         });
 
@@ -317,6 +377,9 @@ describe('AttachmentVideoUnitFormComponent', () => {
             fileProperties: {
                 file: fakeFile,
                 fileName: exampleFileName,
+            },
+            transcriptionProperties: {
+                videoTranscription: null,
             },
             playlistUrl: undefined,
         });
