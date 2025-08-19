@@ -64,7 +64,6 @@ jhi-secured-image {
 
 .menu-closed.double-arrow {
     justify-content: center;
-    padding-right: 0;
 }
 
 .double-arrow-icon {
@@ -78,13 +77,10 @@ jhi-secured-image {
 
 .menu-closed .double-arrow-icon {
     transform: rotate(0deg);
-    padding-left: 0;
-    margin-left: -3px;
-    min-width: 40px;
 }
 
 .me-negative {
-    margin-right: -5px;
+    margin-right: -10px;
 }
 
 .course-circle {

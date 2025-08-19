@@ -21,19 +21,19 @@
 }
 
 .bg-selected {
-    background-color: var(--sidebar-card-selected-bg);
+    background-color: var(--sidebar-selected-bg);
 
     &.border-module {
-        border-color: var(--sidebar-card-selected-bg) !important;
+        border-color: var(--sidebar-selected-bg) !important;
     }
 
     &.item-border {
-        border-color: var(--bs-card-border-color) !important;
+        border-color: var(--bs-border-color) !important;
     }
 }
 
 .item-border {
     border-width: 1px !important;
     border-style: solid;
-    border-color: var(--bs-card-border-color) !important;
+    border-color: var(--bs-border-color) !important;
 }
