@@ -101,8 +101,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faExclamationCircle = faExclamationCircle;
 
-    ngOnInit(): void {
-        this.evaluateDropLocations();
+    constructor() {
         effect(() => {
             if (this.forceSampleSolution()) {
                 this.showSampleSolution();
@@ -114,6 +113,10 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
                 this.watchCollection();
             }
         });
+    }
+
+    ngOnInit(): void {
+        this.evaluateDropLocations();
     }
 
     ngOnChanges() {
