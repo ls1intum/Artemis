@@ -72,6 +72,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     @Input()
     set question(question) {
         this._question = question;
+        this.showingSampleSolution = false;
         this.watchCollection();
     }
     get question() {
