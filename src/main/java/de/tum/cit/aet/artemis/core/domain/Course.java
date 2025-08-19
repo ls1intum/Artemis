@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -235,16 +234,6 @@ public class Course extends DomainObject {
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "course", allowSetters = true)
     private Set<Faq> faqs = new HashSet<>();
-
-    @Nullable
-    @JsonIgnore
-    @Column(name = "course_staff_calendar_subscription_token", length = 32)
-    private String courseStaffCalendarSubscriptionToken;
-
-    @Nullable
-    @JsonIgnore
-    @Column(name = "student_calendar_subscription_token", length = 32)
-    private String studentCalendarSubscriptionToken;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -1029,23 +1018,5 @@ public class Course extends DomainObject {
     public void addFaq(Faq faq) {
         this.faqs.add(faq);
         faq.setCourse(this);
-    }
-
-    @Nullable
-    public String getCourseStaffCalendarSubscriptionToken() {
-        return courseStaffCalendarSubscriptionToken;
-    }
-
-    public void setCourseStaffCalendarSubscriptionToken(String courseStaffCalendarSubscriptionToken) {
-        this.courseStaffCalendarSubscriptionToken = courseStaffCalendarSubscriptionToken;
-    }
-
-    @Nullable
-    public String getStudentCalendarSubscriptionToken() {
-        return studentCalendarSubscriptionToken;
-    }
-
-    public void setStudentCalendarSubscriptionToken(String studentCalendarSubscriptionToken) {
-        this.studentCalendarSubscriptionToken = studentCalendarSubscriptionToken;
     }
 }

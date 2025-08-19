@@ -7,10 +7,12 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 @Lazy
 @Service
@@ -21,48 +23,40 @@ public class CalendarSubscriptionService {
         LECTURES, TUTORIALS, EXAMS, EXERCISES
     }
 
-    private final CourseRepository courseRepository;
+    private final UserRepository userRepository;
 
-    CalendarSubscriptionService(CourseRepository courseRepository) {
-        this.courseRepository = courseRepository;
+    CalendarSubscriptionService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
-    public String getICSFileAsString(long courseId, boolean userIsStudent, Set<CalendarEventFilterOption> filterOptions) {
+    public String getICSFileAsString(Set<CalendarEventDTO> calendarEventDTOs) {
         return "";
     }
 
-    public String getCourseStaffToken(Course course) {
-        String courseStaffToken = course.getCourseStaffCalendarSubscriptionToken();
-        if (courseStaffToken != null) {
-            return courseStaffToken;
+    public String getOrCreateSubscriptionTokenFor(User user) {
+        String token = user.getCalendarSubscriptionToken();
+        if (token == null) {
+            token = generateUniqueSubscriptionTokenFor(user);
         }
-        String otherToken = course.getStudentCalendarSubscriptionToken();
-        courseStaffToken = generateSubscriptionTokenUnequalToOtherToken(otherToken);
-        course.setCourseStaffCalendarSubscriptionToken(courseStaffToken);
-        courseRepository.save(course);
-        return courseStaffToken;
+        return token;
     }
 
-    public String getStudentToken(Course course) {
-        String studentToken = course.getStudentCalendarSubscriptionToken();
-        if (studentToken != null) {
-            return studentToken;
-        }
-        String otherToken = course.getCourseStaffCalendarSubscriptionToken();
-        studentToken = generateSubscriptionTokenUnequalToOtherToken(otherToken);
-        course.setStudentCalendarSubscriptionToken(studentToken);
-        courseRepository.save(course);
-        return studentToken;
-    }
-
-    private String generateSubscriptionTokenUnequalToOtherToken(String otherToken) {
-        String newToken;
+    private String generateUniqueSubscriptionTokenFor(User user) {
+        String token;
+        boolean generationSuccessful;
         do {
-            byte[] newTokenBytes = generateSubscriptionTokenBytes();
-            newToken = convertBytesToSubscriptionToken(newTokenBytes);
+            token = convertBytesToSubscriptionToken(generateSubscriptionTokenBytes());
+            user.setCalendarSubscriptionToken(token);
+            try {
+                userRepository.saveAndFlush(user);
+                generationSuccessful = true;
+            }
+            catch (DataIntegrityViolationException ex) {
+                generationSuccessful = false;
+            }
         }
-        while (newToken.equals(otherToken));
-        return newToken;
+        while (!generationSuccessful);
+        return token;
     }
 
     private byte[] generateSubscriptionTokenBytes() {

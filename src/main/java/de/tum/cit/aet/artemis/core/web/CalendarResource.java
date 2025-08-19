@@ -86,40 +86,36 @@ public class CalendarResource {
         this.calendarSubscriptionService = calendarSubscriptionService;
     }
 
-    @GetMapping("/courses/{courseId}/subscription/token")
+    @GetMapping("/subscriptionToken")
     @EnforceAtLeastStudent
-    public ResponseEntity<String> getSubscriptionToken(@PathVariable long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
+    public ResponseEntity<String> getSubscriptionToken() {
         User user = userRepository.getUser();
-        String token;
-        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            token = calendarSubscriptionService.getCourseStaffToken(course);
-        }
-        else if (authorizationCheckService.isStudentInCourse(course, user)) {
-            token = calendarSubscriptionService.getStudentToken(course);
-        }
-        else {
-            throw new AccessForbiddenException("You are not allowed to access this course's resources!");
-        }
+        String token = calendarSubscriptionService.getOrCreateSubscriptionTokenFor(user);
         return ResponseEntity.ok(token);
     }
 
     @GetMapping("/courses/{courseId}/subscription/calendarEvents.ics")
     public ResponseEntity<String> getSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
-            @RequestParam("filterOptions") Set<CalendarSubscriptionService.CalendarEventFilterOption> filterOptions) {
+            @RequestParam("filterOptions") Set<CalendarSubscriptionService.CalendarEventFilterOption> filterOptions, @RequestParam("filterOptions") Language language) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        boolean userIsStudent;
-        if (token.equals(course.getStudentCalendarSubscriptionToken())) {
-            userIsStudent = true;
-        }
-        else if (token.equals(course.getCourseStaffCalendarSubscriptionToken())) {
-            userIsStudent = false;
-        }
-        else {
-            throw new AccessForbiddenException("Invalid token!");
+        User user = userRepository.findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
+        boolean userIsStudent = authorizationCheckService.isStudentInCourse(course, user);
+        boolean userIsCourseStaff = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        if (!userIsStudent && !userIsCourseStaff) {
+            throw new AccessForbiddenException("You are not allowed to access this course's resources!");
         }
 
-        String icsFileString = calendarSubscriptionService.getICSFileAsString(courseId, userIsStudent, filterOptions);
+        // TODO: only include DTOs based on filterOptions
+        Set<CalendarEventDTO> tutorialEventDTOs = tutorialGroupApi.map(api -> api.getCalendarEventDTOsFromTutorialsGroups(user.getId(), courseId)).orElse(Collections.emptySet());
+        Set<CalendarEventDTO> examEventDTOs = examApi.map(api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent, language)).orElse(Collections.emptySet());
+        Set<CalendarEventDTO> lectureEventDTOs = lectureApi.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language);
+        Set<CalendarEventDTO> quizExerciseEventDTOs = quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent, language);
+        Set<CalendarEventDTO> otherExerciseEventDTOs = exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent, language);
+
+        Set<CalendarEventDTO> calendarEventDTOs = Stream.of(tutorialEventDTOs, lectureEventDTOs, examEventDTOs, quizExerciseEventDTOs, otherExerciseEventDTOs).flatMap(Set::stream)
+                .collect(Collectors.toSet());
+
+        String icsFileString = calendarSubscriptionService.getICSFileAsString(calendarEventDTOs);
         return ResponseEntity.ok().contentType(MediaType.parseMediaType("text/calendar; charset=utf-8"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=calendarEvents.ics").body(icsFileString);
     }
