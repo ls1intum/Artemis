@@ -4,11 +4,9 @@
 @import '../../../../../content/scss/artemis-mixins';
 
 .conversation-messages {
-    --message-input-height: 142px;
-    --search-height: 52px;
-    --channel-header-height: 52px;
-    --header-height: 68px;
-    --announcement-button-height: 48px;
+    --channel-search-height: 59px;
+    --channel-header-height: 45px;
+    --spacing: 1rem;
 
     .search-active {
         input {
@@ -46,21 +44,7 @@
     }
 
     .posting-infinite-scroll-container {
-        @include dynamic-content-height(--header-height, --search-height, --channel-header-height, --message-input-height);
         overflow-y: auto;
-
-        &.hide-input-full {
-            @include dynamic-content-height(--header-height, --search-height, --channel-header-height);
-        }
-
-        &.hide-input {
-            @include dynamic-content-height(--header-height, --search-height, --channel-header-height, --announcement-button-height);
-        }
-
-        @include media-breakpoint-down(sm) {
-            max-height: calc(90vh - var(--message-input-height) - var(--search-height) - var(--channel-header-height));
-            max-height: calc(90dvh - var(--message-input-height) - var(--search-height) - var(--channel-header-height));
-        }
     }
 
     .envelope {
@@ -98,12 +82,7 @@ jhi-posting-thread {
 }
 
 .channel-content {
-    height: calc(100vh - 1rem - var(--header-height) - var(--message-input-height) - var(--channel-header-height));
-
-    @include media-breakpoint-down(md) {
-        height: calc(100vh - var(--header-height) - var(--message-input-height) - var(--channel-header-height));
-    }
-
+    @include dynamic-content-height(--header-height, --channel-header-height, --channel-search-height, --spacing);
     display: flex;
     flex-direction: column;
     justify-content: space-between;

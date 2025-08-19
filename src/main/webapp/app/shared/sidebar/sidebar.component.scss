@@ -1,22 +1,22 @@
 @import '../../../content/scss/artemis-mixins';
 
-.search-height-normal {
-    --search-height: 97px;
-}
-
-.search-height-conversations {
-    --search-height: 131px;
-}
-
 .scrollable-item-content {
+    --search-height: 60px;
     overflow-y: auto;
-    @include dynamic-content-height(--header-height, --search-height);
+    @include dynamic-content-height(--header-height, --search-height, --filter-height, --channel-search-height);
+
+    &.filter-height {
+        --filter-height: 30px;
+    }
+
+    &.channel-search-height {
+        --channel-search-height: 59px;
+    }
 }
 
 .sidebar {
     background-color: var(--module-bg);
     margin-right: 0.5rem;
-    @include dynamic-content-height(--header-height);
 }
 
 .bg-module {

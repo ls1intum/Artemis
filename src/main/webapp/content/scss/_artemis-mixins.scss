@@ -52,8 +52,8 @@
 
     @if length($extra-height-to-subtract) > 0 {
         @each $extra in $extra-height-to-subtract {
-            $base: calc(#{$base} - var($extra));
-            $base-dvh: calc(#{$base-dvh} - var($extra));
+            $base: calc(#{$base} - var(#{$extra}, 0px));
+            $base-dvh: calc(#{$base-dvh} - var(#{$extra}, 0px));
         }
     }
 
