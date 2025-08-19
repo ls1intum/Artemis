@@ -108,6 +108,16 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(String projectKey);
 
     /**
+     * Finds a ProgrammingExercise with minimal data necessary for exercise versioning.
+     * Only includes core configuration data, NOT submissions, results, or participation data.
+     * This includes: testCases, tasks, auxiliaryRepositories, staticCodeAnalysisCategories, buildConfig
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "templateParticipation", "solutionParticipation", "tasks", "testCases", "staticCodeAnalysisCategories",
+            "submissionPolicy", "buildConfig", "competencyLinks", "competencyLinks.competency", "categories", "teamAssignmentConfig", "gradingCriteria", "exampleSolution",
+            "exampleSubmission.submission", "plagiarismDetectionConfig" })
+    Optional<ProgrammingExercise> findWithEagerForVersioningById(long exerciseId);
+
+    /**
      * Finds one programming exercise including its submission policy by the exercise's project key.
      *
      * @param projectKey           the project key of the programming exercise.

@@ -43,6 +43,15 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency" })
     Optional<FileUploadExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(Long exerciseId);
 
+    /**
+     * Finds a FileUploadExercise with minimal data necessary for exercise versioning.
+     * Only includes core configuration data, NOT submissions, results, or example submissions.
+     * Basic FileUploadExercise fields (exampleSolution, filePattern) are already included in the entity.
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "competencyLinks.competency", "categories", "teamAssignmentConfig", "gradingCriteria", "exampleSolution",
+            "exampleSubmission.submission", "plagiarismDetectionConfig" })
+    Optional<FileUploadExercise> findWithEagerForVersioningById(long exerciseId);
+
     @Query("""
             SELECT f
             FROM FileUploadExercise f

@@ -46,6 +46,15 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencyLinks.competency", "plagiarismDetectionConfig" })
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(long exerciseId);
 
+    /**
+     * Finds a TextExercise with minimal data necessary for exercise versioning.
+     * Only includes core configuration data, NOT submissions, results, or example submissions.
+     * Basic TextExercise fields (exampleSolution, filePattern) are already included in the entity.
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "competencyLinks.competency", "categories", "teamAssignmentConfig", "gradingCriteria", "exampleSolution",
+            "exampleSubmission.submission", "plagiarismDetectionConfig" })
+    Optional<TextExercise> findWithEagerForVersioningById(long exerciseId);
+
     @Query("""
             SELECT t
             FROM TextExercise t
