@@ -25,10 +25,10 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureTranscriptionService;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -46,7 +46,7 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
     private LectureUnitRepository lectureUnitRepository;
 
     @Autowired
-    private LectureRepository lectureRepository;
+    private LectureTestRepository lectureRepository;
 
     // Deep-stubbed RestClient so we can call get().uri(...).retrieve().body(...)
     private RestClient restClient;
