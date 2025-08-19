@@ -1,6 +1,6 @@
 // Note: we first need to define our own customizations
 @import 'src/main/webapp/content/scss/artemis-variables';
-@import 'src/main/webapp/content/scss/_artemis-mixins.scss'; //TODO Relative Path + search hights in mixin
+@import 'src/main/webapp/content/scss/_artemis-mixins.scss';
 
 // Then, we include bootstrap so that it can use some magic functions to compute new values based on those customizations
 // The order is very important, otherwise the background and the button colors might not work correctly
@@ -1090,7 +1090,6 @@ body.transparent-background {
     background-color: var(--bs-body-bg);
 }
 
-// TODO Move!?
 .scrollable-content {
     @include dynamic-content-height(--header-height);
     overflow-y: auto;
