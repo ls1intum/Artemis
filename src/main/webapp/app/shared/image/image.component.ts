@@ -1,4 +1,4 @@
-import { Component, ElementRef, computed, effect, inject, input, output } from '@angular/core';
+import { Component, ElementRef, OnDestroy, computed, effect, inject, input, output } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
@@ -29,9 +29,10 @@ export const enum ImageLoadingStatus {
     `,
     imports: [],
 })
-export class ImageComponent {
+export class ImageComponent implements OnDestroy {
     private domSanitizer = inject(DomSanitizer);
     private retried = false;
+    private rawLocalImageUrl?: string;
 
     element = inject(ElementRef);
     mobileDragAndDrop = input<boolean>(false);
@@ -40,7 +41,14 @@ export class ImageComponent {
     loadingStatus = output<ImageLoadingStatus>();
 
     private imageResource = httpResource.blob<SafeUrl>(() => this.src(), {
-        parse: (blob) => this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(blob)), // we need DomSanitizer to trust the url
+        parse: (blob) => {
+            const oldRawLocalImageUrl = this.rawLocalImageUrl;
+            if (oldRawLocalImageUrl) {
+                URL.revokeObjectURL(oldRawLocalImageUrl);
+            }
+            this.rawLocalImageUrl = URL.createObjectURL(blob);
+            return this.domSanitizer.bypassSecurityTrustUrl(this.rawLocalImageUrl); // we need DomSanitizer to trust the url
+        },
     });
 
     localImageUrl = computed<SafeUrl | undefined>(() => this.getUrlFromResourceIf(this.imageResource.hasValue()));
@@ -56,6 +64,12 @@ export class ImageComponent {
             const resourceHasValue = this.imageResource.hasValue();
             this.updateLoadingStatusDependingOnIf(resourceIsLoading, resourceHasError, resourceHasValue);
         });
+    }
+
+    ngOnDestroy() {
+        if (this.rawLocalImageUrl) {
+            URL.revokeObjectURL(this.rawLocalImageUrl);
+        }
     }
 
     private getUrlFromResourceIf(resourceHasValue: boolean): SafeUrl | undefined {
