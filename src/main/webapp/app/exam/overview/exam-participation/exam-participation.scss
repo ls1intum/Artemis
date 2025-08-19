@@ -1,4 +1,4 @@
-$management-header-height: 132px;
+@import '../../../../content/scss/artemis-mixins';
 
 .update-footer {
     margin-top: 1rem;
@@ -54,7 +54,8 @@ $management-header-height: 132px;
     overflow-y: auto;
 
     &.content-exam-height-testRun {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height);
+        --management-header-height: 127px;
+        @include dynamic-content-height(--management-header-height);
     }
 }
 

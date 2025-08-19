@@ -1,15 +1,18 @@
-$collapse-container-height: 35px;
+@import '../../../../content/scss/artemis-mixins';
 $sidebar-width-open: 235px;
 $sidebar-width-closed: 80px;
-$management-header-height: 132px;
-$sidebar-margin: 61px;
+
+$management-header-height: 127px;
+$exam-sidebar-margin: 62px;
 
 .scrollable-item-content {
-    height: calc(100vh - var(--header-height) - var(--exam-height-offset));
+    --management-header-height: #{$management-header-height};
+    --exam-sidebar-margin: #{$exam-sidebar-margin};
+    height: calc(100vh - var(--exam-sidebar-margin) - var(--exam-height-offset));
     overflow-y: auto;
 
     &.sidebar-height-testRun {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - $sidebar-margin);
+        @include dynamic-content-height(--management-header-height, --exam-sidebar-margin);
     }
 }
 
@@ -30,7 +33,8 @@ $sidebar-margin: 61px;
     }
 
     &.sidebar-height-testRun {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height);
+        --management-header-height: #{$management-header-height};
+        @include dynamic-content-height(--management-header-height);
     }
 }
 
