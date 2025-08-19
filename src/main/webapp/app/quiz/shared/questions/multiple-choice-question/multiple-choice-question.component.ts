@@ -60,7 +60,7 @@ export class MultipleChoiceQuestionComponent {
         this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.question().text);
         this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.question().hint);
         this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.question().explanation);
-        this.renderedQuestion.renderedSubElements = this.question().answerOptions!.map((answerOption) => {
+        this.renderedQuestion.renderedSubElements = (this.question().answerOptions ?? []).map((answerOption) => {
             const renderedAnswerOption = new RenderedQuizQuestionMarkDownElement();
             renderedAnswerOption.text = this.artemisMarkdown.safeHtmlForMarkdown(answerOption.text);
             renderedAnswerOption.hint = this.artemisMarkdown.safeHtmlForMarkdown(answerOption.hint);

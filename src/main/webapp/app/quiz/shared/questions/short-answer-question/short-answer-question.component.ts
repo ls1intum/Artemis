@@ -86,7 +86,7 @@ export class ShortAnswerQuestionComponent {
      * set as submitted texts
      */
     setSubmittedText() {
-        this.submittedTexts.set([]);
+        const updated: ShortAnswerSubmittedText[] = [];
         let i = 0;
         for (const textpart of this.textParts) {
             let j = 0;
@@ -95,13 +95,13 @@ export class ShortAnswerQuestionComponent {
                     const submittedText = new ShortAnswerSubmittedText();
                     submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this.shortAnswerQuestion().id)).value;
                     submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element!), this.shortAnswerQuestion());
-                    this.submittedTexts().push(submittedText);
+                    updated.push(submittedText);
                 }
                 j++;
             }
             i++;
         }
-        this.submittedTextsChange.emit(this.submittedTexts());
+        this.submittedTexts.set(updated);
         /** Only execute the onMappingUpdate function if we received such input **/
         const _fnOnSubmittedTextUpdate = this.fnOnSubmittedTextUpdate();
         if (_fnOnSubmittedTextUpdate && typeof _fnOnSubmittedTextUpdate === 'function') {
