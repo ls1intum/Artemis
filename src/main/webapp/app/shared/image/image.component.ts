@@ -14,8 +14,9 @@ export const enum ImageLoadingStatus {
  * - Relies on browser caching (Artemis serves images publicly with proper caching headers, see {@link PublicResourcesConfiguration.java}).
  *
  * Template note:
- * - We used `[attr.src]="localImageUrl()"` → removes the `src` attribute if the value is `undefined`.
- * - We did not use `[src]="localImageUrl()"` → some browsers (e.g. Chrome) convert `undefined` to the string `"undefined"`, causing broken requests.
+ * - We used `[attr.src]="localImageUrl()"` because it removes the `src` attribute if the value is `undefined`.
+ * - We did not use `[src]="localImageUrl()"` because some browsers (e.g. Chrome) convert `undefined` to the string `"undefined"`, causing a request when we do not want
+ * to trigger a request.
  */
 @Component({
     selector: 'jhi-image',
@@ -42,24 +43,40 @@ export class ImageComponent {
         parse: (blob) => this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(blob)), // we need DomSanitizer to trust the url
     });
 
-    localImageUrl = computed<SafeUrl | undefined>(() => (this.imageResource.hasValue() ? this.imageResource.value() : undefined));
+    localImageUrl = computed<SafeUrl | undefined>(() => this.getUrlFromResourceIf(this.imageResource.hasValue()));
 
     constructor() {
         effect(() => {
-            if (this.imageResource.error() && !this.retried) {
-                this.retried = true;
-                this.imageResource.reload();
-            }
+            const resourceHasError = this.imageResource.error() !== undefined;
+            this.retryAfterFirstImageFetchIf(resourceHasError);
         });
         effect(() => {
-            if (this.imageResource.isLoading()) {
-                this.loadingStatus.emit(ImageLoadingStatus.LOADING);
-            } else if (this.imageResource.error() && this.retried) {
-                this.loadingStatus.emit(ImageLoadingStatus.ERROR);
-            } else if (this.imageResource.hasValue()) {
-                this.loadingStatus.emit(ImageLoadingStatus.SUCCESS);
-            }
+            const resourceIsLoading = this.imageResource.isLoading();
+            const resourceHasError = this.imageResource.error() !== undefined;
+            const resourceHasValue = this.imageResource.hasValue();
+            this.updateLoadingStatusDependingOnIf(resourceIsLoading, resourceHasError, resourceHasValue);
         });
+    }
+
+    private getUrlFromResourceIf(resourceHasValue: boolean): SafeUrl | undefined {
+        return resourceHasValue ? this.imageResource.value() : undefined;
+    }
+
+    private retryAfterFirstImageFetchIf(resourceHasError: boolean) {
+        if (resourceHasError && !this.retried) {
+            this.retried = true;
+            this.imageResource.reload();
+        }
+    }
+
+    private updateLoadingStatusDependingOnIf(resourceIsLoading: boolean, resourceHasError: boolean, resourceHasValue: boolean) {
+        if (resourceIsLoading) {
+            this.loadingStatus.emit(ImageLoadingStatus.LOADING);
+        } else if (resourceHasError && this.retried) {
+            this.loadingStatus.emit(ImageLoadingStatus.ERROR);
+        } else if (resourceHasValue) {
+            this.loadingStatus.emit(ImageLoadingStatus.SUCCESS);
+        }
     }
 
     retryLoadImage() {

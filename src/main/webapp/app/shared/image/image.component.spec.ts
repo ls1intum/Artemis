@@ -16,7 +16,7 @@ describe('ImageComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ImageComponent], // standalone
+            imports: [ImageComponent],
             providers: [provideHttpClient(withFetch()), provideHttpClientTesting()],
         }).compileComponents();
 

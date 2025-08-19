@@ -33,7 +33,7 @@ export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComp
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
     private artemisMarkdown = inject(ArtemisMarkdownService);
 
-    readonly addPublicFilePrefix = addPublicFilePrefix;
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     declare question: DragAndDropQuestion;
 
