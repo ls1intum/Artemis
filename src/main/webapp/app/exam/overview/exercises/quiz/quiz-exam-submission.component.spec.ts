@@ -30,6 +30,11 @@ import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.m
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { captureException } from '@sentry/angular';
+
+jest.mock('@sentry/angular', () => ({
+    captureException: jest.fn(),
+}));
 
 describe('QuizExamSubmissionComponent', () => {
     MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as SecuredImageComponent));
@@ -171,6 +176,15 @@ describe('QuizExamSubmissionComponent', () => {
 
         expect(getElementByIdMock).toHaveBeenCalledWith(QUIZ_QUESTION_ID);
         expect(scrollIntoViewSpy).toHaveBeenCalled();
+    });
+
+    it('should capture exception when element is not found', () => {
+        const questionId = 1;
+        jest.spyOn(document, 'getElementById').mockReturnValue(null);
+
+        component.navigateToQuestion(questionId);
+
+        expect(captureException).toHaveBeenCalledWith('navigateToQuestion: element not found for questionId ' + questionId);
     });
 
     it('should create multiple choice submission from users selection', () => {
