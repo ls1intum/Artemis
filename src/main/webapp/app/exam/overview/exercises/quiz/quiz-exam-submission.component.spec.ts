@@ -31,6 +31,8 @@ import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/inc
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { captureException } from '@sentry/angular';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import * as QuizStepWizardUtil from 'app/quiz/shared/questions/quiz-stepwizard.util';
 
 jest.mock('@sentry/angular', () => ({
     captureException: jest.fn(),
@@ -185,6 +187,37 @@ describe('QuizExamSubmissionComponent', () => {
         component.navigateToQuestion(questionId);
 
         expect(captureException).toHaveBeenCalledWith('navigateToQuestion: element not found for questionId ' + questionId);
+    });
+
+    it('should highlight the correct quiz question', () => {
+        const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
+        const mockQuestion: QuizQuestion = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE, points: 1 };
+        const quizConfiguration: QuizConfiguration = { quizQuestions: [mockQuestion] };
+        component.quizConfiguration = () => quizConfiguration;
+
+        component['highlightQuizQuestion'](1);
+
+        expect(addTemporaryHighlightToQuestionSpy).toHaveBeenCalledWith(mockQuestion);
+    });
+
+    it('should not highlight if question is not found', () => {
+        const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
+        const quizConfiguration: QuizConfiguration = { quizQuestions: [] };
+        component.quizConfiguration = () => quizConfiguration;
+
+        component['highlightQuizQuestion'](1);
+
+        expect(addTemporaryHighlightToQuestionSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not highlight if quizQuestions is undefined', () => {
+        const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
+        const quizConfiguration: QuizConfiguration = { quizQuestions: undefined };
+        component.quizConfiguration = () => quizConfiguration;
+
+        component['highlightQuizQuestion'](1);
+
+        expect(addTemporaryHighlightToQuestionSpy).not.toHaveBeenCalled();
     });
 
     it('should create multiple choice submission from users selection', () => {
