@@ -2,24 +2,24 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { MockCalendarEventService } from 'test/helpers/mocks/service/mock-calendar-event.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 import { CalendarEvent, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
-import { CalendarWeekPresentationComponent } from './calendar-week-presentation.component';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
-import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
+import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
 
-describe('CalendarWeekPresentationComponent', () => {
-    let component: CalendarWeekPresentationComponent;
-    let fixture: ComponentFixture<CalendarWeekPresentationComponent>;
+describe('CalendarEventsPerDaySectionComponent', () => {
+    let component: CalendarEventsPerDaySectionComponent;
+    let fixture: ComponentFixture<CalendarEventsPerDaySectionComponent>;
 
     let mockMap: Map<string, CalendarEvent[]>;
 
     const startOfMonday = dayjs('2025-05-05');
     const startOfTuesday = startOfMonday.add(1, 'day');
     const startOfWednesday = startOfTuesday.add(1, 'day');
+    const week = Array.from({ length: 7 }, (_, i) => startOfMonday.add(i, 'day'));
     const events = [
         new CalendarEvent(
             CalendarEventType.Exam,
@@ -70,8 +70,8 @@ describe('CalendarWeekPresentationComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CalendarWeekPresentationComponent, CalendarEventDetailPopoverComponent],
-            declarations: [MockComponent(CalendarDayBadgeComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
+            imports: [CalendarEventsPerDaySectionComponent, CalendarEventDetailPopoverComponent],
+            declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 {
                     provide: CalendarEventService,
@@ -80,10 +80,10 @@ describe('CalendarWeekPresentationComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CalendarWeekPresentationComponent);
+        fixture = TestBed.createComponent(CalendarEventsPerDaySectionComponent);
         component = fixture.componentInstance;
 
-        fixture.componentRef.setInput('firstDayOfCurrentWeek', startOfMonday);
+        fixture.componentRef.setInput('dates', week);
         fixture.detectChanges();
     });
 
@@ -91,16 +91,7 @@ describe('CalendarWeekPresentationComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should compute correct number of days', () => {
-        const weekDays = component.weekDays();
-        expect(weekDays).toHaveLength(7);
-
-        for (let index = 0; index < 7; index++) {
-            expect(weekDays[index].isSame(startOfMonday.add(index, 'day'), 'day')).toBeTrue();
-        }
-    });
-
-    it('should display correct events', async () => {
+    it('should display events correctly', async () => {
         const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'))?.nativeElement;
         const lectureEventCell = fixture.debugElement.query(By.css('[data-testid="Object Design"]'))?.nativeElement;
         const tutorialEventCell = fixture.debugElement.query(By.css('[data-testid="Tutorial"]'))?.nativeElement;
@@ -169,8 +160,8 @@ describe('CalendarWeekPresentationComponent', () => {
         let popover = document.querySelector('jhi-calendar-event-detail-popover');
         expect(popover).toBeTruthy();
 
-        const scrollContainer = fixture.debugElement.query(By.css('.scroll-container'));
-        scrollContainer.nativeElement.click();
+        const infoColumn = fixture.debugElement.query(By.css('.info-column'));
+        infoColumn.nativeElement.click();
         fixture.detectChanges();
 
         popover = document.querySelector('jhi-calendar-event-detail-popover');
@@ -203,5 +194,20 @@ describe('CalendarWeekPresentationComponent', () => {
         popover = document.querySelector('jhi-calendar-event-detail-popover');
         expect(popover).toBeTruthy();
         expect(component.selectedEvent()?.id).toBe(events[1].id);
+    });
+
+    it('should emit isEventSelected correctly when popover opens/closes', () => {
+        const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
+        expect(examEventCell).toBeTruthy();
+
+        const emitSpy = jest.spyOn(component.isEventSelected, 'emit');
+
+        examEventCell.nativeElement.click();
+        fixture.detectChanges();
+        expect(emitSpy).toHaveBeenCalledWith(true);
+
+        examEventCell.nativeElement.click();
+        fixture.detectChanges();
+        expect(emitSpy).toHaveBeenCalledWith(false);
     });
 });
