@@ -11,6 +11,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -350,25 +352,16 @@ public class ExamService {
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, studentIds);
 
         var studentResults = new ArrayList<ExamScoresDTO.StudentResult>();
-
-        // Cache for unique sets of exercises and participations for each student
-        Map<Set<Long>, List<Exercise>> exerciseSetCache = new HashMap<>();
-        Map<Long, List<StudentParticipation>> participationCache = new HashMap<>();
+        // TODO load last submission & result here.
+        var allParticipations = studentParticipationRepository.findAllByExamId(examId);
 
         for (StudentExam studentExam : studentExams) {
             var studentGrades = examGrades.stream().filter(grade -> Objects.equals(grade.userId(), studentExam.getUser().getId())).collect(Collectors.toSet());
-            // Get exercise IDs for this student exam
-            Set<Long> exerciseIds = studentExam.getExercises().stream().filter(Objects::nonNull).map(Exercise::getId).collect(Collectors.toSet());
-            // Fetch or cache exercises
-            List<Exercise> studentExercises = exerciseSetCache.computeIfAbsent(exerciseIds,
-                    ids -> studentExam.getExercises().stream().filter(Objects::nonNull).collect(Collectors.toList()));
-
-            // Fetch participations for this student exam (cache by student ID)
-            Long studentId = studentExam.getUser().getId();
-            List<StudentParticipation> participations = participationCache.computeIfAbsent(studentId,
-                    id -> studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, false));
-
-            // Pass exercises and participations to calculation method
+            var studentExercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
+            // Create a set of exercise IDs from the student exam for efficient filtering
+            var studentExerciseIds = studentExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
+            // Filter participations to only include those that belong to exercises in this student exam
+            var participations = allParticipations.stream().filter(p -> studentExerciseIds.contains(p.getExercise().getId())).collect(Collectors.toList());
             var studentResult = calculateStudentResultWithGrade(studentExam, studentGrades, exam, gradingScale, true, submittedAnswerCounts, plagiarismMapping, examBonusCalculator,
                     studentExercises, participations);
             studentResults.add(studentResult);
@@ -714,7 +707,8 @@ public class ExamService {
             }
             if (calculateFirstCorrectionPoints && exam.getNumberOfCorrectionRoundsInExam() == 2
                     && !examGrade.includedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
-                Optional<Submission> latestSubmission = studentParticipation != null ? studentParticipation.getSubmissions().stream().findFirst() : Optional.empty();
+                Optional<Submission> latestSubmission = studentParticipation != null ? studentParticipation.getSubmissions().stream().max(Comparator.comparing(DomainObject::getId))
+                        : Optional.empty();
                 if (latestSubmission.isPresent()) {
                     Submission submission = latestSubmission.get();
                     if (submission.getManualResults().size() > 1) {

@@ -258,6 +258,15 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<ExamGradeScoreDTO> findGradesByExamId(@Param("examId") long examId);
 
     @Query("""
+            SELECT p
+            FROM StudentParticipation p
+            WHERE p.exercise.exerciseGroup.exam.id = :examId
+                AND p.testRun = FALSE
+
+            """)
+    Set<StudentParticipation> findAllByExamId(@Param("examId") long examId);
+
+    @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
             WHERE p.exercise.course.id = :courseId
@@ -1500,5 +1509,30 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
         Set<CourseGradeScoreDTO> individualQuizGradeScores = findIndividualQuizGradesByCourseIdAndStudentId(courseIds, studentId);
         Set<CourseGradeScoreDTO> teamGradeScores = findTeamGradesByCourseIdAndStudentId(courseIds, studentId);
         return Stream.of(individualGradeScores, individualQuizGradeScores, teamGradeScores).flatMap(Collection::stream).collect(Collectors.toSet());
+    }
+
+    default List<StudentParticipation> findByCourseIdWithRelevantResult(long courseId) {
+        List<StudentParticipation> participations = findByCourseIdWithEagerRatedResults(courseId);
+        return filterParticipationsWithoutStudent(participations);
+    }
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+            WHERE p.exercise.course.id = :courseId
+                AND (r.rated IS NULL
+                    OR r.rated = TRUE)
+            """)
+    List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") long courseId);
+
+    private List<StudentParticipation> filterParticipationsWithoutStudent(List<StudentParticipation> participations) {
+        return participations.stream()
+                // Filter out participations without Students
+                // These participations are used e.g. to store template and solution build plans in programming exercises
+                .filter(participation -> participation.getParticipant() != null).toList();
     }
 }

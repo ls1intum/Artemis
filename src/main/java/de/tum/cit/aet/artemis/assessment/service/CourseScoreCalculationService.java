@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePointsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationStatusRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -166,11 +167,16 @@ public class CourseScoreCalculationService {
             plagiarismCases = plagiarismCaseApi.map(api -> api.findByCourseIdAndStudentId(courseId, studentId)).orElse(List.of());
         }
         else {
-            // For multiple students, we need to query each student individually since there's no bulk method
-            for (Long studentId : studentIds) {
-                List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(courseId, studentId);
-                if (!participations.isEmpty()) {
-                    studentIdToParticipations.addAll(studentId, participations);
+            var participations = studentParticipationRepository.findByCourseIdWithRelevantResult(courseId);
+            // These participations also contain participations for students with ids not included in 'studentIds'.
+            // Filter out those participations that belong to the students in 'studentIds'.
+            // For the single student case, this is done in the db query.
+            var studentIdSet = new HashSet<>(studentIds);
+            for (StudentParticipation participation : participations) {
+                for (User student : participation.getStudents()) {
+                    if (studentIdSet.contains(student.getId())) {
+                        studentIdToParticipations.add(student.getId(), participation);
+                    }
                 }
             }
             plagiarismCases = plagiarismCaseApi.map(api -> api.findByCourseId(courseId)).orElse(List.of());
