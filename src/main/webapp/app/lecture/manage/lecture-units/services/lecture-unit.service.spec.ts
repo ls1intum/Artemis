@@ -43,6 +43,7 @@ describe('LectureUnitService', () => {
 
         attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.id = 37;
+        attachmentVideoUnit.name = 'Example attachment video unit';
         attachmentVideoUnit.description = 'Lorem Ipsum Attachment';
         attachmentVideoUnit.attachment = attachment;
 
@@ -82,7 +83,7 @@ describe('LectureUnitService', () => {
     }));
 
     it('should get title of associated element', async () => {
-        expect(service.getLectureUnitName(attachmentVideoUnit)).toEqual(attachmentVideoUnit.attachment!.name);
+        expect(service.getLectureUnitName(attachmentVideoUnit)).toEqual(attachmentVideoUnit.name);
         expect(service.getLectureUnitName(exerciseUnit)).toEqual(exerciseUnit.exercise!.title);
         expect(service.getLectureUnitName(textUnit)).toEqual(textUnit.name);
     });
