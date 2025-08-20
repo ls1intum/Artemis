@@ -77,7 +77,7 @@ public class FeatureToggleService {
         // Features that are neither enabled nor disabled should be enabled by default
         // This ensures that all features (except the Science API, TutorSuggestions, and AtlasML) are enabled once the system starts up
         for (Feature feature : Feature.values()) {
-            if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML) {
+            if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions) {
                 features.put(feature, true);
             }
         }
@@ -90,7 +90,7 @@ public class FeatureToggleService {
             features.put(Feature.TutorSuggestions, false);
         }
 
-        if (!features.containsKey(Feature.AtlasML)) {
+        if (!features.containsKey(Feature.AtlasML) || features.get(Feature.AtlasML)) {
             features.put(Feature.AtlasML, false);
         }
     }
