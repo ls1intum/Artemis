@@ -91,16 +91,16 @@
 @keyframes highlightPulse {
     0% {
         background-color: transparent;
-        box-shadow: 0 0 0 0 transparentize(default-variables.$primary, 0.6);
+        box-shadow: 0 0 0 0 transparentize(default-variables.$primary, 0.4);
     }
 
     50% {
-        background-color: transparentize(default-variables.$primary, 0.95);
-        box-shadow: 0 0 0 4px transparentize(default-variables.$primary, 0.8);
+        background-color: transparentize(default-variables.$primary, 0.8);
+        box-shadow: 0 0 0 4px transparentize(default-variables.$primary, 0.6);
     }
 
     100% {
         background-color: transparent;
-        box-shadow: 0 0 0 4px transparentize(default-variables.$primary, 1);
+        box-shadow: 0 0 0 4px transparentize(default-variables.$primary, 0.4);
     }
 }
