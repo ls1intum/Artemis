@@ -164,15 +164,18 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     }
 
     /**
-     * Find the latest programming submissions per participation that are older than the given start time but not older than the given end time
-     * and do NOT have any results. Used for retriggering builds for submissions that did not get a result due to some hiccup in the CI system.
-     * Only the most recent submission per participation in the time range is considered.
+     * Find programming submissions where the absolute latest submission per participation is older than the given start time but not older than the given end time
+     * and does NOT have any results. Used for retriggering builds for submissions that did not get a result due to some hiccup in the CI system.
+     *
+     * This query ensures that either the absolute latest submission for a participation is returned (if it meets all criteria),
+     * or no submission is returned for that participation at all. It does NOT return older submissions even if they are in the time range.
+     *
      * This query is expensive and should be only used in a scheduled job to avoid performance issues in the application.
      *
      * @param startTime the earliest time to consider (oldest submissions)
      * @param endTime   the latest time to consider (newest submissions)
      * @param pageable  pagination information for slice-based retrieval
-     * @return a slice of latest programming submissions per participation without results in the given time range
+     * @return a slice of absolute latest programming submissions per participation without results in the given time range
      */
     @Query("""
             SELECT s
@@ -184,11 +187,8 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
                     SELECT MAX(s2.submissionDate)
                     FROM ProgrammingSubmission s2
                     WHERE s2.participation.id = s.participation.id
-                        AND s2.submissionDate >= :startTime
-                        AND s2.submissionDate <= :endTime
-                        AND s2.results IS EMPTY
                 )
             """)
-    Slice<ProgrammingSubmission> findProgrammingSubmissionsWithoutResultsInTimeRange(@Param("startTime") ZonedDateTime startTime, @Param("endTime") ZonedDateTime endTime,
+    Slice<ProgrammingSubmission> findLatestProgrammingSubmissionsWithoutResultsInTimeRange(@Param("startTime") ZonedDateTime startTime, @Param("endTime") ZonedDateTime endTime,
             Pageable pageable);
 }

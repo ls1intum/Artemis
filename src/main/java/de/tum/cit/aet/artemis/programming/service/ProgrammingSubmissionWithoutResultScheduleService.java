@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
 /**
- * Service responsible for scheduling retriggering builds for programming submissions without results.
+ * Service responsible for executing a scheduled job to retrigger builds for programming submissions without results.
  */
 @Lazy
 @Service
@@ -39,24 +39,24 @@ public class ProgrammingSubmissionWithoutResultScheduleService {
     }
 
     /**
-     * Find the latest programming submissions per participation older than 5 hours but not older than 2 days without results and retrigger their builds.
-     * Only the most recent submission per participation in the time range is considered to avoid duplicate retriggering.
+     * Find the latest programming submissions per participation older than 1 hour but not older than 2 days without results and retrigger their builds.
+     * Only the most recent submission per participation in the time range is considered to avoid spamming the build system.
      * By default, this method is scheduled to run every day at 2 AM.
      */
     @Scheduled(cron = "${artemis.scheduling.programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * *}")
     public void retriggerSubmissionsWithoutResults() {
         checkSecurityUtils();
-        log.info("Retriggering latest submissions per participation without results that are older than 5 hours but not older than 2 days.");
+        log.info("Retriggering latest submission per participation without results that are older than 1 hour but not older than 2 days.");
 
         ZonedDateTime now = ZonedDateTime.now();
-        ZonedDateTime fiveHoursAgo = now.minusHours(5);
+        ZonedDateTime oneHourAgo = now.minusHours(1);
         ZonedDateTime twoDaysAgo = now.minusDays(2);
 
         Pageable pageable = PageRequest.of(0, 50, Sort.by("submissionDate").ascending());
         int processedCount = 0;
         Slice<ProgrammingSubmission> slice;
         do {
-            slice = programmingSubmissionRepository.findProgrammingSubmissionsWithoutResultsInTimeRange(twoDaysAgo, fiveHoursAgo, pageable);
+            slice = programmingSubmissionRepository.findLatestProgrammingSubmissionsWithoutResultsInTimeRange(twoDaysAgo, oneHourAgo, pageable);
             for (ProgrammingSubmission submission : slice.getContent()) {
                 try {
                     programmingTriggerService.triggerBuildAndNotifyUser(submission);
