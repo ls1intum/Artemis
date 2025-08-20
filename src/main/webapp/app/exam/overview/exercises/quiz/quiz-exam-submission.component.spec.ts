@@ -197,7 +197,7 @@ describe('QuizExamSubmissionComponent', () => {
             points: 1,
             randomizeOrder: false,
             invalid: false,
-            exportQuiz: () => '',
+            exportQuiz: () => true,
         };
         const quizConfiguration: QuizConfiguration = { quizQuestions: [mockQuestion] };
         fixture.componentRef.setInput('quizConfiguration', quizConfiguration);
