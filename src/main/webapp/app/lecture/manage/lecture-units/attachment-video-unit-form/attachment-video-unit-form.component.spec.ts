@@ -22,9 +22,18 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip), MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule), FontAwesomeTestingModule],
-            declarations: [AttachmentVideoUnitFormComponent, FormDateTimePickerComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CompetencySelectionComponent)],
+            imports: [
+                ReactiveFormsModule,
+                FormsModule,
+                MockModule(OwlDateTimeModule),
+                MockModule(OwlNativeDateTimeModule),
+                FontAwesomeTestingModule,
+                AttachmentVideoUnitFormComponent,
+            ],
+            declarations: [FormDateTimePickerComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CompetencySelectionComponent), MockDirective(NgbTooltip)],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
