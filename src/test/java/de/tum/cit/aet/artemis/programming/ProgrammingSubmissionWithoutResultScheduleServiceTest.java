@@ -2,18 +2,17 @@ package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
+import jakarta.validation.constraints.NotNull;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -52,8 +51,6 @@ class ProgrammingSubmissionWithoutResultScheduleServiceTest extends AbstractSpri
     @Autowired
     private ParticipationUtilService participationUtilService;
 
-    private ProgrammingExercise programmingExercise;
-
     private ProgrammingExerciseStudentParticipation participation1;
 
     private ProgrammingExerciseStudentParticipation participation2;
@@ -62,16 +59,10 @@ class ProgrammingSubmissionWithoutResultScheduleServiceTest extends AbstractSpri
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 4, 1, 1, 1);
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
-    }
-
-    @AfterEach
-    void cleanup() {
-        programmingSubmissionTestRepository.deleteAll();
-        Mockito.reset(programmingTriggerService);
     }
 
     @Test
@@ -90,14 +81,26 @@ class ProgrammingSubmissionWithoutResultScheduleServiceTest extends AbstractSpri
         ZonedDateTime endTime = now.minusHours(5);
         Pageable pageable = PageRequest.of(0, 10);
 
-        Slice<ProgrammingSubmission> result = programmingSubmissionTestRepository.findLatestProgrammingSubmissionsWithoutResultsInTimeRange(startTime, endTime, pageable);
+        List<ProgrammingSubmission> allSubmissions = getAllSubmissions(startTime, endTime, pageable);
+        assertThat(allSubmissions.stream().map(DomainObject::getId)).anyMatch(submissionInRange.getId()::equals);
+        assertThat(allSubmissions.stream().map(ProgrammingSubmission::getCommitHash)).anyMatch("hash1"::equals);
+    }
 
-        assertThat(result.getContent().stream().map(DomainObject::getId)).anyMatch(submissionInRange.getId()::equals);
-        assertThat(result.getContent().stream().map(ProgrammingSubmission::getCommitHash)).anyMatch("hash1"::equals);
+    private @NotNull List<ProgrammingSubmission> getAllSubmissions(ZonedDateTime startTime, ZonedDateTime endTime, Pageable pageable) {
+        Slice<ProgrammingSubmission> result = programmingSubmissionTestRepository.findLatestProgrammingSubmissionsWithoutResultsInTimeRange(startTime, endTime, pageable);
+        List<ProgrammingSubmission> allSubmissions = new ArrayList<>();
+        allSubmissions.addAll(result.getContent());
+
+        while (result.hasNext()) {
+            pageable = result.nextPageable();
+            result = programmingSubmissionTestRepository.findLatestProgrammingSubmissionsWithoutResultsInTimeRange(startTime, endTime, pageable);
+            allSubmissions.addAll(result.getContent());
+        }
+        return allSubmissions;
     }
 
     @Test
-    void testFindProgrammingSubmissionsWithoutResultsInTimeRangeReturnsOnlyAbsoluteLatestSubmissionPerParticipation() {
+    void testFindProgrammingSubmissionsWithoutResultsInTimeRangeReturnsOnlyLatestSubmissionPerParticipation() {
         ZonedDateTime now = ZonedDateTime.now();
 
         ProgrammingSubmission olderSubmissionParticipationOne = createSubmissionWithoutResult(participation1, now.minusHours(8), "hash5");
@@ -113,32 +116,10 @@ class ProgrammingSubmissionWithoutResultScheduleServiceTest extends AbstractSpri
         ZonedDateTime endTime = now.minusHours(5);
         Pageable pageable = PageRequest.of(0, 10);
 
-        Slice<ProgrammingSubmission> result = programmingSubmissionTestRepository.findLatestProgrammingSubmissionsWithoutResultsInTimeRange(startTime, endTime, pageable);
-
-        List<String> commitHashes = result.getContent().stream().map(ProgrammingSubmission::getCommitHash).toList();
+        List<ProgrammingSubmission> allSubmissions = getAllSubmissions(startTime, endTime, pageable);
+        List<String> commitHashes = allSubmissions.stream().map(ProgrammingSubmission::getCommitHash).toList();
         assertThat(commitHashes).contains("hash7");
         assertThat(commitHashes).doesNotContain("hash5", "hash6", "hash_newest_p1");
-    }
-
-    @Test
-    void testFindProgrammingSubmissionsWithoutResultsInTimeRangeAbsoluteLatestSubmissionBehavior() {
-        ZonedDateTime now = ZonedDateTime.now();
-        ProgrammingSubmission olderSubmissionParticipationOne = createSubmissionWithoutResult(participation1, now.minusHours(10), "hash_old_p1");
-        ProgrammingSubmission absoluteLatestSubmissionParticipationOne = createSubmissionWithoutResult(participation1, now.minusHours(6), "hash_latest_p1");
-
-        ProgrammingSubmission olderSubmissionParticipationTwoInRange = createSubmissionWithoutResult(participation2, now.minusHours(8), "hash_old_p2");
-        ProgrammingSubmission absoluteLatestSubmissionParticipationTwo = createSubmissionWithoutResult(participation2, now.minusHours(2), "hash_latest_p2");
-
-        programmingSubmissionTestRepository.saveAll(List.of(olderSubmissionParticipationOne, absoluteLatestSubmissionParticipationOne, olderSubmissionParticipationTwoInRange,
-                absoluteLatestSubmissionParticipationTwo));
-
-        ZonedDateTime startTime = now.minusDays(2);
-        ZonedDateTime endTime = now.minusHours(5);
-        Pageable pageable = PageRequest.of(0, 10);
-
-        Slice<ProgrammingSubmission> result = programmingSubmissionTestRepository.findLatestProgrammingSubmissionsWithoutResultsInTimeRange(startTime, endTime, pageable);
-
-        assertThat(result.getContent().stream().map(ProgrammingSubmission::getCommitHash)).anyMatch("hash_latest_p1"::equals);
     }
 
     @Test
@@ -154,7 +135,8 @@ class ProgrammingSubmissionWithoutResultScheduleServiceTest extends AbstractSpri
 
         programmingSubmissionWithoutResultScheduleService.retriggerSubmissionsWithoutResults();
 
-        verify(programmingTriggerService, atLeast(2)).triggerBuildAndNotifyUser(any(ProgrammingSubmission.class));
+        verify(programmingTriggerService).triggerBuildAndNotifyUser(eq(latestSubmissionParticipationTwo));
+        verify(programmingTriggerService).triggerBuildAndNotifyUser(eq(newerSubmissionParticipationOne));
     }
 
     @Test
