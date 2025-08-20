@@ -94,10 +94,7 @@ public class BuildAgentInformationService {
     private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
-        int numberOfCurrentBuildJobs = processingJobsOfMember.size();
-        int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
-                : buildAgentConfiguration.getThreadPoolSize();
-        boolean hasJobs = numberOfCurrentBuildJobs > 0;
+        int runningJobs = processingJobsOfMember.size();
         BuildAgentInformation.BuildAgentStatus status;
         BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(memberAddress);
         if (isPaused) {
@@ -105,7 +102,7 @@ public class BuildAgentInformationService {
             status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentInformation.BuildAgentStatus.SELF_PAUSED : BuildAgentInformation.BuildAgentStatus.PAUSED;
         }
         else {
-            status = hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
+            status = runningJobs > 0 ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
         }
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
@@ -114,8 +111,9 @@ public class BuildAgentInformationService {
         BuildAgentDetailsDTO agentDetails = getBuildAgentDetails(agent, recentBuildJob, consecutiveFailures);
 
         int pauseAfterConsecutiveFailedJobs = buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs();
+        int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getTargetThreadPoolSize();
         int maxConcurrentBuildsAllowed = buildAgentConfiguration.getConcurrentBuildsMaximum();
-        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, publicSshKey, agentDetails,
+        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, runningJobs, processingJobsOfMember, status, publicSshKey, agentDetails,
                 pauseAfterConsecutiveFailedJobs, maxConcurrentBuildsAllowed);
     }
 

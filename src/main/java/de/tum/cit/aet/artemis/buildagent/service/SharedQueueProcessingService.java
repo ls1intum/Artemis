@@ -261,6 +261,12 @@ public class SharedQueueProcessingService {
         if (distributedDataAccessService.getDistributedBuildJobQueue().isEmpty() || isPaused.get()) {
             return;
         }
+
+        if (buildAgentConfiguration.isShrinkingThreadPool()) {
+            buildAgentConfiguration.shrinkThreadPool();
+            return;
+        }
+
         BuildJobQueueItem buildJob = null;
         instanceLock.lock();
         try {
