@@ -225,8 +225,7 @@ describe('QuizParticipationComponent', () => {
                 invalid: false,
                 exportQuiz: false,
             };
-            component.quizExercise = { quizQuestions: [] } as unknown as QuizExercise;
-            component.quizExercise.quizQuestions = [mockQuestion];
+            component.quizExercise = { ...quizExercise, quizQuestions: [mockQuestion] };
 
             component['highlightQuestion'](0);
 
@@ -235,8 +234,7 @@ describe('QuizParticipationComponent', () => {
 
         it('should not highlight if question is not found', () => {
             const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
-            component.quizExercise = { quizQuestions: [] } as unknown as QuizExercise;
-            component.quizExercise.quizQuestions = [];
+            component.quizExercise = { ...quizExercise, quizQuestions: [] };
 
             component['highlightQuestion'](1);
 
@@ -245,8 +243,7 @@ describe('QuizParticipationComponent', () => {
 
         it('should not highlight if quizQuestions is undefined', () => {
             const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
-            component.quizExercise = { quizQuestions: [] } as unknown as QuizExercise;
-            component.quizExercise.quizQuestions = undefined;
+            component.quizExercise = { ...quizExercise, quizQuestions: undefined };
 
             component['highlightQuestion'](1);
 
