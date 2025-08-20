@@ -200,7 +200,7 @@ describe('QuizExamSubmissionComponent', () => {
             exportQuiz: () => '',
         };
         const quizConfiguration: QuizConfiguration = { quizQuestions: [mockQuestion] };
-        component.quizConfiguration = signal(quizConfiguration);
+        fixture.componentRef.setInput('quizConfiguration', quizConfiguration);
 
         component['highlightQuizQuestion'](1);
 
@@ -210,7 +210,7 @@ describe('QuizExamSubmissionComponent', () => {
     it('should not highlight if question is not found', () => {
         const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
         const quizConfiguration: QuizConfiguration = { quizQuestions: [] };
-        component.quizConfiguration = () => quizConfiguration;
+        fixture.componentRef.setInput('quizConfiguration', quizConfiguration);
 
         component['highlightQuizQuestion'](1);
 
@@ -220,7 +220,7 @@ describe('QuizExamSubmissionComponent', () => {
     it('should not highlight if quizQuestions is undefined', () => {
         const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
         const quizConfiguration: QuizConfiguration = { quizQuestions: undefined };
-        component.quizConfiguration = () => quizConfiguration;
+        fixture.componentRef.setInput('quizConfiguration', quizConfiguration);
 
         component['highlightQuizQuestion'](1);
 
