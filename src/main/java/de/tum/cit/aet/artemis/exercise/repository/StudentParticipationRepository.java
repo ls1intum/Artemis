@@ -221,7 +221,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     // NOTE: in an exam there is only one submission for file upload, text, modeling and quiz and there is no team support
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO(p.id, u.id, ex.id, r.score)
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO(p.id, u.id, ex.id, r.score, ex.maxPoints, ex.includedInOverallScore)
             FROM StudentParticipation p
                 JOIN p.student u
                 JOIN p.exercise ex
@@ -240,7 +240,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     // NOTE: in an exam there is only one submission for file upload, text, modeling and quiz and there is no team support
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO(p.id, u.id, ex.id, r.score)
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO(p.id, u.id, ex.id, r.score, ex.maxPoints, ex.includedInOverallScore)
             FROM StudentParticipation p
                 JOIN p.student u
                 JOIN p.exercise ex

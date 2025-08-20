@@ -55,7 +55,7 @@ public abstract class SubmittedAnswer extends DomainObject {
 
     @ManyToOne
     @JsonIgnore
-    private QuizSubmission submission;
+    private AbstractQuizSubmission submission;
 
     public Double getScoreInPoints() {
         return scoreInPoints;
@@ -73,11 +73,11 @@ public abstract class SubmittedAnswer extends DomainObject {
         this.quizQuestion = quizQuestion;
     }
 
-    public QuizSubmission getSubmission() {
+    public AbstractQuizSubmission getSubmission() {
         return submission;
     }
 
-    public void setSubmission(QuizSubmission quizSubmission) {
+    public void setSubmission(AbstractQuizSubmission quizSubmission) {
         this.submission = quizSubmission;
     }
 
