@@ -16,10 +16,14 @@ public record SaveCompetencyRequestDTO(@JsonProperty("competencies") List<AtlasM
         @JsonProperty("operation_type") OperationTypeDTO operationType) {
 
     /**
-     * Operation type enum for AtlasML save operations.
+     * Operation type DTO for AtlasML save operations.
      */
-    public enum OperationTypeDTO {
-        UPDATE, DELETE
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record OperationTypeDTO(String value) {
+
+        public static final OperationTypeDTO UPDATE = new OperationTypeDTO("UPDATE");
+
+        public static final OperationTypeDTO DELETE = new OperationTypeDTO("DELETE");
     }
 
     /**

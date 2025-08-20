@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Profile(PROFILE_CORE)
 @Controller
 @Lazy
-public class AtlasMLApi {
+public class AtlasMLApi extends AbstractAtlasApi {
 
     private final AtlasMLService atlasMLService;
 

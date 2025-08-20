@@ -37,8 +37,8 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.Operati
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -62,7 +62,7 @@ class AtlasMLServiceTest {
     private CompetencyRepository competencyRepository;
 
     @Mock
-    private CompetencyExerciseLinkRepository competencyExerciseLinkRepository;
+    private CompetencyExerciseLinkTestRepository competencyExerciseLinkRepository;
 
     @Mock
     private FeatureToggleService featureToggleService;

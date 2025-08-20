@@ -266,7 +266,7 @@ public class AtlasMLService {
             return true;
         }
         catch (Exception e) {
-            log.error("Failed to {} competency with id {}", operationType.name().toLowerCase(), competency != null ? competency.getId() : "null", e);
+            log.error("Failed to {} competency with id {}", operationType.value().toLowerCase(), competency != null ? competency.getId() : "null", e);
             return false;
         }
     }
@@ -295,7 +295,7 @@ public class AtlasMLService {
             return true;
         }
         catch (Exception e) {
-            log.error("Failed to {} course competency with id {}", operationType.name().toLowerCase(), courseCompetency != null ? courseCompetency.getId() : "null", e);
+            log.error("Failed to {} course competency with id {}", operationType.value().toLowerCase(), courseCompetency != null ? courseCompetency.getId() : "null", e);
             return false;
         }
     }
@@ -335,7 +335,7 @@ public class AtlasMLService {
             return true;
         }
         catch (Exception e) {
-            log.error("Failed to {} {} competencies", operationType.name().toLowerCase(), competencies.size(), e);
+            log.error("Failed to {} {} competencies", operationType.value().toLowerCase(), competencies.size(), e);
             return false;
         }
     }
@@ -374,7 +374,7 @@ public class AtlasMLService {
             return true;
         }
         catch (Exception e) {
-            log.error("Failed to {} exercise with id {}", operationType.name().toLowerCase(), exerciseId, e);
+            log.error("Failed to {} exercise with id {}", operationType.value().toLowerCase(), exerciseId, e);
             return false;
         }
     }
@@ -424,7 +424,7 @@ public class AtlasMLService {
             return saveExercise(exercise.getId(), exercise.getTitle(), description, competencyIds, courseId, operationType);
         }
         catch (Exception e) {
-            log.error("Failed to {} exercise with competencies for exercise id {}", operationType.name().toLowerCase(), exercise.getId(), e);
+            log.error("Failed to {} exercise with competencies for exercise id {}", operationType.value().toLowerCase(), exercise.getId(), e);
             return false;
         }
     }
@@ -468,7 +468,7 @@ public class AtlasMLService {
             return saveExercise(exerciseId, exercise.getTitle(), description, competencyIds, courseId, operationType);
         }
         catch (Exception e) {
-            log.error("Failed to {} exercise with competencies for exercise id {}", operationType.name().toLowerCase(), exerciseId, e);
+            log.error("Failed to {} exercise with competencies for exercise id {}", operationType.value().toLowerCase(), exerciseId, e);
             return false;
         }
     }
