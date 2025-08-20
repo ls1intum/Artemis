@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { LectureTranscriptionService } from 'app/core/admin/lecture-transcription-ingestion/service/lecture-transcription.service';
+import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 
 describe('LectureTranscriptionService', () => {
     let service: LectureTranscriptionService;
@@ -27,12 +27,12 @@ describe('LectureTranscriptionService', () => {
         const lectureUnitId = 1;
         service.ingestTranscription(courseId, lectureId, lectureUnitId).subscribe(() => {});
 
-        const req = httpMock.expectOne({ method: 'PUT', url: `api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/ingest-transcription` });
+        const req = httpMock.expectOne({ method: 'POST', url: `api/lecture/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingest` });
         req.flush({});
     });
 
     it('should send POST request to create transcription', () => {
-        const transcription = { transcription: [] };
+        const transcription = { lectureUnitId: 1, language: 'en', segments: [] };
         const lectureId = 1;
         const lectureUnitId = 1;
         service.createTranscription(lectureId, lectureUnitId, transcription).subscribe(() => {});
