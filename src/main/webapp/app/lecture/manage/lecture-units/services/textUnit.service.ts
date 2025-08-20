@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 
 type EntityResponseType = HttpResponse<TextUnit>;
 
