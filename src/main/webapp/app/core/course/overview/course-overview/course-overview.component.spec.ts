@@ -7,7 +7,7 @@ import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -201,7 +201,7 @@ describe('CourseOverviewComponent', () => {
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(CourseExercisesComponent),
                 MockComponent(CourseRegistrationComponent),
-                MockComponent(SecuredImageComponent),
+                MockComponent(ImageComponent),
                 MockComponent(CourseSidebarComponent),
             ],
             providers: [

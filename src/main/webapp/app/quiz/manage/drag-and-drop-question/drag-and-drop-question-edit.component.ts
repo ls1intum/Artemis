@@ -6,8 +6,10 @@ import {
     EventEmitter,
     Input,
     OnChanges,
+    OnDestroy,
     OnInit,
     Output,
+    OutputRefSubscription,
     SimpleChanges,
     ViewEncapsulation,
     inject,
@@ -26,8 +28,7 @@ import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and
 import { cloneDeep } from 'lodash-es';
 import { round } from 'app/shared/util/utils';
 import { MAX_SIZE_UNIT } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import { debounceTime, filter } from 'rxjs/operators';
-import { ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent, ImageLoadingStatus } from 'app/shared/image/image.component';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
@@ -77,7 +78,7 @@ import { FileService } from 'app/shared/service/file.service';
         QuizScoringInfoModalComponent,
         MarkdownEditorMonacoComponent,
         CdkDropListGroup,
-        SecuredImageComponent,
+        ImageComponent,
         NgClass,
         CdkDropList,
         NgStyle,
@@ -89,7 +90,7 @@ import { FileService } from 'app/shared/service/file.service';
         ArtemisTranslatePipe,
     ],
 })
-export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
+export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit, OnDestroy {
     protected readonly faBan = faBan;
     protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
@@ -116,8 +117,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     private fileService = inject(FileService);
 
     private readonly clickLayer = viewChild.required<ElementRef>('clickLayer');
-    private readonly backgroundImage = viewChild.required<SecuredImageComponent>('backgroundImage');
+    private readonly backgroundImage = viewChild.required<ImageComponent>('backgroundImage');
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
+
+    private adjustClickLayerWidthSubscription?: OutputRefSubscription;
 
     @Input() question: DragAndDropQuestion;
     @Input() questionIndex: number;
@@ -189,6 +192,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         }
     }
 
+    ngOnDestroy(): void {
+        this.adjustClickLayerWidthSubscription?.unsubscribe();
+    }
+
     /**
      * Watch for any changes to the question model and notify listener
      * @param changes {SimpleChanges}
@@ -233,13 +240,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             }
         }
 
-        this.backgroundImage()
-            .endLoadingProcess.pipe(
-                filter((loadingStatus) => loadingStatus === ImageLoadingStatus.SUCCESS),
-                // Some time until image render. Need to wait until image width is computed.
-                debounceTime(300),
-            )
-            .subscribe(() => this.adjustClickLayerWidth());
+        this.adjustClickLayerWidthSubscription = this.backgroundImage().loadingStatus.subscribe((loadingStatus) => {
+            if (loadingStatus === ImageLoadingStatus.SUCCESS) {
+                setTimeout(() => this.adjustClickLayerWidth(), 300);
+            }
+        });
+
         // render import images on UI immediatly
         this.makeFileMapPreview();
         // Trigger click layer width adjustment upon window resize.
@@ -951,7 +957,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                         this.question.correctMappings!.push(dndMapping);
                     }
                 };
-                image.src = this.backgroundImage().src;
+                image.src = this.backgroundImage().src();
             }
         }
         this.blankOutBackgroundImage();
@@ -992,7 +998,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                 this.setBackgroundFileFromFile(this.dataUrlToFile(dataUrlCanvas, 'background'));
             }
         };
-        image.src = this.backgroundImage().src;
+        image.src = this.backgroundImage().src();
     }
 
     /**
