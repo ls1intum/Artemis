@@ -37,6 +37,7 @@ import { ShortAnswerQuestion } from '../../shared/entities/short-answer-question
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { captureException } from '@sentry/angular';
+import * as QuizStepWizardUtil from 'app/quiz/shared/questions/quiz-stepwizard.util';
 
 jest.mock('@sentry/angular', () => ({
     captureException: jest.fn(),
@@ -212,6 +213,44 @@ describe('QuizParticipationComponent', () => {
             component.navigateToQuestion(questionIndex);
 
             expect(captureException).toHaveBeenCalledWith('navigateToQuestion: element not found for index ' + questionIndex);
+        });
+
+        it('should highlight the correct quiz question', () => {
+            const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
+            const mockQuestion: QuizQuestion = {
+                id: 1,
+                type: QuizQuestionType.MULTIPLE_CHOICE,
+                points: 1,
+                randomizeOrder: false,
+                invalid: false,
+                exportQuiz: false,
+            };
+            component.quizExercise = { quizQuestions: [] } as QuizExercise;
+            component.quizExercise.quizQuestions = [mockQuestion];
+
+            component['highlightQuestion'](0);
+
+            expect(addTemporaryHighlightToQuestionSpy).toHaveBeenCalledWith(mockQuestion);
+        });
+
+        it('should not highlight if question is not found', () => {
+            const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
+            component.quizExercise = { quizQuestions: [] } as QuizExercise;
+            component.quizExercise.quizQuestions = [];
+
+            component['highlightQuestion'](1);
+
+            expect(addTemporaryHighlightToQuestionSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not highlight if quizQuestions is undefined', () => {
+            const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
+            component.quizExercise = { quizQuestions: [] } as QuizExercise;
+            component.quizExercise.quizQuestions = undefined;
+
+            component['highlightQuestion'](1);
+
+            expect(addTemporaryHighlightToQuestionSpy).not.toHaveBeenCalled();
         });
 
         it('should fetch exercise and create a new submission', () => {
