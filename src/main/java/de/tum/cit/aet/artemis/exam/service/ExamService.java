@@ -159,8 +159,6 @@ public class ExamService {
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
-    private final GitService gitService;
-
     private final CourseExamExportService courseExamExportService;
 
     private final GradingScaleRepository gradingScaleRepository;
@@ -207,7 +205,6 @@ public class ExamService {
         this.submissionRepository = submissionRepository;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.courseExamExportService = courseExamExportService;
-        this.gitService = gitService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.plagiarismCaseApi = plagiarismCaseApi;
         this.authorizationCheckService = authorizationCheckService;
@@ -308,15 +305,21 @@ public class ExamService {
      * @return return ExamScoresDTO with students, scores, exerciseGroups, bonus and related plagiarism verdicts for the exam
      */
     public ExamScoresDTO calculateExamScores(Long examId) {
+        var start = System.currentTimeMillis();
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+        log.debug("Fetched exam {} with exercise groups and exercises in {} ms", examId, System.currentTimeMillis() - start);
+        start = System.currentTimeMillis();
         var examGrades = studentParticipationRepository.findGradesByExamId(examId);
+        log.debug("Fetched {} exam grades for exam {} in {} ms", examGrades.size(), examId, System.currentTimeMillis() - start);
+        start = System.currentTimeMillis();
         List<QuizSubmittedAnswerCount> submittedAnswerCounts = studentParticipationRepository.findSubmittedAnswerCountForQuizzesInExam(examId);
+        log.debug("Fetched {} submitted answer counts for quizzes in exam {} in {} ms", submittedAnswerCounts.size(), examId, System.currentTimeMillis() - start);
 
         // Counts how many participants each exercise has
         Map<Long, Long> exerciseIdToNumberParticipations = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::exerciseId, Collectors.counting()));
-
+        start = System.currentTimeMillis();
         PlagiarismMapping plagiarismMapping = plagiarismCaseApi.map(api -> api.getPlagiarismMappingForExam(exam.getId())).orElse(PlagiarismMapping.empty());
-
+        log.debug("Fetched plagiarism mapping for exam {} in {} ms", examId, System.currentTimeMillis() - start);
         var exerciseGroups = new ArrayList<ExamScoresDTO.ExerciseGroup>();
 
         // Adding exercise group information to DTO
@@ -346,26 +349,28 @@ public class ExamService {
         }
 
         // Adding registered student information to DTO
-        Set<StudentExam> studentExams = studentExamRepository.findByExamId(examId); // fetched without test runs
+        start = System.currentTimeMillis();
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(examId);
+        log.debug("Fetched {} student exams for exam {} in {} ms", studentExams.size(), examId, System.currentTimeMillis() - start);
+        start = System.currentTimeMillis();
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamIdWithBonusFrom(examId);
+        log.debug("Fetched grading scale for exam {} in {} ms", examId, System.currentTimeMillis() - start);
         List<Long> studentIds = studentExams.stream().map(studentExam -> studentExam.getUser().getId()).toList();
+        start = System.currentTimeMillis();
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, studentIds);
+        log.debug("Created exam bonus calculator for exam {} in {} ms", examId, System.currentTimeMillis() - start);
 
         var studentResults = new ArrayList<ExamScoresDTO.StudentResult>();
-        // TODO load last submission & result here.
-        var allParticipations = studentParticipationRepository.findAllByExamId(examId);
-
+        start = System.currentTimeMillis();
         for (StudentExam studentExam : studentExams) {
             var studentGrades = examGrades.stream().filter(grade -> Objects.equals(grade.userId(), studentExam.getUser().getId())).collect(Collectors.toSet());
             var studentExercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
-            // Create a set of exercise IDs from the student exam for efficient filtering
-            var studentExerciseIds = studentExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
-            // Filter participations to only include those that belong to exercises in this student exam
-            var participations = allParticipations.stream().filter(p -> studentExerciseIds.contains(p.getExercise().getId())).collect(Collectors.toList());
+            var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, false);
             var studentResult = calculateStudentResultWithGrade(studentExam, studentGrades, exam, gradingScale, true, submittedAnswerCounts, plagiarismMapping, examBonusCalculator,
                     studentExercises, participations);
             studentResults.add(studentResult);
         }
+        log.debug("Calculated st    udent results for exam {} in {} ms", examId, System.currentTimeMillis() - start);
 
         // Updating exam information in DTO
         int numberOfStudentResults = studentResults.size();
@@ -738,9 +743,9 @@ public class ExamService {
         if (exam.getExamMaxPoints() > 0) {
             overallScoreAchieved = (overallPointsAchieved / exam.getExamMaxPoints()) * 100.0;
             if (gradingScale.isPresent()) {
-                GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchieved, gradingScale.get().getId());
+                GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchieved, gradingScale.get());
                 var overallScoreAchievedInFirstCorrection = (overallPointsAchievedInFirstCorrection / exam.getExamMaxPoints()) * 100.0;
-                GradeStep studentGradeInFirstCorrection = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchievedInFirstCorrection, gradingScale.get().getId());
+                GradeStep studentGradeInFirstCorrection = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchievedInFirstCorrection, gradingScale.get());
                 overallGrade = studentGrade.getGradeName();
                 overallGradeInFirstCorrection = studentGradeInFirstCorrection.getGradeName();
                 hasPassed = studentGrade.getIsPassingGrade();

@@ -1535,4 +1535,13 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 // These participations are used e.g. to store template and solution build plans in programming exercises
                 .filter(participation -> participation.getParticipant() != null).toList();
     }
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            WHERE p.exercise.exerciseGroup.exam.id = :examId
+            AND p.testRun = false
+            """)
+    List<StudentParticipation> findAllByExamIdWithEagerSubmissionsAndResults(@Param("examId") Long examId);
 }

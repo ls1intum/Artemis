@@ -487,8 +487,8 @@ public class CourseScoreCalculationService {
     }
 
     private boolean isAutomaticAssessmentDone(ExerciseCourseScoreDTO exercise) {
-        return isAssessedAutomatically(exercise) && exercise.buildAndTestStudentSubmissionsAfterDueDate() == null
-                || ZonedDateTime.now().isAfter(exercise.buildAndTestStudentSubmissionsAfterDueDate());
+        return isAssessedAutomatically(exercise)
+                && (exercise.buildAndTestStudentSubmissionsAfterDueDate() == null || ZonedDateTime.now().isAfter(exercise.buildAndTestStudentSubmissionsAfterDueDate()));
     }
 
     /**
