@@ -191,9 +191,16 @@ describe('QuizExamSubmissionComponent', () => {
 
     it('should highlight the correct quiz question', () => {
         const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
-        const mockQuestion: QuizQuestion = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE, points: 1 };
+        const mockQuestion: QuizQuestion = {
+            id: 1,
+            type: QuizQuestionType.MULTIPLE_CHOICE,
+            points: 1,
+            randomizeOrder: false,
+            invalid: false,
+            exportQuiz: () => '',
+        };
         const quizConfiguration: QuizConfiguration = { quizQuestions: [mockQuestion] };
-        component.quizConfiguration = () => quizConfiguration;
+        component.quizConfiguration = signal(quizConfiguration);
 
         component['highlightQuizQuestion'](1);
 
