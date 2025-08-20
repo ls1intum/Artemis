@@ -398,9 +398,12 @@ public class ExerciseSharingService {
         }
 
         String decodedToken = new String(Base64.getUrlDecoder().decode(b64Token), StandardCharsets.UTF_8);
-        // with the HMAC key of the token, we ensure it has not been changed client-side after construction,
-        // therefore, we know that `decodedToken` points to a safe path
-        return Optional.of(Paths.get(repoDownloadClonePath, decodedToken + ".zip"));
+        Path zipPath = Paths.get(repoDownloadClonePath, decodedToken + ".zip");
+        if (!Files.exists(zipPath)) {
+            return Optional.empty();
+        }
+        // Integrity is ensured via HMAC validation; decodedToken is a safe relative path segment
+        return Optional.of(zipPath);
     }
 
     private boolean isInvalidToken(String token) {

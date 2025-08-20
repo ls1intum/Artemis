@@ -1,8 +1,8 @@
 {
     "artemisApp": {
         "sharing": {
-            "title": "Import from Sharing Plattform",
-            "expiresAt": "Connection to Sharing Plattform expires at <strong>{{expirationDate}}</strong>",
+            "title": "Import from Sharing Platform",
+            "expiresAt": "Connection to Sharing Platform expires at <strong>{{expirationDate}}</strong>",
             "importedExercise": "Imported Exercise",
             "courseToImport": "Course to import Exercise into",
             "noExercisesFound": "No imported exercises found?",
@@ -11,6 +11,7 @@
             "coursesLoading": "Courses are loading, please stand by.",
             "error": {
                 "loadingStatus": "Sharing profile is not activated",
+                "missingParameters": "some parameters are missing!",
                 "statusError": "Status of Sharing Platform cannot be determined",
                 "navigation": "cannot navigate to import page",
                 "importError": "An error occurred while importing the exercise",

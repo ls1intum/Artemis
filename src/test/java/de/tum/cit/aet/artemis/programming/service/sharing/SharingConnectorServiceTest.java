@@ -6,14 +6,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTest {
-
-    @Value("${artemis.sharing.apikey:#{null}}")
-    private String sharingApiKey;
 
     @Autowired
     private SharingPlatformMockProvider sharingPlatformMockProvider;
@@ -65,8 +61,8 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     void validateApiKey_withValidKey_shouldReturnTrue() {
-        assertThat(sharingConnectorService.validateApiKey(sharingApiKey)).isTrue();
-        assertThat(sharingConnectorService.validateApiKey("Bearer " + sharingApiKey)).isTrue();
+        assertThat(sharingConnectorService.validateApiKey(sharingPlatformMockProvider.getTestSharingApiKey())).isTrue();
+        assertThat(sharingConnectorService.validateApiKey("Bearer " + sharingPlatformMockProvider.getTestSharingApiKey())).isTrue();
     }
 
     @Test

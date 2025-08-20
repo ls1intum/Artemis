@@ -50,7 +50,7 @@ public class SharingSupportResource {
      *
      * @param sharingApiKey    the common secret api key token (transferred by Authorization header).
      * @param apiBaseUrl       the base url of the sharing application api (for callbacks)
-     * @param installationName a descriptive name of the sharing application
+     * @param installationName a descriptive name of the sharing application (optinonal)
      *
      * @return Sharing Plugin configuration
      * @see <a href="https://sharing-codeability.uibk.ac.at/development/sharing/codeability-sharing-platform/-/wikis/Setup/Connector-Interface-Setup">Connector Interface Setup</a>

@@ -31,7 +31,7 @@ export class ProgrammingExerciseSharingService {
      */
     getSharedExercises(sharingInfo: SharingInfo): Observable<ShoppingBasket> {
         // Validate required parameters
-        if (!sharingInfo.basketToken || !sharingInfo.apiBaseURL) {
+        if (!sharingInfo.basketToken || !sharingInfo.apiBaseURL || !sharingInfo.checksum || !sharingInfo.returnURL) {
             throw new Error('Missing required sharing information: basketToken and apiBaseURL are required');
         }
         return this.http

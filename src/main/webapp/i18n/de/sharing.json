@@ -11,6 +11,7 @@
             "coursesLoading": "Kurse werden geladen, bitte ein wenig Geduld",
             "error": {
                 "loadingStatus": "Sharing Profile ist nicht aktiv!",
+                "missingParameters": "Es fehlen Parameter!",
                 "statusError": "Status der Sharing Platform kann nicht identifiziert werden",
                 "navigation": "Navigation zur Importseite fehlgeschlagen",
                 "importError": "Das importieren der Aufgabe ist fehlgeschlagen",

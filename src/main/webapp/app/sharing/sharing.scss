@@ -1,5 +1,5 @@
 .sharing-table {
-    border-spacing: 50px 0;
+    border-spacing: 3rem 0; /* 48px @ 16px root; prefer rem */
     border-collapse: separate;
 }
 
@@ -12,6 +12,7 @@
 }
 
 .scroll-courses {
-    max-height: 800px; /* restrict height */
+    /* Restrict height responsively: the smaller of 60vh or ~800px */
+    max-height: min(60vh, 50rem);
     overflow-y: auto; /* vertical scrollbar if needed */
 }

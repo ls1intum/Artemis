@@ -13,7 +13,6 @@ import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
@@ -44,6 +43,9 @@ public class SharingPlatformMockProvider {
 
     public static final String SHARING_BASEURL_PLUGIN = SHARING_BASEURL + "/pluginIF/v0.1";
 
+    @Autowired
+    SharingConnectorService sharingConnectorService;
+
     private MockRestServiceServer mockSharingServer;
 
     @Autowired
@@ -61,14 +63,10 @@ public class SharingPlatformMockProvider {
     /**
      * the shared secret api key
      */
-    @Value("${artemis.sharing.apikey:#{null}}")
-    private String sharingApiKey;
+    private static final String sharingApiKey = "someSecretlySharedKey1234";
 
     @Autowired
     private MockMvc restMockMvc;
-
-    @Autowired
-    SharingConnectorService sharingConnectorService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -81,9 +79,10 @@ public class SharingPlatformMockProvider {
      * @throws Exception If the request fails or the response is invalid
      */
     public SharingPluginConfig connectRequestFromSharingPlatform() throws Exception {
+        sharingConnectorService.setSharingApiKey(sharingApiKey);
         MvcResult result = restMockMvc
                 .perform(get("/api/core/sharing/config").queryParam("apiBaseUrl", SHARING_BASEURL_PLUGIN).queryParam("installationName", TEST_INSTALLATION_NAME)
-                        .header("Authorization", sharingApiKey).contentType(MediaType.APPLICATION_JSON))
+                        .header("Authorization", "Bearer " + sharingApiKey).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();
         SharingPluginConfig sharingPluginConfig = objectMapper.readerFor(SharingPluginConfig.class).readValue(content);
@@ -101,7 +100,9 @@ public class SharingPlatformMockProvider {
      */
     public void reset() throws Exception {
         sharingConnectorService.shutDown();
-        mockSharingServer.reset();
+        if (mockSharingServer != null) {
+            mockSharingServer.reset();
+        }
     }
 
     /**
@@ -134,7 +135,7 @@ public class SharingPlatformMockProvider {
     }
 
     /**
-     * parses the parameter list, and returns them as a mapp
+     * parses the parameter list, and returns them as a map.
      *
      * @param params the parameter list (alternating name and value)
      * @return a map of parameters
@@ -144,7 +145,9 @@ public class SharingPlatformMockProvider {
             throw new IllegalArgumentException("params cannot be null");
         }
         Map<String, String> paramsMap = new HashMap<>();
-        assertThat(params.length % 2).isEqualTo(0).describedAs("paramList must contain even elements");
+        if (params.length % 2 != 0) {
+            throw new IllegalArgumentException("params must contain an even number of elements (alternating name and value)");
+        }
         for (int i = 0; i < params.length; i = i + 2) {
             String paramName = params[i];
             String paramValue = params[i + 1];

@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -109,6 +110,7 @@ public class SharingConnectorService {
     private URL sharingApiBaseUrl = null;
 
     /**
+     * cmd
      * installation name forwarded in config for Sharing Platform
      */
     private String installationName = UNKNOWN_INSTALLATION_NAME; // to be set after first contact with sharing platform
@@ -121,7 +123,7 @@ public class SharingConnectorService {
 
     /**
      * the url of the sharing platform.
-     * Only needed for initial trigger an configuration exchange during startup.
+     * Only needed for initial trigger a configuration exchange during startup.
      */
     @Value("${artemis.sharing.serverurl:#{null}}")
     private String sharingUrl;
@@ -139,7 +141,7 @@ public class SharingConnectorService {
 
     private final RestTemplate restTemplate;
 
-    public SharingConnectorService(RestTemplate restTemplate, TaskScheduler taskScheduler) {
+    public SharingConnectorService(@Qualifier("sharingRestTemplate") RestTemplate restTemplate, TaskScheduler taskScheduler) {
         this.restTemplate = restTemplate;
         this.taskScheduler = taskScheduler;
     }
@@ -152,6 +154,11 @@ public class SharingConnectorService {
         return sharingApiBaseUrl;
     }
 
+    /**
+     * Sets the apiKey explicitly. For test purpose only.
+     *
+     * @param sharingApiKey the explicit api key
+     */
     public void setSharingApiKey(String sharingApiKey) {
         this.sharingApiKey = sharingApiKey;
     }
@@ -202,7 +209,7 @@ public class SharingConnectorService {
 
             return false;
         }
-        Pattern p = Pattern.compile("Bearer\\s+(\\S+)$");
+        Pattern p = Pattern.compile("^Bearer\\s+(\\S+)$");
         Matcher m = p.matcher(apiKey);
         if (m.matches()) {
             apiKey = m.group(1);
@@ -218,7 +225,7 @@ public class SharingConnectorService {
     /**
      * At (spring) full application startup, we request a reinitialization: i.e. we query the Sharing Platform to send a
      * new config request immediately, not waiting for the next scheduled request.
-     * It starts a background thread in order not to block application startup.
+     * It starts a background thread via the spring task scheduler in order not to block application startup.
      */
     @EventListener(FullStartupEvent.class)
     public void triggerSharingReinitAfterApplicationStart() {
