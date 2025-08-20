@@ -1,7 +1,7 @@
 import { Component, HostListener, Input, OnChanges, inject } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { CachingStrategy, SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { Router, RouterLink } from '@angular/router';
 import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
 import { NgStyle } from '@angular/common';
@@ -14,13 +14,12 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: 'jhi-header-course',
     templateUrl: './header-course.component.html',
     styleUrls: ['./header-course.component.scss'],
-    imports: [NgStyle, FaIconComponent, RouterLink, SecuredImageComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [NgStyle, FaIconComponent, RouterLink, ImageComponent, ArtemisTranslatePipe, TranslateDirective],
 })
 export class HeaderCourseComponent implements OnChanges {
     protected router = inject(Router);
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-    readonly CachingStrategy = CachingStrategy;
 
     @Input() public course: Course;
 
