@@ -29,13 +29,31 @@ export class TextUnitComponent extends LectureUnitDirective<TextUnit> {
     handleIsolatedView() {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
-        const win = window.open('about:blank', '_blank')!;
-        win.document.write(`<html><head><title>${this.lectureUnit().name}</title>`);
-        win.document.write('<link rel="stylesheet" href="public/content/github-markdown.css">');
-        win.document.write('</head><body class="markdown-body">');
-        win.document.write('</body></html>');
-        win.document.close();
-        win.document.body.innerHTML = htmlForMarkdown(this.lectureUnit().content, []);
-        win.focus();
+        const newWindow = window.open('', '_blank', 'noopener,noreferrer')!;
+        const apply = () => {
+            const document = newWindow.document;
+
+            // title
+            document.title = this.lectureUnit().name ?? '';
+
+            // stylesheet
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'public/content/github-markdown.css';
+            document.head.appendChild(link);
+
+            // body + content
+            document.body.className = 'markdown-body';
+            document.body.innerHTML = htmlForMarkdown(this.lectureUnit().content ?? '', []);
+            newWindow.focus();
+        };
+
+        // ensure DOM is ready in the new window
+        const document = newWindow.document;
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            apply();
+        } else {
+            document.addEventListener('DOMContentLoaded', apply, { once: true });
+        }
     }
 }

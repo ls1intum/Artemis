@@ -14,11 +14,11 @@ import {
     ViewEncapsulation,
     inject,
 } from '@angular/core';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { flatten, get, isNumber } from 'lodash-es';
 import { BaseEntity, StringBaseEntity } from 'app/shared/model/base-entity';
-import { LocalStorageService } from 'ngx-webstorage';
 import { SortService } from 'app/shared/service/sort.service';
 import { faCircleNotch, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
@@ -80,7 +80,7 @@ type PagingValue = number | 'all';
 })
 export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     private sortService = inject(SortService);
-    private localStorage = inject(LocalStorageService);
+    private localStorageService = inject(LocalStorageService);
 
     /**
      * @property templateRef Ref to the content child of this component (which is ngx-datatable)
@@ -278,7 +278,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
      * Get "items per page" setting from local storage. If it does not exist, use the default.
      */
     private getCachedEntitiesPerPage = () => {
-        const cachedValue = this.localStorage.retrieve(this.perPageCacheKey);
+        const cachedValue = this.localStorageService.retrieve<string>(this.perPageCacheKey);
         if (cachedValue) {
             const parsedValue = parseInt(cachedValue, 10) || cachedValue;
             if (this.PAGING_VALUES.includes(parsedValue as any)) {
@@ -300,7 +300,7 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
             this.pagingValue = paging;
             this.isRendering = false;
         }, 500);
-        this.localStorage.store(this.perPageCacheKey, paging.toString());
+        this.localStorageService.store(this.perPageCacheKey, paging.toString());
     };
 
     /**
