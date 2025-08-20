@@ -127,7 +127,7 @@ class AtlasMLServiceTest {
         // Given
         AtlasMLCompetencyDTO competencyDTO = new AtlasMLCompetencyDTO(1L, "Test Competency", "Test Description", 1L);
 
-        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(competencyDTO, null, OperationTypeDTO.UPDATE);
+        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(List.of(competencyDTO), null, OperationTypeDTO.UPDATE);
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(new ResponseEntity<>("", HttpStatus.OK));
