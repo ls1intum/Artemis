@@ -5,7 +5,7 @@ import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/le
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exerciseUnit.service';
+import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exercise-unit.service';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
