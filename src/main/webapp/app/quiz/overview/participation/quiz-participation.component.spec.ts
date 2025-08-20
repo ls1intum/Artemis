@@ -36,6 +36,11 @@ import { MultipleChoiceQuestionComponent } from '../../shared/questions/multiple
 import { ShortAnswerQuestion } from '../../shared/entities/short-answer-question.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { captureException } from '@sentry/angular';
+
+jest.mock('@sentry/angular', () => ({
+    captureException: jest.fn(),
+}));
 
 const now = dayjs();
 const question1: QuizQuestion = {
@@ -198,6 +203,15 @@ describe('QuizParticipationComponent', () => {
         it('should initialize', () => {
             fixture.detectChanges();
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
+        });
+
+        it('should capture exception when element is not found', () => {
+            const questionIndex = 1;
+            jest.spyOn(document, 'getElementById').mockReturnValue(null);
+
+            component.navigateToQuestion(questionIndex);
+
+            expect(captureException).toHaveBeenCalledWith('navigateToQuestion: element not found for index ' + questionIndex);
         });
 
         it('should fetch exercise and create a new submission', () => {
