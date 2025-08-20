@@ -33,7 +33,7 @@ export class ShortAnswerQuestionComponent {
     @Input()
     set question(question: QuizQuestion) {
         this.shortAnswerQuestion = question as ShortAnswerQuestion;
-        this.showingSampleSolution = false;
+        this.hideSampleSolution();
         this.watchCollection();
     }
 
