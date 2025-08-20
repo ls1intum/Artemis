@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.competency;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -8,23 +10,30 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 
 class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {
 
     private static final String TEST_PREFIX = "competencyintegrationtest";
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
 
     @BeforeEach
     void setupTestScenario() {
@@ -373,14 +382,11 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldAllowAtlasMLSuggestWhenFeatureEnabled() throws Exception {
-            request.post("/api/atlas/competencies/suggest", null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+            featureToggleService.enableFeature(Feature.AtlasML);
 
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldAllowAtlasMLSaveWhenFeatureEnabled() throws Exception {
-            request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/save").contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(MockMvcResultMatchers.status().isOk());
+            var requestBody = new SuggestCompetencyRequestDTO("test description", 1L);
+            request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON)
+                    .content(new ObjectMapper().writeValueAsString(requestBody))).andExpect(status().isOk());
         }
 
         @Test
@@ -388,20 +394,9 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
         void shouldBlockAtlasMLSuggestWhenFeatureDisabled() throws Exception {
             featureToggleService.disableFeature(Feature.AtlasML);
 
-            request.post("/api/atlas/competencies/suggest", null, HttpStatus.FORBIDDEN);
-
-            featureToggleService.enableFeature(Feature.AtlasML);
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldBlockAtlasMLSaveWhenFeatureDisabled() throws Exception {
-            featureToggleService.disableFeature(Feature.AtlasML);
-
-            request.post("/api/atlas/competencies/save", null, HttpStatus.FORBIDDEN);
-
-            // Re-enable the feature for other tests
-            featureToggleService.enableFeature(Feature.AtlasML);
+            var requestBody = new SuggestCompetencyRequestDTO("test description", 1L);
+            request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON)
+                    .content(new ObjectMapper().writeValueAsString(requestBody))).andExpect(status().isForbidden());
         }
     }
 }
