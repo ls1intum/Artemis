@@ -6,7 +6,7 @@ import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/onlineUnit.service';
+import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
 
