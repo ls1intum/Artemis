@@ -50,7 +50,6 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.ReportParser;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.exception.UnsupportedToolException;
@@ -289,9 +288,9 @@ public class BuildJobExecutionService {
      * @throws LocalCIException If errors occur during the build process or if the test results cannot be parsed successfully.
      */
     // TODO: This method has too many params, we should reduce the number an rather pass an object (record)
-    private BuildResult runScriptAndParseResults(BuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
-            VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri, VcsRepositoryUri[] auxiliaryRepositoriesUris, Path assignmentRepositoryPath,
-            Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
+    private BuildResult runScriptAndParseResults(BuildJobQueueItem buildJob, String containerName, String containerId, LocalVCRepositoryUri assignmentRepositoryUri,
+            LocalVCRepositoryUri testRepositoryUri, @Nullable LocalVCRepositoryUri solutionRepositoryUri, LocalVCRepositoryUri[] auxiliaryRepositoriesUris,
+            Path assignmentRepositoryPath, Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
             @Nullable String testRepoCommitHash, boolean isNetworkDisabled) {
 
         long timeNanoStart = System.nanoTime();
@@ -544,7 +543,7 @@ public class BuildJobExecutionService {
                 staticCodeAnalysisReports, true);
     }
 
-    private Path cloneRepository(VcsRepositoryUri repositoryUri, @Nullable String commitHash, boolean checkout, String buildJobId) {
+    private Path cloneRepository(LocalVCRepositoryUri repositoryUri, @Nullable String commitHash, boolean checkout, String buildJobId) {
         Repository repository = null;
 
         for (int attempt = 1; attempt <= MAX_CLONE_RETRIES; attempt++) {
@@ -585,7 +584,7 @@ public class BuildJobExecutionService {
         }
     }
 
-    private void deleteCloneRepo(VcsRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId, Path repositoryPath) {
+    private void deleteCloneRepo(LocalVCRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId, Path repositoryPath) {
         String msg;
         try {
             Path repositoryPathForDeletion = commitHash != null ? Path.of(checkedOutReposPath, commitHash, repositoryUri.folderNameForRepositoryUri()) : repositoryPath;

@@ -2,8 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamService } from 'app/exercise/team/team.service';
-import { LocalStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { of } from 'rxjs';
 import { MockTeamService, mockTeam } from 'test/helpers/mocks/service/mock-team.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -150,7 +149,7 @@ describe('TeamParticipationTableComponent', () => {
             providers: [
                 MockProvider(TranslateService),
                 { provide: TeamService, useClass: MockTeamService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
                 { provide: AccountService, useClass: MockAccountService },
             ],
         })

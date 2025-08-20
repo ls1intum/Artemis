@@ -5,10 +5,9 @@ import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } fro
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { Lti13ExerciseLaunchComponent } from 'app/lti/overview/lti13-exercise-launch/lti13-exercise-launch.component';
-import { SessionStorageService } from 'ngx-webstorage';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
@@ -20,6 +19,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
     let route: ActivatedRoute;
     let http: HttpClient;
     let accountService: AccountService;
+    let sessionStorageService: SessionStorageService;
     const mockRouter = {
         navigate: jest.fn(() => Promise.resolve(true)),
     } as unknown as Router;
@@ -30,8 +30,6 @@ describe('Lti13ExerciseLaunchComponent', () => {
             snapshot: { queryParamMap: convertToParamMap({ state: 'state', id_token: 'id_token' }) },
         } as ActivatedRoute;
 
-        window.sessionStorage.setItem('state', 'state');
-
         TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
@@ -39,7 +37,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useValue: mockRouter },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
             ],
@@ -49,13 +47,15 @@ describe('Lti13ExerciseLaunchComponent', () => {
                 fixture = TestBed.createComponent(Lti13ExerciseLaunchComponent);
                 comp = fixture.componentInstance;
                 accountService = TestBed.inject(AccountService);
+                sessionStorageService = TestBed.inject(SessionStorageService);
+                sessionStorageService.store<string>('state', 'state');
             });
 
         http = TestBed.inject(HttpClient);
     });
 
     afterEach(() => {
-        window.sessionStorage.clear();
+        sessionStorageService.clear();
         jest.restoreAllMocks();
         navigateSpy.mockClear();
     });
