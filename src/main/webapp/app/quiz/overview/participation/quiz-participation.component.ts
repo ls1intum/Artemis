@@ -1,8 +1,9 @@
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { Component, OnDestroy, OnInit, inject, viewChildren } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import dayjs from 'dayjs/esm';
-import isMobile from 'ismobilejs-es5';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription, combineLatest, of, take } from 'rxjs';
+import { Subscription, combineLatest, map, of, take } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -11,7 +12,6 @@ import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multi
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { TranslateService } from '@ngx-translate/core';
-import * as smoothscroll from 'smoothscroll-polyfill';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -79,7 +79,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private quizService = inject(ArtemisQuizService);
     private serverDateService = inject(ArtemisServerDateService);
+    private breakpointObserver = inject(BreakpointObserver);
 
+    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), { initialValue: false });
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -136,7 +138,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     endDate: dayjs.Dayjs | undefined;
     password = '';
     previousRunning = false;
-    isMobile = false;
     isManagementView = false;
 
     /**
@@ -158,12 +159,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     faSync = faSync;
     faCircleNotch = faCircleNotch;
 
-    constructor() {
-        smoothscroll.polyfill();
-    }
-
     ngOnInit() {
-        this.isMobile = isMobile(window.navigator.userAgent).any;
         // set correct mode
         this.routeAndDataSubscription = combineLatest([this.route.data, this.route.params, this.route.parent?.parent?.params ?? of({ courseId: undefined })]).subscribe(
             ([data, params, parentParams]) => {
