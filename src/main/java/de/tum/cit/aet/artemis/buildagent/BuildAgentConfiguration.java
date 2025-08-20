@@ -49,8 +49,6 @@ public class BuildAgentConfiguration {
 
     private final AtomicInteger threadPoolSize = new AtomicInteger(0);
 
-    private volatile int targetThreadPoolSize = 0;
-
     private DockerClient dockerClient;
 
     private static final Logger log = LoggerFactory.getLogger(BuildAgentConfiguration.class);
@@ -86,7 +84,6 @@ public class BuildAgentConfiguration {
         if (concurrentBuildsMaximum <= 0) {
             concurrentBuildsMaximum = Runtime.getRuntime().availableProcessors();
         }
-        targetThreadPoolSize = threadPoolSize.get();
     }
 
     public ThreadPoolExecutor getBuildExecutor() {
@@ -95,14 +92,6 @@ public class BuildAgentConfiguration {
 
     public int getThreadPoolSize() {
         return threadPoolSize.get();
-    }
-
-    public int getTargetThreadPoolSize() {
-        return targetThreadPoolSize;
-    }
-
-    public int getActiveThreadCount() {
-        return buildExecutor != null ? buildExecutor.getActiveCount() : 0;
     }
 
     public DockerClient getDockerClient() {
@@ -119,8 +108,6 @@ public class BuildAgentConfiguration {
 
     /**
      * Dynamically adjusts the thread pool size for concurrent build jobs.
-     * Sets a target thread count that will be applied when threads finish their work.
-     * This prevents crashes when reducing concurrency while threads are still running.
      *
      * @param newConcurrentBuildSize the new number of concurrent builds
      * @return true if the adjustment was successful, false otherwise
@@ -143,40 +130,18 @@ public class BuildAgentConfiguration {
 
         int currentSize = threadPoolSize.get();
 
-        targetThreadPoolSize = newConcurrentBuildSize;
-
         // We need this check since maximumPoolSize >= corePoolSize should hold at all times.
         if (newConcurrentBuildSize > currentSize) {
-            log.info("Increasing thread pool size from {} to {}", currentSize, newConcurrentBuildSize);
             buildExecutor.setMaximumPoolSize(newConcurrentBuildSize);
             buildExecutor.setCorePoolSize(newConcurrentBuildSize);
-            threadPoolSize.set(newConcurrentBuildSize);
-        }
-        else if (newConcurrentBuildSize < currentSize) {
-            // Decreasing thread count - set target and let it apply when threads finish
-            int activeCount = buildExecutor.getActiveCount();
-            log.info("Setting target thread pool size to {} (current: {}, active: {}). Will apply when threads finish their work.", newConcurrentBuildSize, currentSize,
-                    activeCount);
         }
         else {
-            log.debug("Thread pool size already set to {}", newConcurrentBuildSize);
+            buildExecutor.setCorePoolSize(newConcurrentBuildSize);
+            buildExecutor.setMaximumPoolSize(newConcurrentBuildSize);
         }
 
+        threadPoolSize.set(newConcurrentBuildSize);
         return true;
-    }
-
-    public synchronized void checkAndAdjustThreadPoolSize() {
-        int currentSize = threadPoolSize.get();
-        int activeCount = buildExecutor.getActiveCount();
-
-        if (buildExecutor == null || currentSize <= targetThreadPoolSize || activeCount >= targetThreadPoolSize) {
-            return;
-        }
-
-        log.info("Reducing thread pool size from {} to {} as threads finished their work (active: {})", currentSize, targetThreadPoolSize, activeCount);
-        buildExecutor.setCorePoolSize(targetThreadPoolSize);
-        buildExecutor.setMaximumPoolSize(targetThreadPoolSize);
-        threadPoolSize.set(targetThreadPoolSize);
     }
 
     /**

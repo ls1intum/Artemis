@@ -78,10 +78,9 @@ class BuildAgentConfigurationTest {
         boolean result = buildAgentConfiguration.adjustConcurrentBuildSize(2);
 
         assertThat(result).isTrue();
-        assertThat(mockExecutor.getCorePoolSize()).isEqualTo(4);
-        assertThat(mockExecutor.getMaximumPoolSize()).isEqualTo(4);
-        assertThat(buildAgentConfiguration.getThreadPoolSize()).isEqualTo(4); // We only set target while lowering the size
-        assertThat(buildAgentConfiguration.getTargetThreadPoolSize()).isEqualTo(2);
+        assertThat(mockExecutor.getCorePoolSize()).isEqualTo(2);
+        assertThat(mockExecutor.getMaximumPoolSize()).isEqualTo(2);
+        assertThat(buildAgentConfiguration.getThreadPoolSize()).isEqualTo(2);
     }
 
     @Test
