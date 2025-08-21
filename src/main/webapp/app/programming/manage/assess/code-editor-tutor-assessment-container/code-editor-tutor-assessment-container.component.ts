@@ -262,7 +262,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     @HostListener('window:beforeunload', ['$event'])
     handleBeforeUnload(event: BeforeUnloadEvent) {
-        if (this.hasPendingChanges && this.submission != undefined) {
+        if (this.hasPendingChanges && this.submission !== undefined) {
             // Required to trigger the native prompt in modern browsers
             event.preventDefault();
             event.returnValue = '';
@@ -748,8 +748,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 }
 
 export const canLeaveCodeEditorTutorAssessmentContainer: CanDeactivateFn<CodeEditorTutorAssessmentContainerComponent> = (component) => {
-    if (component.hasPendingChanges && component.submission != undefined) {
-        return window.confirm('Reload? Any changes you made will not be saved.');
+    if (component.hasPendingChanges && component.submission !== undefined) {
+        const translate = inject(TranslateService);
+        return window.confirm(translate.instant('artemisApp.programmingAssessment.confirmLeave'));
     }
     return true;
 };
