@@ -11,7 +11,7 @@ import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-uni
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
