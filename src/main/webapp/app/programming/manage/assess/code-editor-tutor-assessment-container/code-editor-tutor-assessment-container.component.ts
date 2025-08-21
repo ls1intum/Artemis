@@ -135,7 +135,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     templateParticipation: TemplateProgrammingExerciseParticipation;
     templateFileSession: { [fileName: string]: string } = {};
 
-    hasPendingChanges = true;
+    hasPendingChanges = false;
 
     // listener, will get notified upon loading of feedback
     @Output() onFeedbackLoaded = new EventEmitter();
@@ -571,6 +571,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         // Filter out other feedback than manual feedback
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         this.validateFeedback();
+        this.hasPendingChanges = true;
     }
 
     /**
@@ -580,6 +581,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      */
     removeSuggestion(feedback: Feedback) {
         this.feedbackSuggestions = this.feedbackSuggestions.filter((feedbackSuggestion) => feedbackSuggestion !== feedback);
+        this.hasPendingChanges = true;
     }
 
     /**
@@ -590,6 +592,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     onError(error: string) {
         this.alertService.error(error);
         this.saveBusy = this.cancelBusy = this.submitBusy = this.nextSubmissionBusy = false;
+    }
+
+    /**
+     *  Validate the feedback of the assessment with the guarantee that it has changed.
+     */
+    validateUpdatedFeedback(): void {
+        this.validateFeedback();
+        this.hasPendingChanges = true;
     }
 
     /**
