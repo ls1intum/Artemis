@@ -10,7 +10,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -172,8 +171,23 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(result.getScore()).isZero();
         result.score(null);
 
-        // Wait for any asynchronous participant score processing to complete
-        await().atMost(1, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
+        // Execute any pending scheduled tasks
+        participantScoreScheduleService.executeScheduledTasks();
+
+        // Wait for the service to finish processing
+        await().until(participantScoreScheduleService::isIdle);
+
+        // Wait for the specific results to be stored in the repository
+        await().until((java.util.concurrent.Callable<Boolean>) () -> {
+            // Refresh the participations to get the latest state from database
+            List<StudentParticipation> refreshedParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
+
+            // Count total results across all participations
+            int totalResults = refreshedParticipations.stream()
+                    .mapToInt(participation -> participation.getSubmissions().stream().mapToInt(submission -> submission.getResults().size()).sum()).sum();
+
+            return totalResults >= 3;
+        });
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of());
