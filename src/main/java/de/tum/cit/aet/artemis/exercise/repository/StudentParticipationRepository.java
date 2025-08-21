@@ -1512,8 +1512,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     }
 
     default List<StudentParticipation> findByCourseIdWithRelevantResult(long courseId) {
-        List<StudentParticipation> participations = findByCourseIdWithEagerRatedResults(courseId);
-        return filterParticipationsWithoutStudent(participations);
+        return findByCourseIdWithEagerRatedResults(courseId);
     }
 
     @Query("""
@@ -1521,20 +1520,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
-                LEFT JOIN FETCH p.team t
-                LEFT JOIN FETCH t.students
             WHERE p.exercise.course.id = :courseId
-                AND (r.rated IS NULL
-                    OR r.rated = TRUE)
+                AND p.testRun = false
+                AND r.rated = true
             """)
     List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") long courseId);
-
-    private List<StudentParticipation> filterParticipationsWithoutStudent(List<StudentParticipation> participations) {
-        return participations.stream()
-                // Filter out participations without Students
-                // These participations are used e.g. to store template and solution build plans in programming exercises
-                .filter(participation -> participation.getParticipant() != null).toList();
-    }
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p

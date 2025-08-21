@@ -371,7 +371,7 @@ public class ExamService {
                     studentExercises, participations);
             studentResults.add(studentResult);
         }
-        log.debug("Calculated st    udent results for exam {} in {} ms", examId, System.currentTimeMillis() - start);
+        log.debug("Calculated student results for exam {} in {} ms", examId, System.currentTimeMillis() - start);
 
         // Updating exam information in DTO
         int numberOfStudentResults = studentResults.size();

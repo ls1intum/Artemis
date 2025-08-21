@@ -19,6 +19,8 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 
 import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -62,6 +64,8 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 public class CourseScoreCalculationService {
 
     private static final double SCORE_NORMALIZATION_VALUE = 0.01;
+
+    private static final Logger log = LoggerFactory.getLogger(CourseScoreCalculationService.class);
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -147,8 +151,9 @@ public class CourseScoreCalculationService {
             return null;
         }
         Long courseId = course.getId();
-
+        var start = System.currentTimeMillis();
         Set<ExerciseCourseScoreDTO> courseExercises = exerciseRepository.findCourseExerciseScoreInformationByCourseIds(Set.of(courseId));
+        log.debug("Found {} exercises for course {} in {} ms", courseExercises.size(), courseId, System.currentTimeMillis() - start);
         if (courseExercises.isEmpty()) {
             return null;
         }
@@ -160,14 +165,20 @@ public class CourseScoreCalculationService {
         MultiValueMap<Long, StudentParticipation> studentIdToParticipations = new LinkedMultiValueMap<>();
         if (studentIds.size() == 1) {  // Optimize single student case by filtering in the database.
             Long studentId = studentIds.iterator().next();
+            start = System.currentTimeMillis();
             List<StudentParticipation> participations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(courseId, studentId);
+            log.debug("Found {} participations for student {} in course {} in {} ms", participations.size(), studentId, courseId, System.currentTimeMillis() - start);
             if (!participations.isEmpty()) {
                 studentIdToParticipations.addAll(studentId, participations);
             }
+            start = System.currentTimeMillis();
             plagiarismCases = plagiarismCaseApi.map(api -> api.findByCourseIdAndStudentId(courseId, studentId)).orElse(List.of());
+            log.debug("Found {} plagiarism cases for student {} in course {} in {} ms", plagiarismCases.size(), studentId, courseId, System.currentTimeMillis() - start);
         }
         else {
+            start = System.currentTimeMillis();
             var participations = studentParticipationRepository.findByCourseIdWithRelevantResult(courseId);
+            log.debug("Found {} participations in course {} in {} ms", participations.size(), courseId, System.currentTimeMillis() - start);
             // These participations also contain participations for students with ids not included in 'studentIds'.
             // Filter out those participations that belong to the students in 'studentIds'.
             // For the single student case, this is done in the db query.
