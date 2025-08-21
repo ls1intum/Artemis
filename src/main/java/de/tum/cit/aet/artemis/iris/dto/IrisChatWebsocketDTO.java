@@ -32,8 +32,8 @@ public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessage me
      * @param rateLimitInfo the rate limit information
      * @param stages        the stages of the Pyris pipeline
      */
-    public IrisChatWebsocketDTO(@Nullable IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages, List<String> suggestions,
-            List<LLMRequest> tokens) {
+    public IrisChatWebsocketDTO(@Nullable IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages, String sessoinTitle,
+            List<String> suggestions, List<LLMRequest> tokens) {
         this(determineType(message), message, rateLimitInfo, stages, suggestions, tokens);
     }
 

@@ -10,5 +10,6 @@ import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisChatStatusUpdateDTO(@Nullable String result, List<PyrisStageDTO> stages, List<String> suggestions, @Nullable List<LLMRequest> tokens) {
+public record PyrisChatStatusUpdateDTO(@Nullable String result, List<PyrisStageDTO> stages, @Nullable String sessionTitle, List<String> suggestions,
+        @Nullable List<LLMRequest> tokens) {
 }

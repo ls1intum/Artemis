@@ -72,6 +72,11 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
     public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         var session = (S) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
         IrisMessage savedMessage;
+        if (statusUpdate.sessionTitle() != null && !statusUpdate.sessionTitle().isBlank()) {
+            session.setTitle(statusUpdate.sessionTitle());
+            irisSessionRepository.save(session);
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens());
+        }
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
@@ -80,7 +85,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         }
         else {
             savedMessage = null;
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions(), statusUpdate.tokens());
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens());
         }
 
         AtomicReference<TrackedSessionBasedPyrisJob> updatedJob = new AtomicReference<>(job);

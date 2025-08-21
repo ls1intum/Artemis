@@ -48,7 +48,7 @@ public class IrisChatWebsocketService {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         var topic = "" + session.getId(); // Todo: add more specific topic
-        var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, null, null);
+        var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, null, null, null);
         websocketService.send(user.getLogin(), topic, payload);
     }
 
@@ -59,7 +59,7 @@ public class IrisChatWebsocketService {
      * @param stages  the stages to send
      */
     public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages) {
-        this.sendStatusUpdate(session, stages, null, null);
+        this.sendStatusUpdate(session, stages, null, null, null);
     }
 
     /**
@@ -70,11 +70,11 @@ public class IrisChatWebsocketService {
      * @param suggestions the suggestions to send
      * @param tokens      token usage and cost send by Pyris
      */
-    public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages, List<String> suggestions, List<LLMRequest> tokens) {
+    public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages, String sessionTitle, List<String> suggestions, List<LLMRequest> tokens) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         var topic = "" + session.getId(); // Todo: add more specific topic
-        var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, stages, suggestions, tokens);
+        var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, stages, sessionTitle, suggestions, tokens);
         websocketService.send(user.getLogin(), topic, payload);
     }
 }
