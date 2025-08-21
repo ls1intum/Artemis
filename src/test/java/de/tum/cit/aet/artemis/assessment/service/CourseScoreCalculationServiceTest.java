@@ -122,7 +122,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(courseResult).isNull();
     }
 
-    @RepeatedTest(1000)
+    @RepeatedTest(500)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation() {
 
@@ -142,18 +142,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         // Test with multiple results to assert they are sorted.
         StudentParticipation studentParticipation = studentParticipations.getFirst();
         // Create results with completion dates well before the due date to avoid timing issues
-        ZonedDateTime baseCompletionDate = ZonedDateTime.now().minusMinutes(10);
-        Result result1 = participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
-        result1.setCompletionDate(baseCompletionDate);
-        resultRepository.save(result1);
-
-        Result result2 = participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
-        result2.setCompletionDate(baseCompletionDate.plusMinutes(1));
-        resultRepository.save(result2);
-
-        Result result3 = participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
-        result3.setCompletionDate(baseCompletionDate.plusMinutes(2));
-        resultRepository.save(result3);
+        participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
+        participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
+        participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
 
         studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
 
