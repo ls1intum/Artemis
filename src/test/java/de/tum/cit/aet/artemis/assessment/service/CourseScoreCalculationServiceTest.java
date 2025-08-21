@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -173,7 +174,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         // Wait for any asynchronous participant score processing to complete
         participantScoreScheduleService.executeScheduledTasks();
-        await().until(participantScoreScheduleService::isIdle);
+        await().atMost(1, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of());
