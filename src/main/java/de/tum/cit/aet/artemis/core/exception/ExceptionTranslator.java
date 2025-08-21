@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -171,5 +172,14 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     public ResponseEntity<Problem> handleResourceNotFoundException(NoResourceFoundException ex, NativeWebRequest request) {
         final var problem = Problem.builder().withStatus(Status.NOT_FOUND).withDetail(ex.getMessage()).build();
         return create(ex, problem, request);
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<String> handle(RateLimitExceededException ex) {
+        HttpHeaders headers = new HttpHeaders();
+        if (ex.getRetryAfterSeconds() > 0) {
+            headers.add("Retry-After", String.valueOf(ex.getRetryAfterSeconds()));
+        }
+        return new ResponseEntity<>("Too Many Requests", headers, HttpStatus.TOO_MANY_REQUESTS);
     }
 }

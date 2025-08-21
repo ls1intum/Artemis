@@ -161,6 +161,7 @@ public class CacheConfiguration {
             testConfig.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
             testConfig.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
             testConfig.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", initializeDomainMapConfig(jHipsterProperties));
+            testConfig.getMapConfigs().put("rate-limit-buckets", initializeRateLimitBucketsMapConfig(jHipsterProperties));
 
             testConfig.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
@@ -244,6 +245,7 @@ public class CacheConfiguration {
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
         config.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
         config.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", initializeDomainMapConfig(jHipsterProperties));
+        config.getMapConfigs().put("rate-limit-buckets", initializeRateLimitBucketsMapConfig(jHipsterProperties));
 
         // Configure split brain protection if the cluster was split at some point
         var splitBrainProtectionConfig = new SplitBrainProtectionConfig();
@@ -353,5 +355,9 @@ public class CacheConfiguration {
     // config for all domain object, i.e. entities such as Course, Exercise, etc.
     private MapConfig initializeDomainMapConfig(JHipsterProperties jHipsterProperties) {
         return new MapConfig().setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
+    }
+
+    private MapConfig initializeRateLimitBucketsMapConfig(JHipsterProperties jHipsterProperties) {
+        return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount()).setTimeToLiveSeconds(0);
     }
 }
