@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.jenkinsstateless;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_STATELESS_JENKINS;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -13,6 +15,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
+import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.RepositoryDTO;
 
 /**
  * Implementation of ContinuousIntegrationTriggerService for external CI
@@ -21,7 +25,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTrigge
  * to the external connector.
  */
 @Service
-@Profile("statless-jenkins")
+@Profile(PROFILE_STATELESS_JENKINS)
 public class StatelessJenkinsCITriggerService implements ContinuousIntegrationTriggerService {
 
     private static final Logger log = LoggerFactory.getLogger(StatelessJenkinsCITriggerService.class);
@@ -57,12 +61,15 @@ public class StatelessJenkinsCITriggerService implements ContinuousIntegrationTr
             // Create the test repository DTO based on the corresponding exercise
             var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getVcsTemplateRepositoryUri().toString(), null, null, vscAccessToken);
 
+            // Choose if script is bash or groovy
+            String scriptType = BuildTriggerRequestDTO.ScriptType.SHELL.getValue();
+
             var auxiliaryRepository = new ArrayList<RepositoryDTO>();
             var additionalProperties = new HashMap<String, String>();
 
             // Create the build trigger request DTO
             BuildTriggerRequestDTO buildTriggerRequest = new BuildTriggerRequestDTO(exerciseID, participationID, exerciseRepository, testRepository, auxiliaryRepository,
-                    buildScript, participation.getProgrammingExercise().getProgrammingLanguage().toString(), additionalProperties);
+                    buildScript, scriptType, participation.getProgrammingExercise().getProgrammingLanguage().toString(), additionalProperties);
 
             // Delegate to connector service
             statelessJenkinsCIService.build(buildTriggerRequest);

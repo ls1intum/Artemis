@@ -36,20 +36,26 @@ public final class Constants {
     /**
      * The default REST/URL-path prefix for accessing file uploads.
      * Don't use this constant elsewhere than in the Presentation-Layer to reduce
-     * coupling between the persistence layer {@link de.tum.cit.aet.artemis.core.domain.DomainObject }) and the
-     * presentation layer ({@link org.springframework.web.bind.annotation.RestController}).
-     * There might be exceptions if the path can be considered part of the business logic, and not presentation.
+     * coupling between the persistence layer
+     * {@link de.tum.cit.aet.artemis.core.domain.DomainObject }) and the
+     * presentation layer
+     * ({@link org.springframework.web.bind.annotation.RestController}).
+     * There might be exceptions if the path can be considered part of the business
+     * logic, and not presentation.
      */
     public static final String ARTEMIS_FILE_PATH_PREFIX = "/api/core/files/";
 
     /**
-     * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
+     * This constant determines how many seconds after the exercise due dates
+     * submissions will still be considered rated.
      * Submissions after the grace period exceeded will be unrated.
      * <p>
-     * If the student was able to successfully push their solution, this solution should still be graded, even if
+     * If the student was able to successfully push their solution, this solution
+     * should still be graded, even if
      * the processing of the push was up to 1s late.
      * <p>
-     * Have a look at setRatedIfNotAfterDueDate(Participation participation, ZonedDateTime submissionDate) in
+     * Have a look at setRatedIfNotAfterDueDate(Participation participation,
+     * ZonedDateTime submissionDate) in
      * de.tum.cit.aet.artemis.assessment.domain.Result.
      */
     public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 1;
@@ -89,14 +95,16 @@ public final class Constants {
 
     public static final String TUM_LDAP_EMAILS = "imEmailAdressen";
 
-    // NOTE: the following values for programming exercises are hard-coded at the moment
+    // NOTE: the following values for programming exercises are hard-coded at the
+    // moment
     public static final String TEST_REPO_NAME = "tests";
 
     public static final String ASSIGNMENT_REPO_NAME = "assignment";
 
     public static final String SOLUTION_REPO_NAME = "solution";
 
-    // Used to cut off CI specific path segments when receiving static code analysis reports
+    // Used to cut off CI specific path segments when receiving static code analysis
+    // reports
     public static final String ASSIGNMENT_DIRECTORY = "/" + ASSIGNMENT_REPO_NAME + "/";
 
     // Used as a value for <sourceDirectory> for the Java template pom.xml
@@ -123,7 +131,8 @@ public final class Constants {
 
     public static final int MAX_SUBMISSION_MODEL_LENGTH = 100_000; // 100.000 characters
 
-    public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
+    public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column
+                                                                     // definition
 
     /**
      * Maximum length in the database for the feedback detail text.
@@ -136,27 +145,33 @@ public final class Constants {
     public static final int FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH = 1000;
 
     /**
-     * Maximum length for feedback detail text that is trimmed and moved to a connected long feedback instead.
+     * Maximum length for feedback detail text that is trimmed and moved to a
+     * connected long feedback instead.
      */
     public static final int FEEDBACK_PREVIEW_TEXT_MAX_LENGTH = 300;
 
     /**
      * Arbitrary limit that is unlikely to be reached by real feedback in practice.
-     * Avoids filling the DB with huge text blobs, e.g. in case an infinite loop in a test case outputs a lot of text.
+     * Avoids filling the DB with huge text blobs, e.g. in case an infinite loop in
+     * a test case outputs a lot of text.
      */
     public static final int LONG_FEEDBACK_MAX_LENGTH = 10_000_000;
 
-    // This value limits the amount of characters allowed for a complaint response text.
-    // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
+    // This value limits the amount of characters allowed for a complaint response
+    // text.
+    // Set to 65535 as the db-column has type TEXT which can hold up to 65535
+    // characters.
     // Also, the value on the client side must match this value.
     public static final int COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
 
     // This value limits the amount of characters allowed for a complaint text.
-    // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
+    // Set to 65535 as the db-column has type TEXT which can hold up to 65535
+    // characters.
     // Also, the value on the client side must match this value.
     public static final int COMPLAINT_TEXT_LIMIT = 65535;
 
-    // This value limits the amount of characters allowed for custom instructions in Iris sub-settings.
+    // This value limits the amount of characters allowed for custom instructions in
+    // Iris sub-settings.
     public static final int IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
 
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
@@ -283,7 +298,8 @@ public final class Constants {
     public static final String PROFILE_LOCALCI = "localci";
 
     /**
-     * The name of the Spring profile used to process build jobs in a local CI setup.
+     * The name of the Spring profile used to process build jobs in a local CI
+     * setup.
      */
     public static final String PROFILE_BUILDAGENT = "buildagent";
 
@@ -293,6 +309,12 @@ public final class Constants {
      * The name of the Spring profile used to process build jobs in a Jenkins setup.
      */
     public static final String PROFILE_JENKINS = "jenkins";
+
+    /**
+     * The name of the Spring profile used to process build jobs in a Stateless
+     * Jenkins setup.
+     */
+    public static final String PROFILE_STATELESS_JENKINS = "statless-jenkins";
 
     /**
      * The name of the Spring profile used for Artemis functionality.
@@ -326,39 +348,52 @@ public final class Constants {
 
     /**
      * The name of the Spring profile used for the external LDAP system.
-     * Use this profile if you want to synchronize users with an external LDAP system, but you want to route the authentication through another system
+     * Use this profile if you want to synchronize users with an external LDAP
+     * system, but you want to route the authentication through another system
      */
     public static final String PROFILE_LDAP = "ldap";
 
     /**
-     * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.cit.aet.artemis.lti.web.LtiResource}.
+     * The name of the Spring profile used for activating LTI in Artemis, see
+     * {@link de.tum.cit.aet.artemis.lti.web.LtiResource}.
      */
     public static final String PROFILE_LTI = "lti";
 
     /**
-     * The name of the Spring profile used for activating SAML2 in Artemis, see {@link de.tum.cit.aet.artemis.core.service.connectors.SAML2Service}.
+     * The name of the Spring profile used for activating SAML2 in Artemis, see
+     * {@link de.tum.cit.aet.artemis.core.service.connectors.SAML2Service}.
      */
     public static final String PROFILE_SAML2 = "saml2";
 
     /**
-     * The name of the Spring profile used for activating the scheduling functionality.
-     * NOTE: please only use this profile if the service is not used in non-scheduling services or resources, otherwise the multi node configuration does not work.
-     * If you need to communicate scheduling changes (e.g. based on exercise / lecture / slides changes) to node1 with scheduling active,
-     * please use {@link de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService} and
+     * The name of the Spring profile used for activating the scheduling
+     * functionality.
+     * NOTE: please only use this profile if the service is not used in
+     * non-scheduling services or resources, otherwise the multi node configuration
+     * does not work.
+     * If you need to communicate scheduling changes (e.g. based on exercise /
+     * lecture / slides changes) to node1 with scheduling active,
+     * please use
+     * {@link de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService}
+     * and
      * {@link de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageReceiveService}
      */
     public static final String PROFILE_SCHEDULING = "scheduling";
 
     /**
-     * Profile combination for one primary node (in multi node setups, we typically call this node1), where scheduling AND core is active
-     * The distinction is necessary, because otherwise most scheduled operations (regarding database and file system) should only be executed ONCE on the primary node and NOT
+     * Profile combination for one primary node (in multi node setups, we typically
+     * call this node1), where scheduling AND core is active
+     * The distinction is necessary, because otherwise most scheduled operations
+     * (regarding database and file system) should only be executed ONCE on the
+     * primary node and NOT
      * on secondary nodes.
      * NOTE: secondary nodes should only use PROFILE_CORE
      */
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
 
     /**
-     * Profile combination for one primary node (in multi node setups, we typically call this node1), where scheduling, core AND iris is active
+     * Profile combination for one primary node (in multi node setups, we typically
+     * call this node1), where scheduling, core AND iris is active
      */
     public static final String PROFILE_CORE_AND_SCHEDULING_AND_IRIS = PROFILE_CORE + " & " + PROFILE_SCHEDULING + " & " + PROFILE_IRIS;
 
@@ -448,17 +483,20 @@ public final class Constants {
     public static final String PLAGIARISM_ENABLED_PROPERTY_NAME = "artemis.plagiarism.enabled";
 
     /**
-     * The name of the property used to enable or disable text exercise functionality.
+     * The name of the property used to enable or disable text exercise
+     * functionality.
      */
     public static final String TEXT_ENABLED_PROPERTY_NAME = "artemis.text.enabled";
 
     /**
-     * The name of the property used to enable or disable tutorial group functionality.
+     * The name of the property used to enable or disable tutorial group
+     * functionality.
      */
     public static final String TUTORIAL_GROUP_ENABLED_PROPERTY_NAME = "artemis.tutorialgroup.enabled";
 
     /**
-     * The name of the property used to enable or disable the passkey authentication functionality.
+     * The name of the property used to enable or disable the passkey authentication
+     * functionality.
      */
     public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";
 
@@ -488,12 +526,14 @@ public final class Constants {
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
 
     /**
-     * The maximum length of a group conversation human-readable name before it is truncated if no name is specified.
+     * The maximum length of a group conversation human-readable name before it is
+     * truncated if no name is specified.
      */
     public static final int GROUP_CONVERSATION_HUMAN_READABLE_NAME_LIMIT = 100;
 
     /**
-     * The value of the version field we send with each push notification to the native clients (Android & iOS).
+     * The value of the version field we send with each push notification to the
+     * native clients (Android & iOS).
      */
     public static final int PUSH_NOTIFICATION_VERSION = 1;
 
