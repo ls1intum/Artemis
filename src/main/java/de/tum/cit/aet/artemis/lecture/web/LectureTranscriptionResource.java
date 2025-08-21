@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -126,6 +127,7 @@ public class LectureTranscriptionResource {
      *         or {@code 404 Not Found} if no playlist could be retrieved.
      */
     @GetMapping("video-utils/tum-live-playlist")
+    @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<String> getTumLivePlaylist(@RequestParam String url) {
         log.info("Received request to fetch playlist for TUM Live URL: {}", url);
 

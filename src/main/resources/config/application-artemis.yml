@@ -99,9 +99,6 @@ artemis:
   plagiarism-checks:
     plagiarism-results-limit: 100
 
-  tum-live:
-    api-base-url: http://mocketumlive.api
-
   science: # The science module is used for research purposes such as the collection of data.
     event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
