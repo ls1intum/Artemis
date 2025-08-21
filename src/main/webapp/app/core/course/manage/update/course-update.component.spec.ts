@@ -15,7 +15,7 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
@@ -127,7 +127,7 @@ describe('Course Management Update Component', () => {
                 MockComponent(ColorSelectorComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(HelpIconComponent),
-                MockComponent(SecuredImageComponent),
+                MockComponent(ImageComponent),
                 MockDirective(FeatureToggleHideDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
@@ -721,14 +721,14 @@ describe('Course Management Update Component', () => {
             let deleteIconButton = getDeleteIconButton();
             deleteIconButton.dispatchEvent(new Event('click'));
             fixture.detectChanges();
-            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-image');
             deleteIconButton = getDeleteIconButton();
             expect(iconImage).toBeNull();
             expect(deleteIconButton).toBeNull();
         });
 
         it('should not be able to delete icon if icon does not exist', () => {
-            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-image');
             const deleteIconButton = getDeleteIconButton();
             expect(iconImage).toBeNull();
             expect(deleteIconButton).toBeNull();
@@ -754,7 +754,7 @@ describe('Course Management Update Component', () => {
         });
 
         it('should not be able to edit icon if icon does not exist', () => {
-            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-image');
             const editIconButton = getEditIconButton();
             expect(iconImage).toBeNull();
             expect(editIconButton).toBeNull();
@@ -871,7 +871,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
                 MockComponent(ColorSelectorComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(HelpIconComponent),
-                MockComponent(SecuredImageComponent),
+                MockComponent(ImageComponent),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
@@ -992,7 +992,7 @@ describe('Course Management Update Component Create', () => {
                 MockComponent(ColorSelectorComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(HelpIconComponent),
-                MockComponent(SecuredImageComponent),
+                MockComponent(ImageComponent),
                 MockDirective(FeatureToggleHideDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),

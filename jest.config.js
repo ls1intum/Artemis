@@ -1,7 +1,6 @@
 const esModules = [
     '@angular/animations',
     '@angular/cdk',
-    '@angular/cdk',
     '@angular/common',
     '@angular/compiler',
     '@angular/core',
@@ -52,7 +51,6 @@ const esModules = [
     'n-gram',
     'ngx-device-detector',
     'ngx-infinite-scroll',
-    'ngx-webstorage',
     'primeng',
     'rxjs/operators',
     'trigram-utils',
