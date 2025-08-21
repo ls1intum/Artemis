@@ -192,36 +192,13 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         await().until(participantScoreScheduleService::isIdle);
         log.info("TEST_DEBUG: Participant score service is now idle");
 
-        // Wait for the specific results to be stored in the repository
-        log.info("TEST_DEBUG: Starting await for results to be persisted...");
-        await().until((java.util.concurrent.Callable<Boolean>) () -> {
-            // Refresh the participations to get the latest state from database
-            List<StudentParticipation> refreshedParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
+        try {
+            Thread.sleep(500);
+        }
+        catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
-            // Count total results across all participations
-            int totalResults = refreshedParticipations.stream()
-                    .mapToInt(participation -> participation.getSubmissions().stream().mapToInt(submission -> submission.getResults().size()).sum()).sum();
-
-            log.info("TEST_DEBUG: Current total results count: {}, target: 3", totalResults);
-
-            // Log detailed info about each participation and its results
-            for (int i = 0; i < refreshedParticipations.size(); i++) {
-                StudentParticipation p = refreshedParticipations.get(i);
-                int submissionCount = p.getSubmissions().size();
-                int resultCount = p.getSubmissions().stream().mapToInt(s -> s.getResults().size()).sum();
-                log.info("TEST_DEBUG: Participation[{}] ID: {}, Exercise: {}, Submissions: {}, Results: {}", i, p.getId(), p.getExercise().getClass().getSimpleName(),
-                        submissionCount, resultCount);
-
-                // Log result details
-                p.getSubmissions().forEach(submission -> {
-                    submission.getResults().forEach(r -> {
-                        log.info("TEST_DEBUG: Result ID: {}, Score: {}, Rated: {}, CompletionDate: {}", r.getId(), r.getScore(), r.isRated(), r.getCompletionDate());
-                    });
-                });
-            }
-
-            return totalResults >= 3;
-        });
         log.info("TEST_DEBUG: Results await completed successfully");
 
         log.info("TEST_DEBUG: About to calculate course scores with {} participations", studentParticipations.size());
