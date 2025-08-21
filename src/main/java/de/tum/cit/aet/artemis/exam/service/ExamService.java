@@ -21,6 +21,7 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
@@ -434,8 +435,9 @@ public class ExamService {
         GradingScale bonusToGradingScale = gradingScale.get();
         var bonus = bonusToGradingScale.getBonusFrom().stream().findAny().orElseThrow();
         GradingScale sourceGradingScale = bonus.getSourceGradingScale();
-
+        AtomicLong start = new AtomicLong(System.currentTimeMillis());
         Map<Long, BonusSourceResultDTO> scoresMap = calculateBonusSourceStudentPoints(sourceGradingScale, studentIds);
+        log.debug("Calculated bonus source student points for {} students in {} ms", studentIds.size(), System.currentTimeMillis() - start.get());
         String bonusFromTitle = bonus.getSourceGradingScale().getTitle();
         BonusStrategy bonusStrategy = bonus.getBonusToGradingScale().getBonusStrategy();
 
@@ -444,7 +446,9 @@ public class ExamService {
             var courseId = sourceGradingScale.getCourse().getId();
             // fetch course with exercises to calculate reachable points
             var exercises = exerciseRepository.findCourseExerciseScoreInformationByCourseIds(Set.of(courseId));
+            start.set(System.currentTimeMillis());
             tempSourceReachablePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, exercises);
+            log.debug("Calculated reachable points for course {} in {} ms", courseId, System.currentTimeMillis() - start.get());
         }
         final double sourceReachablePoints = tempSourceReachablePoints;
 
@@ -460,7 +464,9 @@ public class ExamService {
                 achievedPresentationScore = result.achievedPresentationScore();
                 presentationScoreThreshold = result.presentationScoreThreshold();
             }
+            start.set(System.currentTimeMillis());
             BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, bonusToAchievedPoints, sourceAchievedPoints, sourceReachablePoints);
+            log.debug("Calculated bonus example for student {} in {} ms", studentId, System.currentTimeMillis() - start.get());
             String bonusGrade = null;
             if (result == null || !result.hasParticipated()) {
                 bonusGrade = bonus.getSourceGradingScale().getNoParticipationGradeOrDefault();
