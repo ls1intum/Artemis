@@ -51,7 +51,7 @@
             },
             "concurrencyResetWarning": {
                 "title": "Warnung: ",
-                "message": "Das Neustarten des Clusters oder das Bereitstellen einer neuen Version setzt die Parallelitätseinstellungen der Build-Agenten auf ihre Standardwerte zurück. Bitte konfigurieren Sie die Parallelitätseinstellungen nach jedem Cluster-Neustart oder jeder Bereitstellung neu."
+                "message": "Das Neustarten des Clusters oder das Bereitstellen einer neuen Version setzt die Parallelitätseinstellungen der Build-Agenten auf die Standardwerte zurück. Bitte konfiguriere die Parallelitätseinstellungen nach jedem Cluster-Neustart oder jeder Bereitstellung neu."
             }
         }
     }

@@ -173,10 +173,18 @@ public class SharedQueueProcessingService {
         distributedDataAccessService.getAdjustBuildAgentCapacityTopic().addMessageListener(message -> {
             BuildAgentCapacityAdjustmentDTO adjustment = message.getMessageObject();
             if (buildAgentShortName.equals(adjustment.buildAgentName())) {
+                if (isPaused.get()) {
+                    log.info("Ignoring capacity adjustment for paused agent {} (requested: {}).", buildAgentShortName, adjustment.newCapacity());
+                    return;
+                }
                 boolean success = buildAgentConfiguration.adjustConcurrentBuildSize(adjustment.newCapacity());
                 if (success) {
                     buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
                     triggerBuildJobProcessing();
+                }
+                else {
+                    log.warn("Capacity adjustment to {} rejected for agent {} (max allowed: {}, executor initialized: {}).", adjustment.newCapacity(), buildAgentShortName,
+                            buildAgentConfiguration.getConcurrentBuildsMaximum(), buildAgentConfiguration.getBuildExecutor() != null);
                 }
             }
         });

@@ -196,11 +196,14 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
             return;
         }
 
+        const previousCapacity = this.concurrencyMap[agentName] || buildAgent?.maxNumberOfConcurrentBuildJobs || 1;
+
         this.buildAgentsService.adjustBuildAgentCapacity(agentName, newCapacity).subscribe({
             next: () => {
                 this.load();
             },
             error: () => {
+                this.concurrencyMap[agentName] = previousCapacity;
                 this.alertService.addAlert({
                     type: AlertType.DANGER,
                     message: 'artemisApp.buildAgents.alerts.buildAgentCapacityAdjustFailed',
