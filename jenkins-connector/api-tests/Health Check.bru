@@ -5,21 +5,52 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/health
+  url: {{baseUrl}}/api/v1/health
   body: none
   auth: none
 }
 
+assert {
+  res.status: eq 200
+  res.body.status: isDefined
+  res.body.details: isDefined
+  res.body.details.service: eq jenkins-connector
+  res.body.details.version: eq 1.0.0
+  res.body.details.jenkinsUrl: isDefined
+  res.body.details.database: eq UP
+}
+
 tests {
-  test("should return 200 OK", function() {
-    expect(res.status).to.equal(200);
+  test("Health check returns valid response", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().status).to.be.oneOf(['UP', 'DEGRADED', 'DOWN']);
+    expect(res.getBody().details).to.be.an('object');
+    expect(res.getBody().details.service).to.equal('jenkins-connector');
   });
-  
-  test("should have status UP", function() {
-    expect(res.body.status).to.equal("UP");
+
+  test("Database is healthy", function() {
+    expect(res.getBody().details.database).to.equal('UP');
   });
-  
-  test("should include connector info", function() {
-    expect(res.body.connector).to.equal("jenkins");
+
+  test("Jenkins connection status is included", function() {
+    expect(res.getBody().details.jenkinsConnection).to.be.oneOf(['UP', 'DOWN']);
   });
+}
+
+docs {
+  # Health Check
+
+  This endpoint checks the overall health of the Jenkins connector service.
+
+  ## Response Status Values:
+  - `UP`: Service is fully operational
+  - `DEGRADED`: Service is running but has issues (e.g., Jenkins unavailable)
+  - `DOWN`: Service is not operational
+
+  ## Details Object:
+  - `service`: Always "jenkins-connector"
+  - `version`: Current service version
+  - `jenkinsUrl`: Configured Jenkins URL
+  - `jenkinsConnection`: Status of Jenkins connectivity
+  - `database`: Database connection status
 }

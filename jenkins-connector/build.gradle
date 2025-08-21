@@ -1,136 +1,51 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.3.2'
+    id 'org.springframework.boot' version '3.3.6'
     id 'io.spring.dependency-management' version '1.1.6'
-    id 'org.liquibase.gradle' version '2.2.1'
 }
 
 group = 'de.tum.cit.aet.artemis'
-version = '7.6.2'
+version = '7.7.1'
 
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 repositories {
     mavenCentral()
 }
 
-ext {
-    set('jenkinsClientVersion', '0.3.8')
-    set('jacksonVersion', '2.17.2')
-    set('testcontainersVersion', '1.19.8')
-}
-
 dependencies {
-    // Spring Boot Core
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-logging'
     
-    // Database
-    runtimeOnly 'org.postgresql:postgresql'
-    implementation 'org.liquibase:liquibase-core'
-    
-    // Jenkins Client
-    implementation "com.offbytwo.jenkins:jenkins-client:${jenkinsClientVersion}"
-    
-    // JSON Processing
+    // Jackson for JSON processing
+    implementation 'com.fasterxml.jackson.core:jackson-core'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
     
-    // Testing
+    // HTTP client for Jenkins API communication
+    implementation 'org.apache.httpcomponents.client5:httpclient5'
+    
+    // H2 Database for testing/development
+    runtimeOnly 'com.h2database:h2'
+    // MySQL for production
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    // PostgreSQL for production
+    runtimeOnly 'org.postgresql:postgresql'
+    
+    // Test dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'com.h2database:h2'
-    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation 'org.testcontainers:junit-jupiter'
-}
-
-dependencyManagement {
-    imports {
-        mavenBom "org.testcontainers:testcontainers-bom:${testcontainersVersion}"
-    }
+    testImplementation 'org.testcontainers:mysql'
+    testImplementation 'org.testcontainers:postgresql'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
-    
-    // Enable parallel test execution
-    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
-    
-    // Test JVM options
-    jvmArgs = ['-XX:+UseG1GC', '-Xmx1g']
-}
-
-// Liquibase configuration
-liquibase {
-    activities {
-        main {
-            changelogFile 'src/main/resources/config/liquibase/master.xml'
-            url project.findProperty('liquibase.url') ?: 'jdbc:postgresql://localhost:5432/jenkins_connector'
-            username project.findProperty('liquibase.username') ?: 'artemis'
-            password project.findProperty('liquibase.password') ?: 'artemis'
-            driver 'org.postgresql.Driver'
-        }
-    }
-    runList = 'main'
-}
-
-// Application properties for different environments
-springBoot {
-    buildInfo()
-}
-
-// Custom tasks
-task startServices(type: Exec) {
-    group = 'application'
-    description = 'Start services with Docker Compose'
-    commandLine 'docker-compose', 'up', '-d'
-}
-
-task stopServices(type: Exec) {
-    group = 'application'  
-    description = 'Stop services with Docker Compose'
-    commandLine 'docker-compose', 'down'
-}
-
-task runApiTests(type: Exec) {
-    group = 'verification'
-    description = 'Run Bruno API tests'
-    workingDir 'api-tests'
-    commandLine 'bru', 'run', '--env', 'local'
-}
-
-// Ensure API tests depend on services being up
-runApiTests.dependsOn startServices
-
-// Build optimization
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-    options.compilerArgs += ['-Xlint:unchecked', '-Xlint:deprecation']
-}
-
-// JAR configuration
-jar {
-    enabled = false
-    archiveClassifier = ''
-}
-
-bootJar {
-    enabled = true
-    archiveClassifier = ''
-    
-    // Layered JARs for better Docker caching
-    layered {
-        enabled = true
-    }
-}
-
-// Development profile support
-if (project.hasProperty('dev')) {
-    bootRun {
-        args = ['--spring.profiles.active=dev']
-    }
 }

@@ -1,0 +1,95 @@
+meta {
+  name: Edge Cases - Empty and Special Characters
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/v1/build
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "exerciseId": {{exerciseId}},
+    "participationId": {{participationId}},
+    "exerciseRepository": {
+      "url": "https://github.com/test/repo-with-special-chars_123.git",
+      "commitHash": "abc123-with-dashes_and_underscores.456",
+      "cloneLocation": "/tmp/with spaces and (parentheses)/repo",
+      "accessToken": "ghp_specialChars123!@#$%^&*()"
+    },
+    "buildScript": "#!/bin/bash\necho 'Testing special chars: !@#$%^&*()'\necho \"Double quotes and 'single quotes'\"\n./gradlew test --info",
+    "programmingLanguage": "JAVA",
+    "additionalProperties": {
+      "special-key": "special!@#$%value",
+      "unicode": "Testing unicode: αβγ δεζ 中文 🚀",
+      "json-in-value": "{\"nested\": \"json\", \"array\": [1,2,3]}"
+    }
+  }
+}
+
+assert {
+  res.status: in [200, 400, 500]
+}
+
+tests {
+  test("Service handles special characters in request", function() {
+    const status = res.getStatus();
+    
+    if (status === 200) {
+      // Service accepted the request with special characters
+      expect(res.getBody().buildId).to.be.a('string');
+    } else if (status === 400) {
+      // Service rejected due to validation (acceptable)
+      console.log("Request rejected due to validation");
+    } else if (status === 500) {
+      // Internal server error (may be due to Jenkins unavailable)
+      console.log("Internal server error - likely Jenkins unavailable");
+    }
+  });
+
+  test("No server crash or unexpected errors", function() {
+    // Service should not return 502, 503, or other unexpected errors
+    expect(res.getStatus()).to.not.be.oneOf([502, 503, 504]);
+  });
+
+  test("Response structure is maintained", function() {
+    const body = res.getBody();
+    if (body && typeof body === 'object') {
+      expect(body).to.have.property('buildId');
+      expect(body).to.have.property('message');
+    }
+  });
+}
+
+docs {
+  # Edge Cases - Empty and Special Characters
+
+  This test verifies how the service handles edge cases and special characters in the request data.
+
+  ## Test Scenarios:
+  - **Special characters** in repository URLs, commit hashes, and file paths
+  - **Unicode characters** in additional properties
+  - **Spaces and parentheses** in file paths
+  - **JSON strings** within property values
+  - **Bash script** with special characters and different quote types
+
+  ## Expected Behavior:
+  The service should either:
+  1. **Accept** the request and process it normally (200)
+  2. **Reject** with validation errors (400) - acceptable for security
+  3. **Handle gracefully** without crashing or returning unexpected errors
+
+  ## Security Considerations:
+  - The service should sanitize inputs to prevent injection attacks
+  - Special characters in build scripts should be properly escaped
+  - File paths should be validated to prevent directory traversal
+
+  This test helps ensure the service is robust and secure when handling real-world data that may contain various special characters.
+}

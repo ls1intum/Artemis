@@ -1,0 +1,59 @@
+meta {
+  name: Trigger Build - Invalid Request
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/build
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "exerciseId": null,
+    "participationId": "not-a-number",
+    "exerciseRepository": {
+      "url": ""
+    },
+    "buildScript": "",
+    "programmingLanguage": ""
+  }
+}
+
+assert {
+  res.status: eq 400
+}
+
+tests {
+  test("Invalid request returns 400 Bad Request", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("Response indicates validation errors", function() {
+    // Spring Boot validation typically returns error details
+    const body = res.getBody();
+    expect(body).to.be.an('object');
+  });
+}
+
+docs {
+  # Trigger Build - Invalid Request
+
+  This test verifies that the API properly validates request data and returns appropriate error responses.
+
+  ## Invalid Data Used:
+  - `exerciseId`: null (should be a number)
+  - `participationId`: string instead of number
+  - `exerciseRepository.url`: empty string (should be valid URL)
+  - `buildScript`: empty string (should not be blank)
+  - `programmingLanguage`: empty string (should not be blank)
+
+  ## Expected Response:
+  - `400 Bad Request`: Validation failed
+}

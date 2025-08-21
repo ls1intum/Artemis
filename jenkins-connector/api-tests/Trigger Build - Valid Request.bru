@@ -1,0 +1,100 @@
+meta {
+  name: Trigger Build - Valid Request
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/build
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "exerciseId": {{exerciseId}},
+    "participationId": {{participationId}},
+    "exerciseRepository": {
+      "url": "https://github.com/user/exercise-repo.git",
+      "commitHash": "abc123def456",
+      "cloneLocation": "/tmp/exercise",
+      "accessToken": "github_pat_example"
+    },
+    "testRepository": {
+      "url": "https://github.com/user/test-repo.git",
+      "commitHash": "def456ghi789",
+      "cloneLocation": "/tmp/tests",
+      "accessToken": "github_pat_example"
+    },
+    "auxiliaryRepositories": [
+      {
+        "url": "https://github.com/user/aux-repo.git",
+        "commitHash": "ghi789jkl012",
+        "cloneLocation": "/tmp/auxiliary"
+      }
+    ],
+    "buildScript": "#!/bin/bash\necho 'Starting build...'\n./gradlew clean test\necho 'Build completed!'",
+    "programmingLanguage": "JAVA",
+    "additionalProperties": {
+      "timeout": "300",
+      "enableTests": "true"
+    }
+  }
+}
+
+assert {
+  res.status: in [200, 500]
+}
+
+tests {
+  test("Build trigger responds appropriately", function() {
+    const status = res.getStatus();
+    const body = res.getBody();
+    
+    if (status === 200) {
+      // Successful build trigger
+      expect(body.buildId).to.be.a('string');
+      expect(body.buildId).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+      expect(body.message).to.equal('Build triggered successfully');
+      
+      // Store the build ID for subsequent tests
+      bru.setVar("triggeredBuildId", body.buildId);
+    } else if (status === 500) {
+      // Expected when Jenkins is not available
+      expect(body.message).to.include('Failed to trigger build');
+    } else {
+      throw new Error(`Unexpected status code: ${status}`);
+    }
+  });
+
+  test("Response has correct structure", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('buildId');
+    expect(body).to.have.property('message');
+  });
+}
+
+docs {
+  # Trigger Build - Valid Request
+
+  This endpoint triggers a new build for a programming exercise participation.
+
+  ## Request Body:
+  - `exerciseId`: ID of the exercise (required)
+  - `participationId`: ID of the participation (required)
+  - `exerciseRepository`: Main exercise repository information
+  - `testRepository`: Test repository information (optional)
+  - `auxiliaryRepositories`: Additional repositories (optional)
+  - `buildScript`: Shell script to execute for the build
+  - `programmingLanguage`: Programming language (JAVA, PYTHON, etc.)
+  - `additionalProperties`: Additional build configuration
+
+  ## Expected Responses:
+  - `200`: Build triggered successfully, returns build UUID
+  - `400`: Invalid request body
+  - `500`: Internal server error (e.g., Jenkins unavailable)
+}

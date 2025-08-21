@@ -1,0 +1,48 @@
+meta {
+  name: Get Build Status - Invalid UUID
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/build/invalid-uuid-format
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 400
+}
+
+tests {
+  test("Invalid UUID format returns 400", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("Error response includes build ID and message", function() {
+    const body = res.getBody();
+    expect(body.buildId).to.equal('invalid-uuid-format');
+    expect(body.status).to.be.null;
+    expect(body.message).to.include('Invalid build ID format');
+  });
+}
+
+docs {
+  # Get Build Status - Invalid UUID
+
+  This test verifies that the API properly validates UUID format and returns appropriate errors.
+
+  ## Test Cases:
+  - Invalid UUID format: "invalid-uuid-format"
+
+  ## Expected Response (400 Bad Request):
+  ```json
+  {
+    "buildId": "invalid-uuid-format",
+    "status": null,
+    "message": "Invalid build ID format"
+  }
+  ```
+
+  Valid UUID format is: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+}

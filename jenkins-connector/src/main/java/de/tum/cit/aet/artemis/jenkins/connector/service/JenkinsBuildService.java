@@ -1,144 +1,170 @@
 package de.tum.cit.aet.artemis.jenkins.connector.service;
 
+import java.net.URI;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.jenkins.connector.domain.BuildRecord;
 import de.tum.cit.aet.artemis.jenkins.connector.domain.JenkinsProject;
-import de.tum.cit.aet.artemis.jenkins.connector.dto.BuildStatusResponseDTO;
+import de.tum.cit.aet.artemis.jenkins.connector.dto.BuildStatusResponseDTO.BuildStatus;
 import de.tum.cit.aet.artemis.jenkins.connector.dto.BuildTriggerRequestDTO;
 import de.tum.cit.aet.artemis.jenkins.connector.repository.BuildRecordRepository;
 import de.tum.cit.aet.artemis.jenkins.connector.repository.JenkinsProjectRepository;
+import de.tum.cit.aet.artemis.jenkins.connector.service.JenkinsJobService.JenkinsException;
 
 /**
- * Service for managing Jenkins builds in the connector microservice.
- * 
- * EXTRACTED FROM: JenkinsBuildPlanService.java in Artemis core
- * Contains core build management logic moved to the stateless connector.
+ * Service for managing Jenkins builds and integrating with the Jenkins API.
  */
 @Service
+@Transactional
 public class JenkinsBuildService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsBuildService.class);
 
+    private final JenkinsJobService jenkinsJobService;
     private final BuildRecordRepository buildRecordRepository;
     private final JenkinsProjectRepository jenkinsProjectRepository;
-    private final JenkinsJobService jenkinsJobService;
+    private final RestTemplate restTemplate;
 
-    public JenkinsBuildService(BuildRecordRepository buildRecordRepository,
+    @Value("${jenkins.url}")
+    private URI jenkinsServerUri;
+
+    public JenkinsBuildService(JenkinsJobService jenkinsJobService, 
+                              BuildRecordRepository buildRecordRepository,
                               JenkinsProjectRepository jenkinsProjectRepository,
-                              JenkinsJobService jenkinsJobService) {
+                              RestTemplate restTemplate) {
+        this.jenkinsJobService = jenkinsJobService;
         this.buildRecordRepository = buildRecordRepository;
         this.jenkinsProjectRepository = jenkinsProjectRepository;
-        this.jenkinsJobService = jenkinsJobService;
+        this.restTemplate = restTemplate;
     }
 
     /**
-     * Triggers a build for the given request in a stateless manner.
-     * Will create Jenkins projects/jobs if they don't exist.
-     * 
-     * EXTRACTED FROM: createBuildPlanForExercise() and configureBuildPlanForParticipation()
-     * 
-     * @param request the build trigger request
-     * @return the build UUID for tracking
+     * Triggers a new build based on the given build trigger request.
+     *
+     * @param buildTriggerRequest the build trigger request containing all necessary information
+     * @return the UUID of the created build
+     * @throws JenkinsException if the build cannot be triggered
      */
-    public UUID triggerBuild(BuildTriggerRequestDTO request) {
-        log.debug("Triggering build for exercise {} participation {}", request.exerciseId(), request.participationId());
+    public UUID triggerBuild(BuildTriggerRequestDTO buildTriggerRequest) throws JenkinsException {
+        log.info("Triggering build for exercise {} and participation {}", 
+                buildTriggerRequest.exerciseId(), buildTriggerRequest.participationId());
 
-        // Generate build UUID
-        UUID buildUuid = UUID.randomUUID();
-
-        // Find or create Jenkins project
-        JenkinsProject jenkinsProject = findOrCreateJenkinsProject(request);
-
-        // Generate job name for this participation
-        String jobName = generateJobName(jenkinsProject.getJenkinsFolderName(), request.participationId());
-
-        // Create/configure Jenkins job if needed
-        ensureJenkinsJobExists(jenkinsProject, jobName, request);
-
-        // Create build record
-        BuildRecord buildRecord = new BuildRecord(buildUuid, request.exerciseId(), request.participationId(), jobName, request.programmingLanguage());
-        buildRecord.setCommitHash(request.exerciseRepository().commitHash());
-        buildRecordRepository.save(buildRecord);
-
-        // Trigger actual Jenkins build
-        Integer jenkinsBuildNumber = jenkinsJobService.triggerBuild(jenkinsProject.getJenkinsFolderName(), jobName, request);
-
-        // Update build record with Jenkins info
-        buildRecord.setJenkinsBuildNumber(jenkinsBuildNumber);
-        buildRecordRepository.save(buildRecord);
-
-        log.info("Triggered build {} for exercise {} participation {} -> Jenkins job: {}/{}",
-                buildUuid, request.exerciseId(), request.participationId(), jenkinsProject.getJenkinsFolderName(), jobName);
-
-        return buildUuid;
+        try {
+            // Generate unique build ID
+            UUID buildId = UUID.randomUUID();
+            
+            // Get or create Jenkins project
+            JenkinsProject jenkinsProject = getOrCreateJenkinsProject(buildTriggerRequest.exerciseId());
+            
+            // Create build record
+            BuildRecord buildRecord = new BuildRecord(buildId, buildTriggerRequest.exerciseId(), 
+                    buildTriggerRequest.participationId(), BuildStatus.QUEUED);
+            buildRecord.setJenkinsProject(jenkinsProject);
+            
+            // Generate job name based on participation
+            String jobName = generateJobName(buildTriggerRequest.participationId());
+            buildRecord.setJenkinsJobName(jobName);
+            
+            // Save build record
+            buildRecord = buildRecordRepository.save(buildRecord);
+            
+            // Create the Jenkins job if it doesn't exist
+            createJenkinsJobIfNeeded(jenkinsProject.getJenkinsFolderName(), jobName, buildTriggerRequest);
+            
+            // Trigger the build in Jenkins
+            Integer jenkinsBuildNumber = jenkinsJobService.triggerBuild(jenkinsProject.getJenkinsFolderName(), jobName);
+            if (jenkinsBuildNumber != null) {
+                buildRecord.setJenkinsBuildNumber(jenkinsBuildNumber);
+            }
+            
+            // Update status to running
+            buildRecord.setStatus(BuildStatus.RUNNING);
+            buildRecordRepository.save(buildRecord);
+            
+            log.info("Successfully triggered build with ID: {}", buildId);
+            return buildId;
+            
+        } catch (Exception e) {
+            log.error("Failed to trigger build for exercise {} and participation {}", 
+                    buildTriggerRequest.exerciseId(), buildTriggerRequest.participationId(), e);
+            throw new JenkinsException("Failed to trigger build: " + e.getMessage(), e);
+        }
     }
 
     /**
-     * Gets the current build status from Jenkins.
-     * 
-     * @param buildUuid the build UUID
-     * @return the current status from Jenkins, or null if not found
+     * Gets the status of a build by its UUID.
+     *
+     * @param buildId the UUID of the build
+     * @return the build status, or null if not found
      */
-    public BuildStatusResponseDTO getBuildStatus(UUID buildUuid) {
-        return buildRecordRepository.findByBuildUuid(buildUuid)
-                .map(buildRecord -> {
-                    // Fetch live status from Jenkins
-                    return jenkinsJobService.getBuildStatus(buildRecord.getJenkinsJobName(), buildRecord.getJenkinsBuildNumber());
-                })
+    @Transactional(readOnly = true)
+    public BuildStatus getBuildStatus(UUID buildId) {
+        return buildRecordRepository.findByBuildId(buildId)
+                .map(BuildRecord::getStatus)
                 .orElse(null);
     }
 
     /**
-     * Finds existing Jenkins project or creates a new one.
-     * 
-     * EXTRACTED FROM: createProjectForExercise() logic
+     * Gets the latest build status for a participation.
+     *
+     * @param participationId the participation ID
+     * @return the build status, or null if no builds found
      */
-    private JenkinsProject findOrCreateJenkinsProject(BuildTriggerRequestDTO request) {
-        return jenkinsProjectRepository.findByExerciseId(request.exerciseId())
+    @Transactional(readOnly = true)
+    public BuildStatus getLatestBuildStatusForParticipation(Long participationId) {
+        return buildRecordRepository.findByParticipationIdOrderByCreatedAtDesc(participationId)
+                .map(BuildRecord::getStatus)
+                .orElse(null);
+    }
+
+    /**
+     * Gets or creates a Jenkins project for the given exercise.
+     */
+    private JenkinsProject getOrCreateJenkinsProject(Long exerciseId) throws JenkinsException {
+        return jenkinsProjectRepository.findByExerciseId(exerciseId)
                 .orElseGet(() -> {
-                    String projectKey = "EX" + request.exerciseId(); // Simple project key generation
-                    String folderName = projectKey;
+                    String projectKey = generateProjectKey(exerciseId);
+                    String jenkinsFolderName = projectKey;
                     
-                    // Create Jenkins folder
-                    jenkinsJobService.createFolder(folderName);
+                    // Create folder in Jenkins
+                    jenkinsJobService.createFolder(jenkinsFolderName);
                     
-                    // Create and save project record
-                    JenkinsProject project = new JenkinsProject(request.exerciseId(), projectKey, folderName, request.programmingLanguage());
+                    // Save project in database
+                    JenkinsProject project = new JenkinsProject(projectKey, exerciseId, jenkinsFolderName);
                     return jenkinsProjectRepository.save(project);
                 });
     }
 
     /**
-     * Generates a job name for a participation.
+     * Creates a Jenkins job if it doesn't already exist.
      */
-    private String generateJobName(String folderName, Long participationId) {
-        return folderName + "-" + participationId;
+    private void createJenkinsJobIfNeeded(String folderName, String jobName, BuildTriggerRequestDTO buildRequest) throws JenkinsException {
+        // Check if job already exists
+        var existingJob = jenkinsJobService.getJob(folderName, jobName);
+        if (existingJob != null) {
+            log.debug("Job {}/{} already exists", folderName, jobName);
+            return;
+        }
+
+        // Create the job
+        // TODO: Implement job creation with proper build configuration
+        // This would involve creating the Jenkins job XML configuration based on the build request
+        log.info("Would create Jenkins job {}/{} with programming language {}", 
+                folderName, jobName, buildRequest.programmingLanguage());
     }
 
-    /**
-     * Ensures a Jenkins job exists for the participation.
-     * 
-     * EXTRACTED FROM: configureBuildPlanForParticipation() and related methods
-     */
-    private void ensureJenkinsJobExists(JenkinsProject project, String jobName, BuildTriggerRequestDTO request) {
-        // First ensure the folder exists
-        if (!jenkinsJobService.folderExists(project.getJenkinsFolderName())) {
-            log.debug("Jenkins folder does not exist, creating: {}", project.getJenkinsFolderName());
-            jenkinsJobService.createFolder(project.getJenkinsFolderName());
-        }
-        
-        if (!jenkinsJobService.jobExists(project.getJenkinsFolderName(), jobName)) {
-            log.debug("Creating Jenkins job: {}/{}", project.getJenkinsFolderName(), jobName);
-            jenkinsJobService.createJob(project.getJenkinsFolderName(), jobName, request);
-        } else {
-            log.debug("Jenkins job already exists: {}/{}", project.getJenkinsFolderName(), jobName);
-            // Update repositories if needed
-            jenkinsJobService.updateJobRepositories(project.getJenkinsFolderName(), jobName, request);
-        }
+    private String generateProjectKey(Long exerciseId) {
+        return "EXERCISE-" + exerciseId;
+    }
+
+    private String generateJobName(Long participationId) {
+        return "participation-" + participationId;
     }
 }

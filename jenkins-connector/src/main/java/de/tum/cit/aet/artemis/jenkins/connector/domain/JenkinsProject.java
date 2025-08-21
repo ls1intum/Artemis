@@ -1,74 +1,124 @@
 package de.tum.cit.aet.artemis.jenkins.connector.domain;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 /**
- * Entity representing a Jenkins project/folder mapping.
- * Maps Artemis exercise information to Jenkins project structure.
+ * Entity representing a Jenkins project (folder) that contains build jobs.
  */
 @Entity
-@Table(name = "jenkins_projects")
+@Table(name = "jenkins_project")
 public class JenkinsProject {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "exercise_id", unique = true, nullable = false)
-    private Long exerciseId;
-
-    @Column(name = "project_key", nullable = false)
+    @Column(name = "project_key", unique = true, nullable = false)
     private String projectKey;
+
+    @Column(name = "exercise_id", nullable = false)
+    private Long exerciseId;
 
     @Column(name = "jenkins_folder_name", nullable = false)
     private String jenkinsFolderName;
 
-    @Column(name = "programming_language", nullable = false)
-    private String programmingLanguage;
-
     @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
+    private ZonedDateTime createdAt;
 
-    @Column(name = "last_accessed_at")
-    private Instant lastAccessedAt;
+    @Column(name = "updated_at")
+    private ZonedDateTime updatedAt;
 
-    public JenkinsProject() {}
+    @OneToMany(mappedBy = "jenkinsProject", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BuildRecord> buildRecords = new ArrayList<>();
 
-    public JenkinsProject(Long exerciseId, String projectKey, String jenkinsFolderName, String programmingLanguage) {
-        this.exerciseId = exerciseId;
-        this.projectKey = projectKey;
-        this.jenkinsFolderName = jenkinsFolderName;
-        this.programmingLanguage = programmingLanguage;
-        this.createdAt = Instant.now();
-        this.lastAccessedAt = Instant.now();
+    public JenkinsProject() {
     }
 
-    // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public JenkinsProject(String projectKey, Long exerciseId, String jenkinsFolderName) {
+        this.projectKey = projectKey;
+        this.exerciseId = exerciseId;
+        this.jenkinsFolderName = jenkinsFolderName;
+    }
 
-    public Long getExerciseId() { return exerciseId; }
-    public void setExerciseId(Long exerciseId) { this.exerciseId = exerciseId; }
+    @PrePersist
+    protected void onCreate() {
+        createdAt = ZonedDateTime.now();
+        updatedAt = ZonedDateTime.now();
+    }
 
-    public String getProjectKey() { return projectKey; }
-    public void setProjectKey(String projectKey) { this.projectKey = projectKey; }
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = ZonedDateTime.now();
+    }
 
-    public String getJenkinsFolderName() { return jenkinsFolderName; }
-    public void setJenkinsFolderName(String jenkinsFolderName) { this.jenkinsFolderName = jenkinsFolderName; }
+    // Getters and setters
 
-    public String getProgrammingLanguage() { return programmingLanguage; }
-    public void setProgrammingLanguage(String programmingLanguage) { this.programmingLanguage = programmingLanguage; }
+    public Long getId() {
+        return id;
+    }
 
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public Instant getLastAccessedAt() { return lastAccessedAt; }
-    public void setLastAccessedAt(Instant lastAccessedAt) { this.lastAccessedAt = lastAccessedAt; }
+    public String getProjectKey() {
+        return projectKey;
+    }
+
+    public void setProjectKey(String projectKey) {
+        this.projectKey = projectKey;
+    }
+
+    public Long getExerciseId() {
+        return exerciseId;
+    }
+
+    public void setExerciseId(Long exerciseId) {
+        this.exerciseId = exerciseId;
+    }
+
+    public String getJenkinsFolderName() {
+        return jenkinsFolderName;
+    }
+
+    public void setJenkinsFolderName(String jenkinsFolderName) {
+        this.jenkinsFolderName = jenkinsFolderName;
+    }
+
+    public ZonedDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(ZonedDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public ZonedDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(ZonedDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public List<BuildRecord> getBuildRecords() {
+        return buildRecords;
+    }
+
+    public void setBuildRecords(List<BuildRecord> buildRecords) {
+        this.buildRecords = buildRecords;
+    }
 }

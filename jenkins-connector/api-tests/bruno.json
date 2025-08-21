@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "name": "Jenkins CI Connector API",
+  "name": "Jenkins Connector API Tests",
   "type": "collection",
   "ignore": [
     "node_modules",

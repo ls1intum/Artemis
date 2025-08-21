@@ -59,10 +59,11 @@ artemis:
     default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
     repository-authentication-mechanisms: password,token,ssh # the order of authentication mechanisms in the code button pop up. Removing parts removes them from the drop-down
   continuous-integration:
-    user: <username>                # e.g. ga12abc
-    password: <password>
+    user: admin
+    password: admin
     token: <token>                  # Enter a valid token generated in the CI system giving Artemis full Admin access
-    url: "localhost:3080"
+    url: "http://localhost:8082" # The URL of the CI system, e.g. http://localhost:8081
+
     # Key of the saved credentials for the VCS service:w
 
     # Jenkins: You have to specify the key from the credentials page in Jenkins under which the user and

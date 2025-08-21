@@ -1,42 +1,36 @@
+server:
+  port: 8081
+
 spring:
   application:
     name: jenkins-connector
   
   datasource:
-    url: jdbc:postgresql://localhost:5432/jenkins_connector
-    username: artemis
-    password: artemis
-    driver-class-name: org.postgresql.Driver
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
   
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: none
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
-        jdbc:
-          time_zone: UTC
+      ddl-auto: create-drop
+    show-sql: true
   
-  liquibase:
-    change-log: classpath:config/liquibase/master.xml
-    contexts: dev
-
-server:
-  port: 8081
+  h2:
+    console:
+      enabled: true
 
 jenkins:
   url: http://localhost:8080
-  username: artemis
-  password: artemis
-  timeout: 60000
-  
+  username: admin
+  password: admin
+
 logging:
   level:
-    de.tum.cit.aet.artemis: DEBUG
-    org.springframework.web: INFO
-    
+    de.tum.cit.aet.artemis.jenkins.connector: DEBUG
+    org.springframework.web: DEBUG
+
 management:
   endpoints:
     web:

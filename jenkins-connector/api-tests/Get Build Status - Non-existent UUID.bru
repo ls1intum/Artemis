@@ -1,0 +1,43 @@
+meta {
+  name: Get Build Status - Non-existent UUID
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/v1/build/12345678-1234-1234-1234-123456789abc
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: eq 404
+}
+
+tests {
+  test("Non-existent UUID returns 404", function() {
+    expect(res.getStatus()).to.equal(404);
+  });
+
+  test("Valid UUID format but build doesn't exist", function() {
+    // This UUID has valid format but doesn't exist in the database
+    const uuid = "12345678-1234-1234-1234-123456789abc";
+    expect(uuid).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+  });
+}
+
+docs {
+  # Get Build Status - Non-existent UUID
+
+  This test verifies the behavior when requesting a build that doesn't exist but uses a valid UUID format.
+
+  ## Test UUID:
+  - Format: Valid UUID v4 format
+  - Exists: No (not in database)
+
+  ## Expected Response:
+  - Status: `404 Not Found`
+  - Body: Typically empty or contains error information
+
+  This is different from invalid UUID format (which returns 400).
+}

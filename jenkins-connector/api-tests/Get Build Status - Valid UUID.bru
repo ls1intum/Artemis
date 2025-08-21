@@ -1,0 +1,68 @@
+meta {
+  name: Get Build Status - Valid UUID
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/build/{{validBuildId}}
+  body: none
+  auth: none
+}
+
+assert {
+  res.status: in [200, 404]
+}
+
+tests {
+  test("Valid UUID format is accepted", function() {
+    const status = res.getStatus();
+    const body = res.getBody();
+    
+    if (status === 200) {
+      // Build found
+      expect(body.buildId).to.equal(bru.getVar("validBuildId"));
+      expect(body.status).to.be.oneOf(['QUEUED', 'RUNNING', 'COMPLETED', 'FAILED']);
+      expect(body.message).to.be.null;
+    } else if (status === 404) {
+      // Build not found (expected for non-existent UUID)
+      // 404 response typically has no body or error body
+    }
+  });
+
+  test("Response structure is correct", function() {
+    if (res.getStatus() === 200) {
+      const body = res.getBody();
+      expect(body).to.have.property('buildId');
+      expect(body).to.have.property('status');
+      expect(body).to.have.property('message');
+    }
+  });
+}
+
+docs {
+  # Get Build Status - Valid UUID
+
+  This endpoint retrieves the current status of a build by its UUID.
+
+  ## Path Parameters:
+  - `buildId`: UUID of the build to check
+
+  ## Response (200 OK):
+  ```json
+  {
+    "buildId": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "RUNNING",
+    "message": null
+  }
+  ```
+
+  ## Build Status Values:
+  - `QUEUED`: Build is waiting in the Jenkins queue
+  - `RUNNING`: Build is currently executing
+  - `COMPLETED`: Build finished successfully
+  - `FAILED`: Build failed with errors
+
+  ## Response (404 Not Found):
+  Build with the given UUID does not exist.
+}

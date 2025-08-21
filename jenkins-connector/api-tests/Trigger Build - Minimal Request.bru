@@ -1,0 +1,61 @@
+meta {
+  name: Trigger Build - Minimal Request
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/build
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "exerciseId": {{exerciseId}},
+    "participationId": {{participationId}},
+    "exerciseRepository": {
+      "url": "https://github.com/user/minimal-repo.git"
+    },
+    "buildScript": "./gradlew test",
+    "programmingLanguage": "JAVA"
+  }
+}
+
+assert {
+  res.status: in [200, 500]
+}
+
+tests {
+  test("Minimal valid request works", function() {
+    const status = res.getStatus();
+    const body = res.getBody();
+    
+    if (status === 200) {
+      expect(body.buildId).to.be.a('string');
+      expect(body.message).to.equal('Build triggered successfully');
+    } else if (status === 500) {
+      // Expected when Jenkins is not available
+      expect(body.message).to.include('Failed to trigger build');
+    }
+  });
+}
+
+docs {
+  # Trigger Build - Minimal Request
+
+  This test uses the minimum required fields to trigger a build.
+
+  ## Required Fields Only:
+  - `exerciseId`: Exercise identifier
+  - `participationId`: Participation identifier  
+  - `exerciseRepository.url`: Repository URL
+  - `buildScript`: Build command
+  - `programmingLanguage`: Programming language
+
+  Optional fields like `testRepository`, `auxiliaryRepositories`, and `additionalProperties` are omitted.
+}
