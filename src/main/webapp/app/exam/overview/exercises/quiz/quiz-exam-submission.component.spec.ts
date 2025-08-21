@@ -29,10 +29,10 @@ import { By } from '@angular/platform-browser';
 import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.model';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 
 describe('QuizExamSubmissionComponent', () => {
-    MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as SecuredImageComponent));
+    MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as ImageComponent));
 
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;
     let component: QuizExamSubmissionComponent;
