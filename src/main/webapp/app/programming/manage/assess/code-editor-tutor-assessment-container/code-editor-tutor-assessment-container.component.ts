@@ -1,11 +1,11 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { Observable, Subscription, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, CanDeactivateFn, Router, RouterLink } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
@@ -135,6 +135,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     templateParticipation: TemplateProgrammingExerciseParticipation;
     templateFileSession: { [fileName: string]: string } = {};
 
+    hasPendingChanges = true;
+
     // listener, will get notified upon loading of feedback
     @Output() onFeedbackLoaded = new EventEmitter();
     // function override, if set will be executed instead of going to the next submission page
@@ -255,6 +257,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             // Update the url with the new id, without reloading the page, to make the history consistent
             const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
             this.location.go(newUrl);
+        }
+    }
+
+    @HostListener('window:beforeunload', ['$event'])
+    handleBeforeUnload(event: BeforeUnloadEvent) {
+        if (this.hasPendingChanges && this.submission != undefined) {
+            // Required to trigger the native prompt in modern browsers
+            event.preventDefault();
+            event.returnValue = '';
         }
     }
 
@@ -427,6 +438,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.manualResultService.cancelAssessment(this.submission.id!).subscribe(() => this.navigateBack());
         }
         this.cancelBusy = false;
+        this.hasPendingChanges = false;
     }
 
     /**
@@ -609,6 +621,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
         this.checkPermissions();
+        this.hasPendingChanges = false;
     }
 
     /**
@@ -723,3 +736,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return totalScore;
     }
 }
+
+export const canLeaveCodeEditorTutorAssessmentContainer: CanDeactivateFn<CodeEditorTutorAssessmentContainerComponent> = (component) => {
+    if (component.hasPendingChanges && component.submission != undefined) {
+        return window.confirm('Reload? Any changes you made will not be saved.');
+    }
+    return true;
+};
