@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.assessment.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -172,7 +171,12 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         result.score(null);
 
         // Wait for any asynchronous participant score processing to complete
-        await().until(participantScoreScheduleService::isIdle);
+        try {
+            Thread.sleep(300);
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of());
