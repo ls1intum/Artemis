@@ -10,7 +10,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 
 // TODO: translate info-labels in template
-// TODO: check whether campus field can be removed
+// TODO: replace weekday with campus in general information, add weekday to next session, remove campus from session table
 
 @Component({
     selector: 'jhi-new-tutorial-group-detail',
