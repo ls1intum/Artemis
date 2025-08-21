@@ -76,7 +76,6 @@ artemis:
     plagiarism-checks:
         plagiarism-results-limit: 100
     nebula:
-        enabled: true
         url: http://nebula.fake
         secret: secret-token
 
