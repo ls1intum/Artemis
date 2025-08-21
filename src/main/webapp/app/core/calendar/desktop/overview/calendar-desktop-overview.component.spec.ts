@@ -10,17 +10,17 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
-import { CalendarWeekPresentationComponent } from 'app/core/calendar/overview/calendar-week-presentation/calendar-week-presentation.component';
-import { CalendarMonthPresentationComponent } from 'app/core/calendar/overview/calendar-month-presentation/calendar-month-presentation.component';
+import { CalendarDesktopWeekPresentationComponent } from 'app/core/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
+import { CalendarDesktopMonthPresentationComponent } from 'app/core/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
 import { CalendarEventFilterComponent } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
-import { CalendarOverviewComponent } from './calendar-overview.component';
+import { CalendarDesktopOverviewComponent } from './calendar-desktop-overview.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
-describe('CalendarOverviewComponent', () => {
-    let component: CalendarOverviewComponent;
-    let fixture: ComponentFixture<CalendarOverviewComponent>;
+describe('CalendarDesktopOverviewComponent', () => {
+    let component: CalendarDesktopOverviewComponent;
+    let fixture: ComponentFixture<CalendarDesktopOverviewComponent>;
 
     const calendarEventServiceMock = {
         eventMap: signal(new Map<string, CalendarEvent[]>()),
@@ -40,7 +40,7 @@ describe('CalendarOverviewComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CalendarOverviewComponent, CalendarWeekPresentationComponent, CalendarMonthPresentationComponent, FaIconComponent],
+            imports: [CalendarDesktopOverviewComponent, CalendarDesktopWeekPresentationComponent, CalendarDesktopMonthPresentationComponent, FaIconComponent],
             declarations: [
                 MockComponent(CalendarEventDetailPopoverComponent),
                 MockComponent(CalendarDayBadgeComponent),
@@ -55,7 +55,7 @@ describe('CalendarOverviewComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CalendarOverviewComponent);
+        fixture = TestBed.createComponent(CalendarDesktopOverviewComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });
@@ -77,8 +77,8 @@ describe('CalendarOverviewComponent', () => {
         expect(monthButton).toBeTruthy();
 
         expect(component.presentation()).toBe('month');
-        expect(fixture.debugElement.query(By.css('calendar-desktop-month'))).toBeTruthy();
-        expect(fixture.debugElement.query(By.css('calendar-desktop-week'))).toBeFalsy();
+        expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-month-presentation'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-week-presentation'))).toBeFalsy();
 
         previousButton.click();
         fixture.detectChanges();
@@ -97,8 +97,8 @@ describe('CalendarOverviewComponent', () => {
         weekButton.click();
         fixture.detectChanges();
         expect(component.presentation()).toBe('week');
-        expect(fixture.debugElement.query(By.css('calendar-desktop-week'))).toBeTruthy();
-        expect(fixture.debugElement.query(By.css('calendar-desktop-month'))).toBeFalsy();
+        expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-week-presentation'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-month-presentation'))).toBeFalsy();
 
         nextButton.click();
         fixture.detectChanges();

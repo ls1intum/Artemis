@@ -12,6 +12,7 @@ describe('ImageComponent', () => {
 
     beforeAll(() => {
         global.URL.createObjectURL = jest.fn(() => testLocalImageURL);
+        global.URL.revokeObjectURL = jest.fn();
     });
 
     beforeEach(async () => {
