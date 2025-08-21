@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.nebula.architecture;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
@@ -18,7 +17,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 public abstract class AbstractNebulaIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
-    @Qualifier("nebulaRequestMockProvider")
     protected NebulaRequestMockProvider nebulaRequestMockProvider;
 
     @Autowired

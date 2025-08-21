@@ -78,7 +78,7 @@ artemis:
     nebula:
         enabled: true
         url: http://nebula.fake
-        token: secret-token
+        secret: secret-token
 
 info:
     operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page, and sent to the telemetry service

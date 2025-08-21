@@ -88,7 +88,6 @@ artemis:
   apollon:
     conversion-service-url: http://localhost:8080
 
-
   scheduling: # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
     programming-exercises-cleanup-time: 0 0 3 * * * # every day at 3am
     data-export-creation-time: 0 0 4 * * * # every day at 4am
@@ -103,3 +102,8 @@ artemis:
   science: # The science module is used for research purposes such as the collection of data.
     event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
+
+  nebula: # The nebula module is used for llm features such as faq-rewriting and lecture transcription
+    enabled: false
+    url: <your-nebula-url>
+    secret: <your-secret>

@@ -21,9 +21,9 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyDTO;
-import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyResponse;
+import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyResponseDTO;
 import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingDTO;
-import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingResponse;
+import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingResponseDTO;
 import de.tum.cit.aet.artemis.nebula.service.FaqProcessingService;
 
 /**
@@ -64,10 +64,10 @@ public class FaqProcessingResource {
      */
     @EnforceAtLeastTutorInCourse
     @PostMapping("courses/{courseId}/rewrite-text")
-    public ResponseEntity<FaqRewritingResponse> rewriteFaq(@RequestBody FaqRewritingDTO request, @PathVariable Long courseId) {
+    public ResponseEntity<FaqRewritingResponseDTO> rewriteFaq(@RequestBody FaqRewritingDTO request, @PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
-        FaqRewritingResponse response = faqProcessingService.executeRewriting(user, course, request.toBeRewritten());
+        FaqRewritingResponseDTO response = faqProcessingService.executeRewriting(user, course, request.toBeRewritten());
         return ResponseEntity.ok(response);
     }
 
@@ -80,10 +80,10 @@ public class FaqProcessingResource {
      */
     @EnforceAtLeastTutorInCourse
     @PostMapping("courses/{courseId}/consistency-check")
-    public ResponseEntity<FaqConsistencyResponse> consistencyCheck(@RequestBody FaqConsistencyDTO request, @PathVariable Long courseId) {
+    public ResponseEntity<FaqConsistencyResponseDTO> consistencyCheck(@RequestBody FaqConsistencyDTO request, @PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
-        FaqConsistencyResponse response = faqProcessingService.executeConsistencyCheck(user, course, request.toBeChecked());
+        FaqConsistencyResponseDTO response = faqProcessingService.executeConsistencyCheck(user, course, request.toBeChecked());
         return ResponseEntity.ok(response);
     }
 

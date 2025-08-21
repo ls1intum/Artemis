@@ -26,9 +26,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyDTO;
-import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyResponse;
+import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyResponseDTO;
 import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingDTO;
-import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingResponse;
+import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingResponseDTO;
+import de.tum.cit.aet.artemis.nebula.exception.NebulaException;
 
 @Component
 @Conditional(NebulaEnabled.class)
@@ -68,11 +69,11 @@ public class NebulaRequestMockProvider {
         }
     }
 
-    public void mockFaqConsistencyRequestReturning(Function<FaqConsistencyDTO, FaqConsistencyResponse> responder) {
+    public void mockFaqConsistencyRequestReturning(Function<FaqConsistencyDTO, FaqConsistencyResponseDTO> responder) {
         mockPostJson("/faq/check-consistency", FaqConsistencyDTO.class, responder, HttpStatus.OK, ExpectedCount.once());
     }
 
-    public void mockFaqRewritingRequestReturning(Function<FaqRewritingDTO, FaqRewritingResponse> responder) {
+    public void mockFaqRewritingRequestReturning(Function<FaqRewritingDTO, FaqRewritingResponseDTO> responder) {
         mockPostJson("/faq/rewrite-faq", FaqRewritingDTO.class, responder, HttpStatus.OK, ExpectedCount.once());
     }
 
@@ -95,4 +96,17 @@ public class NebulaRequestMockProvider {
         });
     }
 
+    public void mockThrowingNebulaExceptionForUrl(String path, NebulaException exception) {
+        mockServer.expect(ExpectedCount.once(), requestTo(buildUrl(path))).andExpect(method(HttpMethod.POST)).andExpect(header("Authorization", nebulaSecretToken))
+                .andRespond(request -> {
+                    throw exception;
+                });
+    }
+
+    public void mockThrowingNebulaRuntimeExceptionForUrl(String path, RuntimeException exception) {
+        mockServer.expect(ExpectedCount.once(), requestTo(buildUrl(path))).andExpect(method(HttpMethod.POST)).andExpect(header("Authorization", nebulaSecretToken))
+                .andRespond(request -> {
+                    throw exception;
+                });
+    }
 }
