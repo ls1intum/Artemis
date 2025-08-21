@@ -15,13 +15,15 @@ RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.yml
 # setup docker
 RUN apt-get update -y \
     && apt-get install -qqy apt-transport-https ca-certificates curl gnupg2 software-properties-common
-RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
-RUN add-apt-repository \
-   "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/debian \
-   $(lsb_release -cs) \
-   stable"
+RUN install -m 0755 -d /etc/apt/keyrings
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+RUN chmod a+r /etc/apt/keyrings/docker.gpg
+RUN echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
 RUN apt-get update -y \
-    && apt-get -y install docker-ce && rm -rf /var/apt/cache/*
+    && apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin && rm -rf /var/lib/apt/lists/*
 RUN usermod -aG docker jenkins
 
 USER jenkins
