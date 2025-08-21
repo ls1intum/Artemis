@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.jenkinsstateless;
+package de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

@@ -6,7 +6,6 @@ import static java.time.ZonedDateTime.now;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -199,7 +198,7 @@ public class AutomaticProgrammingExerciseCleanupService {
         log.info("  Found {} build plans with successful latest result is older than 1 day", countSuccessfulLatestResult);
         log.info("  Found {} build plans with unsuccessful latest result is older than 5 days", countUnsuccessfulLatestResult);
 
-        deleteBuildPlans(participationsWithBuildPlanToDelete);
+        // deleteBuildPlans(participationsWithBuildPlanToDelete);
     }
 
     // returns false if the participation should be cleaned after the criteria checked in this method
@@ -260,33 +259,33 @@ public class AutomaticProgrammingExerciseCleanupService {
         return false;
     }
 
-    private void deleteBuildPlans(Set<ProgrammingExerciseStudentParticipation> participationsWithBuildPlanToDelete) {
-        // Limit to 5000 deletions per night
-        List<ProgrammingExerciseStudentParticipation> actualParticipationsToClean = participationsWithBuildPlanToDelete.stream().limit(5000).toList();
-        List<String> buildPlanIds = actualParticipationsToClean.stream().map(ProgrammingExerciseStudentParticipation::getBuildPlanId).toList();
-        log.info("Build plans to cleanup: {}", buildPlanIds);
-
-        int index = 0;
-        for (ProgrammingExerciseStudentParticipation participation : actualParticipationsToClean) {
-            if (index > 0 && index % externalSystemRequestBatchSize == 0) {
-                try {
-                    log.info("Sleep for {}s during cleanupBuildPlansOnContinuousIntegrationServer", externalSystemRequestBatchWaitingTime / 1000);
-                    Thread.sleep(externalSystemRequestBatchWaitingTime);
-                }
-                catch (InterruptedException ex) {
-                    log.error("Exception encountered when pausing before cleaning up build plans", ex);
-                }
-            }
-
-            try {
-                participationDeletionService.cleanupBuildPlan(participation);
-            }
-            catch (Exception ex) {
-                log.error("Could not cleanup build plan in participation {}", participation.getId(), ex);
-            }
-
-            index++;
-        }
-        log.info("{} build plans have been cleaned", actualParticipationsToClean.size());
-    }
+    // private void deleteBuildPlans(Set<ProgrammingExerciseStudentParticipation> participationsWithBuildPlanToDelete) {
+    // // Limit to 5000 deletions per night
+    // List<ProgrammingExerciseStudentParticipation> actualParticipationsToClean = participationsWithBuildPlanToDelete.stream().limit(5000).toList();
+    // List<String> buildPlanIds = actualParticipationsToClean.stream().map(ProgrammingExerciseStudentParticipation::getBuildPlanId).toList();
+    // log.info("Build plans to cleanup: {}", buildPlanIds);
+    //
+    // int index = 0;
+    // for (ProgrammingExerciseStudentParticipation participation : actualParticipationsToClean) {
+    // if (index > 0 && index % externalSystemRequestBatchSize == 0) {
+    // try {
+    // log.info("Sleep for {}s during cleanupBuildPlansOnContinuousIntegrationServer", externalSystemRequestBatchWaitingTime / 1000);
+    // Thread.sleep(externalSystemRequestBatchWaitingTime);
+    // }
+    // catch (InterruptedException ex) {
+    // log.error("Exception encountered when pausing before cleaning up build plans", ex);
+    // }
+    // }
+    //
+    // try {
+    // // participationDeletionService.cleanupBuildPlan(participation);
+    // }
+    // catch (Exception ex) {
+    // log.error("Could not cleanup build plan in participation {}", participation.getId(), ex);
+    // }
+    //
+    // index++;
+    // }
+    // log.info("{} build plans have been cleaned", actualParticipationsToClean.size());
+    // }
 }

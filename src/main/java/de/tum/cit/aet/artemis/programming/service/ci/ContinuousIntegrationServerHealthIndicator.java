@@ -15,9 +15,9 @@ import org.springframework.stereotype.Component;
 @Lazy
 public class ContinuousIntegrationServerHealthIndicator implements HealthIndicator {
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<StatelessCIService> continuousIntegrationService;
 
-    public ContinuousIntegrationServerHealthIndicator(Optional<ContinuousIntegrationService> continuousIntegrationService) {
+    public ContinuousIntegrationServerHealthIndicator(Optional<StatelessCIService> continuousIntegrationService) {
         this.continuousIntegrationService = continuousIntegrationService;
     }
 

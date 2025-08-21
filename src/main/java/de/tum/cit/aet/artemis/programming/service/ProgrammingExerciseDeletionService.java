@@ -15,13 +15,11 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 
 @Service
 @Lazy
@@ -34,7 +32,7 @@ public class ProgrammingExerciseDeletionService {
 
     private final ParticipationDeletionService participationDeletionService;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    // private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final InstanceMessageSendService instanceMessageSendService;
 
@@ -45,13 +43,12 @@ public class ProgrammingExerciseDeletionService {
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<IrisSettingsApi> irisSettingsApi, InstanceMessageSendService instanceMessageSendService,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService, Optional<IrisSettingsApi> irisSettingsApi,
+            InstanceMessageSendService instanceMessageSendService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationDeletionService = participationDeletionService;
-        this.continuousIntegrationService = continuousIntegrationService;
+        // this.continuousIntegrationService = continuousIntegrationService;
         this.irisSettingsApi = irisSettingsApi;
         this.instanceMessageSendService = instanceMessageSendService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
@@ -75,7 +72,7 @@ public class ProgrammingExerciseDeletionService {
         cancelScheduledOperations(programmingExercise.getId());
 
         if (deleteBaseReposBuildPlans) {
-            deleteBuildPlans(programmingExercise);
+            // deleteBuildPlans(programmingExercise);
             programmingExerciseRepositoryService.deleteRepositories(programmingExercise);
         }
         programmingExerciseRepositoryService.deleteLocalRepoCopies(programmingExercise);
@@ -98,18 +95,18 @@ public class ProgrammingExerciseDeletionService {
         programmingExerciseRepository.deleteById(programmingExerciseId);
     }
 
-    private void deleteBuildPlans(ProgrammingExercise programmingExercise) {
-        final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
-        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
-        if (templateBuildPlanId != null) {
-            continuousIntegration.deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
-        }
-        final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
-        if (solutionBuildPlanId != null) {
-            continuousIntegration.deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
-        }
-        continuousIntegration.deleteProject(programmingExercise.getProjectKey());
-    }
+    // private void deleteBuildPlans(ProgrammingExercise programmingExercise) {
+    // final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
+    // ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
+    // if (templateBuildPlanId != null) {
+    // continuousIntegration.deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
+    // }
+    // final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
+    // if (solutionBuildPlanId != null) {
+    // continuousIntegration.deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
+    // }
+    // continuousIntegration.deleteProject(programmingExercise.getProjectKey());
+    // }
 
     private void cancelScheduledOperations(long programmingExerciseId) {
         instanceMessageSendService.sendProgrammingExerciseScheduleCancel(programmingExerciseId);

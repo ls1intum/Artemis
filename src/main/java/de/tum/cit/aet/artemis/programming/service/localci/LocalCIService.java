@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
-import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.BuildTriggerRequestDTO;
+import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
 
 /**
  * Implementation of ContinuousIntegrationService for local CI. Contains methods

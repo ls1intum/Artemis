@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
-import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -22,7 +20,6 @@ import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 
 @Service
@@ -32,7 +29,7 @@ public class ProgrammingExerciseBuildPlanService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseBuildPlanService.class);
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    // private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<BuildScriptGenerationService> buildScriptGenerationService;
 
@@ -46,11 +43,11 @@ public class ProgrammingExerciseBuildPlanService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    public ProgrammingExerciseBuildPlanService(Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<BuildScriptGenerationService> buildScriptGenerationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
+    public ProgrammingExerciseBuildPlanService(Optional<BuildScriptGenerationService> buildScriptGenerationService,
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
+            Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
-        this.continuousIntegrationService = continuousIntegrationService;
+        // this.continuousIntegrationService = continuousIntegrationService;
         this.buildScriptGenerationService = buildScriptGenerationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
@@ -75,12 +72,12 @@ public class ProgrammingExerciseBuildPlanService {
         var testsRepoUri = programmingExercise.getVcsTestRepositoryUri();
         var solutionRepoUri = programmingExercise.getVcsSolutionRepositoryUri();
 
-        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
-        continuousIntegration.createProjectForExercise(programmingExercise);
-        // template build plan
-        continuousIntegration.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUri, testsRepoUri, solutionRepoUri);
-        // solution build plan
-        continuousIntegration.createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUri, testsRepoUri, solutionRepoUri);
+        // ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
+        // continuousIntegration.createProjectForExercise(programmingExercise);
+        // // template build plan
+        // continuousIntegration.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUri, testsRepoUri, solutionRepoUri);
+        // // solution build plan
+        // continuousIntegration.createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUri, testsRepoUri, solutionRepoUri);
 
         Windfile windfile = programmingExercise.getBuildConfig().getWindfile();
         if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildConfig().getBuildScript() == null) {
@@ -124,17 +121,16 @@ public class ProgrammingExerciseBuildPlanService {
      * @param updatedProgrammingExercise      the changed programming exercise with its new values
      */
     public void updateBuildPlanForExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) throws JsonProcessingException {
-        if (continuousIntegrationService.isEmpty() || Objects.equals(programmingExerciseBeforeUpdate.getBuildConfig().getBuildPlanConfiguration(),
-                updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())) {
+        if (Objects.equals(programmingExerciseBeforeUpdate.getBuildConfig().getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())) {
             return;
         }
         // we only update the build plan configuration if it has changed and is not null, otherwise we
         // do not have a valid exercise anymore
         if (updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
             if (!profileService.isLocalCIActive()) {
-                continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
-                continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
-                continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
+                // continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
+                // continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
+                // continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
                 resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
             }
             // For Aeolus, we have to regenerate the build script based on the new Windfile of the exercise.

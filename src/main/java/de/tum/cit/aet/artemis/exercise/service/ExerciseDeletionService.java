@@ -109,7 +109,7 @@ public class ExerciseDeletionService {
         try (var threadPool = Executors.newFixedThreadPool(10)) {
             var futures = exercise.getStudentParticipations().stream().map(participation -> CompletableFuture.runAsync(() -> {
                 try {
-                    participationDeletionService.cleanupBuildPlan((ProgrammingExerciseStudentParticipation) participation);
+                    // participationDeletionService.cleanupBuildPlan((ProgrammingExerciseStudentParticipation) participation);
                     participationDeletionService.cleanupRepository((ProgrammingExerciseStudentParticipation) participation);
                 }
                 catch (Exception exception) {

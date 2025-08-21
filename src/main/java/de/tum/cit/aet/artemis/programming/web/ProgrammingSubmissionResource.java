@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessaging
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
 
 /**
  * REST controller for managing ProgrammingSubmission.
@@ -90,7 +91,7 @@ public class ProgrammingSubmissionResource {
 
     private final SubmissionRepository submissionRepository;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<StatelessCIService> continuousIntegrationService;
 
     private final UserRepository userRepository;
 
@@ -101,7 +102,7 @@ public class ProgrammingSubmissionResource {
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GradingCriterionRepository gradingCriterionRepository,
-            SubmissionRepository submissionRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository,
+            SubmissionRepository submissionRepository, Optional<StatelessCIService> continuousIntegrationService, UserRepository userRepository,
             ExerciseDateService exerciseDateService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingTriggerService = programmingTriggerService;

@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -38,12 +37,10 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -59,7 +56,7 @@ public class ParticipationService {
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    // private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
 
@@ -81,12 +78,11 @@ public class ParticipationService {
 
     private final ResultRepository resultRepository;
 
-    public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
-            ResultRepository resultRepository) {
-        this.continuousIntegrationService = continuousIntegrationService;
+    public ParticipationService(Optional<VersionControlService> versionControlService, ParticipationRepository participationRepository,
+            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService,
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, ResultRepository resultRepository) {
+        // this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -258,9 +254,9 @@ public class ParticipationService {
         // Step 1c) configure the student repository (e.g. access right, etc.)
         participation = configureRepository(participation);
         // Step 2a) create the build plan (based on the BASE build plan)
-        participation = copyBuildPlan(participation);
+        // participation = copyBuildPlan(participation);
         // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
-        participation = configureBuildPlan(participation);
+        // participation = configureBuildPlan(participation);
         // Step 3a) Set the InitializationState to initialized to indicate, the programming exercise is ready
         participation.setInitializationState(InitializationState.INITIALIZED);
         // after saving, we need to make sure the object that is used after the if statement is the right one
@@ -385,9 +381,9 @@ public class ParticipationService {
     public ProgrammingExerciseStudentParticipation resumeProgrammingExercise(ProgrammingExerciseStudentParticipation participation) {
         // this method assumes that the student git repository already exists (compare startProgrammingExercise) so steps 1, 2 and 5 are not necessary
         // Step 2a) create the build plan (based on the BASE build plan)
-        participation = copyBuildPlan(participation);
+        // participation = copyBuildPlan(participation);
         // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
-        participation = configureBuildPlan(participation);
+        // participation = configureBuildPlan(participation);
         // Note: the repository webhook (step 1c) already exists, so we don't need to set it up again, the empty commit hook (step 2c) is also not necessary here
         // and must be handled by the calling method in case it would be necessary
 
@@ -450,47 +446,47 @@ public class ParticipationService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation copyBuildPlan(ProgrammingExerciseStudentParticipation participation) {
-        // only execute this step if it has not yet been completed yet or if the build plan id is missing for some reason
-        if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED) || participation.getBuildPlanId() == null) {
-            final var exercise = participation.getProgrammingExercise();
-            final var planName = BuildPlanType.TEMPLATE.getName();
-            final var username = participation.getParticipantIdentifier();
-            final var buildProjectName = participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " "
-                    + participation.getExercise().getTitle();
-            final var targetPlanName = participation.addPracticePrefixIfTestRun(username.toUpperCase());
-            // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
-            final var buildPlanId = continuousIntegrationService.orElseThrow().copyBuildPlan(exercise, planName, exercise, buildProjectName, targetPlanName, true);
-            participation.setBuildPlanId(buildPlanId);
-            participation.setInitializationState(InitializationState.BUILD_PLAN_COPIED);
-            return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
-        }
-        else {
-            return participation;
-        }
-    }
-
-    private ProgrammingExerciseStudentParticipation configureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
-        if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
-            try {
-                continuousIntegrationService.orElseThrow().configureBuildPlan(participation);
-            }
-            catch (ContinuousIntegrationException ex) {
-                // this means something with the configuration of the build plan is wrong.
-                // we try to recover from typical edge cases by setting the initialization state back, so that the previous action (copy build plan) is tried again, when
-                // the user again clicks on the start / resume exercise button.
-                participation.setInitializationState(InitializationState.REPO_CONFIGURED);
-                programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
-                // rethrow
-                throw ex;
-            }
-            participation.setInitializationState(InitializationState.BUILD_PLAN_CONFIGURED);
-            return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
-        }
-        else {
-            return participation;
-        }
-    }
+    // private ProgrammingExerciseStudentParticipation copyBuildPlan(ProgrammingExerciseStudentParticipation participation) {
+    // // only execute this step if it has not yet been completed yet or if the build plan id is missing for some reason
+    // if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED) || participation.getBuildPlanId() == null) {
+    // final var exercise = participation.getProgrammingExercise();
+    // final var planName = BuildPlanType.TEMPLATE.getName();
+    // final var username = participation.getParticipantIdentifier();
+    // final var buildProjectName = participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " "
+    // + participation.getExercise().getTitle();
+    // final var targetPlanName = participation.addPracticePrefixIfTestRun(username.toUpperCase());
+    // // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
+    // final var buildPlanId = continuousIntegrationService.orElseThrow().copyBuildPlan(exercise, planName, exercise, buildProjectName, targetPlanName, true);
+    // participation.setBuildPlanId(buildPlanId);
+    // participation.setInitializationState(InitializationState.BUILD_PLAN_COPIED);
+    // return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+    // }
+    // else {
+    // return participation;
+    // }
+    // }
+    //
+    // private ProgrammingExerciseStudentParticipation configureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
+    // if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
+    // try {
+    // continuousIntegrationService.orElseThrow().configureBuildPlan(participation);
+    // }
+    // catch (ContinuousIntegrationException ex) {
+    // // this means something with the configuration of the build plan is wrong.
+    // // we try to recover from typical edge cases by setting the initialization state back, so that the previous action (copy build plan) is tried again, when
+    // // the user again clicks on the start / resume exercise button.
+    // participation.setInitializationState(InitializationState.REPO_CONFIGURED);
+    // programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+    // // rethrow
+    // throw ex;
+    // }
+    // participation.setInitializationState(InitializationState.BUILD_PLAN_CONFIGURED);
+    // return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+    // }
+    // else {
+    // return participation;
+    // }
+    // }
 
     /**
      * Ensures that all team students of a list of team participations are loaded from the database. If not, one database call for all participations is made to load the students.

@@ -5,7 +5,7 @@ import java.util.UUID;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.BuildTriggerRequestDTO;
+import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
 
 /**
  * Abstract service for managing entities related to continuous integration.

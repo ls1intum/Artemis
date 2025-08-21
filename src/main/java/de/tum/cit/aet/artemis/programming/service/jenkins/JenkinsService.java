@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
-import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.BuildTriggerRequestDTO;
+import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
 
 @Profile(PROFILE_JENKINS)
 @Lazy

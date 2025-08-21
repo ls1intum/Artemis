@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -29,14 +28,12 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
@@ -69,7 +66,7 @@ public class ParticipationDeletionService {
 
     private final ParticipationVcsAccessTokenService participationVcsAccessTokenService;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    // private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
@@ -80,9 +77,8 @@ public class ParticipationDeletionService {
     public ParticipationDeletionService(StudentParticipationRepository studentParticipationRepository, ParticipantScoreRepository participantScoreRepository,
             SubmissionRepository submissionRepository, Optional<CompetencyProgressApi> competencyProgressApi, ParticipationRepository participationRepository,
             TeamScoreRepository teamScoreRepository, ResultService resultService, StudentScoreRepository studentScoreRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, GitService gitService,
-            BuildLogEntryService buildLogEntryService, ParticipationVcsAccessTokenService participationVcsAccessTokenService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<VersionControlService> versionControlService,
+            GitService gitService, BuildLogEntryService buildLogEntryService, ParticipationVcsAccessTokenService participationVcsAccessTokenService,
             Optional<SharedQueueManagementService> localCISharedBuildJobQueueService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.participantScoreRepository = participantScoreRepository;
@@ -93,7 +89,7 @@ public class ParticipationDeletionService {
         this.resultService = resultService;
         this.studentScoreRepository = studentScoreRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.continuousIntegrationService = continuousIntegrationService;
+        // this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
         this.buildLogEntryService = buildLogEntryService;
@@ -154,10 +150,10 @@ public class ParticipationDeletionService {
             var repositoryUri = programmingExerciseParticipation.getVcsRepositoryUri();
             String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
 
-            if (buildPlanId != null) {
-                final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
-                continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
-            }
+            // if (buildPlanId != null) {
+            // final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
+            // continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, buildPlanId);
+            // }
             if (programmingExerciseParticipation.getRepositoryUri() != null) {
                 try {
                     versionControlService.orElseThrow().deleteRepository(repositoryUri);
@@ -213,30 +209,30 @@ public class ParticipationDeletionService {
         });
     }
 
-    /**
-     * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactive.
-     * This means the participation can be resumed in the future
-     *
-     * @param participation that will be set to inactive
-     */
-    public void cleanupBuildPlan(ProgrammingExerciseStudentParticipation participation) {
-        // ignore participations without build plan id
-        if (participation.getBuildPlanId() != null) {
-            final var projectKey = ((ProgrammingExercise) participation.getExercise()).getProjectKey();
-            continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, participation.getBuildPlanId());
-
-            // If a graded participation gets cleaned up after the due date set the state back to finished. Otherwise, the participation is initialized
-            var dueDate = ExerciseDateService.getDueDate(participation);
-            if (!participation.isPracticeMode() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
-                participation.setInitializationState(InitializationState.FINISHED);
-            }
-            else {
-                participation.setInitializationState(InitializationState.INACTIVE);
-            }
-            participation.setBuildPlanId(null);
-            programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
-        }
-    }
+    // /**
+    // * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactive.
+    // * This means the participation can be resumed in the future
+    // *
+    // * @param participation that will be set to inactive
+    // */
+    // public void cleanupBuildPlan(ProgrammingExerciseStudentParticipation participation) {
+    // // ignore participations without build plan id
+    // if (participation.getBuildPlanId() != null) {
+    // final var projectKey = ((ProgrammingExercise) participation.getExercise()).getProjectKey();
+    // continuousIntegrationService.orElseThrow().deleteBuildPlan(projectKey, participation.getBuildPlanId());
+    //
+    // // If a graded participation gets cleaned up after the due date set the state back to finished. Otherwise, the participation is initialized
+    // var dueDate = ExerciseDateService.getDueDate(participation);
+    // if (!participation.isPracticeMode() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
+    // participation.setInitializationState(InitializationState.FINISHED);
+    // }
+    // else {
+    // participation.setInitializationState(InitializationState.INACTIVE);
+    // }
+    // participation.setBuildPlanId(null);
+    // programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+    // }
+    // }
 
     /**
      * NOTICE: be careful with this method because it deletes the students code on the version control server Deletes the repository on the version control server and sets the
