@@ -370,26 +370,28 @@ public class CourseScoreCalculationService {
 
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
 
-        if (participationsOfStudent.isEmpty() || plagiarismMapping.studentHasVerdict(studentId, PlagiarismVerdict.PLAGIARISM)) {
+        if (plagiarismMapping.studentHasVerdict(studentId, PlagiarismVerdict.PLAGIARISM)) {
             return new StudentScoresDTO(0.0, 0.0, 0.0, 0);
         }
 
-        // Create mapping from exerciseId to ExerciseCourseScoreDTO for efficient lookup
-        Map<Long, ExerciseCourseScoreDTO> exerciseMap = courseExercises.stream().collect(Collectors.toMap(ExerciseCourseScoreDTO::id, exercise -> exercise));
+        Map<Long, CourseGradeScoreDTO> participationMap = participationsOfStudent.stream()
+                .collect(Collectors.toMap(CourseGradeScoreDTO::exerciseId, participation -> participation));
 
         double pointsAchievedByStudentInCourse = 0.0;
         double presentationScore = 0;
         var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(studentId);
 
-        for (CourseGradeScoreDTO participation : participationsOfStudent) {
-            ExerciseCourseScoreDTO exercise = exerciseMap.get(participation.exerciseId());
-            if (exercise == null || !includeIntoScoreCalculation(exercise)) {
+        for (ExerciseCourseScoreDTO exercise : courseExercises) {
+            if (!includeIntoScoreCalculation(exercise)) {
                 continue;
             }
-            // For CourseGradeScoreDTO, we already have the final score, so we don't need to call getResultForParticipation
-            // The score is already rated and represents the final result
-            double pointsAchievedFromExercise = calculatePointsAchievedFromExerciseScoreDTO(exercise, participation.score(), plagiarismCasesForStudent.get(exercise.id()), course);
-            pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
+
+            CourseGradeScoreDTO participation = participationMap.get(exercise.id());
+            if (participation != null) {
+                double pointsAchievedFromExercise = calculatePointsAchievedFromExerciseScoreDTO(exercise, participation.score(), plagiarismCasesForStudent.get(exercise.id()),
+                        course);
+                pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
+            }
         }
 
         // calculate presentation points for graded presentations
@@ -414,7 +416,6 @@ public class CourseScoreCalculationService {
         return new StudentScoresDTO(absolutePoints, relativeScore, currentRelativeScore, presentationScore);
     }
 
-    // Overloaded method for backward compatibility with StudentParticipation
     public StudentScoresDTO calculateCourseScoreForStudentParticipations(Course course, @Nullable GradingScale gradingScale, Long studentId,
             Collection<StudentParticipation> participationsOfStudent, MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases) {
 

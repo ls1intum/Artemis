@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,11 +17,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePointsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
@@ -40,6 +43,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -76,8 +80,12 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     @Autowired
     private StudentScoreRepository studentScoreRepository;
 
+    @Value("artemis.version-control.url")
+    private URI versionControlUrl;
+
     @BeforeEach
     void init() {
+        ProgrammingExerciseFactory.localVCBaseUri = versionControlUrl;
         studentScoreRepository.deleteAll();
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
         course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
@@ -165,11 +173,13 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         Result result = participationUtilService.getResultsForParticipation(studentParticipationWithZeroScore).iterator().next();
         assertThat(result.getScore()).isZero();
         result.score(null);
+        resultRepository.save(result);
 
         var courseScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourseAndStudent(course.getId(), student.getId());
+        Set<ExerciseCourseScoreDTO> courseExercises = course.getExercises().stream().map(ExerciseCourseScoreDTO::from).collect(Collectors.toSet());
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), courseScores,
-                new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of());
+                new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of(), courseExercises);
         if (withDueDate) {
             assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.6);
             assertThat(studentScoresDTO.relativeScore()).isEqualTo(26.4);
@@ -290,8 +300,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     void calculateCourseScoreWithNoParticipations() {
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
+        Set<ExerciseCourseScoreDTO> courseExercises = course.getExercises().stream().map(ExerciseCourseScoreDTO::from).collect(Collectors.toSet());
         StudentScoresDTO studentScore = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), Collections.emptyList(),
-                new MaxAndReachablePointsDTO(100.00, 100.00, 0.0), Collections.emptyList());
+                new MaxAndReachablePointsDTO(100.00, 100.00, 0.0), Collections.emptyList(), courseExercises);
         assertThat(studentScore.absoluteScore()).isZero();
         assertThat(studentScore.relativeScore()).isZero();
         assertThat(studentScore.currentRelativeScore()).isZero();
