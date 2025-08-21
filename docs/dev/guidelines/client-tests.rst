@@ -168,6 +168,7 @@ More examples on test speed improvement can be found in the `following PR <https
     * Mock services if they just return data from the server.
     * If the service has important logic → keep the real service but mock **HTTP requests and responses** instead.
     * This allows us to test the interaction of the component with the service and in addition test that the service logic works correctly. A good explanation can be found in the `official angular documentation <https://angular.dev/guide/http/testing>`_.
+
     .. code:: ts
 
             import { provideHttpClient } from '@angular/common/http';
@@ -264,7 +265,7 @@ More examples on test speed improvement can be found in the `following PR <https
         });
 
 4. Naming Test Doubles
-===================
+======================
 
 Use clear terminology for test doubles:
 
