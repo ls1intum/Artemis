@@ -14,6 +14,11 @@ jenkins:
     loggedInUsersCanDoAnything:
       allowAnonymousRead: false
 
+  # Disable CSRF protection for easier API integration in development
+  crumbIssuer:
+    standard:
+      excludeClientIPFromCrumb: false
+
 unclassified:
   location:
     url: http://localhost:8080/

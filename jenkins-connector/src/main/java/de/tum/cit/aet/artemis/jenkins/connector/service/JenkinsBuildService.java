@@ -153,11 +153,84 @@ public class JenkinsBuildService {
             return;
         }
 
-        // Create the job
-        // TODO: Implement job creation with proper build configuration
-        // This would involve creating the Jenkins job XML configuration based on the build request
-        log.info("Would create Jenkins job {}/{} with programming language {}", 
+        log.info("Creating Jenkins job {}/{} with programming language {}", 
                 folderName, jobName, buildRequest.programmingLanguage());
+        
+        try {
+            // Create the job with a basic pipeline configuration
+            jenkinsJobService.createJob(folderName, jobName, createJobXmlConfig(buildRequest));
+            log.info("Successfully created Jenkins job {}/{}", folderName, jobName);
+        } catch (Exception e) {
+            log.error("Failed to create Jenkins job {}/{}", folderName, jobName, e);
+            throw new JenkinsException("Failed to create Jenkins job: " + folderName + "/" + jobName, e);
+        }
+    }
+
+    /**
+     * Creates a basic Jenkins job XML configuration based on the build request.
+     */
+    private String createJobXmlConfig(BuildTriggerRequestDTO buildRequest) {
+        String buildScript = buildRequest.buildScript();
+        String gitUrl = buildRequest.exerciseRepository().url();
+        String commitHash = buildRequest.exerciseRepository().commitHash();
+        
+        // Create a basic freestyle project configuration (simpler than pipeline)
+        return String.format("""
+            <?xml version='1.1' encoding='UTF-8'?>
+            <project>
+              <actions/>
+              <description>Auto-generated job for participation %d</description>
+              <keepDependencies>false</keepDependencies>
+              <properties/>
+              <scm class="hudson.plugins.git.GitSCM" plugin="git@4.8.3">
+                <configVersion>2</configVersion>
+                <userRemoteConfigs>
+                  <hudson.plugins.git.UserRemoteConfig>
+                    <url>%s</url>
+                  </hudson.plugins.git.UserRemoteConfig>
+                </userRemoteConfigs>
+                <branches>
+                  <hudson.plugins.git.BranchSpec>
+                    <name>*/main</name>
+                  </hudson.plugins.git.BranchSpec>
+                </branches>
+                <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+                <submoduleCfg class="list"/>
+                <extensions/>
+              </scm>
+              <canRoam>true</canRoam>
+              <disabled>false</disabled>
+              <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+              <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+              <triggers/>
+              <concurrentBuild>false</concurrentBuild>
+              <builders>
+                <hudson.tasks.Shell>
+                  <command>%s</command>
+                </hudson.tasks.Shell>
+              </builders>
+              <publishers/>
+              <buildWrappers/>
+            </project>
+            """, 
+            buildRequest.participationId(),
+            escapeXml(gitUrl),
+            escapeXml(buildScript)
+        );
+    }
+
+    /**
+     * Escapes XML special characters in strings.
+     */
+    private String escapeXml(String input) {
+        if (input == null) {
+            return "";
+        }
+        return input.replace("&", "&amp;")
+                   .replace("<", "&lt;")
+                   .replace(">", "&gt;")
+                   .replace("\"", "&quot;")
+                   .replace("'", "&apos;");
     }
 
     private String generateProjectKey(Long exerciseId) {

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -71,6 +72,11 @@ public class JenkinsJobService {
     public record FolderJob(String name, String description, String url) {
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record JenkinsCrumb(String crumb, String crumbRequestField) {
+    }
+
     /**
      * Gets the folder job or null if it doesn't exist
      *
@@ -92,6 +98,66 @@ public class JenkinsJobService {
     }
 
     /**
+     * Gets a CSRF crumb from Jenkins for API requests that modify state
+     *
+     * @return the CSRF crumb or null if not available
+     */
+    private JenkinsCrumb getCsrfCrumb() {
+        try {
+            URI crumbUri = jenkinsServerUri.resolve("crumbIssuer/api/json");
+            return restTemplate.getForObject(crumbUri, JenkinsCrumb.class);
+        }
+        catch (Exception e) {
+            log.warn("Failed to retrieve CSRF crumb from Jenkins: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Creates HTTP headers with CSRF protection if available
+     *
+     * @param contentType the content type to set
+     * @return configured headers
+     */
+    private HttpHeaders createHeadersWithCsrf(MediaType contentType) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(contentType);
+        
+        JenkinsCrumb crumb = getCsrfCrumb();
+        if (crumb != null && crumb.crumb() != null && crumb.crumbRequestField() != null) {
+            headers.add(crumb.crumbRequestField(), crumb.crumb());
+            log.debug("Added CSRF crumb header: {} = {}", crumb.crumbRequestField(), crumb.crumb());
+        }
+        
+        return headers;
+    }
+
+    /**
+     * Creates a job within a folder
+     *
+     * @param folderName the name of the folder
+     * @param jobName    the name of the job to create
+     * @param jobXml     the XML configuration for the job
+     */
+    public void createJob(String folderName, String jobName, String jobXml) throws JenkinsException {
+        try {
+            HttpHeaders headers = createHeadersWithCsrf(MediaType.APPLICATION_XML);
+            HttpEntity<String> entity = new HttpEntity<>(jobXml, headers);
+
+            URI uri = JenkinsEndpoints.NEW_PLAN.buildEndpoint(jenkinsServerUri, folderName)
+                    .queryParam("name", jobName)
+                    .build(true).toUri();
+                    
+            restTemplate.postForObject(uri, entity, String.class);
+            log.debug("Created job {}/{} in Jenkins", folderName, jobName);
+        }
+        catch (RestClientException e) {
+            log.error("Failed to create job {}/{} in Jenkins", folderName, jobName, e);
+            throw new JenkinsException("Failed to create job: " + folderName + "/" + jobName, e);
+        }
+    }
+
+    /**
      * Creates a folder with the given name in Jenkins
      *
      * @param folderName the name of the folder to create
@@ -100,8 +166,7 @@ public class JenkinsJobService {
         try {
             String folderXml = createFolderXmlConfig();
             
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_XML);
+            HttpHeaders headers = createHeadersWithCsrf(MediaType.APPLICATION_XML);
             HttpEntity<String> entity = new HttpEntity<>(folderXml, headers);
 
             URI uri = JenkinsEndpoints.NEW_FOLDER.buildEndpoint(jenkinsServerUri)
@@ -125,8 +190,11 @@ public class JenkinsJobService {
      */
     public void deleteFolderJob(String folderName) {
         try {
+            HttpHeaders headers = createHeadersWithCsrf(MediaType.APPLICATION_FORM_URLENCODED);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            
             URI uri = JenkinsEndpoints.DELETE_FOLDER.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
-            restTemplate.postForObject(uri, null, String.class);
+            restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
             log.debug("Deleted folder {} from Jenkins", folderName);
         }
         catch (HttpClientErrorException.NotFound notFound) {
@@ -146,8 +214,11 @@ public class JenkinsJobService {
      */
     public void deleteJob(String folderName, String jobName) {
         try {
+            HttpHeaders headers = createHeadersWithCsrf(MediaType.APPLICATION_FORM_URLENCODED);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            
             URI uri = JenkinsEndpoints.DELETE_JOB.buildEndpoint(jenkinsServerUri, folderName, jobName).build(true).toUri();
-            restTemplate.postForObject(uri, null, String.class);
+            restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
             log.debug("Deleted job {}/{} from Jenkins", folderName, jobName);
         }
         catch (HttpClientErrorException.NotFound notFound) {
@@ -168,8 +239,11 @@ public class JenkinsJobService {
      */
     public Integer triggerBuild(String folderName, String jobName) {
         try {
+            HttpHeaders headers = createHeadersWithCsrf(MediaType.APPLICATION_FORM_URLENCODED);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+            
             URI uri = JenkinsEndpoints.TRIGGER_BUILD.buildEndpoint(jenkinsServerUri, folderName, jobName).build(true).toUri();
-            restTemplate.postForObject(uri, null, String.class);
+            restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
             log.debug("Triggered build for job {}/{}", folderName, jobName);
             
             // TODO: Extract build number from queue location header if needed
