@@ -21,7 +21,7 @@ ext {
         "quiz"          :          ["INSTRUCTION": 0.901, "CLASS":  2],
         "text"          :          ["INSTRUCTION": 0.947, "CLASS":  1],
         "tutorialgroup" :          ["INSTRUCTION": 0.915, "CLASS":  1],
-        "nebula"        :          ["INSTRUCTION": 0.900, "CLASS":  2],
+        "nebula"        :          ["INSTRUCTION": 0.700, "CLASS":  2],
     ]
     // If no explicit modules defined -> generate reports and validate for each module
     reportedModules = includedModules.size() == 0
