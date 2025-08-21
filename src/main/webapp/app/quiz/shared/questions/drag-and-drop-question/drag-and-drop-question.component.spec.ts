@@ -8,7 +8,6 @@ import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-q
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { DragItemComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-item/drag-item.component';
 import { QuizScoringInfoStudentModalComponent } from 'app/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
-import { ImageComponent } from 'app/shared/image/image.component';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -16,6 +15,7 @@ import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { FitTextDirective } from 'app/quiz/shared/fit-text/fit-text.directive';
 import { MockProfileService } from 'src/test/javascript/spec/helpers/mocks/service/mock-profile.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ImageComponent } from '../../../../shared/image/image.component';
 
 describe('DragAndDropQuestionComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionComponent>;
@@ -35,7 +35,7 @@ describe('DragAndDropQuestionComponent', () => {
             declarations: [
                 DragAndDropQuestionComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(SecuredImageComponent),
+                MockComponent(ImageComponent),
                 MockComponent(QuizScoringInfoStudentModalComponent),
                 DragItemComponent,
             ],
