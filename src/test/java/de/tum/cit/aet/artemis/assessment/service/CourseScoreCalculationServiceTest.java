@@ -193,7 +193,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         log.info("TEST_DEBUG: Participant score service is now idle");
 
         try {
-            Thread.sleep(300);
+            Thread.sleep(500);
         }
         catch (InterruptedException e) {
             e.printStackTrace();
