@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
+import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.BuildTriggerRequestDTO;
 
 @Profile(PROFILE_JENKINS)
 @Lazy
@@ -218,5 +220,11 @@ public class JenkinsService implements ContinuousIntegrationService {
             log.error(e.getMessage(), e);
             throw new JenkinsException("Error creating folder for exercise " + programmingExercise, e);
         }
+    }
+
+    @Override
+    public UUID build(BuildTriggerRequestDTO buildTriggerRequestDTO) throws ContinuousIntegrationException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'build'");
     }
 }

@@ -60,6 +60,12 @@ public class JenkinsJobService {
         try {
             log.debug("Creating Jenkins folder: {}", folderName);
             
+            // First check if folder already exists
+            if (folderExists(folderName)) {
+                log.debug("Jenkins folder already exists: {}", folderName);
+                return;
+            }
+            
             URI uri = UriComponentsBuilder.fromUri(jenkinsServerUri)
                 .path("/createItem")
                 .queryParam("name", folderName)
@@ -69,13 +75,69 @@ public class JenkinsJobService {
                 .build(true).toUri();
             
             HttpHeaders headers = createAuthHeaders();
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
+            headers.setContentType(MediaType.APPLICATION_XML);
+            
+            // Add minimal folder XML configuration
+            String folderConfig = generateFolderConfig(folderName);
+            HttpEntity<String> entity = new HttpEntity<>(folderConfig, headers);
             
             restTemplate.postForEntity(uri, entity, Void.class);
             log.info("Successfully created Jenkins folder: {}", folderName);
         } catch (RestClientException e) {
             log.error("Failed to create Jenkins folder: {}", folderName, e);
             throw new RuntimeException("Failed to create Jenkins folder", e);
+        }
+    }
+    
+    /**
+     * Generates folder configuration XML.
+     */
+    private String generateFolderConfig(String folderName) {
+        return String.format("""
+            <?xml version='1.1' encoding='UTF-8'?>
+            <com.cloudbees.hudson.plugins.folder.Folder plugin="cloudbees-folder">
+                <actions/>
+                <description>Artemis Exercise Folder: %s</description>
+                <properties/>
+                <folderViews class="com.cloudbees.hudson.plugins.folder.views.DefaultFolderViewHolder">
+                    <views>
+                        <hudson.model.AllView>
+                            <owner class="com.cloudbees.hudson.plugins.folder.Folder" reference="../../../.."/>
+                            <name>All</name>
+                            <filterExecutors>false</filterExecutors>
+                            <filterQueue>false</filterQueue>
+                            <properties class="hudson.model.View$PropertyList"/>
+                        </hudson.model.AllView>
+                    </views>
+                    <tabBar class="hudson.views.DefaultViewsTabBar"/>
+                </folderViews>
+                <healthMetrics/>
+            </com.cloudbees.hudson.plugins.folder.Folder>
+            """, folderName);
+    }
+
+    /**
+     * Checks if a Jenkins folder exists.
+     */
+    public boolean folderExists(String folderName) {
+        try {
+            log.debug("Checking if Jenkins folder exists: {}", folderName);
+            
+            URI uri = UriComponentsBuilder.fromUri(jenkinsServerUri)
+                .path("/job/{folderName}/api/json")
+                .buildAndExpand(folderName).toUri();
+            
+            HttpHeaders headers = createAuthHeaders();
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+            
+            ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.GET, entity, String.class);
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (HttpClientErrorException.NotFound e) {
+            log.debug("Jenkins folder does not exist: {}", folderName);
+            return false;
+        } catch (RestClientException e) {
+            log.error("Error checking folder existence: {}", folderName, e);
+            return false;
         }
     }
 

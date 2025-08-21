@@ -126,6 +126,12 @@ public class JenkinsBuildService {
      * EXTRACTED FROM: configureBuildPlanForParticipation() and related methods
      */
     private void ensureJenkinsJobExists(JenkinsProject project, String jobName, BuildTriggerRequestDTO request) {
+        // First ensure the folder exists
+        if (!jenkinsJobService.folderExists(project.getJenkinsFolderName())) {
+            log.debug("Jenkins folder does not exist, creating: {}", project.getJenkinsFolderName());
+            jenkinsJobService.createFolder(project.getJenkinsFolderName());
+        }
+        
         if (!jenkinsJobService.jobExists(project.getJenkinsFolderName(), jobName)) {
             log.debug("Creating Jenkins job: {}/{}", project.getJenkinsFolderName(), jobName);
             jenkinsJobService.createJob(project.getJenkinsFolderName(), jobName, request);
