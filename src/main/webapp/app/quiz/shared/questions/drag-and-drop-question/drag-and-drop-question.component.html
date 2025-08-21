@@ -103,7 +103,6 @@
                     <jhi-secured-image
                         [src]="addPublicFilePrefix(filePreviewPaths().get(dragAndDropQuestion().backgroundFilePath!) || dragAndDropQuestion().backgroundFilePath!)!"
                         (endLoadingProcess)="changeLoading($event)"
-                    />
                 }
                 <div class="click-layer">
                     @if (!showResult()) {

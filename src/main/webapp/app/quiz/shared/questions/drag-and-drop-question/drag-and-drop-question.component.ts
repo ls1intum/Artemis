@@ -3,7 +3,7 @@ import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/quiz/shared/entities/quiz-question.model';
@@ -50,7 +50,7 @@ enum MappingResult {
         NgbPopover,
         QuizScoringInfoStudentModalComponent,
         CdkDropListGroup,
-        SecuredImageComponent,
+        ImageComponent,
         CdkDropList,
         NgStyle,
         DragItemComponent,
@@ -64,7 +64,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     /** needed to trigger a manual reload of the drag and drop background picture */
-    readonly secureImageComponent = viewChild.required(SecuredImageComponent);
+    readonly secureImageComponent = viewChild.required(ImageComponent);
 
     readonly question = input.required<QuizQuestion>();
     dragAndDropQuestion = computed(() => this.question() as DragAndDropQuestion);
