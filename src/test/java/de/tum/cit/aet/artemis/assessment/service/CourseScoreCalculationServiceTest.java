@@ -173,7 +173,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         result.score(null);
 
         // Wait for any asynchronous participant score processing to complete
-        participantScoreScheduleService.executeScheduledTasks();
         await().atMost(1, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
