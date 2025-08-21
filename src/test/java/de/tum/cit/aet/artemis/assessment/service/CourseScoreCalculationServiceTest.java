@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -46,6 +48,8 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "cscservicetest";
+
+    private static final Logger log = LoggerFactory.getLogger(CourseScoreCalculationServiceTest.class);
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
@@ -125,6 +129,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     @RepeatedTest(500)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation() {
+        log.info("TEST_DEBUG: ========== Starting new test iteration ==========");
 
         boolean withDueDate = true;
         // Set due date well in the future to avoid timing issues with result creation
@@ -141,10 +146,15 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         // Test with multiple results to assert they are sorted.
         StudentParticipation studentParticipation = studentParticipations.getFirst();
+        log.info("TEST_DEBUG: Creating 3 results for participation ID: {}, exercise: {}", studentParticipation.getId(),
+                studentParticipation.getExercise().getClass().getSimpleName());
+
         // Create results with completion dates well before the due date to avoid timing issues
-        participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
-        participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
-        participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
+        Result result1 = participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
+        Result result2 = participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
+        Result result3 = participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
+
+        log.info("TEST_DEBUG: Created results - ID: {}, Score: 50 | ID: {}, Score: 40 | ID: {}, Score: 60", result1.getId(), result2.getId(), result3.getId());
 
         studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
 
@@ -171,13 +181,19 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(result.getScore()).isZero();
         result.score(null);
 
+        log.info("TEST_DEBUG: Set result score to null for participation {}, result ID: {}", studentParticipationWithZeroScore.getId(), result.getId());
+
         // Execute any pending scheduled tasks
+        log.info("TEST_DEBUG: Executing scheduled tasks...");
         participantScoreScheduleService.executeScheduledTasks();
 
         // Wait for the service to finish processing
+        log.info("TEST_DEBUG: Waiting for participant score service to be idle...");
         await().until(participantScoreScheduleService::isIdle);
+        log.info("TEST_DEBUG: Participant score service is now idle");
 
         // Wait for the specific results to be stored in the repository
+        log.info("TEST_DEBUG: Starting await for results to be persisted...");
         await().until((java.util.concurrent.Callable<Boolean>) () -> {
             // Refresh the participations to get the latest state from database
             List<StudentParticipation> refreshedParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
@@ -186,21 +202,64 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
             int totalResults = refreshedParticipations.stream()
                     .mapToInt(participation -> participation.getSubmissions().stream().mapToInt(submission -> submission.getResults().size()).sum()).sum();
 
+            log.info("TEST_DEBUG: Current total results count: {}, target: 3", totalResults);
+
+            // Log detailed info about each participation and its results
+            for (int i = 0; i < refreshedParticipations.size(); i++) {
+                StudentParticipation p = refreshedParticipations.get(i);
+                int submissionCount = p.getSubmissions().size();
+                int resultCount = p.getSubmissions().stream().mapToInt(s -> s.getResults().size()).sum();
+                log.info("TEST_DEBUG: Participation[{}] ID: {}, Exercise: {}, Submissions: {}, Results: {}", i, p.getId(), p.getExercise().getClass().getSimpleName(),
+                        submissionCount, resultCount);
+
+                // Log result details
+                p.getSubmissions().forEach(submission -> {
+                    submission.getResults().forEach(r -> {
+                        log.info("TEST_DEBUG: Result ID: {}, Score: {}, Rated: {}, CompletionDate: {}", r.getId(), r.getScore(), r.isRated(), r.getCompletionDate());
+                    });
+                });
+            }
+
             return totalResults >= 3;
         });
+        log.info("TEST_DEBUG: Results await completed successfully");
+
+        log.info("TEST_DEBUG: About to calculate course scores with {} participations", studentParticipations.size());
+
+        // Log the state of participations before calculation
+        for (int i = 0; i < studentParticipations.size(); i++) {
+            StudentParticipation p = studentParticipations.get(i);
+            log.info("TEST_DEBUG: Input Participation[{}] ID: {}, Exercise: {}, Submissions: {}", i, p.getId(), p.getExercise().getClass().getSimpleName(),
+                    p.getSubmissions().size());
+
+            p.getSubmissions().forEach(submission -> {
+                log.info("TEST_DEBUG: Input Submission ID: {}, Results: {}", submission.getId(), submission.getResults().size());
+                submission.getResults().forEach(r -> {
+                    log.info("TEST_DEBUG: Input Result ID: {}, Score: {}, Rated: {}, CompletionDate: {}", r.getId(), r.getScore(), r.isRated(), r.getCompletionDate());
+                });
+            });
+        }
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of());
+
+        log.info("TEST_DEBUG: Calculated scores - Absolute: {}, Relative: {}, CurrentRelative: {}, withDueDate: {}", studentScoresDTO.absoluteScore(),
+                studentScoresDTO.relativeScore(), studentScoresDTO.currentRelativeScore(), withDueDate);
+
         if (withDueDate) {
+            log.info("TEST_DEBUG: Asserting withDueDate=true values - Expected: absolute=6.6, relative=26.4, currentRelative=132.0");
             assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.6);
             assertThat(studentScoresDTO.relativeScore()).isEqualTo(26.4);
             assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(132.0);
         }
         else {
+            log.info("TEST_DEBUG: Asserting withDueDate=false values - Expected: absolute=4.6, relative=18.4, currentRelative=92.0");
             assertThat(studentScoresDTO.absoluteScore()).isEqualTo(4.6);
             assertThat(studentScoresDTO.relativeScore()).isEqualTo(18.4);
             assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(92.0);
         }
+
+        log.info("TEST_DEBUG: All assertions passed successfully");
 
         Map<Long, BonusSourceResultDTO> bonusSourceResultDTOMap = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, null, List.of(student.getId()));
 
