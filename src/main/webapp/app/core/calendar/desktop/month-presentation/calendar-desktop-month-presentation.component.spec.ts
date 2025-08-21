@@ -7,13 +7,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockCalendarEventService } from 'test/helpers/mocks/service/mock-calendar-event.service';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 import { CalendarEvent, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
-import { CalendarMonthPresentationComponent } from './calendar-month-presentation.component';
+import { CalendarDesktopMonthPresentationComponent } from './calendar-desktop-month-presentation.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 
-describe('CalendarMonthPresentationComponent', () => {
-    let fixture: ComponentFixture<CalendarMonthPresentationComponent>;
-    let component: CalendarMonthPresentationComponent;
+describe('CalendarDesktopMonthPresentationComponent', () => {
+    let fixture: ComponentFixture<CalendarDesktopMonthPresentationComponent>;
+    let component: CalendarDesktopMonthPresentationComponent;
     let mockMap: Map<string, CalendarEvent[]>;
 
     const referenceDate = dayjs('2025-05-15 10:30');
@@ -80,7 +80,7 @@ describe('CalendarMonthPresentationComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CalendarMonthPresentationComponent, CalendarEventDetailPopoverComponent],
+            imports: [CalendarDesktopMonthPresentationComponent, CalendarEventDetailPopoverComponent],
             declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(CalendarDayBadgeComponent), MockDirective(TranslateDirective)],
             providers: [
                 {
@@ -90,7 +90,7 @@ describe('CalendarMonthPresentationComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CalendarMonthPresentationComponent);
+        fixture = TestBed.createComponent(CalendarDesktopMonthPresentationComponent);
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('firstDayOfCurrentMonth', dayjs('2025-05-01'));
