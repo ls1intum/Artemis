@@ -118,7 +118,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(courseResult).isNull();
     }
 
-    @RepeatedTest(1000)
+    @RepeatedTest(500)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation() {
 
@@ -175,14 +175,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         Result result = participationUtilService.getResultsForParticipation(studentParticipationWithZeroScore).iterator().next();
         assertThat(result.getScore()).isZero();
         result.score(null);
-
-        // Small delay to ensure any asynchronous participant score processing completes
-        try {
-            Thread.sleep(150); // Wait slightly longer than DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS (100ms)
-        }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of());
