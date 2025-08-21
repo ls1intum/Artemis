@@ -1,8 +1,19 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, input, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import videojs from 'video.js';
+// Lazy-load video.js at runtime; type-only import doesn't pull code into initial bundle.
+import type videojs from 'video.js';
 
 type VideoJsPlayer = ReturnType<typeof videojs>;
+
+// cache the dynamically loaded module
+let _videojsFn: any;
+function loadVideoJs(): Promise<any /* typeof videojs */> {
+    if (_videojsFn) return Promise.resolve(_videojsFn);
+    return import('video.js').then((mod) => {
+        _videojsFn = (mod as any).default ?? mod;
+        return _videojsFn;
+    });
+}
 
 /**
  * A transcript segment corresponding to a portion of the video.
@@ -14,10 +25,6 @@ export interface TranscriptSegment {
     slideNumber?: number;
 }
 
-/**
- * A transcript-synced video player component using Video.js.
- * Allows highlighting transcript lines and seeking the video via the transcript.
- */
 @Component({
     selector: 'jhi-video-player',
     standalone: true,
@@ -26,89 +33,80 @@ export interface TranscriptSegment {
     styleUrls: ['./video-player.component.scss'],
 })
 export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
-    /**
-     * Reference to the <video> element in the template
-     */
+    /** Reference to the <video> element in the template */
     videoRef = viewChild<ElementRef<HTMLVideoElement>>('videoRef');
 
-    /**
-     * The URL of the video to play (required input)
-     */
+    /** The URL of the video to play (required input) */
     videoUrl = input<string | undefined>();
 
-    /**
-     * An array of transcript segments to highlight and sync
-     */
+    /** Transcript segments to highlight and sync */
     transcriptSegments = input<TranscriptSegment[]>([]);
 
-    /**
-     * The Video.js player instance
-     */
-    player: VideoJsPlayer | null = null;
+    /** The Video.js player instance (set once created) */
+    private player: VideoJsPlayer | null = null;
 
-    /**
-     * Signal to track the index of the currently active transcript segment
-     */
+    /** Track the index of the currently active transcript segment */
     currentSegmentIndex = signal<number>(-1);
 
-    /**
-     * Initializes the video player after the view is rendered.
-     * Also starts syncing transcript highlights with playback time.
-     */
     ngAfterViewInit(): void {
-        const videoElement = this.videoRef()?.nativeElement;
-        if (!videoElement || !this.videoUrl()) return;
+        const elRef = this.videoRef();
+        const videoElement = elRef ? elRef.nativeElement : null;
+        const src = this.videoUrl();
 
-        // Initialize Video.js player
-        this.player = videojs(videoElement, {
-            controls: true,
-            preload: 'auto',
-            sources: [
-                {
-                    src: this.videoUrl(),
-                    type: 'application/x-mpegURL',
-                },
-            ],
-        });
+        if (!videoElement || !src) {
+            return;
+        }
 
-        // Sync transcript segments on time update
-        this.player.on('timeupdate', () => {
-            const currentTime = this.player?.currentTime?.() ?? 0;
-            this.updateCurrentSegment(currentTime);
+        // Initialize Video.js lazily
+        loadVideoJs().then((videojsFn) => {
+            const player: VideoJsPlayer = videojsFn(videoElement, {
+                controls: true,
+                preload: 'auto',
+                sources: [{ src, type: 'application/x-mpegURL' }],
+            });
+
+            // store instance after creation
+            this.player = player;
+
+            // Safe: 'player' is definitely defined in this scope
+            player.on('timeupdate', () => {
+                const v = typeof player.currentTime === 'function' ? player.currentTime() : 0;
+                const currentTime: number = typeof v === 'number' && !Number.isNaN(v) ? v : 0;
+                this.updateCurrentSegment(currentTime);
+            });
         });
     }
 
-    /**
-     * Seek the video to the given time and resume playback.
-     * Typically used when clicking a transcript segment.
-     * @param seconds Time to seek to (in seconds)
-     */
+    /** Seek the video to the given time and resume playback. */
     seekTo(seconds: number): void {
-        this.player?.currentTime(seconds);
-        this.player?.play();
+        if (!this.player) return;
+        this.player.currentTime(seconds);
+        this.player.play();
     }
 
     /**
      * Updates the `currentSegmentIndex` signal based on playback time.
      * Also scrolls the active transcript line into view smoothly.
-     * @param currentTime Current playback time of the video
      */
     updateCurrentSegment(currentTime: number): void {
-        const margin = 0.3; // Add slight tolerance for matching segments
+        const margin = 0.3; // tolerance
         const segments = this.transcriptSegments();
         const index = segments.findIndex((s) => currentTime >= s.startTime - margin && currentTime <= s.endTime + margin);
 
         if (index !== -1 && index !== this.currentSegmentIndex()) {
             this.currentSegmentIndex.set(index);
             const el = document.getElementById(`segment-${segments[index].startTime}`);
-            el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
     }
 
-    /**
-     * Cleans up the video player instance on component destruction.
-     */
+    /** Clean up on destroy. */
     ngOnDestroy(): void {
-        this.player?.dispose();
+        if (this.player) {
+            this.player.dispose();
+            this.player = null;
+        }
     }
 }

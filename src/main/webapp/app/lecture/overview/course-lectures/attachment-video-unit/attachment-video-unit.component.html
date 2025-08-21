@@ -43,8 +43,8 @@
     }
 
     @if (!!videoUrl()) {
-        @if (videoUrl()?.includes('.m3u8')) {
-            <jhi-video-player [videoUrl]="videoUrl()" [transcriptSegments]="transcriptSegments()" />
+        @if (playlistUrl() && hasTranscript()) {
+            <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" />
         } @else {
             <div class="video-player-container">
                 <div class="ratio ratio-16x9">
@@ -52,7 +52,5 @@
                 </div>
             </div>
         }
-    } @else {
-        <div class="alert alert-warning">No valid video URL provided.</div>
     }
 </jhi-lecture-unit-card>

@@ -6,6 +6,7 @@ import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
 import { HttpClient } from '@angular/common/http';
+import { HttpParams } from '@angular/common/http';
 import {
     faDownload,
     faFile,
@@ -46,6 +47,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly http = inject(HttpClient);
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
+    readonly playlistUrl = signal<string | undefined>(undefined);
+    readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
     private readonly videoUrlAllowList = [RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'), RegExp('^https://.+\\.m3u8($|\\?.*)')];
 
@@ -67,10 +70,29 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (!isCollapsed) {
             this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
-            // Only fetch transcript if .m3u8
-            if (this.videoUrl()?.includes('.m3u8')) {
-                this.fetchTranscript();
-            }
+            // reset stale state
+            this.transcriptSegments.set([]);
+            this.playlistUrl.set(undefined);
+
+            const src = this.lectureUnit().videoSource;
+            if (!src) return;
+            // Always try to resolve a TUM Live playlist.
+            this.resolveTumLivePlaylist(src).then((url) => {
+                if (url) {
+                    this.playlistUrl.set(url);
+                    this.fetchTranscript();
+                }
+            });
+        }
+    }
+
+    private async resolveTumLivePlaylist(pageUrl: string): Promise<string | undefined> {
+        const params = new HttpParams().set('url', pageUrl);
+        try {
+            const res = await firstValueFrom(this.http.get('/api/lecture/video-utils/tum-live-playlist', { params, responseType: 'text' }).pipe(catchError(() => of(null))));
+            return (res || undefined) as string | undefined;
+        } catch {
+            return undefined;
         }
     }
 
@@ -81,8 +103,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         void firstValueFrom(
             this.http.get<{ segments: TranscriptSegment[] }>(url).pipe(
                 catchError((err) => {
-                    // eslint-disable-next-line no-undef
-                    console.error('Transcript fetch failed', err);
                     return of({ segments: [] });
                 }),
             ),
@@ -119,10 +139,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
     }
 
-    handleOriginalVersion(): void {
+    handleOriginalVersion() {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
         const link = addPublicFilePrefix(this.lectureUnit().attachment!.link!);
+
         if (link) {
             this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
@@ -136,6 +157,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     hasVideo(): boolean {
         return !!this.lectureUnit().videoSource;
     }
+
     /**
      * Returns the matching icon for the file extension of the attachment
      */
