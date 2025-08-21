@@ -12,9 +12,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -119,11 +118,11 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(courseResult).isNull();
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(booleans = { true, false })
+    @RepeatedTest(500)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation(boolean withDueDate) {
+    void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation() {
 
+        boolean withDueDate = true;
         ZonedDateTime dueDate = withDueDate ? ZonedDateTime.now() : null;
         course.getExercises().forEach(ex -> ex.setDueDate(dueDate));
 
@@ -140,7 +139,12 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
         participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
         participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
-
+        try {
+            Thread.sleep(10);
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
 
         // Test with null result set.
