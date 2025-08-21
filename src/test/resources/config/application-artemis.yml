@@ -76,9 +76,7 @@ artemis:
     plagiarism-checks:
         plagiarism-results-limit: 100
     nebula:
-        url: http://nebula.fake
-        secret: secret-token
-
+        enabled: true
 info:
     operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page, and sent to the telemetry service
     operatorAdminName: Some Universities Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
