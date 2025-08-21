@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, of, throwError } from 'rxjs';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { PdfPreviewComponent } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { ElementRef, signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -38,34 +38,6 @@ jest.mock('pdf-lib', () => {
                 embedPng: jest.fn().mockResolvedValue({}),
                 save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
             })),
-        },
-    };
-});
-
-let mockWorkerSrc = '';
-
-jest.mock('pdfjs-dist', () => {
-    return {
-        getDocument: jest.fn(() => ({
-            promise: Promise.resolve({
-                numPages: 1,
-                getPage: jest.fn(() =>
-                    Promise.resolve({
-                        getViewport: jest.fn(() => ({ width: 600, height: 800, scale: 1 })),
-                        render: jest.fn(() => ({
-                            promise: Promise.resolve(),
-                        })),
-                    }),
-                ),
-            }),
-        })),
-        GlobalWorkerOptions: {
-            get workerSrc() {
-                return mockWorkerSrc;
-            },
-            set workerSrc(value: string) {
-                mockWorkerSrc = value;
-            },
         },
     };
 });
@@ -122,28 +94,38 @@ describe('PdfPreviewComponent', () => {
         fixture = TestBed.createComponent(PdfPreviewComponent);
         component = fixture.componentInstance;
 
-        const originalCreateElement = document.createElement;
-        const mockCanvas = {
-            width: 0,
-            height: 0,
-            getContext: jest.fn().mockReturnValue({
+        // ---- Prototype-based mocks (no deprecated createElement) ----
+        // Canvas API
+        Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+            configurable: true,
+            writable: true,
+            value: jest.fn().mockReturnValue({
                 drawImage: jest.fn(),
             }),
-            toDataURL: jest.fn().mockReturnValue('data:image/png;base64,test'),
-        };
-
-        global.document.createElement = jest.fn().mockImplementation((tagName) => {
-            if (tagName === 'canvas') {
-                return mockCanvas;
-            }
-            if (tagName === 'input') {
-                const mockInput = originalCreateElement.call(document, 'input');
-                mockInput.click = jest.fn();
-                return mockInput;
-            }
-            return originalCreateElement.call(document, tagName);
         });
 
+        Object.defineProperty(HTMLCanvasElement.prototype, 'toDataURL', {
+            configurable: true,
+            writable: true,
+            value: jest.fn(() => 'data:image/png;base64,test'),
+        });
+
+        // Optional: ensure reads to width/height are deterministic
+        Object.defineProperty(HTMLCanvasElement.prototype, 'width', {
+            configurable: true,
+            get: () => 0,
+            set: () => {},
+        });
+        Object.defineProperty(HTMLCanvasElement.prototype, 'height', {
+            configurable: true,
+            get: () => 0,
+            set: () => {},
+        });
+
+        // Input click
+        jest.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
+
+        // ---- Component field wiring ----
         const mockInput = {
             nativeElement: {
                 click: jest.fn(),
@@ -1306,12 +1288,7 @@ describe('PdfPreviewComponent', () => {
                 { id: 'slide3', slideNumber: 3 },
             ] as unknown as Slide[];
 
-            await component.loadPdf(fileUrl, arrayBuffer, sourceId, existingSlides);
-
-            expect(component.pageOrder()).toHaveLength(3);
-            expect(component.pageOrder()[0].slideId).toBe('slide1');
-            expect(component.pageOrder()[1].slideId).toBe('slide2');
-            expect(component.pageOrder()[2].slideId).toBe('slide3');
+            await testLoadPdf(fileUrl, arrayBuffer, sourceId, existingSlides);
 
             const firstPage = component.pageOrder()[0];
             expect(firstPage).toHaveProperty('initialIndex', 1);
@@ -1357,6 +1334,15 @@ describe('PdfPreviewComponent', () => {
             expect(component.isPdfLoading()).toBeFalse();
         });
 
+        const testLoadPdf = async (fileUrl: string, arrayBuffer: ArrayBuffer, sourceId: string, existingSlides: Slide[]) => {
+            await component.loadPdf(fileUrl, arrayBuffer, sourceId, existingSlides);
+
+            expect(component.pageOrder()).toHaveLength(3);
+            expect(component.pageOrder()[0].slideId).toBe('slide1');
+            expect(component.pageOrder()[1].slideId).toBe('slide2');
+            expect(component.pageOrder()[2].slideId).toBe('slide3');
+        };
+
         it('should sort ordered pages by order when loading with existing slides', async () => {
             const fileUrl = 'test-url';
             const arrayBuffer = new ArrayBuffer(10);
@@ -1366,13 +1352,7 @@ describe('PdfPreviewComponent', () => {
                 { id: 'slide1', slideNumber: 1 },
                 { id: 'slide2', slideNumber: 2 },
             ] as unknown as Slide[];
-
-            await component.loadPdf(fileUrl, arrayBuffer, sourceId, existingSlides);
-
-            expect(component.pageOrder()).toHaveLength(3);
-            expect(component.pageOrder()[0].slideId).toBe('slide1');
-            expect(component.pageOrder()[1].slideId).toBe('slide2');
-            expect(component.pageOrder()[2].slideId).toBe('slide3');
+            await testLoadPdf(fileUrl, arrayBuffer, sourceId, existingSlides);
         });
 
         it('should create temporary slide IDs when appending pages', async () => {

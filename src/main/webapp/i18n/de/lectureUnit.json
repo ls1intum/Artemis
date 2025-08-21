@@ -84,6 +84,7 @@
             "created": "Eine neue Dateieinheit wurde erstellt",
             "updated": "Dateieinheit aktualisiert",
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
+            "transcriptionInvalidJson": "Die Transkriptions-JSON ist ungültig und wurde ignoriert.",
             "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis sucht nach der Gliederung (Folie mit Titel 'Outline' und Stichpunkten mit Kapitelüberschriften) und unterteilt das PDF in Einheiten.",
@@ -152,7 +153,9 @@
                 "sourceURLValidationError": "Keine valide URL",
                 "urlVideoHelper": "Umwandlung in einbettbares Format ",
                 "urlHelperPlaceholder": "Du kannst hier eine Video-URL eingeben und den Pfeil benutzen, um sie in die korrekte einbettbare URL umzuwandeln",
-                "urlHelperValidationError": "Automatische Formatumwandlung ist nicht möglich für diese URL"
+                "urlHelperValidationError": "Automatische Formatumwandlung ist nicht möglich für diese URL",
+                "videoTranscription": "Video Transkription",
+                "videoTranscriptionPlaceholder": "Füge hier die Transkription des Videos ein."
             },
             "editAttachmentVideoUnit": {
                 "title": "Bearbeite Dateieinheit"
@@ -165,7 +168,7 @@
             "download": "Datei herunterladen",
             "delete": {
                 "question": "Willst du wirklich die Dateieinheit <strong>{{ title }}</strong> löschen? Die Datei wird auch gelöscht! Du kannst diese Aktion nicht rückgängig machen!",
-                "typeNameToConfirm": "Bitte gib den Namen der Dateieinheit zur Bestätigung ein.",
+                "typeNameToConfirm": "Bitte gib den Namen der Datei/Video Unit zur Bestätigung ein.",
                 "buttonText": "Löschen"
             }
         },
