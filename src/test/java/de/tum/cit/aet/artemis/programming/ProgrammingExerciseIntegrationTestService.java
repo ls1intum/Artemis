@@ -1911,16 +1911,6 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
     }
 
-    void testResetOnlyDeleteBuildPlansForbidden() throws Exception {
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false);
-        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
-    }
-
-    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesForbidden() throws Exception {
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false);
-        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
-    }
-
     void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsForbidden() throws Exception {
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false);
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
@@ -1929,52 +1919,6 @@ public class ProgrammingExerciseIntegrationTestService {
     void testResetExerciseNotFound() throws Exception {
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false);
         request.put(defaultResetEndpoint(-1L), resetOptions, HttpStatus.NOT_FOUND);
-    }
-
-    void testResetOnlyDeleteBuildPlansSuccess() throws Exception {
-        final var projectKey = programmingExercise.getProjectKey();
-        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
-        }
-
-        // Two participations exist with build plans before reset
-        var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(participations).hasSize(2);
-        participations.forEach(participation -> assertThat(participation.getBuildPlanId()).isNotNull());
-
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false);
-        request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
-
-        // Two participations exist with build plans removed after reset
-        participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(participations).hasSize(2);
-        participations.forEach(participation -> assertThat(participation.getBuildPlanId()).isNull());
-    }
-
-    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesSuccess() throws Exception {
-        final var projectKey = programmingExercise.getProjectKey();
-        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
-        }
-
-        // Two participations exist with build plans and repositories before reset
-        var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(participations).hasSize(2);
-        participations.forEach(participation -> {
-            assertThat(participation.getRepositoryUri()).isNotNull();
-            assertThat(participation.getBuildPlanId()).isNotNull();
-        });
-
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false);
-        request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
-
-        // Two participations exist with build plans and repositories removed after reset
-        participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(participations).hasSize(2);
-        participations.forEach(participation -> {
-            assertThat(participation.getRepositoryUri()).isNull();
-            assertThat(participation.getBuildPlanId()).isNull();
-        });
     }
 
     void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
