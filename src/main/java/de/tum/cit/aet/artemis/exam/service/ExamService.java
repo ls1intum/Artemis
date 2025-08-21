@@ -20,7 +20,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -185,9 +184,6 @@ public class ExamService {
 
     @Value("${artemis.course-archives-path}")
     private Path examArchivesDirPath;
-
-    // Cache for bonus source calculations to avoid expensive recalculations
-    private final Map<String, Map<Long, BonusSourceResultDTO>> bonusSourceCache = new ConcurrentHashMap<>();
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, TutorLeaderboardService tutorLeaderboardService,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
@@ -367,21 +363,15 @@ public class ExamService {
 
         var studentResults = new ArrayList<ExamScoresDTO.StudentResult>();
         start = System.currentTimeMillis();
-
-        // Bulk fetch all student participations for the exam to avoid N+1 queries
-        Map<Long, List<StudentParticipation>> studentIdToParticipations = studentParticipationRepository.findByExamIdWithEagerLatestSubmissionsResultGrouped(examId, false);
-        log.debug("Bulk fetched participations for {} students in exam {} in {} ms", studentIdToParticipations.size(), examId, System.currentTimeMillis() - start);
-
-        start = System.currentTimeMillis();
         for (StudentExam studentExam : studentExams) {
             var studentGrades = examGrades.stream().filter(grade -> Objects.equals(grade.userId(), studentExam.getUser().getId())).collect(Collectors.toSet());
             var studentExercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
-            var participations = studentIdToParticipations.getOrDefault(studentExam.getUser().getId(), List.of());
+            var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, false);
             var studentResult = calculateStudentResultWithGrade(studentExam, studentGrades, exam, gradingScale, true, submittedAnswerCounts, plagiarismMapping, examBonusCalculator,
                     studentExercises, participations);
             studentResults.add(studentResult);
         }
-        log.debug("Calculated student results for exam {} in {} ms", examId, System.currentTimeMillis() - start);
+        log.debug("Calculated st    udent results for exam {} in {} ms", examId, System.currentTimeMillis() - start);
 
         // Updating exam information in DTO
         int numberOfStudentResults = studentResults.size();
@@ -485,53 +475,19 @@ public class ExamService {
 
     @Nullable
     private Map<Long, BonusSourceResultDTO> calculateBonusSourceStudentPoints(GradingScale sourceGradingScale, Collection<Long> studentIds) {
-        // Create cache key based on grading scale and sorted student IDs for consistent caching
-        String cacheKey = generateBonusSourceCacheKey(sourceGradingScale, studentIds);
-
-        // Check if we already have cached results
-        Map<Long, BonusSourceResultDTO> cachedResults = bonusSourceCache.get(cacheKey);
-        if (cachedResults != null) {
-            // Filter cached results to only include requested student IDs
-            Set<Long> requestedStudentIds = new HashSet<>(studentIds);
-            return cachedResults.entrySet().stream().filter(entry -> requestedStudentIds.contains(entry.getKey()))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        }
-
         try {
-            Map<Long, BonusSourceResultDTO> results;
             if (sourceGradingScale.getCourse() != null) {
-                results = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(sourceGradingScale.getCourse(), sourceGradingScale, studentIds);
+                return courseScoreCalculationService.calculateCourseScoresForExamBonusSource(sourceGradingScale.getCourse(), sourceGradingScale, studentIds);
             }
             else {
-                results = calculateExamScoresAsBonusSource(sourceGradingScale.getExam().getId(), studentIds);
+                return calculateExamScoresAsBonusSource(sourceGradingScale.getExam().getId(), studentIds);
             }
-
-            // Cache the results if they exist
-            if (results != null) {
-                bonusSourceCache.put(cacheKey, new HashMap<>(results));
-            }
-
-            return results;
         }
         catch (AccessForbiddenException e) {
             // TODO: this is not a good implementation, we should check before if the user has access
             // The current user does not have access to the bonus exam or course, so they should see the grade without bonus.
             return null;
         }
-    }
-
-    /**
-     * Generates a cache key for bonus source calculations based on grading scale and student IDs.
-     *
-     * @param gradingScale the grading scale used for bonus calculation
-     * @param studentIds   the collection of student IDs
-     * @return a unique cache key string
-     */
-    private String generateBonusSourceCacheKey(GradingScale gradingScale, Collection<Long> studentIds) {
-        String sourceType = gradingScale.getCourse() != null ? "course" : "exam";
-        Long sourceId = gradingScale.getCourse() != null ? gradingScale.getCourse().getId() : gradingScale.getExam().getId();
-        String sortedStudentIds = studentIds.stream().sorted().map(String::valueOf).collect(Collectors.joining(","));
-        return String.format("%s_%s_%s_%s", sourceType, sourceId, gradingScale.getId(), sortedStudentIds.hashCode());
     }
 
     private Map<Long, BonusSourceResultDTO> calculateExamScoresAsBonusSource(Long examId, Collection<Long> studentIds) {
@@ -547,88 +503,12 @@ public class ExamService {
             return Map.of(studentId, new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null,
                     Boolean.TRUE.equals(studentResult.submitted())));
         }
+        var scores = calculateExamScores(examId);
+        var studentIdSet = new HashSet<>(studentIds);
+        return scores.studentResults().stream().filter(studentResult -> studentIdSet.contains(studentResult.userId()))
+                .collect(Collectors.toMap(ExamScoresDTO.StudentResult::userId, studentResult -> new BonusSourceResultDTO(studentResult.overallPointsAchieved(),
+                        studentResult.mostSeverePlagiarismVerdict(), null, null, Boolean.TRUE.equals(studentResult.submitted()))));
 
-        // Optimized bulk calculation without recursive calculateExamScores call
-        return calculateExamScoresBulkForBonusSource(examId, studentIds);
-    }
-
-    /**
-     * Optimized method to calculate exam scores for bonus source without recursively calling calculateExamScores.
-     * This method performs only the essential calculations needed for bonus computation.
-     *
-     * @param examId     the exam ID
-     * @param studentIds the student IDs to calculate scores for
-     * @return map of student ID to bonus source result
-     */
-    private Map<Long, BonusSourceResultDTO> calculateExamScoresBulkForBonusSource(Long examId, Collection<Long> studentIds) {
-        // Get exam and basic data
-        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        Set<ExamGradeScoreDTO> examGrades = studentParticipationRepository.findGradesByExamId(examId);
-        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(examId);
-        PlagiarismMapping plagiarismMapping = plagiarismCaseApi.map(api -> api.getPlagiarismMappingForExam(exam.getId())).orElse(PlagiarismMapping.empty());
-
-        Set<Long> targetStudentIds = new HashSet<>(studentIds);
-        Map<Long, BonusSourceResultDTO> results = new HashMap<>();
-
-        // Process each student exam that matches our target student IDs
-        for (StudentExam studentExam : studentExams) {
-            Long studentId = studentExam.getUser().getId();
-            if (!targetStudentIds.contains(studentId)) {
-                continue;
-            }
-
-            // Check if submitted
-            if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
-                results.put(studentId, new BonusSourceResultDTO(0.0, null, null, null, false));
-                continue;
-            }
-
-            // Check for plagiarism
-            if (plagiarismMapping.studentHasVerdict(studentId, PlagiarismVerdict.PLAGIARISM)) {
-                results.put(studentId, new BonusSourceResultDTO(0.0, PlagiarismVerdict.PLAGIARISM, null, null, true));
-                continue;
-            }
-
-            // Calculate points achieved
-            var studentGrades = examGrades.stream().filter(grade -> Objects.equals(grade.userId(), studentId)).collect(Collectors.toSet());
-
-            double overallPointsAchieved = calculateStudentOverallPoints(studentGrades, exam, plagiarismMapping.getPlagiarismCasesForStudent(studentId));
-            overallPointsAchieved = roundScoreSpecifiedByCourseSettings(overallPointsAchieved, exam.getCourse());
-
-            PlagiarismVerdict mostSevereVerdict = null;
-            var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(studentId);
-            if (!plagiarismCasesForStudent.isEmpty()) {
-                var studentVerdictsFromExercises = plagiarismCasesForStudent.values().stream().map(PlagiarismCase::getVerdict).toList();
-                mostSevereVerdict = PlagiarismVerdict.findMostSevereVerdict(studentVerdictsFromExercises);
-            }
-
-            results.put(studentId, new BonusSourceResultDTO(overallPointsAchieved, mostSevereVerdict, null, null, true));
-        }
-
-        return results;
-    }
-
-    /**
-     * Helper method to calculate overall points for a student in an exam.
-     *
-     * @param studentGrades             the exam grades for the student
-     * @param exam                      the exam
-     * @param plagiarismCasesForStudent plagiarism cases for the student
-     * @return the overall points achieved
-     */
-    private double calculateStudentOverallPoints(Set<ExamGradeScoreDTO> studentGrades, Exam exam, Map<Long, PlagiarismCase> plagiarismCasesForStudent) {
-        double overallPointsAchieved = 0.0;
-
-        for (ExamGradeScoreDTO examGrade : studentGrades) {
-            if (!examGrade.includedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
-                PlagiarismCase plagiarismCase = plagiarismCasesForStudent.get(examGrade.exerciseId());
-                double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
-                double achievedPoints = calculateAchievedPoints(examGrade.maxPoints(), examGrade.score(), exam.getCourse(), plagiarismPointDeductionPercentage);
-                overallPointsAchieved += achievedPoints;
-            }
-        }
-
-        return overallPointsAchieved;
     }
 
     /**
