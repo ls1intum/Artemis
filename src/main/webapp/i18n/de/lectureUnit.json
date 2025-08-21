@@ -152,6 +152,8 @@
                 "sourceURLValidationError": "Keine valide URL",
                 "urlVideoHelper": "Umwandlung in einbettbares Format ",
                 "urlHelperPlaceholder": "Du kannst hier eine Video-URL eingeben und den Pfeil benutzen, um sie in die korrekte einbettbare URL umzuwandeln",
+                "videoTranscription": "Video Transkription",
+                "videoTranscriptionPlaceholder": "Füge hier die Transkription des Videos ein.",
                 "urlHelperValidationError": "Automatische Formatumwandlung für diese URL ist nicht möglich",
                 "generateTranscriptLabel": "Transkript nach dem Speichern erzeugen"
             },
@@ -166,7 +168,7 @@
             "download": "Datei herunterladen",
             "delete": {
                 "question": "Willst du wirklich die Dateieinheit <strong>{{ title }}</strong> löschen? Die Datei wird auch gelöscht! Du kannst diese Aktion nicht rückgängig machen!",
-                "typeNameToConfirm": "Bitte gib den Namen der Dateieinheit zur Bestätigung ein.",
+                "typeNameToConfirm": "Bitte gib den Namen der Datei/Video Unit zur Bestätigung ein.",
                 "buttonText": "Löschen"
             }
         },
