@@ -173,13 +173,16 @@ public class JenkinsBuildService {
         String buildScript = buildRequest.buildScript();
         String gitUrl = buildRequest.exerciseRepository().url();
         String commitHash = buildRequest.exerciseRepository().commitHash();
+        BuildTriggerRequestDTO.ScriptType scriptType = buildRequest.getScriptType();
+        
+        String builderXml = createBuilderXml(buildScript, scriptType);
         
         // Create a basic freestyle project configuration (simpler than pipeline)
         return String.format("""
             <?xml version='1.1' encoding='UTF-8'?>
             <project>
               <actions/>
-              <description>Auto-generated job for participation %d</description>
+              <description>Auto-generated job for participation %d (script type: %s)</description>
               <keepDependencies>false</keepDependencies>
               <properties/>
               <scm class="hudson.plugins.git.GitSCM" plugin="git@4.8.3">
@@ -205,18 +208,46 @@ public class JenkinsBuildService {
               <triggers/>
               <concurrentBuild>false</concurrentBuild>
               <builders>
-                <hudson.tasks.Shell>
-                  <command>%s</command>
-                </hudson.tasks.Shell>
+                %s
               </builders>
               <publishers/>
               <buildWrappers/>
             </project>
             """, 
             buildRequest.participationId(),
+            scriptType.getValue(),
             escapeXml(gitUrl),
-            escapeXml(buildScript)
+            builderXml
         );
+    }
+
+    /**
+     * Creates the appropriate builder XML based on script type.
+     */
+    private String createBuilderXml(String buildScript, BuildTriggerRequestDTO.ScriptType scriptType) {
+        String escapedScript = escapeXml(buildScript);
+        
+        return switch (scriptType) {
+            case GROOVY -> String.format("""
+                <hudson.plugins.groovy.Groovy plugin="groovy@2.4">
+                  <scriptSource class="hudson.plugins.groovy.StringScriptSource">
+                    <command>%s</command>
+                  </scriptSource>
+                  <groovyName>(System)</groovyName>
+                  <parameters/>
+                  <scriptParameters/>
+                  <properties/>
+                  <javaOpts/>
+                  <classPath/>
+                </hudson.plugins.groovy.Groovy>
+                """, escapedScript);
+                
+            case SHELL -> String.format("""
+                <hudson.tasks.Shell>
+                  <command>%s</command>
+                </hudson.tasks.Shell>
+                """, escapedScript);
+        };
     }
 
     /**

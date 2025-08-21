@@ -1,7 +1,7 @@
 meta {
-  name: Trigger Build - Valid Request
+  name: Trigger Build - Shell Script
   type: http
-  seq: 2
+  seq: 11
 }
 
 post {
@@ -24,25 +24,11 @@ body:json {
       "cloneLocation": "/tmp/exercise",
       "accessToken": "github_pat_example"
     },
-    "testRepository": {
-      "url": "https://github.com/user/test-repo.git",
-      "commitHash": "def456ghi789",
-      "cloneLocation": "/tmp/tests",
-      "accessToken": "github_pat_example"
-    },
-    "auxiliaryRepositories": [
-      {
-        "url": "https://github.com/user/aux-repo.git",
-        "commitHash": "ghi789jkl012",
-        "cloneLocation": "/tmp/auxiliary"
-      }
-    ],
-    "buildScript": "#!/bin/bash\necho 'Starting build...'\n./gradlew clean test\necho 'Build completed!'",
+    "buildScript": "#!/bin/bash\necho 'Running shell script build...'\n./gradlew clean test\necho 'Shell script build completed!'",
     "scriptType": "shell",
     "programmingLanguage": "JAVA",
     "additionalProperties": {
-      "timeout": "300",
-      "enableTests": "true"
+      "timeout": "300"
     }
   }
 }
@@ -52,7 +38,7 @@ assert {
 }
 
 tests {
-  test("Build trigger responds appropriately", function() {
+  test("Shell script build trigger responds appropriately", function() {
     const status = res.getStatus();
     const body = res.getBody();
     
@@ -63,7 +49,7 @@ tests {
       expect(body.message).to.equal('Build triggered successfully');
       
       // Store the build ID for subsequent tests
-      bru.setVar("triggeredBuildId", body.buildId);
+      bru.setVar("shellBuildId", body.buildId);
     } else if (status === 500) {
       // Expected when Jenkins is not available
       expect(body.message).to.include('Failed to trigger build');
@@ -80,18 +66,16 @@ tests {
 }
 
 docs {
-  # Trigger Build - Valid Request
+  # Trigger Build - Shell Script
 
-  This endpoint triggers a new build for a programming exercise participation.
+  This endpoint triggers a new build using a shell script.
 
   ## Request Body:
   - `exerciseId`: ID of the exercise (required)
   - `participationId`: ID of the participation (required)
   - `exerciseRepository`: Main exercise repository information
-  - `testRepository`: Test repository information (optional)
-  - `auxiliaryRepositories`: Additional repositories (optional)
-  - `buildScript`: Script to execute for the build
-  - `scriptType`: Type of script ("shell" or "groovy", defaults to "shell")
+  - `buildScript`: Shell script to execute for the build
+  - `scriptType`: "shell" to specify shell script execution
   - `programmingLanguage`: Programming language (JAVA, PYTHON, etc.)
   - `additionalProperties`: Additional build configuration
 

@@ -49,14 +49,13 @@ public class JenkinsJobService {
         }
 
         try {
-            URI uri = JenkinsEndpoints.GET_JOB.buildEndpoint(jenkinsServerUri, folderJobName, jobName).build(true).toUri();
+            URI uri = JenkinsEndpoints.GET_JOB.buildEndpoint(jenkinsServerUri, folderJobName, jobName).build(true)
+                    .toUri();
             return restTemplate.getForObject(uri, JobWithDetails.class);
-        }
-        catch (HttpClientErrorException.NotFound notFound) {
+        } catch (HttpClientErrorException.NotFound notFound) {
             log.warn("Cannot get the job {} in folder {} because it doesn't exist.", jobName, folderJobName);
             return null;
-        }
-        catch (RestClientException e) {
+        } catch (RestClientException e) {
             log.error(e.getMessage(), e);
             throw new JenkinsException(e.getMessage(), e);
         }
@@ -87,11 +86,9 @@ public class JenkinsJobService {
         try {
             URI uri = JenkinsEndpoints.GET_FOLDER_JOB.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
             return restTemplate.getForObject(uri, FolderJob.class);
-        }
-        catch (HttpClientErrorException.NotFound notFound) {
+        } catch (HttpClientErrorException.NotFound notFound) {
             return null;
-        }
-        catch (RestClientException e) {
+        } catch (RestClientException e) {
             log.error(e.getMessage(), e);
             throw new JenkinsException(e.getMessage(), e);
         }
@@ -106,8 +103,7 @@ public class JenkinsJobService {
         try {
             URI crumbUri = jenkinsServerUri.resolve("crumbIssuer/api/json");
             return restTemplate.getForObject(crumbUri, JenkinsCrumb.class);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.warn("Failed to retrieve CSRF crumb from Jenkins: {}", e.getMessage());
             return null;
         }
@@ -122,13 +118,13 @@ public class JenkinsJobService {
     private HttpHeaders createHeadersWithCsrf(MediaType contentType) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(contentType);
-        
+
         JenkinsCrumb crumb = getCsrfCrumb();
         if (crumb != null && crumb.crumb() != null && crumb.crumbRequestField() != null) {
             headers.add(crumb.crumbRequestField(), crumb.crumb());
             log.debug("Added CSRF crumb header: {} = {}", crumb.crumbRequestField(), crumb.crumb());
         }
-        
+
         return headers;
     }
 
@@ -147,11 +143,10 @@ public class JenkinsJobService {
             URI uri = JenkinsEndpoints.NEW_PLAN.buildEndpoint(jenkinsServerUri, folderName)
                     .queryParam("name", jobName)
                     .build(true).toUri();
-                    
+
             restTemplate.postForObject(uri, entity, String.class);
             log.debug("Created job {}/{} in Jenkins", folderName, jobName);
-        }
-        catch (RestClientException e) {
+        } catch (RestClientException e) {
             log.error("Failed to create job {}/{} in Jenkins", folderName, jobName, e);
             throw new JenkinsException("Failed to create job: " + folderName + "/" + jobName, e);
         }
@@ -163,9 +158,16 @@ public class JenkinsJobService {
      * @param folderName the name of the folder to create
      */
     public void createFolder(String folderName) throws JenkinsException {
+        // First check if the folder already exists
+        FolderJob existingFolder = getFolderJob(folderName);
+        if (existingFolder != null) {
+            log.debug("Folder {} already exists in Jenkins, skipping creation", folderName);
+            return;
+        }
+
         try {
             String folderXml = createFolderXmlConfig();
-            
+
             HttpHeaders headers = createHeadersWithCsrf(MediaType.APPLICATION_XML);
             HttpEntity<String> entity = new HttpEntity<>(folderXml, headers);
 
@@ -173,11 +175,26 @@ public class JenkinsJobService {
                     .queryParam("name", folderName)
                     .queryParam("mode", "com.cloudbees.hudson.plugins.folder.Folder")
                     .build(true).toUri();
-                    
+
             restTemplate.postForObject(uri, entity, String.class);
             log.debug("Created folder {} in Jenkins", folderName);
-        }
-        catch (RestClientException e) {
+        } catch (HttpClientErrorException.BadRequest badRequest) {
+            // Handle the case where folder might already exist or there's a naming issue
+            log.warn(
+                    "Bad request when creating folder {}: {}. This might indicate the folder already exists or has invalid name.",
+                    folderName, badRequest.getMessage());
+
+            // Check again if folder exists after the error
+            FolderJob folderAfterError = getFolderJob(folderName);
+            if (folderAfterError != null) {
+                log.info("Folder {} exists after creation attempt, proceeding", folderName);
+                return;
+            }
+
+            throw new JenkinsException(
+                    "Failed to create folder due to bad request: " + folderName + " - " + badRequest.getMessage(),
+                    badRequest);
+        } catch (RestClientException e) {
             log.error("Failed to create folder {} in Jenkins", folderName, e);
             throw new JenkinsException("Failed to create folder: " + folderName, e);
         }
@@ -192,15 +209,13 @@ public class JenkinsJobService {
         try {
             HttpHeaders headers = createHeadersWithCsrf(MediaType.APPLICATION_FORM_URLENCODED);
             HttpEntity<String> entity = new HttpEntity<>(headers);
-            
+
             URI uri = JenkinsEndpoints.DELETE_FOLDER.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
             restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
             log.debug("Deleted folder {} from Jenkins", folderName);
-        }
-        catch (HttpClientErrorException.NotFound notFound) {
+        } catch (HttpClientErrorException.NotFound notFound) {
             log.warn("Folder {} not found, nothing to delete", folderName);
-        }
-        catch (RestClientException e) {
+        } catch (RestClientException e) {
             log.error("Failed to delete folder {} from Jenkins", folderName, e);
             throw new JenkinsException("Failed to delete folder: " + folderName, e);
         }
@@ -216,15 +231,14 @@ public class JenkinsJobService {
         try {
             HttpHeaders headers = createHeadersWithCsrf(MediaType.APPLICATION_FORM_URLENCODED);
             HttpEntity<String> entity = new HttpEntity<>(headers);
-            
-            URI uri = JenkinsEndpoints.DELETE_JOB.buildEndpoint(jenkinsServerUri, folderName, jobName).build(true).toUri();
+
+            URI uri = JenkinsEndpoints.DELETE_JOB.buildEndpoint(jenkinsServerUri, folderName, jobName).build(true)
+                    .toUri();
             restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
             log.debug("Deleted job {}/{} from Jenkins", folderName, jobName);
-        }
-        catch (HttpClientErrorException.NotFound notFound) {
+        } catch (HttpClientErrorException.NotFound notFound) {
             log.warn("Job {}/{} not found, nothing to delete", folderName, jobName);
-        }
-        catch (RestClientException e) {
+        } catch (RestClientException e) {
             log.error("Failed to delete job {}/{} from Jenkins", folderName, jobName, e);
             throw new JenkinsException("Failed to delete job: " + folderName + "/" + jobName, e);
         }
@@ -241,15 +255,15 @@ public class JenkinsJobService {
         try {
             HttpHeaders headers = createHeadersWithCsrf(MediaType.APPLICATION_FORM_URLENCODED);
             HttpEntity<String> entity = new HttpEntity<>(headers);
-            
-            URI uri = JenkinsEndpoints.TRIGGER_BUILD.buildEndpoint(jenkinsServerUri, folderName, jobName).build(true).toUri();
+
+            URI uri = JenkinsEndpoints.TRIGGER_BUILD.buildEndpoint(jenkinsServerUri, folderName, jobName).build(true)
+                    .toUri();
             restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
             log.debug("Triggered build for job {}/{}", folderName, jobName);
-            
+
             // TODO: Extract build number from queue location header if needed
             return null;
-        }
-        catch (RestClientException e) {
+        } catch (RestClientException e) {
             log.error("Failed to trigger build for job {}/{}", folderName, jobName, e);
             throw new JenkinsException("Failed to trigger build for job: " + folderName + "/" + jobName, e);
         }
@@ -257,25 +271,25 @@ public class JenkinsJobService {
 
     private String createFolderXmlConfig() {
         return """
-            <?xml version='1.1' encoding='UTF-8'?>
-            <com.cloudbees.hudson.plugins.folder.Folder plugin="cloudbees-folder@6.815.v0dd5a_cb_40e0e">
-              <description></description>
-              <properties/>
-              <folderViews class="com.cloudbees.hudson.plugins.folder.views.DefaultFolderViewHolder">
-                <views>
-                  <hudson.model.AllView>
-                    <owner class="com.cloudbees.hudson.plugins.folder.Folder" reference="../../../.."/>
-                    <name>All</name>
-                    <filterExecutors>false</filterExecutors>
-                    <filterQueue>false</filterQueue>
-                    <properties class="hudson.model.View$PropertyList"/>
-                  </hudson.model.AllView>
-                </views>
-                <tabBar class="hudson.views.DefaultViewsTabBar"/>
-              </folderViews>
-              <healthMetrics/>
-            </com.cloudbees.hudson.plugins.folder.Folder>
-            """;
+                <?xml version='1.0' encoding='UTF-8'?>
+                <com.cloudbees.hudson.plugins.folder.Folder plugin="cloudbees-folder">
+                  <description></description>
+                  <properties/>
+                  <folderViews class="com.cloudbees.hudson.plugins.folder.views.DefaultFolderViewHolder">
+                    <views>
+                      <hudson.model.AllView>
+                        <owner class="com.cloudbees.hudson.plugins.folder.Folder" reference="../../../.."/>
+                        <name>All</name>
+                        <filterExecutors>false</filterExecutors>
+                        <filterQueue>false</filterQueue>
+                        <properties class="hudson.model.View$PropertyList"/>
+                      </hudson.model.AllView>
+                    </views>
+                    <tabBar class="hudson.views.DefaultViewsTabBar"/>
+                  </folderViews>
+                  <healthMetrics/>
+                </com.cloudbees.hudson.plugins.folder.Folder>
+                """;
     }
 
     public static class JenkinsException extends RuntimeException {

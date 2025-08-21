@@ -17,5 +17,34 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record BuildTriggerRequestDTO(@NotNull Long exerciseId, @NotNull Long participationId, @NotNull @Valid RepositoryInfoDTO exerciseRepository, @Valid RepositoryInfoDTO testRepository,
-        List<@Valid RepositoryInfoDTO> auxiliaryRepositories, @NotBlank String buildScript, @NotBlank String programmingLanguage, Map<String, String> additionalProperties) {
+        List<@Valid RepositoryInfoDTO> auxiliaryRepositories, @NotBlank String buildScript, String scriptType, @NotBlank String programmingLanguage, Map<String, String> additionalProperties) {
+
+    public enum ScriptType {
+        SHELL("shell"),
+        GROOVY("groovy");
+        
+        private final String value;
+        
+        ScriptType(String value) {
+            this.value = value;
+        }
+        
+        public String getValue() {
+            return value;
+        }
+    }
+    
+    /**
+     * Gets the script type, defaulting to SHELL if not specified.
+     */
+    public ScriptType getScriptType() {
+        if (scriptType == null || scriptType.isBlank()) {
+            return ScriptType.SHELL;
+        }
+        try {
+            return ScriptType.valueOf(scriptType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ScriptType.SHELL;
+        }
+    }
 }
