@@ -1,0 +1,25 @@
+meta {
+  name: Health Check
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/health
+  body: none
+  auth: none
+}
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should have status UP", function() {
+    expect(res.body.status).to.equal("UP");
+  });
+  
+  test("should include connector info", function() {
+    expect(res.body.connector).to.equal("jenkins");
+  });
+}

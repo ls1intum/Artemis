@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: jenkins-connector-test
+  
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  
+  liquibase:
+    enabled: false
+
+server:
+  port: 0  # Random port for testing
+
+jenkins:
+  url: http://localhost:8080
+  username: test
+  password: test
+  timeout: 10000
+  
+logging:
+  level:
+    de.tum.cit.aet.artemis: DEBUG
+    org.springframework.web: WARN
+    
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

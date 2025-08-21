@@ -1,0 +1,52 @@
+meta {
+  name: Trigger Build - Python
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/builds/trigger
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "exerciseId": 2,
+    "participationId": 201,
+    "exerciseRepository": {
+      "url": "https://github.com/example/python-exercise.git",
+      "commitHash": "xyz789",
+      "cloneLocation": null,
+      "accessToken": "github_token_123",
+      "branch": "main"
+    },
+    "testRepository": {
+      "url": "https://github.com/example/python-tests.git",
+      "commitHash": "uvw456",
+      "cloneLocation": null,
+      "accessToken": "github_token_123",
+      "branch": "main"
+    },
+    "solutionRepository": null,
+    "auxiliaryRepositories": [],
+    "buildScript": "pipeline {\n  agent any\n  stages {\n    stage('Setup') {\n      steps {\n        echo 'Setting up Python environment'\n      }\n    }\n    stage('Test') {\n      steps {\n        docker.image('python:3.11').inside {\n          sh 'pip install -r requirements.txt'\n          sh 'python -m pytest tests/ --junit-xml=test-results.xml'\n        }\n      }\n    }\n    stage('Results') {\n      steps {\n        echo 'Publishing test results'\n        publishTestResults testResultsPattern: 'test-results.xml'\n      }\n    }\n  }\n}",
+    "triggeredByPushTo": "TEST",
+    "programmingLanguage": "python",
+    "additionalProperties": {
+      "dockerImage": "python:3.11",
+      "testFramework": "pytest"
+    }
+  }
+}
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should return a valid UUID", function() {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    expect(res.body).to.match(uuidRegex);
+  });
+}

@@ -1,0 +1,17 @@
+configuration-as-code:1670.v564dc8b_982d0
+workflow-aggregator:596.v8c21c963d92d
+pipeline-stage-view:2.25
+build-pipeline-plugin:1.5.8
+git:5.0.0
+credentials:2.6.1.1
+credentials-binding:523.vd859a_4b_122e6
+job-dsl:1.81
+folder-auth:1.1
+pipeline-utility-steps:2.15.3
+timestamper:1.25
+ws-cleanup:0.45
+build-timeout:1.30
+ant:475.vf34069fef73c
+gradle:2.8.2
+nodejs:1.6.1
+docker-workflow:563.vd5d2e5c4007f

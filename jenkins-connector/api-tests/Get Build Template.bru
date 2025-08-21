@@ -1,0 +1,17 @@
+meta {
+  name: Get Build Template
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/builds/template/java?exerciseType=basic
+  body: none
+  auth: none
+}
+
+tests {
+  test("should return 404 (not implemented yet)", function() {
+    expect(res.status).to.equal(404);
+  });
+}

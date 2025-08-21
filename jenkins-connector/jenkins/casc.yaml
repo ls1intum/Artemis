@@ -1,0 +1,84 @@
+jenkins:
+  systemMessage: "Jenkins configured for Artemis CI Connector testing"
+  numExecutors: 2
+  mode: NORMAL
+  scmCheckoutRetryCount: 3
+  
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: admin
+          password: admin
+          
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+  remotingSecurity:
+    enabled: true
+
+unclassified:
+  location:
+    url: http://jenkins:8080/
+    adminAddress: admin@example.com
+    
+  shell:
+    shell: "/bin/bash"
+
+security:
+  queueItemAuthenticator:
+    authenticators:
+      - global:
+          strategy: triggeringUsersAuthorizationStrategy
+
+tool:
+  git:
+    installations:
+      - name: "Default"
+        home: "/usr/bin/git"
+
+jobs:
+  - script: |
+      folder('test-exercises') {
+        description('Folder for test exercises')
+      }
+      
+      pipelineJob('test-exercises/sample-java-exercise') {
+        description('Sample Java exercise for testing the connector')
+        definition {
+          cps {
+            script('''
+              pipeline {
+                agent any
+                stages {
+                  stage('Test') {
+                    steps {
+                      echo 'This is a test build triggered by the Jenkins connector'
+                      echo "Build started at: ${new Date()}"
+                      echo "Build number: ${env.BUILD_NUMBER}"
+                      script {
+                        // Simulate test execution
+                        sh 'echo "Running tests..." && sleep 5'
+                        sh 'echo "Tests completed successfully"'
+                      }
+                    }
+                  }
+                  stage('Results') {
+                    steps {
+                      echo 'Processing test results'
+                      echo 'Build completed successfully'
+                    }
+                  }
+                }
+                post {
+                  always {
+                    echo "Build finished with status: ${currentBuild.result ?: 'SUCCESS'}"
+                  }
+                }
+              }
+            ''')
+            sandbox()
+          }
+        }
+      }

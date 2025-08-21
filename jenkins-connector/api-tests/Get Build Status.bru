@@ -1,0 +1,30 @@
+meta {
+  name: Get Build Status
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/builds/status/{{buildId}}
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  buildId: 12345678-1234-1234-1234-123456789012
+}
+
+tests {
+  test("should return 200 OK for existing build", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should have valid build status", function() {
+    const validStatuses = ["QUEUED", "RUNNING", "SUCCESS", "FAILED", "CANCELLED", "TIMEOUT"];
+    expect(validStatuses).to.include(res.body.status);
+  });
+  
+  test("should have build ID", function() {
+    expect(res.body.buildId).to.be.a("string");
+  });
+}
