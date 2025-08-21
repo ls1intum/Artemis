@@ -380,6 +380,19 @@ export class AccountService implements IAccountService {
         this.userIdentity.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
     }
 
+    setUserEnabledMemiris(memirisEnabled: boolean): void {
+        if (!this.userIdentity) {
+            return;
+        }
+
+        this.http.put('api/core/account/enable-memiris', memirisEnabled).subscribe({
+            next: () => {
+                this.userIdentity!.memirisEnabled = memirisEnabled;
+            },
+            error: (_) => {},
+        });
+    }
+
     /**
      * Trades the current cookie for a new Tool-specific bearer token which is able to authenticate the user.
      * The Cookie stays valid, a new bearer token is generated on every call with a validity of max 1d.
