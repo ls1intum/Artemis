@@ -90,11 +90,12 @@ public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSetting
                        ELSE FALSE
                    END
             FROM Course c
-            LEFT JOIN IrisCourseSettings cs ON cs.courseId = c.id
-            LEFT JOIN IrisGlobalSettings gs ON TRUE
+            LEFT JOIN IrisCourseSettings   cs  ON cs.courseId = c.id
+            LEFT JOIN IrisGlobalSettings   gs  ON TRUE
 
             LEFT JOIN gs.irisCourseChatSettings gps
             LEFT JOIN cs.irisCourseChatSettings cps
+
             WHERE c.id = :courseId
             """)
     Boolean isCourseChatEnabled(@Param("courseId") long courseId);

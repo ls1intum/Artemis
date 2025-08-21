@@ -42,10 +42,10 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "course" })
-    Optional<LearningPath> findWithEagerCourse(long learningPathId);
+    Optional<LearningPath> findWithEagerCourseById(long learningPathId);
 
     default LearningPath findWithEagerCourseByIdElseThrow(long learningPathId) {
-        return getValueElseThrow(findWithEagerCourse(learningPathId), learningPathId);
+        return getValueElseThrow(findWithEagerCourseById(learningPathId), learningPathId);
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "user", "course" })
