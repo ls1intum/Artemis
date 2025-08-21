@@ -14,7 +14,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockInstance } from 'ng-mocks';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { signal } from '@angular/core';
 import { SubmittedAnswerAfterEvaluation } from './SubmittedAnswerAfterEvaluation';
 
@@ -48,7 +48,7 @@ const course = { id: 1, title: 'Test Course' };
 const answer: SubmittedAnswerAfterEvaluation = { selectedOptions: [{ scoreInPoints: 2 }] };
 
 describe('CourseTrainingQuizComponent', () => {
-    MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as SecuredImageComponent));
+    MockInstance(DragAndDropQuestionComponent, 'secureImageComponent', signal({} as ImageComponent));
     let component: CourseTrainingQuizComponent;
     let fixture: ComponentFixture<CourseTrainingQuizComponent>;
     let quizService: CourseTrainingQuizService;
