@@ -31,6 +31,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
+// Helper type so CI uses the exact method return type
+type StartTxReturn = ReturnType<AttachmentVideoUnitService['startTranscription']>;
+
 describe('LectureUpdateUnitsComponent', () => {
     let wizardUnitComponentFixture: ComponentFixture<LectureUpdateUnitsComponent>;
     let wizardUnitComponent: LectureUpdateUnitsComponent;
@@ -734,6 +737,7 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(createTranscriptionStub).toHaveBeenCalledWith(attachmentVideoUnit.id, attachmentVideoUnitFormData.transcriptionProperties);
         });
     }));
+
     it('should start async transcription with playlistUrl when generateTranscript is enabled', fakeAsync(() => {
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         const alertService = TestBed.inject(AlertService);
@@ -759,7 +763,7 @@ describe('LectureUpdateUnitsComponent', () => {
         savedUnit.id = 42;
 
         jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: savedUnit, status: 201 })));
-        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse({ status: 200 })));
+        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse<string>({ status: 200, body: '' })) as StartTxReturn);
         const successSpy = jest.spyOn(alertService, 'success');
         const errorSpy = jest.spyOn(alertService, 'error');
 
@@ -796,7 +800,7 @@ describe('LectureUpdateUnitsComponent', () => {
         savedUnit.videoSource = 'https://example.com/video-source.m3u8'; // should be ignored due to playlistUrl
 
         jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: savedUnit, status: 201 })));
-        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse({ status: 200 })));
+        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse<string>({ status: 200, body: '' })) as StartTxReturn);
 
         wizardUnitComponentFixture.detectChanges();
         tick();
@@ -827,7 +831,7 @@ describe('LectureUpdateUnitsComponent', () => {
         savedUnit.videoSource = 'https://example.com/from-unit.m3u8';
 
         jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: savedUnit, status: 201 })));
-        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse({ status: 200 })));
+        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse<string>({ status: 200, body: '' })) as StartTxReturn);
 
         wizardUnitComponentFixture.detectChanges();
         tick();
@@ -940,7 +944,7 @@ describe('LectureUpdateUnitsComponent', () => {
         savedUnit.videoSource = 'https://example.com/not-200.m3u8';
 
         jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: savedUnit, status: 201 })));
-        jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse({ status: 500 })));
+        jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse<string>({ status: 500, body: 'error' })) as StartTxReturn);
         const errorSpy = jest.spyOn(alertService, 'error');
 
         wizardUnitComponentFixture.detectChanges();
@@ -967,7 +971,7 @@ describe('LectureUpdateUnitsComponent', () => {
         savedUnit.videoSource = 'https://example.com/boom.m3u8';
 
         jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: savedUnit, status: 201 })));
-        jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(throwError(() => new Error('Boom')));
+        jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(throwError(() => new Error('Boom')) as StartTxReturn);
         const errorSpy = jest.spyOn(alertService, 'error');
 
         wizardUnitComponentFixture.detectChanges();
