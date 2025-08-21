@@ -87,7 +87,19 @@ export class TutorialGroupDetailComponent implements OnChanges {
         this.getTutorialDetail();
     }
 
-    getTutorialTimeSlotString(): string | undefined {
+    private getTutorialDetail() {
+        const tutorialGroup = this.tutorialGroup();
+
+        this.isMessagingEnabled = isMessagingEnabled(this.course());
+        if (tutorialGroup.averageAttendance && tutorialGroup.capacity) {
+            this.utilization = Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100);
+        } else {
+            this.utilization = undefined;
+        }
+        this.tutorialTimeslotString = this.getTutorialTimeSlotString();
+    }
+
+    private getTutorialTimeSlotString(): string | undefined {
         const tutorialGroup = this.tutorialGroup();
         if (!tutorialGroup.tutorialGroupSchedule) {
             return undefined;
@@ -102,18 +114,6 @@ export class TutorialGroupDetailComponent implements OnChanges {
             { n: tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! },
         );
         return `${day} ${start}-${end}, ${repetition}`;
-    }
-
-    getTutorialDetail() {
-        const tutorialGroup = this.tutorialGroup();
-
-        this.isMessagingEnabled = isMessagingEnabled(this.course());
-        if (tutorialGroup.averageAttendance && tutorialGroup.capacity) {
-            this.utilization = Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100);
-        } else {
-            this.utilization = undefined;
-        }
-        this.tutorialTimeslotString = this.getTutorialTimeSlotString();
     }
 
     recalculateAttendanceDetails() {

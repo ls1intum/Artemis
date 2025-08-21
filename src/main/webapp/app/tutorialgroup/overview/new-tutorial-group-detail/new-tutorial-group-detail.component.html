@@ -1,0 +1,85 @@
+<div class="frame">
+    <h2>{{ tutorialGroup().title }}</h2>
+    <hr />
+    <div class="card-row">
+        <div class="card small">
+            <h5>Tutor</h5>
+            <div class="tutor-card-content">
+                <jhi-profile-picture
+                    imageSizeInRem="6"
+                    fontSizeInRem="2"
+                    imageId="tutor-profile-picture"
+                    defaultPictureId="tutor-default-profile-picture"
+                    [authorId]="tutorialGroup().teachingAssistantId"
+                    [authorName]="tutorialGroup().teachingAssistantName"
+                    [imageUrl]="teachingAssistantImageUrl()"
+                />
+                {{ tutorialGroup().teachingAssistantName }}
+            </div>
+        </div>
+        <div class="card big">
+            <h5>General Information</h5>
+            <div class="info-card-content">
+                <div class="info-stack">
+                    <div class="info-item">
+                        <fa-icon [icon]="faRotateRight" />
+                        <span class="info-label">Weekday:</span>
+                        <span jhiTranslate="{{ tutorialGroupWeekday() }}"></span>
+                    </div>
+                    <div class="info-item">
+                        <fa-icon [icon]="faFlag" />
+                        <span class="info-label">Language:</span>
+                        <span jhiTranslate="{{ tutorialGroupLanguage() }}"></span>
+                    </div>
+                </div>
+                <div class="info-stack">
+                    <div class="info-item">
+                        <fa-icon [icon]="faUsers" />
+                        <span class="info-label">Capacity:</span>
+                        {{ tutorialGroup().capacity ?? '-' }}
+                    </div>
+                    <div class="info-item">
+                        <fa-icon [icon]="faTag" />
+                        <span class="info-label">Mode:</span>
+                        <span jhiTranslate="{{ tutorialGroupMode() }}"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-row">
+        <div class="card small">
+            <h5>Average Attendance</h5>
+            <div class="tutor-card-content"></div>
+        </div>
+        <div class="card big">
+            <h5>Next Session</h5>
+            <div class="info-card-content">
+                <div class="info-stack">
+                    <div class="info-item">
+                        <fa-icon [icon]="faCalendarDays" />
+                        <span class="info-label">Date:</span>
+                        {{ nextSessionDate() }}
+                    </div>
+                    <div class="info-item">
+                        <fa-icon [icon]="faClock" />
+                        <span class="info-label">Time:</span>
+                        {{ nextSessionTime() }}
+                    </div>
+                </div>
+                <div class="info-stack">
+                    <div class="info-item">
+                        <fa-icon [icon]="faMapPin" />
+                        <span class="info-label">Location:</span>
+                        {{ nextSessionLocation() }}
+                    </div>
+                    <div class="info-item">
+                        <fa-icon [icon]="faBuildingColumns" />
+                        <span class="info-label">Campus:</span>
+                        {{ nextSessionCampus() }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

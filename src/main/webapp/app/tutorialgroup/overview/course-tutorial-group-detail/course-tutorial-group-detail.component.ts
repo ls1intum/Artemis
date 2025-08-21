@@ -12,12 +12,13 @@ import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator
 import { AsyncPipe, NgClass } from '@angular/common';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { TutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
+import { NewTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/new-tutorial-group-detail/new-tutorial-group-detail.component';
 
 @Component({
     selector: 'jhi-course-tutorial-group-detail',
     templateUrl: './course-tutorial-group-detail.component.html',
     styleUrls: ['./course-tutorial-group-detail.component.scss'],
-    imports: [LoadingIndicatorContainerComponent, NgClass, TutorialGroupDetailComponent, AsyncPipe],
+    imports: [LoadingIndicatorContainerComponent, NgClass, NewTutorialGroupDetailComponent, TutorialGroupDetailComponent, AsyncPipe],
 })
 export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
