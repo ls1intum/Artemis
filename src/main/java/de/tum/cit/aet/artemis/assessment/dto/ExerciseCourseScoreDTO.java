@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 public record ExerciseCourseScoreDTO(long id, Class<? extends Exercise> type, IncludedInOverallScore includedInOverallScore, AssessmentType assessmentType, ZonedDateTime dueDate,
-        ZonedDateTime assessmentDueDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, double maxPoints, @Nullable Double bonusPoints, Long courseId) {
+        ZonedDateTime assessmentDueDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, double maxPoints, @Nullable Double bonusPoints, long courseId) {
 
     public ExerciseType exerciseType() {
         return ExerciseType.getExerciseTypeFromClass(type);
