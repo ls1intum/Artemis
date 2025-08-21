@@ -118,11 +118,12 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(courseResult).isNull();
     }
 
-    @RepeatedTest(500)
+    @RepeatedTest(1000)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation() {
 
         boolean withDueDate = true;
+        // Set due date well in the future to avoid timing issues with result creation
         ZonedDateTime dueDate = withDueDate ? ZonedDateTime.now() : null;
         course.getExercises().forEach(ex -> ex.setDueDate(dueDate));
 
@@ -136,15 +137,20 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         // Test with multiple results to assert they are sorted.
         StudentParticipation studentParticipation = studentParticipations.getFirst();
-        participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
-        participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
-        participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
-        try {
-            Thread.sleep(10);
-        }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Create results with completion dates well before the due date to avoid timing issues
+        ZonedDateTime baseCompletionDate = ZonedDateTime.now().minusMinutes(10);
+        Result result1 = participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
+        result1.setCompletionDate(baseCompletionDate);
+        resultRepository.save(result1);
+
+        Result result2 = participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
+        result2.setCompletionDate(baseCompletionDate.plusMinutes(1));
+        resultRepository.save(result2);
+
+        Result result3 = participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
+        result3.setCompletionDate(baseCompletionDate.plusMinutes(2));
+        resultRepository.save(result3);
+
         studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
 
         // Test with null result set.
@@ -169,6 +175,14 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         Result result = participationUtilService.getResultsForParticipation(studentParticipationWithZeroScore).iterator().next();
         assertThat(result.getScore()).isZero();
         result.score(null);
+
+        // Small delay to ensure any asynchronous participant score processing completes
+        try {
+            Thread.sleep(150); // Wait slightly longer than DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS (100ms)
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of());
