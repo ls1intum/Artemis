@@ -5,7 +5,9 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.springframework.http.HttpStatus.OK;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -123,9 +125,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizExercise.setIsOpenForPractice(true);
         quizExerciseTestRepository.save(quizExercise);
 
-        int[] priorities = { 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7 };
         List<QuizQuestion> questions = new ArrayList<>();
-        List<Long> questionIdsWithPriority = new ArrayList<>();
 
         for (int i = 0; i < 12; i++) {
             QuizQuestion question = quizQuestionRepository.save(new MultipleChoiceQuestion());
@@ -135,11 +135,10 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
             progress.setUserId(userId);
             progress.setQuizQuestionId(question.getId());
             QuizQuestionProgressData data = new QuizQuestionProgressData();
-            data.setPriority(priorities[i]);
+            data.setDueDate(ZonedDateTime.now().minusDays(i));
             progress.setProgressJson(data);
             progress.setLastAnsweredAt(ZonedDateTime.now());
             quizQuestionProgressRepository.save(progress);
-            questionIdsWithPriority.add(question.getId());
         }
 
         quizExercise.setQuizQuestions(questions);
@@ -148,12 +147,13 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         List<QuizQuestion> result = quizQuestionProgressService.getQuestionsForSession(1L, userId);
         assertThat(result.size()).isEqualTo(10);
 
-        List<Long> expectedOrder = new ArrayList<>(questionIdsWithPriority);
-        expectedOrder.sort(Comparator.comparingInt(id -> priorities[questionIdsWithPriority.indexOf(id)]));
+        List<QuizQuestionProgress> progresses = result.stream().map(q -> quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, q.getId()).orElseThrow()).toList();
 
-        for (int i = 0; i < 10; i++) {
-            assertThat(result.get(i).getId()).isEqualTo(expectedOrder.get(i));
-        }
+        List<ZonedDateTime> dueDates = progresses.stream().map(p -> p.getProgressJson().getDueDate()).toList();
+
+        List<ZonedDateTime> sortedDueDates = new ArrayList<>(dueDates);
+        sortedDueDates.sort(Comparator.naturalOrder());
+        assertThat(dueDates).isEqualTo(sortedDueDates);
     }
 
     @Test
@@ -222,6 +222,16 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         mcQuestion.setPoints(1.0);
         mcQuestion.setScoringType(ScoringType.ALL_OR_NOTHING);
         mcQuestion = quizQuestionRepository.save(mcQuestion);
+        QuizQuestionProgress progress = new QuizQuestionProgress();
+        QuizQuestionProgressData dataExisting = new QuizQuestionProgressData();
+        dataExisting.setEasinessFactor(2.5);
+        dataExisting.setInterval(1);
+        dataExisting.setSessionCount(0);
+        dataExisting.setDueDate(null);
+        progress.setProgressJson(dataExisting);
+        progress.setQuizQuestionId(mcQuestion.getId());
+        progress.setUserId(userId);
+        quizQuestionProgressRepository.save(progress);
 
         MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
         submittedAnswer.setQuizQuestion(mcQuestion);
@@ -252,6 +262,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(data.getInterval()).isEqualTo(1);
         assertThat(data.getPriority()).isEqualTo(2);
         assertThat(data.getBox()).isEqualTo(1);
+        assertThat(data.getDueDate().truncatedTo(ChronoUnit.MINUTES)).isEqualTo(ZonedDateTime.now(ZoneOffset.UTC).plusDays(1).truncatedTo(ChronoUnit.MINUTES));
     }
 
     @Test
@@ -262,6 +273,18 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
         quizExercise.setIsOpenForPractice(true);
         quizExerciseService.save(quizExercise);
+        /*
+         * List<QuizQuestion> questions = quizExercise.getQuizQuestions();
+         * for (QuizQuestion question : questions) {
+         * QuizQuestionProgress progress = new QuizQuestionProgress();
+         * QuizQuestionProgressData data = new QuizQuestionProgressData();
+         * data.setDueDate(ZonedDateTime.now().minusDays(1));
+         * progress.setProgressJson(data);
+         * progress.setQuizQuestionId(question.getId());
+         * progress.setUserId(userId);
+         * quizQuestionProgressRepository.save(progress);
+         * }
+         */
 
         List<QuizQuestion> quizQuestions = request.getList("/api/quiz/courses/" + course.getId() + "/training/questions", OK, QuizQuestion.class);
 
