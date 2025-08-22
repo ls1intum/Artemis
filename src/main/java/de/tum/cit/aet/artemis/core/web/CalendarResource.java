@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CalendarSubscriptionService;
+import de.tum.cit.aet.artemis.core.service.CalendarSubscriptionService.CalendarEventFilterOption;
 import de.tum.cit.aet.artemis.core.util.CalendarUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -96,7 +97,7 @@ public class CalendarResource {
 
     @GetMapping("/courses/{courseId}/subscription/calendarEvents.ics")
     public ResponseEntity<String> getSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
-            @RequestParam("filterOptions") Set<CalendarSubscriptionService.CalendarEventFilterOption> filterOptions, @RequestParam("filterOptions") Language language) {
+            @RequestParam("filterOptions") Set<CalendarEventFilterOption> filterOptions, @RequestParam("filterOptions") Language language) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
         boolean userIsStudent = authorizationCheckService.isStudentInCourse(course, user);
@@ -105,12 +106,22 @@ public class CalendarResource {
             throw new AccessForbiddenException("You are not allowed to access this course's resources!");
         }
 
-        // TODO: only include DTOs based on filterOptions
-        Set<CalendarEventDTO> tutorialEventDTOs = tutorialGroupApi.map(api -> api.getCalendarEventDTOsFromTutorialsGroups(user.getId(), courseId)).orElse(Collections.emptySet());
-        Set<CalendarEventDTO> examEventDTOs = examApi.map(api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent, language)).orElse(Collections.emptySet());
-        Set<CalendarEventDTO> lectureEventDTOs = lectureApi.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language);
-        Set<CalendarEventDTO> quizExerciseEventDTOs = quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent, language);
-        Set<CalendarEventDTO> otherExerciseEventDTOs = exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent, language);
+        boolean includeTutorialEvents = filterOptions.contains(CalendarEventFilterOption.TUTORIALS);
+        boolean includeExamEvents = filterOptions.contains(CalendarEventFilterOption.EXAMS);
+        boolean includeLectureEvents = filterOptions.contains(CalendarEventFilterOption.EXERCISES);
+        boolean includeExerciseEvents = filterOptions.contains(CalendarEventFilterOption.EXERCISES);
+
+        Set<CalendarEventDTO> tutorialEventDTOs = includeTutorialEvents
+                ? tutorialGroupApi.map(api -> api.getCalendarEventDTOsFromTutorialsGroups(user.getId(), courseId)).orElse(Collections.emptySet())
+                : Collections.emptySet();
+        Set<CalendarEventDTO> examEventDTOs = includeExamEvents
+                ? examApi.map(api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent, language)).orElse(Collections.emptySet())
+                : Collections.emptySet();
+        Set<CalendarEventDTO> lectureEventDTOs = includeLectureEvents ? lectureApi.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language) : Collections.emptySet();
+        Set<CalendarEventDTO> quizExerciseEventDTOs = includeExerciseEvents ? quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent, language)
+                : Collections.emptySet();
+        Set<CalendarEventDTO> otherExerciseEventDTOs = includeExerciseEvents ? exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent, language)
+                : Collections.emptySet();
 
         Set<CalendarEventDTO> calendarEventDTOs = Stream.of(tutorialEventDTOs, lectureEventDTOs, examEventDTOs, quizExerciseEventDTOs, otherExerciseEventDTOs).flatMap(Set::stream)
                 .collect(Collectors.toSet());
