@@ -186,7 +186,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         await().atMost(2, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
         // Wait for tasks to finish
         try {
-            Thread.sleep(ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS);
+            Thread.sleep(100);
         }
         catch (InterruptedException e) {
             e.printStackTrace();
