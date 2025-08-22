@@ -724,7 +724,7 @@ public class ProgrammingExerciseResource {
      * ProgrammingExerciseResetOptionsDTO for an exercise given an exerciseId.
      * <p>
      * The available operations include:
-     * 1. deleteParticipationsSubmissionsAndResults: Deleting all participations, submissions, and results.
+     * 1. deleteParticipationsSubmissionsAndResults: Deleting all participations, submissions, and results (also deletes repositories and build plans).
      * 2. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI / Aeolus, this will reset the customized build plans).
      *
      * @param exerciseId                         - Id of the programming exercise to reset.

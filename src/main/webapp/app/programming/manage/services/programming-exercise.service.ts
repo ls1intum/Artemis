@@ -69,8 +69,8 @@ export class ProgrammingExerciseService {
     /**
      * Resets a programming exercise with the given exerciseId by performing a set of operations
      * as specified in the ProgrammingExerciseResetOptions. The available operations include:
-     * 1. deleteParticipationsSubmissionsAndResults: Deleting all participations, submissions, and results.
-     * 2. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI / Aeolus, this will reset the customized build plans).
+     * 1. `deleteParticipationsSubmissionsAndResults`: Deleting all participations, submissions, and results (also deletes repositories and build plans).
+     * 2. `recreateBuildPlans`: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI / Aeolus, this will reset the customized build plans).
      *
      * @param exerciseId - of the programming exercise that should be reset.
      * @param options - Configuration options specifying which operations to perform during the exercise reset.
