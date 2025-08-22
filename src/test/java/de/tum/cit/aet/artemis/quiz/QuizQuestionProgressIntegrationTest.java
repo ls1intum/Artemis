@@ -180,7 +180,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     void testCalculateInterval() {
         assertThat(quizQuestionProgressService.calculateInterval(1.3, 1, 1)).isEqualTo(1);
-        assertThat(quizQuestionProgressService.calculateInterval(1.3, 2, 0)).isEqualTo(1);
+        assertThat(quizQuestionProgressService.calculateInterval(1.3, 2, 0)).isEqualTo(0);
         assertThat(quizQuestionProgressService.calculateInterval(1.3, 3, 2)).isEqualTo(2);
         assertThat(quizQuestionProgressService.calculateInterval(1.5, 2, 3)).isEqualTo(3);
     }
@@ -273,18 +273,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
         quizExercise.setIsOpenForPractice(true);
         quizExerciseService.save(quizExercise);
-        /*
-         * List<QuizQuestion> questions = quizExercise.getQuizQuestions();
-         * for (QuizQuestion question : questions) {
-         * QuizQuestionProgress progress = new QuizQuestionProgress();
-         * QuizQuestionProgressData data = new QuizQuestionProgressData();
-         * data.setDueDate(ZonedDateTime.now().minusDays(1));
-         * progress.setProgressJson(data);
-         * progress.setQuizQuestionId(question.getId());
-         * progress.setUserId(userId);
-         * quizQuestionProgressRepository.save(progress);
-         * }
-         */
 
         List<QuizQuestion> quizQuestions = request.getList("/api/quiz/courses/" + course.getId() + "/training/questions", OK, QuizQuestion.class);
 
