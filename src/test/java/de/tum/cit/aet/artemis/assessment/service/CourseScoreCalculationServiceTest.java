@@ -122,7 +122,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(courseResult).isNull();
     }
 
-    @RepeatedTest(500)
+    @RepeatedTest(2000)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation() {
 
