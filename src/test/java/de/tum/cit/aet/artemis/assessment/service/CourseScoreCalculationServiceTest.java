@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -9,12 +10,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -71,6 +72,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private ParticipantScoreScheduleService participantScoreScheduleService;
+
     private Course course;
 
     @Autowired
@@ -119,11 +123,10 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(courseResult).isNull();
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(booleans = { true, false })
+    @RepeatedTest(500)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation(boolean withDueDate) {
-
+    void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation() {
+        boolean withDueDate = Math.random() < 0.5;
         ZonedDateTime dueDate = withDueDate ? ZonedDateTime.now() : null;
         course.getExercises().forEach(ex -> ex.setDueDate(dueDate));
 
@@ -137,9 +140,29 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         // Test with multiple results to assert they are sorted.
         StudentParticipation studentParticipation = studentParticipations.getFirst();
-        participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
-        participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
-        participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
+
+        // Create results with completion dates before the due date
+        ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(5);
+
+        Result result1 = participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
+        result1.setCompletionDate(completionDate);
+        resultRepository.save(result1);
+
+        Result result2 = participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
+        result2.setCompletionDate(completionDate);
+        resultRepository.save(result2);
+
+        Result result3 = participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
+        result3.setCompletionDate(completionDate);
+        resultRepository.save(result3);
+
+        participantScoreScheduleService.executeScheduledTasks();
+
+        // Wait for service to schedule tasks
+        await().atMost(1, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
+
+        // Wait for tasks to complete, default SCHEDULED_TASKS_WAITING_TIME (500ms) is too long for this test.
+        await().pollDelay(100, TimeUnit.MILLISECONDS).until(() -> true);
 
         studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
 
