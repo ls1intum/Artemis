@@ -181,19 +181,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(result.getScore()).isZero();
         result.score(null);
 
-        // Trigger scheduled tasks
-        participantScoreScheduleService.executeScheduledTasks();
-
-        // Wait for service to finish scheduling tasks
-        await().atMost(2, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
-
-        // Wait for tasks to finish
-        try {
-            Thread.sleep(100);
-        }
-        catch (InterruptedException e) {
-        }
-
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of());
         if (withDueDate) {
