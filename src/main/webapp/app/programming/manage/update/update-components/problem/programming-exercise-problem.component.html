@@ -43,36 +43,6 @@
                 />
             }
         </div>
-
-        @if (programmingExercise?.id && !programmingExerciseCreationConfig.isImportFromExistingExercise && !programmingExerciseCreationConfig.isImportFromFile) {
-            <div class="form-group mt-3">
-                <div class="d-flex align-items-center gap-2">
-                    <button id="generate-code-btn" type="button" class="btn btn-primary btn-sm" [disabled]="isGeneratingCode" (click)="generateCode()">
-                        @if (isGeneratingCode) {
-                            <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
-                            {{ 'artemisApp.programmingExercise.codeGeneration.generating' | artemisTranslate }}
-                        } @else {
-                            <fa-icon [icon]="faRobot" class="me-2" />
-                            {{ 'artemisApp.programmingExercise.codeGeneration.generateCode' | artemisTranslate }}
-                        }
-                    </button>
-                    <small class="text-muted">{{ 'artemisApp.programmingExercise.codeGeneration.description' | artemisTranslate }}</small>
-                </div>
-                @if (generationResult) {
-                    <div class="mt-2">
-                        <div class="alert" [ngClass]="generationResult.success ? 'alert-success' : 'alert-warning'" role="alert">
-                            <fa-icon [icon]="generationResult.success ? faCheckCircle : faExclamationTriangle" class="me-2" />
-                            {{ generationResult.message }}
-                            @if (!generationResult.success) {
-                                <small class="d-block mt-1">{{
-                                    'artemisApp.programmingExercise.codeGeneration.attempts' | artemisTranslate: { attempts: generationResult.attempts }
-                                }}</small>
-                            }
-                        </div>
-                    </div>
-                }
-            </div>
-        }
     }
     @if (isEditFieldDisplayedRecord().linkedCompetencies && !programmingExerciseCreationConfig.isExamMode) {
         <div class="form-group">

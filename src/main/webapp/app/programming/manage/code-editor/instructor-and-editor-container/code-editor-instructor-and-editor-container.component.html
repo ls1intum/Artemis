@@ -123,6 +123,21 @@
                         <span jhiTranslate="artemisApp.editor.repoSelect.deleteAssignmentRepo"></span>
                     </button>
                 }
+                <!-- AI Code Generation - Always Visible Test -->
+                <div class="btn-group" ngbDropdown role="group" aria-label="AI Code Generation">
+                    @if (isGeneratingCode) {
+                        <button class="btn btn-outline-primary btn-sm" disabled>
+                            <fa-icon [icon]="faSpinner" animation="spin" />
+                        </button>
+                    } @else {
+                        <button class="btn btn-outline-primary btn-sm" type="button" ngbDropdownToggle ngbTooltip="AI Code Generation">
+                            <fa-icon [icon]="facArtemisIntelligence" />
+                        </button>
+                        <div class="dropdown-menu" ngbDropdownMenu>
+                            <button type="button" class="dropdown-item" (click)="generateCode()" [disabled]="isGeneratingCode">Generate Code (Test)</button>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
         <div editorToolbar class="ms-auto d-flex align-items-center">

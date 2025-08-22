@@ -224,6 +224,7 @@
                 "generateCode": "Generate Code",
                 "generating": "Generating...",
                 "description": "Generate solution, template, and test code using AI",
+                "tooltip": "AI Code Generation - Generate solution, template, and test code",
                 "success": "Code generation completed successfully!",
                 "partialSuccess": "Code generation completed with some issues. Please review the generated code.",
                 "error": "Code generation failed. Please try again later.",
