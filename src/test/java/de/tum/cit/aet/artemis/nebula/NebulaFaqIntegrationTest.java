@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.web.client.HttpStatusCodeException;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.nebula.dto.FaqConsistencyResponseDTO;
 import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingDTO;
 import de.tum.cit.aet.artemis.nebula.dto.FaqRewritingResponseDTO;
 import de.tum.cit.aet.artemis.nebula.exception.NebulaConnectorException;
+import de.tum.cit.aet.artemis.nebula.exception.NebulaException;
 import de.tum.cit.aet.artemis.nebula.exception.NebulaForbiddenException;
 import de.tum.cit.aet.artemis.nebula.exception.NebulaInternalErrorException;
 import de.tum.cit.aet.artemis.nebula.service.FaqProcessingService;
@@ -94,7 +96,6 @@ class NebulaFaqIntegrationTest extends AbstractNebulaIntegrationTest {
 
         var dto = new FaqRewritingDTO("test", null);
         nebulaRequestMockProvider.mockThrowingNebulaExceptionForUrl("/faq/rewrite-faq", new NebulaForbiddenException());
-
         request.postWithResponseBody("/api/nebula/courses/" + course.getId() + "/rewrite-text", dto, FaqRewritingResponseDTO.class, HttpStatus.UNAUTHORIZED);
     }
 
@@ -113,8 +114,38 @@ class NebulaFaqIntegrationTest extends AbstractNebulaIntegrationTest {
     void callRewritingPipelineCoonnectorErrorShouldReturn500() throws Exception {
         var dto = new FaqRewritingDTO("test", null);
         nebulaRequestMockProvider.mockThrowingNebulaRuntimeExceptionForUrl("/faq/rewrite-faq", new NebulaConnectorException("simulated connector failure"));
-
         request.postWithResponseBody("/api/nebula/courses/" + course.getId() + "/rewrite-text", dto, FaqRewritingResponseDTO.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testNebulaExceptionConvertion() throws Exception {
+        NebulaException exception = this.nebulaConnectionService.toNebulaException(createHttpStatusCodeException(HttpStatus.FORBIDDEN, "Forbidden access to Nebula service"));
+        assertThat(exception).isInstanceOf(NebulaForbiddenException.class);
+        exception = this.nebulaConnectionService.toNebulaException(createHttpStatusCodeException(HttpStatus.UNAUTHORIZED, "Unauthorized access to Nebula service"));
+        assertThat(exception).isInstanceOf(NebulaForbiddenException.class);
+        exception = this.nebulaConnectionService.toNebulaException(createHttpStatusCodeException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error"));
+        assertThat(exception).isInstanceOf(NebulaInternalErrorException.class);
+        exception = this.nebulaConnectionService.toNebulaException(createHttpStatusCodeException(HttpStatus.BAD_REQUEST, "Bad request"));
+        assertThat(exception).isInstanceOf(NebulaInternalErrorException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testNebulaExceptionExtraction() throws Exception {
+        HttpStatusCodeException httpException = createHttpStatusCodeException(HttpStatus.BAD_REQUEST, "Bad request");
+        nebulaConnectionService.tryExtractErrorMessage(httpException);
+        assertThat(httpException.getResponseBodyAsString()).isEqualTo("{\"message\": \"Bad request\"}");
+
+    }
+
+    private HttpStatusCodeException createHttpStatusCodeException(HttpStatus status, String message) {
+        return new HttpStatusCodeException(status, message) {
+
+            @Override
+            public String getResponseBodyAsString() {
+                return "{\"message\": \"" + message + "\"}";
+            }
+        };
+    }
 }

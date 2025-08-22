@@ -99,7 +99,7 @@ public class NebulaConnectionService {
         }
     }
 
-    private NebulaException toNebulaException(HttpStatusCodeException e) {
+    public NebulaException toNebulaException(HttpStatusCodeException e) {
         return switch (e.getStatusCode().value()) {
             case 401, 403 -> new NebulaForbiddenException();
             case 400, 500 -> new NebulaInternalErrorException(tryExtractErrorMessage(e));
@@ -107,7 +107,7 @@ public class NebulaConnectionService {
         };
     }
 
-    private String tryExtractErrorMessage(HttpStatusCodeException ex) {
+    public String tryExtractErrorMessage(HttpStatusCodeException ex) {
         try {
             return objectMapper.readTree(ex.getResponseBodyAsString()).required("detail").required("errorMessage").asText();
         }
