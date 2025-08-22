@@ -128,7 +128,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation() {
 
         boolean withDueDate = true;
-        // Set due date well in the future to avoid timing issues with result creation
         ZonedDateTime dueDate = withDueDate ? ZonedDateTime.now() : null;
         course.getExercises().forEach(ex -> ex.setDueDate(dueDate));
 
@@ -183,8 +182,15 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(result.getScore()).isZero();
         result.score(null);
 
-        // Wait for any asynchronous participant score processing to complete
+        // Wait for service to schedule tasks
         await().atMost(2, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
+        // Wait for tasks to finish
+        try {
+            Thread.sleep(ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS);
+        }
+        catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of());
