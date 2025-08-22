@@ -142,10 +142,21 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         // Test with multiple results to assert they are sorted.
         StudentParticipation studentParticipation = studentParticipations.getFirst();
-        // Create results with completion dates well before the due date to avoid timing issues
-        participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
-        participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
-        participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
+
+        // Create results with completion dates before the due date
+        ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(5);
+
+        Result result1 = participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
+        result1.setCompletionDate(completionDate);
+        resultRepository.save(result1);
+
+        Result result2 = participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
+        result2.setCompletionDate(completionDate);
+        resultRepository.save(result2);
+
+        Result result3 = participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
+        result3.setCompletionDate(completionDate);
+        resultRepository.save(result3);
 
         studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
 
@@ -173,7 +184,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         result.score(null);
 
         // Wait for any asynchronous participant score processing to complete
-        await().atMost(1, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
+        await().atMost(2, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of());
