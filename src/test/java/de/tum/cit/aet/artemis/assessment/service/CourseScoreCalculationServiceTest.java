@@ -183,6 +183,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         result.score(null);
 
         // Wait for service to schedule tasks
+        participantScoreScheduleService.executeScheduledTasks();
+
+        // Wait for service to schedule tasks
         await().atMost(2, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
         // Wait for tasks to finish
         try {
