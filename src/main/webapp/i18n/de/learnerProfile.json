@@ -47,7 +47,7 @@
                     "friendly": "Freundlich"
                 },
                 "profileSaved": "Feedback-Lernprofil gespeichert",
-                "invalidRange": "Werte müssen true oder false sein",
+                "invalidRange": "Werte müssen zwischen 1 und 3 liegen",
                 "error": "Feedback-Lernprofil konnte nicht gespeichert werden",
                 "setPreferencesButton": "Feedback-Präferenzen festlegen",
                 "replayOnboardingButton": "Onboarding wiederholen"

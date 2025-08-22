@@ -6,3 +6,8 @@
     display: flex;
     width: 100%;
 }
+
+.btn-group .btn {
+    flex: 1;
+    min-width: 0;
+}
