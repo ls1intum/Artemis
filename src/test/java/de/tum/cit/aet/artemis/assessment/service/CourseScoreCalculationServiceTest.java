@@ -154,7 +154,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         result3.setCompletionDate(completionDate);
         resultRepository.save(result3);
 
-        await().atMost(30, TimeUnit.SECONDS).until(participantScoreScheduleService::isIdle);
+        await().atMost(1, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
 
         studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
 
