@@ -27,7 +27,8 @@ public class SolutionRepository extends CodeGenerationStrategy {
 
     @Override
     protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs) throws NetworkingException {
-        var templateVariables = Map.<String, Object>of("problemStatement", exercise.getProblemStatement(), "programmingLanguage", exercise.getProgrammingLanguage());
+        var templateVariables = Map.<String, Object>of("problemStatement", exercise.getProblemStatement(), "programmingLanguage", exercise.getProgrammingLanguage(),
+                "previousBuildLogs", previousBuildLogs != null ? previousBuildLogs : "");
         return callChatClient("/prompts/hyperion/solution/1_plan.st", templateVariables);
     }
 

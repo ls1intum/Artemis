@@ -2,10 +2,10 @@ You are a senior software engineer designing a test suite for a programming exer
 Based on the following testing plan and programming language, determine the necessary file structure for the tests.
 
 **Testing Plan:**
-{{solutionPlan}}
+<solutionPlan>
 
 **Programming Language:**
-{{programmingLanguage}}
+<programmingLanguage>
 
 First, think step-by-step.
 1.  **Analyze the plan:** Review the test classes and cases mentioned in the testing plan.

@@ -2,11 +2,18 @@ You are a senior software engineer designing a solution for a programming exerci
 Your task is to create a detailed implementation plan.
 
 **Problem Statement:**
-{{problemStatement}}
+<problemStatement>
 
 **Programming Language:**
-{{programmingLanguage}}
+<programmingLanguage>
 
+<if(previousBuildLogs)>
+**Previous Build Errors:**
+<previousBuildLogs>
+
+Note: The above represents build/compilation errors from a previous attempt. Learn from these errors and adjust your solution plan accordingly.
+
+<endif>
 First, think step-by-step to analyze the problem.
 1.  **Deconstruct the requirements:** Identify the core functionalities, constraints, and goals mentioned in the problem statement.
 2.  **Identify necessary components:** Based on the requirements, list the classes, methods, and data structures that will be needed. Think about how they will interact.

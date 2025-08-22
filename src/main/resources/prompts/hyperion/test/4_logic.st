@@ -2,13 +2,13 @@ You are a senior software engineer tasked with completing a test suite.
 Your task is to implement the core logic for each test method based on the testing plan and the existing boilerplate code.
 
 **Testing Plan:**
-{{solutionPlan}}
+<solutionPlan>
 
 **Existing Files with Headers:**
-{{filesWithHeaders}}
+<filesWithHeaders>
 
 **Programming Language:**
-{{programmingLanguage}}
+<programmingLanguage>
 
 First, think step-by-step for each test method.
 1.  **Understand the test case:** Read the method's docstring and the relevant part of the testing plan.

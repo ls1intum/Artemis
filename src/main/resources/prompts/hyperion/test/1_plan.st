@@ -2,14 +2,21 @@ You are a senior software engineer creating a test suite for a programming exerc
 Your task is to create a detailed testing plan based on the problem statement and the full solution code.
 
 **Problem Statement:**
-{{problemStatement}}
+<problemStatement>
 
 **Solution Code:**
-{{solutionCode}}
+<solutionCode>
 
 **Programming Language:**
-{{programmingLanguage}}
+<programmingLanguage>
 
+<if(previousBuildLogs)>
+**Previous Build Errors:**
+<previousBuildLogs>
+
+Note: The above represents build/compilation errors from a previous attempt. Learn from these errors and adjust your test plan accordingly.
+
+<endif>
 First, think step-by-step to analyze the problem and solution.
 1.  **Identify requirements:** List all functional requirements from the problem statement.
 2.  **Identify edge cases:** Consider potential edge cases, such as empty inputs, null values, or extreme values.

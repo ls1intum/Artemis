@@ -2,13 +2,13 @@ You are a senior software engineer designing a test suite for a programming exer
 Your task is to generate the boilerplate code for each test file based on the testing plan.
 
 **Testing Plan:**
-{{solutionPlan}}
+<solutionPlan>
 
 **File Structure:**
-{{fileStructure}}
+<fileStructure>
 
 **Programming Language:**
-{{programmingLanguage}}
+<programmingLanguage>
 
 First, think step-by-step for each test file.
 1.  **Create test classes:** For each source file, define the public test class.

@@ -2,13 +2,13 @@ You are a senior software engineer tasked with completing a programming exercise
 Your task is to implement the core logic for each method based on the solution plan and the existing boilerplate code.
 
 **Solution Plan:**
-{{solutionPlan}}
+<solutionPlan>
 
 **Existing Files with Headers:**
-{{filesWithHeaders}}
+<filesWithHeaders>
 
 **Programming Language:**
-{{programmingLanguage}}
+<programmingLanguage>
 
 First, think step-by-step for each method.
 1.  **Understand the goal:** Read the method's docstring and the relevant part of the solution plan.

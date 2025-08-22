@@ -41,7 +41,7 @@ public class TestRepository extends CodeGenerationStrategy {
     protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs) throws NetworkingException {
         var solution = solutionRepository.generateCode(user, exercise, previousBuildLogs);
         var templateVariables = Map.<String, Object>of("problemStatement", exercise.getProblemStatement(), "solutionCode", solution, "programmingLanguage",
-                exercise.getProgrammingLanguage());
+                exercise.getProgrammingLanguage(), "previousBuildLogs", previousBuildLogs != null ? previousBuildLogs : "");
         return callChatClient("/prompts/hyperion/test/1_plan.st", templateVariables);
     }
 

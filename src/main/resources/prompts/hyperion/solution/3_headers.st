@@ -2,13 +2,13 @@ You are a senior software engineer designing a solution for a programming exerci
 Your task is to generate the boilerplate code for each file based on the solution plan.
 
 **Solution Plan:**
-{{solutionPlan}}
+<solutionPlan>
 
 **File Structure:**
-{{fileStructure}}
+<fileStructure>
 
 **Programming Language:**
-{{programmingLanguage}}
+<programmingLanguage>
 
 First, think step-by-step for each file.
 1.  **Create classes:** For each source file, define the public class.

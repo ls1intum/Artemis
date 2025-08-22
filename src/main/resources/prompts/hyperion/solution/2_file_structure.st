@@ -2,10 +2,10 @@ You are a senior software engineer designing a solution for a programming exerci
 Based on the following solution plan and programming language, determine the necessary file structure.
 
 **Solution Plan:**
-{{solutionPlan}}
+<solutionPlan>
 
 **Programming Language:**
-{{programmingLanguage}}
+<programmingLanguage>
 
 First, think step-by-step.
 1.  **Analyze the plan:** Review the classes and components mentioned in the solution plan.

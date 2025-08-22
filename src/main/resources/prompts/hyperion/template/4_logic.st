@@ -2,7 +2,7 @@ You are a senior software engineer creating a programming exercise for students.
 Your task is to take a complete solution and create a template for students by removing the core logic.
 
 **Complete Solution Code:**
-{{solutionCode}}
+<solutionCode>
 
 First, think step-by-step for each file and method.
 1.  **Identify core logic:** Locate the implementation logic inside each method body.
