@@ -142,19 +142,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         StudentParticipation studentParticipation = studentParticipations.getFirst();
 
         // Create results with completion dates before the due date
-        ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(5);
-
-        Result result1 = participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
-        result1.setCompletionDate(completionDate);
-        resultRepository.save(result1);
-
-        Result result2 = participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
-        result2.setCompletionDate(completionDate);
-        resultRepository.save(result2);
-
-        Result result3 = participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
-        result3.setCompletionDate(completionDate);
-        resultRepository.save(result3);
+        participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
+        participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
+        participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
 
         participantScoreScheduleService.executeScheduledTasks();
 
