@@ -2,30 +2,29 @@ package de.tum.cit.aet.artemis.hyperion.dto;
 
 import java.util.List;
 
-public class CodeGenerationResponseDTO {
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-    private List<GeneratedFile> files;
+/**
+ * DTO for internal code generation response.
+ * Contains the generated content from AI service calls.
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record CodeGenerationResponseDTO(
+        /**
+         * The solution plan as a string
+         */
+        String solutionPlan,
 
-    private String solutionPlan;
-
-    public CodeGenerationResponseDTO(List<GeneratedFile> files, String solutionPlan) {
-        this.files = files;
-        this.solutionPlan = solutionPlan;
-    }
-
-    public List<GeneratedFile> getFiles() {
-        return files;
-    }
-
-    public void setFiles(List<GeneratedFile> files) {
-        this.files = files;
-    }
+        /**
+         * List of generated files with path and content
+         */
+        List<GeneratedFile> files) {
 
     public String getSolutionPlan() {
         return solutionPlan;
     }
 
-    public void setSolutionPlan(String solutionPlan) {
-        this.solutionPlan = solutionPlan;
+    public List<GeneratedFile> getFiles() {
+        return files;
     }
 }

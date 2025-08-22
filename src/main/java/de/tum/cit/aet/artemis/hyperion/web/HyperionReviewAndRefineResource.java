@@ -21,11 +21,14 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.ConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.ProblemStatementRewriteService;
+import de.tum.cit.aet.artemis.hyperion.service.codegeneration.CodeGenerationExecutionService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -55,13 +58,16 @@ public class HyperionReviewAndRefineResource {
 
     private final ProblemStatementRewriteService rewriteService;
 
+    private final CodeGenerationExecutionService codeGenerationExecutionService;
+
     public HyperionReviewAndRefineResource(UserRepository userRepository, CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ConsistencyCheckService consistencyCheckService, ProblemStatementRewriteService rewriteService) {
+            ConsistencyCheckService consistencyCheckService, ProblemStatementRewriteService rewriteService, CodeGenerationExecutionService codeGenerationExecutionService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.consistencyCheckService = consistencyCheckService;
         this.rewriteService = rewriteService;
+        this.codeGenerationExecutionService = codeGenerationExecutionService;
     }
 
     /**
@@ -171,6 +177,47 @@ public class HyperionReviewAndRefineResource {
         }
         catch (Exception e) {
             log.error("Problem statement rewrite failed for course {}: {}", courseId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Generates solution, template, and test code for a programming exercise using AI.
+     * Uses iterative generation with build feedback to produce compilable code.
+     *
+     * @param exerciseId the ID of the programming exercise to generate code for
+     * @param requestDTO the request containing generation options (currently empty)
+     * @return HTTP 200 with generation results, or appropriate error status
+     */
+    @Operation(summary = "Generate exercise code", description = "Generates solution, template, and test code for a programming exercise using AI with iterative improvement")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Code generation completed", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CodeGenerationResultDTO.class))),
+            @ApiResponse(responseCode = "503", description = "Hyperion service unavailable"), @ApiResponse(responseCode = "500", description = "Internal server error") })
+    @EnforceAtLeastInstructorInExercise
+    @PostMapping("exercises/{exerciseId}/generate-code")
+    public ResponseEntity<CodeGenerationResultDTO> generateExerciseCode(
+            @Parameter(description = "ID of the programming exercise to generate code for", required = true) @PathVariable Long exerciseId,
+            @Parameter(description = "Request containing generation options", required = true) @RequestBody CodeGenerationRequestDTO requestDTO) {
+
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+
+        log.info("Starting code generation for exercise {} by user {}", exerciseId, user.getLogin());
+
+        try {
+            var result = codeGenerationExecutionService.generateAndCompileCode(programmingExercise, user);
+
+            if (result != null && result.isSuccessful()) {
+                log.info("Code generation successful for exercise {}", exerciseId);
+                return ResponseEntity.ok(new CodeGenerationResultDTO(true, "Code generation and compilation successful", 1));
+            }
+            else {
+                log.warn("Code generation failed for exercise {} after maximum attempts", exerciseId);
+                return ResponseEntity.ok(new CodeGenerationResultDTO(false, "Code generation failed after maximum attempts", 3));
+            }
+        }
+        catch (Exception e) {
+            log.error("Code generation failed for exercise {}: {}", exerciseId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
