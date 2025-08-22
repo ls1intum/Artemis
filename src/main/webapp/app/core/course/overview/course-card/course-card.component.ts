@@ -5,7 +5,6 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
@@ -34,8 +33,6 @@ export class CourseCardComponent implements OnChanges, OnInit, OnDestroy {
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     @Input() course: Course;
-
-    CachingStrategy = CachingStrategy;
 
     nextRelevantExercise?: Exercise;
     exerciseCount = 0;
