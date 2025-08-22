@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import net.fortuna.ical4j.model.component.VEvent;
+import net.fortuna.ical4j.model.property.Uid;
 
 @Lazy
 @Service
@@ -27,10 +30,6 @@ public class CalendarSubscriptionService {
 
     CalendarSubscriptionService(UserRepository userRepository) {
         this.userRepository = userRepository;
-    }
-
-    public String getICSFileAsString(Set<CalendarEventDTO> calendarEventDTOs) {
-        return "";
     }
 
     public String getOrCreateSubscriptionTokenFor(User user) {
@@ -72,5 +71,20 @@ public class CalendarSubscriptionService {
             hexString.append(String.format("%02x", b));
         }
         return hexString.toString();
+    }
+
+    public String getICSFileAsString(Set<CalendarEventDTO> calendarEventDTOs) {
+        return "";
+    }
+
+    private VEvent getVEventFrom(CalendarEventDTO calendarEventDTO) {
+        Instant start = calendarEventDTO.startDate().toInstant();
+        Instant end = calendarEventDTO.endDate() != null ? calendarEventDTO.endDate().toInstant() : null;
+
+        VEvent event = (end != null) ? new VEvent(start, end, calendarEventDTO.title()) : new VEvent(start, calendarEventDTO.title());
+
+        event.add(new Uid(calendarEventDTO.id() + "@artemis.subscription"));
+
+        return event;
     }
 }
