@@ -1,13 +1,6 @@
 {
     "artemisApp": {
         "calendar": {
-            "mondayShort": "Mon",
-            "tuesdayShort": "Tue",
-            "wednesdayShort": "Wed",
-            "thursdayShort": "Thu",
-            "fridayShort": "Fri",
-            "saturdayShort": "Sat",
-            "sundayShort": "Sun",
             "eventSubtypeName": {
                 "lectureStart": "Start",
                 "lectureEnd": "End",

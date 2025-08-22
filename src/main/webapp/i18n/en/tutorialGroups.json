@@ -11,15 +11,6 @@
             "online": "Online",
             "german": "German",
             "english": "English",
-            "weekdays": {
-                "monday": "Monday",
-                "tuesday": "Tuesday",
-                "wednesday": "Wednesday",
-                "thursday": "Thursday",
-                "friday": "Friday",
-                "saturday": "Saturday",
-                "sunday": "Sunday"
-            },
             "repetitions": {
                 "everyWeek": "Every week",
                 "everyNWeeks": "Every {{ n }} weeks"
@@ -274,6 +265,20 @@
                 "title": "Edit Tutorial Group"
             },
             "tutorialGroupDetail": {
+                "cardTitles": {
+                    "tutorCardTitle": "Tutor",
+                    "generalInfoCardTitle": "General Information",
+                    "averageAttendanceCardTitle": "Average Attendance",
+                    "nextSessionCardTitle": "Next Session"
+                },
+                "language": "Language",
+                "capacity": "Capacity",
+                "mode": "Mode",
+                "campus": "Campus",
+                "weekday": "Weekday",
+                "date": "Date",
+                "time": "Time",
+                "location": "Location",
                 "title": "Tutorial Group Detail",
                 "teachingAssistantNotSet": "Tutor not set",
                 "capacityNotSet": "Capacity not set",

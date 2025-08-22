@@ -11,15 +11,6 @@
             "online": "Online",
             "german": "Deutsch",
             "english": "Englisch",
-            "weekdays": {
-                "monday": "Montag",
-                "tuesday": "Dienstag",
-                "wednesday": "Mittwoch",
-                "thursday": "Donnerstag",
-                "friday": "Freitag",
-                "saturday": "Samstag",
-                "sunday": "Sonntag"
-            },
             "repetitions": {
                 "everyWeek": "Jede Woche",
                 "everyNWeeks": "Alle {{ n }} Wochen"
@@ -274,6 +265,20 @@
                 "title": "Übungsgruppe bearbeiten"
             },
             "tutorialGroupDetail": {
+                "cardTitles": {
+                    "tutorCardTitle": "Tutor:in",
+                    "generalInfoCardTitle": "Allgemeine Information",
+                    "averageAttendanceCardTitle": "Durchschn. Auslastung",
+                    "nextSessionCardTitle": "Nächste Session"
+                },
+                "language": "Sprache",
+                "capacity": "Kapazität",
+                "mode": "Modus",
+                "campus": "Campus",
+                "weekday": "Wochentag",
+                "date": "Datum",
+                "time": "Uhrzeit",
+                "location": "Ort",
                 "title": "Übungsgruppen-Details",
                 "teachingAssistantNotSet": "Tutor:in nicht gesetzt",
                 "capacityNotSet": "Kapazität nicht eingestellt",

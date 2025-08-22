@@ -3,7 +3,7 @@
     <hr />
     <div class="card-row">
         <div class="card small">
-            <h5>Tutor</h5>
+            <h5 jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.tutorCardTitle"></h5>
             <div class="tutor-card-content">
                 <jhi-profile-picture
                     imageSizeInRem="6"
@@ -18,30 +18,30 @@
             </div>
         </div>
         <div class="card big">
-            <h5>General Information</h5>
+            <h5 jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.generalInfoCardTitle"></h5>
             <div class="info-card-content">
                 <div class="info-stack">
                     <div class="info-item">
-                        <fa-icon [icon]="faRotateRight" />
-                        <span class="info-label">Weekday:</span>
-                        <span jhiTranslate="{{ tutorialGroupWeekday() }}"></span>
+                        <fa-icon [icon]="faFlag" />
+                        <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.language' | artemisTranslate) + ':' }}</span>
+                        <span jhiTranslate="{{ tutorialGroupLanguage() }}"></span>
                     </div>
                     <div class="info-item">
-                        <fa-icon [icon]="faFlag" />
-                        <span class="info-label">Language:</span>
-                        <span jhiTranslate="{{ tutorialGroupLanguage() }}"></span>
+                        <fa-icon [icon]="faUsers" />
+                        <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.capacity' | artemisTranslate) + ':' }}</span>
+                        {{ tutorialGroupCapacity() }}
                     </div>
                 </div>
                 <div class="info-stack">
                     <div class="info-item">
-                        <fa-icon [icon]="faUsers" />
-                        <span class="info-label">Capacity:</span>
-                        {{ tutorialGroup().capacity ?? '-' }}
+                        <fa-icon [icon]="faTag" />
+                        <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.mode' | artemisTranslate) + ':' }}</span>
+                        <span jhiTranslate="{{ tutorialGroupMode() }}"></span>
                     </div>
                     <div class="info-item">
-                        <fa-icon [icon]="faTag" />
-                        <span class="info-label">Mode:</span>
-                        <span jhiTranslate="{{ tutorialGroupMode() }}"></span>
+                        <fa-icon [icon]="faBuildingColumns" />
+                        <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.campus' | artemisTranslate) + ':' }}</span>
+                        {{ tutorialGroupCampus() }}
                     </div>
                 </div>
             </div>
@@ -49,34 +49,34 @@
     </div>
     <div class="card-row">
         <div class="card small">
-            <h5>Average Attendance</h5>
+            <h5 jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.averageAttendanceCardTitle"></h5>
             <div class="tutor-card-content"></div>
         </div>
         <div class="card big">
-            <h5>Next Session</h5>
+            <h5 jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.nextSessionCardTitle"></h5>
             <div class="info-card-content">
                 <div class="info-stack">
                     <div class="info-item">
-                        <fa-icon [icon]="faCalendarDays" />
-                        <span class="info-label">Date:</span>
-                        {{ nextSessionDate() }}
+                        <fa-icon [icon]="faCalendarDay" />
+                        <span class="info-label"> {{ ('artemisApp.pages.tutorialGroupDetail.weekday' | artemisTranslate) + ':' }}</span>
+                        <span jhiTranslate="{{ nextSessionWeekday() }}"></span>
                     </div>
                     <div class="info-item">
-                        <fa-icon [icon]="faClock" />
-                        <span class="info-label">Time:</span>
-                        {{ nextSessionTime() }}
+                        <fa-icon [icon]="faCalendar" />
+                        <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.date' | artemisTranslate) + ':' }}</span>
+                        {{ nextSessionDate() }}
                     </div>
                 </div>
                 <div class="info-stack">
                     <div class="info-item">
-                        <fa-icon [icon]="faMapPin" />
-                        <span class="info-label">Location:</span>
-                        {{ nextSessionLocation() }}
+                        <fa-icon [icon]="faClock" />
+                        <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.time' | artemisTranslate) + ':' }}</span>
+                        {{ nextSessionTime() }}
                     </div>
                     <div class="info-item">
-                        <fa-icon [icon]="faBuildingColumns" />
-                        <span class="info-label">Campus:</span>
-                        {{ nextSessionCampus() }}
+                        <fa-icon [icon]="faMapPin" />
+                        <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.location' | artemisTranslate) + ':' }}</span>
+                        {{ nextSessionLocation() }}
                     </div>
                 </div>
             </div>

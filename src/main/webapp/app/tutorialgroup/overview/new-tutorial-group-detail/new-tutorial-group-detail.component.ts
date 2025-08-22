@@ -5,16 +5,16 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBuildingColumns, faCalendarDays, faClock, faFlag, faMapPin, faRotateRight, faTag, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faBuildingColumns, faCalendar, faCalendarDay, faClock, faFlag, faMapPin, faRotateRight, faTag, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 // TODO: translate info-labels in template
-// TODO: replace weekday with campus in general information, add weekday to next session, remove campus from session table
 
 @Component({
     selector: 'jhi-new-tutorial-group-detail',
-    imports: [ProfilePictureComponent, FaIconComponent, TranslateDirective],
+    imports: [ProfilePictureComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './new-tutorial-group-detail.component.html',
     styleUrl: './new-tutorial-group-detail.component.scss',
 })
@@ -39,7 +39,8 @@ export class NewTutorialGroupDetailComponent {
     readonly faFlag = faFlag;
     readonly faUsers = faUsers;
     readonly faTag = faTag;
-    readonly faCalendarDays = faCalendarDays;
+    readonly faCalendarDay = faCalendarDay;
+    readonly faCalendar = faCalendar;
     readonly faClock = faClock;
     readonly faMapPin = faMapPin;
     readonly faBuildingColumns = faBuildingColumns;
@@ -59,6 +60,8 @@ export class NewTutorialGroupDetailComponent {
         return '-';
     });
 
+    tutorialGroupCapacity = computed<string>(() => String(this.tutorialGroup().capacity ?? '-'));
+
     tutorialGroupMode = computed<string>(() => {
         const isOnline = this.tutorialGroup().isOnline;
         if (isOnline !== undefined) {
@@ -71,17 +74,23 @@ export class NewTutorialGroupDetailComponent {
         return '-';
     });
 
-    tutorialGroupWeekday = computed<string>(() => {
-        const weekDayIndex = this.tutorialGroup().tutorialGroupSchedule?.dayOfWeek;
+    tutorialGroupCampus = computed<string>(() => {
+        const isOnline = this.tutorialGroup().isOnline;
+        const campus = this.tutorialGroup()?.campus;
+        return !isOnline && campus ? campus : '-';
+    });
+
+    nextSessionWeekday = computed<string>(() => {
+        const weekDayIndex = this.nextSession()?.start?.day();
         if (weekDayIndex && weekDayIndex >= 1 && weekDayIndex <= 7) {
             const keys = [
-                'artemisApp.generic.weekdays.monday',
-                'artemisApp.generic.weekdays.tuesday',
-                'artemisApp.generic.weekdays.wednesday',
-                'artemisApp.generic.weekdays.thursday',
-                'artemisApp.generic.weekdays.friday',
-                'artemisApp.generic.weekdays.saturday',
-                'artemisApp.generic.weekdays.sunday',
+                'global.weekdays.monday',
+                'global.weekdays.tuesday',
+                'global.weekdays.wednesday',
+                'global.weekdays.thursday',
+                'global.weekdays.friday',
+                'global.weekdays.saturday',
+                'global.weekdays.sunday',
             ];
             return keys[weekDayIndex - 1];
         }
@@ -107,10 +116,4 @@ export class NewTutorialGroupDetailComponent {
     });
 
     nextSessionLocation = computed<string>(() => this.nextSession()?.location ?? '-');
-
-    nextSessionCampus = computed<string>(() => {
-        const isOnline = this.tutorialGroup().isOnline;
-        const campus = this.tutorialGroup()?.campus;
-        return !isOnline && campus ? campus : '-';
-    });
 }
