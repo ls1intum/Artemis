@@ -98,7 +98,7 @@ public class ExerciseDeletionService {
     }
 
     /**
-     * Delete student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
+     * Delete student build plans (except BASE/SOLUTION) and git repositories of all exercise student participations.
      *
      * @param exerciseId programming exercise for which build plans in respective student participations are deleted
      */
