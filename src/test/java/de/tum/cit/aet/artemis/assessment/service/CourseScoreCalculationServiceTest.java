@@ -14,8 +14,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -123,10 +124,10 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(courseResult).isNull();
     }
 
-    @RepeatedTest(500)
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation() {
-        boolean withDueDate = Math.random() < 0.5;
+    void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation(boolean withDueDate) {
         ZonedDateTime dueDate = withDueDate ? ZonedDateTime.now() : null;
         course.getExercises().forEach(ex -> ex.setDueDate(dueDate));
 
