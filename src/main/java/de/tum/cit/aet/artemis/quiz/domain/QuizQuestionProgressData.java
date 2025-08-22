@@ -28,6 +28,7 @@ public class QuizQuestionProgressData {
     // The priority is used to determine the order in which questions are shown
     private int priority;
 
+    // The due date is the date when the question should be shown again
     private ZonedDateTime dueDate;
 
     // The box is used to track the progress of the question based on the Leitner system - correct answers move the question to a higher box, incorrect answers move it to a lower
