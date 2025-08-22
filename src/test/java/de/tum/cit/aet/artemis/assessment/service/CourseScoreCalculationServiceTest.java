@@ -10,7 +10,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
@@ -159,9 +158,12 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         // Test with null result set.
         Set<Result> results = participationUtilService.getResultsForParticipation(studentParticipations.get(1));
 
-        // Clear participant scores before deleting results
-        for (Long id : studentParticipations.stream().map(StudentParticipation::getExercise).map(Exercise::getId).collect(Collectors.toSet())) {
-            participantScoreRepository.deleteAllByExerciseId(id);
+        // Wait for any pending scheduled tasks to complete before cleanup to avoid race conditions
+        await().until(participantScoreScheduleService::isIdle);
+
+        // Clear participant score references before deleting results to avoid foreign key constraint violations
+        for (Result result : results) {
+            participantScoreRepository.clearAllByResultId(result.getId());
         }
 
         resultRepository.deleteAll(results);
@@ -190,7 +192,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
             Thread.sleep(100);
         }
         catch (InterruptedException e) {
-            e.printStackTrace();
         }
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
