@@ -376,4 +376,54 @@ describe('BuildAgentSummaryComponent', () => {
         expect(component.concurrencyMap['nonexistentAgent']).toBe(3);
         expect(mockBuildAgentsService.adjustBuildAgentCapacity).toHaveBeenCalledWith('nonexistentAgent', 3);
     });
+
+    it('should handle build agents with missing maxNumberOfConcurrentBuildJobs', () => {
+        const agentsWithMissingValues: BuildAgentInformation[] = [
+            {
+                id: 1,
+                buildAgent: { name: 'agent1', displayName: 'Agent 1', memberAddress: 'agent1' },
+                maxNumberOfConcurrentBuildJobs: undefined,
+                numberOfCurrentBuildJobs: 0,
+                status: BuildAgentStatus.ACTIVE,
+                maxConcurrentBuildsAllowed: 2,
+            },
+        ];
+
+        mockWebsocketService.receive.mockReturnValue(of(agentsWithMissingValues));
+        component.ngOnInit();
+
+        // Should use fallback values (0 for capacity calculation, 1 for concurrency map)
+        expect(component.buildCapacity).toBe(0);
+        expect(component.concurrencyMap['agent1']).toBe(1);
+    });
+
+    it('should handle error in adjustBuildAgentCapacity and restore previous capacity', () => {
+        mockBuildAgentsService.adjustBuildAgentCapacity.mockReturnValue(throwError(() => new Error('Capacity adjustment failed')));
+
+        // Set initial concurrency
+        component.concurrencyMap['agent1'] = 2;
+
+        component.adjustBuildAgentCapacity('agent1', 5);
+
+        // Should restore previous capacity and show error alert
+        expect(component.concurrencyMap['agent1']).toBe(2);
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
+            type: AlertType.DANGER,
+            message: 'artemisApp.buildAgents.alerts.buildAgentCapacityAdjustFailed',
+        });
+    });
+
+    it('should handle adjustBuildAgentCapacity with invalid parameters', () => {
+        // Test with empty agentName
+        component.adjustBuildAgentCapacity('', 5);
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+
+        // Test with capacity < 1
+        component.adjustBuildAgentCapacity('agent1', 0);
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+
+        // Test with negative capacity
+        component.adjustBuildAgentCapacity('agent1', -1);
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+    });
 });

@@ -432,4 +432,35 @@ describe('BuildAgentDetailsComponent', () => {
             message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName',
         });
     });
+
+    it('should handle page change correctly', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        const loadSpy = jest.spyOn(component, 'loadFinishedBuildJobs');
+
+        component.ngOnInit();
+        component.onPageChange({ page: 2, pageSize: 50, direction: 'next' });
+
+        expect(component.page).toBe(2);
+        expect(loadSpy).toHaveBeenCalled();
+    });
+
+    it('should handle error in loadFinishedBuildJobs', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(throwError(() => new Error('API Error')));
+
+        component.ngOnInit();
+        component.isLoading = true; // Set loading to true to test it gets reset
+        component.loadFinishedBuildJobs();
+
+        // Verify that loading state is reset on error
+        expect(component.isLoading).toBeFalse();
+    });
+
+    it('should dismiss concurrency reset warning', () => {
+        expect(component.concurrencyResetWarningDismissed).toBeFalse();
+
+        component.dismissConcurrencyResetWarning();
+
+        expect(component.concurrencyResetWarningDismissed).toBeTrue();
+    });
 });
