@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service.profile;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,12 +36,19 @@ public class CourseLearnerProfileService {
 
     /**
      * Create a course learner profile for a user and saves it in the database
+     * If a profile already exists for this user and course, it returns the existing profile.
      *
      * @param course the course for which the profile is created
      * @param user   the user for which the profile is created
      * @return Saved CourseLearnerProfile
      */
     public CourseLearnerProfile createCourseLearnerProfile(Course course, User user) {
+
+        // Check if a profile already exists for this user and course
+        Optional<CourseLearnerProfile> existingProfile = courseLearnerProfileRepository.findByLoginAndCourse(user.getLogin(), course);
+        if (existingProfile.isPresent()) {
+            return existingProfile.get();
+        }
 
         // Ensure that the user has a learner profile (lazy creation)
         if (user.getLearnerProfile() == null) {

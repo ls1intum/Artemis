@@ -6,6 +6,8 @@ import static de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile.MIN_PRO
 
 import java.util.Optional;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -57,7 +59,7 @@ public class LearnerProfileResource {
     }
 
     /**
-     * GET learner-profile : get the {@link LearnerProfile} of the current user if it exists, otherwise create a new profile..
+     * GET learner-profile : get the {@link LearnerProfile} of the current user if it exists, otherwise create a new profile.
      *
      * @return A ResponseEntity with a status matching the validity of the request containing the profile.
      */
@@ -65,7 +67,8 @@ public class LearnerProfileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<LearnerProfileDTO> getOrCreateLearnerProfile() {
         User user = userRepository.getUser();
-        log.debug("REST request to get LearnerProfile of user {}", user.getLogin());
+        log.debug("REST request to get or create LearnerProfile of user {}", user.getLogin());
+
         Optional<LearnerProfile> existingProfile = learnerProfileRepository.findByUser(user);
         if (existingProfile.isPresent()) {
             return ResponseEntity.ok(LearnerProfileDTO.of(existingProfile.get()));
@@ -73,9 +76,9 @@ public class LearnerProfileResource {
 
         LearnerProfile profile = new LearnerProfile();
         profile.setUser(user);
-        profile.setFeedbackAlternativeStandard(DEFAULT_PROFILE_VALUE);
-        profile.setFeedbackBriefDetailed(DEFAULT_PROFILE_VALUE);
-        profile.setFeedbackFollowupSummary(DEFAULT_PROFILE_VALUE);
+        profile.setFeedbackDetail(DEFAULT_PROFILE_VALUE);
+        profile.setFeedbackFormality(DEFAULT_PROFILE_VALUE);
+        profile.setHasSetupFeedbackPreferences(false);
 
         user.setLearnerProfile(profile);
         userRepository.save(user);
@@ -85,26 +88,27 @@ public class LearnerProfileResource {
     }
 
     /**
-     * PUT learner-profiles/{learnerProfileId} : update fields in a {@link LearnerProfile}.
+     * PUT learner-profile : update fields in the current user's {@link LearnerProfile}.
      *
      * @param learnerProfileDTO {@link LearnerProfileDTO} object from the request body.
      * @return A ResponseEntity with a status matching the validity of the request containing the updated profile.
      */
     @PutMapping(value = "learner-profile")
     @EnforceAtLeastStudent
-    public ResponseEntity<LearnerProfileDTO> updateLearnerProfile(@RequestBody LearnerProfileDTO learnerProfileDTO) {
+    public ResponseEntity<LearnerProfileDTO> updateLearnerProfile(@Valid @RequestBody LearnerProfileDTO learnerProfileDTO) {
         User user = userRepository.getUser();
         log.debug("REST request to update LearnerProfile of user {}", user.getLogin());
 
         LearnerProfile updateProfile = learnerProfileRepository.findByUserElseThrow(user);
 
-        validateProfileField(learnerProfileDTO.feedbackAlternativeStandard(), "FeedbackAlternativeStandard");
-        validateProfileField(learnerProfileDTO.feedbackFollowupSummary(), "FeedbackFollowupSummary");
-        validateProfileField(learnerProfileDTO.feedbackBriefDetailed(), "FeedbackBriefDetailed");
+        validateProfileField(learnerProfileDTO.feedbackDetail(), "FeedbackDetail");
+        validateProfileField(learnerProfileDTO.feedbackFormality(), "FeedbackFormality");
 
-        updateProfile.setFeedbackAlternativeStandard(learnerProfileDTO.feedbackAlternativeStandard());
-        updateProfile.setFeedbackFollowupSummary(learnerProfileDTO.feedbackFollowupSummary());
-        updateProfile.setFeedbackBriefDetailed(learnerProfileDTO.feedbackBriefDetailed());
+        updateProfile.setFeedbackDetail(learnerProfileDTO.feedbackDetail());
+        updateProfile.setFeedbackFormality(learnerProfileDTO.feedbackFormality());
+
+        // Set the flag to true when the user updates their preferences
+        updateProfile.setHasSetupFeedbackPreferences(true);
 
         LearnerProfile result = learnerProfileRepository.save(updateProfile);
         return ResponseEntity.ok(LearnerProfileDTO.of(result));
