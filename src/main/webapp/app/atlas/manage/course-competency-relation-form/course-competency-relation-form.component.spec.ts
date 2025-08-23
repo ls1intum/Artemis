@@ -7,6 +7,8 @@ import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-com
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/atlas/shared/entities/competency.model';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 
 describe('CourseCompetencyRelationFormComponent', () => {
     let component: CourseCompetencyRelationFormComponent;
@@ -53,6 +55,10 @@ describe('CourseCompetencyRelationFormComponent', () => {
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,
+                },
+                {
+                    provide: FeatureToggleService,
+                    useClass: MockFeatureToggleService,
                 },
                 {
                     provide: CourseCompetencyApiService,
@@ -337,7 +343,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
         it('should show lightbulb button for relation suggestions', () => {
             const lightbulbButton = fixture.debugElement.nativeElement.querySelector('button[ngbTooltip="Get AI Suggestions"]');
             expect(lightbulbButton).not.toBeNull();
-            expect(lightbulbButton.disabled).toBeFalse();
+            expect(lightbulbButton.disabled).toBeFalsy();
         });
 
         it('should disable lightbulb button when loading suggestions', async () => {
@@ -347,8 +353,8 @@ describe('CourseCompetencyRelationFormComponent', () => {
             fixture.detectChanges();
 
             const lightbulbButton = fixture.debugElement.nativeElement.querySelector('button[ngbTooltip="Get AI Suggestions"]');
-            expect(lightbulbButton.disabled).toBeTrue();
-            expect(component.isLoadingSuggestions()).toBeTrue();
+            expect(lightbulbButton.disabled).toBeTruthy();
+            expect(component.isLoadingSuggestions()).toBeTruthy();
         });
 
         it('should call API and load suggestions when lightbulb button is clicked', async () => {
@@ -358,7 +364,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
             expect(getSuggestedCompetencyRelationsSpy).toHaveBeenCalledWith(courseId);
             expect(component.suggestedRelations()).toEqual(mockSuggestionResponse.relations);
-            expect(component.isLoadingSuggestions()).toBeFalse();
+            expect(component.isLoadingSuggestions()).toBeFalsy();
         });
 
         it('should auto-select all suggestions when fetched', async () => {
@@ -366,8 +372,9 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
             await component.fetchSuggestions();
 
-            expect(component.selectedSuggestions().size).toBe(3);
-            expect(component.selectedSuggestionsCount()).toBe(3);
+            // Only non-existing relations should be auto-selected (relation 1 already exists)
+            expect(component.selectedSuggestions().size).toBe(2);
+            expect(component.selectedSuggestionsCount()).toBe(2);
         });
 
         it('should display suggested relations with correct information', async () => {
@@ -391,18 +398,19 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
             await component.fetchSuggestions();
 
-            // Initially all suggestions are selected
-            expect(component['isSuggestionSelected'](0)).toBeTrue();
+            // Initially non-existing suggestions are selected (index 0 exists, so only index 1 and 2 should be selected)
+            expect(component['isSuggestionSelected'](0)).toBeFalsy(); // This one already exists
+            expect(component['isSuggestionSelected'](1)).toBeTruthy(); // This one doesn't exist
 
-            // Toggle first suggestion off
-            component['toggleSuggestionSelection'](0);
-            expect(component['isSuggestionSelected'](0)).toBeFalse();
-            expect(component.selectedSuggestionsCount()).toBe(2);
+            // Toggle second suggestion off
+            component['toggleSuggestionSelection'](1);
+            expect(component['isSuggestionSelected'](1)).toBeFalsy();
+            expect(component.selectedSuggestionsCount()).toBe(1);
 
             // Toggle it back on
-            component['toggleSuggestionSelection'](0);
-            expect(component['isSuggestionSelected'](0)).toBeTrue();
-            expect(component.selectedSuggestionsCount()).toBe(3);
+            component['toggleSuggestionSelection'](1);
+            expect(component['isSuggestionSelected'](1)).toBeTruthy();
+            expect(component.selectedSuggestionsCount()).toBe(2);
         });
 
         it('should prevent selection of existing relations', async () => {
@@ -417,12 +425,12 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
             await component.fetchSuggestions();
 
-            expect(component['doesSuggestionAlreadyExist'](responseWithExisting.relations[0])).toBeTrue();
-            expect(component['doesSuggestionAlreadyExist'](responseWithExisting.relations[1])).toBeFalse();
+            expect(component['doesSuggestionAlreadyExist'](responseWithExisting.relations[0])).toBeTruthy();
+            expect(component['doesSuggestionAlreadyExist'](responseWithExisting.relations[1])).toBeFalsy();
 
             // Should only auto-select non-existing relations
-            expect(component.selectedSuggestions().has(0)).toBeFalse();
-            expect(component.selectedSuggestions().has(1)).toBeTrue();
+            expect(component.selectedSuggestions().has(0)).toBeFalsy();
+            expect(component.selectedSuggestions().has(1)).toBeTruthy();
         });
 
         it('should apply suggestion to form when clicked', async () => {
@@ -455,8 +463,9 @@ describe('CourseCompetencyRelationFormComponent', () => {
             await component.fetchSuggestions();
             fixture.detectChanges();
 
-            const importButton = fixture.debugElement.nativeElement.querySelector('button:contains("Add Suggestions")');
-            expect(importButton).not.toBeNull();
+            const importButton = fixture.debugElement.nativeElement.querySelector('button');
+            const buttonText = importButton?.textContent || '';
+            expect(buttonText).toContain('Add Suggestions');
         });
 
         it('should create selected suggestions when import button is clicked', async () => {
@@ -510,7 +519,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
             await component.fetchSuggestions();
 
-            expect(component.isLoadingSuggestions()).toBeFalse();
+            expect(component.isLoadingSuggestions()).toBeFalsy();
             expect(component.suggestedRelations()).toEqual([]);
             expect(alertServiceWarningSpy).toHaveBeenCalledWith('Failed to load suggested relations');
         });
