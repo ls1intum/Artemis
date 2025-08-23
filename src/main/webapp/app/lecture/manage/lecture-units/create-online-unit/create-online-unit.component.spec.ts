@@ -1,7 +1,7 @@
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CreateOnlineUnitComponent } from 'app/lecture/manage/lecture-units/create-online-unit/create-online-unit.component';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/onlineUnit.service';
+import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
