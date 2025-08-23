@@ -280,7 +280,7 @@
         <div cdkDropListGroup>
             <div class="row">
                 <div class="background-area">
-                    <jhi-secured-image
+                    <jhi-image
                         #backgroundImage
                         [src]="addPublicFilePrefix(filePreviewPaths.get(question().backgroundFilePath!)) || ''"
                         [alt]="'artemisApp.dragAndDropQuestion.noBackgroundPicture' | artemisTranslate"
@@ -361,7 +361,7 @@
                         <div class="drag-item" id="drag-item-{{ i }}" cdkDrag [cdkDragDisabled]="false" [cdkDragData]="dragItem">
                             @if (dragItem.pictureFilePath) {
                                 <div>
-                                    <jhi-secured-image [src]="addPublicFilePrefix(filePreviewPaths.get(dragItem.pictureFilePath))!" />
+                                    <jhi-image [src]="addPublicFilePrefix(filePreviewPaths.get(dragItem.pictureFilePath))!" />
                                 </div>
                             }
                             @if (!dragItem.pictureFilePath) {
@@ -429,7 +429,7 @@
                                     </div>
                                     @if (dragItem.pictureFilePath) {
                                         <div>
-                                            <jhi-secured-image [src]="addPublicFilePrefix(filePreviewPaths.get(dragItem.pictureFilePath)) || ''" />
+                                            <jhi-image [src]="addPublicFilePrefix(filePreviewPaths.get(dragItem.pictureFilePath)) || ''" />
                                         </div>
                                     }
                                     @if (!dragItem.pictureFilePath) {

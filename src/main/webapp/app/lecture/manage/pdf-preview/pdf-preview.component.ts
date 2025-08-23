@@ -15,7 +15,7 @@ import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { PDFDocument } from 'pdf-lib';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -561,8 +561,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     private async createPdfFile(pdfDoc: PDFDocument, fileName: string, isStudentVersion: boolean = false): Promise<File> {
         const pdfBytes = await pdfDoc.save();
+        const arrayBuffer = pdfBytes.slice(0, pdfBytes.byteLength).buffer;
         const suffix = isStudentVersion ? '_student' : '';
-        return new File([pdfBytes], `${fileName}${suffix}.pdf`, { type: 'application/pdf' });
+        return new File([arrayBuffer], `${fileName}${suffix}.pdf`, { type: 'application/pdf' });
     }
 
     /**

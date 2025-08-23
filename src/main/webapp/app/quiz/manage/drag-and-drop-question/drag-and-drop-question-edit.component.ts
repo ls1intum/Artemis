@@ -1,4 +1,19 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, EventEmitter, OnInit, Output, ViewEncapsulation, effect, inject, input, viewChild } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    ElementRef,
+    EventEmitter,
+    OnDestroy,
+    OnInit,
+    Output,
+    OutputRefSubscription,
+    ViewEncapsulation,
+    effect,
+    inject,
+    input,
+    viewChild,
+} from '@angular/core';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragState } from 'app/quiz/shared/entities/drag-state.enum';
@@ -12,8 +27,7 @@ import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and
 import { cloneDeep } from 'lodash-es';
 import { round } from 'app/shared/util/utils';
 import { MAX_SIZE_UNIT } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import { debounceTime, filter } from 'rxjs/operators';
-import { ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent, ImageLoadingStatus } from 'app/shared/image/image.component';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
@@ -63,7 +77,7 @@ import { FileService } from 'app/shared/service/file.service';
         QuizScoringInfoModalComponent,
         MarkdownEditorMonacoComponent,
         CdkDropListGroup,
-        SecuredImageComponent,
+        ImageComponent,
         NgClass,
         CdkDropList,
         NgStyle,
@@ -75,7 +89,7 @@ import { FileService } from 'app/shared/service/file.service';
         ArtemisTranslatePipe,
     ],
 })
-export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit {
+export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit, OnDestroy {
     protected readonly faBan = faBan;
     protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
@@ -102,9 +116,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
     private fileService = inject(FileService);
 
     private readonly clickLayer = viewChild.required<ElementRef>('clickLayer');
-    private readonly backgroundImage = viewChild.required<SecuredImageComponent>('backgroundImage');
+    private readonly backgroundImage = viewChild.required<ImageComponent>('backgroundImage');
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
 
+    private adjustClickLayerWidthSubscription?: OutputRefSubscription;
     readonly question = input.required<DragAndDropQuestion>();
     readonly questionIndex = input<number>(undefined!);
     readonly reEvaluationInProgress = input<boolean>(false);
@@ -206,6 +221,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
         }
     }
 
+    ngOnDestroy(): void {
+        this.adjustClickLayerWidthSubscription?.unsubscribe();
+    }
+
     ngAfterViewInit(): void {
         const backgroundFilePath = this.question().backgroundFilePath;
         if (backgroundFilePath && !this.filePreviewPaths.has(backgroundFilePath)) {
@@ -227,13 +246,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
             }
         }
 
-        this.backgroundImage()
-            .endLoadingProcess.pipe(
-                filter((loadingStatus) => loadingStatus === ImageLoadingStatus.SUCCESS),
-                // Some time until image render. Need to wait until image width is computed.
-                debounceTime(300),
-            )
-            .subscribe(() => this.adjustClickLayerWidth());
+        this.adjustClickLayerWidthSubscription = this.backgroundImage().loadingStatus.subscribe((loadingStatus) => {
+            if (loadingStatus === ImageLoadingStatus.SUCCESS) {
+                setTimeout(() => this.adjustClickLayerWidth(), 300);
+            }
+        });
+
         // render import images on UI immediatly
         this.makeFileMapPreview();
         // Trigger click layer width adjustment upon window resize.
@@ -978,7 +996,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
                         this.question().correctMappings!.push(dndMapping);
                     }
                 };
-                image.src = this.backgroundImage().src;
+                image.src = this.backgroundImage().src();
             }
         }
         this.blankOutBackgroundImage();
@@ -1020,7 +1038,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
                 this.setBackgroundFileFromFile(this.dataUrlToFile(dataUrlCanvas, 'background'));
             }
         };
-        image.src = this.backgroundImage().src;
+        image.src = this.backgroundImage().src();
     }
 
     /**

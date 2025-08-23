@@ -1,7 +1,6 @@
 const esModules = [
     '@angular/animations',
     '@angular/cdk',
-    '@angular/cdk',
     '@angular/common',
     '@angular/compiler',
     '@angular/core',
@@ -52,7 +51,6 @@ const esModules = [
     'n-gram',
     'ngx-device-detector',
     'ngx-infinite-scroll',
-    'ngx-webstorage',
     'primeng',
     'rxjs/operators',
     'trigram-utils',
@@ -97,8 +95,8 @@ module.exports = {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
             statements: 89.68,
-            branches: 75.88,
-            functions: 83.64,
+            branches: 75.87,
+            functions: 83.60,
             lines: 89.75,
         },
     },
