@@ -1,6 +1,5 @@
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import angularPlugin from '@angular-eslint/eslint-plugin';
-import prettierPlugin from 'eslint-plugin-prettier';
 import jestPlugin from 'eslint-plugin-jest';
 import jestExtendedPlugin from 'eslint-plugin-jest-extended';
 import typescriptParser from '@typescript-eslint/parser';
@@ -8,8 +7,8 @@ import angularTemplateParser from '@angular-eslint/template-parser';
 import angular from 'angular-eslint';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
-import prettierConfig from 'eslint-config-prettier';
 import localRulesPlugin from './rules/index.mjs';
+import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default tseslint.config(
     {
@@ -87,15 +86,12 @@ export default tseslint.config(
         plugins: {
             '@typescript-eslint': tsPlugin,
             '@angular-eslint': angularPlugin,
-            prettier: prettierPlugin,
             localRules: localRulesPlugin
         },
         // TODO: adapt the rules of the newest jhipster version, e.g. no-inferrable-types, restrict-plus-operands, etc.
         rules: {
             ...tsPlugin.configs.recommended.rules,
             ...angularPlugin.configs.recommended.rules,
-            ...prettierConfig.rules,
-            ...prettierPlugin.configs.recommended.rules,
             '@typescript-eslint/no-non-null-assertion': 'off',
             '@typescript-eslint/no-unsafe-return': 'off',
             '@typescript-eslint/no-unsafe-member-access': 'off',
@@ -155,8 +151,6 @@ export default tseslint.config(
             ...jestPlugin.configs.recommended.rules,
             ...jestPlugin.configs.style.rules,
             ...jestExtendedPlugin.configs.all.rules,
-            ...prettierConfig.rules,
-            ...prettierPlugin.configs.recommended.rules,
             'jest/expect-expect': 'off',
             'jest/no-conditional-expect': 'off',
             '@typescript-eslint/no-deprecated': 'warn',
@@ -187,8 +181,6 @@ export default tseslint.config(
             '@typescript-eslint': tsPlugin,
         },
         rules: {
-            ...prettierConfig.rules,
-            ...prettierPlugin.configs.recommended.rules,
             '@typescript-eslint/no-unused-vars': 'off',
             'no-unused-vars': 'off',
             'no-undef': 'off',
@@ -202,10 +194,8 @@ export default tseslint.config(
         extends: [...angular.configs.templateRecommended, ...angular.configs.templateAccessibility],
         plugins: {
             '@angular-eslint': angularPlugin,
-            prettier: prettierPlugin,
         },
         rules: {
-            'prettier/prettier': ['error', { parser: 'angular' }],
             '@angular-eslint/template/click-events-have-key-events': 'off',
             '@angular-eslint/template/interactive-supports-focus': 'off',
             '@angular-eslint/template/label-has-associated-control': 'off',
@@ -215,4 +205,5 @@ export default tseslint.config(
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
         },
     },
+    eslintConfigPrettier,
 );
