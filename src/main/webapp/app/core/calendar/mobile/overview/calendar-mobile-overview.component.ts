@@ -35,8 +35,6 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     private activatedRouteSubscription?: Subscription;
     private courseId?: number;
 
-    private test;
-
     readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
     readonly faXmark = faXmark;
     readonly faChevronRight = faChevronRight;
