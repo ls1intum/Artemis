@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Competency, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
 import { of, throwError } from 'rxjs';
-import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { ChangeDetectorRef } from '@angular/core';
@@ -19,15 +19,12 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 
 describe('CompetencySelection', () => {
     let fixture: ComponentFixture<CompetencySelectionComponent>;
     let component: CompetencySelectionComponent;
     let courseStorageService: CourseStorageService;
     let courseCompetencyService: CourseCompetencyService;
-    let httpClient: HttpClient;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -43,7 +40,6 @@ describe('CompetencySelection', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 MockProvider(CourseStorageService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -55,7 +51,6 @@ describe('CompetencySelection', () => {
                 component = fixture.componentInstance;
                 courseStorageService = fixture.debugElement.injector.get(CourseStorageService);
                 courseCompetencyService = fixture.debugElement.injector.get(CourseCompetencyService);
-                httpClient = fixture.debugElement.injector.get(HttpClient);
                 const profileService = fixture.debugElement.injector.get(ProfileService);
 
                 const profileInfo = { activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
@@ -218,7 +213,7 @@ describe('CompetencySelection', () => {
         it('should show lightbulb button for competency suggestions', () => {
             const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
             expect(lightbulbButton).not.toBeNull();
-            expect(lightbulbButton.nativeElement.disabled).toBeFalsy();
+            expect(lightbulbButton.nativeElement.disabled).toBeFalse();
         });
 
         it('should disable lightbulb button when no exercise description', () => {
@@ -226,7 +221,7 @@ describe('CompetencySelection', () => {
             fixture.detectChanges();
 
             const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-            expect(lightbulbButton.nativeElement.disabled).toBeTruthy();
+            expect(lightbulbButton.nativeElement.disabled).toBeTrue();
         });
 
         it('should call API and show suggestions when lightbulb button is clicked', () => {
@@ -245,9 +240,9 @@ describe('CompetencySelection', () => {
                 description: 'Create a Java program that implements a sorting algorithm',
                 course_id: '1',
             });
-            expect(component.suggestedCompetencyIds.has(1)).toBeTruthy();
-            expect(component.suggestedCompetencyIds.has(3)).toBeTruthy();
-            expect(component.suggestedCompetencyIds.has(2)).toBeFalsy();
+            expect(component.suggestedCompetencyIds.has(1)).toBeTrue();
+            expect(component.suggestedCompetencyIds.has(3)).toBeTrue();
+            expect(component.suggestedCompetencyIds.has(2)).toBeFalse();
         });
 
         it('should show spinner while suggesting competencies', () => {
@@ -257,10 +252,10 @@ describe('CompetencySelection', () => {
             fixture.detectChanges();
 
             const spinner = fixture.debugElement.query(By.css('.spinner-border-sm'));
-            const button = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
+            const lightbulbIcon = fixture.debugElement.query(By.css('fa-icon'));
 
             expect(spinner).not.toBeNull();
-            expect(button.nativeElement.textContent).not.toContain('fa-icon');
+            expect(lightbulbIcon).toBeNull();
         });
 
         it('should display lightbulb icon next to suggested competencies', () => {
@@ -273,8 +268,8 @@ describe('CompetencySelection', () => {
             component.suggestCompetencies();
             fixture.detectChanges();
 
-            expect(component.isSuggested(1)).toBeTruthy();
-            expect(component.isSuggested(2)).toBeFalsy();
+            expect(component.isSuggested(1)).toBeTrue();
+            expect(component.isSuggested(2)).toBeFalse();
 
             const suggestedLightbulbs = fixture.debugElement.queryAll(By.css('fa-icon.text-warning'));
             expect(suggestedLightbulbs.length).toBeGreaterThan(0);
@@ -291,7 +286,7 @@ describe('CompetencySelection', () => {
 
             const firstCompetency = component.competencyLinks?.[0];
             expect(firstCompetency?.competency?.id).toBe(3);
-            expect(component.isSuggested(3)).toBeTruthy();
+            expect(component.isSuggested(3)).toBeTrue();
         });
 
         it('should handle API error gracefully', () => {
@@ -299,7 +294,7 @@ describe('CompetencySelection', () => {
 
             component.suggestCompetencies();
 
-            expect(component.isSuggesting).toBeFalsy();
+            expect(component.isSuggesting).toBeFalse();
             expect(component.suggestedCompetencyIds.size).toBe(0);
         });
 
