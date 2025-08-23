@@ -15,10 +15,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { AccountService } from 'app/core/auth/account.service';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
     fileProperties: FileProperties;
+    transcriptionProperties?: TranscriptionProperties;
 }
 
 // matches structure of the reactive form
@@ -31,12 +34,17 @@ export interface FormProperties {
     videoSource?: string;
     urlHelper?: string;
     competencyLinks?: CompetencyLectureUnitLink[];
+    videoTranscription?: string;
 }
 
 // file input is a special case and is not included in the reactive form structure
 export interface FileProperties {
     file?: File;
     fileName?: string;
+}
+
+export interface TranscriptionProperties {
+    videoTranscription?: string;
 }
 
 function isTumLiveUrl(url: URL): boolean {
@@ -84,10 +92,33 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
     return { invalidVideoUrl: true };
 }
 
+function validJsonOrEmpty(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (value === undefined || value === null || value === '') {
+        return null;
+    }
+    try {
+        JSON.parse(value);
+        return null;
+    } catch {
+        return { invalidJson: true };
+    }
+}
+
 @Component({
     selector: 'jhi-attachment-video-unit-form',
     templateUrl: './attachment-video-unit-form.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        NgbTooltip,
+        FormDateTimePickerComponent,
+        CompetencySelectionComponent,
+        ArtemisTranslatePipe,
+        ButtonComponent,
+    ],
 })
 export class AttachmentVideoUnitFormComponent implements OnChanges {
     protected readonly faQuestionCircle = faQuestionCircle;
@@ -125,6 +156,10 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
 
     private readonly formBuilder = inject(FormBuilder);
+    private readonly accountService = inject(AccountService);
+
+    readonly shouldShowTranscriptionCreation = computed(() => this.accountService.isAdmin());
+
     form: FormGroup = this.formBuilder.group({
         name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
         description: [undefined as string | undefined, [Validators.maxLength(1000)]],
@@ -134,6 +169,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
         updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
+        videoTranscription: [undefined as string | undefined, [validJsonOrEmpty]],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
 
@@ -159,6 +195,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         // automatically set the name in case it is not yet specified
         if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
             this.form.patchValue({
+                // without extension
                 name: this.file.name.replace(/\.[^/.]+$/, ''),
             });
         }
@@ -204,12 +241,21 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         return this.form.get('urlHelper');
     }
 
-    async submitForm() {
+    get videoTranscriptionControl() {
+        return this.form.get('videoTranscription');
+    }
+
+    submitForm() {
         const formValue = this.form.value;
         const formProperties: FormProperties = { ...formValue };
+
+        formProperties.videoTranscription = undefined;
         const fileProperties: FileProperties = {
             file: this.videoFile || this.file,
             fileName: this.fileName(),
+        };
+        const transcriptionProperties: TranscriptionProperties = {
+            videoTranscription: formValue.videoTranscription,
         };
 
         // If a video file was uploaded, call backend API to upload and get video ID
@@ -229,6 +275,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         this.formSubmitted.emit({
             formProperties,
             fileProperties,
+            transcriptionProperties,
         });
     }
 
@@ -241,6 +288,9 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         }
         if (formData?.fileProperties?.fileName) {
             this.fileName.set(formData?.fileProperties?.fileName);
+        }
+        if (formData?.transcriptionProperties) {
+            this.form.patchValue(formData.transcriptionProperties);
         }
     }
 

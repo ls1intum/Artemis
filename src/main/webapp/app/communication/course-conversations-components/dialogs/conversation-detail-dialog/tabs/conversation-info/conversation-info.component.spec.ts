@@ -6,11 +6,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import {
-    generateExampleChannelDTO,
-    generateExampleGroupChatDTO,
-    generateOneToOneChatDTO,
-} from '../../../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
@@ -25,7 +21,6 @@ import { input } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ConversationInfoComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -56,7 +51,7 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule, TranslateModule.forRoot()],
+                imports: [TranslateModule.forRoot()],
                 declarations: [ConversationInfoComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
                 providers: [
                     MockProvider(ChannelService),
@@ -164,7 +159,7 @@ examples.forEach((activeConversation) => {
             if (isChannelDTO(activeConversation) || isGroupChatDTO(activeConversation)) {
                 genericEditPropertyDialogTest('name', {
                     propertyName: 'name',
-                    maxPropertyLength: 30,
+                    maxPropertyLength: 20,
                     isRequired: true,
                     regexPattern: channelRegex,
                 });

@@ -7,7 +7,7 @@ import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -21,7 +21,6 @@ import { NgbDropdown, NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootst
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -52,8 +51,6 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -66,6 +63,8 @@ import { CourseNotificationSettingInfo } from 'app/communication/shared/entities
 import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -202,7 +201,7 @@ describe('CourseOverviewComponent', () => {
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(CourseExercisesComponent),
                 MockComponent(CourseRegistrationComponent),
-                MockComponent(SecuredImageComponent),
+                MockComponent(ImageComponent),
                 MockComponent(CourseSidebarComponent),
             ],
             providers: [
@@ -224,8 +223,6 @@ describe('CourseOverviewComponent', () => {
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NgbDropdown, useClass: MockDirective(NgbDropdown) },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -287,8 +284,8 @@ describe('CourseOverviewComponent', () => {
     afterEach(() => {
         component.ngOnDestroy();
         jest.restoreAllMocks();
-        localStorage.clear();
-        sessionStorage.clear();
+        TestBed.inject(LocalStorageService).clear();
+        TestBed.inject(SessionStorageService).clear();
     });
 
     it('should call all methods on init', async () => {
@@ -467,14 +464,14 @@ describe('CourseOverviewComponent', () => {
         const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = jest.spyOn(alertService, 'addAlert');
 
-        component.loadCourse().subscribe(
-            () => {
+        component.loadCourse().subscribe({
+            next: () => {
                 throw new Error('should not happen');
             },
-            (error) => {
+            error: (error) => {
                 expect(error).toBeDefined();
             },
-        );
+        });
 
         expect(alertServiceSpy).toHaveBeenCalled();
     });
@@ -494,15 +491,14 @@ describe('CourseOverviewComponent', () => {
     it('should throw for unexpected registration responses from the server', fakeAsync(() => {
         findOneForRegistrationStub.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
 
-        // test that canRegisterForCourse throws
-        component.canRegisterForCourse().subscribe(
-            () => {
+        component.canRegisterForCourse().subscribe({
+            next: () => {
                 throw new Error('should not be called');
             },
-            (error) => {
+            error: (error) => {
                 expect(error).toEqual(new HttpResponse({ status: 404 }));
             },
-        );
+        });
 
         tick();
     }));

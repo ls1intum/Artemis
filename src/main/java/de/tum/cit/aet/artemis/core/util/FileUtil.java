@@ -141,10 +141,9 @@ public class FileUtil {
 
         validateExtension(sanitizedOriginalFilename, true);
 
-        final String filenamePrefix = "Markdown_";
         final Path path = FilePathConverter.getMarkdownFilePathForConversation(courseId, conversationId);
 
-        String fileName = generateFilename(filenamePrefix, sanitizedOriginalFilename, false);
+        String fileName = generateFilename("", sanitizedOriginalFilename, true);
         Path filePath = path.resolve(fileName);
 
         copyFile(file, filePath);
@@ -893,6 +892,41 @@ public class FileUtil {
         catch (IOException e) {
             log.error("Could not convert file {}.", filename, e);
             throw new InternalServerErrorException("Error while converting byte[] to MultipartFile by using CommonsMultipartFile");
+        }
+    }
+
+    /**
+     * Counts the number of tokens in a file, stopping when the total token count reaches the minimum token size.
+     * The method reads the file content, splits it into tokens based on whitespace and common programming symbols,
+     * and counts the tokens until the minimum token size is reached.
+     *
+     * @param path             The path to the file to count tokens in
+     * @param minimumTokenSize The minimum number of tokens to count before stopping
+     * @param totalTokenCount  The initial token count (usually 0)
+     * @return The total number of tokens counted, or minimumTokenSize if there's an error reading the file
+     */
+    public static int countTokensInFile(Path path, int minimumTokenSize, int totalTokenCount) {
+        try {
+            String content = Files.readString(path);
+            // Split the content into tokens using a regex that matches whitespace and common programming symbols.
+            // This set of delimiters is chosen because it covers the most common token boundaries in programming languages.
+            String[] tokens = content.split("[\\s\\n\\r\\t{}();,=+\\-*/<>!&|\\[\\]]+");
+
+            for (String token : tokens) {
+                // Count non-empty tokens
+                if (!token.trim().isEmpty()) {
+                    totalTokenCount++;
+                    if (totalTokenCount >= minimumTokenSize) {
+                        // Return totalTokenCount as soon as the minimum token size is reached
+                        break;
+                    }
+                }
+            }
+            return totalTokenCount;
+        }
+        catch (IOException e) {
+            log.warn("Failed to read file {}: {}", path, e.getMessage());
+            return minimumTokenSize;
         }
     }
 }

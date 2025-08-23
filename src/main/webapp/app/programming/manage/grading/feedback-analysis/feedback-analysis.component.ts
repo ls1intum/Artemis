@@ -1,4 +1,5 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './service/feedback-analysis.service';
 import { NgbModal, NgbModule, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -6,7 +7,6 @@ import { faCircleQuestion, faFilter, faMessage, faSort, faSpinner, faUsers } fro
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { FeedbackModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback/feedback-modal.component';
 import { FeedbackFilterModalComponent, FilterData } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
-import { LocalStorageService } from 'ngx-webstorage';
 import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 import { SortIconComponent } from 'app/shared/sort/icon/sort-icon.component';
 import { AffectedStudentsModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students/feedback-affected-students-modal.component';
@@ -46,7 +46,7 @@ export class FeedbackAnalysisComponent {
     private feedbackAnalysisService = inject(FeedbackAnalysisService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
-    private localStorage = inject(LocalStorageService);
+    private localStorageService = inject(LocalStorageService);
     private router = inject(Router);
 
     readonly page = signal<number>(1);
@@ -105,11 +105,12 @@ export class FeedbackAnalysisComponent {
         });
     }
 
+    // TODO: use proper types here, not arrays of any
     private async loadData(): Promise<void> {
-        const savedTasks = this.localStorage.retrieve(this.FILTER_TASKS_KEY) || [];
-        const savedTestCases = this.localStorage.retrieve(this.FILTER_TEST_CASES_KEY) || [];
-        const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY) || [];
-        const savedErrorCategories = this.localStorage.retrieve(this.FILTER_ERROR_CATEGORIES_KEY) || [];
+        const savedTasks = this.localStorageService.retrieve<[]>(this.FILTER_TASKS_KEY) || [];
+        const savedTestCases = this.localStorageService.retrieve<[]>(this.FILTER_TEST_CASES_KEY) || [];
+        const savedOccurrence = this.localStorageService.retrieve<[]>(this.FILTER_OCCURRENCE_KEY) || [];
+        const savedErrorCategories = this.localStorageService.retrieve<[]>(this.FILTER_ERROR_CATEGORIES_KEY) || [];
 
         const state = {
             page: this.page(),
@@ -206,10 +207,10 @@ export class FeedbackAnalysisComponent {
     }
 
     async openFilterModal(): Promise<void> {
-        const savedTasks = this.localStorage.retrieve(this.FILTER_TASKS_KEY);
-        const savedTestCases = this.localStorage.retrieve(this.FILTER_TEST_CASES_KEY);
-        const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY);
-        const savedErrorCategories = this.localStorage.retrieve(this.FILTER_ERROR_CATEGORIES_KEY);
+        const savedTasks = this.localStorageService.retrieve(this.FILTER_TASKS_KEY);
+        const savedTestCases = this.localStorageService.retrieve(this.FILTER_TEST_CASES_KEY);
+        const savedOccurrence = this.localStorageService.retrieve(this.FILTER_OCCURRENCE_KEY);
+        const savedErrorCategories = this.localStorageService.retrieve(this.FILTER_ERROR_CATEGORIES_KEY);
         this.minCount.set(0);
         if (this.groupFeedback()) {
             this.maxCount.set(this.maxCount());

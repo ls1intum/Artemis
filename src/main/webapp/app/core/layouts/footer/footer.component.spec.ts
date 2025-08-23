@@ -7,6 +7,7 @@ import { RouterModule } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
+import dayJs from 'dayjs/esm';
 
 describe('FooterComponent', () => {
     let component: FooterComponent;
@@ -69,7 +70,7 @@ describe('FooterComponent', () => {
         beforeEach(() => {
             component.gitBranch = 'main';
             component.gitCommitId = 'abc123';
-            component.gitTimestamp = '2023-04-01T12:00:00Z';
+            component.gitTimestamp = dayJs.utc('2023-04-01T12:00:00Z');
             component.gitCommitUser = 'user123';
             component.isProduction = false;
             component.isTestServer = false;
@@ -77,18 +78,12 @@ describe('FooterComponent', () => {
         });
 
         it('should display all git information', () => {
-            // Assuming there's only one .footer-git and it contains all git info divs
             const footerGit = fixture.debugElement.nativeElement.querySelector('.footer-git');
-            const gitElements = footerGit.querySelectorAll('div');
 
-            // Ensure that we have exactly four git info divs
-            expect(gitElements).toHaveLength(4);
-
-            // Check each element for the expected text content
-            expect(gitElements[0].textContent).toContain('main'); // for git branch
-            expect(gitElements[1].textContent).toContain('abc123'); // for git commit ID
-            expect(gitElements[2].textContent).toContain('2023-04-01T12:00:00Z'); // for git timestamp
-            expect(gitElements[3].textContent).toContain('user123'); // for git commit user
+            expect(footerGit.textContent).toContain('main'); // for git branch
+            expect(footerGit.textContent).toContain('abc123'); // for git commit ID
+            expect(footerGit.textContent).toContain('2023-04-01 12:00'); // for git timestamp
+            expect(footerGit.textContent).toContain('user123'); // for git commit user
         });
     });
 });
