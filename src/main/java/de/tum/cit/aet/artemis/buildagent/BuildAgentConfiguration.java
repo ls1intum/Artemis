@@ -113,10 +113,6 @@ public class BuildAgentConfiguration {
      * @return true if the adjustment was successful, false otherwise
      */
     public synchronized boolean adjustConcurrentBuildSize(int newConcurrentBuildSize) {
-        if (newConcurrentBuildSize == threadPoolSize.get()) {
-            return true;
-        }
-
         if (newConcurrentBuildSize <= 0) {
             log.error("Invalid concurrent build size: {}. Must be greater than 0.", newConcurrentBuildSize);
             return false;
@@ -134,8 +130,11 @@ public class BuildAgentConfiguration {
 
         int currentSize = threadPoolSize.get();
 
-        // We need this check since maximumPoolSize >= corePoolSize should hold at all times.
-        if (newConcurrentBuildSize > currentSize) {
+        if (newConcurrentBuildSize == currentSize) {
+            return true;
+        }
+        else if (newConcurrentBuildSize > currentSize) {
+            // We need this check since maximumPoolSize >= corePoolSize should hold at all times.
             buildExecutor.setMaximumPoolSize(newConcurrentBuildSize);
             buildExecutor.setCorePoolSize(newConcurrentBuildSize);
         }
