@@ -1,5 +1,5 @@
-import { Component, OnDestroy, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
-import { FormsModule, NgForm } from '@angular/forms';
+import { Component, OnDestroy, ViewEncapsulation, inject, input } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -18,8 +18,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 class NotFoundExamUserType {
     numberOfUsersNotFound: number;
     numberOfImagesSaved: number;
-    listOfExamUserRegistrationNumbers: string[];
 }
+
 @Component({
     selector: 'jhi-student-upload-images-dialog',
     templateUrl: './students-upload-images-dialog.component.html',
@@ -33,7 +33,6 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
 
     readonly ActionType = ActionType;
 
-    importForm = viewChild<NgForm>('importForm');
     notFoundUsers?: NotFoundExamUserType;
     file: File;
 
