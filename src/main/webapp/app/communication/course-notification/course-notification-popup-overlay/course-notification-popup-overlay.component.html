@@ -5,11 +5,7 @@
     (click)="overlayClicked()"
 >
     @for (notification of notifications; track notification.notificationId) {
-        <div
-            [ngStyle]="{ bottom: isExpanded ? (notifications.length - $index - 1) * 7 + 5 + 'rem' : null }"
-            class="course-notification-popup-overlay-notification"
-            @notificationAnimation
-        >
+        <div [ngStyle]="{ bottom: isExpanded ? (notifications.length - $index - 1) * 7 + 5 + 'rem' : null }" class="course-notification-popup-overlay-notification">
             <jhi-course-notification
                 [courseNotification]="notification"
                 [isShowClose]="true"

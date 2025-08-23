@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -52,7 +51,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [BrowserAnimationsModule, RouterModule.forRoot([])],
+            imports: [RouterModule.forRoot([])],
             providers: [
                 MockProvider(CourseManagementService, {
                     find: () => {

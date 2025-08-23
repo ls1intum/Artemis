@@ -104,7 +104,7 @@
                         <div class="chat-history-label">
                             <p jhiTranslate="artemisApp.iris.chatHistory.today"></p>
                         </div>
-                        @for (session of todaySessions; track session.id; let i = $index) {
+                        @for (session of todaySessions; track session.id) {
                             <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
                         }
                     }
@@ -114,7 +114,7 @@
                         <div class="chat-history-label">
                             <p jhiTranslate="artemisApp.iris.chatHistory.yesterday"></p>
                         </div>
-                        @for (session of yesterdaySessions; track session.id; let i = $index) {
+                        @for (session of yesterdaySessions; track session.id) {
                             <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
                         }
                     }
@@ -124,7 +124,7 @@
                         <div class="chat-history-label">
                             <p jhiTranslate="artemisApp.iris.chatHistory.last7Days"></p>
                         </div>
-                        @for (session of last7DaysSessions; track session.id; let i = $index) {
+                        @for (session of last7DaysSessions; track session.id) {
                             <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
                         }
                     }
@@ -134,7 +134,7 @@
                         <div class="chat-history-label">
                             <p jhiTranslate="artemisApp.iris.chatHistory.last30Days"></p>
                         </div>
-                        @for (session of last30DaysSessions; track session.id; let i = $index) {
+                        @for (session of last30DaysSessions; track session.id) {
                             <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
                         }
                     }
@@ -144,7 +144,7 @@
                         <div class="chat-history-label">
                             <p jhiTranslate="artemisApp.iris.chatHistory.older"></p>
                         </div>
-                        @for (session of olderSessions; track session.id; let i = $index) {
+                        @for (session of olderSessions; track session.id) {
                             <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId" (sessionClicked)="onSessionClick(session)" />
                         }
                     }
@@ -163,14 +163,14 @@
                     (!this.rateLimitInfo?.rateLimit || this.rateLimitInfo?.currentMessageCount !== this.rateLimitInfo?.rateLimit) &&
                     !this.hasActiveStage
                 ) {
-                    <div @suggestionAnimation class="suggestions-container">
+                    <div class="suggestions-container">
                         @for (suggestion of suggestions; track suggestion) {
                             <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [innerHTML]="suggestion"></button>
                         }
                     </div>
                 }
-                @for (message of messages; track message.id; let i = $index) {
-                    <div @messageAnimation [@.disabled]="!shouldAnimate" [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'">
+                @for (message of messages; track message.id) {
+                    <div [@.disabled]="!shouldAnimate" [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'">
                         @for (content of message.content; track content.id) {
                             <div>
                                 @if (message.sender === IrisSender.USER) {
@@ -204,11 +204,11 @@
                                                 </button>
                                                 <button
                                                     class="btn btn-sm"
-                                                    [class.thumbs-down-clicked]="(message | as: IrisAssistantMessage).helpful === false"
-                                                    [class.clickable]="(message | as: IrisAssistantMessage).helpful !== false"
-                                                    [class.rate-button-not-clicked]="(message | as: IrisAssistantMessage).helpful !== false"
+                                                    [class.thumbs-down-clicked]="!(message | as: IrisAssistantMessage).helpful"
+                                                    [class.clickable]="(message | as: IrisAssistantMessage).helpful"
+                                                    [class.rate-button-not-clicked]="(message | as: IrisAssistantMessage).helpful"
                                                     (click)="rateMessage(message, false)"
-                                                    [disabled]="(message | as: IrisAssistantMessage).helpful === false"
+                                                    [disabled]="!(message | as: IrisAssistantMessage).helpful"
                                                 >
                                                     <fa-icon [icon]="faThumbsDown" />
                                                 </button>

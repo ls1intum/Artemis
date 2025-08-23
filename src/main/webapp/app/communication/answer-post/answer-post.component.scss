@@ -48,6 +48,16 @@
     }
 }
 
+.fade-in {
+    opacity: 1;
+    transition: opacity 300ms ease-in;
+}
+
+.fade-out {
+    opacity: 0;
+    transition: opacity 300ms ease-out;
+}
+
 .message-content,
 .post-is-saved-message-content {
     padding-left: 0.25rem;

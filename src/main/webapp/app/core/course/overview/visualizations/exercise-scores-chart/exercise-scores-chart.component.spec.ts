@@ -9,7 +9,6 @@ import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/core/course/o
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
@@ -38,7 +37,6 @@ describe('ExerciseScoresChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(BrowserAnimationsModule)],
             providers: [
                 provideRouter([]),
                 MockProvider(AlertService),

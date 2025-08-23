@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CourseNotificationPopupOverlayComponent } from 'app/communication/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
 import { CourseNotificationWebsocketService } from 'app/communication/course-notification/course-notification-websocket.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
@@ -13,7 +12,6 @@ import { CommonModule } from '@angular/common';
 import { CourseNotificationComponent } from 'app/communication/course-notification/course-notification/course-notification.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CourseNotificationPopupOverlayComponent', () => {
     let component: CourseNotificationPopupOverlayComponent;
@@ -53,7 +51,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         } as unknown as CourseNotificationService;
 
         await TestBed.configureTestingModule({
-            imports: [BrowserAnimationsModule, CommonModule, NoopAnimationsModule, FaIconComponent],
+            imports: [CommonModule, FaIconComponent],
             declarations: [CourseNotificationPopupOverlayComponent, MockComponent(CourseNotificationComponent)],
             providers: [
                 { provide: CourseNotificationWebsocketService, useValue: courseNotificationWebsocketService },

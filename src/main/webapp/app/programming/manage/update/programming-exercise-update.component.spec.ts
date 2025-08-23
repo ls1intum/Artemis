@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { WindFile } from 'app/programming/shared/entities/wind.file';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -68,7 +67,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [BrowserAnimationsModule, FaIconComponent, OwlNativeDateTimeModule],
+            imports: [FaIconComponent, OwlNativeDateTimeModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },

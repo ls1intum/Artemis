@@ -10,7 +10,6 @@ import {
     ExerciseResult,
     StudentResult,
 } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MockProvider } from 'ng-mocks';
 import { ExamScoresComponent, MedianType } from 'app/exam/manage/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -265,7 +264,6 @@ describe('ExamScoresComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [BrowserAnimationsModule],
             providers: [
                 MockProvider(GradingSystemService, {
                     findGradingScaleForExam: () => {

@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -13,7 +12,6 @@ describe('Alert Overlay Component Tests', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NoopAnimationsModule],
             providers: [
                 { provide: AlertService, useClass: AlertService },
                 { provide: TranslateService, useClass: MockTranslateService },

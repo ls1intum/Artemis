@@ -9,8 +9,6 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
-
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FaqComponent } from 'app/communication/faq/faq.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
@@ -65,7 +63,6 @@ describe('FaqComponent', () => {
         } as unknown as ProfileInfo;
 
         TestBed.configureTestingModule({
-            imports: [MockModule(BrowserAnimationsModule)],
             declarations: [FaqComponent, MockRouterLinkDirective, MockComponent(CustomExerciseCategoryBadgeComponent)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

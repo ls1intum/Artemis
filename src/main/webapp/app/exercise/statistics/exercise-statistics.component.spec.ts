@@ -9,7 +9,6 @@ import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercis
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -48,7 +47,6 @@ describe('ExerciseStatisticsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NoopAnimationsModule],
             providers: [
                 LocalStorageService,
                 SessionStorageService,

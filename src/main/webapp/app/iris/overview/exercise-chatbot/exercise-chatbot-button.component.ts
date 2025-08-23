@@ -7,7 +7,6 @@ import { EMPTY, Subscription, filter, of, switchMap } from 'rxjs';
 import { faAngleDoubleDown, faChevronDown, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { animate, state, style, transition, trigger } from '@angular/animations';
 import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -19,28 +18,6 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     selector: 'jhi-exercise-chatbot-button',
     templateUrl: './exercise-chatbot-button.component.html',
     styleUrls: ['./exercise-chatbot-button.component.scss'],
-    animations: [
-        trigger('expandAnimation', [
-            state(
-                'hidden',
-                style({
-                    opacity: 0,
-                    transform: 'scale(0)',
-                    transformOrigin: 'bottom right',
-                }),
-            ),
-            state(
-                'visible',
-                style({
-                    opacity: 1,
-                    transform: 'scale(1)',
-                    transformOrigin: 'bottom right',
-                }),
-            ),
-            transition('hidden => visible', animate('300ms ease-out')),
-            transition('visible => hidden', animate('300ms ease-in')),
-        ]),
-    ],
     imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe],
 })
 export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {

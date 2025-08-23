@@ -1,3 +1,5 @@
+import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
+import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import {
     AfterContentChecked,
     ChangeDetectionStrategy,
@@ -15,46 +17,37 @@ import {
     signal,
     viewChild,
 } from '@angular/core';
-import { Post } from 'app/communication/shared/entities/post.model';
-import { PostingDirective } from 'app/communication/directive/posting.directive';
-import { MetisService } from 'app/communication/service/metis.service';
-import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
-import { faBookmark, faBullhorn, faComments, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
-import dayjs from 'dayjs/esm';
-import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
-import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
-import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
-import { animate, style, transition, trigger } from '@angular/animations';
-import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
-import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PostingHeaderComponent } from '../posting-header/posting-header.component';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { MessageInlineInputComponent } from '../message/message-inline-input/message-inline-input.component';
-import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
-import { Posting } from 'app/communication/shared/entities/posting.model';
-import { throwError } from 'rxjs';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faBookmark, faBullhorn, faComments, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
+import { PostingDirective } from 'app/communication/directive/posting.directive';
+import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
+import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
+import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
+import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
+import { MetisService } from 'app/communication/service/metis.service';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
+import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import dayjs from 'dayjs/esm';
+import { throwError } from 'rxjs';
+import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
+import { MessageInlineInputComponent } from '../message/message-inline-input/message-inline-input.component';
+import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
+import { PostingHeaderComponent } from '../posting-header/posting-header.component';
 
 @Component({
     selector: 'jhi-post',
     templateUrl: './post.component.html',
     styleUrls: ['./post.component.scss', './../metis.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    animations: [
-        trigger('fade', [
-            transition(':enter', [style({ opacity: 0 }), animate('300ms ease-in', style({ opacity: 1 }))]),
-            transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
-        ]),
-    ],
     imports: [
         NgClass,
         FaIconComponent,
@@ -268,12 +261,11 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         const searchQuery = searchConfig.searchTerm.toLowerCase();
         if (!searchQuery) {
             const selectedAuthorIds = searchConfig.selectedAuthors.map((author) => author.id);
-            const isSearchAuthorInAnswers =
+            this.showSearchResultInAnswersHint =
                 this.posting.answers?.some((answer) => {
                     const answerAuthorId = answer.author?.id;
                     return selectedAuthorIds.includes(answerAuthorId);
                 }) ?? false;
-            this.showSearchResultInAnswersHint = isSearchAuthorInAnswers;
             return;
         }
 

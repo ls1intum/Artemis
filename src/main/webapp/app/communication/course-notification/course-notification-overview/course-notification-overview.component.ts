@@ -11,7 +11,6 @@ import { CourseNotificationService } from 'app/communication/course-notification
 import { Subscription, fromEvent } from 'rxjs';
 import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { animate, style, transition, trigger } from '@angular/animations';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink } from '@angular/router';
@@ -26,13 +25,6 @@ import { RouterLink } from '@angular/router';
     imports: [FontAwesomeModule, CourseNotificationBubbleComponent, CommonModule, TranslateDirective, CourseNotificationComponent, ArtemisTranslatePipe, NgbTooltip, RouterLink],
     templateUrl: './course-notification-overview.component.html',
     styleUrls: ['./course-notification-overview.component.scss'],
-    animations: [
-        trigger('fadeAnimation', [transition(':enter', [style({ opacity: 0 }), animate('200ms 400ms ease-in-out', style({ opacity: 1 }))])]),
-        trigger('notificationWrapAnimation', [
-            transition(':enter', [style({ opacity: 0 }), animate('200ms ease-in-out', style({ opacity: 1 }))]),
-            transition(':leave', [animate('400ms ease-in-out', style({ opacity: 0 }))]),
-        ]),
-    ],
 })
 export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, AfterViewInit {
     readonly courseId = input.required<number>();

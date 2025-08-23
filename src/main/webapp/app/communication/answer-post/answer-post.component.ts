@@ -16,7 +16,6 @@ import {
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingDirective } from 'app/communication/directive/posting.directive';
 import dayjs from 'dayjs/esm';
-import { animate, style, transition, trigger } from '@angular/animations';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { faBookmark, faPencilAlt, faShare, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
@@ -38,12 +37,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './answer-post.component.html',
     styleUrls: ['./answer-post.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    animations: [
-        trigger('fade', [
-            transition(':enter', [style({ opacity: 0 }), animate('300ms ease-in', style({ opacity: 1 }))]),
-            transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
-        ]),
-    ],
     imports: [
         NgClass,
         FaIconComponent,

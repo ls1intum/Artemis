@@ -8,7 +8,6 @@ import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
 import { BrowserModule, Title } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Router, RouterModule, provideRouter, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
@@ -34,8 +33,6 @@ export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
         importProvidersFrom(
-            // TODO: we should exclude modules here in the future
-            BrowserAnimationsModule,
             BrowserModule,
             RouterModule,
             ScrollingModule,
