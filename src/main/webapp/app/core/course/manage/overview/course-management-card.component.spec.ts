@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementExerciseRowComponent } from 'app/core/course/manage/overview/course-management-exercise-row.component';
@@ -11,7 +11,7 @@ import dayjs from 'dayjs/esm';
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/core/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -63,12 +63,12 @@ describe('CourseManagementCardComponent', () => {
                 MockRouterLinkDirective,
                 MockComponent(CourseManagementExerciseRowComponent),
                 MockComponent(CourseManagementOverviewStatisticsComponent),
-                MockComponent(SecuredImageComponent),
+                MockComponent(ImageComponent),
                 MockDirective(TranslateDirective),
             ],
             providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 MockProvider(TranslateService),
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: ProfileService, useClass: MockProfileService },

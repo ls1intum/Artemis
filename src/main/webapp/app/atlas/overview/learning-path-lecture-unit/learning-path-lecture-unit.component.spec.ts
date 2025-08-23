@@ -7,13 +7,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { of } from 'rxjs';
 import { CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
@@ -23,6 +21,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { ElementRef, signal } from '@angular/core';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 describe('LearningPathLectureUnitComponent', () => {
     let component: LearningPathLectureUnitComponent;
@@ -64,14 +63,8 @@ describe('LearningPathLectureUnitComponent', () => {
                     provide: TranslateService,
                     useClass: MockTranslateService,
                 },
-                {
-                    provide: LocalStorageService,
-                    useClass: MockLocalStorageService,
-                },
-                {
-                    provide: SessionStorageService,
-                    useClass: MockSyncStorage,
-                },
+                LocalStorageService,
+                SessionStorageService,
                 {
                     provide: AlertService,
                     useClass: MockAlertService,

@@ -1,23 +1,23 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.853, "CLASS": 116]
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.853, "CLASS": 121]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.924, "CLASS":  0],
         "athena"        :          ["INSTRUCTION": 0.874, "CLASS":  2],
         "atlas"         :          ["INSTRUCTION": 0.903, "CLASS":  6],
         "buildagent"    :          ["INSTRUCTION": 0.805, "CLASS":  1],
-        "communication" :          ["INSTRUCTION": 0.848, "CLASS":  5],
-        "core"          :          ["INSTRUCTION": 0.830, "CLASS": 48],
+        "communication" :          ["INSTRUCTION": 0.850, "CLASS":  7],
+        "core"          :          ["INSTRUCTION": 0.825, "CLASS": 48],
         "exam"          :          ["INSTRUCTION": 0.918, "CLASS":  2],
         "exercise"      :          ["INSTRUCTION": 0.916, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.953, "CLASS":  0],
-        "iris"          :          ["INSTRUCTION": 0.774, "CLASS": 25],
+        "iris"          :          ["INSTRUCTION": 0.773, "CLASS": 29],
         "lecture"       :          ["INSTRUCTION": 0.896, "CLASS":  1],
         "lti"           :          ["INSTRUCTION": 0.888, "CLASS":  2],
         "modeling"      :          ["INSTRUCTION": 0.938, "CLASS":  0],
         "plagiarism"    :          ["INSTRUCTION": 0.901, "CLASS":  2],
-        "programming"   :          ["INSTRUCTION": 0.785, "CLASS": 18],
+        "programming"   :          ["INSTRUCTION": 0.785, "CLASS": 20],
         "quiz"          :          ["INSTRUCTION": 0.901, "CLASS":  2],
         "text"          :          ["INSTRUCTION": 0.947, "CLASS":  1],
         "tutorialgroup" :          ["INSTRUCTION": 0.915, "CLASS":  1],

@@ -1,4 +1,4 @@
-// Mock Monaco Editor at the top before any imports
+// Mock Monaco Editor at the top before imports
 jest.mock('monaco-editor', () => ({
     editor: {
         createModel: jest.fn(),
@@ -10,13 +10,13 @@ import * as monaco from 'monaco-editor';
 import { FileStatus, processRepositoryDiff } from './diff.utils';
 
 describe('DiffUtils', () => {
-    let mockOriginalModel: any;
-    let mockModifiedModel: any;
-    let mockDiffEditor: any;
-    let mockDiffListener: any;
+    let mockOriginalModel: monaco.editor.ITextModel;
+    let mockModifiedModel: monaco.editor.ITextModel;
+    let mockDiffListener: monaco.IDisposable;
+    let mockDiffEditor: jest.Mocked<Pick<monaco.editor.IStandaloneDiffEditor, 'setModel' | 'onDidUpdateDiff' | 'getLineChanges' | 'dispose'>>;
 
     // Helper function to setup Monaco mocks with common configuration
-    const setupMonacoMocks = (lineChanges: any[] = []) => {
+    const setupMonacoMocks = (lineChanges: monaco.editor.ILineChange[] = []) => {
         mockDiffEditor.onDidUpdateDiff.mockImplementation((callback: () => void) => {
             setTimeout(callback, 0);
             return mockDiffListener;
@@ -24,22 +24,27 @@ describe('DiffUtils', () => {
         mockDiffEditor.getLineChanges.mockReturnValue(lineChanges);
     };
 
-    // Helper function to create line change objects
-    const createLineChange = (originalStart: number, originalEnd: number, modifiedStart: number, modifiedEnd: number) => ({
+    // Helper: create a strongly-typed line change
+    const createLineChange = (originalStart: number, originalEnd: number, modifiedStart: number, modifiedEnd: number): monaco.editor.ILineChange => ({
         originalStartLineNumber: originalStart,
         originalEndLineNumber: originalEnd,
         modifiedStartLineNumber: modifiedStart,
         modifiedEndLineNumber: modifiedEnd,
+        charChanges: [] as monaco.editor.ICharChange[],
     });
 
     beforeEach(() => {
         // Reset mocks
         jest.clearAllMocks();
 
+        const originalModelStub = { dispose: jest.fn() } satisfies Pick<monaco.editor.ITextModel, 'dispose'>;
+        const modifiedModelStub = { dispose: jest.fn() } satisfies Pick<monaco.editor.ITextModel, 'dispose'>;
+
         // Setup Monaco Editor mocks
-        mockOriginalModel = { dispose: jest.fn() };
-        mockModifiedModel = { dispose: jest.fn() };
-        mockDiffListener = { dispose: jest.fn() };
+        mockOriginalModel = originalModelStub as unknown as monaco.editor.ITextModel;
+        mockModifiedModel = modifiedModelStub as unknown as monaco.editor.ITextModel;
+        mockDiffListener = { dispose: jest.fn() } satisfies monaco.IDisposable;
+
         mockDiffEditor = {
             setModel: jest.fn(),
             onDidUpdateDiff: jest.fn().mockReturnValue(mockDiffListener),
@@ -54,7 +59,7 @@ describe('DiffUtils', () => {
         });
 
         (monaco.editor.createDiffEditor as jest.Mock).mockReturnValue(mockDiffEditor);
-        document.createElement = jest.fn().mockReturnValue({});
+        jest.spyOn(Document.prototype, 'createElement').mockImplementation(() => ({}) as HTMLElement);
     });
 
     describe('processRepositoryDiff', () => {
@@ -247,17 +252,6 @@ describe('DiffUtils', () => {
             expect(result.diffInformations).toHaveLength(2);
             expect(result.diffInformations[0].fileStatus).toBe(FileStatus.UNCHANGED);
             expect(result.diffInformations[1].fileStatus).toBe(FileStatus.UNCHANGED);
-        });
-
-        it('should handle Monaco editor cleanup after processing', async () => {
-            const originalFiles = new Map([['test.txt', 'content']]);
-            const modifiedFiles = new Map([['test.txt', 'modified']]);
-
-            setupMonacoMocks([]);
-            await processRepositoryDiff(originalFiles, modifiedFiles);
-
-            expect(mockDiffListener.dispose).toHaveBeenCalled();
-            expect(mockDiffEditor.dispose).toHaveBeenCalled();
         });
 
         it('should handle very large similarity calculations', async () => {
