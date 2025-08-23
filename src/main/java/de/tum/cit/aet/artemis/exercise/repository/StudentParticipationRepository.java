@@ -848,16 +848,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<StudentParticipation> findAllForPlagiarism(@Param("exerciseId") long exerciseId);
 
     @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-            WHERE p.student.id = :studentId
-                AND p.exercise IN :exercises
-                AND (p.testRun = FALSE OR :includeTestRuns = TRUE)
-                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
-            """)
+                    SELECT DISTINCT p
+                    FROM StudentParticipation p
+                        LEFT JOIN FETCH p.submissions s
+                        LEFT JOIN FETCH s.results r
+                    WHERE p.student.id = :studentId
+                        AND p.exercise IN :exercises
+                        AND (p.testRun = FALSE OR :includeTestRuns = TRUE)
+                        AND (s.submissionDate IS NULL OR s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p))
+            AND (r.completionDate IS NULL OR r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s))
+                    """)
     Set<StudentParticipation> findByStudentIdAndIndividualExercisesWithLatestSubmissionsLatestResult(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises, @Param("includeTestRuns") boolean includeTestRuns);
 
@@ -961,8 +961,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH t.students teamStudent
             WHERE teamStudent.id = :studentId
                 AND p.exercise IN :exercises
-                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+                AND (s.submissionDate IS NULL OR s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p))
+                AND (r.completionDate IS NULL OR r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s))
             """)
     Set<StudentParticipation> findByStudentIdAndTeamExercisesWithLatestSubmissionsLatestResult(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises);
