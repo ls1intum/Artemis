@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, inject, input, numberAttribute, viewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, inject, input, viewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -78,8 +78,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     faArrow = faArrowLeft;
     faX = faX;
 
-    apollonDiagramId = input.required<number, string>({ transform: numberAttribute });
-    courseId = input.required<number, string>({ transform: numberAttribute });
+    apollonDiagramId = input.required<number>();
+    courseId = input.required<number>();
 
     /**
      * Initializes Apollon Editor and sets auto save timer
