@@ -47,7 +47,7 @@ public class BuildAgentConfiguration {
 
     private ThreadPoolExecutor buildExecutor;
 
-    private final AtomicInteger targetThreadPoolSize = new AtomicInteger(0);
+    private final AtomicInteger threadPoolSize = new AtomicInteger(0);
 
     private DockerClient dockerClient;
 
@@ -91,11 +91,7 @@ public class BuildAgentConfiguration {
     }
 
     public int getThreadPoolSize() {
-        return buildExecutor != null ? buildExecutor.getMaximumPoolSize() : 0;
-    }
-
-    public int getTargetThreadPoolSize() {
-        return targetThreadPoolSize.get();
+        return threadPoolSize.get();
     }
 
     public DockerClient getDockerClient() {
@@ -110,10 +106,6 @@ public class BuildAgentConfiguration {
         return concurrentBuildsMaximum;
     }
 
-    public boolean isShrinkingThreadPool() {
-        return getThreadPoolSize() > getTargetThreadPoolSize();
-    }
-
     /**
      * Dynamically adjusts the thread pool size for concurrent build jobs.
      *
@@ -121,11 +113,8 @@ public class BuildAgentConfiguration {
      * @return true if the adjustment was successful, false otherwise
      */
     public synchronized boolean adjustConcurrentBuildSize(int newConcurrentBuildSize) {
-        if (newConcurrentBuildSize == targetThreadPoolSize.get()) {
+        if (newConcurrentBuildSize == threadPoolSize.get()) {
             return true;
-        }
-        else {
-            targetThreadPoolSize.set(newConcurrentBuildSize);
         }
 
         if (newConcurrentBuildSize <= 0) {
@@ -143,37 +132,20 @@ public class BuildAgentConfiguration {
             return false;
         }
 
-        if (newConcurrentBuildSize > getThreadPoolSize()) {
+        int currentSize = threadPoolSize.get();
 
-            // We need to set maximum first while expanding the pool since maximumPoolSize >= corePoolSize should hold at all times.
+        // We need this check since maximumPoolSize >= corePoolSize should hold at all times.
+        if (newConcurrentBuildSize > currentSize) {
             buildExecutor.setMaximumPoolSize(newConcurrentBuildSize);
             buildExecutor.setCorePoolSize(newConcurrentBuildSize);
         }
         else {
-            shrinkThreadPool();
+            buildExecutor.setCorePoolSize(newConcurrentBuildSize);
+            buildExecutor.setMaximumPoolSize(newConcurrentBuildSize);
         }
 
+        threadPoolSize.set(newConcurrentBuildSize);
         return true;
-    }
-
-    public void shrinkThreadPool() {
-        if (buildExecutor == null) {
-            return;
-        }
-
-        int targetSize = targetThreadPoolSize.get();
-        int currentSize = getThreadPoolSize();
-        int activeCount = buildExecutor.getActiveCount();
-        // We need to set corePoolSize first while shrinking the pool since maximumPoolSize >= corePoolSize should hold at all times.
-        if (buildExecutor.getCorePoolSize() > targetSize) {
-            buildExecutor.setCorePoolSize(targetSize);
-        }
-
-        // Shrink the pool only if we have idle threads
-        if (currentSize > activeCount) {
-            int sizeToShrink = Math.max(activeCount, targetSize);
-            buildExecutor.setMaximumPoolSize(sizeToShrink);
-        }
     }
 
     /**
@@ -240,10 +212,10 @@ public class BuildAgentConfiguration {
      */
     private ThreadPoolExecutor createBuildExecutor() {
         // Use preserved size if available, otherwise calculate
-        int poolSize = targetThreadPoolSize.get();
+        int poolSize = threadPoolSize.get();
         if (poolSize == 0) {
             poolSize = specifyConcurrentBuilds ? concurrentBuildsDefault : Math.max(1, (Runtime.getRuntime().availableProcessors() - 2) / 2);
-            targetThreadPoolSize.set(poolSize);
+            threadPoolSize.set(poolSize);
         }
 
         ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")

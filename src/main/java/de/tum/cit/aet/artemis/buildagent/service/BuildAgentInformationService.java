@@ -94,7 +94,9 @@ public class BuildAgentInformationService {
     private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
-        int runningJobs = processingJobsOfMember.size();
+        int numberOfRunningBuildJobs = processingJobsOfMember.size();
+        int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getThreadPoolSize();
+        boolean hasJobs = numberOfRunningBuildJobs > 0;
         BuildAgentInformation.BuildAgentStatus status;
         BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(memberAddress);
         if (isPaused) {
@@ -102,7 +104,7 @@ public class BuildAgentInformationService {
             status = (isPausedDueToFailures || isAlreadySelfPaused) ? BuildAgentInformation.BuildAgentStatus.SELF_PAUSED : BuildAgentInformation.BuildAgentStatus.PAUSED;
         }
         else {
-            status = runningJobs > 0 ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
+            status = hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
         }
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
@@ -111,9 +113,8 @@ public class BuildAgentInformationService {
         BuildAgentDetailsDTO agentDetails = getBuildAgentDetails(agent, recentBuildJob, consecutiveFailures);
 
         int pauseAfterConsecutiveFailedJobs = buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs();
-        int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getTargetThreadPoolSize();
         int maxConcurrentBuildsAllowed = buildAgentConfiguration.getConcurrentBuildsMaximum();
-        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, runningJobs, processingJobsOfMember, status, publicSshKey, agentDetails,
+        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfRunningBuildJobs, processingJobsOfMember, status, publicSshKey, agentDetails,
                 pauseAfterConsecutiveFailedJobs, maxConcurrentBuildsAllowed);
     }
 
