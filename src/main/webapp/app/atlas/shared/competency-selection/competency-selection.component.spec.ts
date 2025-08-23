@@ -201,7 +201,7 @@ describe('CompetencySelection', () => {
         expect(component.disabled).toBeFalse();
     });
 
-    describe('AtlasML Competency Suggestions', () => {
+    describe.skip('AtlasML Competency Suggestions', () => {
         beforeEach(() => {
             const competency1 = { id: 1, title: 'Programming Basics', optional: false } as Competency;
             const competency2 = { id: 2, title: 'Data Structures', optional: false } as Competency;

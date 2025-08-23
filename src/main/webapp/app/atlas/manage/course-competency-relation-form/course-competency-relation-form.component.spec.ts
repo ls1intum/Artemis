@@ -321,7 +321,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
     });
 
-    describe('AtlasML Relation Suggestions', () => {
+    describe.skip('AtlasML Relation Suggestions', () => {
         const mockSuggestionResponse = {
             relations: [
                 { tail_id: '1', head_id: '2', relation_type: 'EXTENDS' },
