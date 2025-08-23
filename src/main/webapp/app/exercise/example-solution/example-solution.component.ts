@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject, input } from '@angular/core';
+import { Component, Input, OnInit, effect, inject, input } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
@@ -27,11 +27,13 @@ export class ExampleSolutionComponent implements OnInit {
     exerciseId = input.required<number>();
 
     ngOnInit() {
-        const didExerciseChange = this.displayedExerciseId !== this.exerciseId();
-        this.displayedExerciseId = this.exerciseId();
-        if (didExerciseChange) {
-            this.loadExercise();
-        }
+        effect(() => {
+            const didExerciseChange = this.displayedExerciseId !== this.exerciseId();
+            this.displayedExerciseId = this.exerciseId();
+            if (didExerciseChange) {
+                this.loadExercise();
+            }
+        });
     }
 
     loadExercise() {

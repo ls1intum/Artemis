@@ -106,7 +106,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
         const examId = this.examId();
         const exerciseGroupId = this.exerciseGroupId();
 
-        if (courseId !== undefined && exerciseId !== undefined && repositoryId !== undefined && examId !== undefined && exerciseGroupId !== undefined) {
+        if (courseId !== undefined && exerciseId !== undefined && repositoryId !== undefined) {
             this.repositoryLink = getLocalRepositoryLink(courseId, exerciseId, this.internalRepositoryType(), repositoryId, examId, exerciseGroupId);
         }
         this.isInCourseManagement = this.router.url.includes('course-management');

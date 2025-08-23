@@ -153,6 +153,9 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     ngOnDestroy() {
         clearInterval(this.interval);
         this.websocketService.unsubscribe(this.websocketChannelForData);
+        if (this.quizExerciseChannel) {
+            this.websocketService.unsubscribe(this.quizExerciseChannel);
+        }
     }
 
     /**

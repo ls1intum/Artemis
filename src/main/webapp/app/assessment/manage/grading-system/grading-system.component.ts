@@ -38,7 +38,7 @@ export class GradingSystemComponent {
 
     courseId = input.required<number>();
     examId = input.required<number>();
-    isExam = this.examId !== undefined;
+    isExam = this.examId() !== undefined;
     childComponent?: BaseGradingSystemComponent;
 
     readonly documentationType: DocumentationType = 'Grading';

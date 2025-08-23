@@ -46,7 +46,6 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;
 
-    private subscription: Subscription;
     private eventSubscriber: Subscription;
 
     fileUploadExercise: FileUploadExercise;
@@ -119,7 +118,6 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
      * Unsubscribes on component destruction
      */
     ngOnDestroy() {
-        this.subscription.unsubscribe();
         this.eventManager.destroy(this.eventSubscriber);
     }
 

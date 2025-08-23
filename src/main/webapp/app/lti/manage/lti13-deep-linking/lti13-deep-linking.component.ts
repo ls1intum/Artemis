@@ -66,7 +66,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
     faWrench = faWrench;
 
     courseId = input.required<number>();
-    isLinking = this.courseId === undefined;
+    isLinking = this.courseId() === undefined;
 
     /**
      * Initializes the component.
