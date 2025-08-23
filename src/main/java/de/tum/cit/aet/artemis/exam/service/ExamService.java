@@ -540,8 +540,13 @@ public class ExamService {
         List<StudentParticipation> participations = studentExam.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream()).toList();
         // fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
-
-        var examGrades = studentParticipationRepository.findGradesByExamIdAndStudentId(studentExam.getExam().getId(), studentExam.getUser().getId());
+        Set<ExamGradeScoreDTO> examGrades;
+        if (studentExam.isTestRun()) {
+            examGrades = studentParticipationRepository.findGradesByExamIdAndStudentIdForTestRun(studentExam.getExam().getId(), studentExam.getUser().getId());
+        }
+        else {
+            examGrades = studentParticipationRepository.findGradesByExamIdAndStudentId(studentExam.getExam().getId(), studentExam.getUser().getId());
+        }
 
         return calculateStudentResultWithGradeAndPoints(studentExam, examGrades);
     }
@@ -563,7 +568,7 @@ public class ExamService {
         // fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
 
-        var examGrades = studentParticipationRepository.findGradesByExamIdAndStudentId(studentExam.getExam().getId(), studentExam.getUser().getId());
+        var examGrades = studentParticipationRepository.findGradesByExamIdAndStudentIdForTestRun(studentExam.getExam().getId(), studentExam.getUser().getId());
         return calculateStudentResultWithGradeAndPoints(studentExam, examGrades);
     }
 
@@ -706,12 +711,17 @@ public class ExamService {
         Map<Long, ExamScoresDTO.ExerciseResult> exerciseGroupIdToExerciseResult = new HashMap<>();
         var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(user.getId());
         for (ExamGradeScoreDTO examGrade : examGrades) {
-            Exercise exercise = studentExercises.stream().filter(e -> e.getId().equals(examGrade.exerciseId())).findFirst().orElse(null);
+            ExamGradeScoreDTO finalExamGrade = examGrade;
+            Exercise exercise = studentExercises.stream().filter(e -> e.getId().equals(finalExamGrade.exerciseId())).findFirst().orElse(null);
             if (exercise == null)
                 continue;
             StudentParticipation studentParticipation = exercise.findParticipation(participations);
             PlagiarismCase plagiarismCase = plagiarismCasesForStudent.get(examGrade.exerciseId());
             double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
+            if (examGrade.score() == null) {
+                examGrade = new ExamGradeScoreDTO(examGrade.participationId(), examGrade.userId(), examGrade.exerciseId(), 0.0, examGrade.maxPoints(),
+                        examGrade.includedInOverallScore());
+            }
             double achievedPoints = calculateAchievedPoints(examGrade.maxPoints(), examGrade.score(), exam.getCourse(), plagiarismPointDeductionPercentage);
             if (!examGrade.includedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
                 overallPointsAchieved += achievedPoints;
@@ -855,7 +865,10 @@ public class ExamService {
         return studentExamGrades.stream().collect(Collectors.toMap(ExamGradeScoreDTO::exerciseId, grade -> {
             PlagiarismCase plagiarismCase = plagiarismMapping.getPlagiarismCase(grade.userId(), grade.exerciseId());
             double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
-            return calculateAchievedPoints(grade.exerciseId(), grade.score(), course, plagiarismPointDeductionPercentage);
+            if (grade.score() == null) {
+                grade = new ExamGradeScoreDTO(grade.participationId(), grade.userId(), grade.exerciseId(), 0.0, grade.maxPoints(), grade.includedInOverallScore());
+            }
+            return calculateAchievedPoints(grade.maxPoints(), grade.score(), course, plagiarismPointDeductionPercentage);
         }));
     }
 

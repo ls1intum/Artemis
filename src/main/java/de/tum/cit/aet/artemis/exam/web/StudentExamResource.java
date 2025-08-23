@@ -192,7 +192,7 @@ public class StudentExamResource {
 
         studentExam.getUser().setVisibleRegistrationNumber();
 
-        var examGrades = studentParticipationRepository.findGradesByExamIdAndStudentId(examId, studentExam.getUser().getId());
+        var examGrades = studentParticipationRepository.findGradesByExamIdAndStudentIdForTestRun(examId, studentExam.getUser().getId());
         StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, examGrades);
 
         return ResponseEntity.ok(studentExamWithGradeDTO);

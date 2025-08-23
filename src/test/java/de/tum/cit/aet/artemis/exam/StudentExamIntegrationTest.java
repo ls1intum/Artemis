@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -1936,6 +1937,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     request.put("/api/text/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
                 }
                 case QuizExercise quizExercise -> submitQuizInExam(quizExercise, (QuizSubmission) submission);
+                case FileUploadExercise ignored -> {
+                    var fileUploadSubmission = (FileUploadSubmission) submission;
+                    final var newFilePath = "path/to/file.txt";
+                    fileUploadSubmission.setFilePath(newFilePath);
+                    var file = new MockMultipartFile("file", "filename.pdf", "application/json", "some data".getBytes());
+                    request.postWithMultipartFile("/api/fileupload/exercises/" + exercise.getId() + "/file-upload-submissions", submission, "submission", file,
+                            FileUploadSubmission.class, HttpStatus.OK);
+                }
                 default -> {
                 }
             }
@@ -2450,8 +2459,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testTestRunGradeSummaryDoesNotReturn404() throws Exception {
         StudentExam testRun = createTestRun();
         testRun.setSubmitted(true);
-        studentExamRepository.save(testRun);
-
+        testRun = studentExamRepository.save(testRun);
         Exam exam = testRun.getExam();
         exam.setPublishResultsDate(ZonedDateTime.now());
         exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(2));
@@ -2460,7 +2468,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         testRun.getExercises().forEach((exercise -> exerciseGroups.add(exercise.getExerciseGroup())));
 
         exam.setExerciseGroups(exerciseGroups);
-        examRepository.save(exam);
+        exam = examRepository.save(exam);
+        Exam finalExam = exam;
+        exam = examRepository.findByCourseIdWithExerciseGroupsAndExercises(course1.getId()).stream().filter(entry -> finalExam.getId().equals(entry.getId())).findFirst()
+                .orElseThrow();
+        testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, testRun.getUser(), exam.getExerciseGroups());
+        var all = studentParticipationRepository.findAllWithEagerSubmissionsAndResults();
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");

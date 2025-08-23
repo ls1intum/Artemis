@@ -447,7 +447,7 @@ public class ParticipationUtilService {
      * @return The created Result
      */
     public Result addResultToSubmission(Participation participation, Submission submission) {
-        Result result = new Result().submission(submission).successful(true).score(100D).rated(true);
+        Result result = new Result().submission(submission).successful(true).score(100D).rated(true).completionDate(ZonedDateTime.now());
         result.setSubmission(submission);
         result = resultRepo.save(result);
         submission.addResult(result);

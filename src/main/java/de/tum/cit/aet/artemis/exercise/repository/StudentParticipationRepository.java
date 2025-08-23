@@ -222,8 +222,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Set<CourseGradeScoreDTO> findTeamGradesByCourseId(@Param("courseId") long courseId);
 
-    // TODO: remove or move into a test repository because it's only used by tests
-
     @Query("""
             SELECT COUNT(p.id) > 0
             FROM StudentParticipation p
@@ -252,6 +250,21 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<ExamGradeScoreDTO> findGradesByExamIdAndStudentId(@Param("examId") long examId, @Param("studentId") long studentId);
+
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO(p.id, u.id, ex.id, r.score, ex.maxPoints, ex.includedInOverallScore)
+            FROM StudentParticipation p
+                JOIN p.student u
+                JOIN p.exercise ex
+                JOIN p.submissions s
+                LEFT JOIN s.results r
+            WHERE ex.exerciseGroup.exam.id = :examId
+                AND p.testRun = TRUE
+                AND p.student.id = :studentId
+                AND s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
+                AND((r.completionDate IS NULL) OR r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s))
+            """)
+    Set<ExamGradeScoreDTO> findGradesByExamIdAndStudentIdForTestRun(@Param("examId") long examId, @Param("studentId") long studentId);
 
     // NOTE: in an exam there is only one submission for file upload, text, modeling and quiz and there is no team support
     @Query("""
@@ -848,16 +861,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     List<StudentParticipation> findAllForPlagiarism(@Param("exerciseId") long exerciseId);
 
     @Query("""
-                    SELECT DISTINCT p
-                    FROM StudentParticipation p
-                        LEFT JOIN FETCH p.submissions s
-                        LEFT JOIN FETCH s.results r
-                    WHERE p.student.id = :studentId
-                        AND p.exercise IN :exercises
-                        AND (p.testRun = FALSE OR :includeTestRuns = TRUE)
-                        AND (s.submissionDate IS NULL OR s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p))
-            AND (r.completionDate IS NULL OR r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s))
-                    """)
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+            WHERE p.student.id = :studentId
+                AND p.exercise IN :exercises
+                AND (p.testRun = FALSE OR :includeTestRuns = TRUE)
+                AND (s.submissionDate IS NULL OR s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p))
+                AND (r.completionDate IS NULL OR r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s))
+            """)
     Set<StudentParticipation> findByStudentIdAndIndividualExercisesWithLatestSubmissionsLatestResult(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises, @Param("includeTestRuns") boolean includeTestRuns);
 
