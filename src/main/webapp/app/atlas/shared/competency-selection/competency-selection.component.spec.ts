@@ -25,6 +25,7 @@ describe('CompetencySelection', () => {
     let component: CompetencySelectionComponent;
     let courseStorageService: CourseStorageService;
     let courseCompetencyService: CourseCompetencyService;
+    let httpClient: HttpClient;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -51,6 +52,7 @@ describe('CompetencySelection', () => {
                 component = fixture.componentInstance;
                 courseStorageService = fixture.debugElement.injector.get(CourseStorageService);
                 courseCompetencyService = fixture.debugElement.injector.get(CourseCompetencyService);
+                httpClient = fixture.debugElement.injector.get(HttpClient);
                 const profileService = fixture.debugElement.injector.get(ProfileService);
 
                 const profileInfo = { activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
@@ -197,5 +199,117 @@ describe('CompetencySelection', () => {
         component.disabled = true;
         component.setDisabledState?.(false);
         expect(component.disabled).toBeFalse();
+    });
+
+    describe('AtlasML Competency Suggestions', () => {
+        beforeEach(() => {
+            const competency1 = { id: 1, title: 'Programming Basics', optional: false } as Competency;
+            const competency2 = { id: 2, title: 'Data Structures', optional: false } as Competency;
+            const competency3 = { id: 3, title: 'Algorithms', optional: false } as Competency;
+            jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2, competency3] });
+
+            component.exerciseDescription = 'Create a Java program that implements a sorting algorithm';
+            fixture.detectChanges();
+        });
+
+        it('should show lightbulb button for competency suggestions', () => {
+            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
+            expect(lightbulbButton).not.toBeNull();
+            expect(lightbulbButton.nativeElement.disabled).toBeFalse();
+        });
+
+        it('should disable lightbulb button when no exercise description', () => {
+            component.exerciseDescription = '';
+            fixture.detectChanges();
+
+            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
+            expect(lightbulbButton.nativeElement.disabled).toBeTrue();
+        });
+
+        it('should call API and show suggestions when lightbulb button is clicked', () => {
+            const mockSuggestionResponse = {
+                competencies: [
+                    { id: 1, title: 'Programming Basics' },
+                    { id: 3, title: 'Algorithms' },
+                ],
+            };
+
+            const httpPostSpy = jest.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
+
+            component.suggestCompetencies();
+
+            expect(httpPostSpy).toHaveBeenCalledWith('/api/atlas/competencies/suggest', {
+                description: 'Create a Java program that implements a sorting algorithm',
+                course_id: '1',
+            });
+            expect(component.suggestedCompetencyIds.has(1)).toBeTrue();
+            expect(component.suggestedCompetencyIds.has(3)).toBeTrue();
+            expect(component.suggestedCompetencyIds.has(2)).toBeFalse();
+        });
+
+        it('should show spinner while suggesting competencies', () => {
+            jest.spyOn(httpClient, 'post').mockReturnValue(of({ competencies: [] }));
+
+            component.isSuggesting = true;
+            fixture.detectChanges();
+
+            const spinner = fixture.debugElement.query(By.css('.spinner-border-sm'));
+            const lightbulbIcon = fixture.debugElement.query(By.css('fa-icon'));
+
+            expect(spinner).not.toBeNull();
+            expect(lightbulbIcon).toBeNull();
+        });
+
+        it('should display lightbulb icon next to suggested competencies', () => {
+            const mockSuggestionResponse = {
+                competencies: [{ id: 1, title: 'Programming Basics' }],
+            };
+
+            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
+
+            component.suggestCompetencies();
+            fixture.detectChanges();
+
+            expect(component.isSuggested(1)).toBeTrue();
+            expect(component.isSuggested(2)).toBeFalse();
+
+            const suggestedLightbulbs = fixture.debugElement.queryAll(By.css('fa-icon.text-warning'));
+            expect(suggestedLightbulbs.length).toBeGreaterThan(0);
+        });
+
+        it('should sort suggested competencies to the top', () => {
+            const mockSuggestionResponse = {
+                competencies: [{ id: 3, title: 'Algorithms' }],
+            };
+
+            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
+
+            component.suggestCompetencies();
+
+            const firstCompetency = component.competencyLinks?.[0];
+            expect(firstCompetency?.competency?.id).toBe(3);
+            expect(component.isSuggested(3)).toBeTrue();
+        });
+
+        it('should handle API error gracefully', () => {
+            jest.spyOn(httpClient, 'post').mockReturnValue(throwError(() => ({ status: 500 })));
+
+            component.suggestCompetencies();
+
+            expect(component.isSuggesting).toBeFalse();
+            expect(component.suggestedCompetencyIds.size).toBe(0);
+        });
+
+        it('should not call API if description is empty or whitespace only', () => {
+            const httpPostSpy = jest.spyOn(httpClient, 'post');
+
+            component.exerciseDescription = '';
+            component.suggestCompetencies();
+            expect(httpPostSpy).not.toHaveBeenCalled();
+
+            component.exerciseDescription = '   ';
+            component.suggestCompetencies();
+            expect(httpPostSpy).not.toHaveBeenCalled();
+        });
     });
 });
