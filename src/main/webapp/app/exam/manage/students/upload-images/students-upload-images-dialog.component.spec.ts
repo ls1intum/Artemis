@@ -60,7 +60,7 @@ describe('StudentsUploadImagesDialogComponent', () => {
     });
 
     it('should reset dialog when selecting pdf file', async () => {
-        component.notFoundUsers = { numberOfUsersNotFound: 1, numberOfImagesSaved: 10, listOfExamUserRegistrationNumbers: ['12345678'] };
+        component.notFoundUsers = { numberOfUsersNotFound: 1, numberOfImagesSaved: 10 };
         component.hasParsed = true;
 
         const event = { target: { files: [{ file: new File([''], 'testFile.pdf', { type: 'application/pdf' }), fileName: 'testFile' }] } };
