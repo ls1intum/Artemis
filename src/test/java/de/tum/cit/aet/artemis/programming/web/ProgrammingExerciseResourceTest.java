@@ -207,4 +207,35 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         localRepo.resetLocalRepo();
     }
 
+    @Test
+    void testFileAndDirectoryFilter() throws Exception {
+        // Test the FileAndDirectoryFilter inner class functionality
+        Class<?> filterClass = Class.forName("de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService$FileAndDirectoryFilter");
+        var constructor = filterClass.getDeclaredConstructor();
+        constructor.setAccessible(true);
+        Object filter = constructor.newInstance();
+
+        // Get both accept methods
+        var acceptFileMethod = filterClass.getDeclaredMethod("accept", java.io.File.class);
+        var acceptDirFileMethod = filterClass.getDeclaredMethod("accept", java.io.File.class, String.class);
+        acceptFileMethod.setAccessible(true);
+        acceptDirFileMethod.setAccessible(true);
+
+        // Test that .git files/directories are filtered out
+        var gitFile = new java.io.File(".git");
+        assertThat((Boolean) acceptFileMethod.invoke(filter, gitFile)).isFalse();
+
+        // Test that regular files are accepted
+        var regularFile = new java.io.File("src/main/java/Test.java");
+        assertThat((Boolean) acceptFileMethod.invoke(filter, regularFile)).isTrue();
+
+        // Test the directory/filename variant
+        var someDir = new java.io.File("src");
+        assertThat((Boolean) acceptDirFileMethod.invoke(filter, someDir, "Test.java")).isTrue();
+
+        // Test filtering .git directory with the two-parameter method
+        var gitDir = new java.io.File(".git");
+        assertThat((Boolean) acceptDirFileMethod.invoke(filter, gitDir, "anyfile.txt")).isFalse();
+    }
+
 }
