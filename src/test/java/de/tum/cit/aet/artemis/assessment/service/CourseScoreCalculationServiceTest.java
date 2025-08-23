@@ -128,6 +128,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation(boolean withDueDate) {
+
         ZonedDateTime dueDate = withDueDate ? ZonedDateTime.now() : null;
         course.getExercises().forEach(ex -> ex.setDueDate(dueDate));
 
@@ -141,8 +142,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         // Test with multiple results to assert they are sorted.
         StudentParticipation studentParticipation = studentParticipations.getFirst();
-
-        // Create results with completion dates before the due date
         participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
         participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
         participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
