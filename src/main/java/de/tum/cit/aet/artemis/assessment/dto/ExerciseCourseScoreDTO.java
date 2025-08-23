@@ -3,6 +3,9 @@ package de.tum.cit.aet.artemis.assessment.dto;
 import java.time.ZonedDateTime;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -10,8 +13,10 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
-public record ExerciseCourseScoreDTO(long id, Class<? extends Exercise> type, IncludedInOverallScore includedInOverallScore, AssessmentType assessmentType, ZonedDateTime dueDate,
-        ZonedDateTime assessmentDueDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, double maxPoints, @Nullable Double bonusPoints, long courseId) {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record ExerciseCourseScoreDTO(long id, Class<? extends Exercise> type, @NotNull IncludedInOverallScore includedInOverallScore, @NotNull AssessmentType assessmentType,
+        @Nullable ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, double maxPoints, @Nullable Double bonusPoints,
+        long courseId) {
 
     public ExerciseType exerciseType() {
         return ExerciseType.getExerciseTypeFromClass(type);

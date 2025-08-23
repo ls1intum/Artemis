@@ -223,19 +223,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<CourseGradeScoreDTO> findTeamGradesByCourseId(@Param("courseId") long courseId);
 
     // TODO: remove or move into a test repository because it's only used by tests
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-                LEFT JOIN p.team.students ts
-            WHERE p.exercise.course.id = :courseId
-                AND (p.student.id = :studentId
-                    OR ts.id = :studentId)
-                AND (r.rated IS NULL
-                    OR r.rated = TRUE)
-            """)
-    List<StudentParticipation> findByCourseIdAndStudentIdWithEagerRatedResults(@Param("courseId") long courseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT COUNT(p.id) > 0
@@ -1538,28 +1525,4 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
         Set<CourseGradeScoreDTO> teamGradeScores = findTeamGradesByCourseIdAndStudentId(courseIds, studentId);
         return Stream.of(individualGradeScores, individualQuizGradeScores, teamGradeScores).flatMap(Collection::stream).collect(Collectors.toSet());
     }
-
-    default List<StudentParticipation> findByCourseIdWithRelevantResult(long courseId) {
-        return findByCourseIdWithEagerRatedResults(courseId);
-    }
-
-    @Query("""
-            SELECT DISTINCT p
-            FROM StudentParticipation p
-                LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results r
-            WHERE p.exercise.course.id = :courseId
-                AND p.testRun = false
-                AND r.rated = true
-            """)
-    List<StudentParticipation> findByCourseIdWithEagerRatedResults(@Param("courseId") long courseId);
-
-    @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results r
-            WHERE p.exercise.exerciseGroup.exam.id = :examId
-            AND p.testRun = false
-            """)
-    List<StudentParticipation> findAllByExamIdWithEagerSubmissionsAndResults(@Param("examId") Long examId);
 }

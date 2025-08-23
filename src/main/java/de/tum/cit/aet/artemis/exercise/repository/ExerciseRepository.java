@@ -690,5 +690,5 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 JOIN ProgrammingExercise p ON e.id = p.id
             WHERE e.course.id IN :courseIds
             """)
-    Set<ExerciseCourseScoreDTO> findCourseExerciseScoreInformationByCourseIds(Set<Long> courseIds);
+    Set<ExerciseCourseScoreDTO> findCourseExerciseScoreInformationByCourseIds(@Param("courseIds") Set<Long> courseIds);
 }
