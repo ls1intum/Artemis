@@ -748,7 +748,11 @@ public class ExamService {
             if (exercise instanceof QuizExercise && quizSubmittedAnswerCounts != null && studentParticipation != null) {
                 hasNonEmptySubmission = hasNonEmptySubmissionInQuiz(studentParticipation, quizSubmittedAnswerCounts);
             }
-            Result relevantResult = studentParticipation != null ? studentParticipation.findLatestResult() : null;
+            Result relevantResult = null;
+            Submission latestSubmission = studentParticipation != null ? studentParticipation.findLatestSubmission().orElse(null) : null;
+            if (latestSubmission != null) {
+                relevantResult = latestSubmission.getLatestCompletedResult();
+            }
             exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
                     exercise.getMaxPoints(), relevantResult != null ? relevantResult.getScore() : 0.0, achievedPoints, hasNonEmptySubmission));
         }
