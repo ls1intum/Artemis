@@ -35,7 +35,6 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
      */
     @Override
     public void doFilterInternal(HttpServletRequest servletRequest, HttpServletResponse servletResponse, @NotNull FilterChain filterChain) throws IOException, ServletException {
-
         log.debug("Trying to push to repository {}", servletRequest.getRequestURI());
 
         servletResponse.setHeader("WWW-Authenticate", "Basic");
