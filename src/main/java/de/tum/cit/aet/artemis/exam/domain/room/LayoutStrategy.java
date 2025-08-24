@@ -4,10 +4,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.context.annotation.Conditional;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -37,15 +40,14 @@ public class LayoutStrategy extends DomainObject {
 
     /**
      * The capacity of this layout strategy, i.e., how many students can be at max seated using this strategy.
-     * This is nullable by default, to lazily defer that calculation for expensive to calculate layouts.
      */
-    @Column(name = "capacity", nullable = true)
+    @Column(name = "capacity", nullable = false)
     private Integer capacity;
 
     /**
      * The room this layout strategy belongs to. One room may have multiple layout strategies.
      */
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exam_room_id", nullable = false)
     @JsonBackReference
     private ExamRoom examRoom;
@@ -54,10 +56,10 @@ public class LayoutStrategy extends DomainObject {
      * The parameters of the layout strategy, i.e., the data that tells the strategy how to distribute the students.
      * Contents of this differ as the {@link LayoutStrategy#type} differs.
      */
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "parameters", columnDefinition = "json", nullable = false)
     private String parametersJson;
 
-    /* Getters & Setters */
     public String getName() {
         return name;
     }
@@ -97,5 +99,4 @@ public class LayoutStrategy extends DomainObject {
     public void setParametersJson(String parametersJson) {
         this.parametersJson = parametersJson;
     }
-    /* Getters & Setters End */
 }

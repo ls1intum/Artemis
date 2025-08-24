@@ -34,7 +34,6 @@ public class ExamRoomExamAssignment extends DomainObject {
     @JsonBackReference("examRoomExamAssignments_exam")
     private Exam exam;
 
-    /* Getters & Setters */
     public ExamRoom getExamRoom() {
         return examRoom;
     }
@@ -50,5 +49,4 @@ public class ExamRoomExamAssignment extends DomainObject {
     public void setExam(Exam exam) {
         this.exam = exam;
     }
-    /* Getters & Setters End */
 }

@@ -1,28 +1,19 @@
 package de.tum.cit.aet.artemis.exam.dto.room;
 
+import jakarta.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.exam.domain.room.SeatCondition;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamSeatDTO(
-        /**
-         * The name of the seat. This is usually a combination of the row and column name.
-         */
-        String label, // For example, "A1", "4", or "{row},{column}"
+public record ExamSeatDTO(@JsonProperty @NotNull String name, // 'rowName, seatName' or just 'seatName' if the row has no name
 
-        /**
-         * The condition of the seat.
-         */
-        SeatCondition seatCondition,
+        @JsonProperty("condition") @NotNull SeatCondition seatCondition,
 
-        /**
-         * The x-coordinate of the seat in the respective exam room. x >= 0.
-         */
-        float x,
+        @JsonProperty("x") @NotNull double xCoordinate,  // >= 0,
 
-        /**
-         * The y-coordinate of the seat in the respective exam room. y >= 0.
-         */
-        float y) {
+        @JsonProperty("y") @NotNull double yCoordinate  // >= 0
+) {
 }

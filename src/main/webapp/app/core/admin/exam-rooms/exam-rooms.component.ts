@@ -1,5 +1,4 @@
-import { Component, Signal, WritableSignal, computed, effect, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Component, EventEmitter, Signal, WritableSignal, computed, effect, inject, signal } from '@angular/core';
 import { ExamRoomAdminOverviewDTO, ExamRoomDTO, ExamRoomDeletionSummaryDTO, ExamRoomUploadInformationDTO } from 'app/core/admin/exam-rooms/exam-rooms.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
@@ -8,9 +7,18 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExamRoomsService } from 'app/core/admin/exam-rooms/exam-rooms.service';
+import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { Subject } from 'rxjs';
+import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { TranslateService } from '@ngx-translate/core';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/shared/service/alert.service';
 
 // privately used interfaces, i.e., not sent from the server like this
-export interface ExamRoomDTOExtended extends ExamRoomDTO {
+interface ExamRoomDTOExtended extends ExamRoomDTO {
     maxCapacity: number;
     layoutStrategyNames: string;
 }
@@ -21,13 +29,20 @@ export interface ExamRoomDTOExtended extends ExamRoomDTO {
     imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ExamRoomsComponent {
-    private http: HttpClient = inject(HttpClient);
+    // readonly
+    private readonly baseTranslationPath = 'artemisApp.examRooms.adminOverview';
+
+    // injected
+    private examRoomsService: ExamRoomsService = inject(ExamRoomsService);
     private sortService: SortService = inject(SortService);
+    private deleteDialogService: DeleteDialogService = inject(DeleteDialogService);
+    private translateService: TranslateService = inject(TranslateService);
+    private alertService: AlertService = inject(AlertService);
 
     // Writeable signals
-    selectedFile: WritableSignal<File | undefined> = signal(undefined);
-    actionStatus: WritableSignal<'uploading' | 'uploadSuccess' | 'uploadError' | 'deleting' | 'deletionSuccess' | 'deletionError' | undefined> = signal(undefined);
-    actionInformation: WritableSignal<ExamRoomUploadInformationDTO | ExamRoomDeletionSummaryDTO | undefined> = signal(undefined);
+    private selectedFile: WritableSignal<File | undefined> = signal(undefined);
+    private actionStatus: WritableSignal<'uploading' | 'uploadSuccess' | 'deleting' | 'deletionSuccess' | undefined> = signal(undefined);
+    private actionInformation: WritableSignal<ExamRoomUploadInformationDTO | ExamRoomDeletionSummaryDTO | undefined> = signal(undefined);
     overview: WritableSignal<ExamRoomAdminOverviewDTO | undefined> = signal(undefined);
 
     // Computed signals
@@ -36,16 +51,33 @@ export class ExamRoomsComponent {
     canUpload: Signal<boolean> = computed(() => this.hasSelectedFile() && !this.isUploading());
     isUploading: Signal<boolean> = computed(() => this.actionStatus() === 'uploading');
     hasUploadInformation: Signal<boolean> = computed(() => this.actionStatus() === 'uploadSuccess' && !!this.uploadInformation());
-    hasUploadFailed: Signal<boolean> = computed(() => this.actionStatus() === 'uploadError');
     isDeleting: Signal<boolean> = computed(() => this.actionStatus() === 'deleting');
     hasDeletionInformation: Signal<boolean> = computed(() => this.actionStatus() === 'deletionSuccess' && !!this.deletionInformation());
-    hasDeletionFailed: Signal<boolean> = computed(() => this.actionStatus() === 'deletionError');
     uploadInformation: Signal<ExamRoomUploadInformationDTO | undefined> = computed(() => this.actionInformation() as ExamRoomUploadInformationDTO);
     deletionInformation: Signal<ExamRoomDeletionSummaryDTO | undefined> = computed(() => this.actionInformation() as ExamRoomDeletionSummaryDTO);
     hasOverview: Signal<boolean> = computed(() => !!this.overview());
-    hasExamRoomData: Signal<boolean> = computed(() => !!this.overview()?.examRoomDTOS?.length);
+    numberOfUniqueExamRooms: Signal<number> = computed(() => this.overview()?.newestUniqueExamRooms?.length ?? 0);
+    numberOfUniqueExamSeats: Signal<number> = computed(
+        () =>
+            this.overview()
+                ?.newestUniqueExamRooms?.map((examRoomDTO) => examRoomDTO.numberOfSeats)
+                .reduce((acc, val) => acc + val, 0) ?? 0,
+    );
+    numberOfUniqueLayoutStrategies: Signal<number> = computed(
+        () =>
+            this.overview()
+                ?.newestUniqueExamRooms?.map((examRoomDTO) => examRoomDTO.layoutStrategies?.length ?? 0)
+                .reduce((acc, val) => acc + val, 0) ?? 0,
+    );
+    distinctLayoutStrategyNames: Signal<string> = computed(() =>
+        [...new Set(this.overview()?.newestUniqueExamRooms?.flatMap((examRoomDTO) => examRoomDTO.layoutStrategies?.map((layoutStrategy) => layoutStrategy.name)) ?? [])]
+            .slice()
+            .sort()
+            .join(', '),
+    );
+    hasExamRoomData: Signal<boolean> = computed(() => !!this.numberOfUniqueExamRooms());
     examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => {
-        return this.overview()?.examRoomDTOS.map(
+        return this.overview()?.newestUniqueExamRooms?.map(
             (examRoomDTO) =>
                 ({
                     ...examRoomDTO,
@@ -58,9 +90,13 @@ export class ExamRoomsComponent {
     // Icons
     faSort = faSort;
 
-    // Attributes for working with SortDirective
-    sort_attribute: 'roomNumber' | 'name' | 'building' | 'maxCapacity' = 'roomNumber';
+    // Fields for working with SortDirective
+    sortAttribute: 'roomNumber' | 'name' | 'building' | 'maxCapacity' = 'roomNumber';
     ascending: boolean = true;
+
+    // Fields for working with DeletionDialogService
+    private dialogErrorSource = new Subject<string>();
+    private dialogError = this.dialogErrorSource.asObservable();
 
     // Basically ngInit / constructor
     initEffect = effect(() => {
@@ -71,11 +107,12 @@ export class ExamRoomsComponent {
      * Makes a REST request to fetch a new exam room overview and displays it
      */
     loadExamRoomOverview(): void {
-        this.http.get<ExamRoomAdminOverviewDTO>('/api/exam/admin/exam-rooms/admin-overview').subscribe({
-            next: (response) => {
-                this.overview.set(response);
+        this.examRoomsService.getAdminOverview().subscribe({
+            next: (examRoomAdminOverviewResponse: HttpResponse<ExamRoomAdminOverviewDTO>) => {
+                this.overview.set(examRoomAdminOverviewResponse.body as ExamRoomAdminOverviewDTO);
             },
-            error: () => {
+            error: (errorResponse: HttpErrorResponse) => {
+                this.showErrorNotification('examRoomOverview.loadError', {}, errorResponse.message);
                 this.overview.set(undefined);
             },
         });
@@ -87,15 +124,27 @@ export class ExamRoomsComponent {
      * @param event A file selection event
      */
     onFileSelectedAcceptZip(event: Event): void {
-        const input = event.target as HTMLInputElement;
-        if (input.files && input.files.length > 0) {
-            const file = input.files[0];
-            if (file.name.endsWith('.zip')) {
-                this.selectedFile.set(file);
-            } else {
-                this.selectedFile.set(undefined);
-            }
+        const { files } = event.target as HTMLInputElement;
+        if (!files || files.length <= 0) {
+            this.showErrorNotification('invalidFile');
+            this.selectedFile.set(undefined);
+            return;
         }
+
+        const file = files[0];
+        if (!file.name.toLowerCase().endsWith('.zip')) {
+            this.showErrorNotification('noZipFile');
+            this.selectedFile.set(undefined);
+            return;
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+            this.showErrorNotification('fileSizeTooBig', { MAX_FILE_SIZE: MAX_FILE_SIZE / 1024 ** 2 });
+            this.selectedFile.set(undefined);
+            return;
+        }
+
+        this.selectedFile.set(file);
     }
 
     /**
@@ -106,19 +155,17 @@ export class ExamRoomsComponent {
         const file = this.selectedFile();
         if (!file) return;
 
-        const formData = new FormData();
-        formData.append('file', file);
-
         this.actionStatus.set('uploading');
 
-        this.http.post('/api/exam/admin/exam-rooms/upload', formData).subscribe({
-            next: (uploadInformation) => {
+        this.examRoomsService.uploadRoomDataZipFile(file).subscribe({
+            next: (uploadInformationResponse: HttpResponse<ExamRoomUploadInformationDTO>) => {
                 this.actionStatus.set('uploadSuccess');
                 this.selectedFile.set(undefined);
-                this.actionInformation.set(uploadInformation as ExamRoomUploadInformationDTO);
+                this.actionInformation.set(uploadInformationResponse.body as ExamRoomUploadInformationDTO);
             },
-            error: () => {
-                this.actionStatus.set('uploadError');
+            error: (errorResponse: HttpErrorResponse) => {
+                this.showErrorNotification('uploadError', {}, errorResponse.message);
+                this.actionStatus.set(undefined);
             },
             complete: () => {
                 this.loadExamRoomOverview();
@@ -130,43 +177,53 @@ export class ExamRoomsComponent {
      * REST request to delete ALL exam room related data.
      */
     clearExamRooms(): void {
-        if (!confirm('Are you sure you want to delete ALL exam rooms? This action cannot be undone.')) {
-            return;
-        }
+        const deleteEmitter = new EventEmitter<{ [key: string]: boolean }>();
 
-        this.actionStatus.set('deleting');
+        deleteEmitter.subscribe(() => {
+            this.actionStatus.set('deleting');
+            this.examRoomsService.deleteAllExamRooms().subscribe({
+                next: () => {
+                    this.actionStatus.set('deletionSuccess');
+                    this.actionInformation.set(undefined);
+                },
+                error: (errorResponse: HttpErrorResponse) => {
+                    this.showErrorNotification('deletionError', {}, errorResponse.message);
+                    this.actionStatus.set(undefined);
+                },
+                complete: () => {
+                    this.dialogErrorSource.next(''); // this.showErrorNotification is easier to use
+                    this.loadExamRoomOverview();
+                },
+            });
+        });
 
-        this.http.delete<void>('/api/exam/admin/exam-rooms').subscribe({
-            next: () => {
-                this.actionStatus.set('deletionSuccess');
-                alert('All exam rooms deleted.');
-            },
-            error: (err) => {
-                this.actionStatus.set('deletionError');
-                alert('Failed to clear exam rooms: ' + err.message);
-            },
-            complete: () => {
-                this.actionInformation.set(undefined); // since this purges everything, we don't need a summary
-                this.loadExamRoomOverview();
-            },
+        this.deleteDialogService.openDeleteDialog({
+            deleteQuestion: `${this.baseTranslationPath}.deleteAllExamRoomsQuestion`,
+            buttonType: ButtonType.ERROR,
+            actionType: ActionType.Delete,
+            delete: deleteEmitter,
+            dialogError: this.dialogError,
+            requireConfirmationOnlyForAdditionalChecks: false,
+            translateValues: {},
         });
     }
 
     /**
-     * REST request to delete all outdated and unused exams.
+     * REST request to delete all outdated and unused exam rooms.
      * An exam room is outdated if there exists a newer entry of the same (number, name) combination.
      * An exam room is unused if it isn't connected to any exam.
      */
     deleteOutdatedAndUnusedExamRooms(): void {
         this.actionStatus.set('deleting');
 
-        this.http.delete<ExamRoomDeletionSummaryDTO>('/api/exam/admin/exam-rooms/outdated-and-unused').subscribe({
-            next: (summary) => {
-                this.actionInformation.set(summary as ExamRoomDeletionSummaryDTO);
+        this.examRoomsService.deleteOutdatedAndUnusedExamRooms().subscribe({
+            next: (examRoomDeletionSummaryResponse: HttpResponse<ExamRoomDeletionSummaryDTO>) => {
+                this.actionInformation.set(examRoomDeletionSummaryResponse.body as ExamRoomDeletionSummaryDTO);
                 this.actionStatus.set('deletionSuccess');
             },
-            error: () => {
-                this.actionStatus.set('deletionError');
+            error: (errorResponse: HttpErrorResponse) => {
+                this.showErrorNotification('deletionError', {}, errorResponse.message);
+                this.actionStatus.set(undefined);
             },
             complete: () => {
                 this.loadExamRoomOverview();
@@ -179,16 +236,21 @@ export class ExamRoomsComponent {
      */
     sortRows(): void {
         if (!this.hasExamRoomData()) return;
-        this.sortService.sortByProperty(this.examRoomData()!, this.sort_attribute, this.ascending);
+        this.sortService.sortByProperty(this.examRoomData()!, this.sortAttribute, this.ascending);
+    }
+
+    private showErrorNotification(translationKey: string, interpolationValues?: any, trailingText?: string, translatePath: string = this.baseTranslationPath): void {
+        const errorMessage = this.translateService.instant(`${translatePath}.${translationKey}`, interpolationValues);
+        this.alertService.error(trailingText ? `${errorMessage}: "${trailingText}"` : errorMessage);
     }
 
     private getMaxCapacityOfExamRoom(examRoom: ExamRoomDTO): number {
-        return examRoom!.layoutStrategies?.map((layoutStrategy) => layoutStrategy.capacity ?? 0).reduce((max, curr) => Math.max(max, curr), 0) ?? 0;
+        return examRoom.layoutStrategies?.map((layoutStrategy) => layoutStrategy.capacity ?? 0).reduce((max, curr) => Math.max(max, curr), 0) ?? 0;
     }
 
     private getLayoutStrategyNames(examRoom: ExamRoomDTO): string {
         return (
-            examRoom!.layoutStrategies
+            examRoom.layoutStrategies
                 ?.map((layoutStrategy) => layoutStrategy.name)
                 .sort()
                 .join(', ') ?? ''

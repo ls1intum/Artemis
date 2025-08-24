@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.3.3"
+version = "8.4.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -163,7 +163,7 @@ dependencies {
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
     implementation "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
-    implementation "org.glassfish.jersey.core:jersey-common:3.1.10"
+    implementation "org.glassfish.jersey.core:jersey-common:3.1.11"
 
     implementation "de.jplag:jplag:${jplag_version}"
 
@@ -208,7 +208,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2025.2"
+    implementation "net.sourceforge.plantuml:plantuml:1.2025.4"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
         version {
@@ -286,7 +286,7 @@ dependencies {
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${fasterxml_version}"
 
     // Avoid outdated version of netty to prevent security issues
-    implementation("net.minidev:json-smart") { version {strictly "2.5.2" } }
+    implementation("net.minidev:json-smart") { version {strictly "2.6.0" } }
 
 
     // Required for synchronization between nodes and build agents (LocalCI)
@@ -299,8 +299,7 @@ dependencies {
     implementation "org.hibernate.orm:hibernate-envers:${hibernate_version}"
 
     // Required for jdbc connection pooling to databases
-    // NOTE: cannot upgrade to 6.3.2 because of an issue: NoSuchMethodException error that is thrown when setting a metric registry
-    implementation "com.zaxxer:HikariCP:7.0.0"
+    implementation "com.zaxxer:HikariCP:7.0.1"
 
     // Required for several dependencies
     implementation "org.apache.commons:commons-text:${commons_text_version}"
@@ -358,7 +357,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:10.4"
+    implementation "com.nimbusds:nimbus-jose-jwt:10.4.1"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
@@ -396,7 +395,7 @@ dependencies {
     implementation "org.apache.maven:maven-model:3.9.11"
     implementation "org.apache.pdfbox:pdfbox:3.0.5"
     implementation "org.apache.commons:commons-csv:1.14.1"
-    implementation "org.commonmark:commonmark:0.25.0"
+    implementation "org.commonmark:commonmark:0.25.1"
     implementation "commons-fileupload:commons-fileupload:1.6.0"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
@@ -448,7 +447,7 @@ dependencies {
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.springframework:spring-test:${spring_framework_version}"
-    testImplementation "org.assertj:assertj-core:3.27.3"
+    testImplementation "org.assertj:assertj-core:3.27.4"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     // needed to add mockito as agent and avoid its warning
     mockitoAgent ("org.mockito:mockito-core:${mockito_version}") {

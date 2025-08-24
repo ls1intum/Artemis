@@ -24,11 +24,7 @@ export interface ExamRoomAdminOverviewDTO {
     numberOfStoredExamRooms: number;
     numberOfStoredExamSeats: number;
     numberOfStoredLayoutStrategies: number;
-    numberOfUniqueExamRooms: number;
-    numberOfUniqueExamSeats: number;
-    numberOfUniqueLayoutStrategies: number;
-    distinctLayoutStrategyNames: string[];
-    examRoomDTOS: ExamRoomDTO[];
+    newestUniqueExamRooms: ExamRoomDTO[];
 }
 
 export interface ExamRoomDeletionSummaryDTO {

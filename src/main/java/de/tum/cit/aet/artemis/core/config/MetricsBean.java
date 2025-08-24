@@ -13,6 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -23,7 +25,6 @@ import org.springframework.boot.actuate.health.NamedContributor;
 import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -198,8 +199,10 @@ public class MetricsBean {
     }
 
     /**
-     * Event listener method that is invoked when the application is ready. It registers various health and metric
+     * PostConstruct that is invoked when the bean has been created. It registers various health and metric
      * contributors, and conditionally enables metrics based on active profiles.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *
      * <p>
      * Specifically, this method performs the following actions:
@@ -224,7 +227,7 @@ public class MetricsBean {
      * </li>
      * </ul>
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void applicationReady() {
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();

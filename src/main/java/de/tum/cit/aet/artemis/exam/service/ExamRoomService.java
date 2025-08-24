@@ -3,14 +3,11 @@ package de.tum.cit.aet.artemis.exam.service;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -31,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
@@ -41,7 +39,6 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
-import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUniqueRoomsDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomAssignmentRepository;
@@ -57,6 +54,8 @@ import de.tum.cit.aet.artemis.exam.repository.LayoutStrategyRepository;
 public class ExamRoomService {
 
     private static final Logger log = LoggerFactory.getLogger(ExamRoomService.class);
+
+    private static final String ENTITY_NAME = "examRoom";
 
     private final ExamRoomRepository examRoomRepository;
 
@@ -134,9 +133,9 @@ public class ExamRoomService {
 
                 // extract the filename - remove the folder path (if existent) and remove the trailing '.json'
                 // Math.max(0, entryName.lastIndexOf('/') + 1); === entryName.lastIndexOf('/') + 1;
-                int roomNumberStartIdx = entryName.lastIndexOf('/') + 1;
-                int roomNumberEndIdx = entryName.lastIndexOf(".json");
-                String roomNumber = entryName.substring(roomNumberStartIdx, roomNumberEndIdx);
+                int roomNumberStartIndex = entryName.lastIndexOf('/') + 1;
+                int roomNumberEndIndex = entryName.lastIndexOf(".json");
+                String roomNumber = entryName.substring(roomNumberStartIndex, roomNumberEndIndex);
 
                 ExamRoomInput examRoomInput = objectMapper.readValue(zis.readAllBytes(), ExamRoomInput.class);
 
@@ -148,8 +147,8 @@ public class ExamRoomService {
             }
 
         }
-        catch (IOException | IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Internal error while trying to parse the rooms");
+        catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Internal error while trying to read the rooms");
         }
         log.info("Parsed rooms in {}", TimeLogUtil.formatDurationFrom(startTime));
 
@@ -180,6 +179,10 @@ public class ExamRoomService {
             return null;
         }
 
+        if (examRoomInput.name == null || examRoomInput.building == null) {
+            throw new BadRequestAlertException("Room name and building are required fields", ENTITY_NAME, "roomNameAndBuildingRequired");
+        }
+
         /* Extract simple exam room fields */
         ExamRoom room = new ExamRoom();
         room.setRoomNumber(roomNumber);
@@ -202,17 +205,13 @@ public class ExamRoomService {
         // for relative layouts will only be done if the rooms have already been parsed
         List<ExamSeatDTO> seats = convertRowInputsToExamSeatDTOs(examRoomInput.rows);
         if (seats == null) {
-            log.warn("Skipping room {} because the seats are stored incorrectly", room.getRoomNumber());
-            return null;
+            throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the seats couldn't be converted", ENTITY_NAME, "cannotConvertSeats");
         }
-
         room.setSeats(seats);
-        /* Extract the seats - End */
 
         /* Extract the layouts */
         List<LayoutStrategy> layouts = convertLayoutInputsToLayoutStrategies(examRoomInput.layouts, room);
         room.setLayoutStrategies(layouts);
-        /* Extract the layouts - End */
 
         return room;
     }
@@ -279,10 +278,8 @@ public class ExamRoomService {
                 case "auto_layout" -> layoutStrategy.setType(LayoutStrategyType.RELATIVE_DISTANCE);
                 // useable_seats is a common typo in the JSON files
                 case "usable_seats", "useable_seats" -> layoutStrategy.setType(LayoutStrategyType.FIXED_SELECTION);
-                default -> {
-                    log.warn("Unknown layout type '{}' in room {}", layoutType, room.getRoomNumber());
-                    return;
-                }
+                default -> throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted", ENTITY_NAME,
+                        "cannotConvertUnknownLayout");
             }
             layoutStrategy.setParametersJson(String.valueOf(layoutDetailNode));
 
@@ -290,19 +287,19 @@ public class ExamRoomService {
             switch (layoutStrategy.getType()) {
                 case LayoutStrategyType.FIXED_SELECTION -> {
                     if (!layoutDetailNode.isArray()) {
-                        log.warn("Skipping layout '{}' of room {} because it's a fixed selection, but parameters aren't an array", layoutName, room.getRoomNumber());
-                        return;
+                        throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted", ENTITY_NAME,
+                                "cannotConvertLayout");
                     }
 
                     layoutStrategy.setCapacity(layoutDetailNode.size());
                 }
                 case LayoutStrategyType.RELATIVE_DISTANCE -> {
                     if (!layoutDetailNode.isObject()) {
-                        log.warn("Skipping layout '{}' of room {} because it's a relative selection, but parameters aren't an object", layoutName, room.getRoomNumber());
-                        return;
+                        throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted", ENTITY_NAME,
+                                "cannotConvertLayout");
                     }
 
-                    calculateSeatsFromRelativeDistanceLayout(layoutDetailNode, room).ifPresent(layoutStrategy::setCapacity);
+                    layoutStrategy.setCapacity(calculateSeatsFromRelativeDistanceLayout(layoutDetailNode, room));
                 }
             }
 
@@ -325,13 +322,11 @@ public class ExamRoomService {
      * However, any or all of those can be omitted. If omitted, they will default to 0, which means no restrictions.
      *
      * @param layoutDetailNode The JSON node containing the expected relative layout information
-     * @return The number of exam seats that can be used with the given layout, or an empty optional if it couldn't
-     *         determine the size.
+     * @return The number of exam seats that can be used with the given layout
      */
-    private static Optional<Integer> calculateSeatsFromRelativeDistanceLayout(JsonNode layoutDetailNode, ExamRoom examRoom) {
-        // If we don't have exam seat information, we can't calculate the size
+    private static int calculateSeatsFromRelativeDistanceLayout(JsonNode layoutDetailNode, ExamRoom examRoom) {
         if (examRoom.getSeats().isEmpty()) {
-            return Optional.empty();
+            return 0;
         }
 
         // first_row in some rooms is -1. I assume this means the same as 0
@@ -341,37 +336,49 @@ public class ExamRoomService {
 
         List<ExamSeatDTO> examSeatsFilteredAndSorted = examRoom.getSeats().stream()
                 // Filter out all exam rooms that are before the "first row". The coords start at 0, the row numbers at 1
-                .filter(examSeatDTO -> examSeatDTO.y() >= (firstRow - 1))
+                .filter(examSeatDTO -> examSeatDTO.yCoordinate() >= (firstRow - 1))
                 // Filter out all exam rooms that are not default usable
                 .filter(examSeatDTO -> examSeatDTO.seatCondition() == SeatCondition.USABLE)
                 // Sort by X, then by Y to ensure stable processing later
-                .sorted(Comparator.comparingDouble(ExamSeatDTO::y).thenComparingDouble(ExamSeatDTO::x)).toList();
+                .sorted(Comparator.comparingDouble(ExamSeatDTO::yCoordinate).thenComparingDouble(ExamSeatDTO::xCoordinate)).toList();
 
         List<ExamSeatDTO> selectedSeats = new ArrayList<>();
         for (ExamSeatDTO examSeatDTO : examSeatsFilteredAndSorted) {
-            boolean isFarEnough = selectedSeats.stream()
-                    .noneMatch(existing -> Math.abs(existing.y() - examSeatDTO.y()) <= ySpace && Math.abs(existing.x() - examSeatDTO.x()) <= xSpace);
+            boolean isFarEnough = selectedSeats.stream().noneMatch(
+                    existing -> Math.abs(existing.yCoordinate() - examSeatDTO.yCoordinate()) <= ySpace && Math.abs(existing.xCoordinate() - examSeatDTO.xCoordinate()) <= xSpace);
             if (isFarEnough) {
                 selectedSeats.add(examSeatDTO);
             }
         }
 
-        return Optional.of(selectedSeats.size());
+        return selectedSeats.size();
     }
 
     private static ExamRoomUploadInformationDTO getExamRoomUploadInformationDTO(MultipartFile zipFile, long startTime, Set<ExamRoom> examRooms) {
-        long startTimeOfDTO = System.nanoTime();
 
+        String uploadDuration = formatDurationWithMillisPrecisionFromNanos(startTime);
         String uploadedFileName = zipFile.getOriginalFilename();
-        PeriodFormatter formatter = new PeriodFormatterBuilder().appendDays().appendSuffix("d ").appendHours().appendSuffix("h ").appendMinutes().appendSuffix("m ").appendSeconds()
-                .appendSuffix("s ").appendMillis().appendSuffix("ms").toFormatter();
-
-        String uploadDuration = formatter.print(Period.millis((int) Duration.ofNanos(startTimeOfDTO - startTime).toMillis()).normalizedStandard());
         Integer numberOfUploadedRooms = examRooms.size();
         Integer numberOfUploadedSeats = examRooms.stream().mapToInt(room -> room.getSeats().size()).sum();
         List<String> roomNames = examRooms.stream().map(ExamRoom::getName).toList();
 
         return new ExamRoomUploadInformationDTO(uploadedFileName, uploadDuration, numberOfUploadedRooms, numberOfUploadedSeats, roomNames);
+    }
+
+    /**
+     * Calculates the duration between the point in time this function was called, and the start time,
+     * that was previously obtained with {@link System#nanoTime}, and then returns a string representation
+     * that's always with millisecond precision.
+     *
+     * @param startTimeNanos the time of the first measurement in nanoseconds
+     * @return A formatted string of the duration between now and timeNanoStart
+     */
+    private static String formatDurationWithMillisPrecisionFromNanos(long startTimeNanos) {
+        final long currentTime = System.nanoTime();
+        PeriodFormatter formatter = new PeriodFormatterBuilder().appendDays().appendSuffix("d ").appendHours().appendSuffix("h ").appendMinutes().appendSuffix("m ").appendSeconds()
+                .appendSuffix("s ").appendMillis().appendSuffix("ms").toFormatter();
+
+        return formatter.print(Period.millis((int) Duration.ofNanos(currentTime - startTimeNanos).toMillis()).normalizedStandard());
     }
 
     /**
@@ -385,17 +392,13 @@ public class ExamRoomService {
         final Integer numberOfStoredExamRooms = examRooms.size();
         final Integer numberOfStoredExamSeats = examRooms.stream().mapToInt(er -> er.getSeats().size()).sum();
         final Integer numberOfStoredLayoutStrategies = examRooms.stream().mapToInt(er -> er.getLayoutStrategies().size()).sum();
-        final Set<String> distinctLayoutStrategyNames = examRooms.stream().flatMap(er -> er.getLayoutStrategies().stream()).map(LayoutStrategy::getName)
-                .collect(Collectors.toSet());
-        final ExamRoomUniqueRoomsDTO uniqueRoomsDTO = this.countUniqueRoomsSeatsAndLayoutStrategies(examRooms);
 
         final Set<ExamRoomDTO> examRoomDTOS = examRooms.stream()
                 .map(examRoom -> new ExamRoomDTO(examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoom.getSeats().size(),
                         examRoom.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
                 .collect(Collectors.toSet());
 
-        return new ExamRoomAdminOverviewDTO(numberOfStoredExamRooms, numberOfStoredExamSeats, numberOfStoredLayoutStrategies, uniqueRoomsDTO.numberOfUniqueRooms(),
-                uniqueRoomsDTO.numberOfUniqueSeats(), uniqueRoomsDTO.numberOfUniqueLayoutStrategies(), distinctLayoutStrategyNames, examRoomDTOS);
+        return new ExamRoomAdminOverviewDTO(numberOfStoredExamRooms, numberOfStoredExamSeats, numberOfStoredLayoutStrategies, examRoomDTOS);
     }
 
     /**
@@ -405,28 +408,9 @@ public class ExamRoomService {
         final long startTime = System.nanoTime();
 
         // deleting everything in batch is more efficient
-        examRoomAssignmentRepository.deleteAllInBatch();
-        layoutStrategyRepository.deleteAllInBatch();
-        examRoomRepository.deleteAllInBatch();
+        examRoomRepository.deleteAll();
 
         log.debug("Deleting all exam rooms took {}", TimeLogUtil.formatDurationFrom(startTime));
-    }
-
-    private ExamRoomUniqueRoomsDTO countUniqueRoomsSeatsAndLayoutStrategies(List<ExamRoom> examRooms) {
-        record ExamRoomKey(String roomNumber, String name, String building) {
-        }
-
-        Collection<ExamRoom> latestUniqueRooms = examRooms.stream().collect(Collectors.toMap(
-                // key
-                er -> new ExamRoomKey(er.getRoomNumber(), er.getName(), er.getBuilding()),
-                // value (the exam room itself)
-                Function.identity(),
-                // merging function
-                (er1, er2) -> er1.getCreatedDate().isAfter(er2.getCreatedDate()) ? er1 : er2)).values();
-        int uniqueSeats = latestUniqueRooms.stream().mapToInt(room -> room.getSeats().size()).sum();
-        int uniqueLayoutStrategies = latestUniqueRooms.stream().mapToInt(room -> room.getLayoutStrategies().size()).sum();
-
-        return new ExamRoomUniqueRoomsDTO(latestUniqueRooms.size(), uniqueSeats, uniqueLayoutStrategies);
     }
 
     /**
@@ -444,10 +428,8 @@ public class ExamRoomService {
         examRoomRepository.deleteAllById(outdatedAndUnusedExamRoomIds);
 
         log.debug("Deleting all unused and outdated exam rooms took {}", TimeLogUtil.formatDurationFrom(startTime));
-        PeriodFormatter formatter = new PeriodFormatterBuilder().appendDays().appendSuffix("d ").appendHours().appendSuffix("h ").appendMinutes().appendSuffix("m ").appendSeconds()
-                .appendSuffix("s ").appendMillis().appendSuffix("ms").toFormatter();
 
-        String duration = formatter.print(Period.millis((int) Duration.ofNanos(System.nanoTime() - startTime).toMillis()).normalizedStandard());
+        String duration = formatDurationWithMillisPrecisionFromNanos(startTime);
         return new ExamRoomDeletionSummaryDTO(duration, outdatedAndUnusedExamRoomIds.size());
     }
 

@@ -90,7 +90,6 @@ public class ExamRoom extends AbstractAuditingEntity {
     @JsonManagedReference("examRoomExamAssignments_room")
     private Set<ExamRoomExamAssignment> examRoomExamAssignments = new HashSet<>();
 
-    /* Getters & Setters */
     public String getName() {
         return name;
     }
@@ -154,7 +153,5 @@ public class ExamRoom extends AbstractAuditingEntity {
     public void setExamRoomAssignments(Set<ExamRoomExamAssignment> examRoomExamAssignments) {
         this.examRoomExamAssignments = examRoomExamAssignments;
     }
-
-    /* Getters & Setters End */
 
 }
