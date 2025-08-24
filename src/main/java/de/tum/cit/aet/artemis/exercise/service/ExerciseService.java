@@ -850,25 +850,27 @@ public class ExerciseService {
                     case ENGLISH -> "Release: ";
                     case GERMAN -> "Veröffentlichung: ";
                 };
-                events.add(new CalendarEventDTO(dto.type(), releaseDateTitlePrefix + dto.title(), dto.releaseDate(), null, null, null));
+                events.add(new CalendarEventDTO("exerciseReleaseEvent-" + dto.originEntityId(), dto.type(), releaseDateTitlePrefix + dto.title(), dto.releaseDate(), null, null,
+                        null));
             }
             if (dto.startDate() != null) {
                 String startDateTitlePrefix = "Start: ";
-                events.add(new CalendarEventDTO(dto.type(), startDateTitlePrefix + dto.title(), dto.startDate(), null, null, null));
+                events.add(new CalendarEventDTO("exerciseStartEvent-" + dto.originEntityId(), dto.type(), startDateTitlePrefix + dto.title(), dto.startDate(), null, null, null));
             }
             if (dto.dueDate() != null) {
                 String dueDateTitlePrefix = switch (language) {
                     case ENGLISH -> "Due: ";
                     case GERMAN -> "Abgabefrist: ";
                 };
-                events.add(new CalendarEventDTO(dto.type(), dueDateTitlePrefix + dto.title(), dto.dueDate(), null, null, null));
+                events.add(new CalendarEventDTO("exerciseDueEvent-" + dto.originEntityId(), dto.type(), dueDateTitlePrefix + dto.title(), dto.dueDate(), null, null, null));
             }
             if (dto.assessmentDueDate() != null) {
                 String assessmentDueDateTitlePrefix = switch (language) {
                     case ENGLISH -> "Assessment due: ";
                     case GERMAN -> "Korrekturfrist: ";
                 };
-                events.add(new CalendarEventDTO(dto.type(), assessmentDueDateTitlePrefix + dto.title(), dto.assessmentDueDate(), null, null, null));
+                events.add(new CalendarEventDTO("exerciseAssessmentDueEvent-" + dto.originEntityId(), dto.type(), assessmentDueDateTitlePrefix + dto.title(),
+                        dto.assessmentDueDate(), null, null, null));
             }
         }
         return events;

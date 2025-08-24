@@ -39,6 +39,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO(
+                lecture.id,
                 lecture.title,
                 lecture.visibleDate,
                 lecture.startDate,

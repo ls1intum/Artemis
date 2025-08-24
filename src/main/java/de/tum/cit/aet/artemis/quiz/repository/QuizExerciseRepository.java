@@ -93,6 +93,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO(
+                exercise.id,
                 exercise.quizMode,
                 exercise.title,
                 exercise.releaseDate,

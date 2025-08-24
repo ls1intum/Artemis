@@ -339,12 +339,15 @@ public class LectureService {
                 case ENGLISH -> "End: ";
                 case GERMAN -> "Ende: ";
             };
-            return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, titlePrefix + dto.title(), dto.endDate(), null, null, null));
+            return Optional.of(new CalendarEventDTO("lectureEndEvent-" + dto.originEntityId(), CalendarEventRelatedEntity.LECTURE, titlePrefix + dto.title(), dto.endDate(), null,
+                    null, null));
         }
         if (dto.startDate() != null && dto.endDate() == null) {
             titlePrefix = "Start: ";
-            return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, titlePrefix + dto.title(), dto.startDate(), null, null, null));
+            return Optional.of(new CalendarEventDTO("lectureStartEvent-" + dto.originEntityId(), CalendarEventRelatedEntity.LECTURE, titlePrefix + dto.title(), dto.startDate(),
+                    null, null, null));
         }
-        return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.LECTURE, dto.title(), dto.startDate(), dto.endDate(), null, null));
+        return Optional.of(new CalendarEventDTO("lectureStartAndEndEvent-" + dto.originEntityId(), CalendarEventRelatedEntity.LECTURE, dto.title(), dto.startDate(), dto.endDate(),
+                null, null));
     }
 }

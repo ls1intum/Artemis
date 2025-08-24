@@ -518,6 +518,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.ExamCalendarEventDTO(
+                exam.id,
                 exam.title,
                 exam.visibleDate,
                 exam.startDate,

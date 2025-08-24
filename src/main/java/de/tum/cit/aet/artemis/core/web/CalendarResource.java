@@ -97,7 +97,7 @@ public class CalendarResource {
 
     @GetMapping("/courses/{courseId}/subscription/calendarEvents.ics")
     public ResponseEntity<String> getSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
-            @RequestParam("filterOptions") Set<CalendarEventFilterOption> filterOptions, @RequestParam("filterOptions") Language language) {
+            @RequestParam("filterOptions") Set<CalendarEventFilterOption> filterOptions, @RequestParam("language") Language language) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
         boolean userIsStudent = authorizationCheckService.isStudentInCourse(course, user);
@@ -126,7 +126,7 @@ public class CalendarResource {
         Set<CalendarEventDTO> calendarEventDTOs = Stream.of(tutorialEventDTOs, lectureEventDTOs, examEventDTOs, quizExerciseEventDTOs, otherExerciseEventDTOs).flatMap(Set::stream)
                 .collect(Collectors.toSet());
 
-        String icsFileString = calendarSubscriptionService.getICSFileAsString(calendarEventDTOs);
+        String icsFileString = calendarSubscriptionService.getICSFileAsString(language, calendarEventDTOs);
         return ResponseEntity.ok().contentType(MediaType.parseMediaType("text/calendar; charset=utf-8"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=calendarEvents.ics").body(icsFileString);
     }

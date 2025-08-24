@@ -666,6 +666,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO(
+                exercise.id,
                 CASE TYPE(exercise)
                     WHEN FileUploadExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity.FILE_UPLOAD_EXERCISE
                     WHEN TextExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity.TEXT_EXERCISE

@@ -587,8 +587,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             return Optional.empty();
         }
 
-        return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, dto.title(), synchronizedBatch.getStartTime(),
-                synchronizedBatch.getStartTime().plusSeconds(dto.duration()), null, null));
+        return Optional.of(new CalendarEventDTO("exerciseStartAndEndEvent-" + dto.originEntityId(), CalendarEventRelatedEntity.QUIZ_EXERCISE, dto.title(),
+                synchronizedBatch.getStartTime(), synchronizedBatch.getStartTime().plusSeconds(dto.duration()), null, null));
     }
 
     /**
@@ -617,14 +617,16 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     case ENGLISH -> "Release: ";
                     case GERMAN -> "Veröffentlichung: ";
                 };
-                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, releaseDateTitlePrefix + dto.title(), dto.releaseDate(), null, null, null));
+                events.add(new CalendarEventDTO("exerciseReleaseEvent-" + dto.originEntityId(), CalendarEventRelatedEntity.QUIZ_EXERCISE, releaseDateTitlePrefix + dto.title(),
+                        dto.releaseDate(), null, null, null));
             }
             if (dto.dueDate() != null) {
                 String dueDateTitlePrefix = switch (language) {
                     case ENGLISH -> "Due: ";
                     case GERMAN -> "Abgabefrist: ";
                 };
-                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, dueDateTitlePrefix + dto.title(), dto.dueDate(), null, null, null));
+                events.add(new CalendarEventDTO("exerciseDueEvent-" + dto.originEntityId(), CalendarEventRelatedEntity.QUIZ_EXERCISE, dueDateTitlePrefix + dto.title(),
+                        dto.dueDate(), null, null, null));
             }
         }
         return events;
