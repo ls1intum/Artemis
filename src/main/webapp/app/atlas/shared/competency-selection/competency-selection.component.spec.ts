@@ -29,6 +29,7 @@ describe('CompetencySelection', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [CompetencySelectionComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -42,23 +43,22 @@ describe('CompetencySelection', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(CourseStorageService),
+                MockProvider(CourseCompetencyService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CompetencySelectionComponent);
-                component = fixture.componentInstance;
-                courseStorageService = fixture.debugElement.injector.get(CourseStorageService);
-                courseCompetencyService = fixture.debugElement.injector.get(CourseCompetencyService);
-                httpClient = fixture.debugElement.injector.get(HttpClient);
-                const profileService = fixture.debugElement.injector.get(ProfileService);
+        });
 
-                const profileInfo = { activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
-                const getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoMock.mockReturnValue(profileInfo);
-            });
+        fixture = TestBed.createComponent(CompetencySelectionComponent);
+        component = fixture.componentInstance;
+        courseStorageService = TestBed.inject(CourseStorageService);
+        courseCompetencyService = TestBed.inject(CourseCompetencyService);
+        httpClient = TestBed.inject(HttpClient);
+        const profileService = TestBed.inject(ProfileService);
+
+        const profileInfo = { activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
+        const getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoMock.mockReturnValue(profileInfo);
     });
 
     afterEach(() => {
@@ -201,7 +201,7 @@ describe('CompetencySelection', () => {
         expect(component.disabled).toBeFalse();
     });
 
-    describe.skip('AtlasML Competency Suggestions', () => {
+    describe('AtlasML Competency Suggestions', () => {
         beforeEach(() => {
             const competency1 = { id: 1, title: 'Programming Basics', optional: false } as Competency;
             const competency2 = { id: 2, title: 'Data Structures', optional: false } as Competency;
@@ -213,6 +213,7 @@ describe('CompetencySelection', () => {
         });
 
         it('should show lightbulb button for competency suggestions', () => {
+            fixture.detectChanges();
             const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
             expect(lightbulbButton).not.toBeNull();
             expect(lightbulbButton.nativeElement.disabled).toBeFalse();
@@ -245,19 +246,20 @@ describe('CompetencySelection', () => {
             expect(component.suggestedCompetencyIds.has(1)).toBeTrue();
             expect(component.suggestedCompetencyIds.has(3)).toBeTrue();
             expect(component.suggestedCompetencyIds.has(2)).toBeFalse();
+            expect(component.isSuggesting).toBeFalse();
         });
 
         it('should show spinner while suggesting competencies', () => {
-            jest.spyOn(httpClient, 'post').mockReturnValue(of({ competencies: [] }));
-
             component.isSuggesting = true;
             fixture.detectChanges();
 
             const spinner = fixture.debugElement.query(By.css('.spinner-border-sm'));
-            const lightbulbIcon = fixture.debugElement.query(By.css('fa-icon'));
+            // There are multiple fa-icons in the component, so we need to be more specific
+            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
+            const lightbulbIcon = lightbulbButton?.query(By.css('fa-icon'));
 
             expect(spinner).not.toBeNull();
-            expect(lightbulbIcon).toBeNull();
+            expect(lightbulbIcon).toBeNull(); // Should not show lightbulb icon when showing spinner
         });
 
         it('should display lightbulb icon next to suggested competencies', () => {
@@ -273,7 +275,8 @@ describe('CompetencySelection', () => {
             expect(component.isSuggested(1)).toBeTrue();
             expect(component.isSuggested(2)).toBeFalse();
 
-            const suggestedLightbulbs = fixture.debugElement.queryAll(By.css('fa-icon.text-warning'));
+            // Check for lightbulb icons with warning color next to competencies
+            const suggestedLightbulbs = fixture.debugElement.queryAll(By.css('fa-icon.text-warning.ms-2'));
             expect(suggestedLightbulbs.length).toBeGreaterThan(0);
         });
 
@@ -310,6 +313,117 @@ describe('CompetencySelection', () => {
             component.exerciseDescription = '   ';
             component.suggestCompetencies();
             expect(httpPostSpy).not.toHaveBeenCalled();
+        });
+
+        it('should clear previous suggestions when making new request', () => {
+            // First suggestion
+            component.suggestedCompetencyIds.add(1);
+            component.suggestedCompetencyIds.add(2);
+
+            const mockResponse = { competencies: [{ id: 3, title: 'New Suggestion' }] };
+            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+
+            component.suggestCompetencies();
+
+            expect(component.suggestedCompetencyIds.has(1)).toBeFalse();
+            expect(component.suggestedCompetencyIds.has(2)).toBeFalse();
+            expect(component.suggestedCompetencyIds.has(3)).toBeTrue();
+        });
+
+        it('should handle empty response from API', () => {
+            const mockResponse = { competencies: [] };
+            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+
+            component.suggestCompetencies();
+
+            expect(component.suggestedCompetencyIds.size).toBe(0);
+            expect(component.isSuggesting).toBeFalse();
+        });
+
+        it('should disable lightbulb button while suggesting', () => {
+            component.isSuggesting = true;
+            fixture.detectChanges();
+
+            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
+            expect(lightbulbButton.nativeElement.disabled).toBeTrue();
+        });
+
+        it('should show lightbulb tooltip', () => {
+            fixture.detectChanges();
+            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
+            expect(lightbulbButton.attributes['ngbTooltip']).toBe('Get AI Suggestions');
+        });
+
+        it('should show AI suggested competency tooltip', () => {
+            const mockSuggestionResponse = {
+                competencies: [{ id: 1, title: 'Programming Basics' }],
+            };
+
+            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
+
+            component.suggestCompetencies();
+            fixture.detectChanges();
+
+            const suggestedIcon = fixture.debugElement.query(By.css('fa-icon.text-warning.ms-2'));
+            expect(suggestedIcon?.attributes['ngbTooltip']).toBe('AI suggested competency');
+        });
+
+        it('should match competencies by ID when processing suggestions', () => {
+            const mockResponse = {
+                competencies: [
+                    { id: 1, title: 'Different Title' }, // ID matches but title is different
+                    { id: 999, title: 'Non-existent' }, // ID doesn't match any competency
+                ],
+            };
+            jest.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse));
+
+            component.suggestCompetencies();
+
+            expect(component.suggestedCompetencyIds.has(1)).toBeTrue(); // Should match by ID
+            expect(component.suggestedCompetencyIds.has(999)).toBeFalse(); // Should not match non-existent ID
+        });
+    });
+
+    // Additional test suite for exercise creation integration
+    describe('Exercise Creation Integration', () => {
+        it('should accept exercise description as input', () => {
+            const testDescription = 'Test exercise description for suggestions';
+            component.exerciseDescription = testDescription;
+            expect(component.exerciseDescription).toBe(testDescription);
+        });
+
+        it('should emit value changes when competency is toggled', () => {
+            const competency = { id: 1, title: 'Test Competency', optional: false } as Competency;
+            jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency] });
+
+            const emitSpy = jest.spyOn(component.valueChange, 'emit');
+
+            fixture.detectChanges();
+
+            component.toggleCompetency(new CompetencyLearningObjectLink(competency, 1));
+
+            expect(emitSpy).toHaveBeenCalled();
+        });
+
+        it('should work with different exercise types', () => {
+            // Test that the component works regardless of the exercise type
+            // by testing with different descriptions
+            const descriptions = [
+                'Programming exercise: implement bubble sort',
+                'Text exercise: write an essay about algorithms',
+                'Modeling exercise: create UML diagrams',
+                'Quiz exercise: multiple choice questions',
+            ];
+
+            descriptions.forEach((desc) => {
+                component.exerciseDescription = desc;
+                expect(component.exerciseDescription?.trim()).toBeTruthy();
+
+                // Button should be enabled for non-empty descriptions
+                fixture.detectChanges();
+                const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
+                expect(lightbulbButton?.nativeElement.disabled).toBeFalse();
+            });
         });
     });
 });
