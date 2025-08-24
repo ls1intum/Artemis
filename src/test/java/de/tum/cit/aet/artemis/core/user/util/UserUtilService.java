@@ -200,6 +200,18 @@ public class UserUtilService {
     }
 
     /**
+     * Updates and saves the user's calendarSubscriptionToken
+     *
+     * @param user                      The User to update
+     * @param calendarSubscriptionToken The calendarSubscriptionToken to set
+     * @return The updated User
+     */
+    public User setUserCalendarSubscriptionTokenAndSave(User user, String calendarSubscriptionToken) {
+        user.setCalendarSubscriptionToken(calendarSubscriptionToken);
+        return userTestRepository.save(user);
+    }
+
+    /**
      * Deletes the userVcsAccessToken from a user
      *
      * @param userWithUserToken The user whose token gets deleted

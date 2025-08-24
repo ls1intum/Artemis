@@ -23,7 +23,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.TestExecutionEvent;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.context.support.WithUserDetails;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -144,125 +146,1217 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         course = courseUtilService.createCourse();
     }
 
-    @Test
-    @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-    void shouldReturnNotFoundWhenCourseDoesNotExist() throws Exception {
-        int courseId = -3;
-        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                + TEST_LANGUAGE_STRING;
-        request.get(URL, HttpStatus.NOT_FOUND, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-    void shouldReturnBadRequestWhenMonthsHaveWrongFormat() throws Exception {
-        Long courseId = course.getId();
-        String monthKeys = "11-2025";
-        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                + TEST_LANGUAGE_STRING;
-        request.get(URL, HttpStatus.BAD_REQUEST, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-    void shouldReturnBadRequestWhenMonthsAreEmpty() throws Exception {
-        Long courseId = course.getId();
-        String monthKeys = "";
-        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                + TEST_LANGUAGE_STRING;
-        request.get(URL, HttpStatus.BAD_REQUEST, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-    void shouldReturnBadRequestWhenTimeZoneFormattedIncorrectly() throws Exception {
-        Long courseId = course.getId();
-        String malformedTimeZone = "EST";
-        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + malformedTimeZone + "&language="
-                + TEST_LANGUAGE_STRING;
-        request.get(URL, HttpStatus.BAD_REQUEST, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = NOT_STUDENT_LOGIN, roles = "USER")
-    void shouldReturnForbiddenForStudentNotPartOfCourse() throws Exception {
-        userUtilService.addStudent("notstudent", NOT_STUDENT_LOGIN);
-        Long courseId = course.getId();
-        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                + TEST_LANGUAGE_STRING;
-        request.get(URL, HttpStatus.FORBIDDEN, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = NOT_TUTOR_LOGIN, roles = "TUTOR")
-    void shouldReturnForbiddenForTutorNotPartOfCourse() throws Exception {
-        userUtilService.addStudent("nottutor", NOT_TUTOR_LOGIN);
-        Long courseId = course.getId();
-        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                + TEST_LANGUAGE_STRING;
-        request.get(URL, HttpStatus.FORBIDDEN, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = NOT_EDITOR_LOGIN, roles = "TA")
-    void shouldReturnForbiddenForEditorNotPartOfCourse() throws Exception {
-        userUtilService.addStudent("noteditor", NOT_EDITOR_LOGIN);
-        Long courseId = course.getId();
-        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                + TEST_LANGUAGE_STRING;
-        request.get(URL, HttpStatus.FORBIDDEN, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = NOT_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-    void shouldReturnForbiddenForInstructorNotPartOfCourse() throws Exception {
-        userUtilService.addStudent("notinstructor", NOT_INSTRUCTOR_LOGIN);
-        Long courseId = course.getId();
-        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                + TEST_LANGUAGE_STRING;
-        request.get(URL, HttpStatus.FORBIDDEN, String.class);
-    }
-
     @Nested
-    class TutorialSessionEventTests {
+    class GetCalendarEventsOverlappingMonthsTests {
 
         @Test
         @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventsForTutorialGroupSessionAsStudent() throws Exception {
-            TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", Language.ENGLISH.name(),
-                    tutor, new HashSet<>(Set.of(student)));
-            TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusHours(2),
-                    5);
+        void shouldReturnNotFoundWhenCourseDoesNotExist() throws Exception {
+            int courseId = -3;
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                    + TEST_LANGUAGE_STRING;
+            request.get(URL, HttpStatus.NOT_FOUND, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldReturnBadRequestWhenMonthsHaveWrongFormat() throws Exception {
+            Long courseId = course.getId();
+            String monthKeys = "11-2025";
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                    + TEST_LANGUAGE_STRING;
+            request.get(URL, HttpStatus.BAD_REQUEST, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldReturnBadRequestWhenMonthsAreEmpty() throws Exception {
+            Long courseId = course.getId();
+            String monthKeys = "";
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                    + TEST_LANGUAGE_STRING;
+            request.get(URL, HttpStatus.BAD_REQUEST, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldReturnBadRequestWhenTimeZoneFormattedIncorrectly() throws Exception {
+            Long courseId = course.getId();
+            String malformedTimeZone = "EST";
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + malformedTimeZone + "&language="
+                    + TEST_LANGUAGE_STRING;
+            request.get(URL, HttpStatus.BAD_REQUEST, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = NOT_STUDENT_LOGIN, roles = "USER")
+        void shouldReturnForbiddenForStudentNotPartOfCourse() throws Exception {
+            userUtilService.addStudent("notstudent", NOT_STUDENT_LOGIN);
             Long courseId = course.getId();
             String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
                     + TEST_LANGUAGE_STRING;
+            request.get(URL, HttpStatus.FORBIDDEN, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = NOT_TUTOR_LOGIN, roles = "TUTOR")
+        void shouldReturnForbiddenForTutorNotPartOfCourse() throws Exception {
+            userUtilService.addStudent("nottutor", NOT_TUTOR_LOGIN);
+            Long courseId = course.getId();
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                    + TEST_LANGUAGE_STRING;
+            request.get(URL, HttpStatus.FORBIDDEN, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = NOT_EDITOR_LOGIN, roles = "TA")
+        void shouldReturnForbiddenForEditorNotPartOfCourse() throws Exception {
+            userUtilService.addStudent("noteditor", NOT_EDITOR_LOGIN);
+            Long courseId = course.getId();
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                    + TEST_LANGUAGE_STRING;
+            request.get(URL, HttpStatus.FORBIDDEN, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = NOT_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+        void shouldReturnForbiddenForInstructorNotPartOfCourse() throws Exception {
+            userUtilService.addStudent("notinstructor", NOT_INSTRUCTOR_LOGIN);
+            Long courseId = course.getId();
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                    + TEST_LANGUAGE_STRING;
+            request.get(URL, HttpStatus.FORBIDDEN, String.class);
+        }
+
+        @Nested
+        class TutorialSessionEventTests {
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventsForTutorialGroupSessionAsStudent() throws Exception {
+                TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching",
+                        Language.ENGLISH.name(), tutor, new HashSet<>(Set.of(student)));
+                TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE,
+                        FIXED_DATE.plusHours(2), 5);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession.getStart(),
+                        tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            void shouldReturnCorrectEventsForTutorialGroupSessionAsCourseStaffMember() throws Exception {
+                TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching",
+                        Language.ENGLISH.name(), tutor, new HashSet<>(Set.of(student)));
+                TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE,
+                        FIXED_DATE.plusHours(2), 5);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession.getStart(),
+                        tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+        }
+
+        @Nested
+        class LectureEventTests {
+
+            private static final String START_DATE_TITLE_PREFIX = "Start: ";
+
+            private static final String END_DATE_TITLE_PREFIX = "End: ";
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventForVisibleLectureWithStartButNoEndAsStudent() throws Exception {
+                Lecture lecture = lectureUtilService.createLecture(course, FIXED_DATE, FIXED_DATE.plusDays(1), null);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.LECTURE, START_DATE_TITLE_PREFIX + lecture.getTitle(), lecture.getStartDate(), null,
+                        null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventForVisibleLectureWithEndButNoStartAsStudent() throws Exception {
+                Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), null, PAST_DATE);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.LECTURE, END_DATE_TITLE_PREFIX + lecture.getTitle(), lecture.getEndDate(), null, null,
+                        null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventForVisibleLectureWithStartAndEndAsStudent() throws Exception {
+                Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE.minusHours(2), PAST_DATE);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.LECTURE, lecture.getTitle(), lecture.getStartDate(), lecture.getEndDate(), null,
+                        null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnNoEventForInvisibleLectureWithStartAndEndAsStudent() throws Exception {
+                Lecture lecture = lectureUtilService.createLecture(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(1).plusHours(2));
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
+                        + "&language=" + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            void shouldReturnCorrectEventForVisibleLectureWithStartButNoEndAsCourseStaffMember() throws Exception {
+                Lecture lecture = lectureUtilService.createLecture(course, FIXED_DATE, FIXED_DATE.plusDays(1), null);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.LECTURE, START_DATE_TITLE_PREFIX + lecture.getTitle(), lecture.getStartDate(), null,
+                        null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            void shouldReturnCorrectEventForVisibleLectureWithEndButNoStartAsCourseStaffMember() throws Exception {
+                Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), null, PAST_DATE);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.LECTURE, END_DATE_TITLE_PREFIX + lecture.getTitle(), lecture.getEndDate(), null, null,
+                        null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            void shouldReturnCorrectEventForVisibleLectureWithStartAndEndAsCourseStaffMember() throws Exception {
+                Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE.minusHours(2), PAST_DATE);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.LECTURE, lecture.getTitle(), lecture.getStartDate(), lecture.getEndDate(), null,
+                        null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            void shouldReturnCorrectEventForInvisibleLectureWithStartAndEventEventAsCourseStaffMember() throws Exception {
+                Lecture lecture = lectureUtilService.createLecture(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(1).plusHours(2));
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
+                        + "&language=" + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.LECTURE, lecture.getTitle(), lecture.getStartDate(), lecture.getEndDate(), null,
+                        null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+        }
+
+        @Nested
+        class ExamEventTests {
+
+            private static final String PUBLISH_RESULTS_TITLE_PREFIX = "Results Release: ";
+
+            private static final String STUDENT_REVIEW_START_DATE_TITLE_PREFIX = "Review Start: ";
+
+            private static final String STUDENT_REVIEW_END_DATE_TITLE_PREFIX = "Review End: ";
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventsForVisibleExamWithStartAndEndAndPublishResultsAndReviewStartAndEndAsStudent() throws Exception {
+                Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), PAST_DATE.plusDays(1), PAST_DATE.plusDays(2),
+                        PAST_DATE.plusDays(3), "Test-Examiner");
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
+                        exam.getExaminer());
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.EXAM, PUBLISH_RESULTS_TITLE_PREFIX + exam.getTitle(), exam.getPublishResultsDate(),
+                        null, null, null);
+                CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, CalendarEventType.EXAM, STUDENT_REVIEW_START_DATE_TITLE_PREFIX + exam.getTitle(),
+                        exam.getExamStudentReviewStart(), null, null, null);
+                CalendarEventDTO expectedEvent4 = new CalendarEventDTO(null, CalendarEventType.EXAM, STUDENT_REVIEW_END_DATE_TITLE_PREFIX + exam.getTitle(),
+                        exam.getExamStudentReviewEnd(), null, null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventsForVisibleExamWithStartAndEndButNoPublishResultsAndReviewStartAndEndAsStudent() throws Exception {
+                Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), null, null, null, "Test-Examiner");
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
+                        exam.getExaminer());
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnNoEventsForInvisibleExamWithStartAndEndAndPublishResultsAndReviewStartAndEndAsStudent() throws Exception {
+                Exam exam = examUtilService.addExam(course, FUTURE_DATE, FUTURE_DATE.plusHours(2), FUTURE_DATE.plusHours(3), FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2),
+                        FUTURE_DATE.plusDays(3), "Test-Examiner");
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            void shouldReturnCorrectEventsForVisibleExamWithStartAndEndAndPublishResultsAndReviewStartAndEndAsCourseStaffMember() throws Exception {
+                Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), PAST_DATE.plusDays(1), PAST_DATE.plusDays(2),
+                        PAST_DATE.plusDays(3), "Test-Examiner");
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
+                        exam.getExaminer());
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.EXAM, PUBLISH_RESULTS_TITLE_PREFIX + exam.getTitle(), exam.getPublishResultsDate(),
+                        null, null, null);
+                CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, CalendarEventType.EXAM, STUDENT_REVIEW_START_DATE_TITLE_PREFIX + exam.getTitle(),
+                        exam.getExamStudentReviewStart(), null, null, null);
+                CalendarEventDTO expectedEvent4 = new CalendarEventDTO(null, CalendarEventType.EXAM, STUDENT_REVIEW_END_DATE_TITLE_PREFIX + exam.getTitle(),
+                        exam.getExamStudentReviewEnd(), null, null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            void shouldReturnCorrectEventsForVisibleExamWithStartAndEndButNoPublishResultsAndReviewStartAndEndAsCourseStaffMember() throws Exception {
+                Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), null, null, null, "Test-Examiner");
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
+                        exam.getExaminer());
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            void shouldReturnNoEventsForInvisibleExamWithStartAndEndAndPublishResultsAndReviewStartAndEndAsCourseStaffMember() throws Exception {
+                Exam exam = examUtilService.addExam(course, FUTURE_DATE, FUTURE_DATE.plusHours(2), FUTURE_DATE.plusHours(3), FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2),
+                        FUTURE_DATE.plusDays(3), "Test-Examiner");
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
+                        + "&language=" + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null,
+                        exam.getExaminer());
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.EXAM, PUBLISH_RESULTS_TITLE_PREFIX + exam.getTitle(), exam.getPublishResultsDate(),
+                        null, null, null);
+                CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, CalendarEventType.EXAM, STUDENT_REVIEW_START_DATE_TITLE_PREFIX + exam.getTitle(),
+                        exam.getExamStudentReviewStart(), null, null, null);
+                CalendarEventDTO expectedEvent4 = new CalendarEventDTO(null, CalendarEventType.EXAM, STUDENT_REVIEW_END_DATE_TITLE_PREFIX + exam.getTitle(),
+                        exam.getExamStudentReviewEnd(), null, null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+        }
+
+        @Nested
+        class QuizExerciseEventTests {
+
+            private static final String RELEASE_DATE_TITLE_PREFIX = "Release: ";
+
+            private static final String DUE_DATE_TITLE_PREFIX = "Due: ";
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventForReleasedSynchronizedQuizWithStartTimeAsStudent() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, PAST_DATE, PAST_DATE.plusDays(1), 600);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, quizExercise.getTitle(), PAST_DATE.plusDays(1),
+                        PAST_DATE.plusDays(1).plusSeconds(600), null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnNoEventForUnreleasedSynchronizedQuizWithStartTimeAsStudent() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, FUTURE_DATE, FUTURE_DATE.plusHours(1), 600);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
+                        + "&language=" + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnNoEventForReleasedSynchronizedQuizWithoutStartTimeAsStudent() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, PAST_DATE, null, 600);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+            void shouldReturnCorrectEventForReleasedSynchronizedQuizWithStartTimeAsCourseStaffMember() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, PAST_DATE, PAST_DATE.plusDays(1), 600);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, quizExercise.getTitle(), PAST_DATE.plusDays(1),
+                        PAST_DATE.plusDays(1).plusSeconds(600), null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+            void shouldReturnCorrectEventForUnreleasedSynchronizedQuizWithStartTimeAsCourseStaffMember() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, FUTURE_DATE, FUTURE_DATE.plusHours(1), 600);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
+                        + "&language=" + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, quizExercise.getTitle(), FUTURE_DATE.plusHours(1),
+                        FUTURE_DATE.plusHours(1).plusSeconds(600), null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+            void shouldReturnNoEventForReleasedSynchronizedQuizWithoutStartTimeAsCourseStaffMember() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, PAST_DATE, null, 600);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventForReleasedIndividualQuizWithNoDueDateAsStudent() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, null, null, QuizMode.INDIVIDUAL);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                        null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventForIndividualQuizWithDueDateButNoReleaseDateAsStudent() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, PAST_DATE, null, QuizMode.INDIVIDUAL);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
+                        null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventsForReleasedIndividualQuizWithDueDateAsStudent() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                        null, null);
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(),
+                        PAST_DATE.plusDays(1), null, null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnNoEventForIndividualQuizWithNoReleaseDateAndNoDueDateAsStudent() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, null, null, QuizMode.INDIVIDUAL);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnNoEventForUnreleasedIndividualQuizWithDueDateAsStudent() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
+                        + "&language=" + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            void shouldReturnCorrectEventForReleasedIndividualQuizWithNoDueDateAsCourseStaffMember() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, null, null, QuizMode.INDIVIDUAL);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                        null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            void shouldReturnCorrectEventForIndividualQuizWithDueDateButNoReleaseDateAsCourseStaffMember() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, PAST_DATE, null, QuizMode.INDIVIDUAL);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
+                        null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            void shouldReturnCorrectEventsForReleasedIndividualQuizWithDueDateAsCourseStaffMember() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                        null, null);
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(),
+                        PAST_DATE.plusDays(1), null, null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            void shouldReturnNoEventForIndividualQuizWithNoReleaseDateAndNoDueDateAsCourseStaffMember() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, null, null, QuizMode.INDIVIDUAL);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            void shouldReturnCorrectEventsForUnreleasedIndividualQuizWithDueDateAsCourseStaffMember() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
+                        + "&language=" + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), FUTURE_DATE,
+                        null, null, null);
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(),
+                        FUTURE_DATE.plusDays(1), null, null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventForReleasedBatchedQuizWithNoDueDateAsStudent() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, null, null, QuizMode.BATCHED);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                        null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventForBatchedQuizWithDueDateButNoReleaseDateAsStudent() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, PAST_DATE, null, QuizMode.BATCHED);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
+                        null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventsForReleasedBatchedQuizWithDueDateAsStudent() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.BATCHED);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                        null, null);
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(),
+                        PAST_DATE.plusDays(1), null, null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnNoEventForBatchedQuizWithNoReleaseDateAndNoDueDateAsStudent() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, null, null, QuizMode.BATCHED);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnNoEventForUnreleasedBatchedQuizWithDueDateAsStudent() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.BATCHED);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
+                        + "&language=" + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            void shouldReturnCorrectEventForReleasedBatchedQuizWithNoDueDateAsCourseStaffMember() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, null, null, QuizMode.BATCHED);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                        null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            void shouldReturnCorrectEventForBatchedQuizWithDueDateButNoReleaseDateAsCourseStaffMember() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, PAST_DATE, null, QuizMode.BATCHED);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
+                        null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+                expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            void shouldReturnCorrectEventsForReleasedBatchedQuizWithDueDateAsCourseStaffMember() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.BATCHED);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
+                        null, null);
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(),
+                        PAST_DATE.plusDays(1), null, null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            void shouldReturnNoEventForBatchedQuizWithNoReleaseDateAndNoDueDateAsCourseStaffMember() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, null, null, QuizMode.BATCHED);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @Test
+            @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+            void shouldReturnCorrectEventsForUnreleasedBatchedQuizWithDueDateAsCourseStaffMember() throws Exception {
+                QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.BATCHED);
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
+                        + "&language=" + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), FUTURE_DATE,
+                        null, null, null);
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(),
+                        FUTURE_DATE.plusDays(1), null, null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+        }
+
+        @Nested
+        class NonQuizExerciseEventTests {
+
+            private static final String RELEASE_DATE_TITLE_PREFIX = "Release: ";
+
+            private static final String START_DATE_TITLE_PREFIX = "Start: ";
+
+            private static final String DUE_DATE_TITLE_PREFIX = "Due: ";
+
+            private static final String ASSESSMENT_DUE_DATE_TITLE_PREFIX = "Assessment due: ";
+
+            enum NonQuizExercise {
+                TEXT, MODELING, FILEUPLOAD, PROGRAMMING,
+            }
+
+            @ParameterizedTest
+            @EnumSource(NonQuizExercise.class)
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventsForReleasedExerciseWithStartDateAsStudent(NonQuizExercise nonQuizExercise) throws Exception {
+                Exercise exercise = switch (nonQuizExercise) {
+                    case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
+                    case MODELING -> modelingExerciseUtilService.addModelingExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
+                    case FILEUPLOAD -> fileUploadExerciseUtilService.addFileUploadExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
+                    case PROGRAMMING -> programmingExerciseUtilService.createProgrammingExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
+                };
+                CalendarEventType eventType = switch (nonQuizExercise) {
+                    case TEXT -> CalendarEventType.TEXT_EXERCISE;
+                    case MODELING -> CalendarEventType.MODELING_EXERCISE;
+                    case FILEUPLOAD -> CalendarEventType.FILE_UPLOAD_EXERCISE;
+                    case PROGRAMMING -> CalendarEventType.PROGRAMMING_EXERCISE;
+                };
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, eventType, START_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @ParameterizedTest
+            @EnumSource(NonQuizExercise.class)
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventForReleasedExerciseWithDueDateAsStudent(NonQuizExercise nonQuizExercise) throws Exception {
+                Exercise exercise = switch (nonQuizExercise) {
+                    case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
+                    case MODELING -> modelingExerciseUtilService.addModelingExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
+                    case FILEUPLOAD -> fileUploadExerciseUtilService.addFileUploadExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
+                    case PROGRAMMING -> programmingExerciseUtilService.createProgrammingExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
+                };
+                CalendarEventType eventType = switch (nonQuizExercise) {
+                    case TEXT -> CalendarEventType.TEXT_EXERCISE;
+                    case MODELING -> CalendarEventType.MODELING_EXERCISE;
+                    case FILEUPLOAD -> CalendarEventType.FILE_UPLOAD_EXERCISE;
+                    case PROGRAMMING -> CalendarEventType.PROGRAMMING_EXERCISE;
+                };
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, eventType, DUE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @ParameterizedTest
+            @EnumSource(NonQuizExercise.class)
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventForReleasedExerciseWithAssessmentDueDateAsStudent(NonQuizExercise nonQuizExercise) throws Exception {
+                Exercise exercise = switch (nonQuizExercise) {
+                    case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
+                    case MODELING -> modelingExerciseUtilService.addModelingExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
+                    case FILEUPLOAD -> fileUploadExerciseUtilService.addFileUploadExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
+                    case PROGRAMMING -> programmingExerciseUtilService.createProgrammingExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
+                };
+                CalendarEventType eventType = switch (nonQuizExercise) {
+                    case TEXT -> CalendarEventType.TEXT_EXERCISE;
+                    case MODELING -> CalendarEventType.MODELING_EXERCISE;
+                    case FILEUPLOAD -> CalendarEventType.FILE_UPLOAD_EXERCISE;
+                    case PROGRAMMING -> CalendarEventType.PROGRAMMING_EXERCISE;
+                };
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, eventType, ASSESSMENT_DUE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null,
+                        null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @ParameterizedTest
+            @EnumSource(NonQuizExercise.class)
+            @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+            void shouldReturnCorrectEventForUnreleasedExerciseAsStudent(NonQuizExercise nonQuizExercise) throws Exception {
+                Exercise exercise = switch (nonQuizExercise) {
+                    case TEXT ->
+                        textExerciseUtilService.createIndividualTextExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
+                    case MODELING ->
+                        modelingExerciseUtilService.addModelingExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
+                    case FILEUPLOAD ->
+                        fileUploadExerciseUtilService.addFileUploadExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
+                    case PROGRAMMING ->
+                        programmingExerciseUtilService.createProgrammingExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
+                };
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
+                        + "&language=" + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @ParameterizedTest
+            @EnumSource(NonQuizExercise.class)
+            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            void shouldReturnCorrectEventsForReleasedExerciseWithStartDateAsCourseStaffMember(NonQuizExercise nonQuizExercise) throws Exception {
+                Exercise exercise = switch (nonQuizExercise) {
+                    case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
+                    case MODELING -> modelingExerciseUtilService.addModelingExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
+                    case FILEUPLOAD -> fileUploadExerciseUtilService.addFileUploadExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
+                    case PROGRAMMING -> programmingExerciseUtilService.createProgrammingExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
+                };
+                CalendarEventType eventType = switch (nonQuizExercise) {
+                    case TEXT -> CalendarEventType.TEXT_EXERCISE;
+                    case MODELING -> CalendarEventType.MODELING_EXERCISE;
+                    case FILEUPLOAD -> CalendarEventType.FILE_UPLOAD_EXERCISE;
+                    case PROGRAMMING -> CalendarEventType.PROGRAMMING_EXERCISE;
+                };
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, eventType, START_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @ParameterizedTest
+            @EnumSource(NonQuizExercise.class)
+            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            void shouldReturnCorrectEventForReleasedExerciseWithDueDateAsCourseStaffMember(NonQuizExercise nonQuizExercise) throws Exception {
+                Exercise exercise = switch (nonQuizExercise) {
+                    case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
+                    case MODELING -> modelingExerciseUtilService.addModelingExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
+                    case FILEUPLOAD -> fileUploadExerciseUtilService.addFileUploadExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
+                    case PROGRAMMING -> programmingExerciseUtilService.createProgrammingExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
+                };
+                CalendarEventType eventType = switch (nonQuizExercise) {
+                    case TEXT -> CalendarEventType.TEXT_EXERCISE;
+                    case MODELING -> CalendarEventType.MODELING_EXERCISE;
+                    case FILEUPLOAD -> CalendarEventType.FILE_UPLOAD_EXERCISE;
+                    case PROGRAMMING -> CalendarEventType.PROGRAMMING_EXERCISE;
+                };
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, eventType, DUE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @ParameterizedTest
+            @EnumSource(NonQuizExercise.class)
+            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            void shouldReturnCorrectEventForReleasedExerciseWithAssessmentDueDateAsCourseStaffMember(NonQuizExercise nonQuizExercise) throws Exception {
+                Exercise exercise = switch (nonQuizExercise) {
+                    case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
+                    case MODELING -> modelingExerciseUtilService.addModelingExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
+                    case FILEUPLOAD -> fileUploadExerciseUtilService.addFileUploadExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
+                    case PROGRAMMING -> programmingExerciseUtilService.createProgrammingExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
+                };
+                CalendarEventType eventType = switch (nonQuizExercise) {
+                    case TEXT -> CalendarEventType.TEXT_EXERCISE;
+                    case MODELING -> CalendarEventType.MODELING_EXERCISE;
+                    case FILEUPLOAD -> CalendarEventType.FILE_UPLOAD_EXERCISE;
+                    case PROGRAMMING -> CalendarEventType.PROGRAMMING_EXERCISE;
+                };
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                        + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, eventType, ASSESSMENT_DUE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null,
+                        null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+
+            @ParameterizedTest
+            @EnumSource(NonQuizExercise.class)
+            @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+            void shouldReturnCorrectEventsForUnreleasedExerciseAsCourseStaffMember(NonQuizExercise nonQuizExercise) throws Exception {
+                Exercise exercise = switch (nonQuizExercise) {
+                    case TEXT ->
+                        textExerciseUtilService.createIndividualTextExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
+                    case MODELING ->
+                        modelingExerciseUtilService.addModelingExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
+                    case FILEUPLOAD ->
+                        fileUploadExerciseUtilService.addFileUploadExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
+                    case PROGRAMMING ->
+                        programmingExerciseUtilService.createProgrammingExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
+                };
+                CalendarEventType eventType = switch (nonQuizExercise) {
+                    case TEXT -> CalendarEventType.TEXT_EXERCISE;
+                    case MODELING -> CalendarEventType.MODELING_EXERCISE;
+                    case FILEUPLOAD -> CalendarEventType.FILE_UPLOAD_EXERCISE;
+                    case PROGRAMMING -> CalendarEventType.PROGRAMMING_EXERCISE;
+                };
+                Long courseId = course.getId();
+                String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING
+                        + "&language=" + TEST_LANGUAGE_STRING;
+                Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+                CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), FUTURE_DATE, null, null, null);
+                CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, eventType, START_DATE_TITLE_PREFIX + exercise.getTitle(), FUTURE_DATE.plusDays(1), null, null, null);
+                CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, eventType, DUE_DATE_TITLE_PREFIX + exercise.getTitle(), FUTURE_DATE.plusDays(2), null, null, null);
+                CalendarEventDTO expectedEvent4 = new CalendarEventDTO(null, eventType, ASSESSMENT_DUE_DATE_TITLE_PREFIX + exercise.getTitle(), FUTURE_DATE.plusDays(3), null, null,
+                        null);
+                Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
+                        .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+                assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                        .isEqualTo(expectedResponse);
+            }
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldReturnCorrectEventsForStudentWhenQueriedForMultipleMonths() throws Exception {
+            TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", Language.ENGLISH.name(),
+                    tutor, new HashSet<>(Set.of(student)));
+            TutorialGroupSession tutorialGroupSession1 = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE.minusMonths(1),
+                    FIXED_DATE.minusMonths(1).plusHours(3), 5);
+            TutorialGroupSession tutorialGroupSession2 = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusHours(2),
+                    5);
+            TutorialGroupSession tutorialGroupSession3 = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE.plusMonths(1),
+                    FIXED_DATE.plusMonths(1).plusHours(1), 5);
+            Long courseId = course.getId();
+            String monthKeys = YearMonth.from(FIXED_DATE.minusMonths(1)) + "," + FIXED_DATE_MONTH_STRING + "," + YearMonth.from(FIXED_DATE.plusMonths(1));
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                    + TEST_LANGUAGE_STRING;
+            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession1.getStart(),
+                    tutorialGroupSession1.getEnd(), tutorialGroupSession1.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession2.getStart(),
+                    tutorialGroupSession2.getEnd(), tutorialGroupSession2.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
+            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession3.getStart(),
+                    tutorialGroupSession3.getEnd(), tutorialGroupSession3.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
+            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3)
+                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                    .isEqualTo(expectedResponse);
+        }
+
+        @Test
+        @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+        void shouldSplitEventAcrossDaysWhenEventSpansMultipleDays() throws Exception {
+            TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", Language.ENGLISH.name(),
+                    tutor, new HashSet<>(Set.of(student)));
+            TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusDays(2), 5);
+            Long courseId = course.getId();
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
+                    + TEST_LANGUAGE_STRING;
+            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+
+            ZoneId timezone = tutorialGroupSession.getStart().getZone();
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession.getStart(),
+                    tutorialGroupSession.getStart().toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone),
+                    tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session",
+                    tutorialGroupSession.getStart().plusDays(1).toLocalDate().atStartOfDay(timezone),
+                    tutorialGroupSession.getStart().plusDays(1).toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone),
+                    tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
+            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session",
+                    tutorialGroupSession.getStart().plusDays(2).toLocalDate().atStartOfDay(timezone), tutorialGroupSession.getEnd(),
+                    tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
+            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3)
+                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
+
+            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
+                    .isEqualTo(expectedResponse);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldGroupEventsAccordingToClientTimeZone() throws Exception {
+            ZonedDateTime berlinStart = ZonedDateTime.of(2025, 5, 15, 2, 30, 0, 0, TEST_TIMEZONE);
+            ZonedDateTime berlinEnd = berlinStart.plusHours(2);
+            TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Early Tutorial", "", 10, false, "Garching", Language.ENGLISH.name(), tutor,
+                    new HashSet<>(Set.of(student)));
+            TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), berlinStart, berlinEnd, 5);
+
+            Long courseId = course.getId();
+            String otherTimeZone = "America/Los_Angeles";
+            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=2025-05&timeZone=" + otherTimeZone + "&language=" + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession.getStart(),
                     tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
-        void shouldReturnCorrectEventsForTutorialGroupSessionAsCourseStaffMember() throws Exception {
-            TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", Language.ENGLISH.name(),
-                    tutor, new HashSet<>(Set.of(student)));
-            TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusHours(2),
-                    5);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession.getStart(),
-                    tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+            expectedResponse.put(tutorialGroupSession.getStart().withZoneSameInstant(ZoneId.of(otherTimeZone)).toLocalDate().toString(), List.of(expectedEvent));
 
             assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
                     .isEqualTo(expectedResponse);
@@ -270,1077 +1364,34 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class LectureEventTests {
-
-        private static final String START_DATE_TITLE_PREFIX = "Start: ";
-
-        private static final String END_DATE_TITLE_PREFIX = "End: ";
+    class GetCalendarEventSubscriptionFileTests {
 
         @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventForVisibleLectureWithStartButNoEndAsStudent() throws Exception {
-            Lecture lecture = lectureUtilService.createLecture(course, FIXED_DATE, FIXED_DATE.plusDays(1), null);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+        @WithUserDetails(value = STUDENT_LOGIN, setupBefore = TestExecutionEvent.TEST_EXECUTION)
+        void shouldReuseExistingToken() throws Exception {
+            String expectedToken = "921651b1118f216d04b190fc0659386b";
+            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.LECTURE, START_DATE_TITLE_PREFIX + lecture.getTitle(), lecture.getStartDate(), null, null,
-                    null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
+            String URL = "/api/core/calendar/subscription-token";
+            String actualToken = request.get(URL, HttpStatus.OK, String.class);
 
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
+            assertThat(actualToken).isEqualTo(expectedToken);
         }
 
         @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventForVisibleLectureWithEndButNoStartAsStudent() throws Exception {
-            Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), null, PAST_DATE);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
+        @WithUserDetails(value = STUDENT_LOGIN, setupBefore = TestExecutionEvent.TEST_EXECUTION)
+        void shouldGenerateNewToken() throws Exception {
+            String URL = "/api/core/calendar/subscription-token";
+            String actualToken = request.get(URL, HttpStatus.OK, String.class);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.LECTURE, END_DATE_TITLE_PREFIX + lecture.getTitle(), lecture.getEndDate(), null, null,
-                    null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventForVisibleLectureWithStartAndEndAsStudent() throws Exception {
-            Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE.minusHours(2), PAST_DATE);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.LECTURE, lecture.getTitle(), lecture.getStartDate(), lecture.getEndDate(), null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnNoEventForInvisibleLectureWithStartAndEndAsStudent() throws Exception {
-            Lecture lecture = lectureUtilService.createLecture(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(1).plusHours(2));
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-        void shouldReturnCorrectEventForVisibleLectureWithStartButNoEndAsCourseStaffMember() throws Exception {
-            Lecture lecture = lectureUtilService.createLecture(course, FIXED_DATE, FIXED_DATE.plusDays(1), null);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.LECTURE, START_DATE_TITLE_PREFIX + lecture.getTitle(), lecture.getStartDate(), null, null,
-                    null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-        void shouldReturnCorrectEventForVisibleLectureWithEndButNoStartAsCourseStaffMember() throws Exception {
-            Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), null, PAST_DATE);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.LECTURE, END_DATE_TITLE_PREFIX + lecture.getTitle(), lecture.getEndDate(), null, null,
-                    null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-        void shouldReturnCorrectEventForVisibleLectureWithStartAndEndAsCourseStaffMember() throws Exception {
-            Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE.minusHours(2), PAST_DATE);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.LECTURE, lecture.getTitle(), lecture.getStartDate(), lecture.getEndDate(), null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-        void shouldReturnCorrectEventForInvisibleLectureWithStartAndEventEventAsCourseStaffMember() throws Exception {
-            Lecture lecture = lectureUtilService.createLecture(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(1).plusHours(2));
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.LECTURE, lecture.getTitle(), lecture.getStartDate(), lecture.getEndDate(), null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
+            assertThat(actualToken).isNotNull();
+            assertThat(actualToken.length()).isEqualTo(32);
+            assertThat(actualToken).matches("^[0-9a-f]+$");
         }
     }
 
     @Nested
-    class ExamEventTests {
+    class GetCalendarEventSubscriptionTokenTests {
 
-        private static final String PUBLISH_RESULTS_TITLE_PREFIX = "Results Release: ";
-
-        private static final String STUDENT_REVIEW_START_DATE_TITLE_PREFIX = "Review Start: ";
-
-        private static final String STUDENT_REVIEW_END_DATE_TITLE_PREFIX = "Review End: ";
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventsForVisibleExamWithStartAndEndAndPublishResultsAndReviewStartAndEndAsStudent() throws Exception {
-            Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), PAST_DATE.plusDays(1), PAST_DATE.plusDays(2),
-                    PAST_DATE.plusDays(3), "Test-Examiner");
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null, exam.getExaminer());
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.EXAM, PUBLISH_RESULTS_TITLE_PREFIX + exam.getTitle(), exam.getPublishResultsDate(), null,
-                    null, null);
-            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, CalendarEventType.EXAM, STUDENT_REVIEW_START_DATE_TITLE_PREFIX + exam.getTitle(),
-                    exam.getExamStudentReviewStart(), null, null, null);
-            CalendarEventDTO expectedEvent4 = new CalendarEventDTO(null, CalendarEventType.EXAM, STUDENT_REVIEW_END_DATE_TITLE_PREFIX + exam.getTitle(),
-                    exam.getExamStudentReviewEnd(), null, null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventsForVisibleExamWithStartAndEndButNoPublishResultsAndReviewStartAndEndAsStudent() throws Exception {
-            Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), null, null, null, "Test-Examiner");
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null, exam.getExaminer());
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnNoEventsForInvisibleExamWithStartAndEndAndPublishResultsAndReviewStartAndEndAsStudent() throws Exception {
-            Exam exam = examUtilService.addExam(course, FUTURE_DATE, FUTURE_DATE.plusHours(2), FUTURE_DATE.plusHours(3), FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2),
-                    FUTURE_DATE.plusDays(3), "Test-Examiner");
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
-        void shouldReturnCorrectEventsForVisibleExamWithStartAndEndAndPublishResultsAndReviewStartAndEndAsCourseStaffMember() throws Exception {
-            Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), PAST_DATE.plusDays(1), PAST_DATE.plusDays(2),
-                    PAST_DATE.plusDays(3), "Test-Examiner");
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null, exam.getExaminer());
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.EXAM, PUBLISH_RESULTS_TITLE_PREFIX + exam.getTitle(), exam.getPublishResultsDate(), null,
-                    null, null);
-            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, CalendarEventType.EXAM, STUDENT_REVIEW_START_DATE_TITLE_PREFIX + exam.getTitle(),
-                    exam.getExamStudentReviewStart(), null, null, null);
-            CalendarEventDTO expectedEvent4 = new CalendarEventDTO(null, CalendarEventType.EXAM, STUDENT_REVIEW_END_DATE_TITLE_PREFIX + exam.getTitle(),
-                    exam.getExamStudentReviewEnd(), null, null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
-        void shouldReturnCorrectEventsForVisibleExamWithStartAndEndButNoPublishResultsAndReviewStartAndEndAsCourseStaffMember() throws Exception {
-            Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), null, null, null, "Test-Examiner");
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null, exam.getExaminer());
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
-        void shouldReturnNoEventsForInvisibleExamWithStartAndEndAndPublishResultsAndReviewStartAndEndAsCourseStaffMember() throws Exception {
-            Exam exam = examUtilService.addExam(course, FUTURE_DATE, FUTURE_DATE.plusHours(2), FUTURE_DATE.plusHours(3), FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2),
-                    FUTURE_DATE.plusDays(3), "Test-Examiner");
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.EXAM, exam.getTitle(), exam.getStartDate(), exam.getEndDate(), null, exam.getExaminer());
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.EXAM, PUBLISH_RESULTS_TITLE_PREFIX + exam.getTitle(), exam.getPublishResultsDate(), null,
-                    null, null);
-            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, CalendarEventType.EXAM, STUDENT_REVIEW_START_DATE_TITLE_PREFIX + exam.getTitle(),
-                    exam.getExamStudentReviewStart(), null, null, null);
-            CalendarEventDTO expectedEvent4 = new CalendarEventDTO(null, CalendarEventType.EXAM, STUDENT_REVIEW_END_DATE_TITLE_PREFIX + exam.getTitle(),
-                    exam.getExamStudentReviewEnd(), null, null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-    }
-
-    @Nested
-    class QuizExerciseEventTests {
-
-        private static final String RELEASE_DATE_TITLE_PREFIX = "Release: ";
-
-        private static final String DUE_DATE_TITLE_PREFIX = "Due: ";
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventForReleasedSynchronizedQuizWithStartTimeAsStudent() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, PAST_DATE, PAST_DATE.plusDays(1), 600);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, quizExercise.getTitle(), PAST_DATE.plusDays(1),
-                    PAST_DATE.plusDays(1).plusSeconds(600), null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnNoEventForUnreleasedSynchronizedQuizWithStartTimeAsStudent() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, FUTURE_DATE, FUTURE_DATE.plusHours(1), 600);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnNoEventForReleasedSynchronizedQuizWithoutStartTimeAsStudent() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, PAST_DATE, null, 600);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
-        void shouldReturnCorrectEventForReleasedSynchronizedQuizWithStartTimeAsCourseStaffMember() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, PAST_DATE, PAST_DATE.plusDays(1), 600);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, quizExercise.getTitle(), PAST_DATE.plusDays(1),
-                    PAST_DATE.plusDays(1).plusSeconds(600), null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
-        void shouldReturnCorrectEventForUnreleasedSynchronizedQuizWithStartTimeAsCourseStaffMember() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, FUTURE_DATE, FUTURE_DATE.plusHours(1), 600);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, quizExercise.getTitle(), FUTURE_DATE.plusHours(1),
-                    FUTURE_DATE.plusHours(1).plusSeconds(600), null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
-        void shouldReturnNoEventForReleasedSynchronizedQuizWithoutStartTimeAsCourseStaffMember() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveSynchronizedQuiz(course, PAST_DATE, null, 600);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventForReleasedIndividualQuizWithNoDueDateAsStudent() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, null, null, QuizMode.INDIVIDUAL);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
-                    null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventForIndividualQuizWithDueDateButNoReleaseDateAsStudent() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, PAST_DATE, null, QuizMode.INDIVIDUAL);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
-                    null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventsForReleasedIndividualQuizWithDueDateAsStudent() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
-                    null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE.plusDays(1),
-                    null, null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnNoEventForIndividualQuizWithNoReleaseDateAndNoDueDateAsStudent() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, null, null, QuizMode.INDIVIDUAL);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnNoEventForUnreleasedIndividualQuizWithDueDateAsStudent() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-        void shouldReturnCorrectEventForReleasedIndividualQuizWithNoDueDateAsCourseStaffMember() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, null, null, QuizMode.INDIVIDUAL);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
-                    null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-        void shouldReturnCorrectEventForIndividualQuizWithDueDateButNoReleaseDateAsCourseStaffMember() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, PAST_DATE, null, QuizMode.INDIVIDUAL);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
-                    null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-        void shouldReturnCorrectEventsForReleasedIndividualQuizWithDueDateAsCourseStaffMember() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
-                    null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE.plusDays(1),
-                    null, null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-        void shouldReturnNoEventForIndividualQuizWithNoReleaseDateAndNoDueDateAsCourseStaffMember() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, null, null, QuizMode.INDIVIDUAL);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-        void shouldReturnCorrectEventsForUnreleasedIndividualQuizWithDueDateAsCourseStaffMember() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), FUTURE_DATE, null,
-                    null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), FUTURE_DATE.plusDays(1),
-                    null, null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventForReleasedBatchedQuizWithNoDueDateAsStudent() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, null, null, QuizMode.BATCHED);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
-                    null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventForBatchedQuizWithDueDateButNoReleaseDateAsStudent() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, PAST_DATE, null, QuizMode.BATCHED);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
-                    null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventsForReleasedBatchedQuizWithDueDateAsStudent() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.BATCHED);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
-                    null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE.plusDays(1),
-                    null, null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnNoEventForBatchedQuizWithNoReleaseDateAndNoDueDateAsStudent() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, null, null, QuizMode.BATCHED);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnNoEventForUnreleasedBatchedQuizWithDueDateAsStudent() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.BATCHED);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-        void shouldReturnCorrectEventForReleasedBatchedQuizWithNoDueDateAsCourseStaffMember() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, null, null, QuizMode.BATCHED);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
-                    null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-        void shouldReturnCorrectEventForBatchedQuizWithDueDateButNoReleaseDateAsCourseStaffMember() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, PAST_DATE, null, QuizMode.BATCHED);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null, null,
-                    null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-            expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-        void shouldReturnCorrectEventsForReleasedBatchedQuizWithDueDateAsCourseStaffMember() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.BATCHED);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE, null,
-                    null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), PAST_DATE.plusDays(1),
-                    null, null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-        void shouldReturnNoEventForBatchedQuizWithNoReleaseDateAndNoDueDateAsCourseStaffMember() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, null, null, null, QuizMode.BATCHED);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @Test
-        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-        void shouldReturnCorrectEventsForUnreleasedBatchedQuizWithDueDateAsCourseStaffMember() throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.BATCHED);
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, RELEASE_DATE_TITLE_PREFIX + quizExercise.getTitle(), FUTURE_DATE, null,
-                    null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.QUIZ_EXERCISE, DUE_DATE_TITLE_PREFIX + quizExercise.getTitle(), FUTURE_DATE.plusDays(1),
-                    null, null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-    }
-
-    @Nested
-    class NonQuizExerciseEventTests {
-
-        private static final String RELEASE_DATE_TITLE_PREFIX = "Release: ";
-
-        private static final String START_DATE_TITLE_PREFIX = "Start: ";
-
-        private static final String DUE_DATE_TITLE_PREFIX = "Due: ";
-
-        private static final String ASSESSMENT_DUE_DATE_TITLE_PREFIX = "Assessment due: ";
-
-        enum NonQuizExercise {
-            TEXT, MODELING, FILEUPLOAD, PROGRAMMING,
-        }
-
-        @ParameterizedTest
-        @EnumSource(NonQuizExercise.class)
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventsForReleasedExerciseWithStartDateAsStudent(NonQuizExercise nonQuizExercise) throws Exception {
-            Exercise exercise = switch (nonQuizExercise) {
-                case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
-                case MODELING -> modelingExerciseUtilService.addModelingExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
-                case FILEUPLOAD -> fileUploadExerciseUtilService.addFileUploadExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
-                case PROGRAMMING -> programmingExerciseUtilService.createProgrammingExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
-            };
-            CalendarEventType eventType = switch (nonQuizExercise) {
-                case TEXT -> CalendarEventType.TEXT_EXERCISE;
-                case MODELING -> CalendarEventType.MODELING_EXERCISE;
-                case FILEUPLOAD -> CalendarEventType.FILE_UPLOAD_EXERCISE;
-                case PROGRAMMING -> CalendarEventType.PROGRAMMING_EXERCISE;
-            };
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, eventType, START_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @ParameterizedTest
-        @EnumSource(NonQuizExercise.class)
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventForReleasedExerciseWithDueDateAsStudent(NonQuizExercise nonQuizExercise) throws Exception {
-            Exercise exercise = switch (nonQuizExercise) {
-                case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
-                case MODELING -> modelingExerciseUtilService.addModelingExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
-                case FILEUPLOAD -> fileUploadExerciseUtilService.addFileUploadExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
-                case PROGRAMMING -> programmingExerciseUtilService.createProgrammingExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
-            };
-            CalendarEventType eventType = switch (nonQuizExercise) {
-                case TEXT -> CalendarEventType.TEXT_EXERCISE;
-                case MODELING -> CalendarEventType.MODELING_EXERCISE;
-                case FILEUPLOAD -> CalendarEventType.FILE_UPLOAD_EXERCISE;
-                case PROGRAMMING -> CalendarEventType.PROGRAMMING_EXERCISE;
-            };
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, eventType, DUE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @ParameterizedTest
-        @EnumSource(NonQuizExercise.class)
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventForReleasedExerciseWithAssessmentDueDateAsStudent(NonQuizExercise nonQuizExercise) throws Exception {
-            Exercise exercise = switch (nonQuizExercise) {
-                case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
-                case MODELING -> modelingExerciseUtilService.addModelingExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
-                case FILEUPLOAD -> fileUploadExerciseUtilService.addFileUploadExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
-                case PROGRAMMING -> programmingExerciseUtilService.createProgrammingExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
-            };
-            CalendarEventType eventType = switch (nonQuizExercise) {
-                case TEXT -> CalendarEventType.TEXT_EXERCISE;
-                case MODELING -> CalendarEventType.MODELING_EXERCISE;
-                case FILEUPLOAD -> CalendarEventType.FILE_UPLOAD_EXERCISE;
-                case PROGRAMMING -> CalendarEventType.PROGRAMMING_EXERCISE;
-            };
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, eventType, ASSESSMENT_DUE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null,
-                    null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @ParameterizedTest
-        @EnumSource(NonQuizExercise.class)
-        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-        void shouldReturnCorrectEventForUnreleasedExerciseAsStudent(NonQuizExercise nonQuizExercise) throws Exception {
-            Exercise exercise = switch (nonQuizExercise) {
-                case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
-                case MODELING -> modelingExerciseUtilService.addModelingExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
-                case FILEUPLOAD ->
-                    fileUploadExerciseUtilService.addFileUploadExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
-                case PROGRAMMING ->
-                    programmingExerciseUtilService.createProgrammingExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
-            };
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @ParameterizedTest
-        @EnumSource(NonQuizExercise.class)
-        @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
-        void shouldReturnCorrectEventsForReleasedExerciseWithStartDateAsCourseStaffMember(NonQuizExercise nonQuizExercise) throws Exception {
-            Exercise exercise = switch (nonQuizExercise) {
-                case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
-                case MODELING -> modelingExerciseUtilService.addModelingExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
-                case FILEUPLOAD -> fileUploadExerciseUtilService.addFileUploadExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
-                case PROGRAMMING -> programmingExerciseUtilService.createProgrammingExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
-            };
-            CalendarEventType eventType = switch (nonQuizExercise) {
-                case TEXT -> CalendarEventType.TEXT_EXERCISE;
-                case MODELING -> CalendarEventType.MODELING_EXERCISE;
-                case FILEUPLOAD -> CalendarEventType.FILE_UPLOAD_EXERCISE;
-                case PROGRAMMING -> CalendarEventType.PROGRAMMING_EXERCISE;
-            };
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, eventType, START_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @ParameterizedTest
-        @EnumSource(NonQuizExercise.class)
-        @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
-        void shouldReturnCorrectEventForReleasedExerciseWithDueDateAsCourseStaffMember(NonQuizExercise nonQuizExercise) throws Exception {
-            Exercise exercise = switch (nonQuizExercise) {
-                case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
-                case MODELING -> modelingExerciseUtilService.addModelingExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
-                case FILEUPLOAD -> fileUploadExerciseUtilService.addFileUploadExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
-                case PROGRAMMING -> programmingExerciseUtilService.createProgrammingExercise(course, PAST_DATE, null, PAST_DATE.plusDays(1), null);
-            };
-            CalendarEventType eventType = switch (nonQuizExercise) {
-                case TEXT -> CalendarEventType.TEXT_EXERCISE;
-                case MODELING -> CalendarEventType.MODELING_EXERCISE;
-                case FILEUPLOAD -> CalendarEventType.FILE_UPLOAD_EXERCISE;
-                case PROGRAMMING -> CalendarEventType.PROGRAMMING_EXERCISE;
-            };
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, eventType, DUE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null, null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @ParameterizedTest
-        @EnumSource(NonQuizExercise.class)
-        @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
-        void shouldReturnCorrectEventForReleasedExerciseWithAssessmentDueDateAsCourseStaffMember(NonQuizExercise nonQuizExercise) throws Exception {
-            Exercise exercise = switch (nonQuizExercise) {
-                case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
-                case MODELING -> modelingExerciseUtilService.addModelingExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
-                case FILEUPLOAD -> fileUploadExerciseUtilService.addFileUploadExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
-                case PROGRAMMING -> programmingExerciseUtilService.createProgrammingExercise(course, PAST_DATE, null, null, PAST_DATE.plusDays(1));
-            };
-            CalendarEventType eventType = switch (nonQuizExercise) {
-                case TEXT -> CalendarEventType.TEXT_EXERCISE;
-                case MODELING -> CalendarEventType.MODELING_EXERCISE;
-                case FILEUPLOAD -> CalendarEventType.FILE_UPLOAD_EXERCISE;
-                case PROGRAMMING -> CalendarEventType.PROGRAMMING_EXERCISE;
-            };
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + PAST_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE, null, null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, eventType, ASSESSMENT_DUE_DATE_TITLE_PREFIX + exercise.getTitle(), PAST_DATE.plusDays(1), null, null,
-                    null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-
-        @ParameterizedTest
-        @EnumSource(NonQuizExercise.class)
-        @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
-        void shouldReturnCorrectEventsForUnreleasedExerciseAsCourseStaffMember(NonQuizExercise nonQuizExercise) throws Exception {
-            Exercise exercise = switch (nonQuizExercise) {
-                case TEXT -> textExerciseUtilService.createIndividualTextExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
-                case MODELING -> modelingExerciseUtilService.addModelingExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
-                case FILEUPLOAD ->
-                    fileUploadExerciseUtilService.addFileUploadExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
-                case PROGRAMMING ->
-                    programmingExerciseUtilService.createProgrammingExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), FUTURE_DATE.plusDays(2), FUTURE_DATE.plusDays(3));
-            };
-            CalendarEventType eventType = switch (nonQuizExercise) {
-                case TEXT -> CalendarEventType.TEXT_EXERCISE;
-                case MODELING -> CalendarEventType.MODELING_EXERCISE;
-                case FILEUPLOAD -> CalendarEventType.FILE_UPLOAD_EXERCISE;
-                case PROGRAMMING -> CalendarEventType.PROGRAMMING_EXERCISE;
-            };
-            Long courseId = course.getId();
-            String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FUTURE_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                    + TEST_LANGUAGE_STRING;
-            Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, eventType, RELEASE_DATE_TITLE_PREFIX + exercise.getTitle(), FUTURE_DATE, null, null, null);
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, eventType, START_DATE_TITLE_PREFIX + exercise.getTitle(), FUTURE_DATE.plusDays(1), null, null, null);
-            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, eventType, DUE_DATE_TITLE_PREFIX + exercise.getTitle(), FUTURE_DATE.plusDays(2), null, null, null);
-            CalendarEventDTO expectedEvent4 = new CalendarEventDTO(null, eventType, ASSESSMENT_DUE_DATE_TITLE_PREFIX + exercise.getTitle(), FUTURE_DATE.plusDays(3), null, null,
-                    null);
-            Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3, expectedEvent4)
-                    .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-            assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                    .isEqualTo(expectedResponse);
-        }
-    }
-
-    @Test
-    @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-    void shouldReturnCorrectEventsForStudentWhenQueriedForMultipleMonths() throws Exception {
-        TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", Language.ENGLISH.name(), tutor,
-                new HashSet<>(Set.of(student)));
-        TutorialGroupSession tutorialGroupSession1 = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE.minusMonths(1),
-                FIXED_DATE.minusMonths(1).plusHours(3), 5);
-        TutorialGroupSession tutorialGroupSession2 = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusHours(2), 5);
-        TutorialGroupSession tutorialGroupSession3 = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE.plusMonths(1),
-                FIXED_DATE.plusMonths(1).plusHours(1), 5);
-        Long courseId = course.getId();
-        String monthKeys = YearMonth.from(FIXED_DATE.minusMonths(1)) + "," + FIXED_DATE_MONTH_STRING + "," + YearMonth.from(FIXED_DATE.plusMonths(1));
-        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + monthKeys + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                + TEST_LANGUAGE_STRING;
-        Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-        CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession1.getStart(),
-                tutorialGroupSession1.getEnd(), tutorialGroupSession1.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
-        CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession2.getStart(),
-                tutorialGroupSession2.getEnd(), tutorialGroupSession2.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
-        CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession3.getStart(),
-                tutorialGroupSession3.getEnd(), tutorialGroupSession3.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
-        Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3)
-                .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-        assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                .isEqualTo(expectedResponse);
-    }
-
-    @Test
-    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
-    void shouldSplitEventAcrossDaysWhenEventSpansMultipleDays() throws Exception {
-        TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", Language.ENGLISH.name(), tutor,
-                new HashSet<>(Set.of(student)));
-        TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusDays(2), 5);
-        Long courseId = course.getId();
-        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=" + FIXED_DATE_MONTH_STRING + "&timeZone=" + TEST_TIMEZONE_STRING + "&language="
-                + TEST_LANGUAGE_STRING;
-        Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-        ZoneId timezone = tutorialGroupSession.getStart().getZone();
-        CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession.getStart(),
-                tutorialGroupSession.getStart().toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(),
-                tutor.getFirstName() + " " + tutor.getLastName());
-        CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session",
-                tutorialGroupSession.getStart().plusDays(1).toLocalDate().atStartOfDay(timezone),
-                tutorialGroupSession.getStart().plusDays(1).toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone),
-                tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
-        CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session",
-                tutorialGroupSession.getStart().plusDays(2).toLocalDate().atStartOfDay(timezone), tutorialGroupSession.getEnd(),
-                tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
-        Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3)
-                .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
-
-        assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                .isEqualTo(expectedResponse);
-    }
-
-    @Test
-    @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-    void shouldGroupEventsAccordingToClientTimeZone() throws Exception {
-        ZonedDateTime berlinStart = ZonedDateTime.of(2025, 5, 15, 2, 30, 0, 0, TEST_TIMEZONE);
-        ZonedDateTime berlinEnd = berlinStart.plusHours(2);
-        TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Early Tutorial", "", 10, false, "Garching", Language.ENGLISH.name(), tutor,
-                new HashSet<>(Set.of(student)));
-        TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), berlinStart, berlinEnd, 5);
-
-        Long courseId = course.getId();
-        String otherTimeZone = "America/Los_Angeles";
-        String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=2025-05&timeZone=" + otherTimeZone + "&language=" + TEST_LANGUAGE_STRING;
-        Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
-
-        CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession.getStart(), tutorialGroupSession.getEnd(),
-                tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
-        Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
-        expectedResponse.put(tutorialGroupSession.getStart().withZoneSameInstant(ZoneId.of(otherTimeZone)).toLocalDate().toString(), List.of(expectedEvent));
-
-        assertThat(actualResponse).usingRecursiveComparison().withComparatorForType(TIMESTAMP_COMPARATOR, ZonedDateTime.class).ignoringCollectionOrder()
-                .isEqualTo(expectedResponse);
     }
 }
