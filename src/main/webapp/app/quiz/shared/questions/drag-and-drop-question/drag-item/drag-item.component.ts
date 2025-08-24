@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, input } from '@angular/core';
 import isMobile from 'ismobilejs-es5';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { NgClass, NgStyle } from '@angular/common';
@@ -16,11 +16,11 @@ import { addPublicFilePrefix } from 'app/app.constants';
     imports: [NgClass, NgStyle, CdkDrag, ImageComponent, CdkDragPlaceholder, FitTextDirective, CdkDragPreview, TranslateDirective],
 })
 export class DragItemComponent implements OnInit {
-    @Input() minWidth: string;
-    @Input() dragItem: DragItem;
-    @Input() clickDisabled: boolean;
-    @Input() invalid: boolean;
-    @Input() filePreviewPaths: Map<string, string> = new Map<string, string>();
+    readonly minWidth = input<string>();
+    readonly dragItem = input.required<DragItem>();
+    readonly clickDisabled = input<boolean>();
+    readonly invalid = input<boolean>();
+    readonly filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
     isMobile = false;
 
     /**

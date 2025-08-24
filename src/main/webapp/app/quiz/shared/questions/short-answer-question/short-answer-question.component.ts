@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject } from '@angular/core';
+import { Component, ViewEncapsulation, computed, effect, inject, input, model } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
@@ -27,42 +27,31 @@ export class ShortAnswerQuestionComponent {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
 
-    shortAnswerQuestion: ShortAnswerQuestion;
-    _forceSampleSolution: boolean;
-
-    @Input()
-    set question(question: QuizQuestion) {
-        this.shortAnswerQuestion = question as ShortAnswerQuestion;
-        this.watchCollection();
-    }
+    readonly question = input.required<QuizQuestion>();
+    shortAnswerQuestion = computed(() => this.question() as ShortAnswerQuestion);
 
     // TODO: Map vs. Array --> consistency
-    @Input()
-    submittedTexts: ShortAnswerSubmittedText[];
-    @Input()
-    clickDisabled: boolean;
-    @Input()
-    showResult: boolean;
-    @Input()
-    questionIndex: number;
-    @Input()
-    score: number;
-    @Input()
-    set forceSampleSolution(forceSampleSolution) {
-        this._forceSampleSolution = forceSampleSolution;
-        if (this.forceSampleSolution) {
-            this.showSampleSolution();
-        }
-    }
+    readonly submittedTexts = model<ShortAnswerSubmittedText[]>([]);
+    readonly clickDisabled = input<boolean>(false);
+    readonly showResult = input<boolean>(false);
+    readonly questionIndex = input<number>(0);
+    readonly score = input<number>(0);
+    readonly forceSampleSolution = input<boolean>(false);
+    readonly fnOnSubmittedTextUpdate = input<any>();
 
-    get forceSampleSolution() {
-        return this._forceSampleSolution;
+    constructor() {
+        effect(() => {
+            if (this.forceSampleSolution()) {
+                this.showSampleSolution();
+            }
+        });
+        effect(() => {
+            const currentQuestion = this.shortAnswerQuestion();
+            if (currentQuestion) {
+                this.watchCollection();
+            }
+        });
     }
-    @Input()
-    fnOnSubmittedTextUpdate: any;
-
-    @Output()
-    submittedTextsChange = new EventEmitter<ShortAnswerSubmittedText[]>();
 
     readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
@@ -81,12 +70,12 @@ export class ShortAnswerQuestionComponent {
     watchCollection() {
         this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
 
-        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text!);
+        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion().text!);
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
 
-        this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.text);
-        this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.hint);
-        this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion.explanation);
+        this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().text);
+        this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().hint);
+        this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().explanation);
     }
 
     /**
@@ -94,25 +83,26 @@ export class ShortAnswerQuestionComponent {
      * set as submitted texts
      */
     setSubmittedText() {
-        this.submittedTexts = [];
+        const updated: ShortAnswerSubmittedText[] = [];
         let i = 0;
         for (const textpart of this.textParts) {
             let j = 0;
             for (const element of textpart) {
                 if (this.shortAnswerQuestionUtil.isInputField(element!)) {
                     const submittedText = new ShortAnswerSubmittedText();
-                    submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this.shortAnswerQuestion.id)).value;
-                    submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element!), this.shortAnswerQuestion);
-                    this.submittedTexts.push(submittedText);
+                    submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this.shortAnswerQuestion().id)).value;
+                    submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element!), this.shortAnswerQuestion());
+                    updated.push(submittedText);
                 }
                 j++;
             }
             i++;
         }
-        this.submittedTextsChange.emit(this.submittedTexts);
+        this.submittedTexts.set(updated);
         /** Only execute the onMappingUpdate function if we received such input **/
-        if (this.fnOnSubmittedTextUpdate) {
-            this.fnOnSubmittedTextUpdate();
+        const _fnOnSubmittedTextUpdate = this.fnOnSubmittedTextUpdate();
+        if (_fnOnSubmittedTextUpdate && typeof _fnOnSubmittedTextUpdate === 'function') {
+            _fnOnSubmittedTextUpdate();
         }
     }
 
@@ -121,7 +111,7 @@ export class ShortAnswerQuestionComponent {
      */
     showSampleSolution() {
         // TODO: the question is not yet available
-        this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolutions(this.shortAnswerQuestion);
+        this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolutions(this.shortAnswerQuestion());
         this.showingSampleSolution = true;
     }
 
@@ -137,7 +127,7 @@ export class ShortAnswerQuestionComponent {
      * @param spotTag Spot tag for which to get the submitted text
      */
     getSubmittedTextForSpot(spotTag: string): ShortAnswerSubmittedText {
-        return this.submittedTexts.filter((submittedText) => submittedText.spot!.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag))[0];
+        return this.submittedTexts().filter((submittedText) => submittedText.spot!.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag))[0];
     }
 
     /**
@@ -163,7 +153,7 @@ export class ShortAnswerQuestionComponent {
      * @param spotTag Spot tag for which to get the sample solution
      */
     getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
-        const index = this.shortAnswerQuestion.spots!.findIndex((spot) => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
+        const index = this.shortAnswerQuestion().spots!.findIndex((spot) => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
         return this.sampleSolutions[index];
     }
 
@@ -212,10 +202,10 @@ export class ShortAnswerQuestionComponent {
      * @param spotTag Spot tag for which to return the input field's class
      */
     classifyInputField(spotTag: string): string {
-        if (this.shortAnswerQuestion.invalid) {
+        if (this.shortAnswerQuestion().invalid) {
             return 'invalid';
         }
-        const spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.shortAnswerQuestion);
+        const spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.shortAnswerQuestion());
         if (spot.invalid) {
             return 'invalid';
         }
@@ -239,8 +229,8 @@ export class ShortAnswerQuestionComponent {
     isSubmittedTextCompletelyCorrect(spotTag: string): boolean {
         let isTextCorrect = false;
         const solutionsForSpot = this.shortAnswerQuestionUtil.getAllSolutionsForSpot(
-            this.shortAnswerQuestion.correctMappings,
-            this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.shortAnswerQuestion),
+            this.shortAnswerQuestion().correctMappings,
+            this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.shortAnswerQuestion()),
         );
         const solutions = solutionsForSpot?.filter((solution) => solution.text?.trim() === this.getSubmittedTextForSpot(spotTag)?.text?.trim());
         if (solutions && solutions.length > 0) {
