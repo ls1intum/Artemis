@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.assessment.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
@@ -43,11 +41,10 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndependentTest {
+class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "cscservicetest";
 
@@ -80,12 +77,8 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     @Autowired
     private StudentScoreRepository studentScoreRepository;
 
-    @Value("artemis.version-control.url")
-    private URI versionControlUrl;
-
     @BeforeEach
     void init() {
-        ProgrammingExerciseFactory.localVCBaseUri = versionControlUrl;
         studentScoreRepository.deleteAll();
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
         course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
