@@ -396,6 +396,7 @@ public class CourseScoreCalculationService {
      * @param participationsOfStudent the exercise participations of the given student.
      * @param maxAndReachablePoints   max points and max reachable points in the given course.
      * @param plagiarismCases         the plagiarism verdicts for the student.
+     * @return a StudentScoresDTO instance with the presentation score, relative and absolute points achieved by the given student.
      */
     public StudentScoresDTO calculateCourseScoreForStudentParticipations(Course course, @Nullable GradingScale gradingScale, Long studentId,
             Collection<StudentParticipation> participationsOfStudent, MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases) {
