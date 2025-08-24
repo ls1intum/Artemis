@@ -28,10 +28,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.map.listener.EntryAddedListener;
-import com.hazelcast.map.listener.EntryRemovedListener;
-import com.hazelcast.map.listener.EntryUpdatedListener;
-
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
@@ -42,6 +38,10 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryAddedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryRemovedEvent;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryUpdatedEvent;
 
 /**
  * Includes methods for managing and retrieving the shared build job queue and build agent information. Also contains methods for cancelling build jobs.
@@ -76,7 +76,7 @@ public class SharedQueueManagementService {
      */
     @PostConstruct
     public void init() {
-        this.distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), true);
+        this.distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener());
         this.updateBuildAgentCapacity();
     }
 
@@ -375,24 +375,23 @@ public class SharedQueueManagementService {
         return Duration.between(now, estimatedCompletionDate).toSeconds();
     }
 
-    class BuildAgentListener
-            implements EntryAddedListener<String, BuildAgentInformation>, EntryRemovedListener<String, BuildAgentInformation>, EntryUpdatedListener<String, BuildAgentInformation> {
+    class BuildAgentListener implements MapEntryListener<String, BuildAgentInformation> {
 
         @Override
-        public void entryAdded(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
-            log.debug("Build agent added: {}", event.getValue());
+        public void entryAdded(MapEntryAddedEvent<String, BuildAgentInformation> event) {
+            log.debug("Build agent added: {}", event.value());
             updateBuildAgentCapacity();
         }
 
         @Override
-        public void entryRemoved(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
-            log.debug("Build agent removed: {}", event.getOldValue());
+        public void entryRemoved(MapEntryRemovedEvent<String, BuildAgentInformation> event) {
+            log.debug("Build agent removed: {}", event.oldValue());
             updateBuildAgentCapacity();
         }
 
         @Override
-        public void entryUpdated(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
-            log.debug("Build agent updated: {}", event.getValue());
+        public void entryUpdated(MapEntryUpdatedEvent<String, BuildAgentInformation> event) {
+            log.debug("Build agent updated: {}", event.value());
             updateBuildAgentCapacity();
         }
     }
