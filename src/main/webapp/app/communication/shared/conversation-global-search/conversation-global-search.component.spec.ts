@@ -37,12 +37,11 @@ describe('ConversationGlobalSearchComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [FormsModule],
+            imports: [FormsModule, FaIconComponent],
             declarations: [
                 ConversationGlobalSearchComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ButtonComponent),
-                MockComponent(FaIconComponent),
                 MockComponent(ProfilePictureComponent),
                 MockDirective(TranslateDirective),
             ],

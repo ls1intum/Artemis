@@ -49,12 +49,10 @@ $border-color: #dee2e6;
 
 // Footer
 $footer-bg: $white;
-$footer-height-dev: 3rem;
-$footer-height-prod: 2rem;
+$header-footer-combined-height: 2rem;
 
 // Sidebar
-$sidebar-footer-height-dev: 104px;
-$sidebar-footer-height-prod: 88px;
+$sidebar-header-footer-combined-height: 88px;
 $sidebar-width: 255px;
 $spacing-modules: 1rem;
 
@@ -97,6 +95,11 @@ $modal-content-bg: $white;
 $exam-height-offset: 88px;
 
 // === END BOOTSTRAP ===
+
+// Scrollbar
+$scrollbar-width: 5px;
+$scrollbar-color: $gray-500;
+$scrollbar-transition-time: 0.3s;
 
 // Navigation Tab Bar
 $tab-bar-color: $gray-700;
@@ -477,6 +480,7 @@ $exam-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $exam-participation-footer-connected-background: #d1ecf1;
 $exam-participation-footer-disconnected-background: #fff2cc;
 $exam-text-exam-summary-background: #f8f9fa;
+$exam-update-footer-offset: 42px; // height of the update footer (connection status)
 
 // Assessment
 $textblock-assessment-span-hover-background: $gray-300;
@@ -584,3 +588,11 @@ $ssh-key-settings-dropdown-buttons: $light;
 $ssh-key-settings-dropdown-buttons-hover: $gray-200;
 $ssh-key-settings-text-color: $black;
 $ssh-key-settings-shadow: rgba(0, 0, 0, 0.2);
+
+// Calendar
+$pastel-cyan: lighten($cyan, 35%);
+$pastel-blue: lighten($blue, 20%);
+$pastel-purple: lighten($purple, 20%);
+$pastel-teal: lighten($teal, 25%);
+$calendar-loading-overlay-background: transparentize($module-bg, 0.8);
+$calendar-day-badge-selected: $gray-400;

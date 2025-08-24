@@ -34,8 +34,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
-import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
@@ -44,6 +42,7 @@ import { CompetencySelectionComponent } from 'app/atlas/shared/competency-select
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -64,8 +63,6 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
         ModelingEditorComponent,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
-        CustomMinDirective,
-        CustomMaxDirective,
         ExerciseFeedbackSuggestionOptionsComponent,
         PresentationScoreComponent,
         GradingInstructionsDetailsComponent,
@@ -85,6 +82,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
+    private readonly calendarEventService = inject(CalendarEventService);
 
     exerciseTitleChannelNameComponent = viewChild.required(ExerciseTitleChannelNameComponent);
     @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent?: TeamConfigFormGroupComponent;
@@ -331,6 +329,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.isSaving = false;
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
+        this.calendarEventService.refresh();
     }
 
     private onSaveError(errorRes: HttpErrorResponse): void {

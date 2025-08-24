@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { TutorialGroupFormComponent, TutorialGroupFormData } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -60,13 +60,12 @@ describe('TutorialGroupFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule, FaIconComponent],
             declarations: [
                 TutorialGroupFormComponent,
                 ScheduleFormComponent,
                 MarkdownEditorStubComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisDateRangePipe),
             ],

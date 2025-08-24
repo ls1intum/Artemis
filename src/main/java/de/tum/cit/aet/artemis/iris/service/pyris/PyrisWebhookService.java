@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.io.IOException;
@@ -27,6 +26,7 @@ import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
@@ -37,11 +37,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWe
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcriptionIngestion.PyrisTranscriptionIngestionWebhookDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcriptionIngestion.PyrisWebhookTranscriptionDeletionExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcriptionIngestion.PyrisWebhookTranscriptionIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
@@ -67,97 +65,23 @@ public class PyrisWebhookService {
 
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
+    private final Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi;
+
+    private final InstanceMessageSendService instanceMessageSendService;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
-            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
+            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
+            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, @Lazy InstanceMessageSendService instanceMessageSendService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
-    }
-
-    /**
-     * adds the transcription to the vector database in Pyris
-     *
-     * @param transcription The transcription that got Updated
-     * @param course        The course of the transcriptions
-     * @param lecture       The lecture of the transcriptions
-     * @param lectureUnit   The lecture unit of the transcriptions
-     * @return jobToken if the job was created else null
-     */
-    public String addTranscriptionsToPyrisDB(LectureTranscription transcription, Course course, Lecture lecture, AttachmentVideoUnit lectureUnit) {
-        if (transcription == null) {
-            throw new IllegalArgumentException("Transcriptions cannot be empty");
-        }
-
-        if (!lectureIngestionEnabled(course)) {
-            return null;
-        }
-
-        if (transcription.getLectureUnit().getLecture() == null) {
-            throw new IllegalArgumentException("Transcription must be associated with a lecture");
-        }
-        else if (!transcription.getLectureUnit().getLecture().equals(lecture)) {
-            throw new IllegalArgumentException("All transcriptions must be associated with the same lecture");
-        }
-
-        PyrisTranscriptionIngestionWebhookDTO pyrisTranscriptionIngestionWebhookDTO = new PyrisTranscriptionIngestionWebhookDTO(transcription, lecture.getId(), lecture.getTitle(),
-                course.getId(), course.getTitle(), course.getDescription(), transcription.getLectureUnit().getId(), transcription.getLectureUnit().getName(),
-                lectureUnit.getVideoSource());
-
-        return executeTranscriptionAdditionWebhook(pyrisTranscriptionIngestionWebhookDTO, course, lecture, lectureUnit);
-    }
-
-    /**
-     * adds the lecture transcription into the vector database of Pyris
-     *
-     * @param toUpdateTranscription The transcription that is going to be Updated
-     * @return jobToken if the job was created
-     */
-    private String executeTranscriptionAdditionWebhook(PyrisTranscriptionIngestionWebhookDTO toUpdateTranscription, Course course, Lecture lecture, LectureUnit lectureUnit) {
-        String jobToken = pyrisJobService.addTranscriptionIngestionWebhookJob(course.getId(), lecture.getId(), lectureUnit.getId());
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisLectureIngestionSettings();
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.selectedVariant());
-        PyrisWebhookTranscriptionIngestionExecutionDTO executionDTO = new PyrisWebhookTranscriptionIngestionExecutionDTO(toUpdateTranscription, lectureUnit.getId(), settingsDTO,
-                List.of());
-        pyrisConnectorService.executeTranscriptionAdditionWebhook(executionDTO);
-        return jobToken;
-    }
-
-    /**
-     * delete the lecture transcription in pyris
-     *
-     * @param lectureTranscription The lecture transcription that gets erased
-     * @return jobToken if the job was created
-     */
-    public String deleteLectureTranscription(LectureTranscription lectureTranscription) {
-        Lecture lecture = lectureTranscription.getLectureUnit().getLecture();
-        Course course = lecture.getCourse();
-        LectureUnit lectureUnit = lectureTranscription.getLectureUnit();
-        if (!(lectureUnit instanceof AttachmentVideoUnit)) {
-            throw new IllegalArgumentException("Lecture Transcription must belong to an AttachmentVideoUnit");
-        }
-        return executeLectureTranscriptionDeletionWebhook(new PyrisTranscriptionIngestionWebhookDTO(lectureTranscription, lecture.getId(), lecture.getTitle(), course.getId(),
-                course.getTitle(), course.getDescription(), lectureUnit.getId(), lectureUnit.getName(), ((AttachmentVideoUnit) lectureUnit).getVideoSource()));
-    }
-
-    /**
-     * executes the lecture transcription deletion webhook to delete lecture transcriptions from the vector database on pyris
-     *
-     * @param toUpdateLectureTranscription The lecture transcription that got Updated as webhook DTO
-     * @return jobToken if the job was created else null
-     */
-    private String executeLectureTranscriptionDeletionWebhook(PyrisTranscriptionIngestionWebhookDTO toUpdateLectureTranscription) {
-        String jobToken = pyrisJobService.addTranscriptionIngestionWebhookJob(toUpdateLectureTranscription.courseId(), toUpdateLectureTranscription.lectureId(),
-                toUpdateLectureTranscription.transcription().getLectureUnit().getId());
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, "default");
-        PyrisWebhookTranscriptionDeletionExecutionDTO executionDTO = new PyrisWebhookTranscriptionDeletionExecutionDTO(toUpdateLectureTranscription, settingsDTO, List.of());
-        pyrisConnectorService.executeLectureTranscriptionDeletionWebhook(executionDTO);
-
-        return jobToken;
+        this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     private boolean lectureIngestionEnabled(Course course) {
@@ -175,26 +99,62 @@ public class PyrisWebhookService {
         }
     }
 
-    private PyrisLectureUnitWebhookDTO processAttachmentForUpdate(AttachmentVideoUnit attachmentVideoUnit) {
+    private PyrisLectureUnitWebhookDTO processAttachmentVideoUnitForUpdate(AttachmentVideoUnit attachmentVideoUnit) {
+        Lecture lecture = attachmentVideoUnit.getLecture();
+        Course course = attachmentVideoUnit.getLecture().getCourse();
+
         Long lectureUnitId = attachmentVideoUnit.getId();
         String lectureUnitName = attachmentVideoUnit.getName();
-        Long lectureId = attachmentVideoUnit.getLecture().getId();
-        String lectureTitle = attachmentVideoUnit.getLecture().getTitle();
-        Long courseId = attachmentVideoUnit.getLecture().getCourse().getId();
-        String courseTitle = attachmentVideoUnit.getLecture().getCourse().getTitle();
-        String courseDescription = attachmentVideoUnit.getLecture().getCourse().getDescription() == null ? "" : attachmentVideoUnit.getLecture().getCourse().getDescription();
-        String base64EncodedPdf = attachmentToBase64(attachmentVideoUnit);
-        String lectureUnitLink = artemisBaseUrl + ARTEMIS_FILE_PATH_PREFIX + attachmentVideoUnit.getAttachment().getLink();
+
+        Long lectureId = lecture.getId();
+        String lectureTitle = lecture.getTitle();
+        Long courseId = course.getId();
+        String courseTitle = course.getTitle();
+        String courseDescription = course.getDescription() == null ? "" : course.getDescription();
+        String base64EncodedPdf;
+        String lectureUnitLink;
+        if (attachmentVideoUnit.getAttachment() != null) {
+            base64EncodedPdf = attachmentToBase64(attachmentVideoUnit);
+            lectureUnitLink = artemisBaseUrl + "/" + attachmentVideoUnit.getAttachment().getLink();
+        }
+        else {
+            base64EncodedPdf = "";
+            lectureUnitLink = "";
+        }
+
+        LectureTranscriptionsRepositoryApi transcriptionsRepositoryApi = lectureTranscriptionsRepositoryApi
+                .orElseThrow(() -> new LectureApiNotPresentException(LectureTranscriptionsRepositoryApi.class));
+        Optional<LectureTranscription> lectureTranscription = transcriptionsRepositoryApi.findByLectureUnit_Id(attachmentVideoUnit.getId());
+        int version = attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : 1;
+
         LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
         api.save(attachmentVideoUnit);
-        return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink);
+
+        if (lectureTranscription.isPresent()) {
+            LectureTranscription transcription = lectureTranscription.get();
+
+            return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : -1,
+                    transcription, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink,
+                    attachmentVideoUnit.getVideoSource());
+        }
+
+        return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : null, null,
+                lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, attachmentVideoUnit.getVideoSource());
     }
 
-    private PyrisLectureUnitWebhookDTO processAttachmentForDeletion(AttachmentVideoUnit attachmentVideoUnit) {
+    /**
+     * Processes an {@link AttachmentVideoUnit} for deletion by creating a dummy DTO with only the necessary IDs.
+     * This method returns a {@link PyrisLectureUnitWebhookDTO} where most fields are empty or have default values,
+     * as only the IDs are required by Pyris to identify and delete the lecture unit from its database.
+     *
+     * @param attachmentVideoUnit The lecture unit to be processed for deletion.
+     * @return A {@link PyrisLectureUnitWebhookDTO} with IDs for deletion and empty/default values for other fields.
+     */
+    private PyrisLectureUnitWebhookDTO processAttachmentVideoUnitForDeletion(AttachmentVideoUnit attachmentVideoUnit) {
         Long lectureUnitId = attachmentVideoUnit.getId();
         Long lectureId = attachmentVideoUnit.getLecture().getId();
         Long courseId = attachmentVideoUnit.getLecture().getCourse().getId();
-        return new PyrisLectureUnitWebhookDTO("", lectureUnitId, "", lectureId, "", courseId, "", "", "");
+        return new PyrisLectureUnitWebhookDTO("", 0, null, lectureUnitId, "", lectureId, "", courseId, "", "", "", "");
     }
 
     /**
@@ -208,12 +168,13 @@ public class PyrisWebhookService {
         if (course.isEmpty()) {
             return;
         }
+
         var settings = irisSettingsService.getCombinedIrisSettingsFor(course.get(), false).irisLectureIngestionSettings();
         if (!settings.enabled() || !settings.autoIngest()) {
             return;
         }
         for (AttachmentVideoUnit attachmentVideoUnit : newAttachmentVideoUnits) {
-            addLectureUnitToPyrisDB(attachmentVideoUnit);
+            instanceMessageSendService.sendLectureUnitAutoIngestionSchedule(attachmentVideoUnit.getId());
         }
     }
 
@@ -225,8 +186,11 @@ public class PyrisWebhookService {
      */
     public String deleteLectureFromPyrisDB(List<AttachmentVideoUnit> attachmentVideoUnits) {
         List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentVideoUnits = new ArrayList<>();
-        attachmentVideoUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf"))
-                .forEach(unit -> toUpdateAttachmentVideoUnits.add(processAttachmentForDeletion(unit)));
+        attachmentVideoUnits.stream().filter(
+                unit -> (unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf")) || unit.getVideoSource() != null)
+                .forEach(unit -> {
+                    toUpdateAttachmentVideoUnits.add(processAttachmentVideoUnitForDeletion(unit));
+                });
         if (!toUpdateAttachmentVideoUnits.isEmpty()) {
             return executeLectureDeletionWebhook(toUpdateAttachmentVideoUnits);
         }
@@ -240,9 +204,11 @@ public class PyrisWebhookService {
      * @return jobToken if the job was created else null
      */
     public String addLectureUnitToPyrisDB(AttachmentVideoUnit attachmentVideoUnit) {
-        if (lectureIngestionEnabled(attachmentVideoUnit.getLecture().getCourse()) && attachmentVideoUnit.getAttachment() != null
-                && attachmentVideoUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentVideoUnit.getAttachment().getLink().endsWith(".pdf")) {
-            return executeLectureAdditionWebhook(processAttachmentForUpdate(attachmentVideoUnit), attachmentVideoUnit.getLecture().getCourse());
+        if (lectureIngestionEnabled(attachmentVideoUnit.getLecture().getCourse())) {
+            if ((attachmentVideoUnit.getVideoSource() != null && !attachmentVideoUnit.getVideoSource().isEmpty()) || (attachmentVideoUnit.getAttachment() != null
+                    && (attachmentVideoUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentVideoUnit.getAttachment().getLink().endsWith(".pdf")))) {
+                return executeLectureAdditionWebhook(processAttachmentVideoUnitForUpdate(attachmentVideoUnit), attachmentVideoUnit.getLecture().getCourse());
+            }
         }
         return null;
     }
@@ -273,7 +239,8 @@ public class PyrisWebhookService {
                 toUpdateAttachmentVideoUnit.lectureUnitId());
         var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisLectureIngestionSettings();
         PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.selectedVariant());
-        PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentVideoUnit, settingsDTO, List.of());
+        PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentVideoUnit,
+                toUpdateAttachmentVideoUnit.lectureUnitId(), settingsDTO, List.of());
         pyrisConnectorService.executeLectureAdditionWebhook(executionDTO);
         return jobToken;
     }
@@ -416,5 +383,4 @@ public class PyrisWebhookService {
     public IngestionState getFaqIngestionState(long courseId, long faqId) {
         return pyrisConnectorService.getFaqIngestionState(courseId, faqId);
     }
-
 }

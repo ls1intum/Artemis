@@ -81,7 +81,7 @@ describe('ChatHistoryItemComponent', () => {
         const iconDebugEl = fixture.debugElement.query(By.directive(FaIconComponent));
         const iconInstance = iconDebugEl.componentInstance as FaIconComponent;
         const entityNameEl = fixture.debugElement.query(By.css('.related-entity-name')).nativeElement;
-        expect(iconInstance.icon).toBe(expectedIcon);
+        expect(iconInstance.icon()).toBe(expectedIcon);
         expect(component.tooltipKey()).toBe(expectedTooltipKey);
         expect(entityNameEl.textContent).toContain(expectedEntityName);
     }

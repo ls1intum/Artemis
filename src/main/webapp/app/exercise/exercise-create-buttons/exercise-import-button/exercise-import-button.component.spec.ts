@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { ExerciseImportButtonComponent } from './exercise-import-button.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
@@ -8,11 +7,10 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockComponent } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 
 describe('ExerciseImportButtonComponent', () => {
     let component: ExerciseImportButtonComponent;
@@ -22,7 +20,7 @@ describe('ExerciseImportButtonComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockComponent(FaIconComponent), ExerciseImportButtonComponent],
+            imports: [FaIconComponent, ExerciseImportButtonComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
@@ -46,7 +44,7 @@ describe('ExerciseImportButtonComponent', () => {
         { exerciseType: ExerciseType.FILE_UPLOAD, id: 2 },
         { exerciseType: ExerciseType.PROGRAMMING, id: 2 },
         { exerciseType: ExerciseType.PROGRAMMING, id: undefined },
-    ])('should open import modal', async ({ exerciseType, id }) => {
+    ])('should open import modal', async ({ exerciseType, id }: { exerciseType: ExerciseType; id?: number }) => {
         fixture.componentRef.setInput('exerciseType', exerciseType);
         const promise = new Promise((resolve) => {
             resolve({ id, maxPoints: 1 } as Exercise);
@@ -81,10 +79,13 @@ describe('ExerciseImportButtonComponent', () => {
         { exerciseType: ExerciseType.FILE_UPLOAD, expectedIcon: faFileUpload, expectedTranslationLabel: 'artemisApp.fileUploadExercise.home.importLabel' },
         { exerciseType: ExerciseType.TEXT, expectedIcon: faFont, expectedTranslationLabel: 'artemisApp.textExercise.home.importLabel' },
         { exerciseType: ExerciseType.PROGRAMMING, expectedIcon: faKeyboard, expectedTranslationLabel: 'artemisApp.programmingExercise.home.importLabel' },
-    ])('should determine correct translation key and icon', ({ exerciseType, expectedIcon, expectedTranslationLabel }) => {
-        fixture.componentRef.setInput('exerciseType', exerciseType);
-        component.ngOnInit();
-        expect(component.icon).toEqual(expectedIcon);
-        expect(component.translationLabel).toEqual(expectedTranslationLabel);
-    });
+    ])(
+        'should determine correct translation key and icon',
+        ({ exerciseType, expectedIcon, expectedTranslationLabel }: { exerciseType: ExerciseType; expectedIcon: IconDefinition; expectedTranslationLabel: string }) => {
+            fixture.componentRef.setInput('exerciseType', exerciseType);
+            component.ngOnInit();
+            expect(component.icon).toEqual(expectedIcon);
+            expect(component.translationLabel).toEqual(expectedTranslationLabel);
+        },
+    );
 });

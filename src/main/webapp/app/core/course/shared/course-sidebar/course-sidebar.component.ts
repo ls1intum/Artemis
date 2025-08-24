@@ -5,7 +5,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -47,7 +47,7 @@ export interface SidebarItem {
         TranslateDirective,
         NgbTooltip,
         RouterLink,
-        SecuredImageComponent,
+        ImageComponent,
         RouterLinkActive,
         FeatureToggleHideDirective,
         SlicePipe,

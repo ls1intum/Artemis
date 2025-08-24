@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angul
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import '@angular/localize/init';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { input, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -21,11 +22,9 @@ import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/ht
 import { of } from 'rxjs';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
-import { MockTranslateService } from '../../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockSyncStorage } from '../../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ConversationMembersComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-members.component';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
@@ -42,14 +41,8 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [FormsModule, ReactiveFormsModule],
-                declarations: [
-                    ConversationMembersComponent,
-                    MockPipe(ArtemisTranslatePipe),
-                    MockComponent(FaIconComponent),
-                    MockComponent(ItemCountComponent),
-                    MockDirective(TranslateDirective),
-                ],
+                imports: [FormsModule, ReactiveFormsModule, FaIconComponent],
+                declarations: [ConversationMembersComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ItemCountComponent), MockDirective(TranslateDirective)],
                 providers: [
                     MockProvider(ConversationService),
                     MockProvider(AlertService),
@@ -57,7 +50,7 @@ examples.forEach((activeConversation) => {
                     provideHttpClient(),
                     provideHttpClientTesting(),
                     { provide: TranslateService, useClass: MockTranslateService },
-                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    SessionStorageService,
                 ],
             }).compileComponents();
         }));

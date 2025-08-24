@@ -112,20 +112,21 @@ export class CourseManagementExercisesPage {
         await this.page.locator('#import-quiz-exercise').click();
     }
 
-    async exportQuizExercise(exerciseID: number) {
-        await this.getExercise(exerciseID).locator('button', { hasText: 'Export' }).click();
-    }
-
     async clickImportExercise(exerciseID: number) {
         await this.page.locator(`.exercise-${exerciseID}`).locator('.import').click();
     }
 
     async startQuiz(quizID: number) {
-        await this.page.locator(`#instructor-quiz-start-${quizID}`).click();
+        const startButton = this.page.locator(`#instructor-quiz-start-${quizID}`);
+        await startButton.waitFor({ state: 'visible', timeout: 10000 });
+        await startButton.click();
     }
 
     async endQuiz(quizExercise: QuizExercise) {
-        await this.page.locator(`#quiz-set-end-${quizExercise.id}`).click();
+        const endButton = this.page.locator(`#quiz-set-end-${quizExercise.id}`);
+        await endButton.waitFor({ state: 'visible', timeout: 10000 });
+        await endButton.scrollIntoViewIfNeeded();
+        await endButton.click();
         await this.page.locator('#confirm-entity-name').fill(quizExercise.title!);
         await this.page.locator('#delete').click();
     }
@@ -138,6 +139,10 @@ export class CourseManagementExercisesPage {
 
     async openExerciseParticipations(exerciseId: number) {
         await this.getExercise(exerciseId).locator('.btn', { hasText: 'Participations' }).click();
+    }
+
+    async openQuizExerciseDetailsPage(exerciseId: number) {
+        await Promise.all([this.page.waitForURL(`/course-management/*/quiz-exercises/${exerciseId}`), this.page.locator(`#exercise-id-${exerciseId} a`).click()]);
     }
 
     getModelingExerciseTitle(exerciseID: number) {

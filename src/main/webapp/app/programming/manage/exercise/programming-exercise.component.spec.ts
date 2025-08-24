@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseComponent } from 'app/programming/manage/exercise/programming-exercise.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -16,9 +16,6 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
@@ -42,19 +39,17 @@ describe('ProgrammingExercise Management Component', () => {
     let courseExerciseService: CourseExerciseService;
     let programmingExerciseService: ProgrammingExerciseService;
     let modalService: NgbModal;
-    let alertService: AlertService;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
+                LocalStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: AlertService, useClass: MockAlertService },
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(EventManager),
                 provideHttpClient(),
@@ -69,7 +64,6 @@ describe('ProgrammingExercise Management Component', () => {
         courseExerciseService = TestBed.inject(CourseExerciseService);
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
         modalService = TestBed.inject(NgbModal);
-        alertService = TestBed.inject(AlertService);
 
         comp.programmingExercises = [programmingExercise, programmingExercise2, programmingExercise3];
     });
@@ -175,19 +169,6 @@ describe('ProgrammingExercise Management Component', () => {
 
     it('should return exercise id', () => {
         expect(comp.trackId(0, programmingExercise)).toBe(456);
-    });
-
-    it('should download the repository', () => {
-        // GIVEN
-        const exportRepositoryStub = jest.spyOn(programmingExerciseService, 'exportInstructorRepository').mockReturnValue(of(new HttpResponse<Blob>()));
-        const alertSuccessStub = jest.spyOn(alertService, 'success');
-
-        // WHEN
-        comp.downloadRepository(programmingExercise.id, RepositoryType.TEMPLATE);
-
-        // THEN
-        expect(exportRepositoryStub).toHaveBeenCalledOnce();
-        expect(alertSuccessStub).toHaveBeenCalledOnce();
     });
 
     describe('ProgrammingExercise Search Exercises', () => {

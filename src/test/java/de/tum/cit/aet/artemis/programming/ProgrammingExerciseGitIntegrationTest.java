@@ -21,10 +21,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.TestFileUtil;
 
+// TODO: it does not make sense to inherit from independent test. Git is only available when LocalVC is enabled, so this test should inherit from a LocalVC based test class
 class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "progexgitintegration";
@@ -49,17 +51,17 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         // create commits
         // the following 2 lines prepare the generation of the structural test oracle
         var testJsonFilePath = localRepoPath.resolve("test").resolve(programmingExercise.getPackageFolderName()).resolve("test.json");
-        gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath);
+        TestFileUtil.writeEmptyJsonFileToPath(testJsonFilePath);
         GitService.commit(localGit).setMessage("add test.json").setAuthor("test", "test@test.com").call();
         var testJsonFilePath2 = localRepoPath.resolve("test").resolve(programmingExercise.getPackageFolderName()).resolve("test2.json");
-        gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath2);
+        TestFileUtil.writeEmptyJsonFileToPath(testJsonFilePath2);
         GitService.commit(localGit).setMessage("add test2.json").setAuthor("test", "test@test.com").call();
         var testJsonFilePath3 = localRepoPath.resolve("test").resolve(programmingExercise.getPackageFolderName()).resolve("test3.json");
-        gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath3);
+        TestFileUtil.writeEmptyJsonFileToPath(testJsonFilePath3);
         GitService.commit(localGit).setMessage("add test3.json").setAuthor("test", "test@test.com").call();
 
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(VcsRepositoryUri.class), any(Path.class), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(LocalVCRepositoryUri.class), any(Path.class), anyBoolean(), anyBoolean());
         doNothing().when(gitService).fetchAll(any());
         var objectId = localGit.reflog().call().iterator().next().getNewId();
         doReturn(objectId).when(gitService).getLastCommitHash(any());

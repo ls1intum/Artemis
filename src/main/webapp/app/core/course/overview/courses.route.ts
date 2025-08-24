@@ -21,8 +21,9 @@ export enum CourseOverviewRoutePath {
     STATISTICS = 'statistics',
     COMMUNICATION = 'communication',
     SETTINGS = 'settings',
-    PRACTICE = 'practice',
-    PRACTICE_QUIZ = 'practice/quiz',
+    TRAINING = 'training',
+    TRAINING_QUIZ = 'training/quiz',
+    CALENDAR = 'calendar',
 }
 
 export const routes: Routes = [
@@ -332,27 +333,39 @@ export const routes: Routes = [
                 canActivate: [CourseOverviewGuard],
             },
             {
-                path: CourseOverviewRoutePath.PRACTICE,
-                loadComponent: () => import('app/core/course/overview/course-practice/course-practice.component').then((m) => m.CoursePracticeComponent),
+                path: CourseOverviewRoutePath.TRAINING,
+                loadComponent: () => import('app/core/course/overview/course-training/course-training.component').then((m) => m.CourseTrainingComponent),
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'overview.practice',
+                    pageTitle: 'overview.training',
                     hasSidebar: false,
                     showRefreshButton: true,
                 },
+                canActivate: [CourseOverviewGuard],
             },
             {
-                path: CourseOverviewRoutePath.PRACTICE_QUIZ,
-                loadComponent: () => import('app/quiz/overview/course-practice-quiz/course-practice-quiz.component').then((m) => m.CoursePracticeQuizComponent),
+                path: CourseOverviewRoutePath.TRAINING_QUIZ,
+                loadComponent: () => import('app/quiz/overview/course-training-quiz/course-training-quiz.component').then((m) => m.CourseTrainingQuizComponent),
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'overview.practice',
+                    pageTitle: 'overview.training',
                 },
+                canActivate: [CourseOverviewGuard],
             },
             {
                 path: '',
                 redirectTo: CourseOverviewRoutePath.DASHBOARD, // dashboard will redirect to exercises if not enabled
                 pathMatch: 'full',
+            },
+            {
+                path: CourseOverviewRoutePath.CALENDAR,
+                loadComponent: () => import('app/core/calendar/calendar-overview/calendar-overview.component').then((m) => m.CalendarOverviewComponent),
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.calendar',
+                    hasSidebar: false,
+                    showRefreshButton: true,
+                },
             },
         ],
     },

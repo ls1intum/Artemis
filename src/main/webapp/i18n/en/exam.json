@@ -327,6 +327,7 @@
             "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?",
             "handInEarly": "Hand in Early",
             "continueAfterHandInEarly": "Back",
+            "continue": "Continue",
             "attendanceCheck": "Attendance check",
             "continueAfterHandInEarlyDescription": "To continue working on the exam, click on the 'Back' button.",
             "handInEarlyNotice": "You are about to hand in your submission before the end of the exam. After finishing the exam you cannot participate any longer.",

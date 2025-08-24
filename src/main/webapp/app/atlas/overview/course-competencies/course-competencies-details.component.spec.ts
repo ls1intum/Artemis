@@ -5,7 +5,7 @@ import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
@@ -54,7 +54,7 @@ describe('CourseCompetenciesDetails', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule)],
+            imports: [MockModule(NgbTooltipModule), FaIconComponent],
             declarations: [
                 CourseCompetenciesDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -66,7 +66,6 @@ describe('CourseCompetenciesDetails', () => {
                 MockComponent(CompetencyRingsComponent),
                 MockComponent(SidePanelComponent),
                 MockComponent(HelpIconComponent),
-                MockComponent(FaIconComponent),
                 MockComponent(FireworksComponent),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(HtmlForMarkdownPipe),

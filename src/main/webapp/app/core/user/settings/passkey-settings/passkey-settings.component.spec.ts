@@ -13,6 +13,7 @@ import { PasskeyDTO } from 'app/core/user/settings/passkey-settings/dto/passkey.
 
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { TranslateService } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
 
 describe('PasskeySettingsComponent', () => {
     let component: PasskeySettingsComponent;
@@ -138,7 +139,7 @@ describe('PasskeySettingsComponent', () => {
         const result = component.getDeleteSummary(passkey);
 
         if (result) {
-            const summary = await result.toPromise();
+            const summary = await firstValueFrom(result);
             expect(summary).toEqual({
                 'artemisApp.userSettings.passkeySettingsPage.label': 'Test Passkey',
                 'artemisApp.userSettings.passkeySettingsPage.created': '2023-10-01T12:00:00Z',

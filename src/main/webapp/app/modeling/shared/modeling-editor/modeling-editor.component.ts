@@ -40,10 +40,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     private modelSubscription: number;
 
-    htmlScroll = 0;
-    mouseDownListener: ((this: Document, ev: MouseEvent) => any) | undefined;
-    scrollListener: ((this: Document, ev: Event) => any) | undefined;
-
     readonlyApollonDiagram?: SVG;
     readOnlySVG?: SafeHtml;
 
@@ -67,7 +63,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             }
         } else {
             this.setupInteract();
-            this.setupSafariScrollFix();
         }
     }
 
@@ -103,41 +98,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     }
 
     /**
-     * This is a hack to prevent the UI jumping to bottom when using popovers in Apollon while using Safari.
-     * Other browsers do not show this behavior.
-     */
-    private setupSafariScrollFix() {
-        // Detect Safari desktop: https://stackoverflow.com/a/52205049/7441850
-        const isSafariDesktop = /Safari/i.test(navigator.userAgent) && /Apple Computer/.test(navigator.vendor) && !/Mobi|Android/i.test(navigator.userAgent);
-
-        if (this.readOnly || !isSafariDesktop) {
-            return;
-        }
-
-        // eslint-disable-next-line no-undef
-        console.log('Warning: Installing hack to prevent UI scroll jumps in Safari while using Apollon!');
-        // eslint-disable-next-line no-undef
-        console.log('Warning: If you experience problems regarding the scrolling behavior, please report them at https://github.com/ls1intum/Artemis');
-
-        this.mouseDownListener = () => {
-            const newScroll = document.getElementsByTagName('html')[0].scrollTop;
-            if (newScroll !== this.htmlScroll) {
-                const copy = this.htmlScroll;
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore (behavior 'instant' works with safari)
-                requestAnimationFrame(() => window.scrollTo({ top: copy, left: 0, behavior: 'instant' }));
-            }
-        };
-
-        this.scrollListener = () => {
-            this.htmlScroll = document.getElementsByTagName('html')[0].scrollTop;
-        };
-
-        document.addEventListener('mousedown', this.mouseDownListener);
-        document.addEventListener('scroll', this.scrollListener);
-    }
-
-    /**
      * Destroys the Apollon editor instance, unsubscribes from events, and removes event listeners to clean up resources.
      */
     private destroyApollonEditor(): void {
@@ -150,11 +110,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             // }
             this.apollonEditor.destroy();
             this.apollonEditor = undefined;
-        }
-
-        if (this.mouseDownListener) {
-            document.removeEventListener('mousedown', this.mouseDownListener);
-            document.removeEventListener('scroll', this.scrollListener!);
         }
     }
 

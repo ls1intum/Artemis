@@ -4,10 +4,10 @@ import { TeamUpdateDialogComponent } from 'app/exercise/team/team-update-dialog/
 import { By } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockTeamService, mockEmptyTeam, mockExercise, mockNonTeamStudents, mockTeam, mockTeamStudents } from 'test/helpers/mocks/service/mock-team.service';
 import { TeamService } from 'app/exercise/team/team.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -18,6 +18,7 @@ import { TeamStudentSearchComponent } from 'app/exercise/team/team-student-searc
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('TeamUpdateDialogComponent', () => {
     let comp: TeamUpdateDialogComponent;
@@ -27,7 +28,7 @@ describe('TeamUpdateDialogComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [FormsModule],
+            imports: [FormsModule, FaIconComponent],
             declarations: [
                 TeamUpdateDialogComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -40,8 +41,8 @@ describe('TeamUpdateDialogComponent', () => {
             providers: [
                 EventManager,
                 { provide: TeamService, useClass: MockTeamService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 MockProvider(NgbActiveModal),
                 { provide: TranslateService, useClass: MockTranslateService },
             ],

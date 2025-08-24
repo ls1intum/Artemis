@@ -1,0 +1,35 @@
+.day-badge {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+.day-badge.today-normal {
+    background-color: var(--primary);
+    color: var(--white);
+}
+
+.day-badge.today-minimal {
+    background-color: var(--body-bg);
+    color: var(--primary);
+}
+
+.day-badge.not-today {
+    background-color: var(--body-bg);
+}
+
+.day-badge.selected-day {
+    background-color: var(--calendar-day-badge-selected);
+    color: var(--black);
+}
+
+.day-badge.today-minimal.selected-day {
+    background-color: var(--calendar-day-badge-selected);
+    color: var(--primary);
+}

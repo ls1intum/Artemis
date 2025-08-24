@@ -15,13 +15,13 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/core/shared/entities/organization.model';
@@ -47,6 +47,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
@@ -105,11 +106,11 @@ describe('Course Management Update Component', () => {
             data: of({ course }),
         } as any as ActivatedRoute;
         TestBed.configureTestingModule({
-            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
+            imports: [FaIconComponent, MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -126,7 +127,7 @@ describe('Course Management Update Component', () => {
                 MockComponent(ColorSelectorComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(HelpIconComponent),
-                MockComponent(SecuredImageComponent),
+                MockComponent(ImageComponent),
                 MockDirective(FeatureToggleHideDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
@@ -720,14 +721,14 @@ describe('Course Management Update Component', () => {
             let deleteIconButton = getDeleteIconButton();
             deleteIconButton.dispatchEvent(new Event('click'));
             fixture.detectChanges();
-            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-image');
             deleteIconButton = getDeleteIconButton();
             expect(iconImage).toBeNull();
             expect(deleteIconButton).toBeNull();
         });
 
         it('should not be able to delete icon if icon does not exist', () => {
-            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-image');
             const deleteIconButton = getDeleteIconButton();
             expect(iconImage).toBeNull();
             expect(deleteIconButton).toBeNull();
@@ -753,7 +754,7 @@ describe('Course Management Update Component', () => {
         });
 
         it('should not be able to edit icon if icon does not exist', () => {
-            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-secured-image');
+            const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-image');
             const editIconButton = getEditIconButton();
             expect(iconImage).toBeNull();
             expect(editIconButton).toBeNull();
@@ -850,12 +851,12 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
+            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule), FaIconComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -870,7 +871,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
                 MockComponent(ColorSelectorComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(HelpIconComponent),
-                MockComponent(SecuredImageComponent),
+                MockComponent(ImageComponent),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
@@ -973,12 +974,12 @@ describe('Course Management Update Component Create', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
+            imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule), FaIconComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
@@ -991,7 +992,7 @@ describe('Course Management Update Component Create', () => {
                 MockComponent(ColorSelectorComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(HelpIconComponent),
-                MockComponent(SecuredImageComponent),
+                MockComponent(ImageComponent),
                 MockDirective(FeatureToggleHideDirective),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),

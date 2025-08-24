@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exerciseUnit.service';
+import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exercise-unit.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -38,13 +38,8 @@ describe('CreateExerciseUnitComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
-                CreateExerciseUnitComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(SortDirective),
-                MockDirective(SortByDirective),
-                MockComponent(FaIconComponent),
-            ],
+            imports: [FaIconComponent],
+            declarations: [CreateExerciseUnitComponent, MockPipe(ArtemisTranslatePipe), MockDirective(SortDirective), MockDirective(SortByDirective)],
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(AlertService),
