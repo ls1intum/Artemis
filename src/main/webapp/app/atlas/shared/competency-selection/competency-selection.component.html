@@ -51,7 +51,7 @@
                                     <span class="ms-1">{{ competencyLink.competency.title }}</span>
                                 </label>
                                 @if (isSuggested(competencyLink.competency.id)) {
-                                    <fa-icon [icon]="faLightbulb" class="text-warning ms-2" [ngbTooltip]="'AI suggested competency'" />
+                                    <fa-icon [icon]="faLightbulb" class="text-warning ms-2" ngbTooltip="AI suggested competency" />
                                 }
                             </div>
                             @if (checkboxStates[competencyLink.competency.id]) {

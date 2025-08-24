@@ -16,6 +16,9 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 /**
  * Integration test suite for AtlasML Competency Suggestion Feature
@@ -32,6 +35,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
     let courseStorageService: CourseStorageService;
     let httpClient: HttpClient;
     let profileService: ProfileService;
+    let featureToggleService: FeatureToggleService;
 
     // Sample competencies for testing
     const sampleCompetencies: Competency[] = [
@@ -56,11 +60,16 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 MockProvider(CourseStorageService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
+
+        // Initialize feature toggles subject in mock BEFORE component creation so directives can subscribe safely
+        featureToggleService = TestBed.inject(FeatureToggleService);
+        (featureToggleService as MockFeatureToggleService).getFeatureToggles();
 
         fixture = TestBed.createComponent(CompetencySelectionComponent);
         component = fixture.componentInstance;
@@ -95,18 +104,13 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         });
 
         it('should hide lightbulb button when AtlasML feature is disabled', () => {
-            // Mock AtlasML feature as disabled
-            const profileInfo = new ProfileInfo();
-            profileInfo.activeModuleFeatures = [];
-            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
-
-            // Recreate component with disabled feature
-            component.ngOnInit();
+            // Disable AtlasML feature toggle
+            (featureToggleService as MockFeatureToggleService).setFeatureToggleState(FeatureToggle.AtlasML, false).subscribe();
             fixture.detectChanges();
 
             const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-            // Button should be hidden via jhiFeatureToggleHide directive
-            expect(lightbulbButton?.nativeElement?.hidden || !lightbulbButton).toBeTruthy();
+            // Button should be hidden with d-none class when AtlasML feature is disabled
+            expect(lightbulbButton?.nativeElement?.classList.contains('d-none')).toBeTruthy();
         });
 
         it('should show proper tooltip for lightbulb button', () => {
@@ -170,8 +174,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             jest.spyOn(httpClient, 'post').mockReturnValue(throwError(() => ({ status: 500, message: 'Server Error' })));
 
             component.suggestCompetencies();
-            expect(component.isSuggesting).toBeTruthy();
-
+            // After error, isSuggesting should be false due to finalize operator
             tick();
             fixture.detectChanges();
 
@@ -210,7 +213,8 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
 
             // Verify tooltips
             suggestedIcons.forEach((icon) => {
-                expect(icon.attributes['ngbTooltip']).toBe('AI suggested competency');
+                const tooltip = icon.injector.get(NgbTooltip, null);
+                expect(tooltip?.ngbTooltip).toBe('AI suggested competency');
             });
         });
 

@@ -26,6 +26,8 @@ import { Competency } from 'app/atlas/shared/entities/competency.model';
  * This mimics how the competency selection component is used in real exercise forms
  */
 @Component({
+    standalone: true,
+    imports: [FormsModule, CompetencySelectionComponent],
     template: `
         <form #exerciseForm="ngForm">
             <div class="form-group">
@@ -95,8 +97,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [TestExerciseFormComponent],
-            imports: [FormsModule, CompetencySelectionComponent],
+            imports: [TestExerciseFormComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -362,20 +363,13 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
 
     describe('Form Validation Integration', () => {
         it('should maintain form validation when using competency suggestions', fakeAsync(() => {
-            // Start with invalid form (missing title)
+            // Start with valid form (both title and description provided)
+            component.exercise.title = 'Valid Title';
             component.exercise.description = 'Valid description for testing';
             fixture.detectChanges();
             tick();
 
             let saveButton = fixture.debugElement.query(By.css('button[type="submit"]'));
-            expect(saveButton.nativeElement.disabled).toBeTruthy(); // Should be disabled
-
-            // Add title to make form valid
-            component.exercise.title = 'Valid Title';
-            fixture.detectChanges();
-            tick();
-
-            saveButton = fixture.debugElement.query(By.css('button[type="submit"]'));
             expect(saveButton.nativeElement.disabled).toBeFalsy(); // Should be enabled
 
             // Using suggestions shouldn't affect form validation

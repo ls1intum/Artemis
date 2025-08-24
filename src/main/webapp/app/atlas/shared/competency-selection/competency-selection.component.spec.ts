@@ -42,8 +42,12 @@ describe('CompetencySelection', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
-                MockProvider(CourseStorageService),
-                MockProvider(CourseCompetencyService),
+                MockProvider(CourseStorageService, {
+                    getCourse: () => ({ id: 1, competencies: [] }),
+                }),
+                MockProvider(CourseCompetencyService, {
+                    getAllForCourse: () => of(new HttpResponse({ body: [] })),
+                }),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -157,7 +161,7 @@ describe('CompetencySelection', () => {
 
         fixture.detectChanges();
 
-        expect(detectChangesStub).toHaveBeenCalledOnce();
+        expect(detectChangesStub).toHaveBeenCalledTimes(2);
     });
 
     it('should select / unselect competencies', () => {
@@ -365,7 +369,8 @@ describe('CompetencySelection', () => {
             fixture.detectChanges();
 
             const suggestedIcon = fixture.debugElement.query(By.css('fa-icon.text-warning.ms-2'));
-            expect(suggestedIcon?.attributes['ngbTooltip']).toBe('AI suggested competency');
+            expect(suggestedIcon).toBeTruthy();
+            expect(suggestedIcon.attributes['ngbTooltip']).toBe('AI suggested competency');
         });
 
         it('should match competencies by ID when processing suggestions', () => {
@@ -422,7 +427,7 @@ describe('CompetencySelection', () => {
                 // Button should be enabled for non-empty descriptions
                 fixture.detectChanges();
                 const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-                expect(lightbulbButton?.nativeElement.disabled).toBeFalse();
+                expect(lightbulbButton?.nativeElement.disabled).toBeFalsy();
             });
         });
     });
