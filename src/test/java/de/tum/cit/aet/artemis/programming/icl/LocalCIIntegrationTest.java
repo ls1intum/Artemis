@@ -301,7 +301,6 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         }
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testMissingBuildJobCheck() {
@@ -327,6 +326,12 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         buildJobRepository.save(buildJob);
 
         hazelcastInstance.getQueue("buildJobQueue").clear();
+
+        localCIEventListenerService.checkPendingBuildJobsStatus();
+
+        hazelcastInstance.getQueue("buildJobQueue").clear();
+        buildJob.setRetryCount(3);
+        buildJobRepository.save(buildJob);
 
         localCIEventListenerService.checkPendingBuildJobsStatus();
 

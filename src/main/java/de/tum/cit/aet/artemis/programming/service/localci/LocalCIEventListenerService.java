@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
@@ -61,14 +63,21 @@ public class LocalCIEventListenerService {
 
     private final MailService mailService;
 
+    private final LocalCITriggerService localCITriggerService;
+
+    private final ParticipationRepository participationRepository;
+
     public LocalCIEventListenerService(DistributedDataAccessService distributedDataAccessService, LocalCIQueueWebsocketService localCIQueueWebsocketService,
-            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, UserService userService, MailService mailService) {
+            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, UserService userService, MailService mailService,
+            LocalCITriggerService localCITriggerService, ParticipationRepository participationRepository) {
         this.distributedDataAccessService = distributedDataAccessService;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
         this.buildJobRepository = buildJobRepository;
         this.programmingMessagingService = programmingMessagingService;
         this.userService = userService;
         this.mailService = mailService;
+        this.localCITriggerService = localCITriggerService;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -124,9 +133,19 @@ public class LocalCIEventListenerService {
                 continue;
             }
             log.error("Build job with id {} is in an unknown state", buildJob.getBuildJobId());
-            // If the build job is in an unknown state, set it to missing and update the build start date
-            buildJobRepository.updateBuildJobStatus(buildJob.getBuildJobId(), BuildStatus.MISSING);
+            if (buildJob.getRetryCount() < 3) {
+                retryBuildJob(buildJob);
+            }
+            else {
+                buildJobRepository.updateBuildJobStatus(buildJob.getBuildJobId(), BuildStatus.MISSING);
+            }
         }
+    }
+
+    private void retryBuildJob(BuildJob buildJob) {
+        var participation = participationRepository.findByIdElseThrow(buildJob.getParticipationId());
+        localCITriggerService.triggerBuild((ProgrammingExerciseParticipation) participation, buildJob.getCommitHash(), buildJob.getTriggeredByPushTo(),
+                buildJob.getRetryCount() + 1);
     }
 
     private boolean checkIfBuildJobIsStillBuilding(List<String> processingJobIds, String buildJobId) {
