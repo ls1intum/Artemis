@@ -146,9 +146,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private Competency competency;
 
-    @Autowired
-    private TextSubmissionTestRepository textSubmissionTestRepository;
-
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);

@@ -1538,12 +1538,4 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
         Set<CourseGradeScoreDTO> teamGradeScores = findTeamGradesByCourseIdAndStudentId(courseIds, studentId);
         return Stream.of(individualGradeScores, individualQuizGradeScores, teamGradeScores).flatMap(Collection::stream).collect(Collectors.toSet());
     }
-
-    @Query("""
-                    SELECT DISTINCT p
-                    FROM StudentParticipation p
-                        LEFT JOIN FETCH p.submissions s
-                        LEFT JOIN FETCH s.results r
-            """)
-    List<StudentParticipation> findAllWithEagerSubmissionsAndResults();
 }

@@ -20,7 +20,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
@@ -306,21 +305,13 @@ public class ExamService {
      * @return return ExamScoresDTO with students, scores, exerciseGroups, bonus and related plagiarism verdicts for the exam
      */
     public ExamScoresDTO calculateExamScores(Long examId) {
-        var start = System.currentTimeMillis();
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        log.debug("Fetched exam {} with exercise groups and exercises in {} ms", examId, System.currentTimeMillis() - start);
-        start = System.currentTimeMillis();
         var examGrades = studentParticipationRepository.findGradesByExamId(examId);
-        log.debug("Fetched {} exam grades for exam {} in {} ms", examGrades.size(), examId, System.currentTimeMillis() - start);
-        start = System.currentTimeMillis();
         List<QuizSubmittedAnswerCount> submittedAnswerCounts = studentParticipationRepository.findSubmittedAnswerCountForQuizzesInExam(examId);
-        log.debug("Fetched {} submitted answer counts for quizzes in exam {} in {} ms", submittedAnswerCounts.size(), examId, System.currentTimeMillis() - start);
 
         // Counts how many participants each exercise has
         Map<Long, Long> exerciseIdToNumberParticipations = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::exerciseId, Collectors.counting()));
-        start = System.currentTimeMillis();
         PlagiarismMapping plagiarismMapping = plagiarismCaseApi.map(api -> api.getPlagiarismMappingForExam(exam.getId())).orElse(PlagiarismMapping.empty());
-        log.debug("Fetched plagiarism mapping for exam {} in {} ms", examId, System.currentTimeMillis() - start);
         var exerciseGroups = new ArrayList<ExamScoresDTO.ExerciseGroup>();
 
         // Adding exercise group information to DTO
@@ -350,19 +341,12 @@ public class ExamService {
         }
 
         // Adding registered student information to DTO
-        start = System.currentTimeMillis();
         Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(examId);
-        log.debug("Fetched {} student exams for exam {} in {} ms", studentExams.size(), examId, System.currentTimeMillis() - start);
-        start = System.currentTimeMillis();
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamIdWithBonusFrom(examId);
-        log.debug("Fetched grading scale for exam {} in {} ms", examId, System.currentTimeMillis() - start);
         List<Long> studentIds = studentExams.stream().map(studentExam -> studentExam.getUser().getId()).toList();
-        start = System.currentTimeMillis();
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, studentIds);
-        log.debug("Created exam bonus calculator for exam {} in {} ms", examId, System.currentTimeMillis() - start);
 
         var studentResults = new ArrayList<ExamScoresDTO.StudentResult>();
-        start = System.currentTimeMillis();
         for (StudentExam studentExam : studentExams) {
             var studentGrades = examGrades.stream().filter(grade -> Objects.equals(grade.userId(), studentExam.getUser().getId())).collect(Collectors.toSet());
             var studentExercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
@@ -371,7 +355,6 @@ public class ExamService {
                     studentExercises, participations);
             studentResults.add(studentResult);
         }
-        log.debug("Calculated student results for exam {} in {} ms", examId, System.currentTimeMillis() - start);
 
         // Updating exam information in DTO
         int numberOfStudentResults = studentResults.size();
@@ -404,7 +387,6 @@ public class ExamService {
         var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCasesForStudent);
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, List.of(studentId));
         var exercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
-        // Fetch participations for this student exam
         var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, false);
         var studentResult = calculateStudentResultWithGrade(studentExam, studentExamGrades, exam, gradingScale, false, null, plagiarismMapping, examBonusCalculator, exercises,
                 participations);
@@ -416,7 +398,6 @@ public class ExamService {
     }
 
     @Nullable
-    // TODO: GradingScale must include the course
     private ExamBonusCalculator createExamBonusCalculator(Optional<GradingScale> gradingScale, Collection<Long> studentIds) {
         if (gradingScale.isEmpty() || gradingScale.get().getBonusFrom().isEmpty()) {
             return null;
@@ -425,9 +406,7 @@ public class ExamService {
         GradingScale bonusToGradingScale = gradingScale.get();
         var bonus = bonusToGradingScale.getBonusFrom().stream().findAny().orElseThrow();
         GradingScale sourceGradingScale = bonus.getSourceGradingScale();
-        AtomicLong start = new AtomicLong(System.currentTimeMillis());
         Map<Long, BonusSourceResultDTO> scoresMap = calculateBonusSourceStudentPoints(sourceGradingScale, studentIds);
-        log.debug("Calculated bonus source student points for {} students in {} ms", studentIds.size(), System.currentTimeMillis() - start.get());
         String bonusFromTitle = bonus.getSourceGradingScale().getTitle();
         BonusStrategy bonusStrategy = bonus.getBonusToGradingScale().getBonusStrategy();
 
@@ -436,9 +415,7 @@ public class ExamService {
             var courseId = sourceGradingScale.getCourse().getId();
             // fetch course with exercises to calculate reachable points
             var exercises = exerciseRepository.findCourseExerciseScoreInformationByCourseIds(Set.of(courseId));
-            start.set(System.currentTimeMillis());
             tempSourceReachablePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, exercises);
-            log.debug("Calculated reachable points for course {} in {} ms", courseId, System.currentTimeMillis() - start.get());
         }
         final double sourceReachablePoints = tempSourceReachablePoints;
 
@@ -454,9 +431,7 @@ public class ExamService {
                 achievedPresentationScore = result.achievedPresentationScore();
                 presentationScoreThreshold = result.presentationScoreThreshold();
             }
-            start.set(System.currentTimeMillis());
             BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, bonusToAchievedPoints, sourceAchievedPoints, sourceReachablePoints);
-            log.debug("Calculated bonus example for student {} in {} ms", studentId, System.currentTimeMillis() - start.get());
             String bonusGrade = null;
             if (result == null || !result.hasParticipated()) {
                 bonusGrade = bonus.getSourceGradingScale().getNoParticipationGradeOrDefault();
@@ -533,7 +508,6 @@ public class ExamService {
             throw new AccessForbiddenException(NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY + "before the release date of results");
         }
 
-        // TODO: check if we can remove the participations and quiz submissions here, they might not be needed for the student summary
         // fetch participations, submissions and results and connect them to the studentExam
         fetchParticipationsSubmissionsAndResultsForExam(studentExam, targetUser);
 

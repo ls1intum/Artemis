@@ -2473,8 +2473,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         exam = examRepository.findByCourseIdWithExerciseGroupsAndExercises(course1.getId()).stream().filter(entry -> finalExam.getId().equals(entry.getId())).findFirst()
                 .orElseThrow();
         testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, testRun.getUser(), exam.getExerciseGroups());
-        var all = studentParticipationRepository.findAllWithEagerSubmissionsAndResults();
-
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 

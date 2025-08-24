@@ -131,7 +131,7 @@ public class ParticipantScoreResource {
     public ResponseEntity<CourseGradeInformationDTO> getGradeScoresForCourse(@PathVariable long courseId) {
         log.info("REST request to get grade scores for Course {}", courseId);
         long start = System.nanoTime();
-        var gradeScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId);
+        Set<CourseGradeScoreDTO> gradeScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId);
         Set<Long> userIds = gradeScores.stream().map(CourseGradeScoreDTO::userId).collect(Collectors.toSet());
         List<StudentDTO> students = userIds.isEmpty() ? List.of() : userRepository.findAllStudentsByIdIn(userIds);
         log.info("Found {} grade scores, {} students, in {}", gradeScores.size(), students.size(), TimeLogUtil.formatDurationFrom(start));

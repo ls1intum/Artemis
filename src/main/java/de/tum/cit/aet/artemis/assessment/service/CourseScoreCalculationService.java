@@ -17,10 +17,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -64,8 +63,6 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 public class CourseScoreCalculationService {
 
     private static final double SCORE_NORMALIZATION_VALUE = 0.01;
-
-    private static final Logger log = LoggerFactory.getLogger(CourseScoreCalculationService.class);
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -150,10 +147,8 @@ public class CourseScoreCalculationService {
         if (course == null) {
             return null;
         }
-        Long courseId = course.getId();
-        var start = System.currentTimeMillis();
+        long courseId = course.getId();
         Set<ExerciseCourseScoreDTO> courseExercises = exerciseRepository.findCourseExerciseScoreInformationByCourseIds(Set.of(courseId));
-        log.debug("Found {} exercises for course {} in {} ms", courseExercises.size(), courseId, System.currentTimeMillis() - start);
         if (courseExercises.isEmpty()) {
             return null;
         }
@@ -164,22 +159,15 @@ public class CourseScoreCalculationService {
 
         MultiValueMap<Long, CourseGradeScoreDTO> studentIdToGradeScores = new LinkedMultiValueMap<>();
         if (studentIds.size() == 1) {  // Optimize single student case by filtering in the database.
-            Long studentId = studentIds.iterator().next();
-            start = System.currentTimeMillis();
+            long studentId = studentIds.iterator().next();
             List<CourseGradeScoreDTO> gradeScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourseAndStudent(courseId, studentId);
-            log.debug("Found {} participations for student {} in course {} in {} ms", gradeScores.size(), studentId, courseId, System.currentTimeMillis() - start);
             if (!gradeScores.isEmpty()) {
                 studentIdToGradeScores.addAll(studentId, gradeScores);
             }
-            start = System.currentTimeMillis();
             plagiarismCases = plagiarismCaseApi.map(api -> api.findByCourseIdAndStudentId(courseId, studentId)).orElse(List.of());
-            log.debug("Found {} plagiarism cases for student {} in course {} in {} ms", plagiarismCases.size(), studentId, courseId, System.currentTimeMillis() - start);
         }
         else {
-            start = System.currentTimeMillis();
-            var all = studentParticipationRepository.findAllWithEagerSubmissionsAndResults();
             var courseGradeScoreDtos = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId);
-            log.debug("Found {} participations in course {} in {} ms", courseGradeScoreDtos.size(), courseId, System.currentTimeMillis() - start);
             // These participations also contain participations for students with ids not included in 'studentIds'.
             // Filter out those participations that belong to the students in 'studentIds'.
             // For the single student case, this is done in the db query.
@@ -383,6 +371,11 @@ public class CourseScoreCalculationService {
             presentationScore = participationsOfStudent.stream().filter(p -> p.presentationScore() != null && p.presentationScore() > 0.0).count();
         }
 
+        return getStudentScoresDTO(course, maxAndReachablePoints, pointsAchievedByStudentInCourse, presentationScore);
+    }
+
+    @NotNull
+    private StudentScoresDTO getStudentScoresDTO(Course course, MaxAndReachablePointsDTO maxAndReachablePoints, double pointsAchievedByStudentInCourse, double presentationScore) {
         double absolutePoints = roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course);
         double relativeScore = maxAndReachablePoints.maxPoints() > 0
                 ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxAndReachablePoints.maxPoints() * 100.0, course)
@@ -442,15 +435,7 @@ public class CourseScoreCalculationService {
             presentationScore = participationsOfStudent.stream().filter(p -> p.getPresentationScore() != null && p.getPresentationScore() > 0.0).count();
         }
 
-        double absolutePoints = roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course);
-        double relativeScore = maxAndReachablePoints.maxPoints() > 0
-                ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxAndReachablePoints.maxPoints() * 100.0, course)
-                : 0.0;
-        double currentRelativeScore = maxAndReachablePoints.reachablePoints() > 0
-                ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxAndReachablePoints.reachablePoints() * 100.0, course)
-                : 0.0;
-
-        return new StudentScoresDTO(absolutePoints, relativeScore, currentRelativeScore, presentationScore);
+        return getStudentScoresDTO(course, maxAndReachablePoints, pointsAchievedByStudentInCourse, presentationScore);
     }
 
     private double calculatePointsAchievedFromExercise(Exercise exercise, Result result, @Nullable PlagiarismCase plagiarismCaseForExercise) {
