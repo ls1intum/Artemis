@@ -127,7 +127,7 @@ class AtlasMLServiceTest {
         // Given
         AtlasMLCompetencyDTO competencyDTO = new AtlasMLCompetencyDTO(1L, "Test Competency", "Test Description", 1L);
 
-        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(List.of(competencyDTO), null, OperationTypeDTO.UPDATE);
+        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(List.of(competencyDTO), null, OperationTypeDTO.UPDATE.value());
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(new ResponseEntity<>("", HttpStatus.OK));
@@ -167,7 +167,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveCompetencies_WhenServiceThrowsException() {
         // Given
-        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(null, null, OperationTypeDTO.UPDATE);
+        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(null, null, OperationTypeDTO.UPDATE.value());
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
@@ -663,7 +663,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveCompetencies_WhenFeatureDisabled() {
         // Given
-        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(null, null, OperationTypeDTO.UPDATE);
+        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(null, null, OperationTypeDTO.UPDATE.value());
         when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(false);
 
         // When
@@ -676,7 +676,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveCompetencies_HttpServerErrorException() {
         // Given
-        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(null, null, OperationTypeDTO.UPDATE);
+        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(null, null, OperationTypeDTO.UPDATE.value());
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
@@ -690,7 +690,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveCompetencies_ResourceAccessException() {
         // Given
-        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(null, null, OperationTypeDTO.UPDATE);
+        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(null, null, OperationTypeDTO.UPDATE.value());
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new ResourceAccessException("Connection timeout"));

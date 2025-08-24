@@ -144,4 +144,4 @@ helios:
 
 atlas:
   atlasml:
-    base-url: http://atlasml.aet.cit.tum.de/
+    base-url: http://localhost:8000

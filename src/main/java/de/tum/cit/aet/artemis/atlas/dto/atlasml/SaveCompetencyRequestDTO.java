@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SaveCompetencyRequestDTO(@JsonProperty("competencies") List<AtlasMLCompetencyDTO> competencies, @JsonProperty("exercise") AtlasMLExerciseDTO exercise,
-        @JsonProperty("operation_type") OperationTypeDTO operationType) {
+        @JsonProperty("operation_type") String operationType) {
 
     /**
      * Operation type DTO for AtlasML save operations.
@@ -31,7 +31,7 @@ public record SaveCompetencyRequestDTO(@JsonProperty("competencies") List<AtlasM
      */
     public static SaveCompetencyRequestDTO fromCompetency(Competency competency, OperationTypeDTO operationType) {
         List<AtlasMLCompetencyDTO> competencies = competency != null ? List.of(AtlasMLCompetencyDTO.fromDomain(competency)) : null;
-        return new SaveCompetencyRequestDTO(competencies, null, operationType);
+        return new SaveCompetencyRequestDTO(competencies, null, operationType.value());
     }
 
     /**
@@ -40,7 +40,7 @@ public record SaveCompetencyRequestDTO(@JsonProperty("competencies") List<AtlasM
     public static SaveCompetencyRequestDTO fromCompetencies(List<Competency> competencies, OperationTypeDTO operationType) {
         List<AtlasMLCompetencyDTO> atlasMLCompetencies = competencies != null && !competencies.isEmpty() ? competencies.stream().map(AtlasMLCompetencyDTO::fromDomain).toList()
                 : null;
-        return new SaveCompetencyRequestDTO(atlasMLCompetencies, null, operationType);
+        return new SaveCompetencyRequestDTO(atlasMLCompetencies, null, operationType.value());
     }
 
     /**
@@ -49,6 +49,6 @@ public record SaveCompetencyRequestDTO(@JsonProperty("competencies") List<AtlasM
     public static SaveCompetencyRequestDTO fromExercise(Long exerciseId, String title, String description, List<Long> competencyIds, Long courseId,
             OperationTypeDTO operationType) {
         AtlasMLExerciseDTO atlasMLExercise = new AtlasMLExerciseDTO(exerciseId, title, description, competencyIds, courseId);
-        return new SaveCompetencyRequestDTO(null, atlasMLExercise, operationType);
+        return new SaveCompetencyRequestDTO(null, atlasMLExercise, operationType.value());
     }
 }
