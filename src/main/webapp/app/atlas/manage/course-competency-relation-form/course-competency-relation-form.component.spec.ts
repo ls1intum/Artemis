@@ -321,7 +321,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
     });
 
-    describe.skip('AtlasML Relation Suggestions', () => {
+    describe('AtlasML Relation Suggestions', () => {
         const mockSuggestionResponse = {
             relations: [
                 { tail_id: '1', head_id: '2', relation_type: 'EXTENDS' },
@@ -361,13 +361,20 @@ describe('CourseCompetencyRelationFormComponent', () => {
             expect(component.isLoadingSuggestions()).toBeFalse();
         });
 
-        it('should auto-select all suggestions when fetched', async () => {
+        it('should auto-select only non-existing suggestions when fetched', async () => {
             getSuggestedCompetencyRelationsSpy.mockResolvedValue(mockSuggestionResponse);
 
             await component.fetchSuggestions();
 
-            expect(component.selectedSuggestions().size).toBe(3);
-            expect(component.selectedSuggestionsCount()).toBe(3);
+            // Existing relations (1->2 EXTENDS) should NOT be auto-selected
+            expect(component['doesSuggestionAlreadyExist'](mockSuggestionResponse.relations[0])).toBeTrue();
+            expect(component.selectedSuggestions().has(0)).toBeFalse();
+
+            // Non-existing suggestions should be selected
+            expect(component.selectedSuggestions().has(1)).toBeTrue();
+            expect(component.selectedSuggestions().has(2)).toBeTrue();
+            expect(component.selectedSuggestions().size).toBe(2);
+            expect(component.selectedSuggestionsCount()).toBe(2);
         });
 
         it('should display suggested relations with correct information', async () => {
@@ -391,18 +398,19 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
             await component.fetchSuggestions();
 
-            // Initially all suggestions are selected
-            expect(component['isSuggestionSelected'](0)).toBeTrue();
-
-            // Toggle first suggestion off
-            component['toggleSuggestionSelection'](0);
-            expect(component['isSuggestionSelected'](0)).toBeFalse();
+            // Initially: index 1 and 2 are selected (non-existing); index 0 is not (existing)
+            expect(component['isSuggestionSelected'](1)).toBeTrue();
             expect(component.selectedSuggestionsCount()).toBe(2);
 
-            // Toggle it back on
-            component['toggleSuggestionSelection'](0);
-            expect(component['isSuggestionSelected'](0)).toBeTrue();
-            expect(component.selectedSuggestionsCount()).toBe(3);
+            // Toggle index 1 OFF
+            component['toggleSuggestionSelection'](1);
+            expect(component['isSuggestionSelected'](1)).toBeFalse();
+            expect(component.selectedSuggestionsCount()).toBe(1);
+
+            // Toggle index 1 back ON
+            component['toggleSuggestionSelection'](1);
+            expect(component['isSuggestionSelected'](1)).toBeTrue();
+            expect(component.selectedSuggestionsCount()).toBe(2);
         });
 
         it('should prevent selection of existing relations', async () => {
@@ -455,8 +463,9 @@ describe('CourseCompetencyRelationFormComponent', () => {
             await component.fetchSuggestions();
             fixture.detectChanges();
 
-            const importButton = fixture.debugElement.nativeElement.querySelector('button:contains("Add Suggestions")');
-            expect(importButton).not.toBeNull();
+            const buttons: HTMLButtonElement[] = Array.from(fixture.debugElement.nativeElement.querySelectorAll('button'));
+            const importButton = buttons.find((b) => (b.textContent || '').includes('Add Suggestions'));
+            expect(importButton).toBeTruthy();
         });
 
         it('should create selected suggestions when import button is clicked', async () => {
@@ -464,24 +473,23 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
             await component.fetchSuggestions();
 
-            // Select only first suggestion
-            component['toggleSuggestionSelection'](1);
-            component['toggleSuggestionSelection'](2);
+            // Select only a non-existing suggestion (index 2)
+            component.selectedSuggestions.set(new Set([2]));
 
             const mockCreatedRelation = {
                 id: 10,
-                headCompetencyId: 2,
+                headCompetencyId: 3,
                 tailCompetencyId: 1,
-                relationType: CompetencyRelationType.EXTENDS,
+                relationType: CompetencyRelationType.MATCHES,
             };
             createCourseCompetencyRelationSpy.mockResolvedValue(mockCreatedRelation);
 
             await component['addSelectedSuggestions']();
 
             expect(createCourseCompetencyRelationSpy).toHaveBeenCalledWith(courseId, {
-                headCompetencyId: 2,
+                headCompetencyId: 3,
                 tailCompetencyId: 1,
-                relationType: CompetencyRelationType.EXTENDS,
+                relationType: CompetencyRelationType.MATCHES,
             });
         });
 
