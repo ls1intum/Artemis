@@ -1026,7 +1026,7 @@ public class CourseTestService {
     public void testGetCoursesForDashboardPracticeRepositories() throws Exception {
         User student = userUtilService.getUserByLogin(userPrefix + "student3");
 
-        Course course = courseUtilService.createCourse();
+        Course course = courseUtilService.createCourseWithUserPrefix(userPrefix);
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
@@ -1051,7 +1051,9 @@ public class CourseTestService {
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(practiceResult, practiceParticipation, "ghjk");
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student2");
         exerciseRepo.findAll().forEach(exercise -> {
-            log.error("{}-{}-{}", exercise.getId(), exercise.getTitle(), exercise.getMaxPoints());
+            if (exercise.getMaxPoints() == null) {
+                log.error("{}-{}-{}-{}", exercise.getId(), exercise.getShortName(), exercise.getTitle(), exercise.getMaxPoints());
+            }
 
         });
 
