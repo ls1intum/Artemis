@@ -50,7 +50,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
-    private readonly videoUrlAllowList = [RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'), RegExp('^https://.+\\.m3u8($|\\?.*)')];
+    private readonly videoUrlAllowList = [
+        RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'),
+        RegExp('^https?://.+\\.m3u8($|\\?.*)'), // Allow both http and https, and .m3u8 ending
+        RegExp('^https?://localhost:8000/api/videos/.+/playlist\\.m3u8'), // Local video storage service URLs
+    ];
 
     /**
      * Return the URL of the video source
@@ -76,13 +80,20 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
             const src = this.lectureUnit().videoSource;
             if (!src) return;
-            // Always try to resolve a TUM Live playlist.
-            this.resolveTumLivePlaylist(src).then((url) => {
-                if (url) {
-                    this.playlistUrl.set(url);
-                    this.fetchTranscript();
-                }
-            });
+            // Check if this is a local video storage service URL (already a playlist URL)
+            if (this.isLocalVideoStorageUrl(src)) {
+                // For local video storage, the URL is already a playlist URL
+                this.playlistUrl.set(src);
+                this.fetchTranscript();
+            } else {
+                // Try to resolve TUM Live playlist for external videos
+                this.resolveTumLivePlaylist(src).then((url) => {
+                    if (url) {
+                        this.playlistUrl.set(url);
+                        this.fetchTranscript();
+                    }
+                });
+            }
         }
     }
 
@@ -156,6 +167,20 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     hasVideo(): boolean {
         return !!this.lectureUnit().videoSource;
+    }
+
+    isM3u8Video(): boolean {
+        const videoSource = this.lectureUnit().videoSource;
+        if (!videoSource) return false;
+        return /^https?:\/\/.+\.m3u8($|\?.*)/.test(videoSource);
+    }
+
+    /**
+     * Check if the video source is from the local video storage service
+     */
+    isLocalVideoStorageUrl(videoSource: string): boolean {
+        // Check if it's a localhost:8000 URL with /api/videos/ pattern
+        return /^https?:\/\/localhost:8000\/api\/videos\/.+\.m3u8/.test(videoSource);
     }
 
     /**

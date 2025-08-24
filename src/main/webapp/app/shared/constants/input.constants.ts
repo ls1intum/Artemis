@@ -9,6 +9,8 @@ export const MAX_FILE_SIZE = 20 * 1024 * 1024;
 export const MAX_FILE_SIZE_COMMUNICATION = 5 * 1024 * 1024;
 /** Maximum submission file size: 4 MB **/
 export const MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024;
+/** Maximum video file size: 5 GB (for video uploads to external storage service) **/
+export const MAX_VIDEO_FILE_SIZE = 5 * 1024 * 1024 * 1024;
 /** Maximum text exercise submission character length: 30.000 **/
 export const MAX_SUBMISSION_TEXT_LENGTH = 30 * 1000;
 /** Maximum quiz exercise short answer character length: 255 **/

@@ -1,22 +1,24 @@
-<div class="video-wrapper">
-    <div class="video-column">
+<div class="video-wrapper" [class.has-transcript]="transcriptSegments().length > 0">
+    <div class="video-column" [class.full-width]="transcriptSegments().length === 0">
         <!-- add vjs-fluid so it keeps aspect ratio; id & ref unchanged -->
         <video #videoRef id="video-player" class="video-js vjs-default-skin vjs-fluid" controls preload="auto" playsinline></video>
     </div>
 
-    <div class="transcript-column">
-        <div class="transcript-title">Transcript</div>
-        <div class="transcript-list">
-            @for (segment of transcriptSegments(); track segment.startTime) {
-                <div
-                    class="transcript-line"
-                    [id]="'segment-' + segment.startTime"
-                    (click)="seekTo(segment.startTime)"
-                    [class.active]="currentSegmentIndex() >= 0 && segment.startTime === transcriptSegments()[currentSegmentIndex()].startTime"
-                >
-                    {{ segment.text }}
-                </div>
-            }
+    @if (transcriptSegments().length > 0) {
+        <div class="transcript-column">
+            <div class="transcript-title">Transcript</div>
+            <div class="transcript-list">
+                @for (segment of transcriptSegments(); track segment.startTime) {
+                    <div
+                        class="transcript-line"
+                        [id]="'segment-' + segment.startTime"
+                        (click)="seekTo(segment.startTime)"
+                        [class.active]="currentSegmentIndex() >= 0 && segment.startTime === transcriptSegments()[currentSegmentIndex()].startTime"
+                    >
+                        {{ segment.text }}
+                    </div>
+                }
+            </div>
         </div>
-    </div>
+    }
 </div>

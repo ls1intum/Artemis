@@ -2,3 +2,19 @@
     padding-top: 20px;
     padding-bottom: 20px;
 }
+
+// Ensure video player stays within lecture unit card boundaries
+:host {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+// Video player wrapper
+jhi-video-player {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+}

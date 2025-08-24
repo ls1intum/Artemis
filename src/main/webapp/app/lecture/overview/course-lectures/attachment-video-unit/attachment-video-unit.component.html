@@ -12,24 +12,7 @@
     (onShowIsolated)="handleDownload()"
     (onShowOriginalVersion)="handleOriginalVersion()"
 >
-    @if (lectureUnit().attachment?.uploadDate) {
-        <div>
-            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">: </span>
-            {{ lectureUnit().attachment?.uploadDate | artemisDate }}
-        </div>
-    }
-    @if (lectureUnit().attachment?.version) {
-        <div>
-            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.version">: </span>
-            {{ lectureUnit().attachment?.version }}
-        </div>
-    }
-    @if (lectureUnit().attachment?.link) {
-        <div>
-            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.FileName">: </span>
-            {{ getFileName() }}
-        </div>
-    }
+    <!-- Video units don't need to show file details since the video is already playing -->
 
     @if (lectureUnit()?.description) {
         <div>
@@ -44,8 +27,13 @@
 
     @if (!!videoUrl()) {
         @if (playlistUrl() && hasTranscript()) {
+            <!-- Use playlist URL with transcript (for TUM Live videos) -->
             <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" />
+        } @else if (isM3u8Video()) {
+            <!-- Use video player for M3U8 videos (including local video storage) -->
+            <jhi-video-player [videoUrl]="videoUrl()!" [transcriptSegments]="transcriptSegments()" />
         } @else {
+            <!-- Fallback for other video types -->
             <div class="video-player-container">
                 <div class="ratio ratio-16x9">
                     <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>

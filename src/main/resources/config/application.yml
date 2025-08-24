@@ -252,6 +252,8 @@ spring:
         multipart:
             max-file-size: 20MB # this should match the value in /webapp/app/shared/constants/input.constants.ts MAX_FILE_SIZE
             max-request-size: 20MB
+            # Note: For large video uploads, these limits are bypassed by the VideoStorageService
+            # which uses direct streaming to external video storage service
     lifecycle:
         timeout-per-shutdown-phase: 10
     websocket:
