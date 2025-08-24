@@ -100,9 +100,9 @@
         <div cdkDropListGroup class="drag-and-drop-area">
             <div class="background-area">
                 @if (dragAndDropQuestion().backgroundFilePath) {
-                    <jhi-secured-image
+                    <jhi-image
                         [src]="addPublicFilePrefix(filePreviewPaths().get(dragAndDropQuestion().backgroundFilePath!) || dragAndDropQuestion().backgroundFilePath!)!"
-                        (endLoadingProcess)="changeLoading($event)"
+                        (loadingStatus)="changeLoading($event)"
                     />
                 }
                 <div class="click-layer">
