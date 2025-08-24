@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
+import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -339,15 +339,15 @@ public class LectureService {
                 case ENGLISH -> "End: ";
                 case GERMAN -> "Ende: ";
             };
-            return Optional.of(new CalendarEventDTO("lectureEndEvent-" + dto.originEntityId(), CalendarEventRelatedEntity.LECTURE, titlePrefix + dto.title(), dto.endDate(), null,
-                    null, null));
+            return Optional
+                    .of(new CalendarEventDTO("lectureEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, titlePrefix + dto.title(), dto.endDate(), null, null, null));
         }
         if (dto.startDate() != null && dto.endDate() == null) {
             titlePrefix = "Start: ";
-            return Optional.of(new CalendarEventDTO("lectureStartEvent-" + dto.originEntityId(), CalendarEventRelatedEntity.LECTURE, titlePrefix + dto.title(), dto.startDate(),
-                    null, null, null));
+            return Optional
+                    .of(new CalendarEventDTO("lectureStartEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, titlePrefix + dto.title(), dto.startDate(), null, null, null));
         }
-        return Optional.of(new CalendarEventDTO("lectureStartAndEndEvent-" + dto.originEntityId(), CalendarEventRelatedEntity.LECTURE, dto.title(), dto.startDate(), dto.endDate(),
-                null, null));
+        return Optional
+                .of(new CalendarEventDTO("lectureStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.LECTURE, dto.title(), dto.startDate(), dto.endDate(), null, null));
     }
 }

@@ -6,7 +6,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockCalendarEventService } from 'test/helpers/mocks/service/mock-calendar-event.service';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
-import { CalendarEvent, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarDesktopMonthPresentationComponent } from './calendar-desktop-month-presentation.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
@@ -18,30 +18,13 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
 
     const referenceDate = dayjs('2025-05-15 10:30');
     const events = [
-        new CalendarEvent(CalendarEventType.Exam, CalendarEventSubtype.StartAndEndDate, 'Exam', referenceDate, referenceDate.add(1, 'hour'), undefined, 'Marlon Nienaber'),
-        new CalendarEvent(
-            CalendarEventType.Lecture,
-            CalendarEventSubtype.StartAndEndDate,
-            'Object Design',
-            referenceDate.subtract(4, 'hour'),
-            referenceDate.subtract(2, 'hour'),
-            undefined,
-            undefined,
-        ),
-        new CalendarEvent(CalendarEventType.Lecture, CalendarEventSubtype.StartAndEndDate, 'Object Design 2', referenceDate.subtract(2), referenceDate, undefined, undefined),
-        new CalendarEvent(CalendarEventType.Lecture, CalendarEventSubtype.StartAndEndDate, 'Object Design 3', referenceDate, referenceDate.add(2, 'hour'), undefined, undefined),
+        new CalendarEvent(CalendarEventType.Exam, 'Exam', referenceDate, referenceDate.add(1, 'hour'), undefined, 'Marlon Nienaber'),
+        new CalendarEvent(CalendarEventType.Lecture, 'Object Design', referenceDate.subtract(4, 'hour'), referenceDate.subtract(2, 'hour'), undefined, undefined),
+        new CalendarEvent(CalendarEventType.Lecture, 'Object Design 2', referenceDate.subtract(2), referenceDate, undefined, undefined),
+        new CalendarEvent(CalendarEventType.Lecture, 'Object Design 3', referenceDate, referenceDate.add(2, 'hour'), undefined, undefined),
+        new CalendarEvent(CalendarEventType.Tutorial, 'Tutorial 1', referenceDate.add(1, 'day'), referenceDate.add(1, 'day').add(1, 'hour'), 'Zoom', 'Marlon Nienaber'),
         new CalendarEvent(
             CalendarEventType.Tutorial,
-            CalendarEventSubtype.StartAndEndDate,
-            'Tutorial 1',
-            referenceDate.add(1, 'day'),
-            referenceDate.add(1, 'day').add(1, 'hour'),
-            'Zoom',
-            'Marlon Nienaber',
-        ),
-        new CalendarEvent(
-            CalendarEventType.Tutorial,
-            CalendarEventSubtype.StartAndEndDate,
             'Tutorial 2',
             referenceDate.add(1, 'day').add(2, 'hour'),
             referenceDate.add(1, 'day').add(3, 'hour'),
@@ -50,22 +33,13 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
         ),
         new CalendarEvent(
             CalendarEventType.Tutorial,
-            CalendarEventSubtype.StartAndEndDate,
             'Tutorial 3',
             referenceDate.add(1, 'day').add(3, 'hour'),
             referenceDate.add(1, 'day').add(4, 'hour'),
             'Zoom',
             'Marlon Nienaber',
         ),
-        new CalendarEvent(
-            CalendarEventType.TextExercise,
-            CalendarEventSubtype.StartDate,
-            'Your aspirations as a programmer',
-            referenceDate.add(2, 'day'),
-            undefined,
-            undefined,
-            undefined,
-        ),
+        new CalendarEvent(CalendarEventType.TextExercise, 'Start: Your aspirations as a programmer', referenceDate.add(2, 'day'), undefined, undefined, undefined),
     ];
 
     beforeAll(() => {
@@ -118,7 +92,7 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
         const tutorial1EventCell = fixture.debugElement.query(By.css('[data-testid="Tutorial 1"]'));
         const tutorial2EventCell = fixture.debugElement.query(By.css('[data-testid="Tutorial 2"]'));
         const tutorial3EventCell = fixture.debugElement.query(By.css('[data-testid="Tutorial 3"]'));
-        const textExerciseEventCell = fixture.debugElement.query(By.css('[data-testid="Your aspirations as a programmer"]'));
+        const textExerciseEventCell = fixture.debugElement.query(By.css('[data-testid="Start: Your aspirations as a programmer"]'));
 
         expect(examEventCell).toBeTruthy();
         expect(lecture1EventCell).toBeTruthy();

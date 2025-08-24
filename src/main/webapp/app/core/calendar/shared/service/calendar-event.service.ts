@@ -1,9 +1,11 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable, catchError, map, throwError } from 'rxjs';
+import { Observable, catchError, distinctUntilChanged, map, throwError } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import timezone from 'dayjs/esm/plugin/timezone';
-import { CalendarEvent, CalendarEventDTO, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEvent, CalendarEventDTO, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 import { AlertService } from 'app/shared/service/alert.service';
 
@@ -17,8 +19,18 @@ type CalendarEventMapResponse = HttpResponse<Record<string, CalendarEventDTO[]>>
 export class CalendarEventService {
     private httpClient = inject(HttpClient);
     private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
     private readonly resourceUrl = '/api/core/calendar/courses';
 
+    private currentLanguage = toSignal(
+        this.translateService.onLangChange.pipe(
+            map((event) => (event.lang === 'de' ? 'GERMAN' : 'ENGLISH')),
+            distinctUntilChanged(),
+        ),
+        {
+            initialValue: this.translateService.currentLang === 'de' ? 'GERMAN' : 'ENGLISH',
+        },
+    );
     private currentCourseId?: number;
     private firstDayOfCurrentMonth?: Dayjs;
     private currentEventMap = signal<Map<string, CalendarEvent[]>>(new Map());
@@ -31,6 +43,13 @@ export class CalendarEventService {
         CalendarEventFilterOption.ExamEvents,
     ];
     includedEventFilterOptions = signal<CalendarEventFilterOption[]>(this.eventFilterOptions);
+
+    constructor() {
+        effect(() => {
+            this.currentLanguage();
+            this.refresh();
+        });
+    }
 
     refresh() {
         const currentCourseId = this.currentCourseId;
@@ -46,7 +65,8 @@ export class CalendarEventService {
         const nextMonthKey = firstDayOfCurrentMonth.add(1, 'month').format('YYYY-MM');
         const monthKeys = `${previousMonthKey},${currentMonthKey},${nextMonthKey}`;
         const timeZone = dayjs.tz.guess();
-        const parameters = new HttpParams().set('monthKeys', monthKeys).set('timeZone', timeZone);
+        const language = this.currentLanguage() ?? 'ENGLISH';
+        const parameters = new HttpParams().set('monthKeys', monthKeys).set('timeZone', timeZone).set('language', language);
 
         return this.httpClient
             .get<Record<string, CalendarEventDTO[]>>(`${this.resourceUrl}/${courseId}/calendar-events`, {
@@ -90,21 +110,16 @@ export class CalendarEventService {
 
     private createCalendarEvent(dto: CalendarEventDTO): CalendarEvent | undefined {
         const type = this.createCalendarEventType(dto.type);
-        const subtype = this.createCalendarEventSubtype(dto.subtype);
 
-        if (!type || !subtype) {
+        if (!type) {
             return undefined;
         }
 
-        return new CalendarEvent(type, subtype, dto.title, dayjs(dto.startDate), dto.endDate ? dayjs(dto.endDate) : undefined, dto.location, dto.facilitator);
+        return new CalendarEvent(type, dto.title, dayjs(dto.startDate), dto.endDate ? dayjs(dto.endDate) : undefined, dto.location, dto.facilitator);
     }
 
     private createCalendarEventType(value: string): CalendarEventType | undefined {
         return Object.values(CalendarEventType).includes(value as CalendarEventType) ? (value as CalendarEventType) : undefined;
-    }
-
-    private createCalendarEventSubtype(value: string): CalendarEventSubtype | undefined {
-        return Object.values(CalendarEventSubtype).includes(value as CalendarEventSubtype) ? (value as CalendarEventSubtype) : undefined;
     }
 
     private filterEventMapByOptions(eventMap: Map<string, CalendarEvent[]>, filterOptions: CalendarEventFilterOption[]): Map<string, CalendarEvent[]> {

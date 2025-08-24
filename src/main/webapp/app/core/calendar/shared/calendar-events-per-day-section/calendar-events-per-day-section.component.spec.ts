@@ -6,7 +6,7 @@ import { MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
-import { CalendarEvent, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
 
@@ -21,41 +21,10 @@ describe('CalendarEventsPerDaySectionComponent', () => {
     const startOfWednesday = startOfTuesday.add(1, 'day');
     const week = Array.from({ length: 7 }, (_, i) => startOfMonday.add(i, 'day'));
     const events = [
-        new CalendarEvent(
-            CalendarEventType.Exam,
-            CalendarEventSubtype.StartAndEndDate,
-            'Exam',
-            startOfTuesday.add(12, 'hour'),
-            startOfTuesday.add(13, 'hour'),
-            undefined,
-            'Marlon Nienaber',
-        ),
-        new CalendarEvent(
-            CalendarEventType.Lecture,
-            CalendarEventSubtype.StartAndEndDate,
-            'Object Design',
-            startOfWednesday.add(10, 'hour'),
-            startOfWednesday.add(12, 'hour'),
-            undefined,
-            undefined,
-        ),
-        new CalendarEvent(
-            CalendarEventType.Tutorial,
-            CalendarEventSubtype.StartAndEndDate,
-            'Tutorial',
-            startOfWednesday.add(11, 'hour'),
-            startOfWednesday.add(13, 'hour'),
-            'Zoom',
-            'Marlon Nienaber',
-        ),
-        new CalendarEvent(
-            CalendarEventType.TextExercise,
-            CalendarEventSubtype.StartDate,
-            'Your aspirations as a programmer',
-            startOfWednesday.add(12, 'hour'),
-            undefined,
-            undefined,
-        ),
+        new CalendarEvent(CalendarEventType.Exam, 'Exam', startOfTuesday.add(12, 'hour'), startOfTuesday.add(13, 'hour'), undefined, 'Marlon Nienaber'),
+        new CalendarEvent(CalendarEventType.Lecture, 'Object Design', startOfWednesday.add(10, 'hour'), startOfWednesday.add(12, 'hour'), undefined, undefined),
+        new CalendarEvent(CalendarEventType.Tutorial, 'Tutorial', startOfWednesday.add(11, 'hour'), startOfWednesday.add(13, 'hour'), 'Zoom', 'Marlon Nienaber'),
+        new CalendarEvent(CalendarEventType.TextExercise, 'Start: Your aspirations as a programmer', startOfWednesday.add(12, 'hour'), undefined, undefined),
     ];
 
     beforeAll(() => {
@@ -95,7 +64,7 @@ describe('CalendarEventsPerDaySectionComponent', () => {
         const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'))?.nativeElement;
         const lectureEventCell = fixture.debugElement.query(By.css('[data-testid="Object Design"]'))?.nativeElement;
         const tutorialEventCell = fixture.debugElement.query(By.css('[data-testid="Tutorial"]'))?.nativeElement;
-        const textExerciseEventCell = fixture.debugElement.query(By.css('[data-testid="Your aspirations as a programmer"]'))?.nativeElement;
+        const textExerciseEventCell = fixture.debugElement.query(By.css('[data-testid="Start: Your aspirations as a programmer"]'))?.nativeElement;
 
         expect(examEventCell).toBeTruthy();
         expect(lectureEventCell).toBeTruthy();

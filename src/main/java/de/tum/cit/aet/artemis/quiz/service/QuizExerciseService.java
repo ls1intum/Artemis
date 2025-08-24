@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
-import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
+import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
@@ -587,8 +587,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             return Optional.empty();
         }
 
-        return Optional.of(new CalendarEventDTO("exerciseStartAndEndEvent-" + dto.originEntityId(), CalendarEventRelatedEntity.QUIZ_EXERCISE, dto.title(),
-                synchronizedBatch.getStartTime(), synchronizedBatch.getStartTime().plusSeconds(dto.duration()), null, null));
+        return Optional.of(new CalendarEventDTO("exerciseStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.QUIZ_EXERCISE, dto.title(), synchronizedBatch.getStartTime(),
+                synchronizedBatch.getStartTime().plusSeconds(dto.duration()), null, null));
     }
 
     /**
@@ -617,7 +617,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     case ENGLISH -> "Release: ";
                     case GERMAN -> "Veröffentlichung: ";
                 };
-                events.add(new CalendarEventDTO("exerciseReleaseEvent-" + dto.originEntityId(), CalendarEventRelatedEntity.QUIZ_EXERCISE, releaseDateTitlePrefix + dto.title(),
+                events.add(new CalendarEventDTO("exerciseReleaseEvent-" + dto.originEntityId(), CalendarEventType.QUIZ_EXERCISE, releaseDateTitlePrefix + dto.title(),
                         dto.releaseDate(), null, null, null));
             }
             if (dto.dueDate() != null) {
@@ -625,8 +625,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                     case ENGLISH -> "Due: ";
                     case GERMAN -> "Abgabefrist: ";
                 };
-                events.add(new CalendarEventDTO("exerciseDueEvent-" + dto.originEntityId(), CalendarEventRelatedEntity.QUIZ_EXERCISE, dueDateTitlePrefix + dto.title(),
-                        dto.dueDate(), null, null, null));
+                events.add(new CalendarEventDTO("exerciseDueEvent-" + dto.originEntityId(), CalendarEventType.QUIZ_EXERCISE, dueDateTitlePrefix + dto.title(), dto.dueDate(), null,
+                        null, null));
             }
         }
         return events;

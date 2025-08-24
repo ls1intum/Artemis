@@ -6,7 +6,7 @@ import { CalendarMobileMonthPresentationComponent } from './calendar-mobile-mont
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
-import { CalendarEvent, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { MockCalendarEventService } from 'test/helpers/mocks/service/mock-calendar-event.service';
 
 describe('CalendarMobileMonthPresentation', () => {
@@ -16,26 +16,14 @@ describe('CalendarMobileMonthPresentation', () => {
 
     const referenceDate = dayjs('2025-05-15 10:30');
     const events: CalendarEvent[] = [
-        new CalendarEvent(CalendarEventType.Exam, CalendarEventSubtype.StartAndEndDate, 'Exam', referenceDate, referenceDate.add(1, 'hour')),
-        new CalendarEvent(CalendarEventType.Lecture, CalendarEventSubtype.StartAndEndDate, 'Lecture 1', referenceDate.subtract(4, 'hour'), referenceDate.subtract(2, 'hour')),
-        new CalendarEvent(CalendarEventType.Lecture, CalendarEventSubtype.StartAndEndDate, 'Lecture 2', referenceDate.subtract(2, 'hour'), referenceDate),
-        new CalendarEvent(CalendarEventType.Lecture, CalendarEventSubtype.StartAndEndDate, 'Lecture 3', referenceDate, referenceDate.add(2, 'hour')),
-        new CalendarEvent(CalendarEventType.Tutorial, CalendarEventSubtype.StartAndEndDate, 'Tutorial 1', referenceDate.add(1, 'day'), referenceDate.add(1, 'day').add(1, 'hour')),
-        new CalendarEvent(
-            CalendarEventType.Tutorial,
-            CalendarEventSubtype.StartAndEndDate,
-            'Tutorial 2',
-            referenceDate.add(1, 'day').add(2, 'hour'),
-            referenceDate.add(1, 'day').add(3, 'hour'),
-        ),
-        new CalendarEvent(
-            CalendarEventType.Tutorial,
-            CalendarEventSubtype.StartAndEndDate,
-            'Tutorial 3',
-            referenceDate.add(1, 'day').add(3, 'hour'),
-            referenceDate.add(1, 'day').add(4, 'hour'),
-        ),
-        new CalendarEvent(CalendarEventType.TextExercise, CalendarEventSubtype.StartDate, 'Text Exercise', referenceDate.add(2, 'day')),
+        new CalendarEvent(CalendarEventType.Exam, 'Exam', referenceDate, referenceDate.add(1, 'hour')),
+        new CalendarEvent(CalendarEventType.Lecture, 'Lecture 1', referenceDate.subtract(4, 'hour'), referenceDate.subtract(2, 'hour')),
+        new CalendarEvent(CalendarEventType.Lecture, 'Lecture 2', referenceDate.subtract(2, 'hour'), referenceDate),
+        new CalendarEvent(CalendarEventType.Lecture, 'Lecture 3', referenceDate, referenceDate.add(2, 'hour')),
+        new CalendarEvent(CalendarEventType.Tutorial, 'Tutorial 1', referenceDate.add(1, 'day'), referenceDate.add(1, 'day').add(1, 'hour')),
+        new CalendarEvent(CalendarEventType.Tutorial, 'Tutorial 2', referenceDate.add(1, 'day').add(2, 'hour'), referenceDate.add(1, 'day').add(3, 'hour')),
+        new CalendarEvent(CalendarEventType.Tutorial, 'Tutorial 3', referenceDate.add(1, 'day').add(3, 'hour'), referenceDate.add(1, 'day').add(4, 'hour')),
+        new CalendarEvent(CalendarEventType.TextExercise, 'Start: Text Exercise', referenceDate.add(2, 'day')),
     ];
 
     beforeAll(() => {
