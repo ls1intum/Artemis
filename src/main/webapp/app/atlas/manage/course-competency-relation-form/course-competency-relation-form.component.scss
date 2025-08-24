@@ -6,3 +6,8 @@
 .cursor-pointer {
     cursor: pointer;
 }
+
+.suggestions-scroll-container {
+    max-height: 240px;
+    overflow-y: auto;
+}
