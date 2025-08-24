@@ -35,7 +35,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
     let courseStorageService: CourseStorageService;
     let httpClient: HttpClient;
     let profileService: ProfileService;
-    let featureToggleService: FeatureToggleService;
+    let mockFeatureToggleService: MockFeatureToggleService;
 
     // Sample competencies for testing
     const sampleCompetencies: Competency[] = [
@@ -68,8 +68,8 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         }).compileComponents();
 
         // Initialize feature toggles subject in mock BEFORE component creation so directives can subscribe safely
-        featureToggleService = TestBed.inject(FeatureToggleService);
-        (featureToggleService as MockFeatureToggleService).getFeatureToggles();
+        mockFeatureToggleService = TestBed.inject(FeatureToggleService) as unknown as MockFeatureToggleService;
+        mockFeatureToggleService.getFeatureToggles();
 
         fixture = TestBed.createComponent(CompetencySelectionComponent);
         component = fixture.componentInstance;
@@ -105,7 +105,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
 
         it('should hide lightbulb button when AtlasML feature is disabled', () => {
             // Disable AtlasML feature toggle
-            (featureToggleService as MockFeatureToggleService).setFeatureToggleState(FeatureToggle.AtlasML, false).subscribe();
+            mockFeatureToggleService.setFeatureToggleState(FeatureToggle.AtlasML, false).subscribe();
             fixture.detectChanges();
 
             const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
