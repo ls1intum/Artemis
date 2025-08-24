@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -23,6 +24,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategyType;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamRoomTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -237,4 +241,119 @@ public class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTes
         assertThat(uploadInformation.uploadedRoomNames()).hasSize(64);
     }
 
+    @Test
+    void testGetExamRoomAdminOverview_empty() {
+        var overview = examRoomService.getExamRoomAdminOverview();
+
+        assertThat(overview).isNotNull();
+        assertThat(overview.numberOfStoredExamRooms()).isZero();
+        assertThat(overview.numberOfStoredExamSeats()).isZero();
+        assertThat(overview.numberOfStoredLayoutStrategies()).isZero();
+        assertThat(overview.newestUniqueExamRooms()).isEmpty();
+    }
+
+    @Test
+    void testGetExamRoomAdminOverview_insertOnce() {
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFileSingleExamRoom);
+        var overview = examRoomService.getExamRoomAdminOverview();
+
+        assertThat(overview).isNotNull();
+        assertThat(overview.numberOfStoredExamRooms()).isOne();
+        assertThat(overview.numberOfStoredExamSeats()).isEqualTo(528);
+        assertThat(overview.numberOfStoredLayoutStrategies()).isEqualTo(4);
+
+        assertContainsOnlyFriedrichLBauerRoomDTO(overview.newestUniqueExamRooms());
+    }
+
+    private static void assertContainsOnlyFriedrichLBauerRoomDTO(Set<ExamRoomDTO> newestUniqueExamRooms) {
+        assertThat(newestUniqueExamRooms).hasSize(1);
+        var uploadedRoomDTO = newestUniqueExamRooms.iterator().next();
+
+        assertThat(uploadedRoomDTO.roomNumber()).isEqualTo("5602.EG.001");
+        assertThat(uploadedRoomDTO.name()).isEqualTo("Friedrich L. Bauer Hörsaal");
+        assertThat(uploadedRoomDTO.numberOfSeats()).isEqualTo(528);
+        assertThat(uploadedRoomDTO.building()).isEqualTo("MI");
+
+        ExamRoomLayoutStrategyDTO[] expectedLayoutStrategies = new ExamRoomLayoutStrategyDTO[] {
+                new ExamRoomLayoutStrategyDTO("default", LayoutStrategyType.RELATIVE_DISTANCE, 139),
+                new ExamRoomLayoutStrategyDTO("wide", LayoutStrategyType.RELATIVE_DISTANCE, 93), new ExamRoomLayoutStrategyDTO("narrow", LayoutStrategyType.RELATIVE_DISTANCE, 497),
+                new ExamRoomLayoutStrategyDTO("corona", LayoutStrategyType.FIXED_SELECTION, 68) };
+        assertThat(uploadedRoomDTO.layoutStrategies()).containsExactlyInAnyOrder(expectedLayoutStrategies);
+    }
+
+    @Test
+    void testGetExamRoomAdminOverview_insertMultipleTimes() {
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFileSingleExamRoom);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFileSingleExamRoom);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFileSingleExamRoom);
+
+        var overview = examRoomService.getExamRoomAdminOverview();
+        assertThat(overview).isNotNull();
+        assertThat(overview.numberOfStoredExamRooms()).isEqualTo(3);
+        assertThat(overview.numberOfStoredExamSeats()).isEqualTo(528 * 3);
+        assertThat(overview.numberOfStoredLayoutStrategies()).isEqualTo(4 * 3);
+
+        assertContainsOnlyFriedrichLBauerRoomDTO(overview.newestUniqueExamRooms());
+    }
+
+    @Test
+    void testDeleteAllExamRooms() {
+        // used to check that we don't accidentally write to the DB
+        examRoomService.deleteAllExamRooms();
+        assertThat(examRoomRepository.findAll()).isEmpty();
+
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFileSingleExamRoom);
+        assertThat(examRoomRepository.findAll()).isNotEmpty();
+        examRoomService.deleteAllExamRooms();
+        assertThat(examRoomRepository.findAll()).isEmpty();
+
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFileFourExamRooms);
+        assertThat(examRoomRepository.findAll()).isNotEmpty();
+        examRoomService.deleteAllExamRooms();
+        assertThat(examRoomRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    void testDeleteAllOutdatedAndUnusedExamRooms_empty() {
+        var deletionSummary = examRoomService.deleteAllOutdatedAndUnusedExamRooms();
+        assertThat(deletionSummary).isNotNull();
+        assertThat(deletionSummary.deleteDuration()).endsWith("ms");
+        assertThat(deletionSummary.numberOfDeletedExamRooms()).isZero();
+    }
+
+    @Test
+    void testDeleteAllOutdatedAndUnusedExamRooms_noDuplicates() {
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFileSingleExamRoom);
+
+        var deletionSummary = examRoomService.deleteAllOutdatedAndUnusedExamRooms();
+        assertThat(deletionSummary).isNotNull();
+        assertThat(deletionSummary.deleteDuration()).endsWith("ms");
+        assertThat(deletionSummary.numberOfDeletedExamRooms()).isZero();
+    }
+
+    @Test
+    void testDeleteAllOutdatedAndUnusedExamRooms_duplicates() {
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFileSingleExamRoom);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFileSingleExamRoom);
+
+        var deletionSummary = examRoomService.deleteAllOutdatedAndUnusedExamRooms();
+        assertThat(deletionSummary).isNotNull();
+        assertThat(deletionSummary.deleteDuration()).endsWith("ms");
+        assertThat(deletionSummary.numberOfDeletedExamRooms()).isOne();
+    }
+
+    @Test
+    void testDeleteAllOutdatedAndUnusedExamRooms_manyDuplicates() {
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFileFourExamRooms);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFileFourExamRooms);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFileFourExamRooms);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFileFourExamRooms);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFileFourExamRooms);
+
+        // 16 outdated rooms
+        var deletionSummary = examRoomService.deleteAllOutdatedAndUnusedExamRooms();
+        assertThat(deletionSummary).isNotNull();
+        assertThat(deletionSummary.deleteDuration()).endsWith("ms");
+        assertThat(deletionSummary.numberOfDeletedExamRooms()).isEqualTo(16);
+    }
 }

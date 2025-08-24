@@ -386,7 +386,7 @@ public class ExamRoomService {
      *
      * @return A DTO that can be sent to the client, containing basic information about the state of the exam room DB.
      */
-    public ExamRoomAdminOverviewDTO getExamRoomAdminOverviewDTO() {
+    public ExamRoomAdminOverviewDTO getExamRoomAdminOverview() {
         final List<ExamRoom> examRooms = examRoomRepository.findAllExamRoomsWithEagerLayoutStrategies();
 
         final Integer numberOfStoredExamRooms = examRooms.size();
@@ -407,7 +407,6 @@ public class ExamRoomService {
     public void deleteAllExamRooms() {
         final long startTime = System.nanoTime();
 
-        // deleting everything in batch is more efficient
         examRoomRepository.deleteAll();
 
         log.debug("Deleting all exam rooms took {}", TimeLogUtil.formatDurationFrom(startTime));

@@ -97,7 +97,7 @@ public class AdminExamResource {
     public ResponseEntity<ExamRoomAdminOverviewDTO> getExamRoomAdminOverview() {
         log.debug("REST request to get exam room admin overview");
 
-        var examRoomAdminOverviewDTO = examRoomService.getExamRoomAdminOverviewDTO();
+        var examRoomAdminOverviewDTO = examRoomService.getExamRoomAdminOverview();
         return ResponseEntity.ok(examRoomAdminOverviewDTO);
     }
 
