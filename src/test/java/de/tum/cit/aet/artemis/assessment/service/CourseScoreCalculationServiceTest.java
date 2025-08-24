@@ -132,7 +132,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation(boolean withDueDate) {
 
-        ZonedDateTime dueDate = withDueDate ? ZonedDateTime.now() : null;
+        ZonedDateTime dueDate = withDueDate ? ZonedDateTime.now().plusDays(1) : null;
         course.getExercises().forEach(ex -> ex.setDueDate(dueDate));
 
         exerciseRepository.saveAll(course.getExercises());
@@ -181,14 +181,14 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), courseScores,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of(), courseExercises);
         if (withDueDate) {
+            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(0.0);
+            assertThat(studentScoresDTO.relativeScore()).isEqualTo(0.0);
+            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(0.0);
+        }
+        else {
             assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.6);
             assertThat(studentScoresDTO.relativeScore()).isEqualTo(26.4);
             assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(132.0);
-        }
-        else {
-            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(4.6);
-            assertThat(studentScoresDTO.relativeScore()).isEqualTo(18.4);
-            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(92.0);
         }
 
         Map<Long, BonusSourceResultDTO> bonusSourceResultDTOMap = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, null, List.of(student.getId()));

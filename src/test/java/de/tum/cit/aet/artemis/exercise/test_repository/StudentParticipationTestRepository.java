@@ -62,11 +62,4 @@ public interface StudentParticipationTestRepository extends StudentParticipation
             """)
     List<StudentParticipation> findByCourseIdAndStudentIdWithEagerRatedResults(@Param("courseId") long courseId, @Param("studentId") long studentId);
 
-    @Query("""
-                    SELECT DISTINCT p
-                    FROM StudentParticipation p
-                        LEFT JOIN FETCH p.submissions s
-                        LEFT JOIN FETCH s.results r
-            """)
-    List<StudentParticipation> findAllWithEagerSubmissionsAndResults();
 }

@@ -15,8 +15,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseCourseScoreDTO(long id, Class<? extends Exercise> type, @NotNull IncludedInOverallScore includedInOverallScore, @NotNull AssessmentType assessmentType,
-        @Nullable ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, double maxPoints, @Nullable Double bonusPoints,
-        long courseId) {
+        @Nullable ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, double maxPoints,
+        @Nullable Double bonusPoints, long courseId) {
 
     public ExerciseType exerciseType() {
         return ExerciseType.getExerciseTypeFromClass(type);

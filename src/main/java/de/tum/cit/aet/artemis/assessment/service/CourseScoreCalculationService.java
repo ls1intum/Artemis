@@ -162,14 +162,14 @@ public class CourseScoreCalculationService {
 
         List<PlagiarismCase> plagiarismCases;
 
-        MultiValueMap<Long, CourseGradeScoreDTO> studentIdToParticipations = new LinkedMultiValueMap<>();
+        MultiValueMap<Long, CourseGradeScoreDTO> studentIdToGradeScores = new LinkedMultiValueMap<>();
         if (studentIds.size() == 1) {  // Optimize single student case by filtering in the database.
             Long studentId = studentIds.iterator().next();
             start = System.currentTimeMillis();
-            List<CourseGradeScoreDTO> participations = studentParticipationRepository.findGradeScoresForAllExercisesForCourseAndStudent(courseId, studentId);
-            log.debug("Found {} participations for student {} in course {} in {} ms", participations.size(), studentId, courseId, System.currentTimeMillis() - start);
-            if (!participations.isEmpty()) {
-                studentIdToParticipations.addAll(studentId, participations);
+            List<CourseGradeScoreDTO> gradeScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourseAndStudent(courseId, studentId);
+            log.debug("Found {} participations for student {} in course {} in {} ms", gradeScores.size(), studentId, courseId, System.currentTimeMillis() - start);
+            if (!gradeScores.isEmpty()) {
+                studentIdToGradeScores.addAll(studentId, gradeScores);
             }
             start = System.currentTimeMillis();
             plagiarismCases = plagiarismCaseApi.map(api -> api.findByCourseIdAndStudentId(courseId, studentId)).orElse(List.of());
@@ -177,22 +177,23 @@ public class CourseScoreCalculationService {
         }
         else {
             start = System.currentTimeMillis();
-            var participations = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId);
-            log.debug("Found {} participations in course {} in {} ms", participations.size(), courseId, System.currentTimeMillis() - start);
+            var all = studentParticipationRepository.findAllWithEagerSubmissionsAndResults();
+            var courseGradeScoreDtos = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId);
+            log.debug("Found {} participations in course {} in {} ms", courseGradeScoreDtos.size(), courseId, System.currentTimeMillis() - start);
             // These participations also contain participations for students with ids not included in 'studentIds'.
             // Filter out those participations that belong to the students in 'studentIds'.
             // For the single student case, this is done in the db query.
             var studentIdSet = new HashSet<>(studentIds);
-            for (CourseGradeScoreDTO participation : participations) {
-                Long studentId = participation.userId();
+            for (CourseGradeScoreDTO courseGradeScoreDTO : courseGradeScoreDtos) {
+                Long studentId = courseGradeScoreDTO.userId();
                 if (studentIdSet.contains(studentId)) {
-                    studentIdToParticipations.add(studentId, participation);
+                    studentIdToGradeScores.add(studentId, courseGradeScoreDTO);
                 }
             }
             plagiarismCases = plagiarismCaseApi.map(api -> api.findByCourseId(courseId)).orElse(List.of());
         }
 
-        return studentIdToParticipations.entrySet().parallelStream().collect(Collectors.toMap(Map.Entry::getKey,
+        return studentIdToGradeScores.entrySet().parallelStream().collect(Collectors.toMap(Map.Entry::getKey,
                 entry -> constructBonusSourceResultDTO(course, gradingScale, entry.getKey(), entry.getValue(), maxAndReachablePoints, plagiarismCases, courseExercises)));
     }
 
@@ -304,30 +305,6 @@ public class CourseScoreCalculationService {
      * @return a map of the scores for the different exercise types (total, for programming exercises etc.). For each type, the map contains the max and reachable max points and
      *         the scores of the current user.
      */
-    private Map<ExerciseType, CourseScoresDTO> calculateCourseScores(Course course, Collection<CourseGradeScoreDTO> studentParticipations, long userId,
-            Collection<PlagiarismCase> plagiarismCases, Set<ExerciseCourseScoreDTO> courseExercises) {
-
-        Map<ExerciseType, CourseScoresDTO> scoresPerExerciseType = new HashMap<>();
-
-        // Get scores per exercise type.
-        for (ExerciseType type : ExerciseType.values()) {
-            // Filter out the entities per exercise type.
-            var exerciseCourseScores = courseExercises.stream().filter(exercise -> exercise.exerciseType() == type).collect(Collectors.toSet());
-            var maxAndReachablePoints = calculateMaxAndReachablePoints(null, exerciseCourseScores);
-            var studentParticipationsOfType = studentParticipations.stream().filter(participation -> participation.type() == type).toList();
-
-            // Hand over all plagiarism cases (not just the ones for the current exercise type) because a student will receive a 0 score for all exercises if there is any
-            // PLAGIARISM verdict.
-            var studentScoresOfExerciseType = calculateCourseScoreForStudent(course, null, userId, studentParticipationsOfType, maxAndReachablePoints, plagiarismCases,
-                    exerciseCourseScores);
-            var scoresOfExerciseType = new CourseScoresDTO(maxAndReachablePoints.maxPoints(), maxAndReachablePoints.reachablePoints(), 0.0, studentScoresOfExerciseType);
-            scoresPerExerciseType.put(type, scoresOfExerciseType);
-        }
-
-        return scoresPerExerciseType;
-    }
-
-    // Overloaded method for backward compatibility with StudentParticipation
     private Map<ExerciseType, CourseScoresDTO> calculateCourseScoresForStudentParticipations(Course course, Collection<StudentParticipation> studentParticipations, long userId,
             Collection<PlagiarismCase> plagiarismCases) {
 

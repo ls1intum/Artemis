@@ -1515,7 +1515,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param studentId the id of the student for which to find all grade scores
      * @return a set of {@link CourseGradeScoreDTO}
      */
-    default List<CourseGradeScoreDTO> findGradeScoresForAllExercisesForCourseAndStudent(Long courseId, long studentId) {
+    default List<CourseGradeScoreDTO> findGradeScoresForAllExercisesForCourseAndStudent(long courseId, long studentId) {
         // Distinguish between individual and team participations for performance reasons
         Set<CourseGradeScoreDTO> individualGradeScores = findIndividualGradesByCourseIdAndStudentId(Set.of(courseId), studentId);
         Set<CourseGradeScoreDTO> individualQuizGradeScores = findIndividualQuizGradesByCourseIdAndStudentId(Set.of(courseId), studentId);
@@ -1538,4 +1538,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
         Set<CourseGradeScoreDTO> teamGradeScores = findTeamGradesByCourseIdAndStudentId(courseIds, studentId);
         return Stream.of(individualGradeScores, individualQuizGradeScores, teamGradeScores).flatMap(Collection::stream).collect(Collectors.toSet());
     }
+
+    @Query("""
+                    SELECT DISTINCT p
+                    FROM StudentParticipation p
+                        LEFT JOIN FETCH p.submissions s
+                        LEFT JOIN FETCH s.results r
+            """)
+    List<StudentParticipation> findAllWithEagerSubmissionsAndResults();
 }

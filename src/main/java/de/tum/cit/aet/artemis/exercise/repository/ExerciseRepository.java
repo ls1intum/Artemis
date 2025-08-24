@@ -687,7 +687,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT DISTINCT NEW de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO(e.id, TYPE(e), e.includedInOverallScore, e.assessmentType, e.dueDate, e.assessmentDueDate, p.buildAndTestStudentSubmissionsAfterDueDate, e.maxPoints, e.bonusPoints, e.course.id)
             FROM Exercise e
-                JOIN ProgrammingExercise p ON e.id = p.id
+                LEFT JOIN ProgrammingExercise p ON e.id = p.id
             WHERE e.course.id IN :courseIds
             """)
     Set<ExerciseCourseScoreDTO> findCourseExerciseScoreInformationByCourseIds(@Param("courseIds") Set<Long> courseIds);

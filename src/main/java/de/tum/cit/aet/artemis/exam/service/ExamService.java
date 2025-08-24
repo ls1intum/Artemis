@@ -713,8 +713,9 @@ public class ExamService {
         for (ExamGradeScoreDTO examGrade : examGrades) {
             ExamGradeScoreDTO finalExamGrade = examGrade;
             Exercise exercise = studentExercises.stream().filter(e -> e.getId().equals(finalExamGrade.exerciseId())).findFirst().orElse(null);
-            if (exercise == null)
+            if (exercise == null) {
                 continue;
+            }
             StudentParticipation studentParticipation = exercise.findParticipation(participations);
             PlagiarismCase plagiarismCase = plagiarismCasesForStudent.get(examGrade.exerciseId());
             double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
