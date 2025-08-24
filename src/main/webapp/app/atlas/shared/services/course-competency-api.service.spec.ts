@@ -101,6 +101,16 @@ describe('CourseCompetencyApiService', () => {
         await methodCall;
     });
 
+    it('should get suggested competency relations', async () => {
+        const methodCall = courseCompetencyApiService.getSuggestedCompetencyRelations(courseId);
+        const response = httpClient.expectOne({
+            method: 'GET',
+            url: `${baseUrl}/courses/${courseId}/competencies/relations/suggest`,
+        });
+        response.flush({ relations: [] });
+        await methodCall;
+    });
+
     function getBasePath(courseId: number): string {
         return `${baseUrl}/courses/${courseId}/course-competencies`;
     }
