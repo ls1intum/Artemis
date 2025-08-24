@@ -22,6 +22,12 @@ public record ExerciseCourseScoreDTO(long id, Class<? extends Exercise> type, @N
         return ExerciseType.getExerciseTypeFromClass(type);
     }
 
+    /**
+     * Creates an ExerciseCourseScoreDTO from an Exercise entity.
+     *
+     * @param exercise the exercise entity
+     * @return the corresponding ExerciseCourseScoreDTO
+     */
     public static ExerciseCourseScoreDTO from(Exercise exercise) {
         ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate = null;
         if (exercise instanceof ProgrammingExercise programmingExercise) {

@@ -339,6 +339,7 @@ public class CourseScoreCalculationService {
      * @param participationsOfStudent should be non-empty. The exercise participations of the given student.
      * @param maxAndReachablePoints   max points and max reachable points in the given course.
      * @param plagiarismCases         the plagiarism verdicts for the student.
+     * @param courseExercises         the exercises of the course with their properties relevant for the score calculation.
      * @return a StudentScoresDTO instance with the presentation score, relative and absolute points achieved by the given student.
      */
     public StudentScoresDTO calculateCourseScoreForStudent(Course course, @Nullable GradingScale gradingScale, Long studentId,
@@ -393,6 +394,16 @@ public class CourseScoreCalculationService {
         return new StudentScoresDTO(absolutePoints, relativeScore, currentRelativeScore, presentationScore);
     }
 
+    /**
+     * Calculates course scores for a given set of student participations for a particular student.
+     *
+     * @param course                  the course the scores are calculated for.
+     * @param gradingScale            the grading scale of the course.
+     * @param studentId               the id of the student who has participated in the course exercises.
+     * @param participationsOfStudent the exercise participations of the given student.
+     * @param maxAndReachablePoints   max points and max reachable points in the given course.
+     * @param plagiarismCases         the plagiarism verdicts for the student.
+     */
     public StudentScoresDTO calculateCourseScoreForStudentParticipations(Course course, @Nullable GradingScale gradingScale, Long studentId,
             Collection<StudentParticipation> participationsOfStudent, MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases) {
 
