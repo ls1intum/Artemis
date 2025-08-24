@@ -164,13 +164,13 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     }
 
     /**
-     * Find programming submissions where the absolute latest submission per participation is older than the given start time but not older than the given end time
+     * <b>⚠️ ATTENTION: This query is expensive and should be only used in a scheduled job to avoid performance issues in the application.</b>
+     * <br>
+     * Find programming submissions where the latest submission per participation is older than the given start time but not older than the given end time
      * and does NOT have any results. Used for retriggering builds for submissions that did not get a result due to some hiccup in the CI system.
-     *
-     * This query ensures that either the absolute latest submission for a participation is returned (if it meets all criteria),
+     * <br>
+     * This query ensures that either the latest submission for a participation is returned (if it meets all criteria),
      * or no submission is returned for that participation at all. It does NOT return older submissions even if they are in the time range.
-     *
-     * This query is expensive and should be only used in a scheduled job to avoid performance issues in the application.
      *
      * @param startTime the earliest time to consider (oldest submissions)
      * @param endTime   the latest time to consider (newest submissions)

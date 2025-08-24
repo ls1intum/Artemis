@@ -46,17 +46,17 @@ public class ProgrammingSubmissionWithoutResultScheduleService {
     @Scheduled(cron = "${artemis.scheduling.programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * *}")
     public void retriggerSubmissionsWithoutResults() {
         checkSecurityUtils();
-        log.info("Retriggering latest submission per participation without results that are older than 1 hour but not older than 2 days.");
+        log.info("Retriggering latest submission per participation without results that are older than two hours but not older than 2 days.");
 
         ZonedDateTime now = ZonedDateTime.now();
-        ZonedDateTime oneHourAgo = now.minusHours(1);
+        ZonedDateTime twoHoursAgo = now.minusHours(2);
         ZonedDateTime twoDaysAgo = now.minusDays(2);
 
         Pageable pageable = PageRequest.of(0, 50, Sort.by("submissionDate").ascending());
         int processedCount = 0;
         Slice<ProgrammingSubmission> slice;
         do {
-            slice = programmingSubmissionRepository.findLatestProgrammingSubmissionsWithoutResultsInTimeRange(twoDaysAgo, oneHourAgo, pageable);
+            slice = programmingSubmissionRepository.findLatestProgrammingSubmissionsWithoutResultsInTimeRange(twoDaysAgo, twoHoursAgo, pageable);
             for (ProgrammingSubmission submission : slice.getContent()) {
                 try {
                     programmingTriggerService.triggerBuildAndNotifyUser(submission);
