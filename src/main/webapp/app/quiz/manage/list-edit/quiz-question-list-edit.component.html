@@ -5,7 +5,7 @@
         </h4>
     </div>
     <div class="row mt-1">
-        @for (quizQuestion of quizQuestions; track quizQuestion; let i = $index) {
+        @for (quizQuestion of quizQuestions(); track quizQuestion; let i = $index) {
             <div class="question card">
                 @if (quizQuestion.type === MULTIPLE_CHOICE) {
                     <div>
@@ -46,7 +46,7 @@
             </div>
         }
     </div>
-    @if (!disabled) {
+    @if (!disabled()) {
         <div class="row mt-2">
             <div class="col-12 col-sm-6 col-xl mb-1">
                 <button id="quiz-add-mc-question" class="btn btn-block btn-success" (click)="addMultipleChoiceQuestion()">
@@ -80,11 +80,11 @@
             </div>
         </div>
     }
-    @if (!disabled) {
+    @if (!disabled()) {
         <div class="row mt-2 mb-5">
             <jhi-quiz-question-list-edit-existing
                 [show]="showExistingQuestions"
-                [courseId]="courseId"
+                [courseId]="courseId()"
                 [filePool]="fileMap"
                 (onQuestionsAdded)="handleExistingQuestionsAdded($event)"
                 (onFilesAdded)="handleFilesAdded($event)"

@@ -4,13 +4,13 @@ import {
     Component,
     ElementRef,
     EventEmitter,
-    Input,
     OnChanges,
     OnInit,
     Output,
     SimpleChanges,
     ViewEncapsulation,
     inject,
+    input,
     viewChild,
 } from '@angular/core';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
@@ -85,13 +85,10 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     shortAnswerQuestion: ShortAnswerQuestion;
 
-    @Input()
-    set question(quizQuestion: QuizQuestion) {
-        this.shortAnswerQuestion = quizQuestion as ShortAnswerQuestion;
-    }
+    readonly question = input<QuizQuestion>();
 
-    @Input() questionIndex: number;
-    @Input() reEvaluationInProgress: boolean;
+    readonly questionIndex = input<number>(undefined!);
+    readonly reEvaluationInProgress = input<boolean>(false);
 
     @Output() questionUpdated = new EventEmitter();
     @Output() questionDeleted = new EventEmitter();
@@ -153,6 +150,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
          * 1. The question text is split at every new line. The first element of the array would be then the first line of the question text.
          * 2. Now each line of the question text will be divided into each word (we use whitespace and the borders of spots as separator, see regex).
          */
+
         this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text!);
 
         /** Assign status booleans and strings **/
@@ -167,7 +165,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     ngOnChanges(changes: SimpleChanges): void {
         /** Check if previousValue wasn't null to avoid firing at component initialization **/
-        if (changes.question && changes.question.previousValue) {
+        this.shortAnswerQuestion = changes.question.currentValue as ShortAnswerQuestion;
+        if (changes.question.previousValue) {
             this.questionUpdated.emit();
         }
     }
@@ -177,7 +176,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @desc Setup the question editor
      */
     ngAfterViewInit(): void {
-        if (!this.reEvaluationInProgress) {
+        if (!this.reEvaluationInProgress()) {
             requestAnimationFrame(this.setupQuestionEditor.bind(this));
         }
     }
@@ -474,7 +473,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const solution = new ShortAnswerSolution();
         solution.text = InsertShortAnswerOptionAction.DEFAULT_TEXT_SHORT;
         // Add solution directly to the question if re-evaluation is in progress
-        if (this.reEvaluationInProgress) {
+        if (this.reEvaluationInProgress()) {
             this.shortAnswerQuestion.solutions.push(solution);
             this.questionUpdated.emit();
             // Use the editor to add the solution

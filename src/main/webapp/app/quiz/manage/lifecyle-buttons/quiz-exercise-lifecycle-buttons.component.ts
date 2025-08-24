@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Output, inject, input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -38,8 +38,7 @@ export class QuizExerciseLifecycleButtonsComponent {
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    @Input()
-    quizExercise: QuizExercise;
+    quizExercise = input.required<QuizExercise>();
 
     @Output()
     loadOne = new EventEmitter<number>();
@@ -51,7 +50,7 @@ export class QuizExerciseLifecycleButtonsComponent {
      * Set the quiz open for practice
      */
     openForPractice() {
-        this.quizExerciseService.openForPractice(this.quizExercise.id!).subscribe({
+        this.quizExerciseService.openForPractice(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizExercise>) => {
                 this.handleNewQuizExercise.emit(res.body!);
             },
@@ -65,7 +64,7 @@ export class QuizExerciseLifecycleButtonsComponent {
      * Start the given quiz-exercise immediately
      */
     startQuiz() {
-        this.quizExerciseService.start(this.quizExercise.id!).subscribe({
+        this.quizExerciseService.start(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizExercise>) => {
                 this.handleNewQuizExercise.emit(res.body!);
             },
@@ -79,7 +78,7 @@ export class QuizExerciseLifecycleButtonsComponent {
      * End the given quiz-exercise immediately
      */
     endQuiz() {
-        return this.quizExerciseService.end(this.quizExercise.id!).subscribe({
+        return this.quizExerciseService.end(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizExercise>) => {
                 this.handleNewQuizExercise.emit(res.body!);
                 this.dialogErrorSource.next('');
@@ -96,7 +95,7 @@ export class QuizExerciseLifecycleButtonsComponent {
     startBatch(quizBatchId: number) {
         this.quizExerciseService.startBatch(quizBatchId).subscribe({
             next: () => {
-                this.loadOne.emit(this.quizExercise.id!);
+                this.loadOne.emit(this.quizExercise().id!);
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
@@ -108,9 +107,9 @@ export class QuizExerciseLifecycleButtonsComponent {
      * Adds a new batch to the given quiz
      */
     addBatch() {
-        this.quizExerciseService.addBatch(this.quizExercise.id!).subscribe({
+        this.quizExerciseService.addBatch(this.quizExercise().id!).subscribe({
             next: () => {
-                this.loadOne.emit(this.quizExercise.id!);
+                this.loadOne.emit(this.quizExercise().id!);
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
@@ -122,7 +121,7 @@ export class QuizExerciseLifecycleButtonsComponent {
      * Make the given quiz-exercise visible to students
      */
     showQuiz() {
-        this.quizExerciseService.setVisible(this.quizExercise.id!).subscribe({
+        this.quizExerciseService.setVisible(this.quizExercise().id!).subscribe({
             next: (res: HttpResponse<QuizExercise>) => {
                 this.handleNewQuizExercise.emit(res.body!);
             },
@@ -134,6 +133,6 @@ export class QuizExerciseLifecycleButtonsComponent {
 
     private onError(error: HttpErrorResponse) {
         this.alertService.error(error.headers.get('X-artemisApp-error')!);
-        this.loadOne.emit(this.quizExercise.id!);
+        this.loadOne.emit(this.quizExercise().id!);
     }
 }

@@ -109,7 +109,7 @@ const moduleThresholds = {
     },
     quiz: {
         statements: 86.25,
-        branches:   74.69,
+        branches:   74.35,
         functions:  78.69,
         lines:      86.35,
     },

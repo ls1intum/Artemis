@@ -8,10 +8,7 @@ import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragAndDropQuestionEditComponent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
-import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from 'src/test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
-import { triggerChanges } from 'src/test/javascript/spec/helpers/utils/general-test.utils';
-import { ChangeDetectorRef } from '@angular/core';
 import { clone } from 'lodash-es';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
@@ -67,20 +64,16 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
+            imports: [DragAndDropQuestionEditComponent],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ThemeService, useClass: MockThemeService },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .overrideComponent(DragAndDropQuestionEditComponent, {
-                set: {
-                    providers: [{ provide: NgbModal, useClass: MockNgbModalService }, MockProvider(ChangeDetectorRef)],
-                },
-            })
-            .compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
         component = fixture.componentInstance;
         modalService = fixture.debugElement.injector.get(NgbModal);
@@ -97,9 +90,9 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     beforeEach(fakeAsync(() => {
-        component.question = clone(question1);
-        component.questionIndex = 1;
-        component.reEvaluationInProgress = false;
+        fixture.componentRef.setInput('question', clone(question1));
+        fixture.componentRef.setInput('questionIndex', 1);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
 
         fixture.detectChanges(false);
         tick();
@@ -120,12 +113,12 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     it('should detect changes and update component', () => {
-        triggerChanges(component, { property: 'question', currentValue: question2, previousValue: question1 });
+        fixture.componentRef.setInput('question', clone(question2));
 
         fixture.detectChanges();
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(component.backupQuestion).toEqual(question1);
+        expect(component.backupQuestion).toEqual(question2);
     });
 
     it('should edit question in different ways', () => {
@@ -149,7 +142,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.setBackgroundFile(event);
 
-        expect(component.question.backgroundFilePath).toEndWith('.jpg');
+        expect(component.question().backgroundFilePath).toEndWith('.jpg');
         expect(addFileSpy).toHaveBeenCalledOnce();
         expect(createObjectURLStub).toHaveBeenCalledExactlyOnceWith(file1);
     });
@@ -227,20 +220,20 @@ describe('DragAndDropQuestionEditComponent', () => {
         const dropLocation = { posX: 10, posY: 10, width: lengthOfElement, height: lengthOfElement, invalid: false };
         const alternativeDropLocation = { posX: 15, posY: 15, width: lengthOfElement, height: lengthOfElement, invalid: false };
         component.currentDropLocation = dropLocation;
-        component.question.dropLocations = [dropLocation, alternativeDropLocation];
-        component.question.correctMappings = undefined;
+        component.question().dropLocations = [dropLocation, alternativeDropLocation];
+        component.question().correctMappings = undefined;
 
         component.mouseUp();
 
         expect(component.draggingState).toBe(DragState.NONE);
         expect(component.currentDropLocation).toBeUndefined();
-        expect(component.question.correctMappings).toBeArrayOfSize(0);
-        expect(component.question.dropLocations).toEqual([alternativeDropLocation]);
+        expect(component.question().correctMappings).toBeArrayOfSize(0);
+        expect(component.question().dropLocations).toEqual([alternativeDropLocation]);
     });
 
     it('should move background mouse down', () => {
         component.draggingState = DragState.NONE;
-        component.question.backgroundFilePath = 'NeedToGetInThere';
+        component.question().backgroundFilePath = 'NeedToGetInThere';
         const mouse = { x: 10, y: 10, startX: 5, startY: 5, offsetX: 0, offsetY: 0 };
         component.mouse = mouse;
 
@@ -280,11 +273,11 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     it('should duplicate drop location', () => {
         const dropLocation = { posX: 10, posY: 10, width: 0, height: 0 } as DropLocation;
-        component.question.dropLocations = [];
+        component.question().dropLocations = [];
 
         component.duplicateDropLocation(dropLocation);
 
-        const duplicatedDropLocation = component.question.dropLocations[0];
+        const duplicatedDropLocation = component.question().dropLocations![0];
         expect(duplicatedDropLocation.posX).toBe(dropLocation.posX! + 3);
         expect(duplicatedDropLocation.posY).toBe(dropLocation.posY! + 3);
         expect(duplicatedDropLocation.width).toBe(0);
@@ -328,8 +321,8 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.addTextDragItem();
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(component.question.dragItems).toBeArrayOfSize(1);
-        const newDragItemOfQuestion = component.question.dragItems![0];
+        expect(component.question().dragItems).toBeArrayOfSize(1);
+        const newDragItemOfQuestion = component.question().dragItems![0];
         expect(newDragItemOfQuestion.text).toBe('Text');
         expect(newDragItemOfQuestion.pictureFilePath).toBeUndefined();
         expect(component.filePreviewPaths.size).toBe(0);
@@ -345,8 +338,8 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.createImageDragItem({ target: { files: [file] } });
 
-        expect(component.question.dragItems).toBeArrayOfSize(1);
-        const newDragItemOfQuestion = component.question.dragItems![0];
+        expect(component.question().dragItems).toBeArrayOfSize(1);
+        const newDragItemOfQuestion = component.question().dragItems![0];
         expect(newDragItemOfQuestion.text).toBeUndefined();
         expect(newDragItemOfQuestion.pictureFilePath).toBeDefined();
         expect(newDragItemOfQuestion.pictureFilePath).toEndWith('.' + extension);
@@ -361,24 +354,24 @@ describe('DragAndDropQuestionEditComponent', () => {
         const item = new DragItem();
         const newItem = new DragItem();
         const mapping = new DragAndDropMapping(newItem, new DropLocation());
-        component.question.dragItems = [item];
-        component.question.correctMappings = [mapping];
+        component.question().dragItems = [item];
+        component.question().correctMappings = [mapping];
 
         component.deleteDragItem(item);
 
-        expect(component.question.dragItems).toBeArrayOfSize(0);
-        expect(component.question.correctMappings).toEqual([mapping]);
+        expect(component.question().dragItems).toBeArrayOfSize(0);
+        expect(component.question().correctMappings).toEqual([mapping]);
     });
 
     it('should delete mapping', () => {
         const item = new DragItem();
         const location = new DropLocation();
         const mapping = new DragAndDropMapping(item, location);
-        component.question.correctMappings = [mapping];
+        component.question().correctMappings = [mapping];
 
         component.deleteMapping(mapping);
 
-        expect(component.question.correctMappings).toBeArrayOfSize(0);
+        expect(component.question().correctMappings).toBeArrayOfSize(0);
     });
 
     it('should drop a drag item on a drop location', () => {
@@ -386,21 +379,21 @@ describe('DragAndDropQuestionEditComponent', () => {
         const item = new DragItem();
         item.id = 2;
         location.id = 2;
-        component.question.dragItems = [item];
+        component.question().dragItems = [item];
         const mapping = new DragAndDropMapping(item, location);
-        component.question.correctMappings = [mapping];
+        component.question().correctMappings = [mapping];
         const alternativeLocation = new DropLocation();
         const alternativeItem = new DragItem();
         alternativeLocation.id = 3;
         alternativeItem.id = 3;
         const event = { item: { data: alternativeItem } } as CdkDragDrop<DragItem, DragItem>;
         const expectedMapping = new DragAndDropMapping(alternativeItem, alternativeLocation);
-        component.question.dragItems = [item, alternativeItem];
+        component.question().dragItems = [item, alternativeItem];
 
         component.onDragDrop(alternativeLocation, event);
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(component.question.correctMappings).toEqual([mapping, expectedMapping]);
+        expect(component.question().correctMappings).toEqual([mapping, expectedMapping]);
     });
 
     it('should get mapping index for mapping', () => {
@@ -416,7 +409,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const mapping2 = new DragAndDropMapping(item2, location2);
         const mapping3 = new DragAndDropMapping(item3, location3);
         const mapping4 = new DragAndDropMapping(item4, location4); // unused mapping
-        component.question.correctMappings = [mapping1, mapping2, mapping3];
+        component.question().correctMappings = [mapping1, mapping2, mapping3];
 
         expect(component.getMappingIndex(mapping1)).toBe(1);
         expect(component.getMappingIndex(mapping2)).toBe(2);
@@ -428,7 +421,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const item = new DragItem();
         const location = new DropLocation();
         const mapping = new DragAndDropMapping(item, location);
-        component.question.correctMappings = [mapping];
+        component.question().correctMappings = [mapping];
 
         expect(component.getMappingsForDropLocation(location)).toEqual([mapping]);
     });
@@ -437,33 +430,33 @@ describe('DragAndDropQuestionEditComponent', () => {
         const item = new DragItem();
         const location = new DropLocation();
         const mapping = new DragAndDropMapping(item, location);
-        component.question.correctMappings = [mapping];
+        component.question().correctMappings = [mapping];
 
         expect(component.getMappingsForDragItem(item)).toEqual([mapping]);
     });
 
     it('should change picture drag item to text drag item', () => {
-        component.question = clone(question3);
+        fixture.componentRef.setInput('question', clone(question3));
         component.ngOnInit();
         component.ngAfterViewInit();
 
-        component.changeToTextDragItem(component.question.dragItems![1]);
+        component.changeToTextDragItem(component.question().dragItems![1]);
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.filePreviewPaths.size).toBe(3);
         expect(addFileSpy).not.toHaveBeenCalled();
         expect(removeFileSpy).toHaveBeenCalledExactlyOnceWith('this/is/a/fake/path/3/image.jpg');
-        expect(component.question.dragItems![0]).toContainAllEntries([
+        expect(component.question().dragItems![0]).toContainAllEntries([
             ['id', 1],
             ['pictureFilePath', 'this/is/a/fake/path/2/image.jpg'],
             ['text', undefined],
         ]);
-        expect(component.question.dragItems![1]).toContainAllEntries([
+        expect(component.question().dragItems![1]).toContainAllEntries([
             ['id', 2],
             ['pictureFilePath', undefined],
             ['text', 'Text'],
         ]);
-        expect(component.question.dragItems![2]).toContainAllEntries([
+        expect(component.question().dragItems![2]).toContainAllEntries([
             ['id', 3],
             ['pictureFilePath', 'this/is/a/fake/path/4/image.jpg'],
             ['text', undefined],
@@ -471,7 +464,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     it('should change text drag item to picture drag item', () => {
-        component.question = question4;
+        fixture.componentRef.setInput('question', clone(question4));
         component.ngOnInit();
         component.ngAfterViewInit();
 
@@ -480,23 +473,23 @@ describe('DragAndDropQuestionEditComponent', () => {
         const expectedPath = 'some/client/dependent/path/' + fileName;
         const file = new File([], fileName);
 
-        component.changeToPictureDragItem(component.question.dragItems![1], { target: { files: [file] } });
+        component.changeToPictureDragItem(component.question().dragItems![1], { target: { files: [file] } });
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(component.question.dragItems![0]).toContainAllEntries([
+        expect(component.question().dragItems![0]).toContainAllEntries([
             ['id', 1],
             ['pictureFilePath', undefined],
             ['text', 'Text1'],
         ]);
-        expect(component.question.dragItems![2]).toContainAllEntries([
+        expect(component.question().dragItems![2]).toContainAllEntries([
             ['id', 3],
             ['pictureFilePath', undefined],
             ['text', 'Text3'],
         ]);
-        expect(component.question.dragItems![1].text).toBeUndefined();
-        expect(component.question.dragItems![1].pictureFilePath).toBeDefined();
-        expect(component.question.dragItems![1].pictureFilePath).toEndWith('.' + extension);
-        const filePath = component.question.dragItems![1].pictureFilePath!;
+        expect(component.question().dragItems![1].text).toBeUndefined();
+        expect(component.question().dragItems![1].pictureFilePath).toBeDefined();
+        expect(component.question().dragItems![1].pictureFilePath).toEndWith('.' + extension);
+        const filePath = component.question().dragItems![1].pictureFilePath!;
         expect(component.filePreviewPaths.get(filePath)).toBe(expectedPath);
         expect(addFileSpy).toHaveBeenCalledExactlyOnceWith({ file, fileName: filePath });
         expect(removeFileSpy).not.toHaveBeenCalled();
@@ -504,22 +497,22 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     it('should change question title', () => {
         const title = 'backupQuestionTitle';
-        component.question = new DragAndDropQuestion();
-        component.question.title = 'alternativeBackupQuestionTitle';
+        fixture.componentRef.setInput('question', new DragAndDropQuestion());
+        component.question().title = 'alternativeBackupQuestionTitle';
         component.backupQuestion = new DragAndDropQuestion();
         component.backupQuestion.title = title;
 
         component.resetQuestionTitle();
 
-        expect(component.question.title).toBe(title);
+        expect(component.question().title).toBe(title);
     });
 
     it('should reset question', () => {
         const title = 'backupQuestionTitle';
         const dropLocation = new DropLocation();
         const item = new DragItem();
-        component.question = new DragAndDropQuestion();
-        component.question.title = 'alternativeBackupQuestionTitle';
+        fixture.componentRef.setInput('question', new DragAndDropQuestion());
+        component.question().title = 'alternativeBackupQuestionTitle';
 
         const backupQuestion = {
             type: 'drag-and-drop',
@@ -540,7 +533,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.resetQuestion();
 
-        expect(component.question).toEqual(backupQuestion);
+        expect(component.question()).toEqual(backupQuestion);
     });
 
     it('should reset drag item', () => {
@@ -550,14 +543,14 @@ describe('DragAndDropQuestionEditComponent', () => {
         const secondItem = new DragItem();
         secondItem.id = 404;
         secondItem.invalid = false;
-        component.question = new DragAndDropQuestion();
-        component.question.dragItems = [new DragItem(), new DragItem(), firstItem, new DragItem()];
+        fixture.componentRef.setInput('question', new DragAndDropQuestion());
+        component.question().dragItems = [new DragItem(), new DragItem(), firstItem, new DragItem()];
         component.backupQuestion = new DragAndDropQuestion();
         component.backupQuestion.dragItems = [secondItem];
 
         component.resetDragItem(firstItem);
 
-        expect(component.question.dragItems[2].invalid).toBeFalse();
+        expect(component.question().dragItems![2].invalid).toBeFalse();
     });
 
     it('should reset drop location', () => {
@@ -567,45 +560,45 @@ describe('DragAndDropQuestionEditComponent', () => {
         const secondItem = new DropLocation();
         secondItem.id = 404;
         secondItem.invalid = false;
-        component.question = new DragAndDropQuestion();
-        component.question.dropLocations = [new DropLocation(), new DropLocation(), firstItem, new DropLocation()];
+        fixture.componentRef.setInput('question', new DragAndDropQuestion());
+        component.question().dropLocations = [new DropLocation(), new DropLocation(), firstItem, new DropLocation()];
         component.backupQuestion = new DragAndDropQuestion();
         component.backupQuestion.dropLocations = [secondItem];
 
         component.resetDropLocation(firstItem);
 
-        expect(component.question.dropLocations[2].invalid).toBeFalse();
+        expect(component.question().dropLocations![2].invalid).toBeFalse();
     });
 
     it('should toggle preview', () => {
         component.showPreview = true;
-        component.question = new DragAndDropQuestion();
-        component.question.text = 'should be removed';
+        fixture.componentRef.setInput('question', new DragAndDropQuestion());
+        component.question().text = 'should be removed';
 
         component.togglePreview();
 
         expect(component.showPreview).toBeFalse();
-        expect(component.question.text).toBeUndefined();
+        expect(component.question().text).toBeUndefined();
     });
 
     it('should detect changes in markdown and edit accordingly', () => {
-        component.question = new DragAndDropQuestion();
-        component.question.text = 'should be removed';
+        fixture.componentRef.setInput('question', new DragAndDropQuestion());
+        component.question().text = 'should be removed';
 
         const newValue = 'new value';
         expect(questionUpdatedSpy).toHaveBeenCalledTimes(0);
         component.changesInMarkdown(newValue);
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(component.question.text).toBeUndefined();
+        expect(component.question().text).toBeUndefined();
         expect(component.questionEditorText).toBe(newValue);
     });
 
     it('should detect domain actions', () => {
-        component.question = new DragAndDropQuestion();
-        component.question.text = 'text';
-        component.question.explanation = 'explanation';
-        component.question.hint = 'hint';
+        fixture.componentRef.setInput('question', new DragAndDropQuestion());
+        component.question().text = 'text';
+        component.question().explanation = 'explanation';
+        component.question().hint = 'hint';
         let textWithDomainAction: TextWithDomainAction;
 
         // explanation
@@ -615,7 +608,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.domainActionsFound([textWithDomainAction]);
 
-        expect(component.question.explanation).toBe(text);
+        expect(component.question().explanation).toBe(text);
 
         // hint
         action = new QuizHintAction();
@@ -624,7 +617,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.domainActionsFound([textWithDomainAction]);
 
-        expect(component.question.hint).toBe(text);
+        expect(component.question().hint).toBe(text);
 
         // text
         text = 'take this null as a command';
@@ -632,6 +625,6 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.domainActionsFound([textWithDomainAction]);
 
-        expect(component.question.text).toBe(text);
+        expect(component.question().text).toBe(text);
     });
 });
