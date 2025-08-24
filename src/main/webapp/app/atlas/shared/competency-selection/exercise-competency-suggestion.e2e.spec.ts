@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -122,7 +122,8 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
 
         // Setup Atlas feature enabled
         const profileService = TestBed.inject(ProfileService);
-        const profileInfo = { activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
+        const profileInfo = new ProfileInfo();
+        profileInfo.activeModuleFeatures = [MODULE_FEATURE_ATLAS];
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
         // Mock course with competencies
@@ -226,11 +227,11 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
             const checkboxes = fixture.debugElement.queryAll(By.css('input[type="checkbox"]'));
 
             // Select suggested competency (Software Testing)
-            const testingCheckbox = checkboxes.find((cb) => cb.attributes['id'].includes('competency-4'));
+            const testingCheckbox = checkboxes.find((cb) => cb.attributes['id']?.includes('competency-4') ?? false);
             testingCheckbox?.nativeElement.click();
 
             // Also select a non-suggested competency (Design Patterns)
-            const patternsCheckbox = checkboxes.find((cb) => cb.attributes['id'].includes('competency-5'));
+            const patternsCheckbox = checkboxes.find((cb) => cb.attributes['id']?.includes('competency-5') ?? false);
             patternsCheckbox?.nativeElement.click();
 
             fixture.detectChanges();
@@ -314,7 +315,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
 
         it('should handle API errors gracefully without breaking exercise creation', fakeAsync(() => {
             // Mock API error
-            jest.spyOn(httpClient, 'post').mockReturnValue(new Promise((_, reject) => reject({ status: 500, message: 'Server Error' })));
+            jest.spyOn(httpClient, 'post').mockReturnValue(throwError(() => ({ status: 500, message: 'Server Error' })));
 
             const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
             lightbulbButton.nativeElement.click();
@@ -341,7 +342,8 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
         it('should work when AtlasML feature is disabled', () => {
             // Disable Atlas feature
             const profileService = TestBed.inject(ProfileService);
-            const profileInfo = { activeModuleFeatures: [] } as ProfileInfo;
+            const profileInfo = new ProfileInfo();
+            profileInfo.activeModuleFeatures = [];
             jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
             // Recreate component with disabled feature

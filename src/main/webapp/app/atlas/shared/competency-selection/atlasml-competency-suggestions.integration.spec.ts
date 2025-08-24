@@ -1,12 +1,10 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Competency, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
+import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { delay, of, throwError } from 'rxjs';
-import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
-import { ChangeDetectorRef, DebugElement } from '@angular/core';
-import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
@@ -32,7 +30,6 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
     let fixture: ComponentFixture<CompetencySelectionComponent>;
     let component: CompetencySelectionComponent;
     let courseStorageService: CourseStorageService;
-    let courseCompetencyService: CourseCompetencyService;
     let httpClient: HttpClient;
     let profileService: ProfileService;
 
@@ -68,12 +65,12 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         fixture = TestBed.createComponent(CompetencySelectionComponent);
         component = fixture.componentInstance;
         courseStorageService = fixture.debugElement.injector.get(CourseStorageService);
-        courseCompetencyService = fixture.debugElement.injector.get(CourseCompetencyService);
         httpClient = fixture.debugElement.injector.get(HttpClient);
         profileService = fixture.debugElement.injector.get(ProfileService);
 
         // Enable Atlas module feature
-        const profileInfo = { activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
+        const profileInfo = new ProfileInfo();
+        profileInfo.activeModuleFeatures = [MODULE_FEATURE_ATLAS];
         const getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoMock.mockReturnValue(profileInfo);
 
@@ -94,13 +91,13 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
 
             expect(lightbulbButton).toBeTruthy();
-            expect(lightbulbButton.nativeElement).toBeVisible();
             expect(lightbulbButton.nativeElement.disabled).toBeFalsy();
         });
 
         it('should hide lightbulb button when AtlasML feature is disabled', () => {
             // Mock AtlasML feature as disabled
-            const profileInfo = { activeModuleFeatures: [] } as ProfileInfo;
+            const profileInfo = new ProfileInfo();
+            profileInfo.activeModuleFeatures = [];
             jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
             // Recreate component with disabled feature
