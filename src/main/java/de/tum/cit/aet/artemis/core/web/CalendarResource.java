@@ -87,7 +87,7 @@ public class CalendarResource {
         this.calendarSubscriptionService = calendarSubscriptionService;
     }
 
-    @GetMapping("subscriptionToken")
+    @GetMapping("subscription-token")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getSubscriptionToken() {
         User user = userRepository.getUser();
@@ -95,7 +95,7 @@ public class CalendarResource {
         return ResponseEntity.ok(token);
     }
 
-    @GetMapping("courses/{courseId}/subscription/calendarEvents.ics")
+    @GetMapping("courses/{courseId}/subscription/calendar-events.ics")
     public ResponseEntity<String> getSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
             @RequestParam("filterOptions") Set<CalendarEventFilterOption> filterOptions, @RequestParam("language") Language language) {
         Course course = courseRepository.findByIdElseThrow(courseId);
