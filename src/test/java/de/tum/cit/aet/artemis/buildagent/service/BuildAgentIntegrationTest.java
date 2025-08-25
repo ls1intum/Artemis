@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -105,6 +106,11 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         BuildAgentInformation initialBuildAgent = new BuildAgentInformation(buildAgentDTO, 2, 0, new ArrayList<>(), BuildAgentInformation.BuildAgentStatus.IDLE, null, null,
                 pauseAfterConsecutiveFailures, 2);
         buildAgentInformation.put(memberAddress, initialBuildAgent);
+    }
+
+    @AfterEach
+    void tearDown() {
+        super.shutdownTestExecutor();
     }
 
     @Test

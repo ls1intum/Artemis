@@ -81,6 +81,8 @@ public abstract class AbstractArtemisBuildAgentTest {
 
     protected DockerClient dockerClient;
 
+    private ThreadPoolExecutor testExecutor;
+
     private static DockerClient dockerClientMock;
 
     private static final Path TEST_RESULTS_PATH = Path.of("src", "test", "resources", "test-data", "test-results");
@@ -109,7 +111,7 @@ public abstract class AbstractArtemisBuildAgentTest {
             return null;
         }).when(startContainerCmd).exec();
 
-        ThreadPoolExecutor testExecutor = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+        testExecutor = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
         when(buildAgentConfiguration.getBuildExecutor()).thenReturn(testExecutor);
 
         when(buildAgentConfiguration.getDockerClient()).thenReturn(dockerClientMock);
@@ -215,5 +217,17 @@ public abstract class AbstractArtemisBuildAgentTest {
         return new BuildConfig("dummy-build-script", "dummy-docker-image", "dummy-commit-hash", "assignment-commit-hash", "test-commit-hash", "main", ProgrammingLanguage.JAVA,
                 ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 1, "dummy-assignment-checkout-path", "dummy-test-checkout-path",
                 "dummy-solution-checkout-path", dockerRunConfig);
+    }
+
+    protected void shutdownTestExecutor() {
+        if (testExecutor != null) {
+            testExecutor.shutdownNow();
+            try {
+                testExecutor.awaitTermination(5, TimeUnit.SECONDS);
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 }
