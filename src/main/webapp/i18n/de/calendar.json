@@ -25,6 +25,7 @@
                 "exams": "Klausuren"
             },
             "filterButtonLabel": "Filter",
+            "subscribeButtonLabel": "Abbonieren",
             "todayButtonLabel": "Heute",
             "weekButtonLabel": "Woche",
             "monthButtonLabel": "Monat",

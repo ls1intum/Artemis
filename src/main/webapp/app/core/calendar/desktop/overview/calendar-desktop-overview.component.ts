@@ -7,17 +7,32 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import 'dayjs/esm/locale/en';
 import 'dayjs/esm/locale/de';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarDesktopMonthPresentationComponent } from 'app/core/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
 import { CalendarDesktopWeekPresentationComponent } from 'app/core/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
+import { Popover } from 'primeng/popover';
+import { Checkbox } from 'primeng/checkbox';
+import { FormsModule } from '@angular/forms';
+import { SelectButton } from 'primeng/selectbutton';
 
 @Component({
     selector: 'jhi-calendar-desktop-overview',
-    imports: [CalendarDesktopMonthPresentationComponent, CalendarDesktopWeekPresentationComponent, CalendarEventFilterComponent, NgClass, FaIconComponent, TranslateDirective],
+    imports: [
+        CalendarDesktopMonthPresentationComponent,
+        CalendarDesktopWeekPresentationComponent,
+        CalendarEventFilterComponent,
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        Popover,
+        Checkbox,
+        FormsModule,
+        SelectButton,
+    ],
     templateUrl: './calendar-desktop-overview.component.html',
     styleUrl: './calendar-desktop-overview.component.scss',
 })
@@ -33,10 +48,22 @@ export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
     readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
     readonly faChevronRight = faChevronRight;
     readonly faChevronLeft = faChevronLeft;
+    readonly faCopy = faCopy;
     presentation = signal<'week' | 'month'>('month');
     firstDayOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     firstDayOfCurrentWeek = signal<Dayjs>(dayjs().startOf('isoWeek'));
     isLoading = signal<boolean>(false);
+    includeLectureEvents = true;
+    includeExerciseEvents = true;
+    includeTutorialEvents = true;
+    includeExamEvents = true;
+
+    stateOptions: any[] = [
+        { label: 'English', value: 'ENGLISH' },
+        { label: 'German', value: 'GERMAN' },
+    ];
+
+    value: string = 'ENGLISH';
 
     ngOnInit(): void {
         this.currentLocaleSubscription = this.translateService.onLangChange.subscribe((event) => {

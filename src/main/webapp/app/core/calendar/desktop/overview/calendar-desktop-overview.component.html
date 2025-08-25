@@ -3,6 +3,7 @@
         <span class="h3">{{ getMonthDescription() }}</span>
         <div class="spacer"></div>
         <jhi-calendar-event-filter [variant]="CalendarEventFilterComponentVariant.DESKTOP" />
+        <button #subscriptionButton type="button" class="btn btn-outline-primary" (click)="op.toggle($event)" jhiTranslate="artemisApp.calendar.subscribeButtonLabel"></button>
         <button id="today-button" type="button" class="btn btn-outline-primary" (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
         <div class="btn-group" role="group">
             <button
@@ -50,3 +51,35 @@
         }
     </div>
 </div>
+<p-popover #op>
+    <div class="popover-content">
+        <h5>iCalendar subscription</h5>
+        <div class="subscription-link-copy-section">
+            <input class="subscription-link-field" type="text" value="shareUrl" readonly />
+            <button class="subscription-link-copy-button" type="button">
+                <fa-icon [icon]="faCopy" />
+            </button>
+        </div>
+        Use this URL to subscribe the calendars on your personal devices to the Artemis calendar. Before copying the link, choose a language and select course contents for which
+        you would like to include events:
+        <div class="configure-events-section">
+            <div class="events-checkbox-and-label">
+                <p-checkbox inputId="lectureEventsCheckbox" [(ngModel)]="includeLectureEvents" [binary]="true" />
+                <label for="lectureEventsCheckbox"> Lectures </label>
+            </div>
+            <div class="events-checkbox-and-label">
+                <p-checkbox inputId="exerciseEventsCheckbox" [(ngModel)]="includeExerciseEvents" [binary]="true" />
+                <label for="exerciseEventsCheckbox"> Exercises </label>
+            </div>
+            <div class="events-checkbox-and-label">
+                <p-checkbox inputId="tutorialEventsCheckbox" [(ngModel)]="includeTutorialEvents" [binary]="true" />
+                <label for="tutorialEventsCheckbox"> Tutorials </label>
+            </div>
+            <div class="events-checkbox-and-label">
+                <p-checkbox inputId="examEventsCheckbox" [(ngModel)]="includeExamEvents" [binary]="true" />
+                <label for="examEventsCheckbox"> Exams </label>
+            </div>
+            <p-selectbutton [options]="stateOptions" [(ngModel)]="value" optionLabel="label" optionValue="value" />
+        </div>
+    </div>
+</p-popover>

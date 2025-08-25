@@ -25,6 +25,7 @@
                 "exams": "Exams"
             },
             "filterButtonLabel": "Filter",
+            "subscribeButtonLabel": "Subscribe",
             "todayButtonLabel": "Today",
             "weekButtonLabel": "Week",
             "monthButtonLabel": "Month",
