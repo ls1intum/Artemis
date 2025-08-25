@@ -95,6 +95,23 @@ public class RequestUtilService {
         return request;
     }
 
+    public void postMultipartFileOnly(String path, MockMultipartFile file, HttpStatus expectedStatus) throws Exception {
+        postMultipartFileOnlyWithResponseBody(path, file, null, expectedStatus);
+    }
+
+    public <R> R postMultipartFileOnlyWithResponseBody(String path, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+        var builder = MockMvcRequestBuilders.multipart(new URI(path)).file(file);
+        MvcResult res = performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+
+        if (!expectedStatus.is2xxSuccessful()) {
+            assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
+            return null;
+        }
+
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+    }
+
     /**
      * Sends a multipart post request with a mandatory json file and an optional file.
      *
