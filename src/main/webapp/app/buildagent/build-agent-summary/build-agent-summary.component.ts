@@ -85,8 +85,13 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
 
         // Initialize individual concurrency values
         this.buildAgents.forEach((agent) => {
-            if (agent.buildAgent?.name && !this.concurrencyMap[agent.buildAgent.name]) {
-                this.concurrencyMap[agent.buildAgent.name] = agent.maxNumberOfConcurrentBuildJobs || 1;
+            const name = agent.buildAgent?.name;
+            if (!name) {
+                return;
+            }
+            const serverVal = agent.maxNumberOfConcurrentBuildJobs || 1;
+            if (!(name in this.concurrencyMap) || this.concurrencyMap[name] !== serverVal) {
+                this.concurrencyMap[name] = serverVal;
             }
         });
     }

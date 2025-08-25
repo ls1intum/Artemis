@@ -14,7 +14,7 @@
                     <div class="d-flex align-items-center ms-3">
                         <label class="form-label mb-0 me-2" jhiTranslate="artemisApp.buildAgents.concurrencyLabel"></label>
                         <jhi-number-input
-                            [value]="buildAgent.maxNumberOfConcurrentBuildJobs || 1"
+                            [value]="newConcurrency"
                             [minValue]="1"
                             [maxValue]="buildAgent.maxConcurrentBuildsAllowed"
                             [disabled]="buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED'"
