@@ -70,9 +70,7 @@ export class CourseTrainingQuizComponent {
     selectedAnswerOptions: AnswerOption[] = [];
     dragAndDropMappings: DragAndDropMapping[] = [];
     shortAnswerSubmittedTexts: ShortAnswerSubmittedText[] = [];
-    originalMappings: DragAndDropMapping[] = [];
-    originalShortAnswerSubmittedTexts: ShortAnswerSubmittedText[] = [];
-    questionKey = 0;
+
     /**
      * checks if the current question is the last question
      */
@@ -101,7 +99,6 @@ export class CourseTrainingQuizComponent {
             this.currentIndex.set(this.currentIndex() + 1);
             const question = this.currentQuestion();
             if (question) {
-                this.questionKey++;
                 this.initQuestion(question);
             }
         }
@@ -115,23 +112,19 @@ export class CourseTrainingQuizComponent {
         this.showingResult = false;
         this.submitted = false;
         this.trainingAnswer = new QuizTrainingAnswer();
-
-        this.selectedAnswerOptions = [];
-        this.dragAndDropMappings = [];
-        this.shortAnswerSubmittedTexts = [];
-        /*if (question) {
-                switch (question.type) {
-                    case QuizQuestionType.MULTIPLE_CHOICE:
-                        this.selectedAnswerOptions = [];
-                        break;
-                    case QuizQuestionType.DRAG_AND_DROP:
-                        this.dragAndDropMappings = [];
-                        break;
-                    case QuizQuestionType.SHORT_ANSWER:
-                        this.shortAnswerSubmittedTexts = [];
-                        break;
-                }
-            }*/
+        if (question) {
+            switch (question.type) {
+                case QuizQuestionType.MULTIPLE_CHOICE:
+                    this.selectedAnswerOptions = [];
+                    break;
+                case QuizQuestionType.DRAG_AND_DROP:
+                    this.dragAndDropMappings = [];
+                    break;
+                case QuizQuestionType.SHORT_ANSWER:
+                    this.shortAnswerSubmittedTexts = [];
+                    break;
+            }
+        }
     }
 
     /**
@@ -177,12 +170,6 @@ export class CourseTrainingQuizComponent {
      */
     onSubmit() {
         const questionId = this.currentQuestion()?.id;
-        if (this.currentQuestion()?.type === QuizQuestionType.DRAG_AND_DROP) {
-            this.originalMappings = [...this.dragAndDropMappings];
-        }
-        if (this.currentQuestion()?.type === QuizQuestionType.SHORT_ANSWER) {
-            this.originalShortAnswerSubmittedTexts = [...this.shortAnswerSubmittedTexts];
-        }
         if (!questionId) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
@@ -235,10 +222,10 @@ export class CourseTrainingQuizComponent {
                 this.selectedAnswerOptions = evaluatedAnswer.selectedOptions || [];
                 break;
             case QuizQuestionType.DRAG_AND_DROP:
-                this.dragAndDropMappings = /*evaluatedAnswer.mappings ||*/ this.originalMappings;
+                this.dragAndDropMappings = evaluatedAnswer.mappings || [];
                 break;
             case QuizQuestionType.SHORT_ANSWER:
-                this.shortAnswerSubmittedTexts = /*evaluatedAnswer.submittedTexts ||*/ this.originalShortAnswerSubmittedTexts;
+                this.shortAnswerSubmittedTexts = evaluatedAnswer.submittedTexts || [];
                 break;
         }
     }
