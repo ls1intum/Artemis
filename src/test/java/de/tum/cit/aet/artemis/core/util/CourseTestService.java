@@ -575,17 +575,13 @@ public class CourseTestService {
     }
 
     private void addConversationsToCourse(Course course3) throws Exception {
-        var channelDTO = new ChannelDTO();
-        channelDTO.setName("name test");
-        channelDTO.setIsPublic(true);
-        channelDTO.setIsAnnouncementChannel(false);
-        channelDTO.setDescription("general channel");
+        var channelDTO = new ChannelDTO().withName("name test").withIsPublic(true).withIsAnnouncementChannel(false).withDescription("general channel");
 
         var chat = request.postWithResponseBody("/api/communication/courses/" + course3.getId() + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
         var user = userUtilService.getUserByLogin(userPrefix + "student1");
 
         var participant = new ConversationParticipant();
-        participant.setConversation(conversationRepository.findByIdElseThrow(chat.getId()));
+        participant.setConversation(conversationRepository.findByIdElseThrow(chat.id()));
         participant.setIsModerator(false);
         participant.setUser(user);
         conversationParticipantRepository.save(participant);
@@ -2153,8 +2149,8 @@ public class CourseTestService {
         Course course = createCourseForUserSearchTest();
         // Test: search for all (no login or name) tutors (tutors includes also editors)
         var result = searchUsersTest(course, List.of("tutors"), Optional.empty(), NUMBER_OF_TUTORS + NUMBER_OF_EDITORS, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).hasSize(NUMBER_OF_EDITORS);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(NUMBER_OF_TUTORS);
+        assertThat(result.stream().filter(UserPublicInfoDTO::isEditor)).hasSize(NUMBER_OF_EDITORS);
+        assertThat(result.stream().filter(UserPublicInfoDTO::isTeachingAssistant)).hasSize(NUMBER_OF_TUTORS);
     }
 
     /**
@@ -2164,7 +2160,7 @@ public class CourseTestService {
         var course = createCourseForUserSearchTest();
         // Test: search for all (no login or name) instructors
         var result = searchUsersTest(course, List.of("instructors"), Optional.empty(), NUMBER_OF_INSTRUCTORS, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(NUMBER_OF_INSTRUCTORS);
+        assertThat(result.stream().filter(UserPublicInfoDTO::isInstructor)).hasSize(NUMBER_OF_INSTRUCTORS);
     }
 
     /**
@@ -2193,7 +2189,7 @@ public class CourseTestService {
         // Test: Try to search for students with a long enough search term (at least 3 as students are included)
         // Note: -1 as student1 is the requesting user and will not be returned
         var result = searchUsersTest(course, List.of("students"), Optional.of(userPrefix + "student"), NUMBER_OF_STUDENTS - 1, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent)).hasSize(NUMBER_OF_STUDENTS - 1);
+        assertThat(result.stream().filter(UserPublicInfoDTO::isStudent)).hasSize(NUMBER_OF_STUDENTS - 1);
     }
 
     /**
@@ -2203,9 +2199,9 @@ public class CourseTestService {
         var course = createCourseForUserSearchTest();
         // Test: Try to search for all tutors (tutors includes also editors) and instructors
         var result = searchUsersTest(course, List.of("tutors", "instructors"), Optional.empty(), NUMBER_OF_TUTORS + NUMBER_OF_EDITORS + NUMBER_OF_INSTRUCTORS, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).hasSize(NUMBER_OF_EDITORS);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(NUMBER_OF_TUTORS);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(NUMBER_OF_INSTRUCTORS);
+        assertThat(result.stream().filter(UserPublicInfoDTO::isEditor)).hasSize(NUMBER_OF_EDITORS);
+        assertThat(result.stream().filter(UserPublicInfoDTO::isTeachingAssistant)).hasSize(NUMBER_OF_TUTORS);
+        assertThat(result.stream().filter(UserPublicInfoDTO::isInstructor)).hasSize(NUMBER_OF_INSTRUCTORS);
     }
 
     /**
@@ -2215,9 +2211,9 @@ public class CourseTestService {
         var course = createCourseForUserSearchTest();
         // Test : Try to search for all tutors (tutors includes also editors) and instructors with search term
         var result = searchUsersTest(course, List.of("tutors", "instructors"), Optional.of(userPrefix + "tutor"), NUMBER_OF_TUTORS, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).isEmpty();
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(NUMBER_OF_TUTORS);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).isEmpty();
+        assertThat(result.stream().filter(UserPublicInfoDTO::isEditor)).isEmpty();
+        assertThat(result.stream().filter(UserPublicInfoDTO::isTeachingAssistant)).hasSize(NUMBER_OF_TUTORS);
+        assertThat(result.stream().filter(UserPublicInfoDTO::isInstructor)).isEmpty();
     }
 
     /**
@@ -2239,10 +2235,10 @@ public class CourseTestService {
         // Test: Try to search or all students, tutors (tutors includes also editors)
         // and instructors with a long enough search term (at least 3 as students are included)
         var result = searchUsersTest(course, List.of("students", "tutors", "instructors"), Optional.of(userPrefix + "tutor"), NUMBER_OF_TUTORS, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).isEmpty();
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(NUMBER_OF_TUTORS);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).isEmpty();
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent)).isEmpty();
+        assertThat(result.stream().filter(UserPublicInfoDTO::isEditor)).isEmpty();
+        assertThat(result.stream().filter(UserPublicInfoDTO::isTeachingAssistant)).hasSize(NUMBER_OF_TUTORS);
+        assertThat(result.stream().filter(UserPublicInfoDTO::isInstructor)).isEmpty();
+        assertThat(result.stream().filter(UserPublicInfoDTO::isStudent)).isEmpty();
     }
 
     /**
@@ -2298,7 +2294,7 @@ public class CourseTestService {
         var status = shouldPass ? HttpStatus.OK : HttpStatus.BAD_REQUEST;
         var foundUsers = request.getList("/api/core/courses/" + course.getId() + "/users/search", status, UserPublicInfoDTO.class, queryParameter);
         if (shouldPass) {
-            var foundUsersWithPrefix = foundUsers.stream().filter(user -> user.getLogin().startsWith(userPrefix)).toList();
+            var foundUsersWithPrefix = foundUsers.stream().filter(user -> user.login().startsWith(userPrefix)).toList();
             assertThat(foundUsersWithPrefix).hasSize(expectedSize);
             return foundUsersWithPrefix;
         }

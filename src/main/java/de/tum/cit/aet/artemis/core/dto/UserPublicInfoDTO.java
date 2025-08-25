@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.dto;
 
-import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -11,159 +9,23 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * A DTO representing a user with the minimal information allowed to be seen by other users in a course
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class UserPublicInfoDTO {
-
-    @SuppressWarnings("PMD.ShortVariable")
-    private Long id;
-
-    // we need this to differentiate between users with the same name
-    private String login;
-
-    private String name;
-
-    private String firstName;
-
-    private String lastName;
-
-    private String imageUrl;
-
-    private Boolean isInstructor;
-
-    private Boolean isEditor;
-
-    private Boolean isTeachingAssistant;
-
-    private Boolean isStudent;
-
-    public UserPublicInfoDTO() {
-        // Empty constructor needed for Jackson.
-    }
+public record UserPublicInfoDTO(@SuppressWarnings("PMD.ShortVariable") Long id, String login, String name, String firstName, String lastName, String imageUrl, Boolean isInstructor,
+        Boolean isEditor, Boolean isTeachingAssistant, Boolean isStudent) {
 
     public UserPublicInfoDTO(User user) {
-        this.id = user.getId();
-        this.login = user.getLogin();
-        this.name = user.getName();
-        this.firstName = user.getFirstName();
-        this.lastName = user.getLastName();
-        this.imageUrl = user.getImageUrl();
+        this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getImageUrl(), null, null, null, null);
     }
 
     /**
-     * Assigns the transient fields isInstructor, isEditor, isTeachingAssistant and isStudent based on the given course and user
+     * Creates a new UserPublicInfoDTO with role properties assigned based on the given course and user
      *
-     * @param course            the course to check the roles for
-     * @param user              the user to check the roles for
-     * @param userPublicInfoDTO the DTO to assign the roles to
+     * @param course the course to check the roles for
+     * @param user   the user to check the roles for
+     * @return a new UserPublicInfoDTO with assigned roles
      */
-    public static void assignRoleProperties(Course course, User user, UserPublicInfoDTO userPublicInfoDTO) {
-        userPublicInfoDTO.setIsStudent(user.getGroups().contains(course.getStudentGroupName()));
-        userPublicInfoDTO.setIsTeachingAssistant(user.getGroups().contains(course.getTeachingAssistantGroupName()));
-        userPublicInfoDTO.setIsInstructor(user.getGroups().contains(course.getInstructorGroupName()));
-        userPublicInfoDTO.setIsEditor(user.getGroups().contains(course.getEditorGroupName()));
-    }
-
-    @SuppressWarnings("PMD.ShortVariable")
-    public Long getId() {
-        return id;
-    }
-
-    @SuppressWarnings("PMD.ShortVariable")
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getLogin() {
-        return login;
-    }
-
-    public void setLogin(String login) {
-        this.login = login;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-    public Boolean getIsInstructor() {
-        return isInstructor;
-    }
-
-    public void setIsInstructor(Boolean instructor) {
-        isInstructor = instructor;
-    }
-
-    public Boolean getIsEditor() {
-        return isEditor;
-    }
-
-    public void setIsEditor(Boolean editor) {
-        isEditor = editor;
-    }
-
-    public Boolean getIsTeachingAssistant() {
-        return isTeachingAssistant;
-    }
-
-    public void setIsTeachingAssistant(Boolean teachingAssistant) {
-        isTeachingAssistant = teachingAssistant;
-    }
-
-    public Boolean getIsStudent() {
-        return isStudent;
-    }
-
-    public void setIsStudent(Boolean student) {
-        isStudent = student;
-    }
-
-    @Override
-    public boolean equals(Object object) {
-        if (this == object) {
-            return true;
-        }
-        if (!(object instanceof UserPublicInfoDTO that)) {
-            return false;
-        }
-        return id.equals(that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "UserPublicInfoDTO{" + "id=" + id + ", login='" + login + '\'' + ", name='" + name + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\''
-                + ", imageUrl='" + imageUrl + '\'' + ", isInstructor=" + isInstructor + ", isEditor=" + isEditor + ", isTeachingAssistant=" + isTeachingAssistant + ", isStudent="
-                + isStudent + '}';
+    public UserPublicInfoDTO withRoles(Course course, User user) {
+        return new UserPublicInfoDTO(this.id, this.login, this.name, this.firstName, this.lastName, this.imageUrl, user.getGroups().contains(course.getInstructorGroupName()),
+                user.getGroups().contains(course.getEditorGroupName()), user.getGroups().contains(course.getTeachingAssistantGroupName()),
+                user.getGroups().contains(course.getStudentGroupName()));
     }
 }

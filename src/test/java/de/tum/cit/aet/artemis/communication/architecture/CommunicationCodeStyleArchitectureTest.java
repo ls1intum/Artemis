@@ -10,11 +10,6 @@ class CommunicationCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest
     }
 
     @Override
-    protected int dtoAsAnnotatedRecordThreshold() {
-        return 7;
-    }
-
-    @Override
     protected int dtoNameEndingThreshold() {
         return 6;
     }
