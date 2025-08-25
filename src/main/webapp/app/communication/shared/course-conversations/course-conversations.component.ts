@@ -469,6 +469,26 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Clears search results and reverts to the original messages view.
+     * This is called when the refresh button is clicked to reset the search state.
+     */
+    clearSearchAndRevertToOriginalView() {
+        // Clear the global search component
+        this.globalSearchComponent()?.clearSearch();
+
+        // Reset the course-wide search configuration
+        this.courseWideSearchConfig.searchTerm = '';
+        this.courseWideSearchConfig.selectedConversations = [];
+        this.courseWideSearchConfig.selectedAuthors = [];
+
+        // Trigger search with empty config to revert to original view
+        this.courseWideSearch()?.onSearch();
+
+        // Update query parameters to reflect the cleared search
+        this.updateQueryParameters();
+    }
+
+    /**
      * Refreshes and prepares the sidebar data used for rendering channel and chat groups.
      *
      * - Forces MetisConversationService to refresh data (e.g., conversations).
