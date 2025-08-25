@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
@@ -40,6 +41,9 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
     private final Path jenkinsPath = Path.of("templates", "jenkins", "jenkins.txt");
 
     private final List<Path> jenkinsFilesystemPaths = List.of(Path.of("templates", "jenkins", "p1.txt"), Path.of("templates", "jenkins", "p2.txt"));
+
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
 
     @AfterEach
     void cleanup() throws IOException {
@@ -173,7 +177,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest
         doReturn(resource).when(resourceLoader).getResource(anyString());
 
         // Instantiate the class under test and invoke the method.
-        ResourceLoaderService resourceLoaderService = new ResourceLoaderService(resourceLoader);
+        ResourceLoaderService resourceLoaderService = new ResourceLoaderService(resourceLoader, tempPath);
         Path path = Path.of("path", "to", "resource.txt");
         Path resourceFilePath = resourceLoaderService.getResourceFilePath(path);
 
