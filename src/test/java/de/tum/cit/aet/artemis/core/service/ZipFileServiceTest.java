@@ -11,10 +11,9 @@ import java.util.function.Predicate;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 
 import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -60,7 +59,8 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testCreateZipFileWithFolderContentInMemory(@TempDir Path testDir) throws IOException, Exception {
+    void testCreateZipFileWithFolderContentInMemory() throws Exception {
+        Path testDir = Files.createTempDirectory(tempPath, "test-dir");
         Path testFile = Files.createTempFile(testDir, "test", ".txt");
         FileUtils.writeByteArrayToFile(testFile.toFile(), "test content".getBytes());
 
