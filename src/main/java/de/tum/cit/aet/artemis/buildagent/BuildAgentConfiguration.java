@@ -79,11 +79,12 @@ public class BuildAgentConfiguration {
      */
     @PostConstruct
     public void onApplicationReady() {
-        buildExecutor = createBuildExecutor();
-        dockerClient = createDockerClient();
         if (concurrentBuildsMaximum <= 0) {
             concurrentBuildsMaximum = Runtime.getRuntime().availableProcessors();
+            log.info("concurrentBuildsMaximum was <= 0, set to available processors: {}", concurrentBuildsMaximum);
         }
+        buildExecutor = createBuildExecutor();
+        dockerClient = createDockerClient();
     }
 
     public ThreadPoolExecutor getBuildExecutor() {
@@ -210,12 +211,22 @@ public class BuildAgentConfiguration {
      * @return The executor service.
      */
     private ThreadPoolExecutor createBuildExecutor() {
-        // Use preserved size if available, otherwise calculate
         int poolSize = threadPoolSize.get();
+
+        // Use preserved size if available, otherwise calculate
         if (poolSize == 0) {
-            poolSize = specifyConcurrentBuilds ? concurrentBuildsDefault : Math.max(1, (Runtime.getRuntime().availableProcessors() - 2) / 2);
-            threadPoolSize.set(poolSize);
+            poolSize = specifyConcurrentBuilds ? concurrentBuildsDefault : concurrentBuildsMaximum;
         }
+
+        if (poolSize > concurrentBuildsMaximum) {
+            poolSize = concurrentBuildsMaximum;
+            log.info("Default pool size was bigger than maximum, setting default to maximum: {}", poolSize);
+        }
+
+        threadPoolSize.set(poolSize);
+
+        log.info("Creating build executor with pool size: {} (specifyConcurrentBuilds: {}, default: {}, max: {})", poolSize, specifyConcurrentBuilds, concurrentBuildsDefault,
+                concurrentBuildsMaximum);
 
         ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
                 .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread {}", thread.getName(), exception)).build();
