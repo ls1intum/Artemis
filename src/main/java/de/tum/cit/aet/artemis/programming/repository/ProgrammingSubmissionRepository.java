@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -160,4 +162,33 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     default ProgrammingSubmission findByResultIdElseThrow(long resultId) {
         return getValueElseThrow(findByResultId(resultId));
     }
+
+    /**
+     * <b>⚠️ ATTENTION: This query is expensive and should be only used in a scheduled job to avoid performance issues in the application.</b>
+     * <br>
+     * Find programming submissions where the latest submission per participation is older than the given start time but not older than the given end time
+     * and does NOT have any results. Used for retriggering builds for submissions that did not get a result due to some hiccup in the CI system.
+     * <br>
+     * This query ensures that either the latest submission for a participation is returned (if it meets all criteria),
+     * or no submission is returned for that participation at all. It does NOT return older submissions even if they are in the time range.
+     *
+     * @param startTime the earliest time to consider (oldest submissions)
+     * @param endTime   the latest time to consider (newest submissions)
+     * @param pageable  pagination information for slice-based retrieval
+     * @return a slice of absolute latest programming submissions per participation without results in the given time range
+     */
+    @Query("""
+            SELECT s
+            FROM ProgrammingSubmission s
+            WHERE s.submissionDate >= :startTime
+                AND s.submissionDate <= :endTime
+                AND s.results IS EMPTY
+                AND s.submissionDate = (
+                    SELECT MAX(s2.submissionDate)
+                    FROM ProgrammingSubmission s2
+                    WHERE s2.participation.id = s.participation.id
+                )
+            """)
+    Slice<ProgrammingSubmission> findLatestProgrammingSubmissionsWithoutResultsInTimeRange(@Param("startTime") ZonedDateTime startTime, @Param("endTime") ZonedDateTime endTime,
+            Pageable pageable);
 }
