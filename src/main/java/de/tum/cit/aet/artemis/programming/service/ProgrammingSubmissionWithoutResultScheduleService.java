@@ -39,7 +39,7 @@ public class ProgrammingSubmissionWithoutResultScheduleService {
     }
 
     /**
-     * Find the latest programming submissions per participation older than 1 hour but not older than 2 days without results and retrigger their builds.
+     * Find the latest programming submissions per participation older than 2 hours but not older than 2 days without results and retrigger their builds.
      * Only the most recent submission per participation in the time range is considered to avoid spamming the build system.
      * By default, this method is scheduled to run every day at 2 AM.
      */
