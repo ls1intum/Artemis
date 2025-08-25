@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -172,6 +173,17 @@ public class ExerciseDateService {
         else {
             return Optional.ofNullable(exercise.getDueDate());
         }
+    }
+
+    /**
+     * Checks if the current time is after the assessment due date of the course exercise and manual results can be published to the student.
+     * NOTE: not applicable for exam exercises, as the assessment due date is not used there.
+     *
+     * @param exercise to check the assessment due date
+     * @return true if the assessment due date is in the past or if the exercise has no assessment due date.
+     */
+    public static boolean isAfterAssessmentDueDate(ExerciseCourseScoreDTO exercise) {
+        return exercise.assessmentDueDate() == null || ZonedDateTime.now().isAfter(exercise.assessmentDueDate());
     }
 
     /**

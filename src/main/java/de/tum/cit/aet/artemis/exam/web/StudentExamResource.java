@@ -71,6 +71,7 @@ import de.tum.cit.aet.artemis.exam.service.StudentExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
@@ -175,13 +176,10 @@ public class StudentExamResource {
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndSessionsAndStudentParticipationsElseThrow(studentExamId);
-
         examService.loadQuizExercisesForStudentExam(studentExam);
-
         // fetch participations, latest submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, true);
-
         // fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
 
@@ -190,9 +188,16 @@ public class StudentExamResource {
             // add participation with submission and result to each exercise
             examService.filterParticipationForExercise(studentExam, exercise, participations, true);
         }
-        studentExam.getUser().setVisibleRegistrationNumber();
 
-        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, participations);
+        studentExam.getUser().setVisibleRegistrationNumber();
+        Set<ExamGradeScoreDTO> examGrades;
+        if (studentExam.isTestRun()) {
+            examGrades = studentParticipationRepository.findGradesByExamIdAndStudentIdForTestRun(examId, studentExam.getUser().getId());
+        }
+        else {
+            examGrades = studentParticipationRepository.findGradesByExamIdAndStudentId(examId, studentExam.getUser().getId());
+        }
+        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, examGrades);
 
         return ResponseEntity.ok(studentExamWithGradeDTO);
     }

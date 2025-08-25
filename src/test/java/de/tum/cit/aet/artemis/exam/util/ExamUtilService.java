@@ -247,18 +247,18 @@ public class ExamUtilService {
             Submission submission = null;
             switch (exercise) {
                 case ModelingExercise modelingExercise -> submission = modelingExerciseUtilService.addModelingSubmission(modelingExercise,
-                        ParticipationFactory.generateModelingSubmission("", false), instructor.getLogin());
+                        ParticipationFactory.generateModelingSubmission("", true), instructor.getLogin());
                 case TextExercise textExercise ->
-                    submission = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("", null, false), instructor.getLogin());
+                    submission = textExerciseUtilService.saveTextSubmission(textExercise, ParticipationFactory.generateTextSubmission("", null, true), instructor.getLogin());
                 case QuizExercise quizExercise ->
-                    submission = quizExerciseUtilService.saveQuizSubmission(quizExercise, ParticipationFactory.generateQuizSubmission(false), instructor.getLogin());
+                    submission = quizExerciseUtilService.saveQuizSubmission(quizExercise, ParticipationFactory.generateQuizSubmission(true), instructor.getLogin());
                 case ProgrammingExercise programmingExercise -> {
                     submission = new ProgrammingSubmission().submitted(true);
                     addProgrammingSubmission(programmingExercise, (ProgrammingSubmission) submission, instructor.getLogin());
                     submission = submissionRepository.save(submission);
                 }
                 case FileUploadExercise fileUploadExercise ->
-                    submission = saveFileUploadSubmission(fileUploadExercise, ParticipationFactory.generateFileUploadSubmission(false), instructor.getLogin());
+                    submission = saveFileUploadSubmission(fileUploadExercise, ParticipationFactory.generateFileUploadSubmission(true), instructor.getLogin());
                 default -> {
                 }
             }

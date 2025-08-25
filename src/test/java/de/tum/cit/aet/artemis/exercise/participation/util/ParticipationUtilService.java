@@ -230,6 +230,7 @@ public class ParticipationUtilService {
     public Result createSubmissionAndResult(StudentParticipation studentParticipation, long scoreAwarded, boolean rated) {
         Exercise exercise = studentParticipation.getExercise();
         var submission = getSubmission(studentParticipation, exercise);
+        submission.setSubmissionDate(ZonedDateTime.now().minusWeeks(1));
         submission = submissionRepository.save(submission);
 
         Result result = ParticipationFactory.generateResult(rated, scoreAwarded);
@@ -447,7 +448,7 @@ public class ParticipationUtilService {
      * @return The created Result
      */
     public Result addResultToSubmission(Participation participation, Submission submission) {
-        Result result = new Result().submission(submission).successful(true).score(100D).rated(true);
+        Result result = new Result().submission(submission).successful(true).score(100D).rated(true).completionDate(ZonedDateTime.now());
         result.setSubmission(submission);
         result = resultRepo.save(result);
         submission.addResult(result);

@@ -47,4 +47,19 @@ public interface StudentParticipationTestRepository extends StudentParticipation
             WHERE p.id = :participationId
             """)
     Optional<StudentParticipation> findWithEagerResultsAndFeedbackById(@Param("participationId") long participationId);
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN p.team.students ts
+            WHERE p.exercise.course.id = :courseId
+                AND (p.student.id = :studentId
+                    OR ts.id = :studentId)
+                AND (r.rated IS NULL
+                    OR r.rated = TRUE)
+            """)
+    List<StudentParticipation> findByCourseIdAndStudentIdWithEagerRatedResults(@Param("courseId") long courseId, @Param("studentId") long studentId);
+
 }

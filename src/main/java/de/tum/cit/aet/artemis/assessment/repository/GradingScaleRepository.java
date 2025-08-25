@@ -203,6 +203,11 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
         return this.matchPercentageToGradeStep(percentage, gradeSteps);
     }
 
+    default GradeStep matchPercentageToGradeStep(double percentage, GradingScale gradingScale) {
+        Set<GradeStep> gradeSteps = gradingScale.getGradeSteps();
+        return this.matchPercentageToGradeStep(percentage, gradeSteps);
+    }
+
     /**
      * @param percentage the grade percentage to be mapped
      * @param gradeSteps the grade steps of a grading scale

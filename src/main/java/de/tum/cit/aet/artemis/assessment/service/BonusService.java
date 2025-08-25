@@ -62,7 +62,7 @@ public class BonusService {
     public BonusExampleDTO calculateGradeWithBonus(IBonusStrategy bonusStrategy, GradingScale bonusToGradingScale, Double bonusToAchievedPoints, GradingScale sourceGradingScale,
             Double sourceAchievedPoints, Double sourceReachablePoints, double calculationSign) {
         double bonusToReachablePoints = bonusToGradingScale.getMaxPoints();
-        GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * bonusToAchievedPoints / bonusToReachablePoints, bonusToGradingScale.getId());
+        GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * bonusToAchievedPoints / bonusToReachablePoints, bonusToGradingScale);
 
         if (!bonusToRawGradeStep.getIsPassingGrade() || sourceGradingScale == null) {
             return new BonusExampleDTO(bonusToAchievedPoints, sourceAchievedPoints, bonusToRawGradeStep.getGradeName(), 0.0, bonusToAchievedPoints,
