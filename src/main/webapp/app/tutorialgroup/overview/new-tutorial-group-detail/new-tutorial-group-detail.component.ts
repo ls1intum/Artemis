@@ -9,12 +9,12 @@ import { faBuildingColumns, faCalendar, faCalendarDay, faClock, faFlag, faMapPin
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-
-// TODO: translate info-labels in template
+import { SelectButton } from 'primeng/selectbutton';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-new-tutorial-group-detail',
-    imports: [ProfilePictureComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [ProfilePictureComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, SelectButton, FormsModule],
     templateUrl: './new-tutorial-group-detail.component.html',
     styleUrl: './new-tutorial-group-detail.component.scss',
 })
@@ -116,4 +116,11 @@ export class NewTutorialGroupDetailComponent {
     });
 
     nextSessionLocation = computed<string>(() => this.nextSession()?.location ?? '-');
+
+    stateOptions: any[] = [
+        { label: 'One-Way', value: 'one-way' },
+        { label: 'Return', value: 'return' },
+    ];
+
+    value: string = 'off';
 }
