@@ -42,13 +42,11 @@ import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/prog
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { PROFILE_IRIS } from 'app/app.constants';
-import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ActivatedRoute } from '@angular/router';
 import { ConsistencyCheckAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check.action';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -90,12 +88,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     artemisIntelligenceActions = computed(() =>
         this.irisEnabled
             ? [
-                  new RewriteAction(
-                      this.artemisIntelligenceService,
-                      RewritingVariant.PROBLEM_STATEMENT,
-                      this.courseId,
-                      signal<RewriteResult>({ result: '', inconsistencies: undefined, suggestions: undefined, improvement: undefined }),
-                  ),
+                  new RewriteAction(this.artemisIntelligenceService, this.courseId),
                   ...(this.exerciseId ? [new ConsistencyCheckAction(this.artemisIntelligenceService, this.exerciseId, this.renderedConsistencyCheckResultMarkdown)] : []),
               ]
             : [],
