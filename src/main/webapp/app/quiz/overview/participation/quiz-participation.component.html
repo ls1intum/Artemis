@@ -213,12 +213,12 @@
                             <div>
                                 <span ngbTooltip="{{ submission.submissionDate | artemisDate: 'long' : true }}" placement="right auto">
                                     @if (submission.submitted) {
-                                        <span jhiTranslate="artemisApp.quizExercise.submitted" [ngClass]="{ 'colon-suffix': !isMobile }"></span>
+                                        <span jhiTranslate="artemisApp.quizExercise.submitted" [ngClass]="{ 'colon-suffix': !isMobile() }"></span>
                                     } @else {
-                                        <span jhiTranslate="artemisApp.quizExercise.lastSaved" [ngClass]="{ 'colon-suffix': !isMobile }"></span>
+                                        <span jhiTranslate="artemisApp.quizExercise.lastSaved" [ngClass]="{ 'colon-suffix': !isMobile() }"></span>
                                     }
                                     <!-- Only display save and submission hint without time stamps for mobile -->
-                                    @if (!isMobile) {
+                                    @if (!isMobile()) {
                                         @if (justSaved) {
                                             <span jhiTranslate="justNow"></span>
                                         } @else {
