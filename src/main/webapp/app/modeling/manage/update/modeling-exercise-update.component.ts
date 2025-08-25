@@ -294,6 +294,34 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.calculateFormSectionStatus();
     }
 
+    /**
+     * Handles Enter key navigation - moves to next input field
+     * Only applies to form inputs, not Apollon Editor elements
+     */
+    handleEnterKeyNavigation(event: Event): void {
+        event.preventDefault();
+
+        const activeElement = document.activeElement as HTMLElement;
+
+        // Check if we're inside Apollon Editor - if so, don't interfere
+        const apollonContainer = document.querySelector('.apollon-container');
+        if (apollonContainer?.contains(activeElement)) {
+            return; // Let Apollon handle its own navigation
+        }
+
+        // Only handle navigation for regular form inputs outside Apollon
+        const focusableElements = Array.from(
+            document.querySelectorAll('input:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly]), select:not([disabled])'),
+        ) as HTMLElement[];
+
+        const currentIndex = focusableElements.indexOf(activeElement);
+
+        // Move to next element, or stay on current if it's the last
+        if (currentIndex >= 0 && currentIndex < focusableElements.length - 1) {
+            focusableElements[currentIndex + 1].focus();
+        }
+    }
+
     save() {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
         this.isSaving = true;
