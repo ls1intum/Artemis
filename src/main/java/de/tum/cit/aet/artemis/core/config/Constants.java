@@ -371,6 +371,11 @@ public final class Constants {
     public static final String PROFILE_THEIA = "theia";
 
     /**
+     * the sharing profile
+     */
+    public static final String PROFILE_SHARING = "sharing";
+
+    /**
      * The name of the profile for integration independent tests
      */
     public static final String PROFILE_TEST_INDEPENDENT = "test-independent-integration";
