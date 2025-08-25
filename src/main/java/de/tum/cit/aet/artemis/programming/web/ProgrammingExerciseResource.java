@@ -87,7 +87,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
@@ -157,8 +156,6 @@ public class ProgrammingExerciseResource {
 
     private final CourseRepository courseRepository;
 
-    private final GitService gitService;
-
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
@@ -182,7 +179,7 @@ public class ProgrammingExerciseResource {
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseTaskService programmingExerciseTaskService,
             StudentParticipationRepository studentParticipationRepository, StaticCodeAnalysisService staticCodeAnalysisService,
-            GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService, AuxiliaryRepositoryService auxiliaryRepositoryService,
+            GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ChannelRepository channelRepository,
             Optional<AthenaApi> athenaApi, Environment environment, RepositoryCheckoutService repositoryCheckoutService, Optional<SlideApi> slideApi,
@@ -206,7 +203,6 @@ public class ProgrammingExerciseResource {
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.courseRepository = courseRepository;
-        this.gitService = gitService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -728,10 +724,8 @@ public class ProgrammingExerciseResource {
      * ProgrammingExerciseResetOptionsDTO for an exercise given an exerciseId.
      * <p>
      * The available operations include:
-     * 1. deleteBuildPlans: Deleting all student build plans (except BASE/SOLUTION).
-     * 2. deleteRepositories: Deleting all student repositories (requires: 1. deleteBuildPlans == true).
-     * 3. deleteParticipationsSubmissionsAndResults: Deleting all participations, submissions, and results.
-     * 4. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI / Aeolus, this will reset the customized build plans).
+     * 1. deleteParticipationsSubmissionsAndResults: Deleting all participations, submissions, and results (also deletes repositories and build plans).
+     * 2. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI / Aeolus, this will reset the customized build plans).
      *
      * @param exerciseId                         - Id of the programming exercise to reset.
      * @param programmingExerciseResetOptionsDTO - Data Transfer Object specifying which operations to perform during the exercise reset.
@@ -754,12 +748,7 @@ public class ProgrammingExerciseResource {
         if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
             exerciseDeletionService.reset(programmingExercise);
-        }
-
-        if (programmingExerciseResetOptionsDTO.deleteBuildPlans()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
-            boolean deleteRepositories = programmingExerciseResetOptionsDTO.deleteRepositories();
-            exerciseDeletionService.cleanup(exerciseId, deleteRepositories);
+            exerciseDeletionService.cleanup(exerciseId);
         }
 
         return ResponseEntity.ok().build();
