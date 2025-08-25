@@ -1,18 +1,20 @@
 import { Component, input, output } from '@angular/core';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-number-input',
     templateUrl: './number-input.component.html',
     styleUrl: './number-input.component.scss',
-    imports: [FaIconComponent],
+    imports: [FaIconComponent, NgbTooltip],
 })
 export class NumberInputComponent {
     value = input.required<number>();
     minValue = input<number>(Number.MIN_SAFE_INTEGER);
     maxValue = input<number>(Number.MAX_SAFE_INTEGER);
     disabled = input<boolean>(false);
+    disabledTooltip = input<string>('');
     valueChange = output<number>();
 
     // Icons

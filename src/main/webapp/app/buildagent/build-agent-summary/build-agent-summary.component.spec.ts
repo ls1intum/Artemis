@@ -16,6 +16,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('BuildAgentSummaryComponent', () => {
     let component: BuildAgentSummaryComponent;
@@ -125,6 +126,7 @@ describe('BuildAgentSummaryComponent', () => {
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(AlertService),
+                MockProvider(TranslateService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

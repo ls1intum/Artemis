@@ -107,6 +107,7 @@
                                     [minValue]="1"
                                     [maxValue]="row.maxConcurrentBuildsAllowed"
                                     [disabled]="row.status === 'PAUSED' || row.status === 'SELF_PAUSED'"
+                                    [disabledTooltip]="getConcurrencyDisabledTooltip(row)"
                                     (valueChange)="onConcurrencyChange(row.buildAgent?.name, $event)"
                                 />
                             </div>

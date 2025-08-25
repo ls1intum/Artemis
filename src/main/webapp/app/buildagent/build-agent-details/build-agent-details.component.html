@@ -18,6 +18,7 @@
                             [minValue]="1"
                             [maxValue]="buildAgent.maxConcurrentBuildsAllowed"
                             [disabled]="buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED'"
+                            [disabledTooltip]="getConcurrencyDisabledTooltip()"
                             (valueChange)="onConcurrencyChange($event)"
                         />
                     </div>

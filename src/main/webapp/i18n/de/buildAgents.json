@@ -41,6 +41,7 @@
             "resumeAll": "Alle Agenten fortsetzen",
             "concurrency": "Parallelität",
             "concurrencyLabel": "Parallele Jobs:",
+            "concurrencyDisabledTooltip": "Parallelität kann nicht angepasst werden, während der Build-Agent pausiert ist. Starten Sie den Agent neu, um die Anpassung zu aktivieren.",
             "pauseAllWarning": "Du bist dabei, alle Build-Agenten anzuhalten. Dies wird verhindern, dass sie neue Build-Jobs verarbeiten.\nBist du sicher, dass du fortfahren möchtest?",
             "clearDistributedData": {
                 "title": "Verteilte Daten löschen",

@@ -41,6 +41,7 @@
             "resumeAll": "Resume All Agents",
             "concurrency": "Concurrency",
             "concurrencyLabel": "Max # concurrent build jobs:",
+            "concurrencyDisabledTooltip": "Cannot adjust concurrency while build agent is paused. Resume the agent to enable adjustment.",
             "pauseAllWarning": "You are about to pause all build agents. This will prevent them from processing any new build jobs.\nAre you sure you want to proceed?",
             "clearDistributedData": {
                 "title": "Clear Distributed Data",

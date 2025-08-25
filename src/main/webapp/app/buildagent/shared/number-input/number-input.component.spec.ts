@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NumberInputComponent } from './number-input.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommonModule } from '@angular/common';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('NumberInputComponent', () => {
     let component: NumberInputComponent;
@@ -9,7 +10,7 @@ describe('NumberInputComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [NumberInputComponent, FontAwesomeModule, CommonModule],
+            imports: [NumberInputComponent, FontAwesomeModule, CommonModule, NgbModule],
         }).compileComponents();
     });
 
@@ -158,7 +159,7 @@ describe('NumberInputComponent', () => {
         expect(input.value).toBe('5');
     });
 
-    it('should disable buttons when component is disabled', () => {
+    it('should hide buttons when component is disabled', () => {
         fixture.componentRef.setInput('disabled', true);
         fixture.detectChanges();
 
@@ -167,9 +168,33 @@ describe('NumberInputComponent', () => {
         const decrementButton = compiled.querySelector('button[aria-label="Decrease value"]');
         const input = compiled.querySelector('input[type="number"]');
 
-        expect(incrementButton.disabled).toBeTrue();
-        expect(decrementButton.disabled).toBeTrue();
+        expect(incrementButton).toBeNull();
+        expect(decrementButton).toBeNull();
         expect(input.disabled).toBeTrue();
+    });
+
+    it('should show tooltip when disabled', () => {
+        fixture.componentRef.setInput('disabled', true);
+        fixture.componentRef.setInput('disabledTooltip', 'Test tooltip');
+        fixture.detectChanges();
+
+        const compiled = fixture.nativeElement;
+        const wrapper = compiled.querySelector('.number-input-wrapper');
+
+        expect(wrapper).not.toBeNull();
+        expect(component.disabledTooltip()).toBe('Test tooltip');
+    });
+
+    it('should not show tooltip when not disabled', () => {
+        fixture.componentRef.setInput('disabled', false);
+        fixture.componentRef.setInput('disabledTooltip', 'Test tooltip');
+        fixture.detectChanges();
+
+        const compiled = fixture.nativeElement;
+        const wrapper = compiled.querySelector('.number-input-wrapper');
+
+        expect(wrapper).not.toBeNull();
+        expect(component.disabledTooltip()).toBe('Test tooltip');
     });
 
     it('should disable buttons when at min/max values', () => {

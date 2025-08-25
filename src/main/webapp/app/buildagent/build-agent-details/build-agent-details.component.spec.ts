@@ -21,6 +21,7 @@ import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.s
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('BuildAgentDetailsComponent', () => {
     let component: BuildAgentDetailsComponent;
@@ -192,6 +193,7 @@ describe('BuildAgentDetailsComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(AlertService),
+                MockProvider(TranslateService),
             ],
         }).compileComponents();
 

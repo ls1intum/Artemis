@@ -44,6 +44,7 @@ import dayjs from 'dayjs/esm';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';
 import { NumberInputComponent } from 'app/buildagent/shared/number-input/number-input.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-build-agent-details',
@@ -77,6 +78,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private readonly buildQueueService = inject(BuildQueueService);
     private readonly alertService = inject(AlertService);
     private readonly modalService = inject(NgbModal);
+    private readonly translateService = inject(TranslateService);
 
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
     buildAgent: BuildAgentInformation;
@@ -430,6 +432,13 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     dismissConcurrencyResetWarning() {
         this.concurrencyResetWarningDismissed = true;
         sessionStorage.setItem('concurrencyResetWarningDismissed', 'true');
+    }
+
+    getConcurrencyDisabledTooltip(): string {
+        if (this.buildAgent && (this.buildAgent.status === 'PAUSED' || this.buildAgent.status === 'SELF_PAUSED')) {
+            return this.translateService.instant('artemisApp.buildAgents.concurrencyDisabledTooltip');
+        }
+        return '';
     }
 
     private loadConcurrencyResetWarningState() {

@@ -17,6 +17,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { FormsModule } from '@angular/forms';
 import { NumberInputComponent } from 'app/buildagent/shared/number-input/number-input.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-build-agents',
@@ -31,6 +32,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly router = inject(Router);
     private readonly modalService = inject(NgbModal);
     private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
 
     buildAgents: BuildAgentInformation[] = [];
     buildCapacity = 0;
@@ -243,5 +245,12 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
         if (dismissed === 'true') {
             this.concurrencyResetWarningDismissed = true;
         }
+    }
+
+    getConcurrencyDisabledTooltip(buildAgent: BuildAgentInformation): string {
+        if (buildAgent && (buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED')) {
+            return this.translateService.instant('artemisApp.buildAgents.concurrencyDisabledTooltip');
+        }
+        return '';
     }
 }
