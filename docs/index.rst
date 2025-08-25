@@ -51,6 +51,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    dev/setup
    dev/development-process/development-process
    dev/guidelines
+   dev/guidelines/reviewer-guidelines
    dev/system-design
    dev/migration
    dev/use-local-user-management
