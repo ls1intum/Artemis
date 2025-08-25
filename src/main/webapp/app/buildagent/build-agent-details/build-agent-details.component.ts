@@ -1,7 +1,19 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
-import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faPause, faPauseCircle, faPlay, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
+import {
+    faCircleCheck,
+    faCog,
+    faExclamationCircle,
+    faExclamationTriangle,
+    faFilter,
+    faPause,
+    faPauseCircle,
+    faPlay,
+    faSort,
+    faSync,
+    faTimes,
+} from '@fortawesome/free-solid-svg-icons';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -31,6 +43,8 @@ import { FormsModule } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';
+import { NumberInputComponent } from 'app/buildagent/shared/number-input/number-input.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-build-agent-details',
@@ -54,6 +68,7 @@ import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/
         NgxDatatableModule,
         FormsModule,
         SliceNavigatorComponent,
+        NumberInputComponent,
     ],
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
@@ -63,6 +78,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private readonly buildQueueService = inject(BuildQueueService);
     private readonly alertService = inject(AlertService);
     private readonly modalService = inject(NgbModal);
+    private readonly translateService = inject(TranslateService);
 
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
     buildAgent: BuildAgentInformation;
@@ -83,6 +99,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     hasMore = signal(true);
 
+    newConcurrency: number;
+    concurrencyResetWarningDismissed = false;
+
     //icons
     readonly faCircleCheck = faCircleCheck;
     readonly faExclamationCircle = faExclamationCircle;
@@ -93,7 +112,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     readonly faPlay = faPlay;
     readonly faSort = faSort;
     readonly faSync = faSync;
-
+    readonly faCog = faCog;
     readonly paginationConfig: PaginationConfig = {
         pageSize: ITEMS_PER_PAGE,
         initialPage: 1,
@@ -122,6 +141,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             }, 1000); // 1 second
             this.load();
             this.initWebsocketSubscription();
+            this.loadConcurrencyResetWarningState();
             this.searchSubscription = this.search
                 .pipe(
                     debounceTime(UI_RELOAD_TIME),
@@ -190,6 +210,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     private updateBuildAgent(buildAgent: BuildAgentInformation) {
         this.buildAgent = buildAgent;
+        this.newConcurrency = this.buildAgent.maxNumberOfConcurrentBuildJobs || 1;
         this.buildJobStatistics = {
             successfulBuilds: this.buildAgent.buildAgentDetails?.successfulBuilds || 0,
             failedBuilds: this.buildAgent.buildAgentDetails?.failedBuilds || 0,
@@ -252,6 +273,39 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                     this.alertService.addAlert({
                         type: AlertType.DANGER,
                         message: 'artemisApp.buildAgents.alerts.buildAgentResumeFailed',
+                    });
+                },
+            });
+        } else {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName',
+            });
+        }
+    }
+
+    onConcurrencyChange(newValue: number) {
+        if (this.buildAgent.status === 'PAUSED' || this.buildAgent.status === 'SELF_PAUSED') {
+            return;
+        }
+        this.newConcurrency = newValue;
+        this.adjustBuildAgentCapacity();
+    }
+
+    adjustBuildAgentCapacity(): void {
+        if (!this.newConcurrency || this.newConcurrency < 1) {
+            return;
+        }
+
+        if (this.buildAgent.buildAgent?.name) {
+            this.buildAgentsService.adjustBuildAgentCapacity(this.buildAgent.buildAgent.name, this.newConcurrency).subscribe({
+                next: () => {
+                    this.load();
+                },
+                error: () => {
+                    this.alertService.addAlert({
+                        type: AlertType.DANGER,
+                        message: 'artemisApp.buildAgents.alerts.buildAgentCapacityAdjustFailed',
                     });
                 },
             });
@@ -373,5 +427,24 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             // This is necessary to update the view when the build job duration is updated
             return { ...buildJob };
         });
+    }
+
+    dismissConcurrencyResetWarning() {
+        this.concurrencyResetWarningDismissed = true;
+        sessionStorage.setItem('concurrencyResetWarningDismissed', 'true');
+    }
+
+    getConcurrencyDisabledTooltip(): string {
+        if (this.buildAgent && (this.buildAgent.status === 'PAUSED' || this.buildAgent.status === 'SELF_PAUSED')) {
+            return this.translateService.instant('artemisApp.buildAgents.concurrencyDisabledTooltip');
+        }
+        return '';
+    }
+
+    private loadConcurrencyResetWarningState() {
+        const dismissed = sessionStorage.getItem('concurrencyResetWarningDismissed');
+        if (dismissed === 'true') {
+            this.concurrencyResetWarningDismissed = true;
+        }
     }
 }

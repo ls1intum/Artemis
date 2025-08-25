@@ -94,10 +94,9 @@ public class BuildAgentInformationService {
     private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
-        int numberOfCurrentBuildJobs = processingJobsOfMember.size();
-        int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
-                : buildAgentConfiguration.getThreadPoolSize();
-        boolean hasJobs = numberOfCurrentBuildJobs > 0;
+        int numberOfRunningBuildJobs = processingJobsOfMember.size();
+        int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getThreadPoolSize();
+        boolean hasJobs = numberOfRunningBuildJobs > 0;
         BuildAgentInformation.BuildAgentStatus status;
         BuildAgentInformation agent = distributedDataAccessService.getDistributedBuildAgentInformation().get(memberAddress);
         if (isPaused) {
@@ -114,8 +113,9 @@ public class BuildAgentInformationService {
         BuildAgentDetailsDTO agentDetails = getBuildAgentDetails(agent, recentBuildJob, consecutiveFailures);
 
         int pauseAfterConsecutiveFailedJobs = buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs();
-        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, publicSshKey, agentDetails,
-                pauseAfterConsecutiveFailedJobs);
+        int maxConcurrentBuildsAllowed = buildAgentConfiguration.getConcurrentBuildsMaximum();
+        return new BuildAgentInformation(agentInfo, maxNumberOfConcurrentBuilds, numberOfRunningBuildJobs, processingJobsOfMember, status, publicSshKey, agentDetails,
+                pauseAfterConsecutiveFailedJobs, maxConcurrentBuildsAllowed);
     }
 
     private BuildAgentDetailsDTO getBuildAgentDetails(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob, int consecutiveFailures) {

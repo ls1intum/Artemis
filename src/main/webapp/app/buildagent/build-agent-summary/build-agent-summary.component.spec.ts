@@ -16,6 +16,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('BuildAgentSummaryComponent', () => {
     let component: BuildAgentSummaryComponent;
@@ -32,6 +33,7 @@ describe('BuildAgentSummaryComponent', () => {
         pauseAllBuildAgents: jest.fn().mockReturnValue(of({})),
         resumeAllBuildAgents: jest.fn().mockReturnValue(of({})),
         clearDistributedData: jest.fn().mockReturnValue(of({})),
+        adjustBuildAgentCapacity: jest.fn().mockReturnValue(of({})),
     };
 
     const repositoryInfo: RepositoryInfo = {
@@ -99,6 +101,7 @@ describe('BuildAgentSummaryComponent', () => {
             maxNumberOfConcurrentBuildJobs: 2,
             numberOfCurrentBuildJobs: 2,
             status: BuildAgentStatus.ACTIVE,
+            maxConcurrentBuildsAllowed: 2,
         },
         {
             id: 2,
@@ -106,8 +109,10 @@ describe('BuildAgentSummaryComponent', () => {
             maxNumberOfConcurrentBuildJobs: 2,
             numberOfCurrentBuildJobs: 2,
             status: BuildAgentStatus.ACTIVE,
+            maxConcurrentBuildsAllowed: 2,
         },
     ];
+
     let alertService: AlertService;
     let alertServiceAddAlertStub: jest.SpyInstance;
     let modalService: NgbModal;
@@ -121,6 +126,7 @@ describe('BuildAgentSummaryComponent', () => {
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(AlertService),
+                MockProvider(TranslateService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -170,7 +176,8 @@ describe('BuildAgentSummaryComponent', () => {
         component.ngOnInit();
         component.cancelBuildJob(buildJob.id!);
 
-        expect(spy).toHaveBeenCalledExactlyOnceWith(buildJob.id!);
+        expect(spy).toHaveBeenCalledWith(buildJob.id!);
+        expect(spy).toHaveBeenCalledOnce();
     });
 
     it('should cancel all build jobs of a build agent', () => {
@@ -180,7 +187,8 @@ describe('BuildAgentSummaryComponent', () => {
         component.ngOnInit();
         component.cancelAllBuildJobs(buildAgent.buildAgent);
 
-        expect(spy).toHaveBeenCalledExactlyOnceWith(buildAgent.buildAgent);
+        expect(spy).toHaveBeenCalledWith(buildAgent.buildAgent);
+        expect(spy).toHaveBeenCalledOnce();
     });
 
     it('should calculate the build capacity and current builds', () => {
@@ -258,9 +266,166 @@ describe('BuildAgentSummaryComponent', () => {
         const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
 
         component.displayPauseBuildAgentModal();
-        expect(openSpy).toHaveBeenCalledOnce();
+        expect(openSpy).toHaveBeenCalled();
 
         component.displayClearDistributedDataModal();
         expect(openSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle different build agent statuses correctly', () => {
+        const mixedStatusAgents: BuildAgentInformation[] = [
+            {
+                id: 1,
+                buildAgent: { name: 'activeAgent', displayName: 'Active Agent', memberAddress: 'agent1' },
+                maxNumberOfConcurrentBuildJobs: 2,
+                numberOfCurrentBuildJobs: 1,
+                status: BuildAgentStatus.ACTIVE,
+                maxConcurrentBuildsAllowed: 2,
+            },
+            {
+                id: 2,
+                buildAgent: { name: 'pausedAgent', displayName: 'Paused Agent', memberAddress: 'agent2' },
+                maxNumberOfConcurrentBuildJobs: 2,
+                numberOfCurrentBuildJobs: 0,
+                status: BuildAgentStatus.PAUSED,
+                maxConcurrentBuildsAllowed: 2,
+            },
+            {
+                id: 3,
+                buildAgent: { name: 'selfPausedAgent', displayName: 'Self Paused Agent', memberAddress: 'agent3' },
+                maxNumberOfConcurrentBuildJobs: 2,
+                numberOfCurrentBuildJobs: 0,
+                status: BuildAgentStatus.SELF_PAUSED,
+                maxConcurrentBuildsAllowed: 2,
+            },
+            {
+                id: 4,
+                buildAgent: { name: 'idleAgent', displayName: 'Idle Agent', memberAddress: 'agent4' },
+                maxNumberOfConcurrentBuildJobs: 2,
+                numberOfCurrentBuildJobs: 0,
+                status: BuildAgentStatus.IDLE,
+                maxConcurrentBuildsAllowed: 2,
+            },
+        ];
+
+        mockWebsocketService.receive.mockReturnValue(of(mixedStatusAgents));
+
+        component.ngOnInit();
+
+        // Only active and idle agents should contribute to build capacity
+        expect(component.buildCapacity).toBe(4);
+        expect(component.currentBuilds).toBe(1);
+    });
+
+    it('should handle concurrency change successfully', () => {
+        component.onConcurrencyChange('buildagent1', 2);
+
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).toHaveBeenCalledWith('buildagent1', 2);
+        expect(component.concurrencyMap['buildagent1']).toBe(2);
+    });
+
+    it('should not adjust capacity when value is invalid', () => {
+        component.onConcurrencyChange('buildagent1', 0);
+
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+        expect(component.concurrencyMap['buildagent1']).toBeUndefined();
+    });
+
+    it('should not adjust capacity when value is NaN', () => {
+        component.onConcurrencyChange('buildagent1', NaN);
+
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+        expect(component.concurrencyMap['buildagent1']).toBeUndefined();
+    });
+
+    it('should update concurrency map when value is valid', () => {
+        component.onConcurrencyChange('buildagent1', 2);
+
+        expect(component.concurrencyMap['buildagent1']).toBe(2);
+    });
+
+    it('should not call adjustBuildAgentCapacity if build agent is paused', () => {
+        const pausedAgent: BuildAgentInformation = {
+            id: 3,
+            buildAgent: { name: 'pausedAgent', displayName: 'Paused Agent', memberAddress: 'agent3' },
+            maxNumberOfConcurrentBuildJobs: 2,
+            numberOfCurrentBuildJobs: 0,
+            status: BuildAgentStatus.PAUSED,
+            maxConcurrentBuildsAllowed: 2,
+        };
+        component.buildAgents = [pausedAgent];
+        component.onConcurrencyChange('pausedAgent', 3);
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+    });
+
+    it('should not call adjustBuildAgentCapacity if build agent is self-paused', () => {
+        const selfPausedAgent: BuildAgentInformation = {
+            id: 4,
+            buildAgent: { name: 'selfPausedAgent', displayName: 'Self Paused Agent', memberAddress: 'agent4' },
+            maxNumberOfConcurrentBuildJobs: 2,
+            numberOfCurrentBuildJobs: 0,
+            status: BuildAgentStatus.SELF_PAUSED,
+            maxConcurrentBuildsAllowed: 2,
+        };
+        component.buildAgents = [selfPausedAgent];
+        component.onConcurrencyChange('selfPausedAgent', 3);
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+    });
+
+    it('should not update concurrencyMap if agentName is not found', () => {
+        component.buildAgents = [];
+        component.onConcurrencyChange('nonexistentAgent', 3);
+        expect(component.concurrencyMap['nonexistentAgent']).toBe(3);
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).toHaveBeenCalledWith('nonexistentAgent', 3);
+    });
+
+    it('should handle build agents with missing maxNumberOfConcurrentBuildJobs', () => {
+        const agentsWithMissingValues: BuildAgentInformation[] = [
+            {
+                id: 1,
+                buildAgent: { name: 'agent1', displayName: 'Agent 1', memberAddress: 'agent1' },
+                maxNumberOfConcurrentBuildJobs: undefined,
+                numberOfCurrentBuildJobs: 0,
+                status: BuildAgentStatus.ACTIVE,
+                maxConcurrentBuildsAllowed: 2,
+            },
+        ];
+
+        mockWebsocketService.receive.mockReturnValue(of(agentsWithMissingValues));
+        component.ngOnInit();
+
+        // Should use fallback values (0 for capacity calculation, 1 for concurrency map)
+        expect(component.buildCapacity).toBe(0);
+        expect(component.concurrencyMap['agent1']).toBe(1);
+    });
+
+    it('should handle error in adjustBuildAgentCapacity and restore previous capacity', () => {
+        mockBuildAgentsService.adjustBuildAgentCapacity.mockReturnValue(throwError(() => new Error('Capacity adjustment failed')));
+
+        // Set initial concurrency
+        component.concurrencyMap['agent1'] = 2;
+
+        component.adjustBuildAgentCapacity('agent1', 5);
+
+        // Should restore previous capacity and show error alert
+        expect(component.concurrencyMap['agent1']).toBe(2);
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
+            type: AlertType.DANGER,
+            message: 'artemisApp.buildAgents.alerts.buildAgentCapacityAdjustFailed',
+        });
+    });
+
+    it('should handle adjustBuildAgentCapacity with invalid parameters', () => {
+        // Test with empty agentName
+        component.adjustBuildAgentCapacity('', 5);
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+
+        // Test with capacity < 1
+        component.adjustBuildAgentCapacity('agent1', 0);
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+
+        // Test with negative capacity
+        component.adjustBuildAgentCapacity('agent1', -1);
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
     });
 });

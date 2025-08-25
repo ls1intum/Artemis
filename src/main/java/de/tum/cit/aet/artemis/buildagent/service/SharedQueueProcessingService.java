@@ -37,6 +37,7 @@ import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentCapacityAdjustmentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
@@ -168,6 +169,37 @@ public class SharedQueueProcessingService {
                 resumeBuildAgent();
             }
         });
+
+        distributedDataAccessService.getAdjustBuildAgentCapacityTopic().addMessageListener(message -> {
+            BuildAgentCapacityAdjustmentDTO adjustment = message.getMessageObject();
+            if (buildAgentShortName.equals(adjustment.buildAgentName())) {
+                if (isPaused.get()) {
+                    log.info("Ignoring capacity adjustment for paused agent {} (requested: {}).", buildAgentShortName, adjustment.newCapacity());
+                    return;
+                }
+                boolean success = buildAgentConfiguration.adjustConcurrentBuildSize(adjustment.newCapacity());
+                if (success) {
+                    buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
+                    triggerBuildJobProcessing();
+                }
+                else {
+                    log.warn("Capacity adjustment to {} rejected for agent {} (max allowed: {}, executor initialized: {}).", adjustment.newCapacity(), buildAgentShortName,
+                            buildAgentConfiguration.getConcurrentBuildsMaximum(), buildAgentConfiguration.getBuildExecutor() != null);
+                }
+            }
+        });
+    }
+
+    /**
+     * Triggers processing of new build jobs after a configuration change.
+     * This method should be called when the thread pool size is adjusted to ensure
+     * that new jobs can be picked up immediately if capacity becomes available.
+     */
+    public void triggerBuildJobProcessing() {
+        if (!isPaused.get() && distributedDataAccessService.isInstanceRunning()) {
+            log.debug("Triggering build job processing after configuration change");
+            checkAvailabilityAndProcessNextBuild();
+        }
     }
 
     @PreDestroy

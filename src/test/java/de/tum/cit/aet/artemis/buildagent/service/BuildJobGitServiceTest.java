@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -18,6 +19,11 @@ class BuildJobGitServiceTest extends AbstractArtemisBuildAgentTest {
         ReflectionTestUtils.setField(buildJobGitService, "useSshForBuildAgent", false);
         ReflectionTestUtils.setField(buildJobGitService, "gitSshPrivateKeyPath", Optional.of("somePath"));
         ReflectionTestUtils.setField(buildJobGitService, "sshUrlTemplate", Optional.of("someUrl"));
+    }
+
+    @AfterEach
+    protected void tearDown() {
+        super.shutdownTestExecutor();
     }
 
     @Test

@@ -18,11 +18,14 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentCapacityAdjustmentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
@@ -278,6 +281,26 @@ public class AdminBuildJobQueueResource {
         log.debug("REST request to resume all agents");
         localCIBuildJobQueueService.resumeAllBuildAgents();
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Adjust the concurrent build size of a specific build agent.
+     *
+     * @param agentName          the name of the build agent to adjust concurrent build size for
+     * @param capacityAdjustment the capacity adjustment request containing the new size
+     * @return the ResponseEntity with the result of the adjustment
+     */
+    @PutMapping("agents/{agentName}/capacity")
+    public ResponseEntity<Void> adjustBuildAgentCapacity(@PathVariable String agentName, @RequestBody BuildAgentCapacityAdjustmentDTO capacityAdjustment) {
+        log.debug("REST request to adjust concurrent build size of agent {} to {}", agentName, capacityAdjustment.newCapacity());
+
+        try {
+            localCIBuildJobQueueService.adjustBuildAgentCapacity(agentName, capacityAdjustment.newCapacity());
+            return ResponseEntity.noContent().build();
+        }
+        catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 
     /**

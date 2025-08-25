@@ -21,6 +21,7 @@ import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.s
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('BuildAgentDetailsComponent', () => {
     let component: BuildAgentDetailsComponent;
@@ -38,6 +39,7 @@ describe('BuildAgentDetailsComponent', () => {
         pauseBuildAgent: jest.fn().mockReturnValue(of({})),
         resumeBuildAgent: jest.fn().mockReturnValue(of({})),
         getFinishedBuildJobs: jest.fn().mockReturnValue(of({})),
+        adjustBuildAgentCapacity: jest.fn().mockReturnValue(of({})),
     };
 
     const repositoryInfo: RepositoryInfo = {
@@ -104,6 +106,7 @@ describe('BuildAgentDetailsComponent', () => {
         maxNumberOfConcurrentBuildJobs: 2,
         numberOfCurrentBuildJobs: 2,
         status: BuildAgentStatus.ACTIVE,
+        maxConcurrentBuildsAllowed: 2,
     };
 
     const request = {
@@ -190,6 +193,7 @@ describe('BuildAgentDetailsComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(AlertService),
+                MockProvider(TranslateService),
             ],
         }).compileComponents();
 
@@ -385,5 +389,80 @@ describe('BuildAgentDetailsComponent', () => {
         component.viewBuildLogs('1');
         expect(windowSpy).toHaveBeenCalledOnce();
         expect(windowSpy).toHaveBeenCalledWith('/api/programming/build-log/1', '_blank');
+    });
+
+    it('should handle concurrency change successfully', () => {
+        component.buildAgent = mockBuildAgent;
+        component.newConcurrency = 1;
+
+        component.onConcurrencyChange(1);
+
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).toHaveBeenCalledWith('agent1', 1);
+    });
+
+    it('should handle concurrency change error', () => {
+        mockBuildAgentsService.adjustBuildAgentCapacity.mockReturnValue(throwError(() => new Error()));
+        component.buildAgent = mockBuildAgent;
+        component.newConcurrency = 1;
+
+        component.onConcurrencyChange(1);
+
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
+            type: AlertType.DANGER,
+            message: 'artemisApp.buildAgents.alerts.buildAgentCapacityAdjustFailed',
+        });
+    });
+
+    it('should not adjust capacity when newConcurrency is invalid', () => {
+        component.buildAgent = mockBuildAgent;
+        component.newConcurrency = 0;
+
+        component.onConcurrencyChange(0);
+
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+    });
+
+    it('should not adjust capacity when build agent has no name', () => {
+        component.buildAgent = { ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: '' } };
+        component.newConcurrency = 1;
+
+        component.onConcurrencyChange(1);
+
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
+        expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
+            type: AlertType.WARNING,
+            message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName',
+        });
+    });
+
+    it('should handle page change correctly', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        const loadSpy = jest.spyOn(component, 'loadFinishedBuildJobs');
+
+        component.ngOnInit();
+        component.onPageChange({ page: 2, pageSize: 50, direction: 'next' });
+
+        expect(component.page).toBe(2);
+        expect(loadSpy).toHaveBeenCalled();
+    });
+
+    it('should handle error in loadFinishedBuildJobs', () => {
+        mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(throwError(() => new Error('API Error')));
+
+        component.ngOnInit();
+        component.isLoading = true; // Set loading to true to test it gets reset
+        component.loadFinishedBuildJobs();
+
+        // Verify that loading state is reset on error
+        expect(component.isLoading).toBeFalse();
+    });
+
+    it('should dismiss concurrency reset warning', () => {
+        expect(component.concurrencyResetWarningDismissed).toBeFalse();
+
+        component.dismissConcurrencyResetWarning();
+
+        expect(component.concurrencyResetWarningDismissed).toBeTrue();
     });
 });

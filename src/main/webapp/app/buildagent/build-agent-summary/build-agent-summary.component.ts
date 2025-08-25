@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { BuildAgentInformation, BuildAgentStatus } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subscription } from 'rxjs';
-import { faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCog, faExclamationTriangle, faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
 import { Router, RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/buildagent/shared/entities/build-agent.model';
@@ -15,12 +15,15 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { FormsModule } from '@angular/forms';
+import { NumberInputComponent } from 'app/buildagent/shared/number-input/number-input.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-build-agents',
     templateUrl: './build-agent-summary.component.html',
     styleUrl: './build-agent-summary.component.scss',
-    imports: [TranslateDirective, NgxDatatableModule, DataTableComponent, FontAwesomeModule, RouterModule],
+    imports: [TranslateDirective, NgxDatatableModule, DataTableComponent, FontAwesomeModule, RouterModule, FormsModule, NumberInputComponent],
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
@@ -29,6 +32,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly router = inject(Router);
     private readonly modalService = inject(NgbModal);
     private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
 
     buildAgents: BuildAgentInformation[] = [];
     buildCapacity = 0;
@@ -37,17 +41,22 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     websocketSubscription: Subscription;
     restSubscription: Subscription;
     routerLink: string;
+    concurrencyMap: { [agentName: string]: number } = {};
+    concurrencyResetWarningDismissed = false;
 
     //icons
     protected readonly faTimes = faTimes;
     protected readonly faPause = faPause;
     protected readonly faPlay = faPlay;
     protected readonly faTrash = faTrash;
+    protected readonly faCog = faCog;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
 
     ngOnInit() {
         this.routerLink = this.router.url;
         this.load();
         this.initWebsocketSubscription();
+        this.loadConcurrencyResetWarningState();
     }
 
     /**
@@ -71,10 +80,23 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
 
     private updateBuildAgents(buildAgents: BuildAgentInformation[]) {
         this.buildAgents = buildAgents;
+        // Calculate total build capacity of the cluster
         this.buildCapacity = this.buildAgents
             .filter((agent) => agent.status !== BuildAgentStatus.PAUSED && agent.status !== BuildAgentStatus.SELF_PAUSED)
             .reduce((sum, agent) => sum + (agent.maxNumberOfConcurrentBuildJobs || 0), 0);
         this.currentBuilds = this.buildAgents.reduce((sum, agent) => sum + (agent.numberOfCurrentBuildJobs || 0), 0);
+
+        // Initialize individual concurrency values
+        this.buildAgents.forEach((agent) => {
+            const name = agent.buildAgent?.name;
+            if (!name) {
+                return;
+            }
+            const serverVal = agent.maxNumberOfConcurrentBuildJobs || 1;
+            if (!(name in this.concurrencyMap) || this.concurrencyMap[name] !== serverVal) {
+                this.concurrencyMap[name] = serverVal;
+            }
+        });
     }
 
     /**
@@ -170,5 +192,65 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
                 });
             },
         });
+    }
+
+    adjustBuildAgentCapacity(agentName: string, newCapacity: number) {
+        if (!agentName || newCapacity < 1) {
+            return;
+        }
+
+        const buildAgent = this.buildAgents.find((agent) => agent.buildAgent?.name === agentName);
+        if (buildAgent && (buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED')) {
+            return;
+        }
+
+        const previousCapacity = this.concurrencyMap[agentName] || buildAgent?.maxNumberOfConcurrentBuildJobs || 1;
+
+        this.buildAgentsService.adjustBuildAgentCapacity(agentName, newCapacity).subscribe({
+            next: () => {
+                this.load();
+            },
+            error: () => {
+                this.concurrencyMap[agentName] = previousCapacity;
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: 'artemisApp.buildAgents.alerts.buildAgentCapacityAdjustFailed',
+                });
+            },
+        });
+    }
+
+    onConcurrencyChange(agentName: string, newValue: number) {
+        if (isNaN(newValue) || newValue < 1) {
+            return;
+        }
+
+        // Find the build agent to check its status
+        const buildAgent = this.buildAgents.find((agent) => agent.buildAgent?.name === agentName);
+        if (buildAgent && (buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED')) {
+            return;
+        }
+
+        this.concurrencyMap[agentName] = newValue;
+        this.adjustBuildAgentCapacity(agentName, newValue);
+    }
+
+    dismissConcurrencyResetWarning() {
+        this.concurrencyResetWarningDismissed = true;
+        sessionStorage.setItem('concurrencyResetWarningDismissed', 'true');
+    }
+
+    private loadConcurrencyResetWarningState() {
+        const dismissed = sessionStorage.getItem('concurrencyResetWarningDismissed');
+        if (dismissed === 'true') {
+            this.concurrencyResetWarningDismissed = true;
+        }
+    }
+
+    getConcurrencyDisabledTooltip(buildAgent: BuildAgentInformation): string {
+        if (buildAgent && (buildAgent.status === 'PAUSED' || buildAgent.status === 'SELF_PAUSED')) {
+            return this.translateService.instant('artemisApp.buildAgents.concurrencyDisabledTooltip');
+        }
+        return '';
     }
 }

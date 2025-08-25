@@ -10,6 +10,7 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
@@ -46,7 +47,7 @@ public class BuildAgentConfiguration {
 
     private ThreadPoolExecutor buildExecutor;
 
-    private int threadPoolSize = 0;
+    private final AtomicInteger threadPoolSize = new AtomicInteger(0);
 
     private DockerClient dockerClient;
 
@@ -55,8 +56,11 @@ public class BuildAgentConfiguration {
     @Value("${artemis.continuous-integration.docker-connection-uri}")
     String dockerConnectionUri;
 
-    @Value("${artemis.continuous-integration.concurrent-build-size:1}")
-    int concurrentBuildSize;
+    @Value("${artemis.continuous-integration.concurrent-builds.default:1}")
+    int concurrentBuildsDefault;
+
+    @Value("${artemis.continuous-integration.concurrent-builds.maximum:0}")
+    int concurrentBuildsMaximum;
 
     @Value("${artemis.continuous-integration.specify-concurrent-builds:false}")
     boolean specifyConcurrentBuilds;
@@ -75,6 +79,10 @@ public class BuildAgentConfiguration {
      */
     @PostConstruct
     public void onApplicationReady() {
+        if (concurrentBuildsMaximum <= 0) {
+            concurrentBuildsMaximum = Runtime.getRuntime().availableProcessors();
+            log.info("concurrentBuildsMaximum was <= 0, set to available processors: {}", concurrentBuildsMaximum);
+        }
         buildExecutor = createBuildExecutor();
         dockerClient = createDockerClient();
     }
@@ -84,7 +92,7 @@ public class BuildAgentConfiguration {
     }
 
     public int getThreadPoolSize() {
-        return threadPoolSize;
+        return threadPoolSize.get();
     }
 
     public DockerClient getDockerClient() {
@@ -93,6 +101,51 @@ public class BuildAgentConfiguration {
 
     public int getPauseAfterConsecutiveFailedJobs() {
         return pauseAfterConsecutiveFailedJobs;
+    }
+
+    public int getConcurrentBuildsMaximum() {
+        return concurrentBuildsMaximum;
+    }
+
+    /**
+     * Dynamically adjusts the thread pool size for concurrent build jobs.
+     *
+     * @param newConcurrentBuildSize the new number of concurrent builds
+     * @return true if the adjustment was successful, false otherwise
+     */
+    public synchronized boolean adjustConcurrentBuildSize(int newConcurrentBuildSize) {
+        if (newConcurrentBuildSize <= 0) {
+            log.error("Invalid concurrent build size: {}. Must be greater than 0.", newConcurrentBuildSize);
+            return false;
+        }
+
+        if (newConcurrentBuildSize > concurrentBuildsMaximum) {
+            log.error("Invalid concurrent build size: {}. Must not exceed maximum of {}.", newConcurrentBuildSize, concurrentBuildsMaximum);
+            return false;
+        }
+
+        if (buildExecutor == null) {
+            log.error("Build executor is not initialized yet");
+            return false;
+        }
+
+        int currentSize = threadPoolSize.get();
+
+        if (newConcurrentBuildSize == currentSize) {
+            return true;
+        }
+        else if (newConcurrentBuildSize > currentSize) {
+            // We need this check since maximumPoolSize >= corePoolSize should hold at all times.
+            buildExecutor.setMaximumPoolSize(newConcurrentBuildSize);
+            buildExecutor.setCorePoolSize(newConcurrentBuildSize);
+        }
+        else {
+            buildExecutor.setCorePoolSize(newConcurrentBuildSize);
+            buildExecutor.setMaximumPoolSize(newConcurrentBuildSize);
+        }
+
+        threadPoolSize.set(newConcurrentBuildSize);
+        return true;
     }
 
     /**
@@ -153,31 +206,46 @@ public class BuildAgentConfiguration {
     }
 
     /**
-     * Creates an thread pool executor that manages the queue of build jobs.
+     * Creates a thread pool executor that manages the queue of build jobs.
      *
      * @return The executor service.
      */
     private ThreadPoolExecutor createBuildExecutor() {
-        int threadPoolSize;
+        int poolSize = threadPoolSize.get();
 
-        if (specifyConcurrentBuilds) {
-            threadPoolSize = concurrentBuildSize;
+        // Use preserved size if available, otherwise calculate
+        if (poolSize == 0) {
+            poolSize = specifyConcurrentBuilds ? concurrentBuildsDefault : concurrentBuildsMaximum;
         }
-        else {
-            int availableProcessors = Runtime.getRuntime().availableProcessors();
-            threadPoolSize = Math.max(1, (availableProcessors - 2) / 2);
+
+        if (poolSize > concurrentBuildsMaximum) {
+            poolSize = concurrentBuildsMaximum;
+            log.info("Default pool size was bigger than maximum, setting default to maximum: {}", poolSize);
         }
-        this.threadPoolSize = threadPoolSize;
+
+        threadPoolSize.set(poolSize);
+
+        log.info("Creating build executor with pool size: {} (specifyConcurrentBuilds: {}, default: {}, max: {})", poolSize, specifyConcurrentBuilds, concurrentBuildsDefault,
+                concurrentBuildsMaximum);
 
         ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
-                .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread {}", thread.getName(), exception)).build();
+                .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread {}", thread.getName(), exception)).setPriority(Thread.NORM_PRIORITY - 1) // Lower
+                                                                                                                                                                                     // priority
+                                                                                                                                                                                     // for
+                                                                                                                                                                                     // build
+                                                                                                                                                                                     // threads
+                                                                                                                                                                                     // to
+                                                                                                                                                                                     // prevent
+                                                                                                                                                                                     // starving
+                                                                                                                                                                                     // system
+                                                                                                                                                                                     // operations
+                .build();
 
         RejectedExecutionHandler customRejectedExecutionHandler = (runnable, executor) -> {
             throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());
         };
 
-        log.debug("Using ExecutorService with thread pool size {}.", threadPoolSize);
-        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), customThreadFactory, customRejectedExecutionHandler);
+        return new ThreadPoolExecutor(poolSize, poolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1), customThreadFactory, customRejectedExecutionHandler);
     }
 
     /**

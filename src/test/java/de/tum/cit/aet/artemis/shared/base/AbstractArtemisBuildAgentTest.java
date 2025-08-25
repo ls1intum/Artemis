@@ -17,6 +17,9 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -59,7 +62,7 @@ import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
 // NOTE: Do not use SPRING_PROFILE_TEST as it will cause the test to fail due to missing beans. This is because SPRING_PROFILE_TEST will cause some
 // test services, which dependencies are not provided since we are not running the full application context, to be created.
 @ActiveProfiles({ PROFILE_TEST_BUILDAGENT, PROFILE_BUILDAGENT, "local" })
-@TestPropertySource(properties = { "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=2",
+@TestPropertySource(properties = { "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-builds.default=2",
         "artemis.continuous-integration.pause-grace-period-seconds=2", "artemis.continuous-integration.pause-after-consecutive-failed-jobs=5" })
 public abstract class AbstractArtemisBuildAgentTest {
 
@@ -77,6 +80,8 @@ public abstract class AbstractArtemisBuildAgentTest {
     protected BuildJobGitService buildJobGitService;
 
     protected DockerClient dockerClient;
+
+    private ThreadPoolExecutor testExecutor;
 
     private static DockerClient dockerClientMock;
 
@@ -105,6 +110,9 @@ public abstract class AbstractArtemisBuildAgentTest {
             Thread.sleep(100);
             return null;
         }).when(startContainerCmd).exec();
+
+        testExecutor = new ThreadPoolExecutor(2, 2, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+        when(buildAgentConfiguration.getBuildExecutor()).thenReturn(testExecutor);
 
         when(buildAgentConfiguration.getDockerClient()).thenReturn(dockerClientMock);
         dockerClient = dockerClientMock;
@@ -209,5 +217,17 @@ public abstract class AbstractArtemisBuildAgentTest {
         return new BuildConfig("dummy-build-script", "dummy-docker-image", "dummy-commit-hash", "assignment-commit-hash", "test-commit-hash", "main", ProgrammingLanguage.JAVA,
                 ProjectType.MAVEN_MAVEN, false, false, List.of("dummy-result-path"), 1, "dummy-assignment-checkout-path", "dummy-test-checkout-path",
                 "dummy-solution-checkout-path", dockerRunConfig);
+    }
+
+    protected void shutdownTestExecutor() {
+        if (testExecutor != null) {
+            testExecutor.shutdownNow();
+            try {
+                testExecutor.awaitTermination(5, TimeUnit.SECONDS);
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 }
