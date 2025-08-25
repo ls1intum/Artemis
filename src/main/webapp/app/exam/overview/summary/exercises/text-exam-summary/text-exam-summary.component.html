@@ -8,6 +8,7 @@
             [inputParticipation]="isAfterResultsArePublished ? undefined : exercise.studentParticipations![0]"
             [inputSubmission]="isAfterResultsArePublished ? undefined : submission"
             [isExamSummary]="true"
+            [exerciseId]="exercise.id!"
         />
     } @else {
         <div>No submission</div>

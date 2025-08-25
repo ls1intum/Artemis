@@ -1,5 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { SafeHtml } from '@angular/platform-browser';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
@@ -39,7 +38,6 @@ import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/det
 export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);
     private fileUploadExerciseService = inject(FileUploadExerciseService);
-    private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private statisticsService = inject(StatisticsService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
@@ -48,7 +46,6 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;
 
-    private subscription: Subscription;
     private eventSubscriber: Subscription;
 
     fileUploadExercise: FileUploadExercise;
@@ -60,14 +57,14 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     formattedExampleSolution: SafeHtml | null;
     formattedGradingInstructions: SafeHtml | null;
 
+    exerciseId = input.required<number>();
+
     /**
      * Initializes subscription for file upload exercise
      */
     ngOnInit() {
         // TODO: route determines whether the component is in exam mode
-        this.subscription = this.route.params.subscribe((params) => {
-            this.load(params['exerciseId']);
-        });
+        this.load(this.exerciseId());
         this.registerChangeInFileUploadExercises();
     }
 
@@ -121,7 +118,6 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
      * Unsubscribes on component destruction
      */
     ngOnDestroy() {
-        this.subscription.unsubscribe();
         this.eventManager.destroy(this.eventSubscriber);
     }
 

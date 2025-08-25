@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
 import { Subscription } from 'rxjs';
@@ -37,7 +37,7 @@ export class CourseManagementStatisticsComponent implements OnInit {
     currentSpan: SpanType = SpanType.WEEK;
     statisticsView: StatisticsView = StatisticsView.COURSE;
     paramSub: Subscription;
-    courseId: number;
+    courseId = input.required<number>();
     course: Course;
 
     defaultTitle = 'Course';
@@ -57,14 +57,11 @@ export class CourseManagementStatisticsComponent implements OnInit {
     courseStatistics: CourseManagementStatisticsDTO;
 
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.courseId = params['courseId'];
-        });
         this.route.data.subscribe(({ course }) => {
             this.course = course;
             this.initializeGraphTypes();
         });
-        this.service.getCourseStatistics(this.courseId).subscribe((res: CourseManagementStatisticsDTO) => {
+        this.service.getCourseStatistics(this.courseId()).subscribe((res: CourseManagementStatisticsDTO) => {
             this.courseStatistics = res;
         });
     }

@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, inject, input } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute } from '@angular/router';
@@ -68,19 +68,18 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     newIrisMessage: string | undefined;
 
     private numNewMessagesSubscription: Subscription;
-    private paramsSubscription: Subscription;
     private latestIrisMessageSubscription: Subscription;
     private queryParamsSubscription: Subscription;
 
     @ViewChild('chatBubble') chatBubble: ElementRef;
 
+    lectureId = input<number>();
+    exerciseId = input<number>();
+
     ngOnInit() {
         // Subscribes to route params and gets the exerciseId from the route
-        this.paramsSubscription = this.route.params.subscribe((params) => {
-            const rawId = this.mode == ChatServiceMode.LECTURE ? params['lectureId'] : params['exerciseId'];
-            const id = parseInt(rawId, 10);
-            this.chatService.switchTo(this.mode, id);
-        });
+        const rawId = this.mode == ChatServiceMode.LECTURE ? this.lectureId() : this.exerciseId();
+        this.chatService.switchTo(this.mode, rawId);
 
         this.queryParamsSubscription = this.route.queryParams?.subscribe((params: any) => {
             if (params.irisQuestion) {
@@ -118,7 +117,6 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
             this.dialogRef.close();
         }
         this.numNewMessagesSubscription?.unsubscribe();
-        this.paramsSubscription.unsubscribe();
         this.latestIrisMessageSubscription.unsubscribe();
         this.queryParamsSubscription?.unsubscribe();
         this.newIrisMessage = undefined;

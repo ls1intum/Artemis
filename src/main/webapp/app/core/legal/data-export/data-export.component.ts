@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -7,7 +7,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { DataExport, DataExportState } from 'app/core/shared/entities/data-export.model';
-import { ActivatedRoute } from '@angular/router';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { DataExportRequestButtonDirective } from './confirmation/data-export-request-button.directive';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
@@ -24,7 +23,6 @@ export class DataExportComponent implements OnInit {
     private dataExportService = inject(DataExportService);
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
-    private route = inject(ActivatedRoute);
 
     readonly ActionType = ActionType;
     readonly ButtonSize = ButtonSize;
@@ -45,15 +43,16 @@ export class DataExportComponent implements OnInit {
     dataExport: DataExport = new DataExport();
     isAdmin = false;
 
+    id = input<number>();
+
     ngOnInit() {
         this.currentLogin = this.accountService.userIdentity?.login;
         this.isAdmin = this.accountService.isAdmin();
-        this.route.params.subscribe((params) => {
-            if (params['id']) {
-                this.downloadMode = true;
-                this.dataExportId = params['id'];
-            }
-        });
+        const id = this.id();
+        if (id) {
+            this.downloadMode = true;
+            this.dataExportId = id;
+        }
 
         if (this.downloadMode) {
             this.titleKey = 'artemisApp.dataExport.titleDownload';

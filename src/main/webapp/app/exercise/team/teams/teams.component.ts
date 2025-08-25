@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject } from 'rxjs';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
@@ -64,6 +64,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
 
     currentUser: User;
     isAdmin = false;
+    exerciseId = input.required<number>();
 
     constructor() {
         this.accountService.identity().then((user: User) => {
@@ -91,15 +92,13 @@ export class TeamsComponent implements OnInit, OnDestroy {
      * Load all team components
      */
     loadAll() {
-        this.route.params.subscribe((params) => {
-            this.isLoading = true;
-            this.exerciseService.find(params['exerciseId']).subscribe((exerciseResponse) => {
-                this.exercise = exerciseResponse.body!;
-                const teamOwnerId = this.teamCriteria.filterProp === FilterProp.OWN ? this.currentUser.id! : undefined;
-                this.teamService.findAllByExerciseId(params['exerciseId'], teamOwnerId).subscribe((teamsResponse) => {
-                    this.teams = teamsResponse.body!;
-                    this.isLoading = false;
-                });
+        this.isLoading = true;
+        this.exerciseService.find(this.exerciseId()).subscribe((exerciseResponse) => {
+            this.exercise = exerciseResponse.body!;
+            const teamOwnerId = this.teamCriteria.filterProp === FilterProp.OWN ? this.currentUser.id! : undefined;
+            this.teamService.findAllByExerciseId(this.exerciseId(), teamOwnerId).subscribe((teamsResponse) => {
+                this.teams = teamsResponse.body!;
+                this.isLoading = false;
             });
         });
     }

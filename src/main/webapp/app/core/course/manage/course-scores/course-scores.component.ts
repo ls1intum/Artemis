@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { Subscription, forkJoin, of } from 'rxjs';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { sum } from 'lodash-es';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
@@ -84,7 +84,6 @@ export enum HighlightType {
     ],
 })
 export class CourseScoresComponent implements OnInit, OnDestroy {
-    private route = inject(ActivatedRoute);
     private courseManagementService = inject(CourseManagementService);
     private sortService = inject(SortService);
     private changeDetector = inject(ChangeDetectorRef);
@@ -168,15 +167,15 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         this.predicate = 'id';
     }
 
+    courseId = input<number>();
+
     /**
      * On init fetch the course, all released exercises and all participations with result for the course from the server.
      */
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
-            this.courseManagementService.findWithExercises(params['courseId']).subscribe((findWithExercisesResult) => {
-                this.initializeWithCourse(findWithExercisesResult.body!);
-            });
+        this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
+        this.courseManagementService.findWithExercises(this.courseId() ?? -1).subscribe((findWithExercisesResult) => {
+            this.initializeWithCourse(findWithExercisesResult.body!);
         });
 
         // Update the view if the language was changed

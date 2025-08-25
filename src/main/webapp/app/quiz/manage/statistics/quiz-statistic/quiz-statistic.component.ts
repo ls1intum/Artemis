@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -22,7 +22,6 @@ import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-st
     imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })
 export class QuizStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
-    private route = inject(ActivatedRoute);
     private router = inject(Router);
     private accountService = inject(AccountService);
     private quizExerciseService = inject(QuizExerciseService);
@@ -42,32 +41,32 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
     // Icons
     faSync = faSync;
 
+    exerciseId = input.required<number>();
+
     ngOnInit() {
         this.translateService.onLangChange.subscribe(() => {
             this.setAxisLabels('showStatistic.quizStatistic.xAxes', 'showStatistic.quizStatistic.yAxes');
             this.ngxData[this.ngxData.length - 1].name = this.translateService.instant('showStatistic.quizStatistic.average');
             this.ngxData = [...this.ngxData];
         });
-        this.route.params.subscribe((params) => {
-            // use different REST-call if the User is a Student
+        // use different REST-call if the User is a Student
+        if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+            this.quizExerciseService.find(this.exerciseId()).subscribe((res: HttpResponse<QuizExercise>) => {
+                this.loadQuizSuccess(res.body!);
+            });
+        }
+
+        // subscribe websocket for new statistical data
+        this.websocketChannelForData = '/topic/statistic/' + this.exerciseId();
+        this.websocketService.subscribe(this.websocketChannelForData);
+
+        // ask for new Data if the websocket for new statistical data was notified
+        this.websocketService.receive(this.websocketChannelForData).subscribe(() => {
             if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
+                this.quizExerciseService.find(this.exerciseId()).subscribe((res) => {
                     this.loadQuizSuccess(res.body!);
                 });
             }
-
-            // subscribe websocket for new statistical data
-            this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            this.websocketService.subscribe(this.websocketChannelForData);
-
-            // ask for new Data if the websocket for new statistical data was notified
-            this.websocketService.receive(this.websocketChannelForData).subscribe(() => {
-                if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
-                    this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
-                        this.loadQuizSuccess(res.body!);
-                    });
-                }
-            });
         });
         this.changeDetector.detectChanges();
     }

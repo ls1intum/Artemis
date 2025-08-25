@@ -1,7 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-dynamic-registration',
@@ -12,7 +12,7 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private http = inject(HttpClient);
 
-    courseId: number;
+    courseId = input.required<number>();
     isRegistering = true;
     registeredSuccessfully: boolean;
 
@@ -20,10 +20,6 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
      * perform LTI 13 dynamic registration
      */
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
-            this.courseId = Number(params['courseId']);
-        });
-
         const openIdConfiguration = this.route.snapshot.queryParamMap.get('openid_configuration');
         const registrationToken = this.route.snapshot.queryParamMap.get('registration_token');
 

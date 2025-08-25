@@ -1,6 +1,6 @@
 import { Location, UpperCasePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, linkedSignal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -77,7 +77,6 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     unreferencedFeedback: Feedback[] = [];
     exercise?: FileUploadExercise;
     course?: Course;
-    exerciseId: number;
     totalScore = 0;
     assessmentsAreValid: boolean;
     invalidError?: string;
@@ -90,12 +89,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     userId: number;
     isLoading = true;
     isTestRun = false;
-    courseId: number;
     hasAssessmentDueDatePassed: boolean;
     correctionRound = 0;
-    resultId: number;
-    examId = 0;
-    exerciseGroupId: number;
     exerciseDashboardLink: string[];
     loadingInitialSubmission = true;
     highlightDifferences = false;
@@ -116,6 +111,15 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         return [...this.unreferencedFeedback];
     }
 
+    courseId = input.required<number>();
+    exerciseId = input.required<number>();
+    resultId = input<number>();
+    internalResultId = linkedSignal<number>(() => this.resultId() || 0);
+
+    examId = input<number>();
+    exerciseGroupId = input.required<number>();
+    submissionId = input.required();
+
     public ngOnInit(): void {
         this.busy = true;
 
@@ -130,28 +134,13 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.route.params.subscribe((params) => {
-            this.courseId = Number(params['courseId']);
-            const exerciseId = Number(params['exerciseId']);
-            this.resultId = Number(params['resultId']) || 0;
-            this.exerciseId = exerciseId;
+        this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId(), this.exerciseId(), this.examId(), this.isTestRun);
 
-            const examId = params['examId'];
-            if (examId) {
-                this.examId = Number(examId);
-                this.exerciseGroupId = Number(params['exerciseGroupId']);
-            }
-
-            this.exerciseDashboardLink = getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun);
-
-            const submissionValue = params['submissionId'];
-            const submissionId = Number(submissionValue);
-            if (submissionValue === 'new') {
-                this.loadOptimalSubmission(this.exerciseId);
-            } else {
-                this.loadSubmission(submissionId);
-            }
-        });
+        if (this.submissionId() === 'new') {
+            this.loadOptimalSubmission(this.exerciseId());
+        } else {
+            this.loadSubmission(Number(this.submissionId()));
+        }
     }
 
     attachmentExtension(filePath: string): string {
@@ -191,7 +180,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
     private loadSubmission(submissionId: number): void {
         this.fileUploadSubmissionService
-            .get(submissionId, this.correctionRound, this.resultId)
+            .get(submissionId, this.correctionRound, this.internalResultId())
             .pipe(filter((res) => !!res))
             .subscribe({
                 next: (res) => {
@@ -225,10 +214,10 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.accountService.setAccessRightsForExercise(this.exercise);
         this.course = getCourseFromExercise(this.exercise);
         this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && dayjs(this.exercise.assessmentDueDate).isBefore(dayjs());
-        if (this.resultId > 0) {
+        if (this.internalResultId() > 0) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
-            this.result = getSubmissionResultById(this.submission, this.resultId);
+            this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.internalResultId())!;
+            this.result = getSubmissionResultById(this.submission, this.internalResultId());
         } else {
             this.result = getLatestSubmissionResult(this.submission);
         }
@@ -292,12 +281,12 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
                 const url = getLinkToSubmissionAssessment(
                     ExerciseType.FILE_UPLOAD,
-                    this.courseId,
-                    this.exerciseId,
+                    this.courseId(),
+                    this.exerciseId(),
                     this.unassessedSubmission!.participation!.id!,
                     this.unassessedSubmission!.id!,
-                    this.examId,
-                    this.exerciseGroupId,
+                    this.examId(),
+                    this.exerciseGroupId(),
                 );
                 this.router.navigate(url);
             },

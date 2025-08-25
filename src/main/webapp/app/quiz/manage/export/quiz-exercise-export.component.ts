@@ -1,5 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -19,23 +18,19 @@ import { FormsModule } from '@angular/forms';
     imports: [TranslateDirective, FormsModule],
 })
 export class QuizExerciseExportComponent implements OnInit {
-    private route = inject(ActivatedRoute);
     private quizExerciseService = inject(QuizExerciseService);
     private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
 
     questions: QuizQuestion[] = new Array(0);
-    courseId: number;
+    courseId = input.required<number>();
     course: Course;
 
     /**
      * Load the quizzes of the course for export on init.
      */
     ngOnInit() {
-        this.route.params.subscribe((params) => {
-            this.courseId = params['courseId'];
-            this.loadForCourse(this.courseId);
-        });
+        this.loadForCourse(this.courseId());
     }
 
     /**
@@ -43,7 +38,7 @@ export class QuizExerciseExportComponent implements OnInit {
      * @param courseId Id of the course
      */
     private loadForCourse(courseId: number) {
-        this.courseService.find(this.courseId).subscribe((courseResponse) => {
+        this.courseService.find(this.courseId()).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
             // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
             this.quizExerciseService.findForCourse(courseId).subscribe({

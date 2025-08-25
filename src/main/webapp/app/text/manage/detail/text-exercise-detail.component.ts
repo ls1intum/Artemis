@@ -1,6 +1,5 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
@@ -35,7 +34,6 @@ import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/det
     imports: [TranslateDirective, DocumentationButtonComponent, NonProgrammingExerciseDetailCommonActionsComponent, ExerciseDetailStatisticsComponent, DetailOverviewListComponent],
 })
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
-    private route = inject(ActivatedRoute);
     private eventManager = inject(EventManager);
     private artemisMarkdownService = inject(ArtemisMarkdownService);
     private textExerciseService = inject(TextExerciseService);
@@ -60,14 +58,13 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
     private eventSubscriber: Subscription;
 
+    exerciseId = input.required<number>();
     /**
      * Loads the text exercise and subscribes to changes of it on component initialization.
      */
     ngOnInit() {
         // TODO: route determines whether the component is in exam mode
-        this.subscription = this.route.params.subscribe((params) => {
-            this.load(params['exerciseId']);
-        });
+        this.load(this.exerciseId());
         this.registerChangeInTextExercises();
     }
 

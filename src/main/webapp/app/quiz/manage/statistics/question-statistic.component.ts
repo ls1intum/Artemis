@@ -5,10 +5,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { Subscription } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { CanBecomeInvalid } from 'app/quiz/shared/entities/drop-location.model';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 
@@ -33,8 +32,6 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     questionStatistic: QuizQuestionStatistic;
 
     quizExercise: QuizExercise;
-    questionIdParam: number;
-    sub: Subscription;
 
     // TODO: why do we have a second variable for labels?
     labels: string[] = [];
@@ -53,27 +50,27 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     backgroundColors: string[] = [];
     backgroundSolutionColors: string[] = [];
 
+    questionId = input.required<number>();
+    exerciseId = input.required<number>();
+
     ngOnInit() {
         this.translateService.onLangChange.subscribe(() => {
             this.setAxisLabels('showStatistic.questionStatistic.xAxes', 'showStatistic.questionStatistic.yAxes');
         });
-        this.sub = this.route.params.subscribe((params) => {
-            this.questionIdParam = +params['questionId'];
-            // use different REST-call if the User is a Student
-            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
-                    this.loadQuiz(res.body!, false);
-                });
-            }
-
-            // subscribe websocket for new statistical data
-            this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            this.websocketService.subscribe(this.websocketChannelForData);
-
-            // ask for new Data if the websocket for new statistical data was notified
-            this.websocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
-                this.loadQuiz(quiz, true);
+        // use different REST-call if the User is a Student
+        if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+            this.quizExerciseService.find(this.exerciseId()).subscribe((res) => {
+                this.loadQuiz(res.body!, false);
             });
+        }
+
+        // subscribe websocket for new statistical data
+        this.websocketChannelForData = '/topic/statistic/' + this.exerciseId();
+        this.websocketService.subscribe(this.websocketChannelForData);
+
+        // ask for new Data if the websocket for new statistical data was notified
+        this.websocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
+            this.loadQuiz(quiz, true);
         });
     }
 
@@ -144,7 +141,7 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
         }
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionId() === question.id)[0];
         // if anyone finds a way to the Website, with a wrong combination of QuizId and QuestionId, go back to Courses
         if (!updatedQuestion) {
             this.router.navigateByUrl('courses');

@@ -1,5 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { AfterViewInit, Component, OnDestroy, OnInit, effect, inject, input } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { LegalDocumentLanguage } from 'app/core/shared/entities/legal-document.model';
@@ -12,9 +11,10 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     imports: [HtmlForMarkdownPipe],
 })
 export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
-    private route = inject(ActivatedRoute);
     private legalDocumentService = inject(LegalDocumentService);
     private languageHelper = inject(JhiLanguageHelper);
+
+    fragment = input<string>();
 
     imprint?: string;
     private languageChangeSubscription?: Subscription;
@@ -39,15 +39,28 @@ export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
      * After view initialization scroll the fragment of the current route into view.
      */
     ngAfterViewInit(): void {
-        this.route.params.subscribe((params) => {
-            try {
-                const fragment = document.querySelector('#' + params['fragment']);
-                if (fragment !== null) {
-                    fragment.scrollIntoView();
-                }
-            } catch (e) {
-                /* empty */
-            }
+        // Initial scroll if fragment exists
+        this.scrollToFragment();
+    }
+
+    constructor() {
+        effect(() => {
+            this.scrollToFragment();
         });
+    }
+
+    scrollToFragment(): void {
+        const fragmentValue = this.fragment();
+        if (fragmentValue) {
+            // Use setTimeout to ensure DOM is updated
+            setTimeout(() => {
+                try {
+                    const element = document.querySelector('#' + fragmentValue);
+                    element?.scrollIntoView();
+                } catch (e) {
+                    /* empty */
+                }
+            });
+        }
     }
 }

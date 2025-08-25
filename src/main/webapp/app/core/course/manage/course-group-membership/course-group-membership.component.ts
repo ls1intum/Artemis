@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { Course, CourseGroup, courseGroups } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -25,7 +25,7 @@ export class CourseGroupMembershipComponent implements OnInit {
 
     allCourseGroupUsers: User[] = [];
     course: Course;
-    courseGroup: CourseGroup;
+    courseGroup = input.required<CourseGroup>();
     isLoading = false;
     isAdmin = false;
     paramSub: Subscription;
@@ -39,9 +39,9 @@ export class CourseGroupMembershipComponent implements OnInit {
 
     userSearch = (loginOrName: string) => this.userService.search(loginOrName);
 
-    addToGroup = (login: string) => this.courseService.addUserToCourseGroup(this.course.id!, this.courseGroup, login);
+    addToGroup = (login: string) => this.courseService.addUserToCourseGroup(this.course.id!, this.courseGroup(), login);
 
-    removeFromGroup = (login: string) => this.courseService.removeUserFromCourseGroup(this.course.id!, this.courseGroup, login);
+    removeFromGroup = (login: string) => this.courseService.removeUserFromCourseGroup(this.course.id!, this.courseGroup(), login);
 
     /**
      * Update the number of filtered users
@@ -59,15 +59,12 @@ export class CourseGroupMembershipComponent implements OnInit {
         this.isAdmin = this.accountService.isAdmin();
         this.route.parent!.data.subscribe(({ course }) => {
             this.course = course;
-            this.paramSub = this.route.params.subscribe((params) => {
-                this.courseGroup = params['courseGroup'];
-                if (!courseGroups.includes(this.courseGroup)) {
-                    return this.router.navigate(['/course-management']);
-                }
-                this.courseService.getAllUsersInCourseGroup(this.course.id!, this.courseGroup).subscribe((usersResponse) => {
-                    this.allCourseGroupUsers = usersResponse.body!;
-                    this.isLoading = false;
-                });
+            if (!courseGroups.includes(this.courseGroup())) {
+                return this.router.navigate(['/course-management']);
+            }
+            this.courseService.getAllUsersInCourseGroup(this.course.id!, this.courseGroup()).subscribe((usersResponse) => {
+                this.allCourseGroupUsers = usersResponse.body!;
+                this.isLoading = false;
             });
         });
     };
@@ -76,7 +73,7 @@ export class CourseGroupMembershipComponent implements OnInit {
      * Property that returns the course group name, e.g. "artemis-test-students"
      */
     get courseGroupName() {
-        switch (this.courseGroup) {
+        switch (this.courseGroup()) {
             case CourseGroup.STUDENTS:
                 return this.course.studentGroupName;
             case CourseGroup.TUTORS:
@@ -96,7 +93,7 @@ export class CourseGroupMembershipComponent implements OnInit {
      * If the count of users is exactly 1, singular is used instead of plural.
      */
     get courseGroupEntityName(): string {
-        return this.allCourseGroupUsers.length === 1 ? this.courseGroup.slice(0, -1) : this.courseGroup;
+        return this.allCourseGroupUsers.length === 1 ? this.courseGroup().slice(0, -1) : this.courseGroup();
     }
 
     get exportFilename(): string {

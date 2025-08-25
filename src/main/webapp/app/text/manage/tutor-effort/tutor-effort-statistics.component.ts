@@ -1,7 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -27,7 +27,6 @@ interface TutorEffortRange {
     imports: [TranslateDirective, FaIconComponent, HelpIconComponent, BarChartModule, ArtemisTranslatePipe],
 })
 export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDirective implements OnInit {
-    private route = inject(ActivatedRoute);
     private router = inject(Router);
     private textExerciseService = inject(TextExerciseService);
     private textAssessmentService = inject(TextAssessmentService);
@@ -37,8 +36,8 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     numberOfSubmissions: number;
     totalTimeSpent: number;
     averageTimeSpent: number;
-    currentExerciseId: number;
-    currentCourseId: number;
+    exerciseId = input.required<number>();
+    courseId = input.required<number>();
     numberOfTutorsInvolvedInCourse: number;
     effortDistribution: number[];
     yScaleMax = 10;
@@ -66,15 +65,11 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
         this.translateLabels();
         this.ngxChartLabels = ['[0-10)', '[10-20)', '[20-30)', '[30-40)', '[40-50)', '[50-60)', '[60-70)', '[70-80)', '[80-90)', '[90-100)', '[100-110)', '[110-120)', '120+'];
         this.ngxColor.domain = Array(13).fill(GraphColors.LIGHT_BLUE);
-        this.route.params.subscribe((params) => {
-            this.currentExerciseId = Number(params['exerciseId']);
-            this.currentCourseId = Number(params['courseId']);
-        });
         this.loadTutorEfforts();
     }
 
     loadTutorEfforts() {
-        this.textExerciseService.calculateTutorEffort(this.currentExerciseId, this.currentCourseId).subscribe((tutorEffortResponse: TutorEffort[]) => {
+        this.textExerciseService.calculateTutorEffort(this.exerciseId(), this.courseId()).subscribe((tutorEffortResponse: TutorEffort[]) => {
             this.handleTutorEffortResponse(tutorEffortResponse);
         });
         this.loadNumberOfTutorsInvolved();
@@ -108,7 +103,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     }
 
     loadNumberOfTutorsInvolved() {
-        this.textAssessmentService.getNumberOfTutorsInvolvedInAssessment(this.currentCourseId, this.currentExerciseId).subscribe((response: number) => {
+        this.textAssessmentService.getNumberOfTutorsInvolvedInAssessment(this.courseId(), this.exerciseId()).subscribe((response: number) => {
             this.numberOfTutorsInvolvedInCourse = response;
         });
     }
@@ -133,7 +128,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
      * Delegates the user to the assessment dashboard
      */
     onSelect() {
-        this.router.navigate(['/course-management', this.currentCourseId, 'assessment-dashboard', this.currentExerciseId]);
+        this.router.navigate(['/course-management', this.courseId(), 'assessment-dashboard', this.exerciseId()]);
     }
 
     /**

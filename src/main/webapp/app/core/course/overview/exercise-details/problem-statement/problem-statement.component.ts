@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { NgClass } from '@angular/common';
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, Input, OnInit, inject, input } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -25,25 +25,22 @@ export class ProblemStatementComponent implements OnInit {
     @Input() participation?: StudentParticipation;
     isStandalone: boolean = false;
 
-    ngOnInit() {
-        this.route.params.subscribe((params) => {
-            const exerciseId = parseInt(params['exerciseId'], 10);
-            let participationId: number | undefined = undefined;
-            if (params['participationId']) {
-                participationId = parseInt(params['participationId'], 10);
-            }
+    exerciseId = input<number>();
+    participationId = input<number>();
 
-            if (!this.exercise) {
-                this.exerciseService.getExerciseDetails(exerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
-                    this.exercise = exerciseResponse.body!.exercise;
-                });
-            }
-            if (!this.participation && participationId) {
-                this.participationService.find(participationId).subscribe((participationResponse) => {
-                    this.participation = participationResponse.body!;
-                });
-            }
-        });
+    ngOnInit() {
+        const internParticipationId = this.participationId();
+        const internExerciseId = this.exerciseId();
+        if (!this.exercise && internExerciseId) {
+            this.exerciseService.getExerciseDetails(internExerciseId).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
+                this.exercise = exerciseResponse.body!.exercise;
+            });
+        }
+        if (!this.participation && internParticipationId) {
+            this.participationService.find(internParticipationId).subscribe((participationResponse) => {
+                this.participation = participationResponse.body!;
+            });
+        }
         // Check whether problem statement is displayed standalone (mobile apps)
         const url = this.route.url;
         if (url) {
