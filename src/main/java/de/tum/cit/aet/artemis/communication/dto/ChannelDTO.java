@@ -217,11 +217,6 @@ public record ChannelDTO(
         return channel;
     }
 
-    // Convenience getter methods to match original naming convention
-    public boolean getIsPublic() {
-        return isPublic;
-    }
-
     public boolean getIsAnnouncementChannel() {
         return isAnnouncementChannel;
     }

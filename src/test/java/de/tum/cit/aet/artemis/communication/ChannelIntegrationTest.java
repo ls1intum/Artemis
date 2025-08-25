@@ -145,9 +145,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // when
         var chat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
         // then
-        this.assertChannelProperties(chat.id(), channelDTO.name(), null, channelDTO.description(), channelDTO.getIsPublic(), false);
+        this.assertChannelProperties(chat.id(), channelDTO.name(), null, channelDTO.description(), channelDTO.isPublic(), false);
         var participants = assertParticipants(chat.id(), 1, loginNameWithoutPrefix);
-        // creator is automatically added as channel moderator
+        // creator is automatically added as a channel moderator
         assertThat(participants.stream().findFirst().orElseThrow().getIsModerator()).isTrue();
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.id(), loginNameWithoutPrefix);
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE);
@@ -981,7 +981,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldToggleChannelPrivacy() throws Exception {
         var initialChannel = createChannel(true, TEST_PREFIX + "togglePrivacy");
-        assertThat(initialChannel.getIsPublic()).isTrue();
+        assertThat(initialChannel.isPublic()).isTrue();
 
         // Toggle privacy
         MultiValueMap<String, String> emptyParams = new LinkedMultiValueMap<>();

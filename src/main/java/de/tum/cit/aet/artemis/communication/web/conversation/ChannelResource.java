@@ -228,7 +228,7 @@ public class ChannelResource extends ConversationManagementResource {
 
         var channelToCreate = new Channel();
         channelToCreate.setName(channelDTO.name());
-        channelToCreate.setIsPublic(channelDTO.getIsPublic());
+        channelToCreate.setIsPublic(channelDTO.isPublic());
         channelToCreate.setIsAnnouncementChannel(channelDTO.getIsAnnouncementChannel());
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(channelDTO.description());
@@ -584,7 +584,7 @@ public class ChannelResource extends ConversationManagementResource {
     }
 
     private Stream<ChannelDTO> filterVisibleChannelsForNonInstructors(Stream<ChannelDTO> channelDTOs) {
-        return channelDTOs.filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.isMember());
+        return channelDTOs.filter(channelDTO -> channelDTO.isPublic() || channelDTO.isMember());
     }
 
     private void checkChannelMembership(Channel channel, @NotNull User user) {
