@@ -130,7 +130,7 @@
                     <jhi-unreferenced-feedback
                         [(feedbacks)]="unreferencedFeedback"
                         [feedbackSuggestions]="unreferencedFeedbackSuggestions"
-                        (feedbacksChange)="validateFeedback()"
+                        (feedbacksChange)="validateUpdatedFeedback()"
                         [readOnly]="readOnly()"
                         [highlightDifferences]="highlightDifferences"
                         (onAcceptSuggestion)="removeSuggestion($event)"
