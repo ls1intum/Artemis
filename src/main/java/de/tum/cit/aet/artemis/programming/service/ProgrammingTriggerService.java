@@ -4,9 +4,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.TRIGGER_INSTRUCTOR_BUILD;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +18,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -41,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -60,8 +60,6 @@ public class ProgrammingTriggerService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
-
-    private final ResultRepository resultRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
@@ -85,14 +83,14 @@ public class ProgrammingTriggerService {
 
     public ProgrammingTriggerService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository, ResultRepository resultRepository,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingMessagingService programmingMessagingService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProfileService profileService,
-            ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, ProgrammingSubmissionMessagingService programmingSubmissionMessagingService) {
+            ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, ProgrammingSubmissionMessagingService programmingSubmissionMessagingService,
+            DistributedDataAccessService distributedDataAccessService) {
         this.participationService = participationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.resultRepository = resultRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -123,9 +121,7 @@ public class ProgrammingTriggerService {
 
         // Let the instructor know that a build run was triggered.
         programmingMessagingService.notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
-        List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>(
-                programmingExerciseStudentParticipationRepository.findWithSubmissionsAndTeamStudentsByExerciseId(exerciseId));
-
+        Set<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findWithLatestSubmissionByExerciseId(exerciseId);
         triggerBuildForParticipations(participations);
 
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
@@ -139,7 +135,7 @@ public class ProgrammingTriggerService {
      *
      * @param participations the participations for which the method triggerBuild should be executed.
      */
-    public void triggerBuildForParticipations(List<ProgrammingExerciseStudentParticipation> participations) {
+    public void triggerBuildForParticipations(Collection<ProgrammingExerciseStudentParticipation> participations) {
         var index = 0;
         for (var participation : participations) {
             // Execute requests in batches when using an external build system.
