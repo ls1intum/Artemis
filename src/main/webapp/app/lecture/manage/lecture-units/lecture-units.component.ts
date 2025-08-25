@@ -167,9 +167,11 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     createEditAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
-        const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
+        const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
+
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
         const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
+
         if (!name || (!fileName && !videoSource)) {
             return;
         }
@@ -187,7 +189,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
 
         let notificationText: string | undefined;
-
         if (updateNotificationText) {
             notificationText = updateNotificationText;
         }
@@ -228,7 +229,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
             .pipe(
                 switchMap((response) => {
                     const lectureUnit = response.body!;
-
+                    if (lectureUnit) {
+                        this.triggerTranscriptionIfEnabled(lectureUnit, generateTranscript, attachmentVideoUnitFormData.playlistUrl);
+                    }
                     if (!videoTranscription) {
                         return of(lectureUnit);
                     }
@@ -341,5 +344,29 @@ export class LectureUpdateUnitsComponent implements OnInit {
                         break;
                 }
             });
+    }
+
+    private triggerTranscriptionIfEnabled(unit: AttachmentVideoUnit | undefined, generateTranscript: boolean | undefined, playlistUrl?: string): void {
+        if (!this.isEditingLectureUnit && generateTranscript && unit?.id) {
+            const transcriptionUrl = playlistUrl ?? unit.videoSource;
+
+            if (!transcriptionUrl) {
+                return; // No transcription URL available
+            }
+
+            this.attachmentVideoUnitService.startTranscription(this.lecture.id!, unit.id, transcriptionUrl).subscribe({
+                next: (res) => {
+                    if (res.status === 200) {
+                        this.alertService.success('Transcript generation started.');
+                    } else {
+                        this.alertService.error('Transcript request did not succeed. Status: ' + res.status);
+                    }
+                },
+                error: (err) => {
+                    this.alertService.error('Transcript failed to start: ' + err.message);
+                },
+            });
+        }
+        // When editing, disabled, or missing data, simply do nothing
     }
 }
