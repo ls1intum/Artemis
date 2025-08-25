@@ -36,7 +36,6 @@
 </ng-template>
 
 <ng-template #eventCell let-event>
-    @let eventSubtypeDescriptor = utils.getEventSubtypeNameKey(event);
     <div
         class="event-cell"
         [ngClass]="{
@@ -53,13 +52,7 @@
         #popover="ngbPopover"
         [attr.data-testid]="event.title"
     >
-        <div class="event-label">
-            @if (eventSubtypeDescriptor) {
-                {{ eventSubtypeDescriptor | artemisTranslate }}: {{ event.title }}
-            } @else {
-                {{ event.title }}
-            }
-        </div>
+        <div class="event-label">{{ event.title }}</div>
         <fa-icon [icon]="utils.getIconForEvent(event)" />
     </div>
 </ng-template>

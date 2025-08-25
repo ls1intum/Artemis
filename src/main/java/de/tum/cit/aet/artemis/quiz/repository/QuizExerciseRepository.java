@@ -93,6 +93,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO(
+                exercise.id,
                 exercise.quizMode,
                 exercise.title,
                 exercise.releaseDate,
@@ -104,7 +105,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
                 LEFT JOIN exercise.quizBatches batch ON exercise.quizMode = de.tum.cit.aet.artemis.quiz.domain.QuizMode.SYNCHRONIZED
             WHERE exercise.course.id = :courseId
             """)
-    Set<QuizExerciseCalendarEventDTO> getQuizExerciseCalendarEventDAOsForCourseId(@Param("courseId") long courseId);
+    Set<QuizExerciseCalendarEventDTO> getQuizExerciseCalendarEventDTOsForCourseId(@Param("courseId") long courseId);
 
     /**
      * Finds a quiz exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.

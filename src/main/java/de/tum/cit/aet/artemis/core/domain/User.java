@@ -146,6 +146,11 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "vcs_access_token_expiry_date")
     private ZonedDateTime vcsAccessTokenExpiryDate = null;
 
+    @Nullable
+    @JsonIgnore
+    @Column(name = "calendar_subscription_token", length = 32, unique = true)
+    private String calendarSubscriptionToken;
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "user_groups", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "user_groups")
@@ -465,6 +470,15 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setVcsAccessTokenExpiryDate(@Nullable ZonedDateTime vcsAccessTokenExpiryDate) {
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
+    }
+
+    @Nullable
+    public String getCalendarSubscriptionToken() {
+        return calendarSubscriptionToken;
+    }
+
+    public void setCalendarSubscriptionToken(String calendarSubscriptionToken) {
+        this.calendarSubscriptionToken = calendarSubscriptionToken;
     }
 
     public Set<TutorialGroupRegistration> getTutorialGroupRegistrations() {

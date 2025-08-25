@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -44,7 +45,7 @@ public class LectureApi extends AbstractLectureApi {
         lectureService.delete(lecture, updateCompetencyProgress);
     }
 
-    public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, boolean userIsStudent) {
-        return lectureService.getCalendarEventDTOsFromLectures(courseId, userIsStudent);
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, boolean userIsStudent, Language language) {
+        return lectureService.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language);
     }
 }

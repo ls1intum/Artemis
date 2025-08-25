@@ -8,17 +8,6 @@
             "fridayShort": "Fri",
             "saturdayShort": "Sat",
             "sundayShort": "Sun",
-            "eventSubtypeName": {
-                "lectureStart": "Start",
-                "lectureEnd": "End",
-                "examPublishResults": "Results Release",
-                "examReviewStart": "Review Start",
-                "examReviewEnd": "Review End",
-                "exerciseRelease": "Release",
-                "exerciseStart": "Start",
-                "exerciseDue": "Due",
-                "exerciseAssessmentDue": "Assessment Due"
-            },
             "eventTypeName": {
                 "programming": "Programming Exercise",
                 "text": "Text Exercise",

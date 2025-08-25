@@ -8,17 +8,6 @@
             "fridayShort": "Fr",
             "saturdayShort": "Sa",
             "sundayShort": "So",
-            "eventSubtypeName": {
-                "lectureStart": "Anfang",
-                "lectureEnd": "Ende",
-                "examPublishResults": "Veröffentlichung Ergebnisse",
-                "examReviewStart": "Einsicht Start",
-                "examReviewEnd": "Einsicht Ende",
-                "exerciseRelease": "Veröffentlichung",
-                "exerciseStart": "Start",
-                "exerciseDue": "Ende",
-                "exerciseAssessmentDue": "Korrektur Ende"
-            },
             "eventTypeName": {
                 "programming": "Programmieraufgabe",
                 "text": "Textaufgabe",

@@ -18,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -35,6 +38,8 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.CalendarSubscriptionService;
+import de.tum.cit.aet.artemis.core.service.CalendarSubscriptionService.CalendarEventFilterOption;
 import de.tum.cit.aet.artemis.core.util.CalendarUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -66,8 +71,11 @@ public class CalendarResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final CalendarSubscriptionService calendarSubscriptionService;
+
     public CalendarResource(UserRepository userRepository, Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamApi> examApi, LectureApi lectureApi,
-            ExerciseService exerciseService, QuizExerciseService quizExerciseService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService) {
+            ExerciseService exerciseService, QuizExerciseService quizExerciseService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
+            CalendarSubscriptionService calendarSubscriptionService) {
         this.userRepository = userRepository;
         this.tutorialGroupApi = tutorialGroupApi;
         this.examApi = examApi;
@@ -76,6 +84,51 @@ public class CalendarResource {
         this.exerciseService = exerciseService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.calendarSubscriptionService = calendarSubscriptionService;
+    }
+
+    @GetMapping("subscription-token")
+    @EnforceAtLeastStudent
+    public ResponseEntity<String> getCalendarEventSubscriptionToken() {
+        User user = userRepository.getUser();
+        String token = calendarSubscriptionService.getOrCreateSubscriptionTokenFor(user);
+        return ResponseEntity.ok(token);
+    }
+
+    @GetMapping("courses/{courseId}/subscription/calendar-events.ics")
+    public ResponseEntity<String> getCalendarEventSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
+            @RequestParam("filterOptions") Set<CalendarEventFilterOption> filterOptions, @RequestParam("language") Language language) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
+        boolean userIsStudent = authorizationCheckService.isStudentInCourse(course, user);
+        boolean userIsCourseStaff = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        if (!userIsStudent && !userIsCourseStaff) {
+            throw new AccessForbiddenException("You are not allowed to access this course's resources!");
+        }
+
+        boolean includeTutorialEvents = filterOptions.contains(CalendarEventFilterOption.TUTORIALS);
+        boolean includeExamEvents = filterOptions.contains(CalendarEventFilterOption.EXAMS);
+        boolean includeLectureEvents = filterOptions.contains(CalendarEventFilterOption.EXERCISES);
+        boolean includeExerciseEvents = filterOptions.contains(CalendarEventFilterOption.EXERCISES);
+
+        Set<CalendarEventDTO> tutorialEventDTOs = includeTutorialEvents
+                ? tutorialGroupApi.map(api -> api.getCalendarEventDTOsFromTutorialsGroups(user.getId(), courseId)).orElse(Collections.emptySet())
+                : Collections.emptySet();
+        Set<CalendarEventDTO> examEventDTOs = includeExamEvents
+                ? examApi.map(api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent, language)).orElse(Collections.emptySet())
+                : Collections.emptySet();
+        Set<CalendarEventDTO> lectureEventDTOs = includeLectureEvents ? lectureApi.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language) : Collections.emptySet();
+        Set<CalendarEventDTO> quizExerciseEventDTOs = includeExerciseEvents ? quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent, language)
+                : Collections.emptySet();
+        Set<CalendarEventDTO> otherExerciseEventDTOs = includeExerciseEvents ? exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent, language)
+                : Collections.emptySet();
+
+        Set<CalendarEventDTO> calendarEventDTOs = Stream.of(tutorialEventDTOs, lectureEventDTOs, examEventDTOs, quizExerciseEventDTOs, otherExerciseEventDTOs).flatMap(Set::stream)
+                .collect(Collectors.toSet());
+
+        String icsFileString = calendarSubscriptionService.getICSFileAsString(language, calendarEventDTOs);
+        return ResponseEntity.ok().contentType(MediaType.parseMediaType("text/calendar; charset=utf-8"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=calendarEvents.ics").body(icsFileString);
     }
 
     /**
@@ -92,7 +145,7 @@ public class CalendarResource {
     @GetMapping("courses/{courseId}/calendar-events")
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, List<CalendarEventDTO>>> getCalendarEventsOverlappingMonths(@PathVariable long courseId, @RequestParam List<String> monthKeys,
-            @RequestParam String timeZone) {
+            @RequestParam String timeZone, @RequestParam Language language) {
         log.debug("REST request to get calendar events falling into: {}", monthKeys);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -105,10 +158,10 @@ public class CalendarResource {
         Long userId = user.getId();
 
         Set<CalendarEventDTO> tutorialEventDTOs = tutorialGroupApi.map(api -> api.getCalendarEventDTOsFromTutorialsGroups(userId, courseId)).orElse(Collections.emptySet());
-        Set<CalendarEventDTO> examEventDTOs = examApi.map(api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent)).orElse(Collections.emptySet());
-        Set<CalendarEventDTO> lectureEventDTOs = lectureApi.getCalendarEventDTOsFromLectures(courseId, userIsStudent);
-        Set<CalendarEventDTO> quizExerciseEventDTOs = quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent);
-        Set<CalendarEventDTO> otherExerciseEventDTOs = exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent);
+        Set<CalendarEventDTO> examEventDTOs = examApi.map(api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent, language)).orElse(Collections.emptySet());
+        Set<CalendarEventDTO> lectureEventDTOs = lectureApi.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language);
+        Set<CalendarEventDTO> quizExerciseEventDTOs = quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent, language);
+        Set<CalendarEventDTO> otherExerciseEventDTOs = exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent, language);
 
         Set<CalendarEventDTO> calendarEventDTOs = Stream.of(tutorialEventDTOs, lectureEventDTOs, examEventDTOs, quizExerciseEventDTOs, otherExerciseEventDTOs).flatMap(Set::stream)
                 .collect(Collectors.toSet());
