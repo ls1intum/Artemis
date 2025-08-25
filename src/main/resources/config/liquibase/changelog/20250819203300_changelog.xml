@@ -4,7 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <changeSet id="20250818093000-add-course-calendar-subscription-tokens" author="marlonnienaber">
-        <comment>Add nullable, unique calendar subscription token to users (per-user)</comment>
+        <comment>Add nullable, unique calendar subscription token to user table</comment>
 
         <addColumn tableName="jhi_user">
             <column name="calendar_subscription_token" type="varchar(32)">
