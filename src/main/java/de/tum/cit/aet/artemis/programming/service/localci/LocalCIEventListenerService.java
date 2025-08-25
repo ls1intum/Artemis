@@ -134,7 +134,7 @@ public class LocalCIEventListenerService {
             }
             log.error("Build job with id {} is in an unknown state", buildJob.getBuildJobId());
             if (buildJob.getRetryCount() < 3) {
-                retryBuildJob(buildJob);
+                retriggerBuildJob(buildJob);
             }
             else {
                 buildJobRepository.updateBuildJobStatus(buildJob.getBuildJobId(), BuildStatus.MISSING);
@@ -142,7 +142,8 @@ public class LocalCIEventListenerService {
         }
     }
 
-    private void retryBuildJob(BuildJob buildJob) {
+    private void retriggerBuildJob(BuildJob buildJob) {
+        log.info("Retriggering build job with id {} (retry count: {})", buildJob.getBuildJobId(), buildJob.getRetryCount() + 1);
         var participation = participationRepository.findByIdElseThrow(buildJob.getParticipationId());
         localCITriggerService.triggerBuild((ProgrammingExerciseParticipation) participation, buildJob.getCommitHash(), buildJob.getTriggeredByPushTo(),
                 buildJob.getRetryCount() + 1);
