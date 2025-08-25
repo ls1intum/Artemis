@@ -130,6 +130,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     firstUnreadPostId: number | undefined;
     unreadPostsCount: number = 0;
     atNewPostPosition = false;
+
     // Icons
     protected readonly faTimes = faTimes;
     protected readonly faEnvelope = faEnvelope;
