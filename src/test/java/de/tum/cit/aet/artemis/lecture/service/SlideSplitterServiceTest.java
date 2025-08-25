@@ -28,6 +28,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -62,6 +63,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
     private AttachmentVideoUnit testAttachmentVideoUnit;
 
     private PDDocument testDocument;
+
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
 
     @BeforeEach
     void initTestCase() {
@@ -645,7 +649,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         slideRepository.deleteAll(existingSlides);
 
         // Create a mock PDF file with 3 pages
-        Path tempDir = Files.createTempDirectory("test-slides");
+        Path tempDir = Files.createTempDirectory(tempPath, "test-slides");
         Path tempPdfPath = tempDir.resolve("test-slides.pdf");
         try (PDDocument doc = new PDDocument()) {
             // Add 3 pages to the document
@@ -772,7 +776,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         slideRepository.deleteAll(existingSlides);
 
         // Create a mock PDF file
-        Path tempDir = Files.createTempDirectory("test-slides");
+        Path tempDir = Files.createTempDirectory(tempPath, "test-slides");
         Path tempPdfPath = tempDir.resolve("test-slides.pdf");
         try (PDDocument doc = new PDDocument()) {
             doc.addPage(new PDPage());
@@ -821,7 +825,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         slideRepository.deleteAll(existingSlides);
 
         // Create a mock PDF file with 3 pages
-        Path tempDir = Files.createTempDirectory("test-slides");
+        Path tempDir = Files.createTempDirectory(tempPath, "test-slides");
         Path tempPdfPath = tempDir.resolve("test-slides.pdf");
         try (PDDocument doc = new PDDocument()) {
             // Add 3 pages to the document
