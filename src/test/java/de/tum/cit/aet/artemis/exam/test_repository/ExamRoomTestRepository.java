@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.test_repository;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
@@ -40,5 +41,24 @@ public interface ExamRoomTestRepository extends ExamRoomRepository {
                 AND examRoom.createdDate < latestRoom.maxCreatedDate
             WHERE examRoom.id NOT IN ( SELECT DISTINCT examRoom.id FROM ExamRoomExamAssignment )
             """)
-    Set<ExamRoom> findAllOutdatedAndUnusedExamRooms();
+    List<ExamRoom> findAllOutdatedAndUnusedExamRooms();
+
+    @Query(value = """
+                    WITH latestRooms AS (
+                        SELECT
+                            roomNumber AS roomNumber,
+                            name AS name,
+                            MAX(createdDate) AS maxCreatedDate
+                        FROM ExamRoom
+                        GROUP BY roomNumber, name
+                    )
+                    SELECT examRoom
+                    FROM ExamRoom examRoom
+                    JOIN latestRooms latestRoom
+                        ON examRoom.roomNumber = latestRoom.roomNumber
+                        AND examRoom.name = latestRoom.name
+                        AND examRoom.createdDate = latestRoom.maxCreatedDate
+                    LEFT JOIN FETCH examRoom.layoutStrategies
+            """)
+    Set<ExamRoom> findAllNewestExamRoomVersionsWithEagerLayoutStrategies();
 }

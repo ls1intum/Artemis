@@ -125,13 +125,13 @@ public class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependen
         var uploadInformation = request.postMultipartFileOnlyWithResponseBody("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom,
                 ExamRoomUploadInformationDTO.class, HttpStatus.OK);
 
-        validateUploadOverviewAndCheckIfDbContainsRooms(uploadInformation, ExamRoomZipFiles.zipFileSingleExamRoom.getOriginalFilename(), 1, 528, 4, singleExpectedRoom);
+        validateUploadOverviewAndCheckIfDbContainsRooms(uploadInformation, ExamRoomZipFiles.zipFileSingleExamRoom.getOriginalFilename(), 1, 528, singleExpectedRoom);
 
         validateDbStoredElementCounts(1, 528, 4);
     }
 
     private void validateUploadOverviewAndCheckIfDbContainsRooms(ExamRoomUploadInformationDTO uploadInformationDTO, String originalFilename, int expectedNumberOfRooms,
-            int expectedNumberOfSeats, int expectedNumberOfLayoutStrategies, ExpectedRoom... expectedRooms) {
+            int expectedNumberOfSeats, ExpectedRoom... expectedRooms) {
         // first verify the returned upload information is correct
         assertThat(uploadInformationDTO.uploadedFileName()).isEqualTo(originalFilename);
         assertThat(uploadInformationDTO.uploadDuration()).isNotNull();
@@ -143,7 +143,7 @@ public class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependen
         assertThat(uploadInformationDTO.uploadedRoomNames()).containsExactlyInAnyOrderElementsOf(allRoomNames);
 
         // now verify the exam rooms were stored (correctly)
-        Map<String, List<ExamRoom>> allExamRoomsGroupedByRoomNumber = examRoomRepository.findAllOutdatedAndUnusedExamRooms().stream()
+        Map<String, List<ExamRoom>> allExamRoomsGroupedByRoomNumber = examRoomRepository.findAllNewestExamRoomVersionsWithEagerLayoutStrategies().stream()
                 .collect(Collectors.groupingBy(ExamRoom::getRoomNumber));
         assertThat(allExamRoomsGroupedByRoomNumber.keySet()).hasSize(expectedRooms.length);
 
@@ -171,5 +171,29 @@ public class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependen
 
         int totalLayoutStrategies = allExamRooms.stream().mapToInt(examRoom -> examRoom.getLayoutStrategies().size()).sum();
         assertThat(totalLayoutStrategies).isEqualTo(expectedNumberOfLayoutStrategies);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUploadFourRooms() throws Exception {
+        var uploadInformation = request.postMultipartFileOnlyWithResponseBody("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms,
+                ExamRoomUploadInformationDTO.class, HttpStatus.OK);
+
+        validateUploadOverviewAndCheckIfDbContainsRooms(uploadInformation, ExamRoomZipFiles.zipFileFourExamRooms.getOriginalFilename(), 4, 994, fourExpectedRooms);
+        validateDbStoredElementCounts(4, 994, 15);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUploadFourRoomsMultipleTimes() throws Exception {
+        // upload the same file multiple times, should not create duplicates
+        for (int i = 0; i < 3; i++) {
+            var uploadInformation = request.postMultipartFileOnlyWithResponseBody("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms,
+                    ExamRoomUploadInformationDTO.class, HttpStatus.OK);
+
+            validateUploadOverviewAndCheckIfDbContainsRooms(uploadInformation, ExamRoomZipFiles.zipFileFourExamRooms.getOriginalFilename(), 4, 994, fourExpectedRooms);
+        }
+
+        validateDbStoredElementCounts(4 * 3, 994 * 3, 15 * 3);
     }
 }

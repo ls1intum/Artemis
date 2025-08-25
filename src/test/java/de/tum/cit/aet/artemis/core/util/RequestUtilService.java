@@ -96,7 +96,7 @@ public class RequestUtilService {
     }
 
     public void postMultipartFileOnly(String path, MockMultipartFile file, HttpStatus expectedStatus) throws Exception {
-        postMultipartFileOnlyWithResponseBody(path, file, null, expectedStatus);
+        postMultipartFileOnlyWithResponseBody(path, file, Object.class, expectedStatus);
     }
 
     public <R> R postMultipartFileOnlyWithResponseBody(String path, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {

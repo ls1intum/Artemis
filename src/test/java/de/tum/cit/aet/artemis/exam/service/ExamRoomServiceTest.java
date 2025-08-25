@@ -3,18 +3,12 @@ package de.tum.cit.aet.artemis.exam.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.Random;
 import java.util.Set;
-import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -39,24 +33,13 @@ public class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTes
 
     private static final String[] fourExamRoomNames = { "Seminarraum", "Wilhelm-Nusselt-Hörsaal", "N1090", "Friedrich L. Bauer Hörsaal" };
 
-    private static String generateRandomLowercaseText(final int length) {
-        Random rand = new Random();
-        return IntStream.range(0, length).unordered().parallel().map(ignored -> 'z' - rand.nextInt('z' - 'a'))
-                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
-    }
-
-    private static MultipartFile generateMultipartFileFromResource(String resourcePath) throws IOException {
-        Resource zipFileResource = new ClassPathResource(resourcePath);
-        return new MockMultipartFile("file", TEST_PREFIX + zipFileResource.getFilename(), "application/zip", zipFileResource.getInputStream());
-    }
-
     @AfterEach
     void tearDown() {
         examRoomRepository.deleteAll();
     }
 
-    private void testParseAndStoreZipFile(MultipartFile zipFile, int expectedNumberOfRooms, int expectedNumberOfSeats, int expectedNumberOfLayoutStrategies,
-            String... expectedRoomNames) {
+    private void testParseAndStoreZipFileAndValidateUploadOverview(MultipartFile zipFile, int expectedNumberOfRooms, int expectedNumberOfSeats,
+            int expectedNumberOfLayoutStrategies, String... expectedRoomNames) {
         var uploadInformation = examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFile);
 
         // first verify the returned upload information is correct
@@ -70,29 +53,29 @@ public class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTes
 
     @Test
     void testParseAndStoreZipFileSingleExamRoom() {
-        testParseAndStoreZipFile(ExamRoomZipFiles.zipFileSingleExamRoom, 1, 528, 4, singleExamRoomName);
+        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileSingleExamRoom, 1, 528, 4, singleExamRoomName);
     }
 
     @Test
     void testParseAndStoreZipFileSingleExamRoomRepeated() {
         // Multiple entries of the same exam room should be ignored
-        testParseAndStoreZipFile(ExamRoomZipFiles.zipFileSingleExamRoomRepeated, 1, 528, 4, singleExamRoomName);
+        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileSingleExamRoomRepeated, 1, 528, 4, singleExamRoomName);
     }
 
     @Test
     void testParseAndStoreZipFileSingleExamWithUnrelatedFiles() {
-        testParseAndStoreZipFile(ExamRoomZipFiles.zipFileSingleExamRoomWithUnrelatedFiles, 1, 528, 4, singleExamRoomName);
+        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileSingleExamRoomWithUnrelatedFiles, 1, 528, 4, singleExamRoomName);
     }
 
     @Test
     void testParseAndStoreZipFileSingleRoomNoLayouts() {
         // Single exam room with no layout strategies
-        testParseAndStoreZipFile(ExamRoomZipFiles.zipFileSingleRoomNoLayouts, 1, 101, 0, "Theresianum");
+        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileSingleRoomNoLayouts, 1, 101, 0, "Theresianum");
     }
 
     @Test
     void testParseAndStoreZipFileFourExamRooms() {
-        testParseAndStoreZipFile(ExamRoomZipFiles.zipFileFourExamRooms, 4, 994, 15, fourExamRoomNames);
+        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileFourExamRooms, 4, 994, 15, fourExamRoomNames);
     }
 
     @Test

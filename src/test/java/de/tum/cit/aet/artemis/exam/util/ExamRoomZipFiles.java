@@ -78,7 +78,7 @@ public class ExamRoomZipFiles {
     private static MockMultipartFile generateMultipartFileFromResource(String resourcePath) {
         Resource zipFileResource = new ClassPathResource(resourcePath);
         try {
-            return new MockMultipartFile("filename", zipFileResource.getFilename(), "application/zip", zipFileResource.getInputStream());
+            return new MockMultipartFile("file", zipFileResource.getFilename(), "application/zip", zipFileResource.getInputStream());
         }
         catch (IOException e) {
             throw new RuntimeException(e);
