@@ -300,7 +300,6 @@ describe('SidebarComponent', () => {
         it('should show "Create Channel" button when canCreateChannel is true', () => {
             runInInjectionContext(fixture.debugElement.injector, () => {
                 component.inCommunication = input<boolean>(true);
-                component.ngOnInit();
                 component.sidebarData.canCreateChannel = true;
                 fixture.detectChanges();
                 const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
@@ -311,7 +310,6 @@ describe('SidebarComponent', () => {
         it('should not show "Create Channel" button when canCreateChannel is false', () => {
             runInInjectionContext(fixture.debugElement.injector, () => {
                 component.inCommunication = input<boolean>(true);
-                component.ngOnInit();
                 component.sidebarData.canCreateChannel = false;
                 fixture.detectChanges();
                 const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));

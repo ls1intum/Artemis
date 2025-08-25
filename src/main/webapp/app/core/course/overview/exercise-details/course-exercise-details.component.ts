@@ -36,7 +36,6 @@ import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -70,7 +69,6 @@ interface InstructorActionItem {
     styleUrls: ['../course-overview/course-overview.scss', './course-exercise-details.component.scss'],
     providers: [ExerciseCacheService],
     imports: [
-        NgClass,
         FaIconComponent,
         NgbDropdown,
         NgbDropdownToggle,
@@ -152,8 +150,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     plagiarismCaseInfo?: PlagiarismCaseInfo;
     irisSettings?: IrisSettings;
     paramsSubscription: Subscription;
-    isProduction = true;
-    isTestServer = false;
     instructorActionItems: InstructorActionItem[] = [];
     exerciseIcon: IconProp;
     numberOfPracticeResults: number;
@@ -189,9 +185,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.scienceService.logEvent(ScienceEventType.EXERCISE__OPEN, this.exerciseId);
             });
         }
-
-        this.isProduction = this.profileService.isProduction();
-        this.isTestServer = this.profileService.isTestServer();
     }
 
     loadExercise() {

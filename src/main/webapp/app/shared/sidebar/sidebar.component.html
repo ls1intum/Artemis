@@ -1,10 +1,10 @@
 <div class="sidebar-wrap">
-    <div class="d-flex sidebar rounded-3 px-2 sidebar-width hide-on_print" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
+    <div class="d-flex sidebar rounded-3 px-2 sidebar-width hide-on_print" [ngClass]="{ collapsed: isCollapsed }">
         <div class="w-100 bg-module">
             <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
                 @if (searchFieldEnabled) {
-                    <div class="mt-2 mb-1" [ngClass]="{ 'd-flex align-items-center': inCommunication() }">
-                        <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="mb-1 flex-grow-1 search-filter" />
+                    <div class="mt-2" [ngClass]="{ 'd-flex align-items-center': inCommunication() }">
+                        <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="flex-grow-1 search-filter" />
                         @if (showFilter) {
                             <div class="ms-2 mt-2 text-primary">
                                 <a (click)="openFilterExercisesDialog()">
@@ -19,7 +19,7 @@
                         }
 
                         @if (inCommunication()) {
-                            <div class="ms-2 mb-1" ngbDropdown>
+                            <div class="ms-2" ngbDropdown>
                                 <button type="button" class="btn btn-primary btn-sm square-button" ngbDropdownToggle>
                                     <fa-icon [icon]="faPlusCircle" class="item-icon" />
                                 </button>
@@ -57,7 +57,6 @@
 
                 @if (!sidebarData?.ungroupedData || !(sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue)?.length) {
                     <div
-                        [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
                         [jhiTranslate]="
                             (sidebarDataBeforeFiltering?.ungroupedData?.length ?? 0) > 0 && sidebarData.ungroupedData?.length === 0
                                 ? 'artemisApp.courseOverview.general.noElementFoundWithAppliedFilter'
@@ -69,9 +68,8 @@
                     <div
                         class="scrollable-item-content my-2"
                         [ngClass]="{
-                            'content-height-dev': !isProduction || isTestServer,
-                            'search-height-conversations': sidebarData?.sidebarType === 'conversation',
-                            'search-height-normal': sidebarData?.sidebarType !== 'conversation',
+                            'filter-height': sidebarData?.sidebarType === 'exercise',
+                            'channel-search-height': sidebarData?.sidebarType === 'conversation',
                         }"
                     >
                         @if (sidebarData?.groupByCategory && sidebarData.groupedData) {

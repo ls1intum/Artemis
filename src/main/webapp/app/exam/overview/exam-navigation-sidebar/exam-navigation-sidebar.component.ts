@@ -1,7 +1,6 @@
 import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { SidebarEventService } from 'app/shared/sidebar/service/sidebar-event.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { Exercise, ExerciseType, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -37,7 +36,6 @@ export enum ExerciseButtonStatus {
     styleUrl: './exam-navigation-sidebar.component.scss',
 })
 export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
-    private profileService = inject(ProfileService);
     private sidebarEventService = inject(SidebarEventService);
     private examParticipationService = inject(ExamParticipationService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
@@ -69,16 +67,11 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     readonly faFileLines = faFileLines;
     readonly faChevronRight = faChevronRight;
 
-    isProduction = true;
-    isTestServer = false;
     isCollapsed = false;
     exerciseId: string;
     numberOfSavedExercises: number = 0;
 
     ngOnInit(): void {
-        this.isProduction = this.profileService.isProduction();
-        this.isTestServer = this.profileService.isTestServer();
-
         if (!this.examTimeLineView) {
             this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdForNavigation.subscribe((exerciseIdToNavigateTo) => {
                 // another exercise will only be displayed if the student clicks on the corresponding pop-up notification

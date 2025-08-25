@@ -1,3 +1,5 @@
+@import '../../../../content/scss/artemis-mixins';
+
 .exam-waiting-for-start-overlay {
     position: fixed !important;
     top: 50%;
@@ -23,14 +25,6 @@
 }
 
 .scrollable-content-exam-cover {
-    height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--header-height));
+    @include dynamic-content-height(--header-height);
     overflow-y: auto;
-
-    &.content-height-dev {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--header-height));
-    }
-
-    @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--header-height)) !important;
-    }
 }

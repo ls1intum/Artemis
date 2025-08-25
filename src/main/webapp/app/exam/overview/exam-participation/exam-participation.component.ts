@@ -24,7 +24,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/exam/shared/entities/exam-page.model';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TestRunRibbonComponent } from '../../manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationCoverComponent } from '../exam-cover/exam-participation-cover.component';
 import { AsyncPipe, NgClass } from '@angular/common';
@@ -106,7 +105,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private examManagementService = inject(ExamManagementService);
-    private profileService = inject(ProfileService);
 
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faGraduationCap = faGraduationCap;
@@ -161,9 +159,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     workingTimeUpdateEventsSubscription?: Subscription;
     problemStatementUpdateEventsSubscription?: Subscription;
     studentExamSubscription?: Subscription;
-
-    isProduction = true;
-    isTestServer = false;
 
     sidebarData: SidebarData;
     sidebarExercises: SidebarCardElement[] = [];
@@ -261,9 +256,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.connected = status.connected;
         });
-
-        this.isProduction = this.profileService.isProduction();
-        this.isTestServer = this.profileService.isTestServer();
     }
 
     /**
