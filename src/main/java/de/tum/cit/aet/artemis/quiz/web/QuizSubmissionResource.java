@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
-import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -157,15 +156,12 @@ public class QuizSubmissionResource {
         }
 
         // the following method either reuses an existing participation or creates a new one
-        StudentParticipation participation = participationService.startExercise(quizExercise, user, false);
+        StudentParticipation participation = participationService.startPracticeMode(quizExercise, user, Optional.empty(), false);
         // we set the exercise again to prevent issues with lazy loaded quiz questions
         participation.setExercise(quizExercise);
 
         // update and save submission
         Result result = quizSubmissionService.submitForPractice(quizSubmission, quizExercise, participation);
-        // The quizScheduler is usually responsible for updating the participation to FINISHED in the database. If quizzes where the student did not participate are used for
-        // practice, the QuizScheduler does not update the participation, that's why we update it manually here
-        participation.setInitializationState(InitializationState.FINISHED);
         studentParticipationRepository.saveAndFlush(participation);
 
         // remove some redundant or unnecessary data that is not needed on client side
