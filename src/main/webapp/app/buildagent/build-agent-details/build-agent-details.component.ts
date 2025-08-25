@@ -139,6 +139,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             }, 1000); // 1 second
             this.load();
             this.initWebsocketSubscription();
+            this.loadConcurrencyResetWarningState();
             this.searchSubscription = this.search
                 .pipe(
                     debounceTime(UI_RELOAD_TIME),
@@ -428,5 +429,13 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     dismissConcurrencyResetWarning() {
         this.concurrencyResetWarningDismissed = true;
+        sessionStorage.setItem('concurrencyResetWarningDismissed', 'true');
+    }
+
+    private loadConcurrencyResetWarningState() {
+        const dismissed = sessionStorage.getItem('concurrencyResetWarningDismissed');
+        if (dismissed === 'true') {
+            this.concurrencyResetWarningDismissed = true;
+        }
     }
 }

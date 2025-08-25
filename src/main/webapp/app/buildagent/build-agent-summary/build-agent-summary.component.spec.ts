@@ -316,10 +316,10 @@ describe('BuildAgentSummaryComponent', () => {
     });
 
     it('should handle concurrency change successfully', () => {
-        component.onConcurrencyChange('buildagent1', 5);
+        component.onConcurrencyChange('buildagent1', 2);
 
-        expect(mockBuildAgentsService.adjustBuildAgentCapacity).toHaveBeenCalledWith('buildagent1', 5);
-        expect(component.concurrencyMap['buildagent1']).toBe(5);
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).toHaveBeenCalledWith('buildagent1', 2);
+        expect(component.concurrencyMap['buildagent1']).toBe(2);
     });
 
     it('should not adjust capacity when value is invalid', () => {
@@ -337,9 +337,9 @@ describe('BuildAgentSummaryComponent', () => {
     });
 
     it('should update concurrency map when value is valid', () => {
-        component.onConcurrencyChange('buildagent1', 3);
+        component.onConcurrencyChange('buildagent1', 2);
 
-        expect(component.concurrencyMap['buildagent1']).toBe(3);
+        expect(component.concurrencyMap['buildagent1']).toBe(2);
     });
 
     it('should not call adjustBuildAgentCapacity if build agent is paused', () => {

@@ -54,6 +54,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
         this.routerLink = this.router.url;
         this.load();
         this.initWebsocketSubscription();
+        this.loadConcurrencyResetWarningState();
     }
 
     /**
@@ -234,5 +235,13 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
 
     dismissConcurrencyResetWarning() {
         this.concurrencyResetWarningDismissed = true;
+        sessionStorage.setItem('concurrencyResetWarningDismissed', 'true');
+    }
+
+    private loadConcurrencyResetWarningState() {
+        const dismissed = sessionStorage.getItem('concurrencyResetWarningDismissed');
+        if (dismissed === 'true') {
+            this.concurrencyResetWarningDismissed = true;
+        }
     }
 }
