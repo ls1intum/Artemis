@@ -4,21 +4,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 
-import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -31,7 +27,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
 import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
@@ -43,8 +38,6 @@ import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndependentTest {
-
-    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResourceTest.class);
 
     private static final String TEST_PREFIX = "programmingexerciseresource";
 
@@ -75,10 +68,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
     @Autowired
     private CourseTestRepository courseRepository;
 
-    @Autowired
-    private GitService gitService;
-
-    @MockBean
+    @MockitoBean
     private GitRepositoryExportService gitRepositoryExportService;
 
     protected Course course;
@@ -120,14 +110,14 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
-    void testExportTemplateRepositoryAsInMemoryZip_shouldReturnValidZipWithContent(@TempDir Path tempDir) throws Exception {
+    void testExportTemplateRepositoryAsInMemoryZip_shouldReturnValidZipWithContent() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         course.setInstructorGroupName(instructor.getGroups().iterator().next());
         courseRepository.save(course);
 
         var localRepo = new LocalRepository(defaultBranch);
-        var originRepoPath = tempDir.resolve("testOriginRepo");
+        var originRepoPath = tempPath.resolve("testOriginRepo");
         localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -163,14 +153,14 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
-    void testExportRepositoryWithFullHistory(@TempDir Path tempDir) throws Exception {
+    void testExportRepositoryWithFullHistory() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         course.setInstructorGroupName(instructor.getGroups().iterator().next());
         courseRepository.save(course);
 
         var localRepo = new LocalRepository(defaultBranch);
-        var originRepoPath = tempDir.resolve("testOriginRepo");
+        var originRepoPath = tempPath.resolve("testOriginRepo");
         localRepo.configureRepos(originRepoPath, "testLocalRepo", "testOriginRepo");
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
