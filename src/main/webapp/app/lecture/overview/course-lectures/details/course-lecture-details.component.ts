@@ -13,7 +13,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faChalkboardTeacher, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';

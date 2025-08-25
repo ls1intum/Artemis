@@ -4,7 +4,7 @@ import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lect
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { TextUnitService } from 'app/lecture/manage/lecture-units/services/textUnit.service';
+import { TextUnitService } from 'app/lecture/manage/lecture-units/services/text-unit.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import dayjs from 'dayjs/esm';
