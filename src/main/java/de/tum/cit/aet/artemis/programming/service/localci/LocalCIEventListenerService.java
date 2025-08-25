@@ -133,20 +133,20 @@ public class LocalCIEventListenerService {
                 continue;
             }
             log.error("Build job with id {} is in an unknown state", buildJob.getBuildJobId());
-            if (buildJob.getRetryCount() < 3) {
-                retriggerBuildJob(buildJob);
-            }
-            else {
-                buildJobRepository.updateBuildJobStatus(buildJob.getBuildJobId(), BuildStatus.MISSING);
-            }
+            buildJobRepository.updateBuildJobStatus(buildJob.getBuildJobId(), BuildStatus.MISSING);
         }
     }
 
-    private void retriggerBuildJob(BuildJob buildJob) {
-        log.info("Retriggering build job with id {} (retry count: {})", buildJob.getBuildJobId(), buildJob.getRetryCount() + 1);
-        var participation = participationRepository.findByIdElseThrow(buildJob.getParticipationId());
-        localCITriggerService.triggerBuild((ProgrammingExerciseParticipation) participation, buildJob.getCommitHash(), buildJob.getTriggeredByPushTo(),
-                buildJob.getRetryCount() + 1);
+    @Scheduled(fixedRateString = "${artemis.continuous-integration.check-job-status-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.check-job-status-delay-seconds:60}", timeUnit = TimeUnit.SECONDS)
+    public void retryMissingJobs() {
+        log.debug("Checking for missing build jobs");
+        List<BuildJob> missingBuildJobs = buildJobRepository.findAllByBuildStatusIn(List.of(BuildStatus.MISSING));
+        for (BuildJob buildJob : missingBuildJobs) {
+            if (buildJob.getRetryCount() >= 3) {
+                continue;
+            }
+            localCITriggerService.retryBuildJob(buildJob, (ProgrammingExerciseParticipation) participationRepository.findByIdElseThrow(buildJob.getParticipationId()));
+        }
     }
 
     private boolean checkIfBuildJobIsStillBuilding(List<String> processingJobIds, String buildJobId) {

@@ -153,6 +153,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, 0);
     }
 
+    public void retryBuildJob(BuildJob buildJob, ProgrammingExerciseParticipation participation) {
+        log.info("Retrying build for missing build job with id {} (retry count: {})", buildJob.getBuildJobId(), buildJob.getRetryCount() + 1);
+        triggerBuild(participation, buildJob.getCommitHash(), buildJob.getTriggeredByPushTo(), buildJob.getRetryCount() + 1);
+    }
+
     /**
      * Add a new build job item containing all relevant information necessary for the execution to the distributed build job queue.
      *
