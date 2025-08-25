@@ -137,7 +137,7 @@ public class LocalCIEventListenerService {
         }
     }
 
-    @Scheduled(fixedRateString = "${artemis.continuous-integration.check-job-status-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.check-job-status-delay-seconds:60}", timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedRateString = "${artemis.continuous-integration.check-job-status-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.check-job-status-delay-seconds:120}", timeUnit = TimeUnit.SECONDS)
     public void retryMissingJobs() {
         log.debug("Checking for missing build jobs");
         List<BuildJob> missingBuildJobs = buildJobRepository.findAllByBuildStatusIn(List.of(BuildStatus.MISSING));
