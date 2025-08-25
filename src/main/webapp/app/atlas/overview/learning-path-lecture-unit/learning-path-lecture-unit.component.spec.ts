@@ -11,7 +11,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { of } from 'rxjs';
 import { CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
