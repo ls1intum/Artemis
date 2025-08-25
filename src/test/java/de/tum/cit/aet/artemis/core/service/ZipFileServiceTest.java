@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -23,8 +24,13 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ZipFileService zipFileService;
 
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
+
     @Test
-    void testExtractZipFileRecursively_unzipsNestedZipCorrectly(@TempDir Path testDir, @TempDir Path zipDir) throws IOException {
+    void testExtractZipFileRecursively_unzipsNestedZipCorrectly() throws IOException {
+        Path testDir = Files.createTempDirectory(tempPath, "test-dir");
+        Path zipDir = Files.createTempDirectory(tempPath, "zip-dir");
         Path rootDir = Files.createTempDirectory(testDir, "root-dir");
         Path subDir = Files.createTempDirectory(rootDir, "sub-dir");
         Path subDir2 = Files.createTempDirectory(subDir, "sub-dir2");
@@ -46,8 +52,8 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testCreateTemporaryZipFileSchedulesFileForDeletion(@TempDir Path tempDir) throws IOException {
-        var tempZipFile = Files.createTempFile(tempDir, "test", ".zip");
+    void testCreateTemporaryZipFileSchedulesFileForDeletion() throws IOException {
+        var tempZipFile = Files.createTempFile(tempPath, "test", ".zip");
         zipFileService.createTemporaryZipFile(tempZipFile, List.of(), 5);
         assertThat(tempZipFile).exists();
         verify(fileService).schedulePathForDeletion(tempZipFile, 5L);
