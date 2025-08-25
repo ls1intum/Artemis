@@ -64,6 +64,12 @@ public class ExamRoomZipFiles {
      */
     public static final MockMultipartFile zipFileRealisticScenario;
 
+    public static final String[] singleExamRoomName = { "Friedrich L. Bauer Hörsaal" };
+
+    public static final String[] fourExamRoomNames = { "Seminarraum", "Wilhelm-Nusselt-Hörsaal", "N1090", "Friedrich L. Bauer Hörsaal" };
+
+    public static final String[] singleExamRoomNoLayoutsName = { "Theresianum" };
+
     static {
         emptyZipFile = new MockMultipartFile("file", "emptyFile.zip", "application/zip", new byte[0]);
         zipFileSingleExamRoom = generateMultipartFileFromResource("test-data/exam-room/single-room.zip");

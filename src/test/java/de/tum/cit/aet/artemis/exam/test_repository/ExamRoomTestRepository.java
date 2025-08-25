@@ -61,4 +61,22 @@ public interface ExamRoomTestRepository extends ExamRoomRepository {
                     LEFT JOIN FETCH examRoom.layoutStrategies
             """)
     Set<ExamRoom> findAllNewestExamRoomVersionsWithEagerLayoutStrategies();
+
+    @Query(value = """
+                    WITH latestRooms AS (
+                        SELECT
+                            roomNumber AS roomNumber,
+                            name AS name,
+                            MAX(createdDate) AS maxCreatedDate
+                        FROM ExamRoom
+                        GROUP BY roomNumber, name
+                    )
+                    SELECT examRoom
+                    FROM ExamRoom examRoom
+                    JOIN latestRooms latestRoom
+                        ON examRoom.roomNumber = latestRoom.roomNumber
+                        AND examRoom.name = latestRoom.name
+                        AND examRoom.createdDate = latestRoom.maxCreatedDate
+            """)
+    Set<ExamRoom> findAllNewestExamRoomVersions();
 }

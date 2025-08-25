@@ -29,17 +29,12 @@ public class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTes
     @Autowired
     private ExamRoomTestRepository examRoomRepository;
 
-    private static final String[] singleExamRoomName = { "Friedrich L. Bauer Hörsaal" };
-
-    private static final String[] fourExamRoomNames = { "Seminarraum", "Wilhelm-Nusselt-Hörsaal", "N1090", "Friedrich L. Bauer Hörsaal" };
-
     @AfterEach
     void tearDown() {
         examRoomRepository.deleteAll();
     }
 
-    private void testParseAndStoreZipFileAndValidateUploadOverview(MultipartFile zipFile, int expectedNumberOfRooms, int expectedNumberOfSeats,
-            int expectedNumberOfLayoutStrategies, String... expectedRoomNames) {
+    private void testParseAndStoreZipFileAndValidateUploadOverview(MultipartFile zipFile, int expectedNumberOfRooms, int expectedNumberOfSeats, String... expectedRoomNames) {
         var uploadInformation = examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFile);
 
         // first verify the returned upload information is correct
@@ -53,29 +48,29 @@ public class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTes
 
     @Test
     void testParseAndStoreZipFileSingleExamRoom() {
-        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileSingleExamRoom, 1, 528, 4, singleExamRoomName);
+        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileSingleExamRoom, 1, 528, ExamRoomZipFiles.singleExamRoomName);
     }
 
     @Test
     void testParseAndStoreZipFileSingleExamRoomRepeated() {
         // Multiple entries of the same exam room should be ignored
-        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileSingleExamRoomRepeated, 1, 528, 4, singleExamRoomName);
+        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileSingleExamRoomRepeated, 1, 528, ExamRoomZipFiles.singleExamRoomName);
     }
 
     @Test
     void testParseAndStoreZipFileSingleExamWithUnrelatedFiles() {
-        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileSingleExamRoomWithUnrelatedFiles, 1, 528, 4, singleExamRoomName);
+        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileSingleExamRoomWithUnrelatedFiles, 1, 528, ExamRoomZipFiles.singleExamRoomName);
     }
 
     @Test
     void testParseAndStoreZipFileSingleRoomNoLayouts() {
         // Single exam room with no layout strategies
-        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileSingleRoomNoLayouts, 1, 101, 0, "Theresianum");
+        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileSingleRoomNoLayouts, 1, 101, ExamRoomZipFiles.singleExamRoomNoLayoutsName);
     }
 
     @Test
     void testParseAndStoreZipFileFourExamRooms() {
-        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileFourExamRooms, 4, 994, 15, fourExamRoomNames);
+        testParseAndStoreZipFileAndValidateUploadOverview(ExamRoomZipFiles.zipFileFourExamRooms, 4, 994, ExamRoomZipFiles.fourExamRoomNames);
     }
 
     @Test
