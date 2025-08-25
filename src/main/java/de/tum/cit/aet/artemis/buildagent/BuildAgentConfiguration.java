@@ -229,7 +229,17 @@ public class BuildAgentConfiguration {
                 concurrentBuildsMaximum);
 
         ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
-                .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread {}", thread.getName(), exception)).build();
+                .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread {}", thread.getName(), exception)).setPriority(Thread.NORM_PRIORITY - 1) // Lower
+                                                                                                                                                                                     // priority
+                                                                                                                                                                                     // for
+                                                                                                                                                                                     // build
+                                                                                                                                                                                     // threads
+                                                                                                                                                                                     // to
+                                                                                                                                                                                     // prevent
+                                                                                                                                                                                     // starving
+                                                                                                                                                                                     // system
+                                                                                                                                                                                     // operations
+                .build();
 
         RejectedExecutionHandler customRejectedExecutionHandler = (runnable, executor) -> {
             throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());
