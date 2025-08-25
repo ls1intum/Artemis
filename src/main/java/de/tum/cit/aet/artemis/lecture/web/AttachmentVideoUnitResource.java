@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
+import de.tum.cit.aet.artemis.lecture.service.VideoStorageService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -82,10 +84,12 @@ public class AttachmentVideoUnitResource {
 
     private final FileService fileService;
 
+    private final VideoStorageService videoStorageService;
+
     public AttachmentVideoUnitResource(AttachmentVideoUnitRepository attachmentVideoUnitRepository, LectureRepository lectureRepository,
             LectureUnitProcessingService lectureUnitProcessingService, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
             AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService,
-            FileService fileService) {
+            FileService fileService, VideoStorageService videoStorageService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -95,6 +99,7 @@ public class AttachmentVideoUnitResource {
         this.competencyProgressApi = competencyProgressApi;
         this.slideSplitterService = slideSplitterService;
         this.fileService = fileService;
+        this.videoStorageService = videoStorageService;
     }
 
     /**
@@ -337,6 +342,27 @@ public class AttachmentVideoUnitResource {
         catch (Exception e) {
             log.error("Could not set the Student Version of the Attachment Video Unit", e);
             throw new InternalServerErrorException("Could not set the Student Version of the Attachment Video Unit");
+        }
+    }
+
+    /**
+     * POST /video/upload : Uploads a lecture video file to the external video storage service.
+     * This endpoint accepts a video file from the client, forwards it to the video storage microservice,
+     * and returns the generated videoId used for later playback or retrieval.
+     *
+     * @param file the video file to be uploaded (should be a .mp4 file)
+     * @return the videoId returned by the storage service, or 500 if an error occurs
+     */
+    @PostMapping("video/upload")
+    @EnforceAtLeastEditor
+    public ResponseEntity<String> uploadLectureVideo(@RequestParam("file") MultipartFile file) {
+        try {
+            String videoId = videoStorageService.uploadVideo(file);
+            return ResponseEntity.ok(videoId);
+        }
+        catch (Exception e) {
+            log.error("Video upload failed", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Upload failed");
         }
     }
 

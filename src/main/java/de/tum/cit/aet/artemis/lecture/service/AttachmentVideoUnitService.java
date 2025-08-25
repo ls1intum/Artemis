@@ -12,6 +12,8 @@ import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,8 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 @Lazy
 public class AttachmentVideoUnitService {
 
+    private static final Logger log = LoggerFactory.getLogger(AttachmentVideoUnitService.class);
+
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
     private final AttachmentRepository attachmentRepository;
@@ -51,9 +55,11 @@ public class AttachmentVideoUnitService {
 
     private final LectureUnitService lectureUnitService;
 
+    private final VideoStorageService videoStorageService;
+
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService) {
+            LectureUnitService lectureUnitService, VideoStorageService videoStorageService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -61,6 +67,7 @@ public class AttachmentVideoUnitService {
         this.irisLectureApi = irisLectureApi;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
+        this.videoStorageService = videoStorageService;
     }
 
     /**
@@ -118,6 +125,19 @@ public class AttachmentVideoUnitService {
         if (existingAttachment == null && updateAttachment != null) {
             createAttachment(updateAttachment, existingAttachmentVideoUnit, updateFile, keepFilename);
         }
+        else if (existingAttachment != null && isVideoFile(updateFile)) {
+            // Handle video file updates
+            try {
+                log.info("Updating video file {} via video storage service", updateFile.getOriginalFilename());
+                String playlistUrl = videoStorageService.uploadVideo(updateFile);
+                existingAttachmentVideoUnit.setVideoSource(playlistUrl);
+                log.info("Video update successful. New playlist URL set: {}", playlistUrl);
+            }
+            catch (Exception e) {
+                log.error("Failed to update video in storage service: {}", e.getMessage(), e);
+                // Continue with normal attachment handling as fallback
+            }
+        }
 
         AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
 
@@ -160,6 +180,20 @@ public class AttachmentVideoUnitService {
     }
 
     private void createAttachment(Attachment attachment, AttachmentVideoUnit attachmentVideoUnit, MultipartFile file, boolean keepFilename) {
+        // Check if this is a video file that should be uploaded to video storage service
+        if (file != null && isVideoFile(file)) {
+            try {
+                log.info("Uploading video file {} to video storage service", file.getOriginalFilename());
+                String playlistUrl = videoStorageService.uploadVideo(file);
+                attachmentVideoUnit.setVideoSource(playlistUrl);
+                log.info("Video upload successful. Playlist URL set: {}", playlistUrl);
+            }
+            catch (Exception e) {
+                log.error("Failed to upload video to storage service: {}", e.getMessage(), e);
+                // Continue with normal attachment handling as fallback
+            }
+        }
+
         handleFile(file, attachment, keepFilename, attachmentVideoUnit.getId());
         // Default attachment
         attachment.setVersion(1);
@@ -168,6 +202,31 @@ public class AttachmentVideoUnitService {
         Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
         attachmentVideoUnit.setAttachment(savedAttachment);
         evictCache(file, attachmentVideoUnit);
+    }
+
+    /**
+     * Checks if the uploaded file is a video file that should be processed by the video storage service.
+     */
+    private boolean isVideoFile(MultipartFile file) {
+        if (file == null || file.getContentType() == null) {
+            return false;
+        }
+
+        String contentType = file.getContentType().toLowerCase();
+        String filename = file.getOriginalFilename();
+
+        // Check by content type
+        if (contentType.startsWith("video/")) {
+            return true;
+        }
+
+        // Check by file extension as fallback
+        if (filename != null) {
+            String extension = FilenameUtils.getExtension(filename).toLowerCase();
+            return extension.matches("mp4|mov|avi|mkv|webm|m4v|3gp|flv|wmv");
+        }
+
+        return false;
     }
 
     /**

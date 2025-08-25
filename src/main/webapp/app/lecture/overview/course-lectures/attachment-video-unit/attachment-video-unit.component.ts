@@ -1,9 +1,12 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
+import { HttpClient } from '@angular/common/http';
+import { HttpParams } from '@angular/common/http';
 import {
     faDownload,
     faFile,
@@ -26,10 +29,13 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
+import { TranscriptSegment } from 'app/lecture/shared/video-player/video-player.component';
+import { firstValueFrom, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe],
+    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
@@ -38,11 +44,83 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
+    private readonly http = inject(HttpClient);
+
+    readonly transcriptSegments = signal<TranscriptSegment[]>([]);
+    readonly playlistUrl = signal<string | undefined>(undefined);
+    readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
     private readonly videoUrlAllowList = [
-        // TUM-Live. Example: 'https://live.rbg.tum.de/w/test/26?video_only=1'
         RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$'),
+        RegExp('^https?://.+\\.m3u8($|\\?.*)'), // Allow both http and https, and .m3u8 ending
+        RegExp('^https?://localhost:8000/api/videos/.+/playlist\\.m3u8'), // Local video storage service URLs
     ];
+
+    /**
+     * Return the URL of the video source
+     */
+    readonly videoUrl = computed(() => {
+        const source = this.lectureUnit().videoSource;
+        if (!source) return undefined;
+        if (this.videoUrlAllowList.some((r) => r.test(source)) || !urlParser || urlParser.parse(source)) {
+            return source;
+        }
+        return undefined;
+    });
+
+    override toggleCollapse(isCollapsed: boolean): void {
+        super.toggleCollapse(isCollapsed);
+
+        if (!isCollapsed) {
+            this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
+
+            // reset stale state
+            this.transcriptSegments.set([]);
+            this.playlistUrl.set(undefined);
+
+            const src = this.lectureUnit().videoSource;
+            if (!src) return;
+            // Check if this is a local video storage service URL (already a playlist URL)
+            if (this.isLocalVideoStorageUrl(src)) {
+                // For local video storage, the URL is already a playlist URL
+                this.playlistUrl.set(src);
+                this.fetchTranscript();
+            } else {
+                // Try to resolve TUM Live playlist for external videos
+                this.resolveTumLivePlaylist(src).then((url) => {
+                    if (url) {
+                        this.playlistUrl.set(url);
+                        this.fetchTranscript();
+                    }
+                });
+            }
+        }
+    }
+
+    private async resolveTumLivePlaylist(pageUrl: string): Promise<string | undefined> {
+        const params = new HttpParams().set('url', pageUrl);
+        try {
+            const res = await firstValueFrom(this.http.get('/api/lecture/video-utils/tum-live-playlist', { params, responseType: 'text' }).pipe(catchError(() => of(null))));
+            return (res || undefined) as string | undefined;
+        } catch {
+            return undefined;
+        }
+    }
+
+    private fetchTranscript(): void {
+        const id = this.lectureUnit().id;
+        const url = `/api/lecture/lecture-unit/${id}/transcript`;
+
+        void firstValueFrom(
+            this.http.get<{ segments: TranscriptSegment[] }>(url).pipe(
+                catchError((err) => {
+                    return of({ segments: [] });
+                }),
+            ),
+        ).then((res) => {
+            this.transcriptSegments.set(res.segments ?? []);
+        });
+    }
 
     /**
      * Returns the name of the attachment file (including its file extension)
@@ -55,19 +133,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
         return '';
     }
-
-    /**
-     * Return the URL of the video source
-     */
-    readonly videoUrl = computed(() => {
-        if (this.lectureUnit().videoSource) {
-            const source = this.lectureUnit().videoSource!;
-            if (this.videoUrlAllowList.some((r) => r.test(source)) || !urlParser || urlParser.parse(source)) {
-                return source;
-            }
-        }
-        return undefined;
-    });
 
     /**
      * Downloads the file as the student version if available, otherwise the instructor version
@@ -102,6 +167,20 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     hasVideo(): boolean {
         return !!this.lectureUnit().videoSource;
+    }
+
+    isM3u8Video(): boolean {
+        const videoSource = this.lectureUnit().videoSource;
+        if (!videoSource) return false;
+        return /^https?:\/\/.+\.m3u8($|\?.*)/.test(videoSource);
+    }
+
+    /**
+     * Check if the video source is from the local video storage service
+     */
+    isLocalVideoStorageUrl(videoSource: string): boolean {
+        // Check if it's a localhost:8000 URL with /api/videos/ pattern
+        return /^https?:\/\/localhost:8000\/api\/videos\/.+\.m3u8/.test(videoSource);
     }
 
     /**

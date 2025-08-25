@@ -77,7 +77,7 @@ public class FileUtil {
      * NOTE: Has to be kept in sync with the client-side definitions in file-extensions.constants.ts
      */
     private static final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc",
-            "docx", "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
+            "docx", "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf", "mp4");
 
     private static final String MARKDOWN_FILE_SUBPATH = "markdown/";
 
