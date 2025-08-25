@@ -391,19 +391,19 @@ describe('BuildAgentDetailsComponent', () => {
 
     it('should handle concurrency change successfully', () => {
         component.buildAgent = mockBuildAgent;
-        component.newConcurrency = 3;
+        component.newConcurrency = 1;
 
-        component.onConcurrencyChange(3);
+        component.onConcurrencyChange(1);
 
-        expect(mockBuildAgentsService.adjustBuildAgentCapacity).toHaveBeenCalledWith('agent1', 3);
+        expect(mockBuildAgentsService.adjustBuildAgentCapacity).toHaveBeenCalledWith('agent1', 1);
     });
 
     it('should handle concurrency change error', () => {
         mockBuildAgentsService.adjustBuildAgentCapacity.mockReturnValue(throwError(() => new Error()));
         component.buildAgent = mockBuildAgent;
-        component.newConcurrency = 3;
+        component.newConcurrency = 1;
 
-        component.onConcurrencyChange(3);
+        component.onConcurrencyChange(1);
 
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
             type: AlertType.DANGER,
@@ -422,9 +422,9 @@ describe('BuildAgentDetailsComponent', () => {
 
     it('should not adjust capacity when build agent has no name', () => {
         component.buildAgent = { ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: '' } };
-        component.newConcurrency = 3;
+        component.newConcurrency = 1;
 
-        component.onConcurrencyChange(3);
+        component.onConcurrencyChange(1);
 
         expect(mockBuildAgentsService.adjustBuildAgentCapacity).not.toHaveBeenCalled();
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
