@@ -26,8 +26,8 @@ import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-
         NgbPopover,
         CalendarEventFilterComponent,
     ],
-    templateUrl: './calendar-mobile-overview.html',
-    styleUrl: './calendar-mobile-overview.scss',
+    templateUrl: './calendar-mobile-overview.component.html',
+    styleUrl: './calendar-mobile-overview.component.scss',
 })
 export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     private calendarEventService = inject(CalendarEventService);
