@@ -120,19 +120,20 @@ class NebulaFaqIntegrationTest extends AbstractNebulaIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testNebulaExceptionConvertion() throws Exception {
+        String fallBackMessage = "An error within Nebula has occurred";
         NebulaException exception = this.nebulaConnectionService.toNebulaException(createHttpStatusCodeException(HttpStatus.FORBIDDEN, "Forbidden access to Nebula service"));
         // we do not check the message here, since we have default translation which cant be accessed by the server tests so it defaults to the fallback
         assertThat(exception).isInstanceOf(NebulaForbiddenException.class);
-        assertThat(exception.getMessage()).isEqualTo("An error within Nebula has occurred");
+        assertThat(exception.getMessage()).isEqualTo(fallBackMessage);
         exception = this.nebulaConnectionService.toNebulaException(createHttpStatusCodeException(HttpStatus.UNAUTHORIZED, "Unauthorized access to Nebula service"));
         assertThat(exception).isInstanceOf(NebulaForbiddenException.class);
-        assertThat(exception.getMessage()).isEqualTo("An error within Nebula has occurred");
+        assertThat(exception.getMessage()).isEqualTo(fallBackMessage);
         exception = this.nebulaConnectionService.toNebulaException(createHttpStatusCodeException(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error"));
         assertThat(exception).isInstanceOf(NebulaInternalErrorException.class);
-        assertThat(exception.getMessage()).isEqualTo("An error within Nebula has occurred");
+        assertThat(exception.getMessage()).isEqualTo(fallBackMessage);
         exception = this.nebulaConnectionService.toNebulaException(createHttpStatusCodeException(HttpStatus.BAD_REQUEST, "Bad request"));
         assertThat(exception).isInstanceOf(NebulaInternalErrorException.class);
-        assertThat(exception.getMessage()).isEqualTo("An error within Nebula has occurred");
+        assertThat(exception.getMessage()).isEqualTo(fallBackMessage);
     }
 
     @Test
