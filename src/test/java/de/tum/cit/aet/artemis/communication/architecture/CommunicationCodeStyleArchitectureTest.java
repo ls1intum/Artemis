@@ -11,7 +11,7 @@ class CommunicationCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest
 
     @Override
     protected int dtoAsAnnotatedRecordThreshold() {
-        return 7;
+        return 6;
     }
 
     @Override
