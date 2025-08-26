@@ -2,4 +2,7 @@ artemis:
     iris:
         url: "http://iris.fake"
         secret-token: "secret-token"
-
+    nebula:
+        enabled: true
+        url: "http://nebula.fake"
+        secret: "secret-token"
