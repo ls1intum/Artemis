@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, model, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -50,7 +50,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     readonly QuizStatus = QuizStatus;
     readonly QuizMode = QuizMode;
 
-    quizExercises = signal<QuizExercise[]>([]);
+    quizExercises = model<QuizExercise[]>([]);
     filteredQuizExercises = signal<QuizExercise[]>([]);
 
     // Icons

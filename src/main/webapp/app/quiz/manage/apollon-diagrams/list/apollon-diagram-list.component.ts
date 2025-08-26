@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, inject, input } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, inject, model } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -37,12 +37,12 @@ export class ApollonDiagramListComponent implements OnInit {
     predicate = 'id';
     reverse = true;
 
-    readonly courseId = input<number>(undefined!);
+    readonly courseId = model<number | undefined>(undefined);
 
     @Output() openDiagram = new EventEmitter<number>();
     @Output() closeDialog = new EventEmitter();
 
-    course: Course;
+    course?: Course;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -59,9 +59,11 @@ export class ApollonDiagramListComponent implements OnInit {
      * Initializes Apollon diagrams from the server
      */
     ngOnInit() {
-        const courseId = this.courseId() ?? Number(this.route.snapshot.paramMap.get('courseId'));
+        if (this.courseId() === undefined) {
+            this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
+        }
 
-        this.courseService.find(courseId).subscribe({
+        this.courseService.find(this.courseId()!).subscribe({
             next: (courseResponse: HttpResponse<Course>) => {
                 this.course = courseResponse.body!;
                 this.loadDiagrams();
@@ -76,10 +78,10 @@ export class ApollonDiagramListComponent implements OnInit {
      * Loads the Apollon diagrams of this course which will be shown
      */
     loadDiagrams() {
-        if (!this.course || this.course.id == null) {
+        if (this.courseId() === undefined) {
             return;
         }
-        this.apollonDiagramsService.getDiagramsByCourse(this.course.id).subscribe({
+        this.apollonDiagramsService.getDiagramsByCourse(this.courseId()!).subscribe({
             next: (response) => {
                 this.apollonDiagrams = response.body!;
             },
@@ -94,11 +96,11 @@ export class ApollonDiagramListComponent implements OnInit {
      * @param apollonDiagram
      */
     delete(apollonDiagram: ApollonDiagram) {
-        if (!this.course || this.course.id == null) {
+        if (this.courseId() === undefined) {
             this.alertService.error('artemisApp.apollonDiagram.delete.error', { title: apollonDiagram.title });
             return;
         }
-        this.apollonDiagramsService.delete(apollonDiagram.id!, this.course.id).subscribe({
+        this.apollonDiagramsService.delete(apollonDiagram.id!, this.courseId()!).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.apollonDiagram.delete.success', { title: apollonDiagram.title });
                 this.apollonDiagrams = this.apollonDiagrams.filter((diagram) => {
@@ -124,13 +126,13 @@ export class ApollonDiagramListComponent implements OnInit {
      * Opens dialog for creating a new diagram
      */
     openCreateDiagramDialog() {
-        if (!this.course || this.course.id == null) {
+        if (this.courseId() === undefined) {
             return;
         }
         const modalRef = this.modalService.open(ApollonDiagramCreateFormComponent, { size: 'lg', backdrop: 'static' });
         const formComponentInstance = modalRef.componentInstance as ApollonDiagramCreateFormComponent;
         // class diagram is the default value and can be changed by the user in the creation dialog
-        formComponentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, this.course.id);
+        formComponentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, this.courseId()!);
         modalRef.result.then((diagram) => this.handleOpenDialogClick(diagram.id));
     }
 
