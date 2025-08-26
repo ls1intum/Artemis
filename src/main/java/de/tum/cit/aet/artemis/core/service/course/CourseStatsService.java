@@ -210,22 +210,22 @@ public class CourseStatsService {
      */
     public CourseManagementDetailViewDTO getStatsForDetailView(Course course, GradingScale gradingScale) {
 
-        // TODO: remove all data that is not needed for the course management detail view
-
-        // var numberOfStudentsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getStudentGroupName()));
-        // var numberOfTeachingAssistantsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
-        // var numberOfEditorsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getEditorGroupName()));
-        // var numberOfInstructorsInCourse = Math.toIntExact(userRepository.countUserInGroup(course.getInstructorGroupName()));
-
+        var start = System.currentTimeMillis();
         Set<Exercise> courseExercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
+        log.debug("exerciseRepository.findAllExercisesByCourseId took {} ms for course with id {}", System.currentTimeMillis() - start, course.getId());
+        start = System.currentTimeMillis();
         Set<Long> courseExerciseIdsWithManualAssessments = exerciseRepository.findExerciseIdsWithManualAssessmentByCourseId(course.getId());
+        log.debug("exerciseRepository.findExerciseIdsWithManualAssessmentsByCourseId took {} ms for course with id {}", System.currentTimeMillis() - start, course.getId());
         if (courseExercises == null || courseExercises.isEmpty()) {
-            return new CourseManagementDetailViewDTO(0, 0, 0, 0, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0.0, 0.0, List.of(), 0.0);
+            return new CourseManagementDetailViewDTO(0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0.0, 0.0, List.of(), 0.0);
         }
         // For the average score we need to only consider scores which are included completely or as bonus
         Set<Exercise> includedExercises = courseExercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
+        start = System.currentTimeMillis();
         Double averageScoreForCourse = participantScoreRepository.findAvgRatedScore(includedExercises);
+        log.debug("participantScoreRepository.findAvgRatedScore took {} ms for exercises with ids {}", System.currentTimeMillis() - start,
+                includedExercises.stream().map(Exercise::getId).collect(Collectors.toSet()));
         averageScoreForCourse = averageScoreForCourse != null ? averageScoreForCourse : 0.0;
         double currentMaxAverageScore = includedExercises.stream().map(Exercise::getMaxPoints).mapToDouble(Double::doubleValue).sum();
 
@@ -233,24 +233,30 @@ public class CourseStatsService {
         if (gradingScale != null && gradingScale.getCourse().equals(course) && gradingScale.getPresentationsNumber() != null && gradingScale.getPresentationsWeight() != null) {
             double maxBaseScore = includedExercises.stream().filter(e -> !e.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_AS_BONUS))
                     .map(Exercise::getMaxPoints).mapToDouble(Double::doubleValue).sum();
+            start = System.currentTimeMillis();
             currentMaxAverageScore += presentationPointsCalculationService.calculateReachablePresentationPoints(gradingScale, maxBaseScore);
-
+            log.debug("presentationPointsCalculationService.calculateReachablePresentationPoints took {} ms for grading scale with id {}", System.currentTimeMillis() - start,
+                    gradingScale.getId());
+            start = System.currentTimeMillis();
             double avgPresentationScore = studentParticipationRepository.getAvgPresentationScoreByCourseId(course.getId());
+            log.debug("studentParticipationRepository.getAvgPresentationScoreByCourseId took {} ms for course with id {}", System.currentTimeMillis() - start, course.getId());
             averageScoreForCourse = gradingScale.getPresentationsWeight() / 100.0 * avgPresentationScore
                     + (100.0 - gradingScale.getPresentationsWeight()) / 100.0 * averageScoreForCourse;
         }
 
         Set<Long> exerciseIds = courseExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
-
-        // var endDate = this.determineEndDateForActiveStudents(course);
-        // var spanSize = this.determineTimeSpanSizeForActiveStudents(course, endDate, 17);
-        // var activeStudents = getActiveStudents(exerciseIds, 0, spanSize, endDate);
-
+        start = System.currentTimeMillis();
         long numberOfAssessments = resultRepository.countNumberOfAssessments(courseExerciseIdsWithManualAssessments);
-
+        log.debug("resultRepository.countNumberOfAssessments took {} ms for exercises with ids {}", System.currentTimeMillis() - start, courseExerciseIdsWithManualAssessments);
+        start = System.currentTimeMillis();
         long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIds)
                 + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIds);
+        log.debug(
+                "submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate and programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted took {} ms for exercises with ids {}",
+                System.currentTimeMillis() - start, exerciseIds);
+        start = System.currentTimeMillis();
         long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(exerciseIds);
+        log.debug("submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate took {} ms for exercises with ids {}", System.currentTimeMillis() - start, exerciseIds);
 
         long numberOfSubmissions = numberOfInTimeSubmissions + numberOfLateSubmissions;
         // TODO: this number can be wrong in the client (over 100%)
@@ -261,9 +267,16 @@ public class CourseStatsService {
         double currentPercentageComplaints = 0.0;
 
         if (course.getComplaintsEnabled()) {
+            start = System.currentTimeMillis();
             currentAbsoluteComplaints = complaintResponseRepository
                     .countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), COMPLAINT);
+            log.debug(
+                    "complaintResponseRepository.countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull took {} ms for course with id {}",
+                    System.currentTimeMillis() - start, course.getId());
+            start = System.currentTimeMillis();
             currentMaxComplaints = complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(course.getId(), COMPLAINT);
+            log.debug("complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType took {} ms for course with id {}",
+                    System.currentTimeMillis() - start, course.getId());
             currentPercentageComplaints = calculatePercentage(currentAbsoluteComplaints, currentMaxComplaints);
         }
 
@@ -272,19 +285,27 @@ public class CourseStatsService {
         double currentPercentageMoreFeedbacks = 0;
 
         if (course.getRequestMoreFeedbackEnabled()) {
+            start = System.currentTimeMillis();
             currentAbsoluteMoreFeedbacks = complaintResponseRepository
                     .countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), MORE_FEEDBACK);
+            log.debug(
+                    "complaintResponseRepository.countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull took {} ms for course with id {}",
+                    System.currentTimeMillis() - start, course.getId());
+            start = System.currentTimeMillis();
             currentMaxMoreFeedbacks = complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(course.getId(), MORE_FEEDBACK);
+            log.debug("complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType took {} ms for course with id {}",
+                    System.currentTimeMillis() - start, course.getId());
             currentPercentageMoreFeedbacks = calculatePercentage(currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks);
         }
         var currentAbsoluteAverageScore = roundScoreSpecifiedByCourseSettings((averageScoreForCourse / 100.0) * currentMaxAverageScore, course);
         var currentPercentageAverageScore = currentMaxAverageScore > 0.0 ? roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course) : 0.0;
-
+        start = System.currentTimeMillis();
         double currentTotalLlmCostInEur = llmTokenUsageTraceRepository.calculateTotalLlmCostInEurForCourse(course.getId());
+        log.debug("llmTokenUsageTraceRepository.calculateTotalLlmCostInEurForCourse took {} ms for course with id {}", System.currentTimeMillis() - start, course.getId());
 
-        return new CourseManagementDetailViewDTO(0, 0, 0, 0, currentPercentageAssessments, numberOfAssessments, numberOfSubmissions, currentPercentageComplaints,
-                currentAbsoluteComplaints, currentMaxComplaints, currentPercentageMoreFeedbacks, currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks,
-                currentPercentageAverageScore, currentAbsoluteAverageScore, currentMaxAverageScore, List.of(), currentTotalLlmCostInEur);
+        return new CourseManagementDetailViewDTO(currentPercentageAssessments, numberOfAssessments, numberOfSubmissions, currentPercentageComplaints, currentAbsoluteComplaints,
+                currentMaxComplaints, currentPercentageMoreFeedbacks, currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks, currentPercentageAverageScore,
+                currentAbsoluteAverageScore, currentMaxAverageScore, List.of(), currentTotalLlmCostInEur);
     }
 
     private double calculatePercentage(double positive, double total) {
