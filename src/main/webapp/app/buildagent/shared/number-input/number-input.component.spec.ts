@@ -12,9 +12,7 @@ describe('NumberInputComponent', () => {
         await TestBed.configureTestingModule({
             imports: [NumberInputComponent, FontAwesomeModule, CommonModule, NgbModule],
         }).compileComponents();
-    });
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(NumberInputComponent);
         component = fixture.componentInstance;
 
