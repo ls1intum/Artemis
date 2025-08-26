@@ -332,7 +332,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 CourseGradeInformationDTO.class);
         assertThat(courseGradeInformationDTO).isNotNull();
         var gradeScoreDTOs = courseGradeInformationDTO.gradeScores();
-        // text,quiz and programming should be included. Modeling should be excluded because it has a due date in the future
+        // 3 x text,quiz and programming should be included. Modeling should be excluded because it has a due date in the future
         assertThat(gradeScoreDTOs).hasSize(5);
 
         Map<Long, IdsMapValue> expectedValuesMap = new HashMap<>();
