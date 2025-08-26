@@ -19,6 +19,9 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 
+/**
+ * Service for rewriting problem statements using Spring AI.
+ */
 @Service
 @Lazy
 @Profile(PROFILE_HYPERION)
@@ -30,11 +33,26 @@ public class ProblemStatementRewriteService {
 
     private final PromptTemplateService templates;
 
+    /**
+     * Creates a new ProblemStatementRewriteService.
+     *
+     * @param chatClient the AI chat client (optional)
+     * @param templates  prompt template service
+     */
     public ProblemStatementRewriteService(@Autowired(required = false) ChatClient chatClient, PromptTemplateService templates) {
         this.chatClient = chatClient;
         this.templates = templates;
     }
 
+    /**
+     * Rewrites the given problem statement text for the provided course and user.
+     *
+     * @param user                 the requesting user
+     * @param course               the course context
+     * @param problemStatementText the original problem statement
+     * @return the rewrite result including whether it was improved
+     * @throws NetworkingException if the AI call fails or returns empty content
+     */
     public ProblemStatementRewriteResponseDTO rewriteProblemStatement(User user, Course course, String problemStatementText) throws NetworkingException {
         if (user == null) {
             throw new IllegalArgumentException("User must not be null");

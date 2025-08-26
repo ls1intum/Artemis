@@ -18,6 +18,13 @@ public class PromptTemplateService {
 
     private final StTemplateRenderer renderer = StTemplateRenderer.builder().startDelimiterToken('<').endDelimiterToken('>').build();
 
+    /**
+     * Render the template at the given classpath resource path with the provided variables.
+     *
+     * @param resourcePath classpath to the template resource
+     * @param variables    map of variables used during rendering
+     * @return the rendered string
+     */
     public String render(String resourcePath, Map<String, Object> variables) {
         try {
             var resource = new ClassPathResource(resourcePath);

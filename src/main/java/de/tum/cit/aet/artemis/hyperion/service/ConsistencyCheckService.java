@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,11 +27,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.Severity;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -43,22 +38,30 @@ public class ConsistencyCheckService {
 
     private static final Logger log = LoggerFactory.getLogger(ConsistencyCheckService.class);
 
-    private final RepositoryService repositoryService;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ChatClient chatClient;
 
     private final PromptTemplateService templates;
 
-    public ConsistencyCheckService(RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository,
-            @Autowired(required = false) ChatClient chatClient, PromptTemplateService templates) {
-        this.repositoryService = repositoryService;
+    private final ProgrammingExerciseContextRenderer exerciseContextRenderer;
+
+    public ConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, @Autowired(required = false) ChatClient chatClient, PromptTemplateService templates,
+            ProgrammingExerciseContextRenderer exerciseContextRenderer) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.chatClient = chatClient;
         this.templates = templates;
+        this.exerciseContextRenderer = exerciseContextRenderer;
     }
 
+    /**
+     * Runs structural and semantic consistency checks on the given exercise using Spring AI.
+     *
+     * @param user     the requesting user
+     * @param exercise the exercise to check
+     * @return aggregated issues and summary
+     * @throws NetworkingException when the AI service or data retrieval fails
+     */
     public ConsistencyCheckResponseDTO checkConsistency(User user, ProgrammingExercise exercise) throws NetworkingException {
         log.info("Performing consistency check for exercise {} by user {}", exercise.getId(), user.getLogin());
 
@@ -68,26 +71,7 @@ public class ConsistencyCheckService {
                 throw new NetworkingException("Spring AI ChatClient is not configured");
             }
 
-            var templateRepo = buildRepository(exerciseWithParticipations, RepositoryType.TEMPLATE);
-            var solutionRepo = buildRepository(exerciseWithParticipations, RepositoryType.SOLUTION);
-            var testRepo = buildRepository(exerciseWithParticipations, RepositoryType.TESTS);
-
-            var lang = exerciseWithParticipations.getProgrammingLanguage();
-            List<ContextRenderer.RepoFile> templateFiles = ContextRenderer
-                    .filterFilesByLanguage(templateRepo.files().stream().map(f -> new ContextRenderer.RepoFile(f.path(), f.content())).toList(), lang);
-            List<ContextRenderer.RepoFile> solutionFiles = ContextRenderer
-                    .filterFilesByLanguage(solutionRepo.files().stream().map(f -> new ContextRenderer.RepoFile(f.path(), f.content())).toList(), lang);
-            List<ContextRenderer.RepoFile> testFiles = ContextRenderer
-                    .filterFilesByLanguage(testRepo.files().stream().map(f -> new ContextRenderer.RepoFile(f.path(), f.content())).toList(), lang);
-
-            String renderedContext = String
-                    .join("\n\n", List.of(
-                            ContextRenderer.renderRepository(
-                                    List.of(new ContextRenderer.RepoFile("problem_statement.md",
-                                            exerciseWithParticipations.getProblemStatement() != null ? exerciseWithParticipations.getProblemStatement() : "")),
-                                    "Problem Statement"),
-                            ContextRenderer.renderRepository(templateFiles, "Template Repository"), ContextRenderer.renderRepository(solutionFiles, "Solution Repository"),
-                            ContextRenderer.renderRepository(testFiles, "Test Repository")));
+            String renderedContext = exerciseContextRenderer.renderContext(exerciseWithParticipations);
 
             String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
             var input = Map.<String, Object>of("rendered_context", renderedContext, "programming_language", programmingLanguage);
@@ -108,10 +92,12 @@ public class ConsistencyCheckService {
             try {
                 combinedIssues = Mono.zip(structuralMono, semanticMono, (a, b) -> {
                     List<ConsistencyIssue> combined = new ArrayList<>();
-                    if (a != null)
+                    if (a != null) {
                         combined.addAll(a);
-                    if (b != null)
+                    }
+                    if (b != null) {
                         combined.addAll(b);
+                    }
                     return combined;
                 }).block();
                 if (combinedIssues == null) {
@@ -194,56 +180,6 @@ public class ConsistencyCheckService {
         }
     }
 
-    private Repo buildRepository(ProgrammingExercise exercise, RepositoryType repositoryType) throws IOException {
-        List<RepoFile> repositoryFiles;
-        try {
-            switch (repositoryType) {
-                case TEMPLATE -> {
-                    var templateParticipation = exercise.getTemplateParticipation();
-                    repositoryFiles = getFilteredRepositoryFiles(templateParticipation);
-                }
-                case SOLUTION -> {
-                    var solutionParticipation = exercise.getSolutionParticipation();
-                    repositoryFiles = getFilteredRepositoryFiles(solutionParticipation);
-                }
-                case TESTS -> {
-                    repositoryFiles = getRepositoryFiles(exercise.getVcsTestRepositoryUri());
-                }
-                default -> {
-                    log.warn("Unknown repository type: {}", repositoryType);
-                    repositoryFiles = List.of();
-                }
-            }
-        }
-        catch (Exception e) {
-            log.error("Failed to fetch repository contents for {} repository of exercise {}", repositoryType, exercise.getId(), e);
-            repositoryFiles = List.of();
-        }
-        return new Repo(repositoryFiles);
-    }
-
-    private List<RepoFile> getFilteredRepositoryFiles(ProgrammingExerciseParticipation participation) {
-        var language = participation.getProgrammingExercise().getProgrammingLanguage();
-        var repositoryContents = getRepositoryContents(participation.getVcsRepositoryUri());
-        return repositoryContents.entrySet().stream().filter(entry -> language == null || language.matchesFileExtension(entry.getKey()))
-                .map(entry -> new RepoFile(entry.getKey(), entry.getValue())).collect(Collectors.toList());
-    }
-
-    private List<RepoFile> getRepositoryFiles(VcsRepositoryUri repositoryUri) {
-        var repositoryContents = getRepositoryContents(repositoryUri);
-        return repositoryContents.entrySet().stream().map(entry -> new RepoFile(entry.getKey(), entry.getValue())).collect(Collectors.toList());
-    }
-
-    private Map<String, String> getRepositoryContents(VcsRepositoryUri repositoryUri) {
-        try {
-            return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repositoryUri);
-        }
-        catch (IOException e) {
-            log.error("Could not get repository content from {}", repositoryUri, e);
-            return Map.of();
-        }
-    }
-
     private ConsistencyIssueDTO mapConsistencyIssueToDto(ConsistencyIssue issue) {
         Severity severity = switch (issue.severity() == null ? "MEDIUM" : issue.severity().toUpperCase()) {
             case "LOW" -> Severity.LOW;
@@ -255,12 +191,6 @@ public class ConsistencyCheckService {
                         .map(loc -> new ArtifactLocationDTO(loc.type() == null ? ArtifactType.PROBLEM_STATEMENT : loc.type(), loc.filePath(), loc.startLine(), loc.endLine()))
                         .collect(Collectors.toList());
         return new ConsistencyIssueDTO(severity, issue.category(), issue.description(), issue.suggestedFix(), locations);
-    }
-
-    private record Repo(List<RepoFile> files) {
-    }
-
-    private record RepoFile(String path, String content) {
     }
 
     // Common internal representation
@@ -313,15 +243,17 @@ public class ConsistencyCheckService {
     }
 
     private List<ConsistencyIssue> toGeneric(StructuralConsistencyIssues structural) {
-        if (structural == null || structural.issues == null)
+        if (structural == null || structural.issues == null) {
             return List.of();
+        }
         return structural.issues.stream()
                 .map(i -> new ConsistencyIssue(i.severity(), i.category() != null ? i.category().name() : null, i.description(), i.suggestedFix(), i.relatedLocations())).toList();
     }
 
     private List<ConsistencyIssue> toGeneric(SemanticConsistencyIssues semantic) {
-        if (semantic == null || semantic.issues == null)
+        if (semantic == null || semantic.issues == null) {
             return List.of();
+        }
         return semantic.issues.stream()
                 .map(i -> new ConsistencyIssue(i.severity(), i.category() != null ? i.category().name() : null, i.description(), i.suggestedFix(), i.relatedLocations())).toList();
     }

@@ -43,12 +43,16 @@ class ConsistencyCheckServiceTest {
 
     private ConsistencyCheckService service;
 
+    private ProgrammingExerciseContextRenderer exerciseContextRenderer;
+
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
         this.chatClient = ChatClient.create(chatModel);
         var templateService = new PromptTemplateService();
-        this.service = new ConsistencyCheckService(repositoryService, programmingExerciseRepository, chatClient, templateService);
+        // Wire minimal renderer with mocked dependencies
+        this.exerciseContextRenderer = new ProgrammingExerciseContextRenderer(repositoryService, new ProgrammingLanguageContextFilter());
+        this.service = new ConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer);
     }
 
     @Test
