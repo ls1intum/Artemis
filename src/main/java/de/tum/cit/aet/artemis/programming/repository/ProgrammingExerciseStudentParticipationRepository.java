@@ -103,7 +103,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @Query("""
                         SELECT DISTINCT participation
                         FROM ProgrammingExerciseStudentParticipation participation
-                            LEFT JOIN FETCH participation.submissions s
+                             JOIN FETCH participation.submissions s
                         WHERE participation.exercise.id = :exerciseId
                             AND s.id = (
                                 SELECT MAX(s2.id)

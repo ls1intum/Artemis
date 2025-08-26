@@ -114,15 +114,18 @@ public class ProgrammingTriggerService {
      * @throws EntityNotFoundException if there is no programming exercise for the given exercise id.
      */
     @Async
-    public void triggerInstructorBuildForExercise(Long exerciseId) throws EntityNotFoundException {
+    public void triggerInstructorBuildForExercise(long exerciseId) throws EntityNotFoundException {
         // Async can't access the authentication object. We need to do any security checks before this point.
         SecurityUtils.setAuthorizationObject();
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         // Let the instructor know that a build run was triggered.
         programmingMessagingService.notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
+        long start = System.currentTimeMillis();
         Set<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findWithLatestSubmissionByExerciseId(exerciseId);
+        log.debug("Database call to fetch participations for trigger all took {} ms", (System.currentTimeMillis() - start));
         triggerBuildForParticipations(participations);
+        log.debug("Database call + trigger all builds for exercise {} took {} ms", exerciseId, (System.currentTimeMillis() - start));
 
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
         programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise, false);

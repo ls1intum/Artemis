@@ -40,9 +40,8 @@ COURSE_ID: str = config.get("CourseSettings", "course_id")
 CREATE_COURSE: bool = config.get("CourseSettings", "create_course").lower() == "true"
 IS_LOCAL_COURSE: bool = config.get("CourseSettings", "is_local_course").lower() == "true"
 
-# Threading config (optional). If not present, defaults to 8.
 try:
-    MAX_WORKERS: int = int(config.get("Settings", "threads"))
+    MAX_WORKERS: int = int(config.get("Settings", "max_threads"))
 except (configparser.NoOptionError, configparser.NoSectionError, ValueError):
     MAX_WORKERS = 8
 
@@ -58,7 +57,7 @@ def process_user(user: Tuple[str, str]) -> None:
     try:
         user_session: Session = requests.Session()
         authenticate_user(username, password, user_session)
-        for exercise_id in exercise_Ids:  # shared read-only in this phase
+        for exercise_id in exercise_Ids:
             participation_response = add_participation(user_session, exercise_id, CLIENT_URL)
             participation_id: int = participation_response.get("id")
             logging.info(
@@ -70,7 +69,6 @@ def process_user(user: Tuple[str, str]) -> None:
                 f"[{username}] Added {COMMITS_PER_STUDENT} commits in programming exercise {exercise_id} successfully"
             )
     except Exception as e:
-        # Catch & log exceptions per user to avoid collapsing the whole pool
         logging.exception(f"[{username}] Error during participation/commit flow: {e}")
 
 
