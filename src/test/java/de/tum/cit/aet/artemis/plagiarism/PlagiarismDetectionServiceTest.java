@@ -18,10 +18,10 @@ import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.beans.factory.annotation.Value;
 
 import de.jplag.Language;
 import de.jplag.c.CLanguage;
@@ -54,8 +54,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class PlagiarismDetectionServiceTest {
 
-    @TempDir
-    Path tempDir;
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
 
     private final PlagiarismDetectionConfig config = PlagiarismDetectionConfig.createDefault();
 
@@ -280,12 +280,18 @@ class PlagiarismDetectionServiceTest {
     }
 
     private Path createTestFile(String filename, String content) throws IOException {
+        Path tempDir = createTemporaryDirectory();
         Path testFile = tempDir.resolve(filename);
         FileUtils.writeStringToFile(testFile.toFile(), content, StandardCharsets.UTF_8);
         return testFile;
     }
 
+    private Path createTemporaryDirectory() throws IOException {
+        return Files.createTempDirectory(tempPath, "plagiarismRepo");
+    }
+
     private void setupRepositoryWithFile(String filename, String content, Repository repository) throws IOException {
+        Path tempDir = createTemporaryDirectory();
         Path repoPath = tempDir.resolve("repo");
         Files.createDirectories(repoPath);
         lenient().when(repository.getLocalPath()).thenReturn(repoPath);
@@ -295,6 +301,7 @@ class PlagiarismDetectionServiceTest {
     }
 
     private void setupRepositoryWithMultipleFiles(Repository repository) throws IOException {
+        Path tempDir = createTemporaryDirectory();
         Path repoPath = tempDir.resolve("repo");
         Files.createDirectories(repoPath);
         lenient().when(repository.getLocalPath()).thenReturn(repoPath);
@@ -308,6 +315,7 @@ class PlagiarismDetectionServiceTest {
     }
 
     private void setupRepositoryWithMixedFiles(Repository repository) throws IOException {
+        Path tempDir = createTemporaryDirectory();
         Path repoPath = tempDir.resolve("repo");
         Files.createDirectories(repoPath);
         lenient().when(repository.getLocalPath()).thenReturn(repoPath);

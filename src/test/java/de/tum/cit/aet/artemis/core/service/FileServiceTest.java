@@ -18,8 +18,8 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -34,6 +34,9 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     private FileService fileService;
 
     private final Path javaPath = Path.of("templates", "java", "java.txt");
+
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
 
     // the resource loader allows to load resources from the file system for this prefix
     private final Path overridableBasePath = Path.of("templates", "jenkins");
@@ -75,7 +78,8 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testCopyResourceKeepDirectories(@TempDir Path targetDir) throws IOException {
+    void testCopyResourceKeepDirectories() throws IOException {
+        Path targetDir = createTempTargetDirectory("testCopyResourceKeepDirectories");
         final Resource[] resources = { resourceLoaderService.getResource(javaPath) };
 
         FileUtil.copyResources(resources, Path.of("templates"), targetDir, true);
@@ -85,7 +89,8 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testCopyResourceDoNotKeepDirectory(@TempDir Path targetDir) throws IOException {
+    void testCopyResourceDoNotKeepDirectory() throws IOException {
+        Path targetDir = createTempTargetDirectory("testCopyResourceDoNotKeepDirectory");
         final Resource[] resources = { resourceLoaderService.getResource(javaPath) };
 
         FileUtil.copyResources(resources, Path.of("templates"), targetDir, false);
@@ -95,7 +100,8 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testCopyResourceRemovePrefix(@TempDir Path targetDir) throws IOException {
+    void testCopyResourceRemovePrefix() throws IOException {
+        Path targetDir = createTempTargetDirectory("testCopyResourceRemovePrefix");
         final Resource[] resources = { resourceLoaderService.getResource(javaPath) };
 
         FileUtil.copyResources(resources, Path.of("templates", "java"), targetDir, true);
@@ -104,8 +110,13 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(expectedTargetFile).exists().isNotEmptyFile();
     }
 
+    private Path createTempTargetDirectory(String prefix) throws IOException {
+        return Files.createTempDirectory(tempPath, prefix);
+    }
+
     @Test
-    void testIgnoreDirectoryFalsePositives(@TempDir Path targetDir) throws IOException {
+    void testIgnoreDirectoryFalsePositives() throws IOException {
+        Path targetDir = createTempTargetDirectory("testIgnoreDirectoryFalsePositives");
         final Path sourceDirectory = overridableBasePath.resolve("package.xcworkspace");
         Files.createDirectories(sourceDirectory);
 
