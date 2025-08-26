@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -14,5 +14,5 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 export class AssessmentComplaintAlertComponent {
     ComplaintType = ComplaintType;
 
-    @Input() complaint?: Complaint;
+    readonly complaint = input<Complaint>();
 }

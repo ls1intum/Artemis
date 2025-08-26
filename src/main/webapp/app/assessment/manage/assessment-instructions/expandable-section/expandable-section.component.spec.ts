@@ -26,15 +26,16 @@ describe('ExpandableSectionComponent', () => {
     });
 
     it('should get correct key', () => {
-        component.headerKey = 'test';
+        const headerKey = 'test';
+        fixture.componentRef.setInput('headerKey', headerKey);
 
         const key = component.storageKey;
 
-        expect(key).toEqual(component.PREFIX + component.headerKey);
+        expect(key).toEqual(component.PREFIX + headerKey);
     });
 
     it('should load state from local storage on init', () => {
-        component.headerKey = 'test';
+        fixture.componentRef.setInput('headerKey', 'test');
         const retrieveSpy = jest.spyOn(localStorageService, 'retrieve').mockReturnValue(true);
         const storeSpy = jest.spyOn(localStorageService, 'store');
 
@@ -46,7 +47,7 @@ describe('ExpandableSectionComponent', () => {
     });
 
     it('should toggle state on toggle of collapsed', () => {
-        component.headerKey = 'test';
+        fixture.componentRef.setInput('headerKey', 'test');
         component.isCollapsed = true;
 
         const storeSpy = jest.spyOn(localStorageService, 'store');
