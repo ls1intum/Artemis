@@ -61,6 +61,13 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
 
+    protected readonly faSpinner = faSpinner;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faExclamationCircle = faExclamationCircle;
+
+    readonly MappingResult = MappingResult;
+
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     /** needed to trigger a manual reload of the drag and drop background picture */
@@ -88,8 +95,6 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     correctAnswer: number;
     incorrectLocationMappings: number;
     mappedLocations: number;
-
-    readonly MappingResult = MappingResult;
 
     loadingState = 'loading';
 

@@ -4,6 +4,7 @@
         disabled: clickDisabled() && !showResult(),
         result: showResult() && !forceSampleSolution(),
         incorrect: (score() || 0) < question().points! && !forceSampleSolution(),
+        'question-highlight': question.isHighlighted,
     }"
 >
     <div [hidden]="loadingState === 'success'">
