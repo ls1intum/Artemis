@@ -51,7 +51,6 @@ import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
@@ -90,9 +89,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @MockitoSpyBean
     protected ResultWebsocketService resultWebsocketService;
 
-    @MockitoSpyBean
-    protected GitRepositoryExportService gitRepositoryExportService;
-
     @Autowired
     protected JenkinsRequestMockProvider jenkinsRequestMockProvider;
 
@@ -122,7 +118,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(continuousIntegrationService, gitRepositoryExportService);
+        Mockito.reset(continuousIntegrationService);
         super.resetSpyBeans();
     }
 

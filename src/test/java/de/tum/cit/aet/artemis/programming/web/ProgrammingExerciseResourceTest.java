@@ -1,9 +1,10 @@
 package de.tum.cit.aet.artemis.programming.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
 
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -25,11 +25,9 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
@@ -72,6 +70,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
+
+    @Value("${artemis.version-control.url}")
+    private URI localVCBaseUri;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCRepoPath;
 
     @BeforeEach
     void setup() {
@@ -117,18 +121,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        templateParticipation
-                .setRepositoryUri(new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, originRepoPath)).getURI().toString());
-        templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
+        setupLocalVCRepository(localRepo, programmingExercise);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
-
-        // Mock the export methods to return valid resources
-        var files = java.util.Map.of("test.txt", "test content");
-        byte[] mockZipData = ZipTestUtil.createTestZipFile(files);
-        InputStreamResource mockZipResource = ZipTestUtil.createMockZipResource(mockZipData, "mock-repo.zip");
-        doReturn(mockZipResource).when(gitRepositoryExportService).exportInstructorRepositoryForExerciseInMemory(any(), any(), any());
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-repository/" + RepositoryType.TEMPLATE.name(),
                 HttpStatus.OK, byte[].class);
@@ -160,20 +155,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
 
-        var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        templateParticipation
-                .setRepositoryUri(new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.workingCopyGitRepoFile, originRepoPath)).getURI().toString());
-        templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
+        setupLocalVCRepository(localRepo, programmingExercise);
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(programmingExercise.getId());
-
-        // Mock the export methods to return valid resources
-        var files = java.util.Map.of(".git/config", "[core]\nrepositoryformatversion = 0", ".git/HEAD", "ref: refs/heads/main", ".git/refs/heads/main",
-                "1234567890abcdef1234567890abcdef12345678", ".git/objects/12/34567890abcdef1234567890abcdef12345678", "mock git object content", "test.txt", "test content");
-
-        byte[] mockZipData = ZipTestUtil.createTestZipFile(files);
-        InputStreamResource mockZipResource = ZipTestUtil.createMockZipResource(mockZipData, "mock-repo-with-git.zip");
-        doReturn(mockZipResource).when(gitRepositoryExportService).exportInstructorRepositoryForExerciseInMemory(any(), any(), any());
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-instructor-repository/" + RepositoryType.TEMPLATE.name(),
                 HttpStatus.OK, byte[].class);
@@ -223,4 +207,24 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         assertThat((Boolean) acceptDirFileMethod.invoke(filter, gitDir, "anyfile.txt")).isFalse();
     }
 
+    private void setupLocalVCRepository(LocalRepository localRepo, ProgrammingExercise exercise) throws Exception {
+        String projectKey = exercise.getProjectKey();
+        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+
+        // Create the repository folder in the LocalVC structure
+        Path projectFolder = localVCRepoPath.resolve(projectKey);
+        if (!Files.exists(projectFolder)) {
+            Files.createDirectories(projectFolder);
+        }
+        Path repositoryFolder = projectFolder.resolve(templateRepositorySlug + ".git");
+        Files.createDirectories(repositoryFolder);
+
+        // Copy the bare repository to the LocalVC location
+        org.apache.commons.io.FileUtils.copyDirectory(localRepo.remoteBareGitRepoFile, repositoryFolder.toFile());
+
+        // Set the proper LocalVC URI format
+        var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
+        templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+        templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
+    }
 }
