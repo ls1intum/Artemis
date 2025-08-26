@@ -327,7 +327,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         hazelcastInstance.getQueue("buildJobQueue").clear();
 
-        localCIEventListenerService.checkPendingBuildJobsStatus();
+        localCIMissingJobService.checkPendingBuildJobsStatus();
 
         buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
         buildJob = buildJobOptional.orElseThrow();
