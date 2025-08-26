@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
@@ -57,10 +56,9 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 @RequestMapping("api/programming/")
 public class TestRepositoryResource extends RepositoryResource {
 
-    public TestRepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
-            RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
-            Optional<LocalVCServletService> localVCServletService) {
-        super(profileService, userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
+    public TestRepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService) {
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
     }
 
     @Override

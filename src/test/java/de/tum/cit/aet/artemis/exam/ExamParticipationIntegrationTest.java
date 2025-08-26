@@ -737,7 +737,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamScore(boolean withCourseBonus, boolean withSecondCorrectionAndStarted) throws Exception {
         programmingExerciseTestService.setup(this, versionControlService);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
 
         var visibleDate = ZonedDateTime.now().minusMinutes(5);
         var startDate = ZonedDateTime.now().plusMinutes(5);

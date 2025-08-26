@@ -7,16 +7,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.transport.PreUploadHook;
 import org.eclipse.jgit.transport.UploadPack;
 
-public class LocalVCFetchPreUploadHookSSH implements PreUploadHook {
-
-    private final LocalVCServletService localVCServletService;
-
-    private final ServerSession serverSession;
-
-    public LocalVCFetchPreUploadHookSSH(LocalVCServletService localVCServletService, ServerSession serverSession) {
-        this.localVCServletService = localVCServletService;
-        this.serverSession = serverSession;
-    }
+public record LocalVCFetchPreUploadHookSSH(LocalVCServletService localVCServletService, ServerSession serverSession) implements PreUploadHook {
 
     @Override
     public void onBeginNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int clientOffered) {

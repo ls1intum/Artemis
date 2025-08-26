@@ -26,7 +26,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
@@ -151,53 +150,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     }
 
     @Override
-    public void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) {
-        log.debug("Called mockUpdateUserInUserManagement with args {}, {}, {}, {}", oldLogin, user, password, oldGroups);
-    }
-
-    @Override
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
-        log.debug("Called mockUpdateCoursePermissions with args {}, {}, {}, {}", updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup);
-    }
-
-    @Override
-    public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup,
-            boolean failToAddUsers, boolean failToRemoveUsers) {
-        log.debug("Called mockFailUpdateCoursePermissionsInCi with args {}, {}, {}, {}, {}, {}", updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup,
-                failToAddUsers, failToRemoveUsers);
-    }
-
-    @Override
-    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) {
-        log.debug("Called mockCreateUserInUserManagement with args {}, {}", user, userExistsInCi);
-    }
-
-    @Override
-    public void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) {
-        log.debug("Called mockFailToCreateUserInExternalUserManagement with args {}, {}, {}, {}", user, failInVcs, failInCi, failToGetCiUser);
-    }
-
-    @Override
-    public void mockCreateGroupInUserManagement(String groupName) {
-        log.debug("Called mockCreateGroupInUserManagement with args {}", groupName);
-    }
-
-    @Override
-    public void mockDeleteGroupInUserManagement(String groupName) {
-        log.debug("Called mockDeleteGroupInUserManagement with args {}", groupName);
-    }
-
-    @Override
-    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) {
-        log.debug("Called mockAddUserToGroupInUserManagement with args {}, {}, {}", user, group, failInCi);
-    }
-
-    @Override
-    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) {
-        log.debug("Called mockRemoveUserFromGroup with args {}, {}, {}", user, group, failInCi);
-    }
-
-    @Override
     public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) {
         log.debug("Called mockDeleteBuildPlan with args {}, {}, {}", projectKey, planName, shouldFail);
     }
@@ -240,11 +192,6 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @Override
     public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
         log.debug("Called mockTriggerBuildFailed with args {}", solutionParticipation);
-    }
-
-    @Override
-    public void mockUserExists(String username) {
-        log.debug("Called mockUserExists with args {}", username);
     }
 
     @Override

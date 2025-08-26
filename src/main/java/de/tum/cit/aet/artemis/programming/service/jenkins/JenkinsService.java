@@ -123,11 +123,6 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void givePlanPermissions(ProgrammingExercise programmingExercise, String planName) {
-        jenkinsBuildPlanService.givePlanPermissions(programmingExercise, planName);
-    }
-
-    @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         jenkinsBuildPlanService.configureBuildPlanForParticipation(participation);
     }

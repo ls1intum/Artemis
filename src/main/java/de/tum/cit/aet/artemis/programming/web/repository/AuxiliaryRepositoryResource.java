@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -61,10 +60,10 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    public AuxiliaryRepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
-            RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
-            Optional<LocalVCServletService> localVCServletService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
-        super(profileService, userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
+    public AuxiliaryRepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
 

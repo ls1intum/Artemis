@@ -18,7 +18,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -61,8 +60,6 @@ public class ProgrammingTriggerService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    private final ResultRepository resultRepository;
-
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
@@ -85,14 +82,13 @@ public class ProgrammingTriggerService {
 
     public ProgrammingTriggerService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository, ResultRepository resultRepository,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingMessagingService programmingMessagingService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProfileService profileService,
             ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, ProgrammingSubmissionMessagingService programmingSubmissionMessagingService) {
         this.participationService = participationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.resultRepository = resultRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
