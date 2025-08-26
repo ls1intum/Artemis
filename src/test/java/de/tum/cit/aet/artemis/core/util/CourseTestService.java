@@ -44,8 +44,6 @@ import javax.imageio.ImageIO;
 
 import org.assertj.core.data.Offset;
 import org.mockito.MockedStatic;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -177,8 +175,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class CourseTestService {
-
-    private static final Logger log = LoggerFactory.getLogger(CourseTestService.class);
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
@@ -1055,15 +1051,8 @@ public class CourseTestService {
         resultRepo.save(practiceResult);
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(practiceResult, practiceParticipation, "ghjk");
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student2");
-        exerciseRepo.findAll().forEach(exercise -> {
-            if (exercise.getMaxPoints() == null) {
-                log.error("{}-{}-{}-{}", exercise.getId(), exercise.getShortName(), exercise.getTitle(), exercise.getMaxPoints());
-            }
-
-        });
 
         var receivedCoursesForDashboard = request.get("/api/core/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
-
         CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/core/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
         Course finalCourse = course;
         CourseForDashboardDTO receivedCourseForDashboardFromGeneralCall = receivedCoursesForDashboard.courses().stream()
