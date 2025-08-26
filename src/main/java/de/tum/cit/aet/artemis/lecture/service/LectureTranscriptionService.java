@@ -2,23 +2,23 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
+import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionInitResponseDTO;
+import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
+import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionStatusResponseDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
@@ -39,15 +39,11 @@ public class LectureTranscriptionService {
 
     private final RestClient restClient;
 
-    private final ObjectMapper objectMapper;
-
     public LectureTranscriptionService(LectureTranscriptionRepository lectureTranscriptionRepository, LectureUnitRepository lectureUnitRepository,
-            RestClient.Builder restClientBuilder, ObjectMapper objectMapper, @Value("${artemis.nebula.url}") String nebulaBaseUrl,
-            @Value("${artemis.nebula.secret}") String nebulaSecretToken) {
+            RestClient.Builder restClientBuilder, @Value("${artemis.nebula.url}") String nebulaBaseUrl, @Value("${artemis.nebula.secret}") String nebulaSecretToken) {
         this.lectureTranscriptionRepository = lectureTranscriptionRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.restClient = restClientBuilder.baseUrl(nebulaBaseUrl).defaultHeader("Authorization", nebulaSecretToken).build();
-        this.objectMapper = objectMapper;
     }
 
     /**
@@ -60,20 +56,18 @@ public class LectureTranscriptionService {
     public void processTranscription(LectureTranscription transcription) {
         String jobId = transcription.getJobId();
         try {
-            Map<String, Object> response = restClient.get().uri("/transcribe/status/" + jobId).retrieve().body(new ParameterizedTypeReference<>() {
-            });
-            String status = (String) response.get("status");
+            NebulaTranscriptionStatusResponseDTO response = restClient.get().uri("/transcribe/status/" + jobId).retrieve().body(NebulaTranscriptionStatusResponseDTO.class);
 
-            switch (status) {
-                case "done" -> {
-                    LectureTranscriptionDTO dto = objectMapper.convertValue(response, LectureTranscriptionDTO.class);
-                    saveFinalTranscriptionResult(jobId, dto);
-                    log.info("Transcription completed and saved for jobId={}", jobId);
-                }
-                case "error" -> {
-                    markTranscriptionAsFailed(transcription, (String) response.get("error"));
-                }
-                default -> log.info("Transcription still in progress for jobId={}", jobId);
+            if (response.isCompleted()) {
+                LectureTranscriptionDTO dto = response.toLectureTranscriptionDTO(transcription.getLectureUnit().getId());
+                saveFinalTranscriptionResult(jobId, dto);
+                log.info("Transcription completed and saved for jobId={}", jobId);
+            }
+            else if (response.hasFailed()) {
+                markTranscriptionAsFailed(transcription, response.error());
+            }
+            else {
+                log.info("Transcription still in progress for jobId={}", jobId);
             }
         }
         catch (Exception e) {
@@ -150,5 +144,43 @@ public class LectureTranscriptionService {
         });
 
         return lectureUnit;
+    }
+
+    /**
+     * Initiates a new transcription job with the Nebula service and creates a placeholder transcription entry.
+     *
+     * @param lectureId     ID of the lecture
+     * @param lectureUnitId ID of the lecture unit
+     * @param request       The transcription request containing video URL and other parameters
+     * @return The job ID returned by Nebula
+     * @throws ResponseStatusException if the request fails or Nebula returns an invalid response
+     */
+    public String startNebulaTranscription(Long lectureId, Long lectureUnitId, NebulaTranscriptionRequestDTO request) {
+        try {
+            log.info("Starting transcription for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
+
+            NebulaTranscriptionInitResponseDTO response = restClient.post().uri("/transcribe/start").header("Content-Type", "application/json").body(request).retrieve()
+                    .body(NebulaTranscriptionInitResponseDTO.class);
+
+            // Validate response
+            if (response == null || response.transcriptionId() == null) {
+                log.error("Nebula returned null or missing transcription ID for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Nebula did not return a valid transcription ID");
+            }
+
+            // Create placeholder transcription for async processing
+            createEmptyTranscription(lectureId, lectureUnitId, response.transcriptionId());
+
+            log.info("Transcription started for Lecture ID {}, Unit ID {}, Job ID: {}", lectureId, lectureUnitId, response.transcriptionId());
+            return response.transcriptionId();
+        }
+        catch (ResponseStatusException e) {
+            // Re-throw our own exceptions
+            throw e;
+        }
+        catch (Exception e) {
+            log.error("Error initiating transcription for Lecture ID: {}, Unit ID: {} → {}", lectureId, lectureUnitId, e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to start transcription: " + e.getMessage(), e);
+        }
     }
 }

@@ -3,18 +3,15 @@ package de.tum.cit.aet.artemis.lecture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Answers.RETURNS_DEEP_STUBS;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestClient;
 
@@ -23,8 +20,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.domain.NebulaTranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
+import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionStatusResponseDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureTranscriptionService;
@@ -67,13 +66,10 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         t.setTranscriptionStatus(TranscriptionStatus.PENDING);
         t = transcriptionRepository.save(t);
 
-        // Nebula status payload → objectMapper.convertValue(...) → DTO
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("status", "done");
-        payload.put("language", "en");
-        payload.put("segments", java.util.List.of());
+        // Mock Nebula status response using the new DTO
+        NebulaTranscriptionStatusResponseDTO response = new NebulaTranscriptionStatusResponseDTO(NebulaTranscriptionStatus.DONE, null, "en", List.of());
 
-        when(restClient.get().uri(eq("/transcribe/status/" + jobId)).retrieve().body(any(ParameterizedTypeReference.class))).thenReturn(payload);
+        when(restClient.get().uri(eq("/transcribe/status/" + jobId)).retrieve().body(eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(response);
 
         service.processTranscription(t);
 
@@ -90,7 +86,9 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         t.setJobId("job-err");
         t = transcriptionRepository.save(t);
 
-        when(restClient.get().uri(eq("/transcribe/status/job-err")).retrieve().body(any(ParameterizedTypeReference.class))).thenReturn(Map.of("status", "error", "error", "Boom!"));
+        NebulaTranscriptionStatusResponseDTO errorResponse = new NebulaTranscriptionStatusResponseDTO(NebulaTranscriptionStatus.ERROR, "Boom!", null, null);
+
+        when(restClient.get().uri(eq("/transcribe/status/job-err")).retrieve().body(eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(errorResponse);
 
         service.processTranscription(t);
 
@@ -109,7 +107,29 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         t = transcriptionRepository.save(t);
         Long id = t.getId();
 
-        when(restClient.get().uri(eq("/transcribe/status/job-running")).retrieve().body(any(ParameterizedTypeReference.class))).thenReturn(Map.of("status", "running"));
+        NebulaTranscriptionStatusResponseDTO runningResponse = new NebulaTranscriptionStatusResponseDTO(NebulaTranscriptionStatus.RUNNING, null, null, null);
+
+        when(restClient.get().uri(eq("/transcribe/status/job-running")).retrieve().body(eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(runningResponse);
+
+        service.processTranscription(t);
+
+        // Status should still be PENDING (not changed)
+        var unchanged = transcriptionRepository.findById(id);
+        assertThat(unchanged).isPresent();
+        assertThat(unchanged.get().getTranscriptionStatus()).isEqualTo(TranscriptionStatus.PENDING);
+    }
+
+    @Test
+    void processTranscription_processing_noStatusChange() {
+        var t = new LectureTranscription();
+        t.setJobId("job-processing");
+        t.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        t = transcriptionRepository.save(t);
+        Long id = t.getId();
+
+        NebulaTranscriptionStatusResponseDTO processingResponse = new NebulaTranscriptionStatusResponseDTO(NebulaTranscriptionStatus.PROCESSING, null, null, null);
+
+        when(restClient.get().uri(eq("/transcribe/status/job-processing")).retrieve().body(eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(processingResponse);
 
         service.processTranscription(t);
 

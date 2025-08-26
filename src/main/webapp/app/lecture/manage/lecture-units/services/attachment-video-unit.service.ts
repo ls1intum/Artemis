@@ -3,8 +3,10 @@ import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/le
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
+import { AlertService } from 'app/shared/service/alert.service';
+import { of } from 'rxjs';
 
 type EntityResponseType = HttpResponse<AttachmentVideoUnit>;
 
@@ -14,6 +16,7 @@ type EntityResponseType = HttpResponse<AttachmentVideoUnit>;
 export class AttachmentVideoUnitService {
     private httpClient = inject(HttpClient);
     private lectureUnitService = inject(LectureUnitService);
+    private alertService = inject(AlertService);
 
     private resourceURL = 'api/lecture';
 
@@ -94,16 +97,30 @@ export class AttachmentVideoUnitService {
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
-    startTranscription(lectureId: number, lectureUnitId: number, videoUrl: string): Observable<HttpResponse<string>> {
+    startTranscription(lectureId: number, lectureUnitId: number, videoUrl: string): Observable<void> {
         const body = {
             videoUrl,
             lectureId,
             lectureUnitId,
         };
 
-        return this.httpClient.post(`/api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/nebula-transcriber`, body, {
-            observe: 'response',
-            responseType: 'text',
-        });
+        return this.httpClient
+            .post(`/api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/nebula-transcriber`, body, {
+                observe: 'response',
+                responseType: 'text',
+            })
+            .pipe(
+                map((response: HttpResponse<string>) => {
+                    if (response.status === 200) {
+                        this.alertService.success('Transcript generation started.');
+                    } else {
+                        this.alertService.error('Transcript request did not succeed. Status: ' + response.status);
+                    }
+                }),
+                catchError((error: any) => {
+                    this.alertService.error('Transcript failed to start: ' + (error.message || 'Unknown error'));
+                    return of();
+                }),
+            );
     }
 }

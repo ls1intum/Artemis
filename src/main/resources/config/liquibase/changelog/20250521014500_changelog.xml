@@ -6,7 +6,6 @@
     http://www.liquibase.org/xml/ns/dbchangelog
     https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
 
-    <!-- Atomic step 1: job_id for all DBs (nullable+unique by your design) -->
     <changeSet id="20250521014500-add-jobid" author="goyal">
         <addColumn tableName="lecture_transcription">
             <column name="job_id" type="VARCHAR(255)">
@@ -18,7 +17,6 @@
         </rollback>
     </changeSet>
 
-    <!-- Atomic step 2 (MySQL, H2): status as native ENUM with default -->
     <changeSet id="20250521014500-mysql-status-enum" author="goyal">
         <preConditions onFail="MARK_RAN"><dbms type="mysql,h2"/></preConditions>
         <addColumn tableName="lecture_transcription">
@@ -33,7 +31,6 @@
         </rollback>
     </changeSet>
 
-    <!-- Atomic step 3 (PostgreSQL): status as TEXT, default PENDING -->
     <changeSet id="20250521014500-pg-status-text" author="goyal">
         <preConditions onFail="MARK_RAN"><dbms type="postgresql"/></preConditions>
         <addColumn tableName="lecture_transcription">
