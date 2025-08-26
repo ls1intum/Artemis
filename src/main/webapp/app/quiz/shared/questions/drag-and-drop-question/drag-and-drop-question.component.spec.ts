@@ -61,6 +61,7 @@ describe('DragAndDropQuestionComponent', () => {
         question.hint = 'Test hint';
         question.explanation = 'Test explanation';
         const markdownSpy = jest.spyOn(markdownService, 'safeHtmlForMarkdown').mockImplementation((arg) => `${arg}markdown`);
+        jest.spyOn(comp, 'hideSampleSolution');
         comp.question = question;
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
@@ -69,6 +70,8 @@ describe('DragAndDropQuestionComponent', () => {
         expect(comp.renderedQuestion.text).toBe(`${question.text}markdown`);
         expect(comp.renderedQuestion.hint).toBe(`${question.hint}markdown`);
         expect(comp.renderedQuestion.explanation).toBe(`${question.explanation}markdown`);
+        expect(comp.hideSampleSolution).toHaveBeenCalledOnce();
+        expect(comp.showingSampleSolution).toBeFalsy();
     });
 
     it('should count correct mappings as zero if no correct mappings', () => {
