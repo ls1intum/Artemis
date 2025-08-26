@@ -1,6 +1,11 @@
 <div
     class="dnd-question markdown-preview"
-    [ngClass]="{ disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.points! && !forceSampleSolution }"
+    [ngClass]="{
+        disabled: clickDisabled && !showResult,
+        result: showResult && !forceSampleSolution,
+        incorrect: (score || 0) < question.points! && !forceSampleSolution,
+        'question-highlight': question.isHighlighted,
+    }"
 >
     <div [hidden]="loadingState === 'success'">
         @if (loadingState !== 'error') {
@@ -96,9 +101,9 @@
         <div cdkDropListGroup class="drag-and-drop-area">
             <div class="background-area">
                 @if (question.backgroundFilePath) {
-                    <jhi-secured-image
+                    <jhi-image
                         [src]="addPublicFilePrefix(filePreviewPaths.get(question.backgroundFilePath!) || question.backgroundFilePath!)!"
-                        (endLoadingProcess)="changeLoading($event)"
+                        (loadingStatus)="changeLoading($event)"
                     />
                 }
                 <div class="click-layer">
