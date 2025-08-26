@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
-import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
@@ -66,10 +65,6 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
     @Autowired
     private CourseTestRepository courseRepository;
-
-    // This will be a spy bean since it is configured as @MockitoSpyBean in the parent class
-    @Autowired
-    private GitRepositoryExportService gitRepositoryExportService;
 
     protected Course course;
 
