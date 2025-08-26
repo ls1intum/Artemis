@@ -26,6 +26,7 @@ To ensure a transparent and trustworthy environment, we have established differe
 
 ### References and Best Practices
 
+- You can find our Coding and Design Guidelines [here](https://docs.artemis.cit.tum.de/dev/guidelines.html).
 - We align our guidelines with the [GitHub Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies) which stress the importance of authenticity and transparency in user profiles.
 - For more insights on contributing to open-source projects, we recommend reviewing the [Open Source Guides by GitHub](https://opensource.guide/).
 
