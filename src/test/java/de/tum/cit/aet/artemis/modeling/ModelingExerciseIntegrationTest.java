@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
@@ -208,6 +209,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo("exercise-new-modeling-exercise");
 
+        // Verify AtlasML notification was sent on create
+        verify(atlasMLApi, timeout(1000)).saveExerciseWithCompetencies(eq(receivedModelingExercise), eq(OperationTypeDTO.UPDATE));
+
         modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), 1L);
         request.post("/api/modeling/modeling-exercises", modelingExercise, HttpStatus.BAD_REQUEST);
 
@@ -244,6 +248,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(returnedModelingExercise);
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(eq(returnedModelingExercise), eq(notificationText));
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(createdModelingExercise), eq(Optional.of(createdModelingExercise)));
+
+        // Verify AtlasML notification was sent on update
+        verify(atlasMLApi, timeout(1000)).saveExerciseWithCompetencies(eq(returnedModelingExercise), eq(OperationTypeDTO.UPDATE));
     }
 
     @Test
@@ -403,6 +410,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         request.delete("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
         assertThat(modelingExerciseRepository.findById(classExercise.getId())).as("exercise was deleted").isEmpty();
         request.delete("/api/modeling/modeling-exercises/" + classExercise.getId(), HttpStatus.NOT_FOUND);
+
+        // Verify AtlasML notification was sent
+        verify(atlasMLApi, timeout(1000)).saveExerciseWithCompetencies(eq(classExercise), eq(OperationTypeDTO.DELETE));
     }
 
     @Test

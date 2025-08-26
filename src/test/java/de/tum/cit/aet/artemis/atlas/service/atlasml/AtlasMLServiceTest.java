@@ -44,6 +44,9 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -755,5 +758,42 @@ class AtlasMLServiceTest {
         assertThatThrownBy(() -> {
             atlasMLService.suggestCompetencyRelations(courseId);
         }).isInstanceOf(AtlasMLServiceException.class);
+    }
+
+    @Test
+    void testSaveExerciseWithCompetencies_QuizExerciseDescriptionBuiltFromQuestions() {
+        // Given
+        QuizExercise quizExercise = new QuizExercise();
+        quizExercise.setId(2L);
+        quizExercise.setTitle("Quiz Title");
+
+        Course course = new Course();
+        course.setId(5L);
+        quizExercise.setCourse(course);
+
+        DragAndDropQuestion q1 = new DragAndDropQuestion();
+        q1.setTitle("Question 1");
+        q1.setText("Text 1");
+        DragAndDropQuestion q2 = new DragAndDropQuestion();
+        q2.setTitle("Question 2");
+        q2.setText("Text 2");
+        quizExercise.setQuizQuestions(List.of((QuizQuestion) q1, (QuizQuestion) q2));
+
+        Competency competency = new Competency();
+        competency.setId(10L);
+        CompetencyExerciseLink link = new CompetencyExerciseLink();
+        link.setExercise(quizExercise);
+        link.setCompetency(competency);
+
+        when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(2L)).thenReturn(List.of(link));
+
+        ResponseEntity<String> response = new ResponseEntity<>(HttpStatus.OK);
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class))).thenReturn(response);
+
+        // When
+        boolean result = atlasMLService.saveExerciseWithCompetencies(quizExercise, OperationTypeDTO.UPDATE);
+
+        // Then
+        assertThat(result).isTrue();
     }
 }

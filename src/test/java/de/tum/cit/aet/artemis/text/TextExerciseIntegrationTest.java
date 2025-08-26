@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
@@ -179,6 +180,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
         assertThat(textExerciseRepository.findById(textExercise.getId())).as("text exercise was deleted").isEmpty();
+
+        // Verify AtlasML notification was sent
+        verify(atlasMLApi, timeout(1000)).saveExerciseWithCompetencies(eq(textExercise), eq(OperationTypeDTO.DELETE));
     }
 
     @Test
@@ -258,6 +262,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(newTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("exerciseGroupId was set correctly").isEqualTo(course.getId());
         assertThat(channel).as("channel was created").isNotNull();
         assertThat(channel.getName()).as("channel name was set correctly").isEqualTo("exercise-new-text-exercise");
+
+        // Verify AtlasML notification was sent on create
+        verify(atlasMLApi, timeout(1000)).saveExerciseWithCompetencies(eq(newTextExercise), eq(OperationTypeDTO.UPDATE));
     }
 
     @Test
@@ -435,6 +442,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any(), any());
         verify(groupNotificationScheduleService, timeout(2000).times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textExercise), eq(Optional.of(textExercise)));
+
+        // Verify AtlasML notification was sent on update
+        verify(atlasMLApi, timeout(1000)).saveExerciseWithCompetencies(eq(updatedTextExercise), eq(OperationTypeDTO.UPDATE));
     }
 
     @Test
