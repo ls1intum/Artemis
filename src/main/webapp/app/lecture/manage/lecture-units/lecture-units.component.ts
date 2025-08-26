@@ -171,6 +171,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
         const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
+
         if (!name || (!fileName && !videoSource)) {
             return;
         }
@@ -228,7 +229,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
             .pipe(
                 switchMap((response) => {
                     const lectureUnit = response.body!;
-
+                    if (lectureUnit) {
+                        this.triggerTranscriptionIfEnabled(lectureUnit, generateTranscript, attachmentVideoUnitFormData.playlistUrl);
+                    }
                     if (!videoTranscription) {
                         return of(lectureUnit);
                     }

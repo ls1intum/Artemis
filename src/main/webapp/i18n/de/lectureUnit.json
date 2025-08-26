@@ -155,7 +155,8 @@
                 "urlHelperPlaceholder": "Du kannst hier eine Video-URL eingeben und den Pfeil benutzen, um sie in die korrekte einbettbare URL umzuwandeln",
                 "urlHelperValidationError": "Automatische Formatumwandlung ist nicht möglich für diese URL",
                 "videoTranscription": "Video Transkription",
-                "videoTranscriptionPlaceholder": "Füge hier die Transkription des Videos ein."
+                "videoTranscriptionPlaceholder": "Füge hier die Transkription des Videos ein.",
+                "generateTranscriptLabel": "Transkript nach dem Speichern erzeugen"
             },
             "editAttachmentVideoUnit": {
                 "title": "Bearbeite Dateieinheit"

@@ -14,6 +14,10 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { HttpClient } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('AttachmentVideoUnitFormComponent', () => {
     let attachmentVideoUnitFormComponentFixture: ComponentFixture<AttachmentVideoUnitFormComponent>;
@@ -182,6 +186,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 file: fakeFile,
                 fileName: exampleFileName,
             },
+            playlistUrl: undefined,
             transcriptionProperties: {
                 videoTranscription: null,
             },
@@ -327,6 +332,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
             transcriptionProperties: {
                 videoTranscription: null,
             },
+            playlistUrl: undefined,
         });
 
         submitFormSpy.mockRestore();
@@ -386,6 +392,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
             transcriptionProperties: {
                 videoTranscription: null,
             },
+            playlistUrl: undefined,
         });
 
         submitFormSpy.mockRestore();
