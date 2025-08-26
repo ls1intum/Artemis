@@ -36,6 +36,8 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 
 /**
  * Service for communicating with the AtlasML microservice.
@@ -414,9 +416,25 @@ public class AtlasMLService {
             // Extract competency IDs
             List<Long> competencyIds = links.stream().map(link -> link.getCompetency().getId()).toList();
 
-            // Ensure description is never null - use problemStatement or fallback to empty string
+            // Build description per exercise type
             String description = exercise.getProblemStatement();
-            if (description == null || description.trim().isEmpty()) {
+            if (exercise instanceof QuizExercise quizExercise) {
+                StringBuilder descriptionBuilder = new StringBuilder();
+                if (quizExercise.getQuizQuestions() != null) {
+                    for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+                        String title = question.getTitle();
+                        String text = question.getText();
+                        if (title != null && !title.isBlank()) {
+                            descriptionBuilder.append(title).append('\n');
+                        }
+                        if (text != null && !text.isBlank()) {
+                            descriptionBuilder.append(text).append("\n\n");
+                        }
+                    }
+                }
+                description = descriptionBuilder.toString().trim();
+            }
+            if (description == null) {
                 description = ""; // AtlasML API expects a non-null description
             }
 

@@ -179,6 +179,16 @@ public class ModelingExerciseResource {
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
+        // Notify AtlasML about the new modeling exercise
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(result, de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO.UPDATE);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about modeling exercise creation: {}", e.getMessage());
+            }
+        });
+
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
     }
 
@@ -250,6 +260,16 @@ public class ModelingExerciseResource {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(modelingExercise)));
 
+        // Notify AtlasML about the modeling exercise update
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(updatedModelingExercise, de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO.UPDATE);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about modeling exercise update: {}", e.getMessage());
+            }
+        });
+
         return ResponseEntity.ok(updatedModelingExercise);
     }
 
@@ -314,6 +334,15 @@ public class ModelingExerciseResource {
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        // Notify AtlasML about the modeling exercise deletion before actual deletion
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(modelingExercise, de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO.DELETE);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about modeling exercise deletion: {}", e.getMessage());
+            }
+        });
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, user);
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);

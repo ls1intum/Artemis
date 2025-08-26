@@ -252,6 +252,16 @@ public class QuizExerciseResource {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
+        // Notify AtlasML about the new quiz exercise
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(result, de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO.UPDATE);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about quiz exercise creation: {}", e.getMessage());
+            }
+        });
+
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
@@ -320,6 +330,16 @@ public class QuizExerciseResource {
         QuizExercise finalQuizExercise = quizExercise;
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalQuiz, Optional.of(finalQuizExercise)));
         slideApi.ifPresent(api -> api.handleDueDateChange(originalQuiz, finalQuizExercise));
+
+        // Notify AtlasML about the quiz exercise update
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(finalQuizExercise, de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO.UPDATE);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about quiz exercise update: {}", e.getMessage());
+            }
+        });
 
         return ResponseEntity.ok(quizExercise);
     }
@@ -683,6 +703,16 @@ public class QuizExerciseResource {
                 .concat(backgroundImagePaths.stream().filter(Objects::nonNull).map(path -> convertToActualPath(path, FilePathType.DRAG_AND_DROP_BACKGROUND)),
                         dragItemImagePaths.stream().filter(Objects::nonNull).map(path -> convertToActualPath(path, FilePathType.DRAG_ITEM)))
                 .filter(Objects::nonNull).toList();
+
+        // Notify AtlasML about the quiz exercise deletion before actual deletion
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(quizExercise, de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO.DELETE);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about quiz exercise deletion: {}", e.getMessage());
+            }
+        });
 
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
