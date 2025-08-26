@@ -28,7 +28,7 @@ $discussion-section-card-min-width: 370px;
     .card {
         width: inherit;
         min-width: $discussion-section-card-min-width;
-        border: 2px solid $border-color;
+        border: 2px solid var(--bs-border-color);
 
         .card-header {
             display: inline-flex;
@@ -37,7 +37,7 @@ $discussion-section-card-min-width: 370px;
             cursor: pointer;
             border-radius: 0.25em 0.25em 0 0;
             background-color: transparent;
-            border-bottom: 2px solid $border-color;
+            border-bottom: 2px solid var(--bs-border-color);
 
             .card-title {
                 display: flex;
