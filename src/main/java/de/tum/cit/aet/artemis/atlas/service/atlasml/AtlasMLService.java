@@ -119,7 +119,6 @@ public class AtlasMLService {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("Authorization", "Test");
             HttpEntity<SuggestCompetencyRequestDTO> entity = new HttpEntity<>(request, headers);
 
             // Get the raw response as String first to handle empty array responses
@@ -167,7 +166,6 @@ public class AtlasMLService {
             log.debug("Requesting competency relation suggestions for courseId: {}", courseId);
 
             HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Test");
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
             String url = config.getAtlasmlBaseUrl() + String.format(SUGGEST_RELATIONS_ENDPOINT, courseId);
@@ -211,7 +209,6 @@ public class AtlasMLService {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("Authorization", "Test");
             HttpEntity<SaveCompetencyRequestDTO> entity = new HttpEntity<>(request, headers);
 
             // Get the raw response as String first to handle any potential response parsing issues
@@ -332,12 +329,14 @@ public class AtlasMLService {
         }
 
         try {
-            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromCompetencies(competencies, operationType);
+            OperationTypeDTO op = operationType != null ? operationType : OperationTypeDTO.UPDATE;
+            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromCompetencies(competencies, op);
             saveCompetencies(request);
             return true;
         }
         catch (Exception e) {
-            log.error("Failed to {} {} competencies", operationType.value().toLowerCase(), competencies.size(), e);
+            final String opStr = operationType != null ? operationType.value().toLowerCase() : "update";
+            log.error("Failed to {} {} competencies", opStr, competencies.size(), e);
             return false;
         }
     }
@@ -371,12 +370,14 @@ public class AtlasMLService {
         }
 
         try {
-            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromExercise(exerciseId, title, description, competencyIds, courseId, operationType);
+            OperationTypeDTO op = operationType != null ? operationType : OperationTypeDTO.UPDATE;
+            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromExercise(exerciseId, title, description, competencyIds, courseId, op);
             saveCompetencies(request);
             return true;
         }
         catch (Exception e) {
-            log.error("Failed to {} exercise with id {}", operationType.value().toLowerCase(), exerciseId, e);
+            final String opStr = operationType != null ? operationType.value().toLowerCase() : "update";
+            log.error("Failed to {} exercise with id {}", opStr, exerciseId, e);
             return false;
         }
     }
