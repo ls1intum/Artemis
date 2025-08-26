@@ -97,9 +97,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndTeamStudentsByExerciseId(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    Set<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseId(long exerciseId);
-
     @Query("""
                         SELECT DISTINCT participation
                         FROM ProgrammingExerciseStudentParticipation participation
