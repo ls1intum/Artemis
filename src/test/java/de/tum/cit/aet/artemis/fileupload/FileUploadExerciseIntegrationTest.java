@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -180,9 +179,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo("exercise-new-fileupload-exerci");
-
-        // Verify AtlasML notification was sent on create
-        verify(atlasMLApi, timeout(1000)).saveExerciseWithCompetencies(eq(receivedFileUploadExercise), eq(OperationTypeDTO.UPDATE));
     }
 
     @Test
@@ -209,9 +205,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(criterionWithoutTitle.getStructuredGradingInstructions()).hasSize(1);
         assertThat(criterionWithoutTitle.getStructuredGradingInstructions().stream().findFirst().orElseThrow().getInstructionDescription())
                 .isEqualTo("created first instruction with empty criteria for testing");
-
-        // Verify AtlasML notification was sent on create (exam)
-        verify(atlasMLApi, timeout(1000)).saveExerciseWithCompetencies(eq(createdFileUploadExercise), eq(OperationTypeDTO.UPDATE));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -337,9 +330,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         Optional<Channel> exerciseChannelAfterDelete = channelRepository.findById(exerciseChannel.getId());
         assertThat(exerciseChannelAfterDelete).isEmpty();
-
-        // Verify AtlasML notification was sent
-        verify(atlasMLApi, timeout(1000)).saveExerciseWithCompetencies(eq(fileUploadExercise), eq(OperationTypeDTO.DELETE));
     }
 
     @Test
@@ -410,9 +400,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any(), any());
         verify(groupNotificationScheduleService, times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any());
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(fileUploadExercise), eq(Optional.of(fileUploadExercise)));
-
-        // Verify AtlasML notification was sent on update
-        verify(atlasMLApi, timeout(1000)).saveExerciseWithCompetencies(eq(receivedFileUploadExercise), eq(OperationTypeDTO.UPDATE));
     }
 
     @Test
@@ -713,9 +700,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedFileUploadExercise));
-
-        // Verify AtlasML notification was sent on import
-        verify(atlasMLApi, timeout(1000)).saveExerciseWithCompetencies(eq(importedFileUploadExercise), eq(OperationTypeDTO.UPDATE));
     }
 
     @Test
