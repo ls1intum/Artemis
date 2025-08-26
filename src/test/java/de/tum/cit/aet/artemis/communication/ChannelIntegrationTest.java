@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Fail.fail;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
@@ -937,7 +936,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void createFeedbackChannel_asStudent_shouldReturnForbidden() {
+    void createFeedbackChannel_asStudent_shouldReturnForbidden() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
@@ -950,20 +949,15 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
-        String BASE_ENDPOINT = "api/communication/courses/{courseId}/{exerciseId}/feedback-channel";
+        String BASE_ENDPOINT = "api/communication/courses/{courseId}/exercises/{exerciseId}/feedback-channel";
 
-        try {
-            request.postWithoutResponseBody(BASE_ENDPOINT.replace("{courseId}", course.getId().toString()).replace("{exerciseId}", programmingExercise.getId().toString()),
-                    feedbackChannelRequest, HttpStatus.FORBIDDEN);
-        }
-        catch (Exception e) {
-            fail("There was an error executing the post request.", e);
-        }
+        request.postWithoutResponseBody(BASE_ENDPOINT.replace("{courseId}", course.getId().toString()).replace("{exerciseId}", programmingExercise.getId().toString()),
+                feedbackChannelRequest, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createFeedbackChannel_asInstructor_shouldCreateChannel() {
+    void createFeedbackChannel_asInstructor_shouldCreateChannel() throws Exception {
         long courseId = 1L;
         long exerciseId = 1L;
         ChannelDTO channelDTO = new ChannelDTO();
@@ -975,16 +969,10 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
-        String BASE_ENDPOINT = "/api/communication/courses/{courseId}/{exerciseId}/feedback-channel";
+        String BASE_ENDPOINT = "/api/communication/courses/{courseId}/exercises/{exerciseId}/feedback-channel";
 
-        ChannelDTO response = null;
-        try {
-            response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", Long.toString(courseId)).replace("{exerciseId}", Long.toString(exerciseId)),
-                    feedbackChannelRequest, ChannelDTO.class, HttpStatus.CREATED);
-        }
-        catch (Exception e) {
-            fail("Failed to create feedback channel", e);
-        }
+        ChannelDTO response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", Long.toString(courseId)).replace("{exerciseId}", Long.toString(exerciseId)),
+                feedbackChannelRequest, ChannelDTO.class, HttpStatus.CREATED);
 
         assertThat(response).isNotNull();
         assertThat(response.getName()).isEqualTo("feedback-channel");

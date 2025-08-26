@@ -44,6 +44,16 @@
     }
 }
 
+.filter-button {
+    all: unset;
+    cursor: pointer;
+    color: var(--secondary);
+
+    .filter-icon {
+        font-size: 0.75rem;
+    }
+}
+
 .remove-button {
     cursor: pointer;
 }
@@ -53,13 +63,13 @@
     flex-direction: column;
 
     .dropdown-item {
-        padding: 6px 8px;
+        padding: 0.375rem 0.5rem;
         cursor: pointer;
         user-select: none;
     }
 }
 
 input[type='checkbox'] {
-    margin-right: 8px;
+    margin-right: 0.5rem;
     margin-left: 0 !important;
 }

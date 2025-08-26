@@ -60,6 +60,9 @@ public class RequestUtilService {
     @Value("${jhipster.clientApp.name}")
     private String APPLICATION_NAME;
 
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
+
     private final MockMvc mvc;
 
     private final ObjectMapper mapper;
@@ -656,7 +659,7 @@ public class RequestUtilService {
 
         var filename = res.getResponse().getHeader("filename");
         assertThat(filename).isNotNull();
-        var tmpFile = Path.of("./local/server-integration-test/temp", filename);
+        var tmpFile = tempPath.resolve(filename);
         Files.createDirectories(tmpFile.getParent());  // Ensure directory exists
         FileUtils.writeByteArrayToFile(tmpFile.toFile(), res.getResponse().getContentAsByteArray());
         return tmpFile.toFile();
