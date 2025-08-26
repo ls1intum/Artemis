@@ -5,9 +5,21 @@ import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { fromPairs, toPairs } from 'lodash-es';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorFileBrowserDeleteComponent } from 'app/programming/manage/code-editor/file-browser/delete/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
-import { faAngleDoubleDown, faAngleDoubleUp, faChevronLeft, faChevronRight, faCircleNotch, faFile, faFolder, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
+import {
+    faAngleDoubleDown,
+    faAngleDoubleUp,
+    faChevronLeft,
+    faChevronRight,
+    faCircleNotch,
+    faFile,
+    faFolder,
+    faFolderOpen,
+    faListAlt,
+    faPlus,
+} from '@fortawesome/free-solid-svg-icons';
 import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -75,10 +87,12 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     CommitState = CommitState;
     FileType = FileType;
-
+    // Problem Statement identifier constant
+    readonly PROBLEM_STATEMENT_IDENTIFIER = '__problem_statement__';
     @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
     @ViewChild('treeview', { static: false }) treeview: TreeViewComponent<string>;
-
+    @Input()
+    participation?: Participation;
     @Input()
     get selectedFile(): string | undefined {
         return this.selectedFileValue;
@@ -122,7 +136,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     commitStateValue: CommitState;
     repositoryFiles: { [fileName: string]: FileType };
     repositoryFilesWithInformationAboutChange: { [fileName: string]: boolean } | undefined;
-    filesTreeViewItem: TreeViewItem<string>[];
+    filesTreeViewItem: TreeViewItem<string>[] = [];
     compressFolders = true;
 
     collapsed = false;
@@ -153,6 +167,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     faChevronLeft = faChevronLeft;
     faCircleNotch = faCircleNotch;
     faFile = faFile;
+    faListAlt = faListAlt;
     faAngleDoubleUp = faAngleDoubleUp;
     faAngleDoubleDown = faAngleDoubleDown;
 
@@ -166,14 +181,24 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         this.commitStateChange.emit(commitState);
     }
 
+    /**
+     * Getter method to safely access the Problem Statement identifier in templates
+     * Provides fallback for test environments where the constant might be undefined
+     */
+    get problemStatementId(): string {
+        return this.PROBLEM_STATEMENT_IDENTIFIER;
+    }
+
     ngOnInit(): void {
         this.conflictSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
-            // When the git conflict was resolved, unset the selectedFile, as it can't be assured that it still exists.
             if (this.gitConflictState === GitConflictState.CHECKOUT_CONFLICT && gitConflictState === GitConflictState.OK) {
                 this.selectedFile = undefined;
             }
             this.gitConflictState = gitConflictState;
         });
+
+        // show PS immediately if we’re not in repository-only view
+        this.syncProblemStatementNode();
     }
 
     /**
@@ -200,6 +225,50 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         } else if (changes.selectedFile && changes.selectedFile.currentValue) {
             this.renamingFile = undefined;
             this.setupTreeview();
+        }
+
+        // Keep PS node consistent when participation, displayOnly, or selection changes
+        if (changes.participation || changes.displayOnly || changes.selectedFile) {
+            this.syncProblemStatementNode();
+        }
+    }
+
+    /** Keep the “Problem Statement” entry in sync (present, first, checked) */
+    private syncProblemStatementNode(): void {
+        const id = this.PROBLEM_STATEMENT_IDENTIFIER;
+
+        // In repository-only view, remove it if present
+        if (this.displayOnly) {
+            if (this.filesTreeViewItem?.length) {
+                this.filesTreeViewItem = this.filesTreeViewItem.filter((n) => n.value !== id);
+            }
+            return;
+        }
+
+        // Ensure list exists
+        if (!this.filesTreeViewItem) {
+            this.filesTreeViewItem = [];
+        }
+
+        const checked = this.selectedFile === id;
+        const idx = this.filesTreeViewItem.findIndex((n) => n.value === id);
+
+        if (idx === -1) {
+            // Create and pin to the top
+            const node = new TreeViewItem<string>({
+                text: 'Problem Statement',
+                value: id,
+                children: [],
+                checked,
+            });
+            this.filesTreeViewItem.unshift(node);
+        } else {
+            // Update checked state and move to top if needed
+            this.filesTreeViewItem[idx].checked = checked;
+            if (idx !== 0) {
+                const [node] = this.filesTreeViewItem.splice(idx, 1);
+                this.filesTreeViewItem.unshift(node);
+            }
         }
     }
 
@@ -313,6 +382,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             tree = tree.map(this.compressTree.bind(this));
         }
         this.filesTreeViewItem = this.transformTreeToTreeViewItem(tree);
+
+        // keep PS entry correct regardless of current mode
+        this.syncProblemStatementNode();
     }
 
     /**

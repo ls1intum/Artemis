@@ -55,6 +55,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
+    readonly PROBLEM_STATEMENT_IDENTIFIER = '__problem_statement__';
+    @ViewChild('rightInstructions', { static: false }) rightInstructions: CodeEditorInstructionsComponent;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
@@ -111,9 +113,17 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     /** END WIP */
 
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
-    selectedFile?: string;
+    private selectedFileValue?: string;
     unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
     fileBadges: { [fileName: string]: FileBadge[] };
+    get selectedFile(): string | undefined {
+        return this.selectedFileValue;
+    }
+
+    set selectedFile(file: string | undefined) {
+        this.selectedFileValue = file;
+        this.handleSmartPreviewPaneManagement(file);
+    }
 
     /** Code Editor State Variables **/
     editorState: EditorState;
@@ -330,5 +340,43 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
             return this.translateService.instant('pendingChanges');
         }
         return true;
+    }
+    // Smart collapsible
+    private handleSmartPreviewPaneManagement(filePath?: string) {
+        // Only manage preview pane in editor mode, not repository view
+        if (this.forRepositoryView) {
+            return;
+        }
+
+        // Desired: collapse for any normal file, expand for problem statement
+        const wantCollapsed = !!filePath && filePath !== this.PROBLEM_STATEMENT_IDENTIFIER;
+        const isCollapsed = this.grid?.rightPanelIsCollapsed ?? false;
+
+        // Already in desired state → nothing to do
+        if (wantCollapsed === isCollapsed) {
+            return;
+        }
+
+        // Toggle when the right instructions pane is ready
+        const toggleWhenReady = () => {
+            const instr = this.rightInstructions;
+            if (!instr?.interactResizable) {
+                // view not ready yet; retry asap after the view stabilizes
+                setTimeout(toggleWhenReady, 0);
+                return;
+            }
+
+            instr.collapsed = wantCollapsed;
+            const evt = {
+                event: { target: document.createElement('div') },
+                horizontal: true,
+                interactable: instr.interactResizable,
+                resizableMinWidth: instr.minInstructionsWidth,
+            } as any;
+
+            this.onToggleCollapse(evt, CollapsableCodeEditorElement.Instructions);
+        };
+
+        toggleWhenReady();
     }
 }

@@ -80,8 +80,25 @@
 </div>
 <!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand">
+    <!--Problem Statement-->
+    @if (item.value === problemStatementId) {
+        <div
+            class="problem-statement-entry"
+            [class.selected]="item.checked"
+            role="button"
+            tabindex="0"
+            [attr.aria-selected]="item.checked"
+            [attr.aria-label]="'Problem Statement'"
+            (click)="handleNodeSelected(item)"
+            (keydown.enter)="handleNodeSelected(item)"
+            (keydown.space)="handleNodeSelected(item)"
+        >
+            <fa-icon [icon]="faListAlt" class="problem-statement-icon" aria-hidden="true" />
+            <span class="problem-statement-text">{{ item.text }}</span>
+        </div>
+    }
     <!--folder-->
-    @if (repositoryFiles[item.value] === FileType.FOLDER) {
+    @if (repositoryFiles?.[item.value] === FileType.FOLDER) {
         <jhi-code-editor-file-browser-folder
             [item]="item"
             [isBeingRenamed]="!!renamingFile && renamingFile![0] === item.value"
@@ -100,11 +117,11 @@
         />
     }
     <!--file-->
-    @if (repositoryFiles[item.value] === FileType.FILE) {
+    @if (repositoryFiles?.[item.value] === FileType.FILE) {
         <jhi-code-editor-file-browser-file
             [item]="item"
-            [hasChanges]="repositoryFilesWithInformationAboutChange ? repositoryFilesWithInformationAboutChange[item.value] : false"
-            [badges]="fileBadges[item.value] || []"
+            [hasChanges]="repositoryFilesWithInformationAboutChange?.[item.value] ?? false"
+            [badges]="fileBadges?.[item.value] ?? []"
             [isBeingRenamed]="!!renamingFile && renamingFile![0] === item.value"
             [hasUnsavedChanges]="unsavedFiles && unsavedFiles.includes(item.value)"
             [hasError]="errorFiles && errorFiles.includes(item.value)"

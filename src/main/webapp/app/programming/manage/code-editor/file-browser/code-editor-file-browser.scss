@@ -19,6 +19,47 @@ File browser
             width: 60px;
         }
     }
+
+    // Problem Statement Entry Styles
+    .problem-statement-entry {
+        display: flex;
+        align-items: center;
+        padding: 0.3rem 0.5rem 0.3rem 1rem;
+        margin-bottom: 2px;
+        border: none;
+        background: linear-gradient(135deg, var(--bs-primary-bg-subtle), var(--bs-info-bg-subtle));
+        border-left: 3px solid var(--bs-primary);
+        border-radius: 4px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+            background: linear-gradient(135deg, var(--bs-primary-bg-subtle), var(--bs-info-bg-subtle));
+            transform: translateX(2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        &.selected {
+            background-color: var(--code-editor-file-browser-selected-file-background) !important;
+            border-left: 3px solid var(--bs-success);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .problem-statement-icon {
+            color: var(--bs-primary);
+            margin-right: 12px;
+            font-size: 1.1em;
+        }
+
+        .problem-statement-text {
+            color: var(--bs-primary);
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
 }
 
 /*!* ==========================================================================
