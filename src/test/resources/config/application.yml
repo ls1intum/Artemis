@@ -98,8 +98,6 @@ artemis:
         matlab:
             license-server: "1234@license-server"
 
-
-
 spring:
     application:
         name: Artemis

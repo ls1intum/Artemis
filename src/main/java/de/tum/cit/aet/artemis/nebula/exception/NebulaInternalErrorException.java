@@ -6,7 +6,7 @@ import org.zalando.problem.Status;
 
 public class NebulaInternalErrorException extends NebulaException {
 
-    public NebulaInternalErrorException(String pyrisErrorMessage) {
-        super("artemisApp.nebula.internalNebulaError", Map.of("nebulaErrorMessage", pyrisErrorMessage), Status.INTERNAL_SERVER_ERROR);
+    public NebulaInternalErrorException(String nebulaErrorMessage) {
+        super("artemisApp.nebula.internalNebulaError", Map.of("nebulaErrorMessage", nebulaErrorMessage), Status.INTERNAL_SERVER_ERROR);
     }
 }
