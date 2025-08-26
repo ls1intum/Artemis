@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -40,7 +39,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -48,8 +46,6 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
 public class ProgrammingTriggerService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingTriggerService.class);
-
-    private final ProfileService profileService;
 
     @Value("${artemis.external-system-request.batch-size}")
     private int externalSystemRequestBatchSize;
@@ -86,9 +82,8 @@ public class ProgrammingTriggerService {
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingMessagingService programmingMessagingService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProfileService profileService,
-            ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, ProgrammingSubmissionMessagingService programmingSubmissionMessagingService,
-            DistributedDataAccessService distributedDataAccessService) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, ProgrammingSubmissionMessagingService programmingSubmissionMessagingService) {
         this.participationService = participationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -99,7 +94,6 @@ public class ProgrammingTriggerService {
         this.auditEventRepository = auditEventRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.programmingMessagingService = programmingMessagingService;
-        this.profileService = profileService;
         this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
     }

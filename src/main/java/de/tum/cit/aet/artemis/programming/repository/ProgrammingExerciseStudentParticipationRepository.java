@@ -110,7 +110,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                                 FROM participation.submissions s2
                             )
             """)
-    Set<ProgrammingExerciseStudentParticipation> findWithLatestSubmissionByExerciseId(long exerciseId);
+    Set<ProgrammingExerciseStudentParticipation> findWithLatestSubmissionByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Will return the participations matching the provided participation ids, but only if they belong to the given exercise.
