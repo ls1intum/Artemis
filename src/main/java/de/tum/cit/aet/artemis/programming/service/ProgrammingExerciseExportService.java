@@ -105,6 +105,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     private final GitService gitService;
 
+    private final GitRepositoryExportService gitRepositoryExportService;
+
     private final ZipFileService zipFileService;
 
     private final BuildPlanRepository buildPlanRepository;
@@ -116,8 +118,9 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     public static final String BUILD_PLAN_FILE_NAME = "buildPlan.txt";
 
     public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            StudentParticipationRepository studentParticipationRepository, FileService fileService, GitService gitService, ZipFileService zipFileService,
-            MappingJackson2HttpMessageConverter springMvcJacksonConverter, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, BuildPlanRepository buildPlanRepository) {
+            StudentParticipationRepository studentParticipationRepository, FileService fileService, GitService gitService, GitRepositoryExportService gitRepositoryExportService,
+            ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            BuildPlanRepository buildPlanRepository) {
         // Programming exercises do not have a submission export service
         super(fileService, springMvcJacksonConverter, null);
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -125,6 +128,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         this.studentParticipationRepository = studentParticipationRepository;
         this.fileService = fileService;
         this.gitService = gitService;
+        this.gitRepositoryExportService = gitRepositoryExportService;
         this.zipFileService = zipFileService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.buildPlanRepository = buildPlanRepository;
@@ -236,7 +240,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         List<Path> pathsToBeZipped = new ArrayList<>();
-        var exportDir = exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, false, true, Optional.empty(), new ArrayList<>(), pathsToBeZipped);
+        Path exportDir = exportProgrammingExerciseMaterialWithStudentReposOptional(exercise, exportErrors, false, true, Optional.empty(), new ArrayList<>(), pathsToBeZipped);
         // Setup path to store the zip file for the exported programming exercise
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         String exportedExerciseZipFileName = "Material-" + exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getTitle() + "-" + exercise.getId()
@@ -397,7 +401,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return Optional.empty();
         }
         var exercise = exerciseOrEmpty.get();
-        String zippedRepoName = getZippedRepoName(exercise, repositoryType.getName());
+        String zippedRepoName = gitRepositoryExportService.getZippedRepoName(exercise, repositoryType.getName());
         var repositoryUri = exercise.getRepositoryURI(repositoryType);
         return exportRepository(repositoryUri, repositoryType.getName(), zippedRepoName, exercise, workingDir, outputDir, null, exportErrors);
     }
@@ -419,7 +423,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return Optional.empty();
         }
         var exercise = exerciseOrEmpty.get();
-        String zippedRepoName = getZippedRepoName(exercise, auxiliaryRepository.getRepositoryName());
+        String zippedRepoName = gitRepositoryExportService.getZippedRepoName(exercise, auxiliaryRepository.getRepositoryName());
         var repositoryUri = auxiliaryRepository.getVcsRepositoryUri();
         return exportRepository(repositoryUri, auxiliaryRepository.getName(), zippedRepoName, exercise, workingDir, outputDir, null, exportErrors);
     }
@@ -441,7 +445,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return Optional.empty();
         }
         var exercise = exerciseOrEmpty.get();
-        String zippedRepoName = getZippedRepoName(exercise, repositoryType.getName());
+        String zippedRepoName = gitRepositoryExportService.getZippedRepoName(exercise, repositoryType.getName());
         Predicate<Path> gitDirFilter = path -> StreamSupport.stream(path.spliterator(), false).noneMatch(pathPart -> ".git".equalsIgnoreCase(pathPart.toString()));
 
         if (includeTests) {
@@ -496,11 +500,6 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         log.info("Request to export instructor repository of programming exercise {} with title '{}'", exercise, exercise.getTitle());
 
         return Optional.of(exercise);
-    }
-
-    private String getZippedRepoName(ProgrammingExercise exercise, String repositoryName) {
-        String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        return FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + repositoryName);
     }
 
     /**
@@ -562,7 +561,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 gitService.getOrCheckoutRepositoryWithLocalPath(auxRepo.getVcsRepositoryUri(), clonePath.resolve(auxRepo.getCheckoutDirectory()), true, false);
             }
 
-            return Optional.of(gitService.zipFiles(clonePath, zippedRepoName, zipPath.toString(), contentFilter).toFile());
+            return Optional.of(gitRepositoryExportService.zipFiles(clonePath, zippedRepoName, zipPath.toString(), contentFilter).toFile());
         }
         catch (GitAPIException | IOException e) {
             var error = "Failed to export solution and test repository for programming exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ")";
@@ -673,7 +672,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         // Zip it and return the path to the file
-        return gitService.zipFiles(localRepoPath, zipFilename, outputDir.toString(), contentFilter);
+        return gitRepositoryExportService.zipFiles(localRepoPath, zipFilename, outputDir.toString(), contentFilter);
     }
 
     /**
@@ -770,7 +769,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             }
 
             log.debug("Create temporary directory for repository {}", repository.getLocalPath().toString());
-            return gitService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.anonymizeRepository(), zipOutput);
+            return gitRepositoryExportService.getRepositoryWithParticipation(repository, outputDir.toString(), repositoryExportOptions.anonymizeRepository(), zipOutput);
         }
         catch (GitAPIException | GitException ex) {
             log.error("Failed to create zip for participation id {} with exercise id {} because of the following exception ", participation.getId(),
@@ -949,4 +948,5 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
         return allRepoFiles;
     }
+
 }

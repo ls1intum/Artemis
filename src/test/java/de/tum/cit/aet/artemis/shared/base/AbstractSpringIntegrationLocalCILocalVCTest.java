@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.programming.icl.TestBuildAgentConfiguration;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
@@ -166,6 +167,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @MockitoSpyBean
     protected CompetencyProgressApi competencyProgressApi;
 
+    @MockitoSpyBean
+    protected GitRepositoryExportService gitRepositoryExportService;
+
+    @Value("${artemis.version-control.url}")
     protected URI localVCBaseUri;
 
     @Value("${artemis.version-control.url}")
@@ -216,7 +221,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(versionControlService, continuousIntegrationService, localCITriggerService, resourceLoaderService, programmingMessagingService, competencyProgressService,
-                competencyProgressApi);
+                competencyProgressApi, gitRepositoryExportService);
         super.resetSpyBeans();
     }
 

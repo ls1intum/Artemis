@@ -574,9 +574,9 @@ public class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
-        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/10";
-        request.postWithResponseBodyFile(path, getOptions(), HttpStatus.BAD_REQUEST);
+    void testExportSubmissionsByParticipationIds_nonExistentParticipationId_notFound() throws Exception {
+        final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + Long.MAX_VALUE;
+        request.postWithResponseBodyFile(path, getOptions(), HttpStatus.NOT_FOUND);
     }
 
     void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
@@ -2018,13 +2018,13 @@ public class ProgrammingExerciseIntegrationTestService {
         request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.FORBIDDEN, File.class);
     }
 
-    void testExportAuxiliaryRepositoryBadRequest() throws Exception {
+    void testExportAuxiliaryRepositoryUnprocessableEntity() throws Exception {
         AuxiliaryRepository repository = addAuxiliaryRepositoryToExercise();
-        request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.BAD_REQUEST, File.class);
+        request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.UNPROCESSABLE_ENTITY, File.class);
     }
 
-    void testExportAuxiliaryRepositoryExerciseNotFound() throws Exception {
-        request.get(defaultExportInstructorAuxiliaryRepository(-1L, 1L), HttpStatus.NOT_FOUND, File.class);
+    void testExportAuxiliaryRepositoryExerciseAccessForbidden() throws Exception {
+        request.get(defaultExportInstructorAuxiliaryRepository(-1L, 1L), HttpStatus.FORBIDDEN, File.class);
     }
 
     void testExportAuxiliaryRepositoryRepositoryNotFound() throws Exception {
