@@ -23,17 +23,17 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class MultipleChoiceQuestionComponent {
     private artemisMarkdown = inject(ArtemisMarkdownService);
 
-    readonly question = input.required<MultipleChoiceQuestion>();
+    question = input.required<MultipleChoiceQuestion>();
     // TODO: Map vs. Array --> consistency
-    readonly selectedAnswerOptions = model.required<AnswerOption[]>();
-    readonly clickDisabled = input<boolean>(false);
-    readonly showResult = input<boolean>(false);
-    readonly questionIndex = input<number>(0);
-    readonly score = input<number>(0);
-    readonly forceSampleSolution = input<boolean>(false);
-    readonly fnOnSelection = input<any>();
-    readonly submittedResult = input<Result>();
-    readonly quizQuestions = input<QuizQuestion[] | undefined>();
+    selectedAnswerOptions = model.required<AnswerOption[]>();
+    clickDisabled = input<boolean>(false);
+    showResult = input<boolean>(false);
+    questionIndex = input<number>(0);
+    score = input<number>(0);
+    forceSampleSolution = input<boolean>(false);
+    fnOnSelection = input<any>();
+    submittedResult = input<Result>();
+    quizQuestions = input<QuizQuestion[] | undefined>();
 
     constructor() {
         effect(() => {

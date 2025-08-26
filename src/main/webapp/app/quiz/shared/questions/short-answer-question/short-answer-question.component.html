@@ -3,7 +3,7 @@
     [ngClass]="{
         disabled: clickDisabled() && !showResult(),
         result: showResult() && !forceSampleSolution(),
-        'question-highlight': shortAnswerQuestion.isHighlighted,
+        'question-highlight': shortAnswerQuestion().isHighlighted,
     }"
 >
     <h4 class="question-title-display">

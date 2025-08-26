@@ -18,7 +18,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, FormsModule, FaIconComponent, NgbTooltip, NgClass, ArtemisTranslatePipe],
 })
 export class MultipleChoiceVisualQuestionComponent {
-    readonly question = input.required<MultipleChoiceQuestion>();
+    question = input.required<MultipleChoiceQuestion>();
 
     questionChanged = output();
 

@@ -16,11 +16,11 @@ import { addPublicFilePrefix } from 'app/app.constants';
     imports: [NgClass, NgStyle, CdkDrag, ImageComponent, CdkDragPlaceholder, FitTextDirective, CdkDragPreview, TranslateDirective],
 })
 export class DragItemComponent implements OnInit {
-    readonly minWidth = input<string>();
-    readonly dragItem = input.required<DragItem>();
-    readonly clickDisabled = input<boolean>();
-    readonly invalid = input<boolean>();
-    readonly filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
+    minWidth = input<string>();
+    dragItem = input.required<DragItem>();
+    clickDisabled = input<boolean>();
+    invalid = input<boolean>();
+    filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
     isMobile = false;
 
     /**

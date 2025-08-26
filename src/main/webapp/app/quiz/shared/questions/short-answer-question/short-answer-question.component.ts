@@ -32,17 +32,17 @@ export class ShortAnswerQuestionComponent {
 
     readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
-    readonly question = input.required<QuizQuestion>();
+    question = input.required<QuizQuestion>();
     shortAnswerQuestion = computed(() => this.question() as ShortAnswerQuestion);
 
     // TODO: Map vs. Array --> consistency
-    readonly submittedTexts = model<ShortAnswerSubmittedText[]>([]);
-    readonly clickDisabled = input<boolean>(false);
-    readonly showResult = input<boolean>(false);
-    readonly questionIndex = input<number>(0);
-    readonly score = input<number>(0);
-    readonly forceSampleSolution = input<boolean>(false);
-    readonly fnOnSubmittedTextUpdate = input<any>();
+    submittedTexts = model<ShortAnswerSubmittedText[]>([]);
+    clickDisabled = input<boolean>(false);
+    showResult = input<boolean>(false);
+    questionIndex = input<number>(0);
+    score = input<number>(0);
+    forceSampleSolution = input<boolean>(false);
+    fnOnSubmittedTextUpdate = input<any>();
 
     constructor() {
         effect(() => {

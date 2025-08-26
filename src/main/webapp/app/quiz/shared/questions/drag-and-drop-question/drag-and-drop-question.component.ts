@@ -73,20 +73,20 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     /** needed to trigger a manual reload of the drag and drop background picture */
     readonly secureImageComponent = viewChild.required(ImageComponent);
 
-    readonly question = input.required<QuizQuestion>();
+    question = input.required<QuizQuestion>();
     dragAndDropQuestion = computed(() => this.question() as DragAndDropQuestion);
 
     // TODO: Map vs. Array --> consistency
-    readonly mappings = model<DragAndDropMapping[]>([]);
-    readonly clickDisabled = input<boolean>(false);
-    readonly showResult = input<boolean>(false);
-    readonly questionIndex = input<number>(0);
-    readonly score = input<number>(0);
+    mappings = model<DragAndDropMapping[]>([]);
+    clickDisabled = input<boolean>(false);
+    showResult = input<boolean>(false);
+    questionIndex = input<number>(0);
+    score = input<number>(0);
 
-    readonly forceSampleSolution = input<boolean>(false);
+    forceSampleSolution = input<boolean>(false);
 
-    readonly onMappingUpdate = input<any>();
-    readonly filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
+    onMappingUpdate = input<any>();
+    filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
 
     showingSampleSolution = false;
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
@@ -97,12 +97,6 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     mappedLocations: number;
 
     loadingState = 'loading';
-
-    // Icons
-    faSpinner = faSpinner;
-    faQuestionCircle = faQuestionCircle;
-    faExclamationTriangle = faExclamationTriangle;
-    faExclamationCircle = faExclamationCircle;
 
     constructor() {
         effect(() => {
