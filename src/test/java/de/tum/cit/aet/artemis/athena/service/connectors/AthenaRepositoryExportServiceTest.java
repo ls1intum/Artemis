@@ -12,8 +12,8 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -50,10 +50,10 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     @Autowired
     private AthenaRepositoryExportService athenaRepositoryExportService;
 
-    @SpyBean
+    @MockitoSpyBean
     private GitService gitService;
 
-    @SpyBean
+    @MockitoSpyBean
     private GitRepositoryExportService gitRepositoryExportService;
 
     private final LocalRepository testRepo = new LocalRepository(defaultBranch);
