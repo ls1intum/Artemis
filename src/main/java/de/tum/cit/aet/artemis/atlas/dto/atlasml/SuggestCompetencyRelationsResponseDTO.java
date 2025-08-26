@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.atlas.dto.atlasml;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 
@@ -12,7 +11,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
  * Maps to the Python CompetencyRelationSuggestionResponse model.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SuggestCompetencyRelationsResponseDTO(@JsonProperty("relations") List<AtlasMLCompetencyRelationDTO> relations) {
+public record SuggestCompetencyRelationsResponseDTO(List<AtlasMLCompetencyRelationDTO> relations) {
 
     /**
      * Convert the AtlasML competency relations to domain objects.
