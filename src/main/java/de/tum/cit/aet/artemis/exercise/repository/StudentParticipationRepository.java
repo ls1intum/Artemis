@@ -1538,4 +1538,25 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
         Set<CourseGradeScoreDTO> teamGradeScores = findTeamGradesByCourseIdAndStudentId(courseIds, studentId);
         return Stream.of(individualGradeScores, individualQuizGradeScores, teamGradeScores).flatMap(Collection::stream).collect(Collectors.toSet());
     }
+
+    /**
+     * Count the number of presentation scores for a participant (regular or team exercise) in a course.
+     * This query handles both individual participations and team participations where the participant is a team member.
+     *
+     * @param courseId                the id of the course
+     * @param participantId           the id of the participant (student for individual exercises, can be student for team exercises)
+     * @param excludedParticipationId optional participation id to exclude from the count (e.g., when updating an existing participation)
+     * @return the count of presentation scores for the participant in the course
+     */
+    @Query("""
+            SELECT COUNT(p)
+            FROM StudentParticipation p
+                LEFT JOIN p.team.students ts
+            WHERE p.exercise.course.id = :courseId
+                AND p.presentationScore IS NOT NULL
+                AND (p.student.id = :participantId OR ts.id = :participantId)
+                AND (p.id <> :excludedParticipationId)
+            """)
+    long countPresentationScoresForParticipant(@Param("courseId") long courseId, @Param("participantId") long participantId,
+            @Param("excludedParticipationId") long excludedParticipationId);
 }
