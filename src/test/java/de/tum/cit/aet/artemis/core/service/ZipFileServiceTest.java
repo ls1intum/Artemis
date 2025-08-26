@@ -11,7 +11,6 @@ import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -19,9 +18,6 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ZipFileService zipFileService;
-
-    @Value("${artemis.temp-path}")
-    private Path tempPath;
 
     @Test
     void testExtractZipFileRecursively_unzipsNestedZipCorrectly() throws IOException {

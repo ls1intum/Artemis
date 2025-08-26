@@ -88,8 +88,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
-    @Value("${artemis.temp-path")
-    private Path tempPath;
+    @Value("${artemis.temp-path}")
+    protected Path tempPath;
 
     // NOTE: we prefer MockitoSpyBean over MockitoBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
     @MockitoSpyBean
