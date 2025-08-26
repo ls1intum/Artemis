@@ -36,6 +36,8 @@ export class CourseTrainingQuizComponent {
     private router = inject(Router);
     private quizService = inject(CourseTrainingQuizService);
 
+    INITIAL_QUESTIONS: QuizQuestion[] = [];
+
     currentIndex = signal(0);
     private alertService = inject(AlertService);
     private courseService = inject(CourseManagementService);
@@ -49,7 +51,7 @@ export class CourseTrainingQuizComponent {
             filter((id): id is number => id !== undefined),
             switchMap((id) => this.quizService.getQuizQuestions(id)),
         ),
-        { initialValue: [] },
+        { initialValue: this.INITIAL_QUESTIONS },
     );
     questions = computed(() => this.questionsSignal());
     courseSignal = toSignal(
@@ -62,6 +64,7 @@ export class CourseTrainingQuizComponent {
         { initialValue: undefined },
     );
     course = computed(() => this.courseSignal());
+    questionsLoaded = computed(() => this.questionsSignal() !== this.INITIAL_QUESTIONS);
 
     trainingAnswer = new QuizTrainingAnswer();
     showingResult = false;

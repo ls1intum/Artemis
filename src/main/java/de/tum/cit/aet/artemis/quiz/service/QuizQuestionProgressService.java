@@ -56,49 +56,69 @@ public class QuizQuestionProgressService {
      * @param data             The progress data object for the question
      * @param score            The achieved score for the question
      * @param existingProgress The previous progress (can be null)
+     * @param answeredAt       The time when the question was answered
      */
-    private void updateProgressCalculations(QuizQuestionProgressData data, double score, QuizQuestionProgress existingProgress) {
+    private void updateProgressCalculations(QuizQuestionProgressData data, double score, QuizQuestionProgress existingProgress, ZonedDateTime answeredAt) {
         int repetition = calculateRepetition(score, data);
         data.setRepetition(repetition);
 
         double prevEasinessFactor = 2.5;
         int prevInterval = 1;
         int prevSessionCount = 0;
+        ZonedDateTime prevDueDate = null;
 
         if (existingProgress != null && existingProgress.getProgressJson() != null) {
             QuizQuestionProgressData prevData = existingProgress.getProgressJson();
             prevEasinessFactor = prevData.getEasinessFactor();
             prevInterval = prevData.getInterval();
             prevSessionCount = prevData.getSessionCount();
+            prevDueDate = prevData.getDueDate();
         }
 
         double easinessFactor = calculateEasinessFactor(score, prevEasinessFactor);
         data.setEasinessFactor(easinessFactor);
-        int interval = calculateInterval(easinessFactor, prevInterval, repetition);
-        data.setInterval(interval);
         int sessionCount = prevSessionCount + 1;
         data.setSessionCount(sessionCount);
 
-        data.setPriority(calculatePriority(sessionCount, interval, score));
-        data.setBox(calculateBox(interval));
+        data.setInterval(prevInterval);
+        data.setDueDate(prevDueDate);
+        data.setBox(calculateBox(prevInterval));
+        data.setPriority(calculatePriority(sessionCount, prevInterval, score));
+
+        if (prevDueDate == null || !answeredAt.isBefore(prevDueDate)) {
+            int interval = calculateInterval(easinessFactor, prevInterval, repetition);
+            data.setInterval(interval);
+            data.setDueDate(answeredAt.plusDays(interval));
+            data.setBox(calculateBox(interval));
+            data.setPriority(calculatePriority(sessionCount, interval, score));
+        }
     }
 
     /**
-     * Get the sorted List of 10 quiz questions based on their priority
+     * Get the sorted List of 10 quiz questions based on their due date
      *
      * @param courseId ID of the course for which the quiz questions are to be fetched
      * @param userId   ID of the user for whom the quiz questions are to be fetched
-     * @return A list of 10 quiz questions sorted by priority
+     * @return A list of 10 quiz questions sorted by due date
      */
     public List<QuizQuestion> getQuestionsForSession(Long courseId, Long userId) {
         Set<QuizQuestion> allQuestions = quizQuestionRepository.findAllQuizQuestionsByCourseId(courseId);
         Set<Long> questionIds = allQuestions.stream().map(QuizQuestion::getId).collect(Collectors.toSet());
         Set<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, questionIds);
-        Map<Long, Integer> priorityMap = progressList.stream()
-                .collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> progress.getProgressJson().getPriority()));
-        List<QuizQuestion> selectedQuestions = allQuestions.stream().sorted(Comparator.comparingInt(q -> priorityMap.getOrDefault(q.getId(), 0))).limit(10).toList();
 
-        return selectedQuestions;
+        Map<Long, ZonedDateTime> dueDateMap = progressList.stream().collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> {
+            QuizQuestionProgressData data = progress.getProgressJson();
+            return data != null ? data.getDueDate() : null;
+        }));
+
+        ZonedDateTime now = ZonedDateTime.now();
+
+        List<QuizQuestion> dueQuestions = allQuestions.stream().filter(q -> {
+            ZonedDateTime dueDate = dueDateMap.getOrDefault(q.getId(), now);
+            return !dueDate.toLocalDate().isAfter(now.toLocalDate());
+        }).sorted(Comparator.comparing(q -> dueDateMap.getOrDefault(q.getId(), now))).limit(10).toList();
+
+        return dueQuestions;
     }
 
     /**
@@ -148,7 +168,10 @@ public class QuizQuestionProgressService {
      * @return The interval to determine the next session in which the question should be repeated
      */
     public int calculateInterval(double easinessFactor, int previousInterval, int repetition) {
-        if (repetition <= 1) {
+        if (repetition < 1) {
+            return 0;
+        }
+        if (repetition == 1) {
             return 1;
         }
         if (repetition == 2) {
@@ -232,7 +255,7 @@ public class QuizQuestionProgressService {
         existingProgress.setUserId(userId);
         double score = question.getPoints() > 0 ? answer.getScoreInPoints() / question.getPoints() : 0.0;
         updateProgressWithNewAttempt(data, score, answeredAt);
-        updateProgressCalculations(data, score, existingProgress);
+        updateProgressCalculations(data, score, existingProgress, answeredAt);
         existingProgress.setProgressJson(data);
         try {
             quizQuestionProgressRepository.save(existingProgress);
