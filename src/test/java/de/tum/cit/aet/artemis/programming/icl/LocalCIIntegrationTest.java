@@ -52,6 +52,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Value;
@@ -105,6 +106,7 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 // concurrently. For example, it prevents overloading the LocalCI's result processing system with too many build job results at the same time, which could lead to flaky tests
 // or timeouts. By keeping everything in the same thread, we maintain more predictable and stable test behavior, while not increasing the test execution time significantly.
 @Execution(ExecutionMode.SAME_THREAD)
+@Isolated
 class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localciint";
@@ -131,6 +133,9 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
+
+    @Value("${artemis.continuous-integration.max-missing-job-retries:3}")
+    private int maxMissingJobRetries;
 
     @BeforeAll
     void setupAll() {
@@ -335,6 +340,51 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         // resume the build agent
         sharedQueueProcessingService.init();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMissingBuildJobRetry() {
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
+
+        await().until(() -> {
+            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+            return buildJobOptional.isPresent() && buildJobOptional.get().getBuildStatus() == BuildStatus.QUEUED;
+        });
+
+        BuildJob buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId()).orElseThrow();
+        buildJob.setBuildStatus(BuildStatus.MISSING);
+        buildJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(10));
+        buildJobRepository.save(buildJob);
+
+        localCIMissingJobService.retryMissingJobs();
+
+        // job for participation should be retried so retry count should be 1 and status QUEUED
+        await().until(() -> {
+            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildJobIdDesc(buildJob.getParticipationId());
+            if (buildJobOptional.isEmpty()) {
+                return false;
+            }
+            BuildJob retryedBuildJob = buildJobOptional.get();
+            return retryedBuildJob.getBuildStatus() == BuildStatus.QUEUED && retryedBuildJob.getRetryCount() == 1;
+        });
+    }
+
+    @Test
+    void testMissingBuildJobRetryLimit() {
+        BuildJob buildJob = new BuildJob();
+        buildJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(10));
+        buildJob.setBuildStatus(BuildStatus.MISSING);
+        buildJob.setRetryCount(maxMissingJobRetries);
+        buildJob.setParticipationId(1L);
+        buildJobRepository.save(buildJob);
+
+        localCIMissingJobService.retryMissingJobs();
+
+        buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildJobIdDesc(buildJob.getParticipationId()).orElseThrow();
+        assertThat(buildJob.getBuildStatus()).isEqualTo(BuildStatus.MISSING);
+        assertThat(buildJob.getRetryCount()).isEqualTo(3);
     }
 
     @Test
