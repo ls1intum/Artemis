@@ -45,7 +45,7 @@ public class FeatureToggleService {
     private Optional<Map<Feature, Boolean>> getFeatures() {
         try {
             if (isHazelcastRunning()) {
-                return Optional.ofNullable(features);
+                return Optional.ofNullable(getFeaturesMap());
             }
         }
         catch (HazelcastInstanceNotActiveException e) {
