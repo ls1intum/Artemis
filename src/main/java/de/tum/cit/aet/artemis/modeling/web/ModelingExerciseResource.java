@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -182,7 +183,7 @@ public class ModelingExerciseResource {
         // Notify AtlasML about the new modeling exercise
         atlasMLApi.ifPresent(api -> {
             try {
-                api.saveExerciseWithCompetencies(result, de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO.UPDATE);
+                api.saveExerciseWithCompetencies(result, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about modeling exercise creation: {}", e.getMessage());
@@ -263,7 +264,7 @@ public class ModelingExerciseResource {
         // Notify AtlasML about the modeling exercise update
         atlasMLApi.ifPresent(api -> {
             try {
-                api.saveExerciseWithCompetencies(updatedModelingExercise, de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO.UPDATE);
+                api.saveExerciseWithCompetencies(updatedModelingExercise, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about modeling exercise update: {}", e.getMessage());
@@ -337,7 +338,7 @@ public class ModelingExerciseResource {
         // Notify AtlasML about the modeling exercise deletion before actual deletion
         atlasMLApi.ifPresent(api -> {
             try {
-                api.saveExerciseWithCompetencies(modelingExercise, de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO.DELETE);
+                api.saveExerciseWithCompetencies(modelingExercise, OperationTypeDTO.DELETE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about modeling exercise deletion: {}", e.getMessage());

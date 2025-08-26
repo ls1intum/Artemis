@@ -65,7 +65,7 @@
                         <td class="col">
                             <div>
                                 <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" container="body" />
-                                {{ 'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') }}
+                                {{ 'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate }}
                             </div>
                         </td>
                         <td class="d-none col-lg d-lg-table-cell">

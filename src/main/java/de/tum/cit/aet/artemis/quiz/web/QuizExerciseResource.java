@@ -41,6 +41,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -255,7 +256,7 @@ public class QuizExerciseResource {
         // Notify AtlasML about the new quiz exercise
         atlasMLApi.ifPresent(api -> {
             try {
-                api.saveExerciseWithCompetencies(result, de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO.UPDATE);
+                api.saveExerciseWithCompetencies(result, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about quiz exercise creation: {}", e.getMessage());
@@ -334,7 +335,7 @@ public class QuizExerciseResource {
         // Notify AtlasML about the quiz exercise update
         atlasMLApi.ifPresent(api -> {
             try {
-                api.saveExerciseWithCompetencies(finalQuizExercise, de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO.UPDATE);
+                api.saveExerciseWithCompetencies(finalQuizExercise, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about quiz exercise update: {}", e.getMessage());
@@ -707,7 +708,7 @@ public class QuizExerciseResource {
         // Notify AtlasML about the quiz exercise deletion before actual deletion
         atlasMLApi.ifPresent(api -> {
             try {
-                api.saveExerciseWithCompetencies(quizExercise, de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO.DELETE);
+                api.saveExerciseWithCompetencies(quizExercise, OperationTypeDTO.DELETE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about quiz exercise deletion: {}", e.getMessage());
@@ -840,7 +841,14 @@ public class QuizExerciseResource {
         QuizExercise newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, files);
 
         // Notify AtlasML about the imported exercise
-        atlasMLApi.ifPresent(api -> api.saveExerciseWithCompetencies(newQuizExercise));
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(newQuizExercise, OperationTypeDTO.UPDATE);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about quiz exercise import: {}", e.getMessage());
+            }
+        });
 
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
