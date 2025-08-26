@@ -229,7 +229,7 @@ dependencies {
     // required by Saml2, should NOT be used in other places, we explicitly use the newest version to avoid security vulnerabilities
     implementation "org.apache.santuario:xmlsec:4.0.4"
 
-    implementation "org.jsoup:jsoup:1.21.1"
+    implementation "org.jsoup:jsoup:1.21.2"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
     implementation "commons-codec:commons-codec:1.19.0"
 
@@ -300,7 +300,7 @@ dependencies {
     implementation "org.hibernate.orm:hibernate-envers:${hibernate_version}"
 
     // Required for jdbc connection pooling to databases
-    implementation "com.zaxxer:HikariCP:7.0.1"
+    implementation "com.zaxxer:HikariCP:7.0.2"
 
     // Required for several dependencies
     implementation "org.apache.commons:commons-text:${commons_text_version}"
@@ -418,7 +418,7 @@ dependencies {
 
     implementation "com.google.errorprone:error_prone_annotations:2.41.0"
     // needed for OpenAPI generation
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.11'
 
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
