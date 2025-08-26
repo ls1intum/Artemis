@@ -1293,7 +1293,7 @@ public class ExamService {
         auditEventRepository.add(auditEvent);
 
         var programmingExercises = getAllExercisesForExamByType(examId, ProgrammingExercise.class);
-        programmingExercises.forEach(exercise -> exerciseDeletionService.cleanup(exercise.getId(), true));
+        programmingExercises.forEach(exercise -> exerciseDeletionService.cleanup(exercise.getId()));
         log.info("The exam {} has been cleaned up!", examId);
     }
 

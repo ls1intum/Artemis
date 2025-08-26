@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -71,6 +73,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationLocalCI
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ParticipantScoreScheduleService participantScoreScheduleService;
 
     private Course course;
 
@@ -141,6 +146,14 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationLocalCI
         participationUtilService.createSubmissionAndResult(studentParticipation, 50, true);
         participationUtilService.createSubmissionAndResult(studentParticipation, 40, true);
         participationUtilService.createSubmissionAndResult(studentParticipation, 60, true);
+
+        participantScoreScheduleService.executeScheduledTasks();
+
+        // Wait for service to schedule tasks
+        await().atMost(1, TimeUnit.MINUTES).until(participantScoreScheduleService::isIdle);
+
+        // Wait for tasks to complete, default SCHEDULED_TASKS_WAITING_TIME (500ms) is too long for this test.
+        await().pollDelay(100, TimeUnit.MILLISECONDS).until(() -> true);
 
         studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
 
