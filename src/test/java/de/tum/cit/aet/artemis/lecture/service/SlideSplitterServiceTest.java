@@ -28,7 +28,6 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -63,9 +62,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
     private AttachmentVideoUnit testAttachmentVideoUnit;
 
     private PDDocument testDocument;
-
-    @Value("${artemis.temp-path}")
-    private Path tempPath;
 
     @BeforeEach
     void initTestCase() {
