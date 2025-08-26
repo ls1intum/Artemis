@@ -6,12 +6,12 @@ import dayjs from 'dayjs/esm';
 import { MockService } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 
-describe('CalendarEventService', () => {
-    let service: CalendarEventService;
+describe('CalendarService', () => {
+    let service: CalendarService;
     let httpMock: HttpTestingController;
 
     const courseId = 42;
@@ -61,7 +61,7 @@ describe('CalendarEventService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                CalendarEventService,
+                CalendarService,
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: AlertService, useValue: MockService(AlertService) },
@@ -69,7 +69,7 @@ describe('CalendarEventService', () => {
             ],
         });
 
-        service = TestBed.inject(CalendarEventService);
+        service = TestBed.inject(CalendarService);
         httpMock = TestBed.inject(HttpTestingController);
     });
 

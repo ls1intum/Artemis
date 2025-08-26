@@ -5,7 +5,7 @@ import { faChevronDown, faFilter, faXmark } from '@fortawesome/free-solid-svg-ic
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 
 export enum CalendarEventFilterComponentVariant {
@@ -24,16 +24,16 @@ type OptionAndMetadata = { option: CalendarEventFilterOption; nameKey: string; i
     styleUrl: './calendar-event-filter.component.scss',
 })
 export class CalendarEventFilterComponent {
-    private calendarEventService = inject(CalendarEventService);
+    private calendarService = inject(CalendarService);
 
     variant = input.required<CalendarEventFilterComponentVariant>();
     includedOptionsAndMetadata = computed<IncludedOptionAndMetadata[]>(() => {
-        const includedOptions = this.calendarEventService.includedEventFilterOptions();
+        const includedOptions = this.calendarService.includedEventFilterOptions();
         return includedOptions.map((option) => ({ option: option, nameKey: utils.getFilterOptionNameKey(option), colorClassName: this.getColorClassFor(option) }));
     });
     optionsAndMetadata = computed<OptionAndMetadata[]>(() => {
-        const includedOptions = this.calendarEventService.includedEventFilterOptions();
-        return this.calendarEventService.eventFilterOptions.map((option) => ({
+        const includedOptions = this.calendarService.includedEventFilterOptions();
+        return this.calendarService.eventFilterOptions.map((option) => ({
             option: option,
             nameKey: utils.getFilterOptionNameKey(option),
             isIncluded: includedOptions.includes(option),
@@ -46,7 +46,7 @@ export class CalendarEventFilterComponent {
     readonly faFilter = faFilter;
 
     toggleOption(option: CalendarEventFilterOption) {
-        this.calendarEventService.toggleEventFilterOption(option);
+        this.calendarService.toggleEventFilterOption(option);
     }
 
     private getColorClassFor(option: CalendarEventFilterOption): string {

@@ -8,7 +8,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarDesktopWeekPresentationComponent } from 'app/core/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
 import { CalendarDesktopMonthPresentationComponent } from 'app/core/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
@@ -22,7 +22,7 @@ describe('CalendarDesktopOverviewComponent', () => {
     let component: CalendarDesktopOverviewComponent;
     let fixture: ComponentFixture<CalendarDesktopOverviewComponent>;
 
-    const calendarEventServiceMock = {
+    const calendarServiceMock = {
         eventMap: signal(new Map<string, CalendarEvent[]>()),
         loadEventsForCurrentMonth: jest.fn().mockReturnValue(of([])),
     };
@@ -49,7 +49,7 @@ describe('CalendarDesktopOverviewComponent', () => {
                 MockComponent(CalendarEventFilterComponent),
             ],
             providers: [
-                { provide: CalendarEventService, useValue: calendarEventServiceMock },
+                { provide: CalendarService, useValue: calendarServiceMock },
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
                 { provide: TranslateService, useValue: translateServiceMock },
             ],

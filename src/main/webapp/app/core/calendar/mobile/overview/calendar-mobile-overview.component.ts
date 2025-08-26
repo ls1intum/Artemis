@@ -12,7 +12,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-calendar-mobile-overview',
@@ -30,7 +30,7 @@ import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-
     styleUrl: './calendar-mobile-overview.component.scss',
 })
 export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
-    private calendarEventService = inject(CalendarEventService);
+    private calendarService = inject(CalendarService);
     private activatedRoute = inject(ActivatedRoute);
     private activatedRouteSubscription?: Subscription;
     private courseId?: number;
@@ -105,7 +105,7 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     private loadEventsForCurrentMonth(): void {
         if (!this.courseId) return;
         this.isLoading.set(true);
-        this.calendarEventService
+        this.calendarService
             .loadEventsForCurrentMonth(this.courseId, this.firstDateOfCurrentMonth())
             .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe();

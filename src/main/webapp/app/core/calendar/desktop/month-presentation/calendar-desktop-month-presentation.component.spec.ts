@@ -4,8 +4,8 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockCalendarEventService } from 'test/helpers/mocks/service/mock-calendar-event.service';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarDesktopMonthPresentationComponent } from './calendar-desktop-month-presentation.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
@@ -58,8 +58,8 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
             declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(CalendarDayBadgeComponent), MockDirective(TranslateDirective)],
             providers: [
                 {
-                    provide: CalendarEventService,
-                    useFactory: () => new MockCalendarEventService(mockMap),
+                    provide: CalendarService,
+                    useFactory: () => new MockCalendarService(mockMap),
                 },
             ],
         }).compileComponents();

@@ -16,11 +16,11 @@ type CalendarEventMapResponse = HttpResponse<Record<string, CalendarEventDTO[]>>
 @Injectable({
     providedIn: 'root',
 })
-export class CalendarEventService {
+export class CalendarService {
     private httpClient = inject(HttpClient);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
-    private readonly resourceUrl = '/api/core/calendar/courses';
+    private readonly resourceUrl = '/api/core/calendar';
 
     private currentLanguage = toSignal(
         this.translateService.onLangChange.pipe(
@@ -59,6 +59,12 @@ export class CalendarEventService {
         }
     }
 
+    loadSubscriptionToken(): Observable<string> {
+        return this.httpClient.get(`${this.resourceUrl}/subscription-token`, {
+            responseType: 'text',
+        });
+    }
+
     loadEventsForCurrentMonth(courseId: number, firstDayOfCurrentMonth: Dayjs): Observable<void> {
         const currentMonthKey = firstDayOfCurrentMonth.format('YYYY-MM');
         const previousMonthKey = firstDayOfCurrentMonth.subtract(1, 'month').format('YYYY-MM');
@@ -69,7 +75,7 @@ export class CalendarEventService {
         const parameters = new HttpParams().set('monthKeys', monthKeys).set('timeZone', timeZone).set('language', language);
 
         return this.httpClient
-            .get<Record<string, CalendarEventDTO[]>>(`${this.resourceUrl}/${courseId}/calendar-events`, {
+            .get<Record<string, CalendarEventDTO[]>>(`${this.resourceUrl}/courses/${courseId}/calendar-events`, {
                 params: parameters,
                 observe: 'response',
             })

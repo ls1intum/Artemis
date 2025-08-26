@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
-import { MockCalendarEventService } from 'test/helpers/mocks/service/mock-calendar-event.service';
+import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
@@ -43,8 +43,8 @@ describe('CalendarEventsPerDaySectionComponent', () => {
             declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 {
-                    provide: CalendarEventService,
-                    useFactory: () => new MockCalendarEventService(mockMap),
+                    provide: CalendarService,
+                    useFactory: () => new MockCalendarService(mockMap),
                 },
             ],
         }).compileComponents();

@@ -53,11 +53,28 @@
         display: flex;
 
         .subscription-link-field {
-            padding: 0.25rem 0.375rem;
+            flex: 1;
             border: 1px solid var(--border-color);
             border-right: none;
             border-bottom-left-radius: 0.25rem;
             border-top-left-radius: 0.25rem;
+            padding: 0.25rem 0.375rem;
+
+            textarea {
+                width: 100%;
+                border: none;
+                font-size: 0.75rem;
+                line-height: 0.75rem;
+                resize: none;
+                overflow: hidden;
+                word-break: break-all;
+                background: transparent;
+            }
+
+            textarea:focus {
+                outline: none;
+                box-shadow: none;
+            }
         }
 
         .subscription-link-copy-button {

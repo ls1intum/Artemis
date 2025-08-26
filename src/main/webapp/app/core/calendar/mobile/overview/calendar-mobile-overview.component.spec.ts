@@ -4,7 +4,7 @@ import { CalendarMobileOverviewComponent } from './calendar-mobile-overview.comp
 import { CalendarMobileMonthPresentationComponent } from 'app/core/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
 import { CalendarMobileDayPresentationComponent } from 'app/core/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
 import { CalendarEventFilterComponent } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -23,7 +23,7 @@ describe('CalendarMobileOverviewComponent', () => {
     let today: Dayjs;
 
     beforeEach(async () => {
-        const calendarEventServiceMock = {
+        const calendarServiceMock = {
             eventMap: signal(new Map<string, CalendarEvent[]>()),
             loadEventsForCurrentMonth: jest.fn().mockReturnValue(of([])),
         };
@@ -38,8 +38,8 @@ describe('CalendarMobileOverviewComponent', () => {
             ],
             providers: [
                 {
-                    provide: CalendarEventService,
-                    useValue: calendarEventServiceMock,
+                    provide: CalendarService,
+                    useValue: calendarServiceMock,
                 },
                 {
                     provide: ActivatedRoute,

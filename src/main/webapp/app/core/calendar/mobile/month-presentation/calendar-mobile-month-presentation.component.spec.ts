@@ -5,9 +5,9 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { CalendarMobileMonthPresentationComponent } from './calendar-mobile-month-presentation.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
-import { MockCalendarEventService } from 'test/helpers/mocks/service/mock-calendar-event.service';
+import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
 
 describe('CalendarMobileMonthPresentation', () => {
     let fixture: ComponentFixture<CalendarMobileMonthPresentationComponent>;
@@ -42,8 +42,8 @@ describe('CalendarMobileMonthPresentation', () => {
             declarations: [MockComponent(CalendarDayBadgeComponent), MockDirective(TranslateDirective)],
             providers: [
                 {
-                    provide: CalendarEventService,
-                    useFactory: () => new MockCalendarEventService(mockMap),
+                    provide: CalendarService,
+                    useFactory: () => new MockCalendarService(mockMap),
                 },
             ],
         }).compileComponents();
