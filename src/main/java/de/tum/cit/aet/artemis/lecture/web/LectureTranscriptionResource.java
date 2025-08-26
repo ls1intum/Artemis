@@ -112,45 +112,23 @@ public class LectureTranscriptionResource {
 
     /**
      * POST /lecture/{lectureId}/lecture-unit/{lectureUnitId}/nebula-transcriber :
-     * Start and complete the transcription process for a lecture video using Nebula.
-     * This method sends the video URL to Nebula, waits for the transcription result,
-     * and saves the transcription immediately into the system.
+     * Start a transcription job with Nebula and create a placeholder transcription entry.
+     * The actual transcription processing happens asynchronously via the polling scheduler.
      *
      * @param lectureId     the ID of the lecture
      * @param lectureUnitId the ID of the lecture unit
      * @param request       the request containing the video URL and any additional options
-     * @return the ResponseEntity with status 200 (OK) and the saved transcription,
+     * @return the ResponseEntity with status 200 (OK) if transcription started successfully,
      *         or 500 (Internal Server Error) if an error occurs
      */
 
     @PostMapping("{lectureId}/lecture-unit/{lectureUnitId}/nebula-transcriber")
     @EnforceAtLeastInstructor
-    public ResponseEntity<?> startNebulaTranscriptionAndSave(@PathVariable Long lectureId, @PathVariable Long lectureUnitId,
+    public ResponseEntity<Void> startNebulaTranscriptionAndSave(@PathVariable Long lectureId, @PathVariable Long lectureUnitId,
             @RequestBody @Valid NebulaTranscriptionRequestDTO request) {
 
-        try {
-            RestClient nebulaRestClient = restClientBuilder.baseUrl(nebulaBaseUrl).build();
-
-            NebulaTranscriptionInitResponseDTO response = nebulaRestClient.post().uri("/transcribe/start").header("Content-Type", "application/json")
-                    .header("Authorization", nebulaSecretToken).body(request).retrieve().body(NebulaTranscriptionInitResponseDTO.class);
-
-            // Null or invalid response check
-            if (response.transcriptionId() == null) {
-                log.error("Nebula returned null or missing transcription ID for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
-                return ResponseEntity.internalServerError().body("Nebula did not return a valid transcription ID.");
-            }
-
-            // Create placeholder transcription for async processing
-            lectureTranscriptionService.createEmptyTranscription(lectureId, lectureUnitId, response.transcriptionId());
-
-            log.info("Transcription started for Lecture ID {}, Unit ID {}, Job ID: {}", lectureId, lectureUnitId, response.transcriptionId());
-            return ResponseEntity.ok("Transcription started. Job ID: " + response.transcriptionId());
-
-        }
-        catch (Exception e) {
-            log.error("Error initiating transcription for Lecture ID: {}, Unit ID: {} → {}", lectureId, lectureUnitId, e.getMessage(), e);
-            return ResponseEntity.internalServerError().body("Failed to start transcription: " + e.getMessage());
-        }
+        lectureTranscriptionService.startNebulaTranscription(lectureId, lectureUnitId, request);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -165,6 +143,7 @@ public class LectureTranscriptionResource {
      *         or {@code 404 Not Found} if no playlist could be retrieved.
      */
     @GetMapping("video-utils/tum-live-playlist")
+    @EnforceAtLeastStudent
     public ResponseEntity<String> getTumLivePlaylist(@RequestParam String url) {
         log.info("Received request to fetch playlist for TUM Live URL: {}", url);
 

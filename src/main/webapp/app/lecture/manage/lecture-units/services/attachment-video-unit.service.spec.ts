@@ -11,12 +11,14 @@ import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachme
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('AttachmentVideoUnitService', () => {
     let service: AttachmentVideoUnitService;
     let httpMock: HttpTestingController;
     let elemDefault: AttachmentVideoUnit;
     let expectedResult: any;
+    let alertService: AlertService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -28,11 +30,13 @@ describe('AttachmentVideoUnitService', () => {
                         return res;
                     },
                 }),
+                MockProvider(AlertService),
             ],
         });
         expectedResult = {} as HttpResponse<AttachmentVideoUnit>;
         service = TestBed.inject(AttachmentVideoUnitService);
         httpMock = TestBed.inject(HttpTestingController);
+        alertService = TestBed.inject(AlertService);
 
         const attachment = new Attachment();
         attachment.id = 0;
@@ -363,20 +367,21 @@ describe('AttachmentVideoUnitService', () => {
         const lectureUnitId = 13;
         const videoUrl = 'https://tum-live.de/stream/abc.m3u8';
 
-        it('should POST to the correct URL with expected body and return text response', fakeAsync(() => {
-            let response: HttpResponse<string> | undefined;
+        it('should POST to the correct URL with expected body and show success alert on 200', fakeAsync(() => {
+            const successSpy = jest.spyOn(alertService, 'success');
+            let completed = false;
 
             service
                 .startTranscription(lectureId, lectureUnitId, videoUrl)
                 .pipe(take(1))
-                .subscribe((resp) => (response = resp));
+                .subscribe(() => (completed = true));
 
             const req = httpMock.expectOne({
                 method: 'POST',
                 url: `/api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/nebula-transcriber`,
             });
 
-            // request shape
+            // Verify request shape
             expect(req.request.method).toBe('POST');
             expect(req.request.responseType).toBe('text');
             expect(req.request.body).toEqual({
@@ -385,137 +390,60 @@ describe('AttachmentVideoUnitService', () => {
                 lectureUnitId,
             });
 
-            const returnedFromService = 'transcription started';
-            req.flush(returnedFromService);
+            // Simulate successful response
+            req.flush('transcription started', { status: 200, statusText: 'OK' });
 
-            expect(response).toBeDefined();
-            expect(response!.status).toBe(200);
-            expect(response!.body).toBe(returnedFromService);
+            expect(completed).toBeTrue();
+            expect(successSpy).toHaveBeenCalledWith('Transcript generation started.');
         }));
 
-        it('should handle non-JSON plain text responses', fakeAsync(() => {
-            let response: HttpResponse<string> | undefined;
+        it('should show error alert on non-200 success status', fakeAsync(() => {
+            const errorSpy = jest.spyOn(alertService, 'error');
+            let completed = false;
 
             service
                 .startTranscription(lectureId, lectureUnitId, videoUrl)
                 .pipe(take(1))
-                .subscribe((resp) => (response = resp));
+                .subscribe(() => (completed = true));
 
             const req = httpMock.expectOne({
                 method: 'POST',
                 url: `/api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/nebula-transcriber`,
             });
 
-            expect(req.request.responseType).toBe('text');
-
-            // Simulate plain text body (e.g., a job id or status string)
-            req.flush('JOB-12345');
-
-            expect(response).toBeDefined();
-            expect(response!.body).toBe('JOB-12345');
-        }));
-
-        it('should propagate server errors', fakeAsync(() => {
-            let errorStatus: number | undefined;
-            let errorText: string | undefined;
-
-            service.startTranscription(lectureId, lectureUnitId, videoUrl).subscribe({
-                next: () => {
-                    throw new Error('expected an error, not a success');
-                },
-                error: (err) => {
-                    errorStatus = err.status;
-                    errorText = err.statusText;
-                },
-            });
-
-            const req = httpMock.expectOne({
-                method: 'POST',
-                url: `/api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/nebula-transcriber`,
-            });
-
-            req.flush('Internal error', { status: 500, statusText: 'Server Error' });
-
-            expect(errorStatus).toBe(500);
-            expect(errorText).toBe('Server Error');
-        }));
-        it('should handle non-200 success statuses (e.g., 202 Accepted)', fakeAsync(() => {
-            let response: HttpResponse<string> | undefined;
-
-            service
-                .startTranscription(lectureId, lectureUnitId, videoUrl)
-                .pipe(take(1))
-                .subscribe((resp) => (response = resp));
-
-            const req = httpMock.expectOne({
-                method: 'POST',
-                url: `/api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/nebula-transcriber`,
-            });
-
-            // Return 202 Accepted with a text body
+            // Return 202 Accepted
             req.flush('accepted', { status: 202, statusText: 'Accepted' });
 
-            expect(response).toBeDefined();
-            expect(response!.status).toBe(202);
-            expect(response!.statusText).toBe('Accepted');
-            expect(response!.body).toBe('accepted');
+            expect(completed).toBeTrue();
+            expect(errorSpy).toHaveBeenCalledWith('Transcript request did not succeed. Status: 202');
         }));
 
-        it('should accept empty text bodies', fakeAsync(() => {
-            let response: HttpResponse<string> | undefined;
+        it('should show error alert and handle server errors gracefully', fakeAsync(() => {
+            const errorSpy = jest.spyOn(alertService, 'error');
+            let completed = false;
 
             service
                 .startTranscription(lectureId, lectureUnitId, videoUrl)
                 .pipe(take(1))
-                .subscribe((resp) => (response = resp));
+                .subscribe(() => (completed = true));
 
             const req = httpMock.expectOne({
                 method: 'POST',
                 url: `/api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/nebula-transcriber`,
             });
 
-            // Empty string body
-            req.flush('', { status: 200, statusText: 'OK' });
+            // Simulate server error
+            req.flush('Internal error', { status: 500, statusText: 'Server Error' });
 
-            expect(response).toBeDefined();
-            expect(response!.status).toBe(200);
-            expect(response!.body).toBe('');
-        }));
-
-        it('should propagate 400 Bad Request (client-side validation errors)', fakeAsync(() => {
-            let errorStatus: number | undefined;
-            let errorText: string | undefined;
-
-            service.startTranscription(lectureId, lectureUnitId, '').subscribe({
-                next: () => {
-                    throw new Error('expected an error, not a success');
-                },
-                error: (err) => {
-                    errorStatus = err.status;
-                    errorText = err.statusText;
-                },
-            });
-
-            const req = httpMock.expectOne({
-                method: 'POST',
-                url: `/api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/nebula-transcriber`,
-            });
-
-            // Simulate backend validation failure
-            req.flush('Missing videoUrl', { status: 400, statusText: 'Bad Request' });
-
-            expect(errorStatus).toBe(400);
-            expect(errorText).toBe('Bad Request');
+            expect(completed).toBeTrue();
+            expect(errorSpy).toHaveBeenCalledWith('Transcript failed to start: Http failure response for /api/lecture/7/lecture-unit/13/nebula-transcriber: 500 Server Error');
         }));
 
         it('should send videoUrl verbatim even with special characters', fakeAsync(() => {
             const specialUrl = 'https://live.rbg.tum.de/w/test/26?video_only=1&token=a+b%2F=';
-            let response: HttpResponse<string> | undefined;
+            const successSpy = jest.spyOn(alertService, 'success');
 
-            service
-                .startTranscription(lectureId, lectureUnitId, specialUrl)
-                .pipe(take(1))
-                .subscribe((resp) => (response = resp));
+            service.startTranscription(lectureId, lectureUnitId, specialUrl).pipe(take(1)).subscribe();
 
             const req = httpMock.expectOne({
                 method: 'POST',
@@ -530,7 +458,23 @@ describe('AttachmentVideoUnitService', () => {
             });
 
             req.flush('ok', { status: 200, statusText: 'OK' });
-            expect(response!.body).toBe('ok');
+            expect(successSpy).toHaveBeenCalledWith('Transcript generation started.');
+        }));
+
+        it('should handle errors with missing message gracefully', fakeAsync(() => {
+            const errorSpy = jest.spyOn(alertService, 'error');
+
+            service.startTranscription(lectureId, lectureUnitId, videoUrl).pipe(take(1)).subscribe();
+
+            const req = httpMock.expectOne({
+                method: 'POST',
+                url: `/api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/nebula-transcriber`,
+            });
+
+            // Simulate error without message
+            req.error(new ProgressEvent('Network error'));
+
+            expect(errorSpy).toHaveBeenCalledWith('Transcript failed to start: Unknown error');
         }));
     });
 });

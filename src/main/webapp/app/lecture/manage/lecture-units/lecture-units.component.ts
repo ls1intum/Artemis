@@ -351,18 +351,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
                 return; // No transcription URL available
             }
 
-            this.attachmentVideoUnitService.startTranscription(this.lecture.id!, unit.id, transcriptionUrl).subscribe({
-                next: (res) => {
-                    if (res.status === 200) {
-                        this.alertService.success('Transcript generation started.');
-                    } else {
-                        this.alertService.error('Transcript request did not succeed. Status: ' + res.status);
-                    }
-                },
-                error: (err) => {
-                    this.alertService.error('Transcript failed to start: ' + err.message);
-                },
-            });
+            this.attachmentVideoUnitService.startTranscription(this.lecture.id!, unit.id, transcriptionUrl).subscribe();
         }
         // When editing, disabled, or missing data, simply do nothing
     }

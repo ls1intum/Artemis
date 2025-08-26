@@ -763,7 +763,7 @@ describe('LectureUpdateUnitsComponent', () => {
         savedUnit.id = 42;
 
         jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: savedUnit, status: 201 })));
-        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse<string>({ status: 200, body: '' })) as StartTxReturn);
+        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as StartTxReturn);
         const successSpy = jest.spyOn(alertService, 'success');
         const errorSpy = jest.spyOn(alertService, 'error');
 
@@ -800,7 +800,7 @@ describe('LectureUpdateUnitsComponent', () => {
         savedUnit.videoSource = 'https://example.com/video-source.m3u8'; // should be ignored due to playlistUrl
 
         jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: savedUnit, status: 201 })));
-        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse<string>({ status: 200, body: '' })) as StartTxReturn);
+        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as StartTxReturn);
 
         wizardUnitComponentFixture.detectChanges();
         tick();
@@ -831,7 +831,7 @@ describe('LectureUpdateUnitsComponent', () => {
         savedUnit.videoSource = 'https://example.com/from-unit.m3u8';
 
         jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: savedUnit, status: 201 })));
-        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse<string>({ status: 200, body: '' })) as StartTxReturn);
+        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as StartTxReturn);
 
         wizardUnitComponentFixture.detectChanges();
         tick();
@@ -935,17 +935,15 @@ describe('LectureUpdateUnitsComponent', () => {
         });
     }));
 
-    it('should show error alert when startTranscription returns non-200 status', fakeAsync(() => {
+    it('should call startTranscription service method when generateTranscript is true', fakeAsync(() => {
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        const alertService = TestBed.inject(AlertService);
 
         const savedUnit = new AttachmentVideoUnit();
         savedUnit.id = 100;
-        savedUnit.videoSource = 'https://example.com/not-200.m3u8';
+        savedUnit.videoSource = 'https://example.com/video.m3u8';
 
         jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: savedUnit, status: 201 })));
-        jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(new HttpResponse<string>({ status: 500, body: 'error' })) as StartTxReturn);
-        const errorSpy = jest.spyOn(alertService, 'error');
+        const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as StartTxReturn);
 
         wizardUnitComponentFixture.detectChanges();
         tick();
@@ -953,39 +951,12 @@ describe('LectureUpdateUnitsComponent', () => {
         jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         wizardUnitComponent.createEditAttachmentVideoUnit({
-            formProperties: { name: 'Bad start', releaseDate: dayjs(), generateTranscript: true },
+            formProperties: { name: 'Test Unit', releaseDate: dayjs(), generateTranscript: true },
             fileProperties: { fileName: 'x' },
         });
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Status: 500'));
-        });
-    }));
-
-    it('should show error alert when startTranscription throws', fakeAsync(() => {
-        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        const alertService = TestBed.inject(AlertService);
-
-        const savedUnit = new AttachmentVideoUnit();
-        savedUnit.id = 101;
-        savedUnit.videoSource = 'https://example.com/boom.m3u8';
-
-        jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: savedUnit, status: 201 })));
-        jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(throwError(() => new Error('Boom')) as StartTxReturn);
-        const errorSpy = jest.spyOn(alertService, 'error');
-
-        wizardUnitComponentFixture.detectChanges();
-        tick();
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-        jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
-
-        wizardUnitComponent.createEditAttachmentVideoUnit({
-            formProperties: { name: 'Throw', releaseDate: dayjs(), generateTranscript: true },
-            fileProperties: { fileName: 'x' },
-        });
-
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(errorSpy).toHaveBeenCalledWith('Transcript failed to start: Boom');
+            expect(startTranscriptionSpy).toHaveBeenCalledWith(wizardUnitComponent.lecture.id, savedUnit.id, savedUnit.videoSource);
         });
     }));
 
