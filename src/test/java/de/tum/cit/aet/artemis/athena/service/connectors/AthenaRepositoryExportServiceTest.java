@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
+import de.tum.cit.aet.artemis.athena.util.AthenaTestUtil;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -34,6 +35,9 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private AthenaTestUtil athenaTestUtil;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -79,7 +83,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
         submission.setParticipation(participation);
         var programmingSubmissionWithId = programmingExerciseUtilService.addProgrammingSubmission(programmingExerciseWithId, submission, TEST_PREFIX + "student1");
 
-        programmingExerciseUtilService.createGitRepository();
+        athenaTestUtil.createGitRepository();
 
         Path resultStudentRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), null);
         Path resultSolutionRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), RepositoryType.SOLUTION);

@@ -23,10 +23,9 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mockStatic;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -65,7 +64,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -138,7 +136,6 @@ import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.service.AutomaticProgrammingExerciseCleanupService;
-import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
@@ -171,6 +168,9 @@ public class ProgrammingExerciseTestService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCRepoPath;
 
+    @Value("${artemis.version-control.url}")
+    private URI localVCBaseUri;
+
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
 
@@ -179,9 +179,6 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private GitService gitService;
-
-    @Autowired
-    private GitRepositoryExportService gitRepositoryExportService;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -1508,42 +1505,31 @@ public class ProgrammingExerciseTestService {
     public void exportInstructorAuxiliaryRepository_shouldReturnFile() throws Exception {
         generateProgrammingExerciseForExport();
         var auxRepo = addAuxiliaryRepositoryToProgrammingExercise(exercise);
-        setupAuxRepoMock(auxRepo);
+        setupAuxRepoLocalVC(auxRepo);
         setupRepositoryMocks(exercise);
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-instructor-auxiliary-repository/" + auxRepo.getId();
         request.get(url, HttpStatus.OK, String.class);
     }
 
-    private void setupAuxRepoMock(AuxiliaryRepository auxiliaryRepository) throws GitAPIException {
-        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepo.workingCopyGitRepoFile.toPath(), null);
+    private void setupAuxRepoLocalVC(AuxiliaryRepository auxiliaryRepository) throws GitAPIException, IOException {
+        // Setup proper LocalVC repository structure for auxiliary repository
+        String projectKey = auxiliaryRepository.getExercise().getProjectKey();
+        String auxRepositorySlug = projectKey.toLowerCase() + "-auxiliary-" + auxiliaryRepository.getName().toLowerCase();
 
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(auxiliaryRepository.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(auxiliaryRepository.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
-
-        try {
-            byte[] mockZipData = "mock-zip-content".getBytes();
-            InputStreamResource mockResource = new InputStreamResource(new ByteArrayInputStream(mockZipData)) {
-
-                @Override
-                public String getFilename() {
-                    return "mock-auxiliary-repo.zip";
-                }
-
-                @Override
-                public long contentLength() {
-                    return mockZipData.length;
-                }
-
-                @Override
-                public InputStream getInputStream() throws IOException {
-                    return new ByteArrayInputStream(mockZipData);
-                }
-            };
-            doReturn(mockResource).when(gitRepositoryExportService).exportRepositoryWithFullHistoryToMemory(eq(auxiliaryRepository.getVcsRepositoryUri()), anyString());
+        // Create the repository folder in the LocalVC structure
+        Path projectFolder = localVCRepoPath.resolve(projectKey);
+        if (!Files.exists(projectFolder)) {
+            Files.createDirectories(projectFolder);
         }
-        catch (Exception e) {
-            throw new RuntimeException("Failed to setup export mock", e);
-        }
+        Path repositoryFolder = projectFolder.resolve(auxRepositorySlug + ".git");
+        Files.createDirectories(repositoryFolder);
+
+        // Copy the bare repository to the LocalVC location
+        FileUtils.copyDirectory(auxRepo.remoteBareGitRepoFile, repositoryFolder.toFile());
+
+        auxiliaryRepository.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + auxRepositorySlug + ".git");
+
+        auxiliaryRepositoryRepository.save(auxiliaryRepository);
     }
 
     public void exportInstructorAuxiliaryRepository_forbidden() throws Exception {
@@ -1835,6 +1821,13 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
 
+        // Use the existing repositories that are already configured
+        exercise.getTemplateParticipation().setRepositoryUri(convertToLocalVcUriString(exerciseRepo));
+        exercise.setSolutionRepositoryUri(convertToLocalVcUriString(solutionRepo));
+        exercise.setTestRepositoryUri(convertToLocalVcUriString(testRepo));
+
+        // Save the updated exercise
+        programmingExerciseRepository.save(exercise);
     }
 
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {

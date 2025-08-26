@@ -1,17 +1,8 @@
 package de.tum.cit.aet.artemis.programming.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -20,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -56,7 +46,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
@@ -64,8 +53,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
-import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -149,12 +136,6 @@ public class ProgrammingExerciseUtilService {
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private GitService gitService;
-
-    @Autowired
-    private GitRepositoryExportService gitRepositoryExportService;
 
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
@@ -856,27 +837,4 @@ public class ProgrammingExerciseUtilService {
         return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
     }
 
-    /**
-     * Creates an example repository and makes the given GitService return it when asked to check it out.
-     *
-     * @throws Exception if creating the repository fails
-     */
-    public void createGitRepository() throws Exception {
-        // Create repository
-        var testRepo = new LocalRepository(defaultBranch);
-        testRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
-        // Add test file to the repository folder
-        Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/Test.java");
-        var file = Files.createFile(filePath).toFile();
-        FileUtils.write(file, "Test", Charset.defaultCharset());
-        // Create mock repo that has the file
-        var mockRepository = mock(Repository.class);
-        doReturn(true).when(mockRepository).isValidFile(any());
-        doReturn(testRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
-        // Mock Git service operations
-        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), any(), any(), anyBoolean(), anyString(), anyBoolean());
-        doNothing().when(gitService).resetToOriginHead(any());
-        doReturn(Path.of("repo.zip")).when(gitRepositoryExportService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(true));
-        doReturn(Path.of("repo")).when(gitRepositoryExportService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(false));
-    }
 }

@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.athena.util.AthenaTestUtil;
 import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -92,6 +93,9 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private LearnerProfileUtilService learnerProfileUtilService;
+
+    @Autowired
+    private AthenaTestUtil athenaTestUtil;
 
     private TextExercise textExercise;
 
@@ -381,7 +385,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingExerciseRepository.save(programmingExercise);
 
         // Add Git repo for export
-        programmingExerciseUtilService.createGitRepository();
+        athenaTestUtil.createGitRepository();
 
         // Get exports from endpoint
         var authHeaders = new HttpHeaders();
