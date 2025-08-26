@@ -9,17 +9,12 @@ from utils import authenticate_user
 from create_course import create_course
 from create_users import create_students, user_credentials
 from add_users_to_course import add_students_to_groups_of_course
-from manage_programming_exercise import (
-    create_programming_exercise,
-    add_participation,
-    commit,
-    exercise_Ids,
-)
+from manage_programming_exercise import create_programming_exercise, add_participation, commit, exercise_Ids
 from randomize_results_after import run_cleanup
 
 # Load configuration and constants
 config = configparser.ConfigParser()
-config.read("config.ini")
+config.read('config.ini')
 
 # Constants
 STUDENTS_TO_CREATE: int = int(config.get("Settings", "students")) + 1
@@ -27,9 +22,7 @@ COMMITS_PER_STUDENT: int = int(config.get("Settings", "commits"))
 EXERCISES_TO_CREATE: int = int(config.get("Settings", "exercises"))
 EXERCISES_NAME: str = str(config.get("Settings", "exercise_name"))
 CREATE_EXERCISES: bool = config.get("Settings", "create_exercises").lower() == "true"
-EXERCISE_IDS: list[int] = list(
-    map(int, config.get("Settings", "exercise_Ids").split(","))
-)
+EXERCISE_IDS: list[int] = list(map(int, config.get("Settings", "exercise_Ids").split(",")))
 
 CLIENT_URL: str = config.get("Settings", "client_url")
 SERVER_URL: str = config.get("Settings", "server_url")
@@ -96,7 +89,6 @@ def main() -> None:
             admin_session, course_id, SERVER_URL, EXERCISES_TO_CREATE, EXERCISES_NAME
         )
     else:
-        # Only extend once, before threading starts
         exercise_Ids.extend(EXERCISE_IDS)
 
     # Step 6: Add participation and commit for each user (in parallel)
@@ -105,15 +97,13 @@ def main() -> None:
         logging.warning("No user credentials found to process.")
         return
 
-    # Launch the thread pool
     logging.info(f"Starting threaded execution with max_workers={MAX_WORKERS}...")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = [executor.submit(process_user, creds) for creds in user_credentials]
 
-        # Optional: iterate to surface exceptions early and get rough progress in logs
-        for i, f in enumerate(as_completed(futures), start=1):
+        for i, future in enumerate(as_completed(futures), start=1):
             try:
-                f.result()
+                future.result()
             except Exception as e:
                 logging.exception(f"[Thread-{i}] Unhandled exception: {e}")
 
