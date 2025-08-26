@@ -542,7 +542,9 @@ public class ExamService {
         // fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
 
-        var examGrades = studentParticipationRepository.findGradesByExamIdAndStudentIdForTestRun(studentExam.getExam().getId(), studentExam.getUser().getId());
+        Set<ExamGradeScoreDTO> examGrades = studentExam.isTestRun()
+                ? studentParticipationRepository.findGradesByExamIdAndStudentIdForTestRun(studentExam.getExam().getId(), studentExam.getUser().getId())
+                : studentParticipationRepository.findGradesByExamIdAndStudentId(studentExam.getExam().getId(), studentExam.getUser().getId());
         return calculateStudentResultWithGradeAndPoints(studentExam, examGrades);
     }
 
@@ -711,8 +713,8 @@ public class ExamService {
                         Result firstManualResult = submission.getFirstManualResult();
                         double achievedPointsInFirstCorrection = 0.0;
                         if (firstManualResult != null) {
-                            achievedPointsInFirstCorrection = calculateAchievedPoints(examGrade.maxPoints(), firstManualResult.getScore(), exam.getCourse(),
-                                    plagiarismPointDeductionPercentage);
+                            double firstRoundScore = firstManualResult.getScore() != null ? firstManualResult.getScore() : 0.0;
+                            achievedPointsInFirstCorrection = calculateAchievedPoints(examGrade.maxPoints(), firstRoundScore, exam.getCourse(), plagiarismPointDeductionPercentage);
                         }
                         overallPointsAchievedInFirstCorrection += achievedPointsInFirstCorrection;
                     }
@@ -727,8 +729,9 @@ public class ExamService {
             if (latestSubmission != null) {
                 relevantResult = latestSubmission.getLatestCompletedResult();
             }
-            exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
-                    exercise.getMaxPoints(), relevantResult != null ? relevantResult.getScore() : 0.0, achievedPoints, hasNonEmptySubmission));
+            double resultScore = (relevantResult != null && relevantResult.getScore() != null) ? relevantResult.getScore() : 0.0;
+            exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
+                    new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
         }
         overallPointsAchieved = roundScoreSpecifiedByCourseSettings(overallPointsAchieved, exam.getCourse());
         var overallGrade = "";
