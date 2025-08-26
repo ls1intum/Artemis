@@ -91,7 +91,7 @@
             flex-wrap: nowrap;
         }
 
-        jhi-secured-image {
+        jhi-image {
             padding: 5px;
 
             ::ng-deep img {
@@ -244,7 +244,7 @@
                 font-size: 13px;
             }
 
-            jhi-secured-image {
+            jhi-image {
                 margin-left: auto;
                 margin-right: auto;
                 display: flex;
