@@ -53,7 +53,7 @@ public class ProblemStatementRewriteService {
                 throw new NetworkingException("Spring AI ChatClient is not configured");
             }
 
-            String rendered = templates.render("/prompts/hyperion/rewrite.st", Map.of("text", problemStatementText.trim()));
+            String rendered = templates.render("/prompts/hyperion/rewrite_problem_statement.st", Map.of("text", problemStatementText.trim()));
             String content = chatClient.prompt()
                     .system("You are an expert technical writing assistant for programming exercise problem statements. Return only the rewritten statement, no explanations.")
                     .user(rendered).call().content();

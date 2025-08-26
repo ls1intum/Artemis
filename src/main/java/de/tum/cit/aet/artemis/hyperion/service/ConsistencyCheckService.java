@@ -92,13 +92,13 @@ public class ConsistencyCheckService {
             String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
             var input = Map.<String, Object>of("rendered_context", renderedContext, "programming_language", programmingLanguage);
 
-            Mono<List<ConsistencyIssue>> structuralMono = Mono.fromCallable(() -> runConsistencyCheck("/prompts/hyperion/structural.st", input).issues())
+            Mono<List<ConsistencyIssue>> structuralMono = Mono.fromCallable(() -> toGeneric(runStructuralCheck("/prompts/hyperion/consistency_structural.st", input)))
                     .subscribeOn(Schedulers.boundedElastic()).onErrorResume(ex -> {
                         log.warn("Structural check failed, returning empty issues: {}", ex.getMessage());
                         return Mono.just(List.of());
                     });
 
-            Mono<List<ConsistencyIssue>> semanticMono = Mono.fromCallable(() -> runConsistencyCheck("/prompts/hyperion/semantic.st", input).issues())
+            Mono<List<ConsistencyIssue>> semanticMono = Mono.fromCallable(() -> toGeneric(runSemanticCheck("/prompts/hyperion/consistency_semantic.st", input)))
                     .subscribeOn(Schedulers.boundedElastic()).onErrorResume(ex -> {
                         log.warn("Semantic check failed, returning empty issues: {}", ex.getMessage());
                         return Mono.just(List.of());
@@ -120,10 +120,10 @@ public class ConsistencyCheckService {
             }
             catch (RuntimeException e) {
                 log.warn("Reactive parallel AI checks failed, falling back to sequential execution", e);
-                ConsistencyIssues structuralEntity = runConsistencyCheck("/prompts/hyperion/structural.st", input);
-                ConsistencyIssues semanticEntity = runConsistencyCheck("/prompts/hyperion/semantic.st", input);
-                List<ConsistencyIssue> structural = structuralEntity != null ? structuralEntity.issues() : List.of();
-                List<ConsistencyIssue> semantic = semanticEntity != null ? semanticEntity.issues() : List.of();
+                StructuralConsistencyIssues structuralEntity = runStructuralCheck("/prompts/hyperion/consistency_structural.st", input);
+                SemanticConsistencyIssues semanticEntity = runSemanticCheck("/prompts/hyperion/consistency_semantic.st", input);
+                List<ConsistencyIssue> structural = toGeneric(structuralEntity);
+                List<ConsistencyIssue> semantic = toGeneric(semanticEntity);
                 List<ConsistencyIssue> merged = new ArrayList<>();
                 merged.addAll(structural);
                 merged.addAll(semantic);
@@ -150,25 +150,47 @@ public class ConsistencyCheckService {
         }
     }
 
-    private ConsistencyIssues runConsistencyCheck(String resourcePath, Map<String, Object> input) {
+    private StructuralConsistencyIssues runStructuralCheck(String resourcePath, Map<String, Object> input) {
         String rendered = templates.render(resourcePath, Map.of("rendered_context", String.valueOf(input.getOrDefault("rendered_context", "")), "programming_language",
                 String.valueOf(input.getOrDefault("programming_language", ""))));
         try {
             return chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.").user(rendered).call()
-                    .entity(ConsistencyIssues.class);
+                    .entity(StructuralConsistencyIssues.class);
         }
         catch (TransientAiException e) {
             log.warn("Transient AI error in {}: {}", resourcePath, e.getMessage());
-            return new ConsistencyIssues();
+            return new StructuralConsistencyIssues();
         }
         catch (NonTransientAiException e) {
             log.error("Non-transient AI error in {}: {}", resourcePath, e.getMessage());
-            return new ConsistencyIssues();
+            return new StructuralConsistencyIssues();
         }
         catch (RuntimeException e) {
             // JSON mapping or unexpected client errors. Do not fail the whole request; return empty issues.
             log.error("Failed to obtain or parse AI response for {}", resourcePath, e);
-            return new ConsistencyIssues();
+            return new StructuralConsistencyIssues();
+        }
+    }
+
+    private SemanticConsistencyIssues runSemanticCheck(String resourcePath, Map<String, Object> input) {
+        String rendered = templates.render(resourcePath, Map.of("rendered_context", String.valueOf(input.getOrDefault("rendered_context", "")), "programming_language",
+                String.valueOf(input.getOrDefault("programming_language", ""))));
+        try {
+            return chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.").user(rendered).call()
+                    .entity(SemanticConsistencyIssues.class);
+        }
+        catch (TransientAiException e) {
+            log.warn("Transient AI error in {}: {}", resourcePath, e.getMessage());
+            return new SemanticConsistencyIssues();
+        }
+        catch (NonTransientAiException e) {
+            log.error("Non-transient AI error in {}: {}", resourcePath, e.getMessage());
+            return new SemanticConsistencyIssues();
+        }
+        catch (RuntimeException e) {
+            // JSON mapping or unexpected client errors. Do not fail the whole request; return empty issues.
+            log.error("Failed to obtain or parse AI response for {}", resourcePath, e);
+            return new SemanticConsistencyIssues();
         }
     }
 
@@ -212,13 +234,13 @@ public class ConsistencyCheckService {
         return repositoryContents.entrySet().stream().map(entry -> new RepoFile(entry.getKey(), entry.getValue())).collect(Collectors.toList());
     }
 
-    private java.util.Map<String, String> getRepositoryContents(VcsRepositoryUri repositoryUri) {
+    private Map<String, String> getRepositoryContents(VcsRepositoryUri repositoryUri) {
         try {
             return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repositoryUri);
         }
         catch (IOException e) {
             log.error("Could not get repository content from {}", repositoryUri, e);
-            return java.util.Map.of();
+            return Map.of();
         }
     }
 
@@ -241,13 +263,11 @@ public class ConsistencyCheckService {
     private record RepoFile(String path, String content) {
     }
 
+    // Common internal representation
     @JsonIgnoreProperties(ignoreUnknown = true)
     private static class ConsistencyIssues {
 
         public List<ConsistencyIssue> issues = List.of();
-
-        public ConsistencyIssues() {
-        }
 
         public List<ConsistencyIssue> issues() {
             return issues == null ? List.of() : issues;
@@ -260,5 +280,49 @@ public class ConsistencyCheckService {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     private record ArtifactLocation(ArtifactType type, String filePath, Integer startLine, Integer endLine) {
+    }
+
+    // Structural schema
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class StructuralConsistencyIssues {
+
+        public List<StructuralConsistencyIssue> issues = List.of();
+    }
+
+    private enum StructuralCategory {
+        METHOD_RETURN_TYPE_MISMATCH, METHOD_PARAMETER_MISMATCH, CONSTRUCTOR_PARAMETER_MISMATCH, ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record StructuralConsistencyIssue(String severity, StructuralCategory category, String description, String suggestedFix, List<ArtifactLocation> relatedLocations) {
+    }
+
+    // Semantic schema
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class SemanticConsistencyIssues {
+
+        public List<SemanticConsistencyIssue> issues = List.of();
+    }
+
+    private enum SemanticCategory {
+        IDENTIFIER_NAMING_INCONSISTENCY
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record SemanticConsistencyIssue(String severity, SemanticCategory category, String description, String suggestedFix, List<ArtifactLocation> relatedLocations) {
+    }
+
+    private List<ConsistencyIssue> toGeneric(StructuralConsistencyIssues structural) {
+        if (structural == null || structural.issues == null)
+            return List.of();
+        return structural.issues.stream()
+                .map(i -> new ConsistencyIssue(i.severity(), i.category() != null ? i.category().name() : null, i.description(), i.suggestedFix(), i.relatedLocations())).toList();
+    }
+
+    private List<ConsistencyIssue> toGeneric(SemanticConsistencyIssues semantic) {
+        if (semantic == null || semantic.issues == null)
+            return List.of();
+        return semantic.issues.stream()
+                .map(i -> new ConsistencyIssue(i.severity(), i.category() != null ? i.category().name() : null, i.description(), i.suggestedFix(), i.relatedLocations())).toList();
     }
 }
