@@ -829,6 +829,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
         this.question().dropLocations = cloneDeep(this.backupQuestion.dropLocations);
         this.question().dragItems = cloneDeep(this.backupQuestion.dragItems);
         this.question().correctMappings = cloneDeep(this.backupQuestion.correctMappings);
+        this.question().isHighlighted = this.backupQuestion.isHighlighted;
         this.resetQuestionText();
     }
 
