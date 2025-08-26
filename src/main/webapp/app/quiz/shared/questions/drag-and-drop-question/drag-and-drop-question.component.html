@@ -85,7 +85,7 @@
                 @if (!showingSampleSolution) {
                     <span jhiTranslate="artemisApp.dragAndDropQuestion.showingYourAnswer"></span>
                 }
-                @if (showResult() && !forceSampleSolution()) {
+                @if (!forceSampleSolution()) {
                     <div>
                         @if (!showingSampleSolution) {
                             <div class="btn btn-outline-primary" (click)="showSampleSolution()" jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></div>

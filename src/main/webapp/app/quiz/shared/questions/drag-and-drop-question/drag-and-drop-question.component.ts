@@ -70,8 +70,6 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     dragAndDropQuestion = computed(() => this.question() as DragAndDropQuestion);
 
     // TODO: Map vs. Array --> consistency
-    //@Input()
-    //mappings: DragAndDropMapping[];
     readonly mappings = model<DragAndDropMapping[]>([]);
     readonly clickDisabled = input<boolean>(false);
     readonly showResult = input<boolean>(false);
