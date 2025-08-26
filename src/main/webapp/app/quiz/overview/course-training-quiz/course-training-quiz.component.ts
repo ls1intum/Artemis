@@ -20,10 +20,11 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/QuizTrainingAnswer';
 import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluation';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-course-practice-quiz',
-    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent],
+    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent, TranslateDirective],
     templateUrl: './course-training-quiz.component.html',
 })
 export class CourseTrainingQuizComponent {
