@@ -4,6 +4,7 @@
         disabled: clickDisabled && !showResult,
         result: showResult && !forceSampleSolution,
         incorrect: (score || 0) < shortAnswerQuestion.points! && !forceSampleSolution,
+        'question-highlight': shortAnswerQuestion.isHighlighted,
     }"
 >
     <h4 class="question-title-display">

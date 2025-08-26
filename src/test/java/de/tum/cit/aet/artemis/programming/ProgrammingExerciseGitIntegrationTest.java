@@ -45,7 +45,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
 
-        localRepoPath = Files.createTempDirectory("repo");
+        localRepoPath = Files.createTempDirectory(tempPath, "repo");
         localGit = LocalRepository.initialize(localRepoPath, defaultBranch, false);
 
         // create commits
