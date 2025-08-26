@@ -75,7 +75,8 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
      */
     mapCoursesIntoSemesters(): void {
         this.semesters.forEach((semester) => {
-            this.semesterCollapsed[semester] = false;
+            const stored = this.courseService.getSemesterCollapseStateFromStorage(semester);
+            this.semesterCollapsed[semester] = stored ?? false;
             this.courseService.setSemesterCollapseState(semester, false);
             this.coursesBySemester[semester] = this.courses.filter((course) => course.semester === semester);
             this.fullFormOfSemesterStrings[semester] = semester.startsWith('WS') ? 'artemisApp.course.archive.winterSemester' : 'artemisApp.course.archive.summerSemester';

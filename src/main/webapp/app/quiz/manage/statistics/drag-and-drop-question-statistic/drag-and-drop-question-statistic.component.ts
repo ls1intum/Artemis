@@ -12,9 +12,10 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { NgStyle } from '@angular/common';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
@@ -26,11 +27,13 @@ import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-st
         './drag-and-drop-question-statistic.component.scss',
     ],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, BarChartModule, FaIconComponent, SecuredImageComponent, NgStyle, DragItemComponent, QuizStatisticsFooterComponent],
+    imports: [TranslateDirective, BarChartModule, FaIconComponent, ImageComponent, NgStyle, DragItemComponent, QuizStatisticsFooterComponent],
 })
 export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
     private artemisMarkdown = inject(ArtemisMarkdownService);
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     declare question: DragAndDropQuestion;
 

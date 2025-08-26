@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseResetDialogComponent } from 'app/programming/manage/reset/dialog/programming-exercise-reset-dialog.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -32,8 +32,8 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
+                LocalStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(NgbActiveModal),
                 provideHttpClient(),
@@ -71,8 +71,6 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
 
         comp.programmingExercise.id = exerciseId;
         comp.programmingExerciseResetOptions = {
-            deleteBuildPlans: true,
-            deleteRepositories: true,
             deleteParticipationsSubmissionsAndResults: true,
             recreateBuildPlans: true,
         };
@@ -103,8 +101,6 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
                     }),
             );
             comp.programmingExerciseResetOptions = {
-                deleteBuildPlans: false,
-                deleteRepositories: false,
                 deleteParticipationsSubmissionsAndResults: true,
                 recreateBuildPlans: false,
             };
@@ -125,8 +121,6 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
             comp.confirmText = 'Programming Exercise';
             comp.resetInProgress = false;
             comp.programmingExerciseResetOptions = {
-                deleteBuildPlans: false,
-                deleteRepositories: false,
                 deleteParticipationsSubmissionsAndResults: true,
                 recreateBuildPlans: false,
             };
@@ -160,8 +154,6 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
     describe('hasSelectedOptions', () => {
         it('should return false when all options are set to false', () => {
             comp.programmingExerciseResetOptions = {
-                deleteBuildPlans: false,
-                deleteRepositories: false,
                 deleteParticipationsSubmissionsAndResults: false,
                 recreateBuildPlans: false,
             };
@@ -175,8 +167,6 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
             ${'recreateBuildPlans'}
         `('should return true when $option is set to true', ({ option }) => {
             comp.programmingExerciseResetOptions = {
-                deleteBuildPlans: false,
-                deleteRepositories: false,
                 deleteParticipationsSubmissionsAndResults: false,
                 recreateBuildPlans: false,
             };

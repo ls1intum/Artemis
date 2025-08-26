@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
@@ -39,39 +38,36 @@ import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 /**
  * Contains useful methods for testing the conversations futures
  */
-abstract class AbstractConversationTest extends AbstractSpringIntegrationIndependentTest {
+abstract class AbstractConversationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
-    CourseTestRepository courseRepository;
+    protected CourseTestRepository courseRepository;
 
     @Autowired
-    UserTestRepository userRepository;
+    protected UserTestRepository userRepository;
 
     @Autowired
-    ConversationTestRepository conversationRepository;
+    protected ConversationTestRepository conversationRepository;
 
     @Autowired
-    ConversationParticipantTestRepository conversationParticipantRepository;
+    protected ConversationParticipantTestRepository conversationParticipantRepository;
 
     @Autowired
-    ChannelRepository channelRepository;
+    protected ChannelRepository channelRepository;
 
     @Autowired
-    GroupChatRepository groupChatRepository;
+    protected ConversationMessageRepository conversationMessageRepository;
 
     @Autowired
-    ConversationMessageRepository conversationMessageRepository;
+    protected UserUtilService userUtilService;
 
     @Autowired
-    UserUtilService userUtilService;
-
-    @Autowired
-    CourseUtilService courseUtilService;
+    protected CourseUtilService courseUtilService;
 
     Long exampleCourseId;
 
