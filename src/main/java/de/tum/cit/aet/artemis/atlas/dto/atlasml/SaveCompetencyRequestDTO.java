@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.dto.atlasml;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 
@@ -11,7 +12,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
  * Maps to the Python SaveCompetencyRequest model.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SaveCompetencyRequestDTO(List<AtlasMLCompetencyDTO> competencies, AtlasMLExerciseDTO exercise, String operationType) {
+public record SaveCompetencyRequestDTO(List<AtlasMLCompetencyDTO> competencies, AtlasMLExerciseDTO exercise, @JsonProperty("operation_type") String operationType) {
 
     /**
      * Operation type DTO for AtlasML save operations.

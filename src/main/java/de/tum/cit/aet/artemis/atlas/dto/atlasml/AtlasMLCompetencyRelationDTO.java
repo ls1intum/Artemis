@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.dto.atlasml;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
@@ -10,7 +11,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
  * This contains only IDs and matches the Python AtlasML API structure.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AtlasMLCompetencyRelationDTO(Long tailId, Long headId, String relationType) {
+public record AtlasMLCompetencyRelationDTO(@JsonProperty("tail_id") Long tailId, @JsonProperty("head_id") Long headId, @JsonProperty("relation_type") String relationType) {
 
     /**
      * Convert from domain CompetencyRelation to AtlasML DTO.
