@@ -11,6 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -133,19 +136,40 @@ public class LocalCIEventListenerService {
                 continue;
             }
             log.error("Build job with id {} is in an unknown state", buildJob.getBuildJobId());
+            // If the build job is in an unknown state, set it to missing and update the build start date
             buildJobRepository.updateBuildJobStatus(buildJob.getBuildJobId(), BuildStatus.MISSING);
         }
     }
 
-    @Scheduled(fixedRateString = "${artemis.continuous-integration.check-job-status-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.check-job-status-delay-seconds:120}", timeUnit = TimeUnit.SECONDS)
+    // todo move other service maybe?
+    @Scheduled(fixedRateString = "${artemis.continuous-integration.retry-missing-jobs-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.retry-missing-jobs-delay-seconds:120}", timeUnit = TimeUnit.SECONDS)
     public void retryMissingJobs() {
-        log.debug("Checking for missing build jobs");
-        List<BuildJob> missingBuildJobs = buildJobRepository.findAllByBuildStatusIn(List.of(BuildStatus.MISSING));
-        for (BuildJob buildJob : missingBuildJobs) {
+        log.debug("Checking for missing build jobs to retry");
+        Pageable pageable = PageRequest.of(0, 50);
+        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime oneHourAgo = now.minusHours(1);
+
+        Slice<BuildJob> missingJobSlice = buildJobRepository.findJobsByStatusesInTimeRange(List.of(BuildStatus.MISSING), oneHourAgo, now, pageable);
+        List<BuildJob> missingJobs = missingJobSlice.getContent();
+        log.debug("Processing {} missing build jobs to retry", missingJobs.size());
+
+        for (BuildJob buildJob : missingJobSlice.getContent()) {
             if (buildJob.getRetryCount() >= 3) {
+                log.warn("Build job with id {} for participation {} has reached the maximum number of retries and will not be retried.", buildJob.getBuildJobId(),
+                        buildJob.getParticipationId());
                 continue;
             }
-            localCITriggerService.retryBuildJob(buildJob, (ProgrammingExerciseParticipation) participationRepository.findByIdElseThrow(buildJob.getParticipationId()));
+
+            try {
+                localCITriggerService.retryBuildJob(buildJob, (ProgrammingExerciseParticipation) participationRepository.findByIdElseThrow(buildJob.getParticipationId()));
+            }
+            catch (Exception e) {
+                log.error("Failed to retry build job with id {} for participation {}", buildJob.getBuildJobId(), buildJob.getParticipationId(), e);
+            }
+        }
+
+        if (missingJobSlice.hasNext()) {
+            log.debug("There are more missing jobs to process in the next scheduled run.");
         }
     }
 

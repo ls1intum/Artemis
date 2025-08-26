@@ -184,4 +184,24 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
      * @return the list of build jobs
      */
     List<BuildJob> findAllByBuildStatusIn(List<BuildStatus> statuses);
+
+    /**
+     * Find all build jobs with the given build statuses in the given time range, ordered by submission date descending.
+     *
+     * @param statuses  the list of build statuses
+     * @param startTime earliest build submission time
+     * @param endTime   latest build submission time
+     * @param pageable  pagination information
+     * @return the list of build jobs
+     */
+    @Query("""
+            SELECT b
+            FROM BuildJob b
+            WHERE b.buildStatus IN :statuses
+              AND b.buildSubmissionDate >= :startTime
+              AND b.buildSubmissionDate <= :endTime
+            ORDER BY b.buildSubmissionDate DESC
+            """)
+    Slice<BuildJob> findJobsByStatusesInTimeRange(@Param("statuses") List<BuildStatus> statuses, @Param("startTime") ZonedDateTime startTime,
+            @Param("endTime") ZonedDateTime endTime, Pageable pageable);
 }
