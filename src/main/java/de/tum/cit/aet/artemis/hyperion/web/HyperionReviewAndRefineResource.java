@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.retry.TransientAiException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -56,7 +57,7 @@ public class HyperionReviewAndRefineResource {
     private final ProblemStatementRewriteService rewriteService;
 
     public HyperionReviewAndRefineResource(UserRepository userRepository, CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ConsistencyCheckService consistencyCheckService, ProblemStatementRewriteService rewriteService) {
+            @Qualifier("hyperionConsistencyCheckService") ConsistencyCheckService consistencyCheckService, ProblemStatementRewriteService rewriteService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;

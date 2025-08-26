@@ -163,14 +163,12 @@ public abstract class AbstractGitService {
         }
         builder.setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
 
-        try (Repository repository = new Repository(builder, localPath, remoteRepositoryUri)) {
-            // Read JavaDoc for more information
-            if (writeAccess) {
-                setRepoConfig(defaultBranch, repository);
-            }
-
-            return repository;
+        Repository repository = new Repository(builder, localPath, remoteRepositoryUri);
+        // Read JavaDoc for more information
+        if (writeAccess) {
+            setRepoConfig(defaultBranch, repository);
         }
+        return repository;
     }
 
     private static void setRepoConfig(String defaultBranch, Repository repository) throws IOException {
@@ -213,9 +211,8 @@ public abstract class AbstractGitService {
         builder.setGitDir(localPath.toFile());
         builder.setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
 
-        try (Repository repository = new Repository(builder, localPath, bareRepositoryUri)) {
-            return repository;
-        }
+        Repository repository = new Repository(builder, localPath, bareRepositoryUri);
+        return repository;
     }
 
     @NotNull

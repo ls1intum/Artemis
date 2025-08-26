@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-@Service
+@Service("hyperionConsistencyCheckService")
 @Lazy
 @Profile(PROFILE_HYPERION)
 public class ConsistencyCheckService {
