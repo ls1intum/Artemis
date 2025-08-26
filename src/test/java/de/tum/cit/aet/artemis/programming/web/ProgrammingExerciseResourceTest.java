@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -68,7 +67,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
     @Autowired
     private CourseTestRepository courseRepository;
 
-    @MockitoBean
+    // This will be a spy bean since it is configured as @MockitoSpyBean in the parent class
+    @Autowired
     private GitRepositoryExportService gitRepositoryExportService;
 
     protected Course course;
