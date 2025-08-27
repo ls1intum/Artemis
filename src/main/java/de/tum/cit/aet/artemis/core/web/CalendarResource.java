@@ -100,7 +100,7 @@ public class CalendarResource {
             @RequestParam("filterOptions") Set<CalendarEventFilterOption> filterOptions, @RequestParam("language") Language language) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
-        boolean userIsStudent = authorizationCheckService.isStudentInCourse(course, user);
+        boolean userIsStudent = authorizationCheckService.isOnlyStudentInCourse(course, user);
         boolean userIsCourseStaff = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         if (!userIsStudent && !userIsCourseStaff) {
             throw new AccessForbiddenException("You are not allowed to access this course's resources!");
