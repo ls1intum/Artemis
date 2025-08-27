@@ -72,7 +72,7 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.course.description" for="field_description"></label>
                     <textarea id="field_description" class="form-control" rows="2" formControlName="description" [(ngModel)]="course.description"></textarea>
                 </div>
-                <div *jhiHasAnyAuthority="'ROLE_ADMIN'">
+                @if (isAdmin) {
                     <div class="form-group">
                         <label class="form-control-label" jhiTranslate="artemisApp.course.organizations"></label>
                         <div class="btn-group d-flex flex-wrap">
@@ -91,7 +91,7 @@
                         </div>
                         <button id="addOrganizationButton" type="button" class="btn btn-outline-primary" (click)="openOrganizationsModal()">Add</button>
                     </div>
-                </div>
+                }
                 <div class="row g-2">
                     <div class="form-group col-md">
                         <jhi-date-time-picker
