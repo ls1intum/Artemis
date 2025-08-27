@@ -115,9 +115,7 @@ public class ProgrammingTriggerService {
 
         // Let the instructor know that a build run was triggered.
         programmingMessagingService.notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
-        long start = System.currentTimeMillis();
         Set<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findWithLatestSubmissionByExerciseId(exerciseId);
-        log.debug("Database call to fetch participations for trigger all took {} ms", (System.currentTimeMillis() - start));
         triggerBuildForParticipations(participations);
 
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
