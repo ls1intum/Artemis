@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NgClass } from '@angular/common';
@@ -7,7 +7,7 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import 'dayjs/esm/locale/en';
 import 'dayjs/esm/locale/de';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck, faChevronLeft, faChevronRight, faCopy } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarDesktopMonthPresentationComponent } from 'app/core/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
@@ -20,6 +20,7 @@ import { FormsModule } from '@angular/forms';
 import { SelectButton } from 'primeng/selectbutton';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TextFieldModule } from '@angular/cdk/text-field';
+import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 
 @Component({
     selector: 'jhi-calendar-desktop-overview',
@@ -35,6 +36,7 @@ import { TextFieldModule } from '@angular/cdk/text-field';
         FormsModule,
         SelectButton,
         TextFieldModule,
+        CalendarSubscriptionPopoverComponent,
     ],
     templateUrl: './calendar-desktop-overview.component.html',
     styleUrl: './calendar-desktop-overview.component.scss',
@@ -45,52 +47,19 @@ export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private activatedRoute = inject(ActivatedRoute);
     private activatedRouteSubscription?: Subscription;
-    private courseId = signal<number | undefined>(undefined);
     private currentLocaleSubscription?: Subscription;
     private currentLocale = signal(this.translateService.currentLang);
-    private calendarSubscriptionToken = signal<string | undefined>(undefined);
 
     readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
     readonly faChevronRight = faChevronRight;
     readonly faChevronLeft = faChevronLeft;
-    readonly faCopy = faCopy;
-    readonly faCheck = faCheck;
+
     presentation = signal<'week' | 'month'>('month');
     firstDayOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     firstDayOfCurrentWeek = signal<Dayjs>(dayjs().startOf('isoWeek'));
     isLoading = signal<boolean>(false);
-    calendarSubscriptionUrl = computed<string | undefined>(() =>
-        this.buildCalendarSubscriptionURL(
-            this.courseId(),
-            this.calendarSubscriptionToken(),
-            this.includeLectureEvents(),
-            this.includeExerciseEvents(),
-            this.includeTutorialEvents(),
-            this.includeExamEvents(),
-            this.language(),
-        ),
-    );
-    includeLectureEvents = signal(true);
-    includeExerciseEvents = signal(true);
-    includeTutorialEvents = signal(true);
-    includeExamEvents = signal(true);
-    language = signal<'ENGLISH' | 'GERMAN'>('ENGLISH');
-    languageOptions = [
-        { label: 'English', value: 'ENGLISH' },
-        { label: 'German', value: 'GERMAN' },
-    ];
-    calendarSubscriptionUrlCopied = signal(false);
-
-    constructor() {
-        effect(() => {
-            if (this.calendarSubscriptionUrlCopied()) {
-                const timer = setTimeout(() => {
-                    this.calendarSubscriptionUrlCopied.set(false);
-                }, 1000);
-                return () => clearTimeout(timer);
-            }
-        });
-    }
+    calendarSubscriptionToken = signal<string | undefined>(undefined);
+    currentCourseId = signal<number | undefined>(undefined);
 
     ngOnInit(): void {
         this.currentLocaleSubscription = this.translateService.onLangChange.subscribe((event) => {
@@ -100,7 +69,7 @@ export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
         this.activatedRouteSubscription = this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
             const courseIdParameter = parameterMap.get('courseId');
             if (courseIdParameter) {
-                this.courseId.set(+courseIdParameter);
+                this.currentCourseId.set(+courseIdParameter);
                 this.loadEventsForCurrentMonth();
             }
         });
@@ -109,34 +78,6 @@ export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
             next: (token) => this.calendarSubscriptionToken.set(token),
             error: () => this.alertService.addErrorAlert(''), // TODO: add error message string
         });
-    }
-
-    private buildCalendarSubscriptionURL(
-        courseId: number | undefined,
-        subscriptionToken: string | undefined,
-        includeLectureEvents: boolean,
-        includeExerciseEvents: boolean,
-        includeTutorialEvents: boolean,
-        includeExamEvents: boolean,
-        language: 'ENGLISH' | 'GERMAN',
-    ): string | undefined {
-        if (!courseId || !subscriptionToken) return undefined;
-        const origin = window.location.origin;
-        const route = `/api/core/calendar/courses/${courseId}/subscription/calendar-events.ics`;
-
-        const filterOptions: string[] = [];
-        if (includeLectureEvents) filterOptions.push('LECTURES');
-        if (includeExerciseEvents) filterOptions.push('EXERCISES');
-        if (includeTutorialEvents) filterOptions.push('TUTORIALS');
-        if (includeExamEvents) filterOptions.push('EXAMS');
-        const queryParameters = new URLSearchParams();
-        queryParameters.set('token', subscriptionToken);
-        if (filterOptions.length > 0) {
-            queryParameters.set('filterOptions', filterOptions.join(','));
-        }
-        queryParameters.set('language', language);
-
-        return origin + route + '?' + queryParameters.toString();
     }
 
     ngOnDestroy() {
@@ -195,16 +136,8 @@ export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
         }
     }
 
-    copyCalendarSubscriptionUrlToClipboard() {
-        const url = this.calendarSubscriptionUrl();
-        if (url) {
-            this.calendarSubscriptionUrlCopied.set(true);
-            navigator.clipboard.writeText(url);
-        }
-    }
-
     private loadEventsForCurrentMonth(): void {
-        const courseId = this.courseId();
+        const courseId = this.currentCourseId();
         if (!courseId) return;
         this.isLoading.set(true);
         this.calendarService

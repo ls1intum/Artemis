@@ -25,11 +25,20 @@
                 "exams": "Klausuren"
             },
             "filterButtonLabel": "Filter",
-            "subscribeButtonLabel": "Abbonieren",
+            "subscribeButtonLabel": "Abonnieren",
             "todayButtonLabel": "Heute",
             "weekButtonLabel": "Woche",
             "monthButtonLabel": "Monat",
-            "loadingError": "Die Kalenderevents konnten nicht geladen werden. Bitte versuche es erneut indem du die Seite aktualisierst."
+            "loadingError": "Die Kalenderevents konnten nicht geladen werden. Bitte versuche es erneut indem du die Seite aktualisierst.",
+            "subscriptionPopover": {
+                "title": "iCalendar Abonnement",
+                "configurationExplanation": "Um dein Abonnement zu konfigurieren, wähle bitte eine Sprache und entscheide für welche Kursinhalte du Events abonnieren möchtest:",
+                "copyExplanation": "Du kannst den folgenden Link verwenden, um den Artemis Kalender in externen Kalender Anwendungen zu abonnieren.",
+                "languageOption": {
+                    "german": "Deutsch",
+                    "english": "Englisch"
+                }
+            }
         }
     }
 }
