@@ -4,7 +4,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
-    <changeSet id="20250626094500-1" author="Alphar">
+    <changeSet id="20250818094500" author="Alphar">
         <createTable tableName="exercise_version">
             <!-- Common fields -->
             <column autoIncrement="true" name="id" type="bigint">
@@ -16,13 +16,9 @@
             <column name="exercise_id" type="bigint">
                 <constraints nullable="false" />
             </column>
-            <column name="metadata" type="json">
-                <constraints nullable="false" />
-            </column>
             <column name="exercise_snapshot" type="json">
                 <constraints nullable="false" />
             </column>
-
             <!-- Auditing fields -->
             <column name="created_by" type="varchar(50)">
                 <constraints nullable="false" />

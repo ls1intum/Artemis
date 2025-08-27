@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -25,15 +26,12 @@ public class ExerciseVersion extends AbstractAuditingEntity {
 
     @ManyToOne
     @JoinColumn(name = "author_id")
+    @Nullable
     private User author;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "metadata", columnDefinition = "json")
-    private ExerciseVersionMetadata metadata;
-
-    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "exercise_snapshot", columnDefinition = "json")
-    private Exercise exerciseSnapshot;
+    private ExerciseSnapshot exerciseSnapshot;
 
     public Exercise getExercise() {
         return exercise;
@@ -51,19 +49,11 @@ public class ExerciseVersion extends AbstractAuditingEntity {
         this.author = author;
     }
 
-    public ExerciseVersionMetadata getMetadata() {
-        return metadata;
-    }
-
-    public void setMetadata(ExerciseVersionMetadata metadata) {
-        this.metadata = metadata;
-    }
-
-    public Exercise getExerciseSnapshot() {
+    public ExerciseSnapshot getExerciseSnapshot() {
         return exerciseSnapshot;
     }
 
-    public void setExerciseSnapshot(Exercise exerciseSnapshot) {
+    public void setExerciseSnapshot(ExerciseSnapshot exerciseSnapshot) {
         this.exerciseSnapshot = exerciseSnapshot;
     }
 }

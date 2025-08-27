@@ -113,8 +113,8 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * This includes: testCases, tasks, auxiliaryRepositories, staticCodeAnalysisCategories, buildConfig
      */
     @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "templateParticipation", "solutionParticipation", "tasks", "testCases", "staticCodeAnalysisCategories",
-            "submissionPolicy", "buildConfig", "competencyLinks", "competencyLinks.competency", "categories", "teamAssignmentConfig", "gradingCriteria", "exampleSolution",
-            "exampleSubmission.submission", "plagiarismDetectionConfig" })
+            "submissionPolicy", "buildConfig", "competencyLinks", "competencyLinks.competency", "categories", "teamAssignmentConfig", "gradingCriteria",
+            "exampleSubmissions.submission", "attachments", "plagiarismDetectionConfig" })
     Optional<ProgrammingExercise> findWithEagerForVersioningById(long exerciseId);
 
     /**
