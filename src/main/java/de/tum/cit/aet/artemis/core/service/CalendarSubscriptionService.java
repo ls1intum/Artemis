@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.component.VEvent;
 import net.fortuna.ical4j.model.property.Contact;
+import net.fortuna.ical4j.model.property.Description;
 import net.fortuna.ical4j.model.property.Location;
 import net.fortuna.ical4j.model.property.ProdId;
 import net.fortuna.ical4j.model.property.Uid;
@@ -87,19 +88,19 @@ public class CalendarSubscriptionService {
         return hexString.toString();
     }
 
-    public String getICSFileAsString(Language language, Set<CalendarEventDTO> calendarEventDTOs) {
+    public String getICSFileAsString(String courseTitle, Language language, Set<CalendarEventDTO> calendarEventDTOs) {
         Calendar calendar = new Calendar();
         calendar.add(new ProdId("-//TUM//Artemis//" + language.getShortName().toUpperCase()));
         calendar.add(ImmutableVersion.VERSION_2_0);
         calendar.add(ImmutableCalScale.GREGORIAN);
         calendar.add(ImmutableMethod.PUBLISH);
 
-        calendarEventDTOs.forEach(calendarEventDTO -> calendar.add(getVEventFrom(calendarEventDTO)));
+        calendarEventDTOs.forEach(calendarEventDTO -> calendar.add(getVEventFrom(calendarEventDTO, courseTitle, language)));
 
         return calendar.toString();
     }
 
-    private VEvent getVEventFrom(CalendarEventDTO calendarEventDTO) {
+    private VEvent getVEventFrom(CalendarEventDTO calendarEventDTO, String courseTitle, Language language) {
         Instant start = calendarEventDTO.startDate().toInstant();
         Instant end = calendarEventDTO.endDate() != null ? calendarEventDTO.endDate().toInstant() : null;
 
@@ -116,6 +117,12 @@ public class CalendarSubscriptionService {
         if (calendarEventDTO.facilitator() != null && !calendarEventDTO.facilitator().isBlank()) {
             event.add(new Contact(calendarEventDTO.facilitator()));
         }
+
+        String eventType = switch (language) {
+            case GERMAN -> calendarEventDTO.type().getGermanDescription();
+            case ENGLISH -> calendarEventDTO.type().getEnglishDescription();
+        };
+        event.add(new Description(courseTitle + " | " + eventType));
 
         return event;
     }

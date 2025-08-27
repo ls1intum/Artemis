@@ -126,7 +126,7 @@ public class CalendarResource {
         Set<CalendarEventDTO> calendarEventDTOs = Stream.of(tutorialEventDTOs, lectureEventDTOs, examEventDTOs, quizExerciseEventDTOs, otherExerciseEventDTOs).flatMap(Set::stream)
                 .collect(Collectors.toSet());
 
-        String icsFileString = calendarSubscriptionService.getICSFileAsString(language, calendarEventDTOs);
+        String icsFileString = calendarSubscriptionService.getICSFileAsString(course.getTitle(), language, calendarEventDTOs);
         return ResponseEntity.ok().contentType(MediaType.parseMediaType("text/calendar; charset=utf-8"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=calendarEvents.ics").body(icsFileString);
     }
