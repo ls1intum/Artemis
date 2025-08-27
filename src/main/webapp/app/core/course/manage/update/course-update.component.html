@@ -43,9 +43,11 @@
                     </div>
                     <div class="col-2">
                         <div class="form-group" style="position: relative">
-                            <label class="form-control-label" jhiTranslate="artemisApp.course.color" for="field_title"></label>
+                            <label class="form-control-label" jhiTranslate="artemisApp.course.color"></label>
                             <div
                                 class="color-preview form-control"
+                                role="button"
+                                [attr.aria-label]="'artemisApp.course.color' | artemisTranslate"
                                 [ngStyle]="{ backgroundColor: courseForm.get('color')!.value || ARTEMIS_DEFAULT_COLOR }"
                                 (click)="openColorSelector($event)"
                             ></div>
@@ -79,9 +81,14 @@
                             @for (organization of courseOrganizations; track organization) {
                                 <div>
                                     <h5>
-                                        <span class="badge bg-primary font-weight-normal m-1" [ngClass]="{ 'ps-3': isAdmin }">
+                                        <span class="badge bg-primary font-weight-normal m-2 ps-2">
                                             {{ organization.name }}
-                                            <button id="removeOrganizationButton" type="button" class="btn text-light" (click)="removeOrganizationFromCourse(organization)">
+                                            <button
+                                                id="removeOrganizationButton-{{ organization.id }}"
+                                                type="button"
+                                                class="btn text-light"
+                                                (click)="removeOrganizationFromCourse(organization)"
+                                            >
                                                 <fa-icon [icon]="faTimes" />
                                             </button>
                                         </span>
