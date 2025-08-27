@@ -102,10 +102,10 @@ public class CalendarSubscriptionService {
 
     private VEvent getVEventFrom(CalendarEventDTO calendarEventDTO, String courseShortName, Language language) {
         Instant start = calendarEventDTO.startDate().toInstant();
-        Instant end = calendarEventDTO.endDate() != null ? calendarEventDTO.endDate().toInstant() : null;
+        Instant end = calendarEventDTO.endDate() != null ? calendarEventDTO.endDate().toInstant() : start;
         String eventType = getEventTypeDescription(language, calendarEventDTO.type());
         String title = courseShortName + " " + eventType + " | " + calendarEventDTO.title();
-        VEvent event = (end != null) ? new VEvent(start, end, title) : new VEvent(start, title);
+        VEvent event = new VEvent(start, end, title);
 
         String stableUniqueEventKey = calendarEventDTO.id() + "|" + artemisServerUrl;
         UUID uuid = UUID.nameUUIDFromBytes(stableUniqueEventKey.getBytes(StandardCharsets.UTF_8));
