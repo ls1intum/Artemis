@@ -2,9 +2,8 @@ package de.tum.cit.aet.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Answers.RETURNS_DEEP_STUBS;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -12,8 +11,13 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -42,15 +46,15 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
     @Autowired
     private LectureTestRepository lectureRepository;
 
-    // Deep-stubbed RestClient so we can call get().uri(...).retrieve().body(...)
-    private RestClient restClient;
+    @MockBean
+    private RestTemplate restTemplate;
 
     @BeforeEach
     void setUp() {
-        restClient = mock(RestClient.class, RETURNS_DEEP_STUBS);
-        // swap RestClient inside the already-constructed bean
-        ReflectionTestUtils.setField(service, "restClient", restClient);
-        // removed: objectMapper injection (the service doesn’t have that field)
+        // Inject mock RestTemplate and configuration values
+        ReflectionTestUtils.setField(service, "restTemplate", restTemplate);
+        ReflectionTestUtils.setField(service, "nebulaBaseUrl", "http://localhost:8080");
+        ReflectionTestUtils.setField(service, "nebulaSecretToken", "test-token");
     }
 
     @Test
@@ -79,7 +83,8 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
         NebulaTranscriptionStatusResponseDTO response = new NebulaTranscriptionStatusResponseDTO(NebulaTranscriptionStatus.DONE, null, "en", List.of());
 
-        when(restClient.get().uri(eq("/transcribe/status/" + jobId)).retrieve().body(eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(response);
+        when(restTemplate.exchange(eq("http://localhost:8080/transcribe/status/" + jobId), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(new ResponseEntity<>(response, HttpStatus.OK));
 
         service.processTranscription(t);
 
@@ -97,7 +102,8 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
         NebulaTranscriptionStatusResponseDTO errorResponse = new NebulaTranscriptionStatusResponseDTO(NebulaTranscriptionStatus.ERROR, "Boom!", null, null);
 
-        when(restClient.get().uri(eq("/transcribe/status/job-err")).retrieve().body(eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(errorResponse);
+        when(restTemplate.exchange(eq("http://localhost:8080/transcribe/status/job-err"), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(new ResponseEntity<>(errorResponse, HttpStatus.OK));
 
         service.processTranscription(t);
 
@@ -117,7 +123,8 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
         NebulaTranscriptionStatusResponseDTO runningResponse = new NebulaTranscriptionStatusResponseDTO(NebulaTranscriptionStatus.RUNNING, null, null, null);
 
-        when(restClient.get().uri(eq("/transcribe/status/job-running")).retrieve().body(eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(runningResponse);
+        when(restTemplate.exchange(eq("http://localhost:8080/transcribe/status/job-running"), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(new ResponseEntity<>(runningResponse, HttpStatus.OK));
 
         service.processTranscription(t);
 
@@ -136,7 +143,8 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
         NebulaTranscriptionStatusResponseDTO processingResponse = new NebulaTranscriptionStatusResponseDTO(NebulaTranscriptionStatus.PROCESSING, null, null, null);
 
-        when(restClient.get().uri(eq("/transcribe/status/job-processing")).retrieve().body(eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(processingResponse);
+        when(restTemplate.exchange(eq("http://localhost:8080/transcribe/status/job-processing"), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(new ResponseEntity<>(processingResponse, HttpStatus.OK));
 
         service.processTranscription(t);
 

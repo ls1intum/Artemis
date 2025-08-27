@@ -4,13 +4,18 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
@@ -40,13 +45,20 @@ public class LectureTranscriptionService {
 
     private final LectureUnitRepository lectureUnitRepository;
 
-    private final RestClient restClient;
+    private final RestTemplate restTemplate;
+
+    private final String nebulaBaseUrl;
+
+    private final String nebulaSecretToken;
 
     public LectureTranscriptionService(LectureTranscriptionRepository lectureTranscriptionRepository, LectureUnitRepository lectureUnitRepository,
-            RestClient.Builder restClientBuilder, @Value("${artemis.nebula.url}") String nebulaBaseUrl, @Value("${artemis.nebula.secret}") String nebulaSecretToken) {
+            @Qualifier("nebulaRestTemplate") RestTemplate restTemplate, @Value("${artemis.nebula.url}") String nebulaBaseUrl,
+            @Value("${artemis.nebula.secret}") String nebulaSecretToken) {
         this.lectureTranscriptionRepository = lectureTranscriptionRepository;
         this.lectureUnitRepository = lectureUnitRepository;
-        this.restClient = restClientBuilder.baseUrl(nebulaBaseUrl).defaultHeader("Authorization", nebulaSecretToken).build();
+        this.restTemplate = restTemplate;
+        this.nebulaBaseUrl = nebulaBaseUrl;
+        this.nebulaSecretToken = nebulaSecretToken;
     }
 
     /**
@@ -59,7 +71,13 @@ public class LectureTranscriptionService {
     public void processTranscription(LectureTranscription transcription) {
         String jobId = transcription.getJobId();
         try {
-            NebulaTranscriptionStatusResponseDTO response = restClient.get().uri("/transcribe/status/" + jobId).retrieve().body(NebulaTranscriptionStatusResponseDTO.class);
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", nebulaSecretToken);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            String url = nebulaBaseUrl + "/transcribe/status/" + jobId;
+            ResponseEntity<NebulaTranscriptionStatusResponseDTO> responseEntity = restTemplate.exchange(url, HttpMethod.GET, entity, NebulaTranscriptionStatusResponseDTO.class);
+            NebulaTranscriptionStatusResponseDTO response = responseEntity.getBody();
 
             if (response.isCompleted()) {
                 LectureTranscriptionDTO dto = response.toLectureTranscriptionDTO(transcription.getLectureUnit().getId());
@@ -162,11 +180,17 @@ public class LectureTranscriptionService {
         try {
             log.info("Starting transcription for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
 
-            NebulaTranscriptionInitResponseDTO response = restClient.post().uri("/transcribe/start").header("Content-Type", "application/json").body(request).retrieve()
-                    .body(NebulaTranscriptionInitResponseDTO.class);
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Content-Type", "application/json");
+            headers.set("Authorization", nebulaSecretToken);
+            HttpEntity<NebulaTranscriptionRequestDTO> entity = new HttpEntity<>(request, headers);
+
+            String url = nebulaBaseUrl + "/transcribe/start";
+            ResponseEntity<NebulaTranscriptionInitResponseDTO> responseEntity = restTemplate.exchange(url, HttpMethod.POST, entity, NebulaTranscriptionInitResponseDTO.class);
+            NebulaTranscriptionInitResponseDTO response = responseEntity.getBody();
 
             // Validate response
-            if (response == null || response.transcriptionId() == null) {
+            if (response.transcriptionId() == null) {
                 log.error("Nebula returned null or missing transcription ID for Lecture ID {}, Unit ID {}", lectureId, lectureUnitId);
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Nebula did not return a valid transcription ID");
             }
