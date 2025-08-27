@@ -16,6 +16,9 @@
             <column name="league_id" type="int">
                 <constraints nullable="false"/>
             </column>
+            <column name="total_score" type="int">
+                <constraints nullable="false"/>
+            </column>
             <column name="score" type="int">
                 <constraints nullable="false"/>
             </column>

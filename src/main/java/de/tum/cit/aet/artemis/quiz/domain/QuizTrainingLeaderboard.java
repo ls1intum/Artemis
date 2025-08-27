@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 
@@ -12,16 +13,19 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @Entity
 public class QuizTrainingLeaderboard extends DomainObject {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn
     private Course course;
 
     @Column(name = "league_id")
     private long leagueId;
+
+    @Column(name = "total_score")
+    private int totalScore;
 
     @Column(name = "score")
     private int score;
@@ -57,6 +61,14 @@ public class QuizTrainingLeaderboard extends DomainObject {
 
     public void setLeagueId(long leagueId) {
         this.leagueId = leagueId;
+    }
+
+    public int getTotalScore() {
+        return totalScore;
+    }
+
+    public void setTotalScore(int totalScore) {
+        this.totalScore = totalScore;
     }
 
     public int getScore() {
