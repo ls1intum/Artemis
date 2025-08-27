@@ -121,11 +121,17 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * after 20 failed attempts in row, increase the timeout to 600 seconds
      */
     stompFailureCallback() {
+        // eslint-disable-next-line no-undef
+        console.log('stompFailureCallback');
         this.connecting = false;
         this.consecutiveFailedAttempts++;
+        // eslint-disable-next-line no-undef
+        console.log('failed attempts: ', this.consecutiveFailedAttempts);
         if (this.connectionStateInternal.getValue().connected) {
             this.connectionStateInternal.next(new ConnectionState(false, this.alreadyConnectedOnce, false));
         }
+        // eslint-disable-next-line no-undef
+        console.log('should reconnect: ', this.shouldReconnect);
         if (this.shouldReconnect) {
             let waitUntilReconnectAttempt;
             if (this.consecutiveFailedAttempts > 20) {
