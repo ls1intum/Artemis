@@ -1519,20 +1519,22 @@ public class ProgrammingExerciseTestService {
     private void setupAuxRepoLocalVC(AuxiliaryRepository auxiliaryRepository) throws GitAPIException, IOException {
         // Setup proper LocalVC repository structure for auxiliary repository
         String projectKey = auxiliaryRepository.getExercise().getProjectKey();
-        String auxRepositorySlug = projectKey.toLowerCase() + "-auxiliary-" + auxiliaryRepository.getName().toLowerCase();
+        String auxRepositorySlug = auxiliaryRepository.getExercise().generateRepositoryName(auxiliaryRepository.getName().toLowerCase());
 
         // Create the repository folder in the LocalVC structure
         Path projectFolder = localVCRepoPath.resolve(projectKey);
-        if (!Files.exists(projectFolder)) {
-            Files.createDirectories(projectFolder);
-        }
+        Files.createDirectories(projectFolder);
         Path repositoryFolder = projectFolder.resolve(auxRepositorySlug + ".git");
+
+        if (Files.exists(repositoryFolder)) {
+            FileUtils.deleteDirectory(repositoryFolder.toFile());
+        }
         Files.createDirectories(repositoryFolder);
 
         // Copy the bare repository to the LocalVC location
         FileUtils.copyDirectory(auxRepo.remoteBareGitRepoFile, repositoryFolder.toFile());
 
-        auxiliaryRepository.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + auxRepositorySlug + ".git");
+        auxiliaryRepository.setRepositoryUri(localVCBaseUri.resolve("/git/" + projectKey + "/" + auxRepositorySlug + ".git").toString());
 
         auxiliaryRepositoryRepository.save(auxiliaryRepository);
     }
