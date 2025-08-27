@@ -67,8 +67,8 @@ class HyperionReviewAndRefineResourceTest {
         var issues = List.of(new ConsistencyIssueDTO(Severity.MEDIUM, "METHOD_PARAMETER_MISMATCH", "desc", "fix", List.of()));
         when(consistencyCheckService.checkConsistency(eq(user), eq(exercise))).thenReturn(new ConsistencyCheckResponseDTO(issues, true, "Found 1 consistency issue(s)"));
 
-        mockMvc.perform(post("/api/hyperion/exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isOk()).andExpect(jsonPath("$.hasIssues").value(true))
-                .andExpect(jsonPath("$.issues[0].category").value("METHOD_PARAMETER_MISMATCH"));
+        mockMvc.perform(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.hasIssues").value(true)).andExpect(jsonPath("$.issues[0].category").value("METHOD_PARAMETER_MISMATCH"));
     }
 
     @Test
@@ -85,7 +85,7 @@ class HyperionReviewAndRefineResourceTest {
         when(rewriteService.rewriteProblemStatement(eq(user), eq(course), eq("Original"))).thenReturn(new ProblemStatementRewriteResponseDTO("Rewritten", true));
 
         String body = "{\"problemStatementText\":\"Original\"}";
-        mockMvc.perform(post("/api/hyperion/courses/{courseId}/problem-statement-rewrite", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+        mockMvc.perform(post("/api/hyperion/courses/{courseId}/problem-statements/rewrite", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.rewrittenText").value("Rewritten")).andExpect(jsonPath("$.improved").value(true));
     }
 }

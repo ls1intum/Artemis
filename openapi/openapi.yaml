@@ -148,7 +148,7 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/TutorialGroupRegistrationImport'}
-  /api/hyperion/exercises/{exerciseId}/consistency-check:
+  /api/hyperion/programming-exercises/{programmingExerciseId}/consistency-check:
     post:
       tags: [hyperion-review-and-refine]
       summary: Check exercise consistency
@@ -156,7 +156,7 @@ paths:
         problem statement, template code, solution code, and test cases
       operationId: checkExerciseConsistency
       parameters:
-      - name: exerciseId
+      - name: programmingExerciseId
         in: path
         description: ID of the programming exercise to analyze
         required: true
@@ -177,7 +177,7 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ConsistencyCheckResponse'}
-  /api/hyperion/courses/{courseId}/problem-statement-rewrite:
+  /api/hyperion/courses/{courseId}/problem-statements/rewrite:
     post:
       tags: [hyperion-review-and-refine]
       summary: Rewrite problem statement

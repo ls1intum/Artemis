@@ -35,7 +35,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
- * REST controller for programming exercise review and enhancement using Hyperion service.
+ * REST controller for exercise review and refinement assistance powered by Hyperion.
  */
 @RestController
 @Lazy
@@ -65,39 +65,40 @@ public class HyperionReviewAndRefineResource {
     }
 
     /**
-     * Analyzes a programming exercise for consistency issues between problem statement,
-     * template code, solution code, and test cases using the Hyperion service.
+     * POST /programming-exercises/{programmingExerciseId}/consistency-check : Analyze a programming exercise for consistency issues.
      *
-     * @param exerciseId the ID of the programming exercise to analyze
-     * @return HTTP 200 with consistency analysis results, or appropriate error status
+     * Analyzes problem statement, template code, solution code, and test cases for consistency issues.
+     *
+     * @param programmingExerciseId the ID of the programming exercise to analyze
+     * @return the ResponseEntity with status 200 (OK) and the consistency analysis results, or appropriate error status
      */
     @Operation(summary = "Check exercise consistency", description = "Analyzes a programming exercise for consistency issues between problem statement, template code, solution code, and test cases")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Consistency check completed successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ConsistencyCheckResponseDTO.class))),
             @ApiResponse(responseCode = "503", description = "Hyperion service unavailable"), @ApiResponse(responseCode = "500", description = "Internal server error") })
     @EnforceAtLeastInstructorInExercise
-    @PostMapping("exercises/{exerciseId}/consistency-check")
+    @PostMapping("programming-exercises/{programmingExerciseId}/consistency-check")
     public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(
-            @Parameter(description = "ID of the programming exercise to analyze", required = true) @PathVariable Long exerciseId) {
+            @Parameter(description = "ID of the programming exercise to analyze", required = true) @PathVariable Long programmingExerciseId) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
 
-        log.info("Performing consistency check for exercise {} by user {}", exerciseId, user.getLogin());
+        log.info("Performing consistency check for programming exercise {} by user {}", programmingExerciseId, user.getLogin());
 
         try {
             ConsistencyCheckResponseDTO result = consistencyCheckService.checkConsistency(user, programmingExercise);
-            log.info("Consistency check completed successfully for exercise {}", exerciseId);
+            log.info("Consistency check completed successfully for programming exercise {}", programmingExerciseId);
             return ResponseEntity.ok(result);
         }
         catch (NetworkingException e) {
             Throwable cause = e.getCause();
             if (cause == null) {
                 // Chat client not configured or similar non-upstream condition
-                log.warn("Consistency check unavailable for exercise {}: {}", exerciseId, e.getMessage());
+                log.warn("Consistency check unavailable for programming exercise {}: {}", programmingExerciseId, e.getMessage());
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
             }
             if (cause instanceof TransientAiException) {
-                log.warn("Consistency check transient AI error for exercise {}: {}", exerciseId, cause.getMessage());
+                log.warn("Consistency check transient AI error for programming exercise {}: {}", programmingExerciseId, cause.getMessage());
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
             }
             if (cause instanceof NonTransientAiException) {
@@ -108,21 +109,21 @@ public class HyperionReviewAndRefineResource {
                 }
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
-            log.error("Consistency check failed for exercise {}: {}", exerciseId, e.getMessage(), e);
+            log.error("Consistency check failed for programming exercise {}: {}", programmingExerciseId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
         catch (Exception e) {
-            log.error("Consistency check failed for exercise {}: {}", exerciseId, e.getMessage(), e);
+            log.error("Consistency check failed for programming exercise {}: {}", programmingExerciseId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     /**
-     * Rewrites and improves a problem statement using the Hyperion service.
+     * POST /courses/{courseId}/problem-statements/rewrite : Rewrite and improve a problem statement using AI.
      *
      * @param courseId   the ID of the course containing the problem statement
      * @param requestDTO the request containing the problem statement text to be improved
-     * @return HTTP 200 with improved problem statement text, or appropriate error status
+     * @return the ResponseEntity with status 200 (OK) and the improved problem statement text, or appropriate error status
      */
     @Operation(summary = "Rewrite problem statement", description = "Rewrites and improves a problem statement using AI assistance")
     @ApiResponses(value = {
@@ -130,7 +131,7 @@ public class HyperionReviewAndRefineResource {
             @ApiResponse(responseCode = "400", description = "Invalid request body"), @ApiResponse(responseCode = "503", description = "Hyperion service unavailable"),
             @ApiResponse(responseCode = "500", description = "Internal server error") })
     @EnforceAtLeastInstructorInCourse
-    @PostMapping("courses/{courseId}/problem-statement-rewrite")
+    @PostMapping("courses/{courseId}/problem-statements/rewrite")
     public ResponseEntity<ProblemStatementRewriteResponseDTO> rewriteProblemStatement(@Parameter(description = "ID of the course", required = true) @PathVariable Long courseId,
             @Parameter(description = "Request containing the problem statement to rewrite", required = true) @RequestBody ProblemStatementRewriteRequestDTO requestDTO) {
 
