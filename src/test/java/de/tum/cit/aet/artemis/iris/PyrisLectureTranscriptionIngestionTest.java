@@ -75,12 +75,6 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
         activateIrisGlobally();
 
-        textUnit.setLecture(lecture1);
-        textUnit = lectureUnitRepository.saveAndFlush(textUnit);
-        // Create transcription the new way, using the service
-        String uniqueJobId = "test-job-id-" + UUID.randomUUID();
-        lectureTranscriptionService.createEmptyTranscription(lecture1.getId(), lectureUnit.getId(), uniqueJobId);
-
         LectureTranscriptionSegment segment1 = new LectureTranscriptionSegment(0.0, 12.0, "Welcome to today's lecture", 1);
         LectureTranscriptionSegment segment2 = new LectureTranscriptionSegment(0.0, 12.0, "Today we will talk about Artemis", 1);
         LectureTranscription transcription = new LectureTranscription("en", List.of(new LectureTranscriptionSegment[] { segment1, segment2 }), this.lectureUnit);
