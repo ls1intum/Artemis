@@ -241,7 +241,7 @@ public class QuizQuestionProgressService {
         QuizQuestionProgressData data = existingProgress.getProgressJson() != null ? existingProgress.getProgressJson() : new QuizQuestionProgressData();
 
         ZonedDateTime dueDate = data.getDueDate() != null ? data.getDueDate() : null;
-        if (dueDate == null || !dueDate.isBefore(answeredAt)) {
+        if (dueDate == null || !dueDate.isAfter(answeredAt)) {
             existingProgress.setQuizQuestionId(question.getId());
             existingProgress.setUserId(userId);
             double score = question.getPoints() > 0 ? answer.getScoreInPoints() / question.getPoints() : 0.0;
