@@ -11,7 +11,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,9 +26,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -84,114 +81,19 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     private PageImpl<Post> findPostsWithSpecification(Pageable pageable, Specification<Post> specification) {
         // Only fetch the postIds without any left joins to avoid that Hibernate loads all objects and creates the page in Java
         long start = System.nanoTime();
-        Page<Long> postIdsPage = findPostIdsWithSpecification(specification, pageable);
+        Page<Long> postIds = findPostIdsWithSpecification(specification, pageable);
         log.debug("findPostIdsWithSpecification took {}", TimeLogUtil.formatDurationFrom(start));
-        List<Long> postIds = postIdsPage.getContent();
         // Fetch all necessary attributes to avoid lazy loading (even though relations are defined as EAGER in the domain class, specification queries do not respect this)
         long start2 = System.nanoTime();
-        List<Post> basePosts = findPostsWithSingleValuedRels(postIds);
-        Map<Long, Post> postsById = basePosts.stream().collect(Collectors.toMap(Post::getId, p -> p));
-        log.debug("findPostsWithSingleValuedRels took {}", TimeLogUtil.formatDurationFrom(start2));
-        // Defensive init/clear to avoid stale state if entity manager reused
-        basePosts.forEach(p -> {
-            if (p.getReactions() != null) {
-                p.getReactions().clear();
-            }
-            if (p.getAnswers() != null) {
-                p.getAnswers().clear();
-            }
-        });
-        // Fetch reactions for posts and attach
-        long start3 = System.nanoTime();
-        List<Reaction> postReactions = findReactionsByPostIds(postIds);
-        for (Reaction r : postReactions) {
-            Post p = r.getPost();
-            if (p != null) { // should be set; guard just in case
-                Post owner = postsById.get(p.getId());
-                if (owner != null) {
-                    owner.addReaction(r);
-                }
-            }
-        }
-        log.debug("findReactionsByPostIds took {}", TimeLogUtil.formatDurationFrom(start3));
-        // Fetch answers (with author + backref post) and attach
-        long start4 = System.nanoTime();
-        List<AnswerPost> answers = findAnswerPostsByPostIds(postIds);
-        Map<Long, List<AnswerPost>> answersByPostId = answers.stream().collect(Collectors.groupingBy(a -> a.getPost().getId()));
-        answersByPostId.forEach((pid, aps) -> {
-            Post owner = postsById.get(pid);
-            if (owner != null) {
-                aps.forEach(owner::addAnswerPost);
-            }
-        });
-        log.debug("findAnswerPostsByPostIds took {}", TimeLogUtil.formatDurationFrom(start4));
-        // Fetch reactions for answers and attach
-        if (!answers.isEmpty()) {
-            long start5 = System.nanoTime();
-            List<Long> answerIds = answers.stream().map(AnswerPost::getId).toList();
-            List<Reaction> answerReactions = findReactionsByAnswerPostIds(answerIds);
-
-            // Build quick lookup for answers (avoid O(n^2))
-            Map<Long, AnswerPost> answerById = answers.stream().collect(Collectors.toMap(AnswerPost::getId, a -> a));
-
-            // Clean existing reaction sets before filling
-            answers.forEach(a -> {
-                if (a.getReactions() != null) {
-                    a.getReactions().clear();
-                }
-            });
-
-            for (Reaction r : answerReactions) {
-                if (r.getAnswerPost() != null) {
-                    AnswerPost ap = answerById.get(r.getAnswerPost().getId());
-                    if (ap != null) {
-                        ap.addReaction(r);
-                    }
-                }
-            }
-            log.debug("findReactionsByAnswerPostIds took {}", TimeLogUtil.formatDurationFrom(start5));
-        }
+        List<Post> posts = findByPostIdsWithEagerRelationships(postIds.getContent());
         // Make sure to sort the posts in the same order as the postIds
-        List<Post> ordered = postIds.stream().map(postsById::get).filter(Objects::nonNull).toList();
+        Map<Long, Post> postMap = posts.stream().collect(Collectors.toMap(Post::getId, post -> post));
+        posts = postIds.stream().map(postMap::get).toList();
+        log.debug("findByPostIdsWithEagerRelationships took {}", TimeLogUtil.formatDurationFrom(start2));
         // Recreate the page with the fetched posts
-        return new PageImpl<>(ordered, postIdsPage.getPageable(), postIdsPage.getTotalElements());
+        return new PageImpl<>(posts, postIds.getPageable(), postIds.getTotalElements());
     }
 
-    // Only fetch @ManyToOne (author and conversation) and simple filed like tags
-    @Query("""
-                SELECT DISTINCT p
-                FROM Post p
-                    LEFT JOIN FETCH p.author
-                    LEFT JOIN FETCH p.conversation
-                    LEFT JOIN FETCH p.tags
-                WHERE p.id IN :postIds
-            """)
-    List<Post> findPostsWithSingleValuedRels(@Param("postIds") List<Long> postIds);
-
-    @Query("""
-                SELECT r
-                FROM Reaction r
-                WHERE r.post.id IN :postIds
-            """)
-    List<Reaction> findReactionsByPostIds(@Param("postIds") List<Long> postIds);
-
-    @Query("""
-                SELECT a
-                FROM AnswerPost a
-                    LEFT JOIN FETCH a.author
-                    LEFT JOIN FETCH a.post
-                 WHERE a.post.id IN :postIds
-            """)
-    List<AnswerPost> findAnswerPostsByPostIds(@Param("postIds") List<Long> postIds);
-
-    @Query("""
-                SELECT r
-                FROM Reaction r
-                WHERE r.answerPost.id IN :answerPostIds
-            """)
-    List<Reaction> findReactionsByAnswerPostIds(@Param("answerPostIds") List<Long> answerPostIds);
-
-    // Multiple LEFT JOIN FETCHes on at least 4 collections
     @Query("""
             SELECT p
             FROM Post p
