@@ -20,7 +20,6 @@ import org.apache.commons.io.filefilter.NotFileFilter;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -70,9 +69,6 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final BuildPlanRepository buildPlanRepository;
 
-    @Value("${artemis.temp-path}")
-    private Path tempPath;
-
     public ProgrammingExerciseImportFromFileService(ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ZipFileService zipFileService, StaticCodeAnalysisService staticCodeAnalysisService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, RepositoryService repositoryService, GitService gitService, FileService fileService,
@@ -108,7 +104,7 @@ public class ProgrammingExerciseImportFromFileService {
         Path importExerciseDir = null;
         ProgrammingExercise newProgrammingExercise;
         try {
-            importExerciseDir = Files.createTempDirectory(tempPath, "imported-exercise-dir");
+            importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
             Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
 
             zipFile.transferTo(exerciseFilePath);

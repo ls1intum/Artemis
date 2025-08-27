@@ -21,8 +21,8 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testExtractZipFileRecursively_unzipsNestedZipCorrectly() throws IOException {
-        Path testDir = Files.createTempDirectory(tempPath, "test-dir");
-        Path zipDir = Files.createTempDirectory(tempPath, "zip-dir");
+        Path testDir = Files.createTempDirectory("test-dir");
+        Path zipDir = Files.createTempDirectory("zip-dir");
 
         Path rootDir = Files.createTempDirectory(testDir, "root-dir");
         Path subDir = Files.createTempDirectory(rootDir, "sub-dir");
@@ -47,7 +47,7 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testCreateTemporaryZipFileSchedulesFileForDeletion() throws IOException {
-        var tempZipFile = Files.createTempFile(tempPath, "test", ".zip");
+        var tempZipFile = Files.createTempFile("test", ".zip");
         zipFileService.createTemporaryZipFile(tempZipFile, List.of(), 5);
         assertThat(tempZipFile).exists();
         verify(fileService).schedulePathForDeletion(tempZipFile, 5L);
