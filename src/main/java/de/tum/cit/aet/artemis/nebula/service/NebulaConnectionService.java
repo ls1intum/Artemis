@@ -99,6 +99,12 @@ public class NebulaConnectionService {
         }
     }
 
+    /**
+     * Converts a given HttpStatusCodeException to a NebulaException.
+     *
+     * @param e the HttpStatusCodeException to convert
+     * @return the corresponding NebulaException
+     */
     public NebulaException toNebulaException(HttpStatusCodeException e) {
         return switch (e.getStatusCode().value()) {
             case 401, 403 -> new NebulaForbiddenException();
@@ -107,6 +113,12 @@ public class NebulaConnectionService {
         };
     }
 
+    /**
+     * Tries to extract a detailed error message from the response body of a HttpStatusCodeException.
+     *
+     * @param ex the HttpStatusCodeException containing the response body
+     * @return the extracted error message, or an empty string if extraction fails
+     */
     public String tryExtractErrorMessage(HttpStatusCodeException ex) {
         try {
             return objectMapper.readTree(ex.getResponseBodyAsString()).required("detail").required("errorMessage").asText();
