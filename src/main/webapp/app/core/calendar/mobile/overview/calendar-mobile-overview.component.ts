@@ -13,6 +13,8 @@ import { faChevronLeft, faChevronRight, faXmark } from '@fortawesome/free-solid-
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 
 @Component({
     selector: 'jhi-calendar-mobile-overview',
@@ -25,11 +27,13 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         FaIconComponent,
         NgbPopover,
         CalendarEventFilterComponent,
+        CalendarSubscriptionPopoverComponent,
     ],
     templateUrl: './calendar-mobile-overview.component.html',
     styleUrl: './calendar-mobile-overview.component.scss',
 })
 export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
+    private alertService = inject(AlertService);
     private calendarService = inject(CalendarService);
     private activatedRoute = inject(ActivatedRoute);
     private activatedRouteSubscription?: Subscription;
@@ -44,14 +48,21 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     selectedDate = signal<Dayjs | undefined>(undefined);
     weekdayNameKeys = utils.getWeekDayNameKeys();
     isLoading = signal<boolean>(false);
+    calendarSubscriptionToken = signal<string | undefined>(undefined);
+    currentCourseId = signal<number | undefined>(undefined);
 
     ngOnInit(): void {
         this.activatedRouteSubscription = this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
             const courseIdParameter = parameterMap.get('courseId');
             if (courseIdParameter) {
-                this.courseId = +courseIdParameter;
+                this.currentCourseId.set(+courseIdParameter);
                 this.loadEventsForCurrentMonth();
             }
+        });
+
+        this.calendarService.loadSubscriptionToken().subscribe({
+            next: (token) => this.calendarSubscriptionToken.set(token),
+            error: () => this.alertService.addErrorAlert(''), // TODO: add error message string
         });
     }
 

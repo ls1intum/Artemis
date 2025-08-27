@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { NgStyle } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { Popover } from 'primeng/popover';
 import { Checkbox } from 'primeng/checkbox';
@@ -12,7 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-calendar-subscription-popover',
-    imports: [Popover, Checkbox, SelectButton, TextFieldModule, FormsModule, FaIconComponent, TranslateDirective],
+    imports: [NgStyle, Popover, Checkbox, SelectButton, TextFieldModule, FormsModule, FaIconComponent, TranslateDirective],
     templateUrl: './calendar-subscription-popover.component.html',
     styleUrl: './calendar-subscription-popover.component.scss',
 })
@@ -36,6 +37,7 @@ export class CalendarSubscriptionPopoverComponent implements OnDestroy, OnInit {
     calendarSubscriptionPopover = viewChild<Popover>('calendarSubscriptionPopover');
     subscriptionToken = input.required<string>();
     courseId = input.required<number>();
+    isMobile = input<boolean>(false);
     copiedUrl = signal(false);
     includeLectureEvents = signal(true);
     includeExerciseEvents = signal(true);
