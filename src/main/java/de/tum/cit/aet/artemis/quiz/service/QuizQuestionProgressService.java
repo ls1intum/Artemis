@@ -42,7 +42,7 @@ public class QuizQuestionProgressService {
      * @param score      The achieved score for the question
      * @param answeredAt The time when the question was answered
      */
-    private void updateProgressWithNewAttempt(QuizQuestionProgressData data, double score, ZonedDateTime answeredAt) {
+    public void updateProgressWithNewAttempt(QuizQuestionProgressData data, double score, ZonedDateTime answeredAt) {
         QuizQuestionProgressData.Attempt attempt = new QuizQuestionProgressData.Attempt();
         attempt.setScore(score);
         attempt.setAnsweredAt(answeredAt);
@@ -58,40 +58,30 @@ public class QuizQuestionProgressService {
      * @param existingProgress The previous progress (can be null)
      * @param answeredAt       The time when the question was answered
      */
-    private void updateProgressCalculations(QuizQuestionProgressData data, double score, QuizQuestionProgress existingProgress, ZonedDateTime answeredAt) {
+    public void updateProgressCalculations(QuizQuestionProgressData data, double score, QuizQuestionProgress existingProgress, ZonedDateTime answeredAt) {
         int repetition = calculateRepetition(score, data);
         data.setRepetition(repetition);
 
         double prevEasinessFactor = 2.5;
         int prevInterval = 1;
         int prevSessionCount = 0;
-        ZonedDateTime prevDueDate = null;
 
         if (existingProgress != null && existingProgress.getProgressJson() != null) {
             QuizQuestionProgressData prevData = existingProgress.getProgressJson();
             prevEasinessFactor = prevData.getEasinessFactor();
             prevInterval = prevData.getInterval();
             prevSessionCount = prevData.getSessionCount();
-            prevDueDate = prevData.getDueDate();
         }
 
         double easinessFactor = calculateEasinessFactor(score, prevEasinessFactor);
         data.setEasinessFactor(easinessFactor);
         int sessionCount = prevSessionCount + 1;
         data.setSessionCount(sessionCount);
-
-        data.setInterval(prevInterval);
-        data.setDueDate(prevDueDate);
-        data.setBox(calculateBox(prevInterval));
-        data.setPriority(calculatePriority(sessionCount, prevInterval, score));
-
-        if (prevDueDate == null || !answeredAt.isBefore(prevDueDate)) {
-            int interval = calculateInterval(easinessFactor, prevInterval, repetition);
-            data.setInterval(interval);
-            data.setDueDate(answeredAt.plusDays(interval));
-            data.setBox(calculateBox(interval));
-            data.setPriority(calculatePriority(sessionCount, interval, score));
-        }
+        int interval = calculateInterval(easinessFactor, prevInterval, repetition);
+        data.setInterval(interval);
+        data.setDueDate(answeredAt.plusDays(interval));
+        data.setBox(calculateBox(interval));
+        data.setPriority(calculatePriority(sessionCount, interval, score));
     }
 
     /**
@@ -108,7 +98,7 @@ public class QuizQuestionProgressService {
 
         Map<Long, ZonedDateTime> dueDateMap = progressList.stream().collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> {
             QuizQuestionProgressData data = progress.getProgressJson();
-            return data != null ? data.getDueDate() : null;
+            return data != null ? data.getDueDate() : ZonedDateTime.now();
         }));
 
         ZonedDateTime now = ZonedDateTime.now();
@@ -209,7 +199,7 @@ public class QuizQuestionProgressService {
      * @return The box number for the question, which is used to determine the learning progress of the student
      */
     public int calculateBox(int interval) {
-        if (interval == 1) {
+        if (interval <= 1) {
             return 1;
         }
         else if (interval == 2) {
@@ -250,18 +240,21 @@ public class QuizQuestionProgressService {
         QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(new QuizQuestionProgress());
         QuizQuestionProgressData data = existingProgress.getProgressJson() != null ? existingProgress.getProgressJson() : new QuizQuestionProgressData();
 
-        existingProgress.setLastAnsweredAt(answeredAt);
-        existingProgress.setQuizQuestionId(question.getId());
-        existingProgress.setUserId(userId);
-        double score = question.getPoints() > 0 ? answer.getScoreInPoints() / question.getPoints() : 0.0;
-        updateProgressWithNewAttempt(data, score, answeredAt);
-        updateProgressCalculations(data, score, existingProgress, answeredAt);
-        existingProgress.setProgressJson(data);
-        try {
-            quizQuestionProgressRepository.save(existingProgress);
-        }
-        catch (DataIntegrityViolationException e) {
-            updateExistingProgress(userId, question, data, answeredAt);
+        ZonedDateTime dueDate = data.getDueDate() != null ? data.getDueDate() : null;
+        if (dueDate == null || !dueDate.isBefore(answeredAt)) {
+            existingProgress.setQuizQuestionId(question.getId());
+            existingProgress.setUserId(userId);
+            double score = question.getPoints() > 0 ? answer.getScoreInPoints() / question.getPoints() : 0.0;
+            updateProgressWithNewAttempt(data, score, answeredAt);
+            updateProgressCalculations(data, score, existingProgress, answeredAt);
+            existingProgress.setProgressJson(data);
+            existingProgress.setLastAnsweredAt(answeredAt);
+            try {
+                quizQuestionProgressRepository.save(existingProgress);
+            }
+            catch (DataIntegrityViolationException e) {
+                updateExistingProgress(userId, question, data, answeredAt);
+            }
         }
     }
 

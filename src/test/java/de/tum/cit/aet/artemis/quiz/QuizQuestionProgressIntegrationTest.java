@@ -5,6 +5,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.springframework.http.HttpStatus.OK;
 
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -315,5 +316,60 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         assertThatThrownBy(() -> quizQuestionProgressService.updateExistingProgress(nonExistentUserId, quizQuestion, newProgressData, newAnsweredTime))
                 .isInstanceOf(IllegalStateException.class).hasMessage("Progress entry should exist but was not found.");
+    }
+
+    @Test
+    void firstAttempt_whenExistingProgressIsNull_shouldCalculateSessionCountRepetitionEasinessIntervalAndDueDateNormally() {
+        QuizQuestionProgressData data = new QuizQuestionProgressData();
+        double score = 1.0;
+        ZonedDateTime answeredAt = ZonedDateTime.of(2024, 6, 1, 10, 0, 0, 0, ZoneId.of("UTC"));
+
+        quizQuestionProgressService.updateProgressWithNewAttempt(data, score, answeredAt);
+        quizQuestionProgressService.updateProgressCalculations(data, score, null, answeredAt);
+
+        assertThat(data.getSessionCount()).isEqualTo(1);
+        assertThat(data.getRepetition()).isEqualTo(1);
+        assertThat(data.getEasinessFactor()).isEqualTo(2.6);
+        assertThat(data.getInterval()).isEqualTo(1);
+        assertThat(data.getDueDate()).isEqualTo(answeredAt.plusDays(1));
+        assertThat(data.getBox()).isEqualTo(1);
+        assertThat(data.getPriority()).isEqualTo(2);
+    }
+
+    @Test
+    void afterDueDateAttempt_shouldAdvanceAllValues() {
+        ZonedDateTime baseDate = ZonedDateTime.of(2024, 6, 1, 9, 0, 0, 0, ZoneId.of("UTC"));
+        ZonedDateTime dueDate = baseDate.plusDays(1); // 2.6.2024 09:00
+        ZonedDateTime afterDue = dueDate.plusHours(2); // 2.6.2024 11:00
+
+        QuizQuestionProgress existing = buildProgress(2.5, 1, 1, 1, dueDate, 1, 2, 1.0);
+        QuizQuestionProgressData data = new QuizQuestionProgressData();
+
+        quizQuestionProgressService.updateProgressWithNewAttempt(data, 1.0, afterDue);
+        quizQuestionProgressService.updateProgressCalculations(data, 1.0, existing, afterDue);
+
+        assertThat(data.getSessionCount()).isEqualTo(2);
+        assertThat(data.getRepetition()).isEqualTo(1);
+        assertThat(data.getEasinessFactor()).isEqualTo(2.6);
+        assertThat(data.getInterval()).isEqualTo(1);
+        assertThat(data.getDueDate()).isEqualTo(afterDue.plusDays(1));
+        assertThat(data.getBox()).isEqualTo(1);
+        assertThat(data.getPriority()).isEqualTo(3);
+    }
+
+    private QuizQuestionProgress buildProgress(double easiness, int interval, int sessionCount, int repetition, ZonedDateTime dueDate, int box, int priority, double lastScore) {
+        QuizQuestionProgressData data = new QuizQuestionProgressData();
+        data.setEasinessFactor(easiness);
+        data.setInterval(interval);
+        data.setSessionCount(sessionCount);
+        data.setRepetition(repetition);
+        data.setDueDate(dueDate);
+        data.setBox(box);
+        data.setPriority(priority);
+        data.setLastScore(lastScore);
+
+        QuizQuestionProgress progress = new QuizQuestionProgress();
+        progress.setProgressJson(data);
+        return progress;
     }
 }
