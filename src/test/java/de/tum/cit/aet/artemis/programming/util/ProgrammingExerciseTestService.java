@@ -168,8 +168,13 @@ public class ProgrammingExerciseTestService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCRepoPath;
 
+    protected URI localVCBaseUri;
+
     @Value("${artemis.version-control.url}")
-    private URI localVCBaseUri;
+    public void setLocalVCBaseUri(URI localVCBaseUri) {
+        this.localVCBaseUri = localVCBaseUri;
+        ProgrammingExerciseFactory.localVCBaseUri = localVCBaseUri; // Set the static field in ProgrammingExerciseFactory for convenience
+    }
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
@@ -1821,13 +1826,6 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
 
-        // Use the existing repositories that are already configured
-        exercise.getTemplateParticipation().setRepositoryUri(convertToLocalVcUriString(exerciseRepo));
-        exercise.setSolutionRepositoryUri(convertToLocalVcUriString(solutionRepo));
-        exercise.setTestRepositoryUri(convertToLocalVcUriString(testRepo));
-
-        // Save the updated exercise
-        programmingExerciseRepository.save(exercise);
     }
 
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {

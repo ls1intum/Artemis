@@ -62,7 +62,6 @@ import de.tum.cit.aet.artemis.lti.service.Lti13Service;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
-import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
@@ -99,9 +98,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     // TODO: in the future, we should not mock gitService anymore
     @MockitoSpyBean
     protected GitService gitService;
-
-    @MockitoSpyBean
-    protected GitRepositoryExportService gitRepositoryExportService;
 
     @MockitoSpyBean
     protected FileService fileService;
