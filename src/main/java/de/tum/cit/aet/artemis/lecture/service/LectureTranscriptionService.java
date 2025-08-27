@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -21,11 +22,13 @@ import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionStatusResponseDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 
 /**
  * Service for managing lecture transcription jobs.
  * Communicates with the external Nebula service to poll transcription job status and persist results.
  */
+@Conditional(NebulaEnabled.class)
 @Service
 @Lazy
 @Profile(PROFILE_CORE)
