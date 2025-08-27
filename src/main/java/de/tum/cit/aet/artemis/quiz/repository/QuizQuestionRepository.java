@@ -52,6 +52,20 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
             """)
     boolean areQuizQuestionsAvailableForPractice(@Param("courseId") Long courseId);
 
+    @Query("""
+            SELECT q.id
+            FROM QuizQuestion q
+            WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE
+            """)
+    Set<Long> findQuizQuestionIdsByCourseId(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT COUNT(q)
+            FROM QuizQuestion q
+            WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE
+            """)
+    int countOfQuizQuestionsAvailableForPractice(@Param("courseId") Long courseId);
+
     default DragAndDropQuestion findDnDQuestionByIdOrElseThrow(Long questionId) {
         return getValueElseThrow(findDnDQuestionById(questionId), questionId);
     }

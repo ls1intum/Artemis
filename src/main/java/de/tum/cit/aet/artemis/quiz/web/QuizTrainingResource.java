@@ -27,10 +27,12 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizTrainingAnswerDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
+import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingService;
 
 @Profile(PROFILE_CORE)
@@ -40,6 +42,8 @@ import de.tum.cit.aet.artemis.quiz.service.QuizTrainingService;
 public class QuizTrainingResource {
 
     private static final Logger log = LoggerFactory.getLogger(QuizTrainingResource.class);
+
+    private final QuizTrainingLeaderboardService quizTrainingLeaderboardService;
 
     private final UserRepository userRepository;
 
@@ -51,8 +55,9 @@ public class QuizTrainingResource {
 
     private final QuizTrainingService quizTrainingService;
 
-    public QuizTrainingResource(UserRepository userRepository, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
-            QuizQuestionProgressService quizQuestionProgressService, QuizTrainingService quizTrainingService) {
+    public QuizTrainingResource(QuizTrainingLeaderboardService quizTrainingLeaderboardService, UserRepository userRepository, CourseRepository courseRepository,
+            AuthorizationCheckService authCheckService, QuizQuestionProgressService quizQuestionProgressService, QuizTrainingService quizTrainingService) {
+        this.quizTrainingLeaderboardService = quizTrainingLeaderboardService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -98,8 +103,30 @@ public class QuizTrainingResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         ZonedDateTime answeredAt = ZonedDateTime.now();
 
-        SubmittedAnswerAfterEvaluationDTO result = quizTrainingService.submitForTraining(quizQuestionId, user.getId(), submittedAnswer, answeredAt);
+        SubmittedAnswerAfterEvaluationDTO result = quizTrainingService.submitForTraining(quizQuestionId, user.getId(), submittedAnswer, answeredAt, courseId);
 
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Retrieves the leaderboard for quiz training in a specific course.
+     *
+     * <p>
+     * This endpoint returns a list of leaderboard entries for the given course,
+     * showing the ranking of users based on their quiz training performance.
+     * </p>
+     *
+     * @param courseId the id of the course for which the leaderboard is requested
+     * @return the ResponseEntity containing a list of LeaderboardEntryDTO objects representing the leaderboard
+     */
+    @GetMapping("courses/{courseId}/training/leaderboard")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<LeaderboardEntryDTO>> getQuizTrainingLeaderboard(@PathVariable Long courseId) {
+        log.info("REST request to get leaderboard for course with id : {}", courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        List<LeaderboardEntryDTO> leaderboard = quizTrainingLeaderboardService.getLeaderboard(user.getId(), courseId);
+        return ResponseEntity.ok(leaderboard);
     }
 }
