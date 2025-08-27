@@ -55,6 +55,11 @@ public class NebulaTranscriptionResource {
     /**
      * POST /lecture/{lectureId}/lecture-unit/{lectureUnitId}/transcriber :
      * Start a transcription job with Nebula and create a placeholder transcription entry.
+     *
+     * @param lectureId     the ID of the lecture
+     * @param lectureUnitId the ID of the lecture unit
+     * @param request       the request containing the video URL and any additional options
+     * @return the ResponseEntity with status 200 (OK) if transcription started successfully
      */
     @PostMapping("{lectureId}/lecture-unit/{lectureUnitId}/transcriber")
     @EnforceAtLeastInstructor
@@ -68,6 +73,9 @@ public class NebulaTranscriptionResource {
 
     /**
      * GET /video-utils/tum-live-playlist : Fetch TUM Live playlist URL for transcription.
+     *
+     * @param url the TUM Live video URL to fetch the playlist for
+     * @return the ResponseEntity with status 200 (OK) and playlist URL if found, 404 (Not Found) if no playlist exists, or 400 (Bad Request) for invalid input
      */
     @GetMapping("video-utils/tum-live-playlist")
     @EnforceAtLeastStudent
