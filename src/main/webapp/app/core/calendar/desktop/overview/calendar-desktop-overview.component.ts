@@ -14,12 +14,7 @@ import { CalendarDesktopMonthPresentationComponent } from 'app/core/calendar/des
 import { CalendarDesktopWeekPresentationComponent } from 'app/core/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
-import { Popover } from 'primeng/popover';
-import { Checkbox } from 'primeng/checkbox';
-import { FormsModule } from '@angular/forms';
-import { SelectButton } from 'primeng/selectbutton';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TextFieldModule } from '@angular/cdk/text-field';
 import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 
 @Component({
@@ -31,11 +26,6 @@ import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/c
         NgClass,
         FaIconComponent,
         TranslateDirective,
-        Popover,
-        Checkbox,
-        FormsModule,
-        SelectButton,
-        TextFieldModule,
         CalendarSubscriptionPopoverComponent,
     ],
     templateUrl: './calendar-desktop-overview.component.html',
