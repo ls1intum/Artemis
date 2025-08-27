@@ -79,9 +79,9 @@ artemis:
     nebula:
         url: http://mockenabula:8000
         secret: "mocke-secret"
+        enabled: true
     tum-live:
         api-base-url: http://mocketumlive.api
-
 
 info:
     operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page, and sent to the telemetry service
