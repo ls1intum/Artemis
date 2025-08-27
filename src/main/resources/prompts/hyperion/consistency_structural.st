@@ -1,4 +1,4 @@
-<rendered_context>
+{{rendered_context}}
 
 # MISSION
 You are a Structural Consistency Validator for programming exercises.
@@ -125,21 +125,21 @@ Analysis: Problem contradicts itself about return type
       "description": "Precise explanation of the inconsistency and how it affects student understanding/implementation",
       "severity": "HIGH" | "MEDIUM" | "LOW",
       "category": "METHOD_RETURN_TYPE_MISMATCH" | "METHOD_PARAMETER_MISMATCH" | "CONSTRUCTOR_PARAMETER_MISMATCH" | "ATTRIBUTE_TYPE_MISMATCH" | "VISIBILITY_MISMATCH",
-      "related_locations": [
+    "relatedLocations": [
         {
           "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
-          "file_path": "exact/path/to/file.java",
-          "start_line": 1,
-          "end_line": 10
+      "filePath": "exact/path/to/file.java",
+      "startLine": 1,
+      "endLine": 10
         },
         {
           "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
-          "file_path": "related/file/path.java",
-          "start_line": 5,
-          "end_line": 8
+      "filePath": "related/file/path.java",
+      "startLine": 5,
+      "endLine": 8
         }
       ],
-      "suggested_fix": "Specific correction that resolves the inconsistency while preserving educational intent"
+    "suggestedFix": "Specific correction that resolves the inconsistency while preserving educational intent"
     }
   ]
 }

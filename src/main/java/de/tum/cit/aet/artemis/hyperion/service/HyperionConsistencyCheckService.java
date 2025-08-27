@@ -31,23 +31,23 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-@Service("hyperionConsistencyCheckService")
+@Service
 @Lazy
 @Profile(PROFILE_HYPERION)
-public class ConsistencyCheckService {
+public class HyperionConsistencyCheckService {
 
-    private static final Logger log = LoggerFactory.getLogger(ConsistencyCheckService.class);
+    private static final Logger log = LoggerFactory.getLogger(HyperionConsistencyCheckService.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ChatClient chatClient;
 
-    private final PromptTemplateService templates;
+    private final HyperionPromptTemplateService templates;
 
-    private final ProgrammingExerciseContextRenderer exerciseContextRenderer;
+    private final HyperionProgrammingExerciseContextRenderer exerciseContextRenderer;
 
-    public ConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, @Autowired(required = false) ChatClient chatClient, PromptTemplateService templates,
-            ProgrammingExerciseContextRenderer exerciseContextRenderer) {
+    public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, @Autowired(required = false) ChatClient chatClient,
+            HyperionPromptTemplateService templates, HyperionProgrammingExerciseContextRenderer exerciseContextRenderer) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.chatClient = chatClient;
         this.templates = templates;

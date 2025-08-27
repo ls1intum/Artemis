@@ -21,21 +21,21 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 
-class ProblemStatementRewriteServiceTest {
+class HyperionProblemStatementRewriteServiceTest {
 
     @Mock
     private ChatModel chatModel;
 
     private ChatClient chatClient;
 
-    private ProblemStatementRewriteService service;
+    private HyperionProblemStatementRewriteService service;
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
         this.chatClient = ChatClient.create(chatModel);
-        var templateService = new PromptTemplateService();
-        this.service = new ProblemStatementRewriteService(chatClient, templateService);
+        var templateService = new HyperionPromptTemplateService();
+        this.service = new HyperionProblemStatementRewriteService(chatClient, templateService);
     }
 
     @Test

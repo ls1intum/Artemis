@@ -25,15 +25,15 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 @Component
 @Lazy
 @Profile(PROFILE_HYPERION)
-public class ProgrammingExerciseContextRenderer {
+public class HyperionProgrammingExerciseContextRenderer {
 
-    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseContextRenderer.class);
+    private static final Logger log = LoggerFactory.getLogger(HyperionProgrammingExerciseContextRenderer.class);
 
     private final RepositoryService repositoryService;
 
-    private final ProgrammingLanguageContextFilter languageFilter;
+    private final HyperionProgrammingLanguageContextFilter languageFilter;
 
-    public ProgrammingExerciseContextRenderer(RepositoryService repositoryService, ProgrammingLanguageContextFilter languageFilter) {
+    public HyperionProgrammingExerciseContextRenderer(RepositoryService repositoryService, HyperionProgrammingLanguageContextFilter languageFilter) {
         this.repositoryService = repositoryService;
         this.languageFilter = languageFilter;
     }

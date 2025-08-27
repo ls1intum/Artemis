@@ -14,6 +14,6 @@ Guidelines for rewriting:
 
 Please rewrite the following problem statement:
 
-<text>
+{{text}}
 
 Rewritten problem statement:

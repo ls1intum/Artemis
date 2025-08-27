@@ -1,4 +1,4 @@
-<rendered_context>
+{{rendered_context}}
 
 # MISSION
 You are a Semantic Consistency Validator for programming exercises.
@@ -155,21 +155,21 @@ Analysis: Same entity with different names - students cannot map requirements to
       "description": "Precise explanation of the naming inconsistency and how it affects student conceptual mapping",
       "severity": "HIGH" | "MEDIUM" | "LOW",
       "category": "IDENTIFIER_NAMING_INCONSISTENCY",
-      "related_locations": [
+    "relatedLocations": [
         {
           "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
-          "file_path": "exact/path/to/file.java",
-          "start_line": 1,
-          "end_line": 10
+      "filePath": "exact/path/to/file.java",
+      "startLine": 1,
+      "endLine": 10
         },
         {
           "type": "PROBLEM_STATEMENT" | "TEMPLATE_REPOSITORY" | "SOLUTION_REPOSITORY",
-          "file_path": "related/file/path.java",
-          "start_line": 5,
-          "end_line": 8
+      "filePath": "related/file/path.java",
+      "startLine": 5,
+      "endLine": 8
         }
       ],
-      "suggested_fix": "Specific naming correction that aligns conceptual entities while preserving educational intent"
+    "suggestedFix": "Specific naming correction that aligns conceptual entities while preserving educational intent"
     }
   ]
 }

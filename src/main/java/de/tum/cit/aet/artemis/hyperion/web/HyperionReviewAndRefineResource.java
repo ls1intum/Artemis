@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.retry.NonTransientAiException;
 import org.springframework.ai.retry.TransientAiException;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -25,8 +24,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.service.ConsistencyCheckService;
-import de.tum.cit.aet.artemis.hyperion.service.ProblemStatementRewriteService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementRewriteService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -52,12 +51,12 @@ public class HyperionReviewAndRefineResource {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ConsistencyCheckService consistencyCheckService;
+    private final HyperionConsistencyCheckService consistencyCheckService;
 
-    private final ProblemStatementRewriteService rewriteService;
+    private final HyperionProblemStatementRewriteService rewriteService;
 
     public HyperionReviewAndRefineResource(UserRepository userRepository, CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            @Qualifier("hyperionConsistencyCheckService") ConsistencyCheckService consistencyCheckService, ProblemStatementRewriteService rewriteService) {
+            HyperionConsistencyCheckService consistencyCheckService, HyperionProblemStatementRewriteService rewriteService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;

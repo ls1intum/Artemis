@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
-class ConsistencyCheckServiceTest {
+class HyperionConsistencyCheckServiceTest {
 
     @Mock
     private RepositoryService repositoryService;
@@ -41,18 +41,18 @@ class ConsistencyCheckServiceTest {
 
     private ChatClient chatClient;
 
-    private ConsistencyCheckService service;
+    private HyperionConsistencyCheckService service;
 
-    private ProgrammingExerciseContextRenderer exerciseContextRenderer;
+    private HyperionProgrammingExerciseContextRenderer exerciseContextRenderer;
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
         this.chatClient = ChatClient.create(chatModel);
-        var templateService = new PromptTemplateService();
+        var templateService = new HyperionPromptTemplateService();
         // Wire minimal renderer with mocked dependencies
-        this.exerciseContextRenderer = new ProgrammingExerciseContextRenderer(repositoryService, new ProgrammingLanguageContextFilter());
-        this.service = new ConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer);
+        this.exerciseContextRenderer = new HyperionProgrammingExerciseContextRenderer(repositoryService, new HyperionProgrammingLanguageContextFilter());
+        this.service = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer);
     }
 
     @Test

@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -18,8 +19,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * Extensible via a simple strategy registry; currently ships with Java support.
  */
 @Component
+@Lazy
 @Profile(PROFILE_HYPERION)
-public class ProgrammingLanguageContextFilter {
+public class HyperionProgrammingLanguageContextFilter {
 
     /** Pluggable strategy contract for language-specific file filtering. */
     public interface Strategy {
@@ -44,7 +46,7 @@ public class ProgrammingLanguageContextFilter {
         }
     };
 
-    public ProgrammingLanguageContextFilter() {
+    public HyperionProgrammingLanguageContextFilter() {
         // Register built-ins
         register(new JavaStrategy());
     }
@@ -55,7 +57,7 @@ public class ProgrammingLanguageContextFilter {
      * @param strategy the strategy to register
      * @return this filter for chaining
      */
-    public ProgrammingLanguageContextFilter register(Strategy strategy) {
+    public HyperionProgrammingLanguageContextFilter register(Strategy strategy) {
         if (strategy != null && strategy.language() != null) {
             strategies.put(strategy.language(), strategy);
         }

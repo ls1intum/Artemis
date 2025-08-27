@@ -25,13 +25,13 @@ import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 @Service
 @Lazy
 @Profile(PROFILE_HYPERION)
-public class ProblemStatementRewriteService {
+public class HyperionProblemStatementRewriteService {
 
-    private static final Logger log = LoggerFactory.getLogger(ProblemStatementRewriteService.class);
+    private static final Logger log = LoggerFactory.getLogger(HyperionProblemStatementRewriteService.class);
 
     private final ChatClient chatClient;
 
-    private final PromptTemplateService templates;
+    private final HyperionPromptTemplateService templates;
 
     /**
      * Creates a new ProblemStatementRewriteService.
@@ -39,7 +39,7 @@ public class ProblemStatementRewriteService {
      * @param chatClient the AI chat client (optional)
      * @param templates  prompt template service
      */
-    public ProblemStatementRewriteService(@Autowired(required = false) ChatClient chatClient, PromptTemplateService templates) {
+    public HyperionProblemStatementRewriteService(@Autowired(required = false) ChatClient chatClient, HyperionPromptTemplateService templates) {
         this.chatClient = chatClient;
         this.templates = templates;
     }
