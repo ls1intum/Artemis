@@ -15,8 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestClient;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
@@ -36,9 +34,6 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
     private LectureTranscriptionService service;
 
     @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
     private LectureTranscriptionRepository transcriptionRepository;
 
     @Autowired
@@ -53,27 +48,41 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
     @BeforeEach
     void setUp() {
         restClient = mock(RestClient.class, RETURNS_DEEP_STUBS);
-        // swap RestClient and ObjectMapper inside the already-constructed bean
+        // swap RestClient inside the already-constructed bean
         ReflectionTestUtils.setField(service, "restClient", restClient);
-        ReflectionTestUtils.setField(service, "objectMapper", objectMapper);
+        // removed: objectMapper injection (the service doesn’t have that field)
     }
 
     @Test
     void processTranscription_done_savesCompleteTranscription() {
+        // Real lecture + unit, but persist the unit THROUGH the lecture's list to set the order/index
+        var lecture = new Lecture();
+        lecture.setTitle("L1");
+        lecture = lectureRepository.saveAndFlush(lecture);
+
+        var unit = new AttachmentVideoUnit();
+        unit.setName("U1");
+        unit.setLecture(lecture);
+        // Important: add to the lecture's list so @OrderColumn (or similar) is set
+        lecture.getLectureUnits().add(unit);
+        lecture = lectureRepository.saveAndFlush(lecture);  // persists unit with a non-null list index
+
+        // Re-read the persisted unit (id assigned now)
+        unit = (AttachmentVideoUnit) lecture.getLectureUnits().get(0);
+
         var jobId = "job-123";
         var t = new LectureTranscription();
         t.setJobId(jobId);
         t.setTranscriptionStatus(TranscriptionStatus.PENDING);
-        t = transcriptionRepository.save(t);
+        t.setLectureUnit(unit);
+        t = transcriptionRepository.saveAndFlush(t);
 
-        // Mock Nebula status response using the new DTO
         NebulaTranscriptionStatusResponseDTO response = new NebulaTranscriptionStatusResponseDTO(NebulaTranscriptionStatus.DONE, null, "en", List.of());
 
         when(restClient.get().uri(eq("/transcribe/status/" + jobId)).retrieve().body(eq(NebulaTranscriptionStatusResponseDTO.class))).thenReturn(response);
 
         service.processTranscription(t);
 
-        // Verify the transcription was saved with COMPLETED status
         var saved = transcriptionRepository.findByJobId(jobId);
         assertThat(saved).isPresent();
         assertThat(saved.get().getTranscriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
@@ -93,7 +102,6 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         service.processTranscription(t);
 
         assertThat(t.getTranscriptionStatus()).isEqualTo(TranscriptionStatus.FAILED);
-        // Check that it was saved by fetching from DB
         var saved = transcriptionRepository.findByJobId("job-err");
         assertThat(saved).isPresent();
         assertThat(saved.get().getTranscriptionStatus()).isEqualTo(TranscriptionStatus.FAILED);
@@ -113,7 +121,6 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
         service.processTranscription(t);
 
-        // Status should still be PENDING (not changed)
         var unchanged = transcriptionRepository.findById(id);
         assertThat(unchanged).isPresent();
         assertThat(unchanged.get().getTranscriptionStatus()).isEqualTo(TranscriptionStatus.PENDING);
@@ -133,7 +140,6 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
         service.processTranscription(t);
 
-        // Status should still be PENDING (not changed)
         var unchanged = transcriptionRepository.findById(id);
         assertThat(unchanged).isPresent();
         assertThat(unchanged.get().getTranscriptionStatus()).isEqualTo(TranscriptionStatus.PENDING);
@@ -175,20 +181,17 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     void createEmptyTranscription_deletesExistingAndCreatesPending() {
-        // Create a real lecture
         var lecture = new Lecture();
         lecture.setTitle("Test Lecture");
         lecture = lectureRepository.save(lecture);
         Long lectureId = lecture.getId();
 
-        // Create a real lecture unit (using AttachmentVideoUnit which is concrete)
         var unit = new AttachmentVideoUnit();
         unit.setName("Test Unit");
         unit.setLecture(lecture);
         unit = lectureUnitRepository.save(unit);
         Long unitId = unit.getId();
 
-        // Create an existing transcription
         var existing = new LectureTranscription();
         existing.setLectureUnit(unit);
         existing.setJobId("old-job");
@@ -196,13 +199,10 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         existing = transcriptionRepository.save(existing);
         Long existingId = existing.getId();
 
-        // Call the service
         service.createEmptyTranscription(lectureId, unitId, "job-new");
 
-        // Verify the old one was deleted
         assertThat(transcriptionRepository.findById(existingId)).isEmpty();
 
-        // Verify a new one was created
         var newTranscription = transcriptionRepository.findByLectureUnit_Id(unitId);
         assertThat(newTranscription).isPresent();
         assertThat(newTranscription.get().getJobId()).isEqualTo("job-new");
@@ -212,7 +212,6 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     void createEmptyTranscription_wrongLecture_throws() {
-        // Create two different lectures
         var lecture1 = new Lecture();
         lecture1.setTitle("Lecture 1");
         lecture1 = lectureRepository.save(lecture1);
@@ -222,17 +221,14 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         lecture2.setTitle("Lecture 2");
         lecture2 = lectureRepository.save(lecture2);
 
-        // Create a unit belonging to lecture2 (using AttachmentVideoUnit which is concrete)
         var unit = new AttachmentVideoUnit();
         unit.setName("Unit for Lecture 2");
         unit.setLecture(lecture2);
         unit = lectureUnitRepository.save(unit);
         Long unitId = unit.getId();
 
-        // Try to create transcription with mismatched lecture ID (should throw)
         assertThatThrownBy(() -> service.createEmptyTranscription(lectureId, unitId, "job-z")).isInstanceOf(IllegalArgumentException.class);
 
-        // Verify no transcription was created
         var transcriptions = transcriptionRepository.findByLectureUnit_Id(unitId);
         assertThat(transcriptions).isEmpty();
     }
