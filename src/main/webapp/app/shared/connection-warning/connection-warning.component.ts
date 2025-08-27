@@ -41,6 +41,8 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
+            // eslint-disable-next-line no-undef
+            console.log('Websocket connection status changed: ', status);
             this.disconnected = !status.connected && !status.intendedDisconnect && status.wasEverConnectedBefore;
 
             if (this.disconnected) {
