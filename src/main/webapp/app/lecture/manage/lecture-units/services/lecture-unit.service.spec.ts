@@ -2,7 +2,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync } from '@angular/core/testing';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
 import { AttachmentVideoUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -43,6 +43,7 @@ describe('LectureUnitService', () => {
 
         attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.id = 37;
+        attachmentVideoUnit.name = 'Example attachment video unit';
         attachmentVideoUnit.description = 'Lorem Ipsum Attachment';
         attachmentVideoUnit.attachment = attachment;
 
@@ -82,7 +83,7 @@ describe('LectureUnitService', () => {
     }));
 
     it('should get title of associated element', async () => {
-        expect(service.getLectureUnitName(attachmentVideoUnit)).toEqual(attachmentVideoUnit.attachment!.name);
+        expect(service.getLectureUnitName(attachmentVideoUnit)).toEqual(attachmentVideoUnit.name);
         expect(service.getLectureUnitName(exerciseUnit)).toEqual(exerciseUnit.exercise!.title);
         expect(service.getLectureUnitName(textUnit)).toEqual(textUnit.name);
     });

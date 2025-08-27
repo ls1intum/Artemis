@@ -13,6 +13,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
+
 /**
  * This component initializes all lazy singleton beans after the application is ready.
  * This allows us to benefit from the lazy initialization of beans during startup, without comprising end user experience as beans are initialized before the first request is
@@ -60,7 +62,7 @@ public class DeferredEagerBeanInitializer {
                 log.warn("Deferred eager initialization of bean {} failed", name, ex);
             }
         });
-
+        context.publishEvent(new DeferredEagerBeanInitializationCompletedEvent());
         log.info("Deferred eager initialization of all beans completed");
     }
 }

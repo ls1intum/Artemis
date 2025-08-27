@@ -96,12 +96,11 @@ public class ExerciseDeletionService {
     }
 
     /**
-     * Delete student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
+     * Delete student build plans (except BASE/SOLUTION) and git repositories of all exercise student participations.
      *
-     * @param exerciseId         programming exercise for which build plans in respective student participations are deleted
-     * @param deleteRepositories if true, the repositories gets deleted
+     * @param exerciseId programming exercise for which build plans in respective student participations are deleted
      */
-    public void cleanup(Long exerciseId, boolean deleteRepositories) {
+    public void cleanup(Long exerciseId) {
         log.info("Cleanup all participations for exercise {} in parallel", exerciseId);
         Exercise exercise = exerciseRepository.findByIdWithStudentParticipationsElseThrow(exerciseId);
         if (!(exercise instanceof ProgrammingExercise)) {
@@ -114,9 +113,6 @@ public class ExerciseDeletionService {
             var futures = exercise.getStudentParticipations().stream().map(participation -> CompletableFuture.runAsync(() -> {
                 try {
                     participationDeletionService.cleanupBuildPlan((ProgrammingExerciseStudentParticipation) participation);
-                    if (!deleteRepositories) {
-                        return; // in this case, we are done with the participation
-                    }
                     participationDeletionService.cleanupRepository((ProgrammingExerciseStudentParticipation) participation);
                 }
                 catch (Exception exception) {

@@ -67,6 +67,9 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final BuildPlanRepository buildPlanRepository;
 
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
+
     public ProgrammingExerciseImportFromFileService(ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ZipFileService zipFileService, StaticCodeAnalysisService staticCodeAnalysisService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, RepositoryService repositoryService, GitService gitService, FileService fileService,
@@ -102,7 +105,7 @@ public class ProgrammingExerciseImportFromFileService {
         Path importExerciseDir = null;
         ProgrammingExercise newProgrammingExercise;
         try {
-            importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
+            importExerciseDir = Files.createTempDirectory(tempPath, "imported-exercise-dir");
             Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
 
             zipFile.transferTo(exerciseFilePath);

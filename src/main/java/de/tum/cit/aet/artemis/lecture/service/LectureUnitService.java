@@ -161,8 +161,10 @@ public class LectureUnitService {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
         if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit) {
-            fileService.schedulePathForDeletion(
-                    FilePathConverter.fileSystemPathForExternalUri(URI.create((attachmentVideoUnit.getAttachment().getLink())), FilePathType.ATTACHMENT_UNIT), 5);
+            if (attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getLink() != null) {
+                fileService.schedulePathForDeletion(
+                        FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT), 5);
+            }
         }
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureUnitToDelete.getLecture().getId());

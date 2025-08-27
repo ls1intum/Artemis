@@ -7,11 +7,8 @@ import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 
 @Profile(PROFILE_IRIS)
 @Controller
@@ -56,33 +53,5 @@ public class IrisLectureApi extends AbstractIrisApi {
      */
     public void autoUpdateAttachmentVideoUnitsInPyris(List<AttachmentVideoUnit> newAttachmentVideoUnits) {
         pyrisWebhookService.autoUpdateAttachmentVideoUnitsInPyris(newAttachmentVideoUnits);
-    }
-
-    /**
-     * Adds the specified lecture transcriptions to the vector database in Pyris.
-     * <p>
-     * This method calls {@link PyrisWebhookService#addTranscriptionsToPyrisDB(LectureTranscription, Course, Lecture, AttachmentVideoUnit)}.
-     * If transcription ingestion is enabled, returns a job token; otherwise returns null.
-     *
-     * @param transcription       the transcription object containing lecture text
-     * @param course              the course to which the lecture belongs
-     * @param lecture             the lecture object
-     * @param attachmentVideoUnit the attachment video unit associated with the transcriptions
-     * @return a job token if ingestion is triggered, otherwise null
-     */
-    public String addTranscriptionsToPyrisDB(LectureTranscription transcription, Course course, Lecture lecture, AttachmentVideoUnit attachmentVideoUnit) {
-        return pyrisWebhookService.addTranscriptionsToPyrisDB(transcription, course, lecture, attachmentVideoUnit);
-    }
-
-    /**
-     * Deletes the specified lecture transcription from the Pyris database.
-     * <p>
-     * This method calls {@link PyrisWebhookService#deleteLectureTranscription(LectureTranscription)}.
-     *
-     * @param lectureTranscription the lecture transcription to delete
-     * @return a job token if the deletion is triggered, otherwise null
-     */
-    public String deleteLectureTranscription(LectureTranscription lectureTranscription) {
-        return pyrisWebhookService.deleteLectureTranscription(lectureTranscription);
     }
 }
