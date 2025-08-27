@@ -42,7 +42,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/shared/service/file.service';
-import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -72,7 +71,6 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         FeatureOverlayComponent,
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
-        DocumentationLinkComponent,
     ],
 })
 export class CourseUpdateComponent implements OnInit {
