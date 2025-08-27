@@ -18,10 +18,10 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.component.VEvent;
 import net.fortuna.ical4j.model.property.Contact;
-import net.fortuna.ical4j.model.property.Description;
 import net.fortuna.ical4j.model.property.Location;
 import net.fortuna.ical4j.model.property.ProdId;
 import net.fortuna.ical4j.model.property.Uid;
@@ -88,23 +88,24 @@ public class CalendarSubscriptionService {
         return hexString.toString();
     }
 
-    public String getICSFileAsString(String courseTitle, Language language, Set<CalendarEventDTO> calendarEventDTOs) {
+    public String getICSFileAsString(String courseShortName, Language language, Set<CalendarEventDTO> calendarEventDTOs) {
         Calendar calendar = new Calendar();
         calendar.add(new ProdId("-//TUM//Artemis//" + language.getShortName().toUpperCase()));
         calendar.add(ImmutableVersion.VERSION_2_0);
         calendar.add(ImmutableCalScale.GREGORIAN);
         calendar.add(ImmutableMethod.PUBLISH);
 
-        calendarEventDTOs.forEach(calendarEventDTO -> calendar.add(getVEventFrom(calendarEventDTO, courseTitle, language)));
+        calendarEventDTOs.forEach(calendarEventDTO -> calendar.add(getVEventFrom(calendarEventDTO, courseShortName, language)));
 
         return calendar.toString();
     }
 
-    private VEvent getVEventFrom(CalendarEventDTO calendarEventDTO, String courseTitle, Language language) {
+    private VEvent getVEventFrom(CalendarEventDTO calendarEventDTO, String courseShortName, Language language) {
         Instant start = calendarEventDTO.startDate().toInstant();
         Instant end = calendarEventDTO.endDate() != null ? calendarEventDTO.endDate().toInstant() : null;
-
-        VEvent event = (end != null) ? new VEvent(start, end, calendarEventDTO.title()) : new VEvent(start, calendarEventDTO.title());
+        String eventType = getEventTypeDescription(language, calendarEventDTO.type());
+        String title = courseShortName + " " + eventType + " | " + calendarEventDTO.title();
+        VEvent event = (end != null) ? new VEvent(start, end, title) : new VEvent(start, title);
 
         String stableUniqueEventKey = calendarEventDTO.id() + "|" + artemisServerUrl;
         UUID uuid = UUID.nameUUIDFromBytes(stableUniqueEventKey.getBytes(StandardCharsets.UTF_8));
@@ -118,12 +119,31 @@ public class CalendarSubscriptionService {
             event.add(new Contact(calendarEventDTO.facilitator()));
         }
 
-        String eventType = switch (language) {
-            case GERMAN -> calendarEventDTO.type().getGermanDescription();
-            case ENGLISH -> calendarEventDTO.type().getEnglishDescription();
-        };
-        event.add(new Description(courseTitle + " | " + eventType));
-
         return event;
+    }
+
+    private String getEventTypeDescription(Language language, CalendarEventType calendarEventType) {
+        return switch (language) {
+            case GERMAN -> getGermanEventTypeDescription(calendarEventType);
+            case ENGLISH -> getEnglishEventTypeDescription(calendarEventType);
+        };
+    }
+
+    private String getGermanEventTypeDescription(CalendarEventType calendarEventType) {
+        return switch (calendarEventType) {
+            case LECTURE -> "Vorlesung";
+            case TUTORIAL -> "Tutorium";
+            case EXAM -> "Klausur";
+            default -> "Aufgabe";
+        };
+    }
+
+    private String getEnglishEventTypeDescription(CalendarEventType calendarEventType) {
+        return switch (calendarEventType) {
+            case LECTURE -> "Lecture";
+            case TUTORIAL -> "Tutorial";
+            case EXAM -> "Exam";
+            default -> "Exercise";
+        };
     }
 }

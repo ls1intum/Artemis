@@ -12,25 +12,5 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
  * entity a given DTO was derived. The value is used for filtering and coloring of events in the calendar feature.
  */
 public enum CalendarEventType {
-
-    LECTURE("Vorlesung", "Lecture"), TUTORIAL("Tutorium", "Tutorial"), EXAM("Klausur", "Exam"), QUIZ_EXERCISE("Quizaufgabe", "Quiz Exercise"),
-    TEXT_EXERCISE("Textaufgabe", "Text Exercise"), MODELING_EXERCISE("Modellierungsaufgabe", "Modeling Exercise"),
-    PROGRAMMING_EXERCISE("Programmieraufgabe", "Programming Exercise"), FILE_UPLOAD_EXERCISE("Datei-Upload-Aufgabe", "File-Upload Exercise");
-
-    private final String germanDescription;
-
-    private final String englishDescription;
-
-    CalendarEventType(String germanDescription, String englishDescription) {
-        this.germanDescription = germanDescription;
-        this.englishDescription = englishDescription;
-    }
-
-    public String getGermanDescription() {
-        return germanDescription;
-    }
-
-    public String getEnglishDescription() {
-        return englishDescription;
-    }
+    LECTURE, TUTORIAL, EXAM, QUIZ_EXERCISE, TEXT_EXERCISE, MODELING_EXERCISE, PROGRAMMING_EXERCISE, FILE_UPLOAD_EXERCISE
 }
