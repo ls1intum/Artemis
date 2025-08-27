@@ -378,7 +378,7 @@ describe('AttachmentVideoUnitService', () => {
 
             const req = httpMock.expectOne({
                 method: 'POST',
-                url: `/api/nebula/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
+                url: `/api/lecture/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
             });
 
             // Verify request shape
@@ -408,7 +408,7 @@ describe('AttachmentVideoUnitService', () => {
 
             const req = httpMock.expectOne({
                 method: 'POST',
-                url: `/api/nebula/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
+                url: `/api/lecture/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
             });
 
             // Return 202 Accepted
@@ -432,7 +432,7 @@ describe('AttachmentVideoUnitService', () => {
 
             const req = httpMock.expectOne({
                 method: 'POST',
-                url: `/api/nebula/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
+                url: `/api/lecture/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
             });
 
             // Simulate server error
@@ -450,7 +450,7 @@ describe('AttachmentVideoUnitService', () => {
 
             const req = httpMock.expectOne({
                 method: 'POST',
-                url: `/api/nebula/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
+                url: `/api/lecture/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
             });
 
             // Body should contain the exact string we passed in
@@ -471,7 +471,7 @@ describe('AttachmentVideoUnitService', () => {
 
             const req = httpMock.expectOne({
                 method: 'POST',
-                url: `/api/nebula/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
+                url: `/api/lecture/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
             });
 
             // Simulate error without message

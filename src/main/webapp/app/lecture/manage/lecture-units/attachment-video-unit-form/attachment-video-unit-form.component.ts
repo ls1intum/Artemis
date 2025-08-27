@@ -242,7 +242,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
         if (parsedUrl.host === 'live.rbg.tum.de') {
             this.http
-                .get('api/nebula/lecture/video-utils/tum-live-playlist', {
+                .get('api/lecture/nebula/video-utils/tum-live-playlist', {
                     params: { url: originalUrl },
                     responseType: 'text',
                 })

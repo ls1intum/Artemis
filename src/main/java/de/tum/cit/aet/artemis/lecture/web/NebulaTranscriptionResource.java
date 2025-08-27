@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
-@RequestMapping("api/nebula/lecture/")
+@RequestMapping("api/lecture/nebula/")
 public class NebulaTranscriptionResource {
 
     private static final Logger log = LoggerFactory.getLogger(NebulaTranscriptionResource.class);
