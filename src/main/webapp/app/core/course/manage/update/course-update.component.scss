@@ -51,11 +51,12 @@ hr {
 }
 
 .nested-form-group {
-    margin-left: 21.6px;
+    margin-left: 1.35rem;
     margin-bottom: 0.5rem;
 }
+
 .row.nested-form-group {
-    margin-left: calc(21.6px - var(--bs-gutter-x) / 2);
+    margin-left: calc(1.35rem - var(--bs-gutter-x) / 2);
 }
 
 .nested-form-group.last {

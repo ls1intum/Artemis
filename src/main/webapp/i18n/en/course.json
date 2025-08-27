@@ -101,7 +101,7 @@
             },
             "accuracyOfScores": {
                 "title": "Decimal Places for Score Calculations",
-                "info": "The number of decimal places used for calculating the scores in this course, determining the accuracy of the scores"
+                "info": "The number of decimal places used for calculating the scores in this course, determining the accuracy of the scores."
             },
             "defaultProgrammingLanguage": "Default Programming Language",
             "gradingSystem": "Grading Key",

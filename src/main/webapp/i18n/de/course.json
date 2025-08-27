@@ -49,7 +49,7 @@
             "courseIcon": "Kursicon",
             "shortName": "Kurzname",
             "maxComplaints": {
-                "title": "Max. Anzahl an Beschwerden pro Student",
+                "title": "Max. Anzahl an Beschwerden pro Studierende:n",
                 "description": "Erlaubte Anzahl an Beschwerden von Studierenden setzen. Wenn eine Beschwerde abgelehnt wird, verliert der Studierende sie. Wenn eine Beschwerde akzeptiert wird, behält der Studierende sie. Diese Begrenzung gilt für individuelle Übungen."
             },
             "maxTeamComplaints": {
@@ -62,7 +62,7 @@
             },
             "maxComplaintTextLimit": {
                 "title": "Max. Zeichenzahl pro Beschwerde",
-                "description": "Diese Nummer gibt an, wie viele Zeichen ein Student maximal pro Beschwerde verwenden darf."
+                "description": "Diese Nummer gibt an, wie viele Zeichen maximal pro Beschwerde verwendet werden dürfen."
             },
             "maxComplaintResponseTextLimit": {
                 "title": "Max. Zeichenzahl pro Beschwerdeantwort",
@@ -151,7 +151,7 @@
             "enrollmentConfirmationMessage": "Nachricht zur Bestätigung der Einschreibung",
             "unenrollmentEnabled": {
                 "title": "Austragen aus dem Kurs für Studierende aktiviert",
-                "description": "Aktiviere diese Checkbox, damit sich Studierende selbstständig vom Kurs austragen können. Du kannst das späteste Datum hierfür einstellen, andernfalls ist es den Studenten bis zum Ende des Kurses möglich sich auszutragen."
+                "description": "Aktiviere diese Checkbox, damit sich Studierende selbstständig vom Kurs austragen können. Du kannst das späteste Datum hierfür einstellen, andernfalls ist es den Studierenden bis zum Ende des Kurses möglich sich auszutragen."
             },
             "unenrollmentEndDate": "Spätestes Datum zur Austragung",
             "exercises": "Aufgaben",
