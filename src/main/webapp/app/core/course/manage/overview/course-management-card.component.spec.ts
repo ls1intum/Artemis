@@ -11,7 +11,7 @@ import dayjs from 'dayjs/esm';
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/core/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -63,7 +63,7 @@ describe('CourseManagementCardComponent', () => {
                 MockRouterLinkDirective,
                 MockComponent(CourseManagementExerciseRowComponent),
                 MockComponent(CourseManagementOverviewStatisticsComponent),
-                MockComponent(SecuredImageComponent),
+                MockComponent(ImageComponent),
                 MockDirective(TranslateDirective),
             ],
             providers: [
