@@ -206,7 +206,7 @@
                         "title": "Zusätzliche Kursfunktionen",
                         "info": "Lerne mehr über die zusätzlichen Kursfunktionen über die Infosymbole neben den Funktionen."
                     },
-                    "studentEnrollment": "Kurseinschreibung für Studierende"
+                    "enrollment": "Kurseinschreibung für Studierende"
                 },
                 "shortname": {
                     "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
