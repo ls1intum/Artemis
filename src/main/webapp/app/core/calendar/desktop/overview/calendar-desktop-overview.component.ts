@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NgClass } from '@angular/common';
@@ -7,7 +7,7 @@ import dayjs, { Dayjs } from 'dayjs/esm';
 import 'dayjs/esm/locale/en';
 import 'dayjs/esm/locale/de';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronLeft, faChevronRight, faCopy } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faChevronLeft, faChevronRight, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarDesktopMonthPresentationComponent } from 'app/core/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
@@ -54,6 +54,7 @@ export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
     readonly faChevronRight = faChevronRight;
     readonly faChevronLeft = faChevronLeft;
     readonly faCopy = faCopy;
+    readonly faCheck = faCheck;
     presentation = signal<'week' | 'month'>('month');
     firstDayOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     firstDayOfCurrentWeek = signal<Dayjs>(dayjs().startOf('isoWeek'));
@@ -78,6 +79,18 @@ export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
         { label: 'English', value: 'ENGLISH' },
         { label: 'German', value: 'GERMAN' },
     ];
+    calendarSubscriptionUrlCopied = signal(false);
+
+    constructor() {
+        effect(() => {
+            if (this.calendarSubscriptionUrlCopied()) {
+                const timer = setTimeout(() => {
+                    this.calendarSubscriptionUrlCopied.set(false);
+                }, 1000);
+                return () => clearTimeout(timer);
+            }
+        });
+    }
 
     ngOnInit(): void {
         this.currentLocaleSubscription = this.translateService.onLangChange.subscribe((event) => {
@@ -179,6 +192,14 @@ export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
             } else {
                 return firstDayOfCurrentWeek.format('MMMM') + ' | ' + lastDayOfCurrentWeek.format('MMMM YYYY');
             }
+        }
+    }
+
+    copyCalendarSubscriptionUrlToClipboard() {
+        const url = this.calendarSubscriptionUrl();
+        if (url) {
+            this.calendarSubscriptionUrlCopied.set(true);
+            navigator.clipboard.writeText(url);
         }
     }
 

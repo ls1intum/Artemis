@@ -58,7 +58,7 @@
         }
     </div>
 </div>
-<p-popover #op>
+<p-popover #op (onHide)="calendarSubscriptionUrlCopied.set(false)">
     <div class="popover-content">
         <h5>iCalendar subscription</h5>
         To configure your subscription, please choose a language and select course contents for which you would like to include events:
@@ -86,8 +86,17 @@
             <div class="subscription-link-field">
                 <textarea cdkTextareaAutosize cdkAutosizeMinRows="1" cdkAutosizeMaxRows="10" [ngModel]="calendarSubscriptionUrl()!" readonly tabindex="-1"></textarea>
             </div>
-            <button class="subscription-link-copy-button" type="button">
-                <fa-icon [icon]="faCopy" />
+            <button
+                class="subscription-link-copy-button"
+                type="button"
+                [class.hover-indication]="!calendarSubscriptionUrlCopied()"
+                (click)="copyCalendarSubscriptionUrlToClipboard()"
+            >
+                @if (calendarSubscriptionUrlCopied()) {
+                    <fa-icon [icon]="faCheck" />
+                } @else {
+                    <fa-icon [icon]="faCopy" />
+                }
             </button>
         </div>
     </div>
