@@ -354,18 +354,19 @@ export abstract class TextEditorAction implements Disposable {
      * Formats consistency check results into well-structured markdown for instructor review.
      */
     private formatConsistencyCheckResults(response: ConsistencyCheckResponse): string {
-        let result = `**${response.summary}**\n\n`;
+        const issues = response.issues ?? [];
+        let result = `**Consistency check results**\n\n`;
 
-        if (!response.hasIssues || !response.issues.length) {
+        if (!issues.length) {
             return result + `**No consistency issues found!**\n\n`;
         }
 
         // Group issues by category for better organization
-        const issuesByCategory = this.groupIssuesByCategory(response.issues);
+        const issuesByCategory = this.groupIssuesByCategory(issues);
 
         // Add summary statistics
-        const severityCount = this.getSeverityCount(response.issues);
-        result += `**${response.issues.length} issues found:** `;
+        const severityCount = this.getSeverityCount(issues);
+        result += `**${issues.length} issues found:** `;
         if (severityCount[ConsistencyIssue.SeverityEnum.High] > 0) result += `${severityCount[ConsistencyIssue.SeverityEnum.High]} HIGH `;
         if (severityCount[ConsistencyIssue.SeverityEnum.Medium] > 0) result += `${severityCount[ConsistencyIssue.SeverityEnum.Medium]} MEDIUM `;
         if (severityCount[ConsistencyIssue.SeverityEnum.Low] > 0) result += `${severityCount[ConsistencyIssue.SeverityEnum.Low]} LOW`;
@@ -465,6 +466,8 @@ export abstract class TextEditorAction implements Disposable {
                 return 'Template';
             case ArtifactLocation.TypeEnum.SolutionRepository:
                 return 'Solution';
+            case ArtifactLocation.TypeEnum.TestsRepository:
+                return 'Tests';
             default:
                 return type;
         }
