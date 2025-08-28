@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -95,6 +95,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
     @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
     @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
+    @ViewChild('editForm', { read: ElementRef }) editFormEl?: ElementRef<HTMLFormElement>;
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
@@ -299,9 +300,12 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
      * Only applies to form inputs, not Apollon Editor elements
      */
     handleEnterKeyNavigation(event: Event): void {
-        event.preventDefault();
-
         const activeElement = document.activeElement as HTMLElement;
+
+        // Let multiline editors/fields handle Enter
+        if (activeElement?.tagName === 'TEXTAREA' || activeElement?.isContentEditable) {
+            return;
+        }
 
         // Check if we're inside Apollon Editor - if so, don't interfere
         const apollonContainer = document.querySelector('.apollon-container');
@@ -309,15 +313,18 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             return; // Let Apollon handle its own navigation
         }
 
-        // Only handle navigation for regular form inputs outside Apollon
+        // Only handle navigation for regular form inputs within this form
+        const formRoot = this.editFormEl?.nativeElement as HTMLElement | undefined;
+        if (!formRoot) {
+            return;
+        }
         const focusableElements = Array.from(
-            document.querySelectorAll('input:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly]), select:not([disabled])'),
+            formRoot.querySelectorAll('input:not([disabled]):not([readonly]):not([tabindex="-1"]):not([hidden]), ' + 'select:not([disabled]):not([tabindex="-1"]):not([hidden])'),
         ) as HTMLElement[];
 
         const currentIndex = focusableElements.indexOf(activeElement);
-
-        // Move to next element, or stay on current if it's the last
         if (currentIndex >= 0 && currentIndex < focusableElements.length - 1) {
+            event.preventDefault();
             focusableElements[currentIndex + 1].focus();
         }
     }
