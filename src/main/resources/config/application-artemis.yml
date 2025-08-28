@@ -103,51 +103,30 @@ artemis:
     event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
 
-  # Spring AI configuration is defined under the standard 'spring.ai.*' properties
-  # Example (OpenAI):
-  # spring:
-  #   ai:
-  #     openai:
-  #       api-key: ${OPENAI_API_KEY}
-  #       base-url: https://api.openai.com
-  #       chat:
-  #         options:
-  #           model: gpt-4o-mini
 
-# Enable Hyperion features via Spring profile
+# Enable Hyperion features (AI exercise creation assistance) via Spring profile
 spring:
   config:
     activate:
       on-profile: hyperion
   ai:
+    # Configure one, either azure or openai:
     azure:
       openai:
-        api-key: ${AZURE_OPENAI_API_KEY:}
-        endpoint: ${AZURE_OPENAI_ENDPOINT:https://example.openai.azure.com/}
+        api-key: <azure_openai_key>
+        endpoint: <azure_openai_endpoint>
         # deployment-name should match the Azure OpenAI deployment
         chat:
           options:
-            deployment-name: ${AZURE_OPENAI_DEPLOYMENT:gpt-5-mini}
-            model: ${AZURE_OPENAI_MODEL:gpt-5-mini}
-            # Some Azure/OpenAI deployments (e.g., gpt-5) only support the default temperature (1.0)
+            deployment-name: <azure_openai_deployment_name>
+            # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
             temperature: 1.0
-    # Fallback OpenAI config can remain for local testing if desired
-    openai:
-      api-key: ${OPENAI_API_KEY:}
-      base-url: https://api.openai.com
-      chat:
-        options:
-          model: ${OPENAI_MODEL:gpt-5-mini}
-          # Ensure temperature is set to the model-supported default
-          temperature: 1.0
-    # Retry/response handling tuning for AI providers (applies when Spring AI auto-config is active)
-    retry:
-      # Treat HTTP 429 as transient to allow auto-retry by Spring AI
-      on-http-codes: [429]
-      # Conservative defaults; adjust if needed
-      max-attempts: 5
-      backoff:
-        initial-interval: 1000ms
-        multiplier: 2.0
-        max-interval: 30000ms
 
+    # openai:
+    #   api-key: <openai_api_key>
+    #   base-url: https://api.openai.com
+    #   chat:
+    #     options:
+    #       model: <openai_model>
+    #       # Ensure temperature is set to the model-supported default (e.g. 1.0 for reasoning models)
+    #       temperature: 1.0

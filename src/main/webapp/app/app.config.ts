@@ -31,7 +31,6 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { provideApi } from 'app/openapi/provide-api';
 
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -63,11 +62,8 @@ export const appConfig: ApplicationConfig = {
         //  provideRouter(routes, withComponentInputBinding(), withRouterConfig({ onSameUrlNavigation: 'reload' })),
         provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
         // This enables service worker (PWA)
-        // Disable in local dev to avoid 404 registration errors; enable for production builds only
-        importProvidersFrom(ServiceWorkerModule.register('ngsw-worker.js', { enabled: false })),
+        importProvidersFrom(ServiceWorkerModule.register('ngsw-worker.js', { enabled: true })),
         provideHttpClient(withInterceptorsFromDi()),
-        // Configure OpenAPI generated clients to use relative base path and send cookies
-        provideApi({ basePath: '', withCredentials: true }),
         provideNgxWebstorage(withNgxWebstorageConfig({ prefix: 'jhi', separator: '-' }), withLocalStorage(), withSessionStorage()),
         Title,
         { provide: LOCALE_ID, useValue: 'en' },

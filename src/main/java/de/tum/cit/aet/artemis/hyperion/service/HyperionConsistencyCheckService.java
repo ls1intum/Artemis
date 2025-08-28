@@ -56,7 +56,7 @@ public class HyperionConsistencyCheckService {
     }
 
     /**
-     * Runs structural and semantic consistency checks on the given exercise using Spring AI.
+     * Runs structural and semantic consistency checks on the given exercise using AI.
      *
      * @param user     the requesting user
      * @param exercise the exercise to check

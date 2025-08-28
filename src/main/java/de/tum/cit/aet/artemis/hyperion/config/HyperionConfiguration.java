@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.config;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
 
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Profile;
 public class HyperionConfiguration {
 
     @Bean
+    @ConditionalOnBean(ChatClient.Builder.class)
     public ChatClient chatClient(ChatClient.Builder builder) {
         return builder.build();
     }
