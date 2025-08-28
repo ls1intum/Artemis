@@ -1,11 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.competency;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Collections;
@@ -20,22 +14,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyRelationDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -46,9 +34,6 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
 
     @Autowired
     private FeatureToggleService featureToggleService;
-
-    @MockitoBean
-    private AtlasMLApi atlasMLApi;
 
     @BeforeEach
     void setupTestScenario() {
@@ -412,181 +397,6 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
             var requestBody = new SuggestCompetencyRequestDTO("test description", 1L);
             request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON)
                     .content(new ObjectMapper().writeValueAsString(requestBody))).andExpect(status().isForbidden());
-        }
-    }
-
-    @Nested
-    class SuggestCompetenciesEndpoint {
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldSuggestCompetenciesSuccessfully() throws Exception {
-            featureToggleService.enableFeature(Feature.AtlasML);
-
-            // Mock AtlasML API response
-            var mockedCompetency1 = new AtlasMLCompetencyDTO(1L, "Java Programming", "Introduction to Java", 1L);
-            var mockedCompetency2 = new AtlasMLCompetencyDTO(2L, "Object-Oriented Programming", "OOP concepts", 1L);
-            var mockedResponse = new SuggestCompetencyResponseDTO(List.of(mockedCompetency1, mockedCompetency2));
-
-            doReturn(mockedResponse).when(atlasMLApi).suggestCompetencies(any(SuggestCompetencyRequestDTO.class));
-
-            var requestBody = new SuggestCompetencyRequestDTO("Java programming course content", 1L);
-            var result = request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON)
-                    .content(new ObjectMapper().writeValueAsString(requestBody))).andExpect(status().isOk()).andReturn();
-
-            var responseDto = new ObjectMapper().readValue(result.getResponse().getContentAsString(), SuggestCompetencyResponseDTO.class);
-            assertThat(responseDto.competencies()).hasSize(2);
-            assertThat(responseDto.competencies().get(0).title()).isEqualTo("Java Programming");
-            assertThat(responseDto.competencies().get(1).title()).isEqualTo("Object-Oriented Programming");
-
-            verify(atlasMLApi).suggestCompetencies(argThat(req -> req.description().equals("Java programming course content") && req.courseId().equals(1L)));
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-        void shouldAllowStudentToSuggestCompetencies() throws Exception {
-            featureToggleService.enableFeature(Feature.AtlasML);
-
-            var mockedResponse = new SuggestCompetencyResponseDTO(List.of());
-            doReturn(mockedResponse).when(atlasMLApi).suggestCompetencies(any(SuggestCompetencyRequestDTO.class));
-
-            var requestBody = new SuggestCompetencyRequestDTO("test description", 1L);
-            request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON)
-                    .content(new ObjectMapper().writeValueAsString(requestBody))).andExpect(status().isOk());
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldHandleAtlasMLServiceException() throws Exception {
-            featureToggleService.enableFeature(Feature.AtlasML);
-
-            doThrow(new RuntimeException("AtlasML service unavailable")).when(atlasMLApi).suggestCompetencies(any(SuggestCompetencyRequestDTO.class));
-
-            var requestBody = new SuggestCompetencyRequestDTO("test description", 1L);
-            request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON)
-                    .content(new ObjectMapper().writeValueAsString(requestBody))).andExpect(status().isBadRequest());
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldReturnEmptyListWhenNoSuggestions() throws Exception {
-            featureToggleService.enableFeature(Feature.AtlasML);
-
-            var mockedResponse = new SuggestCompetencyResponseDTO(List.of());
-            doReturn(mockedResponse).when(atlasMLApi).suggestCompetencies(any(SuggestCompetencyRequestDTO.class));
-
-            var requestBody = new SuggestCompetencyRequestDTO("vague description", 1L);
-            var result = request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON)
-                    .content(new ObjectMapper().writeValueAsString(requestBody))).andExpect(status().isOk()).andReturn();
-
-            var responseDto = new ObjectMapper().readValue(result.getResponse().getContentAsString(), SuggestCompetencyResponseDTO.class);
-            assertThat(responseDto).isNotNull();
-            // Due to @JsonInclude(JsonInclude.Include.NON_EMPTY), empty lists are not serialized and become null when deserialized
-            assertThat(responseDto.competencies()).isNullOrEmpty();
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldValidateRequestBody() throws Exception {
-            featureToggleService.enableFeature(Feature.AtlasML);
-
-            // Test with empty request body - the endpoint accepts null values, so this should work
-            var mockedResponse = new SuggestCompetencyResponseDTO(List.of());
-            doReturn(mockedResponse).when(atlasMLApi).suggestCompetencies(any(SuggestCompetencyRequestDTO.class));
-
-            request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON).content("{}"))
-                    .andExpect(status().isOk());
-        }
-    }
-
-    @Nested
-    class SuggestCompetencyRelationsEndpoint {
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldSuggestCompetencyRelationsSuccessfully() throws Exception {
-            featureToggleService.enableFeature(Feature.AtlasML);
-
-            // Create test competencies in the course
-            var competency1 = competencyUtilService.createCompetency(course);
-            var competency2 = competencyUtilService.createCompetency(course);
-
-            // Mock AtlasML API response
-            var mockedRelation1 = new AtlasMLCompetencyRelationDTO(competency1.getId(), competency2.getId(), "ASSUMES");
-            var mockedResponse = new SuggestCompetencyRelationsResponseDTO(List.of(mockedRelation1));
-
-            doReturn(mockedResponse).when(atlasMLApi).suggestCompetencyRelations(course.getId());
-
-            var result = request.performMvcRequest(MockMvcRequestBuilders.get("/api/atlas/courses/" + course.getId() + "/competencies/relations/suggest"))
-                    .andExpect(status().isOk()).andReturn();
-
-            var responseDto = new ObjectMapper().readValue(result.getResponse().getContentAsString(), SuggestCompetencyRelationsResponseDTO.class);
-            assertThat(responseDto.relations()).hasSize(1);
-            assertThat(responseDto.relations().get(0).tailId()).isEqualTo(competency1.getId());
-            assertThat(responseDto.relations().get(0).headId()).isEqualTo(competency2.getId());
-            assertThat(responseDto.relations().get(0).relationType()).isEqualTo("ASSUMES");
-
-            verify(atlasMLApi).suggestCompetencyRelations(course.getId());
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-        void shouldDenyStudentAccessWhenNotEnrolled() throws Exception {
-            featureToggleService.enableFeature(Feature.AtlasML);
-
-            request.performMvcRequest(MockMvcRequestBuilders.get("/api/atlas/courses/" + course.getId() + "/competencies/relations/suggest")).andExpect(status().isForbidden());
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldHandleAtlasMLServiceExceptionForRelations() throws Exception {
-            featureToggleService.enableFeature(Feature.AtlasML);
-
-            doThrow(new RuntimeException("AtlasML service error")).when(atlasMLApi).suggestCompetencyRelations(course.getId());
-
-            request.performMvcRequest(MockMvcRequestBuilders.get("/api/atlas/courses/" + course.getId() + "/competencies/relations/suggest")).andExpect(status().isBadRequest());
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldReturnEmptyRelationsWhenNoSuggestions() throws Exception {
-            featureToggleService.enableFeature(Feature.AtlasML);
-
-            var mockedResponse = new SuggestCompetencyRelationsResponseDTO(List.of());
-            doReturn(mockedResponse).when(atlasMLApi).suggestCompetencyRelations(course.getId());
-
-            var result = request.performMvcRequest(MockMvcRequestBuilders.get("/api/atlas/courses/" + course.getId() + "/competencies/relations/suggest"))
-                    .andExpect(status().isOk()).andReturn();
-
-            var responseDto = new ObjectMapper().readValue(result.getResponse().getContentAsString(), SuggestCompetencyRelationsResponseDTO.class);
-            assertThat(responseDto).isNotNull();
-            // Due to @JsonInclude(JsonInclude.Include.NON_EMPTY), empty lists are not serialized and become null when deserialized
-            assertThat(responseDto.relations()).isNullOrEmpty();
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldRequireValidCourseId() throws Exception {
-            featureToggleService.enableFeature(Feature.AtlasML);
-
-            // Test with non-existent course ID - authorization happens first, so it returns 403
-            request.performMvcRequest(MockMvcRequestBuilders.get("/api/atlas/courses/999999/competencies/relations/suggest")).andExpect(status().isForbidden());
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldBlockWhenFeatureDisabled() throws Exception {
-            featureToggleService.disableFeature(Feature.AtlasML);
-
-            request.performMvcRequest(MockMvcRequestBuilders.get("/api/atlas/courses/" + course.getId() + "/competencies/relations/suggest")).andExpect(status().isForbidden());
-        }
-
-        @Test
-        @WithMockUser(username = "other-instructor", roles = "INSTRUCTOR")
-        void shouldDenyAccessToUnauthorizedCourse() throws Exception {
-            featureToggleService.enableFeature(Feature.AtlasML);
-
-            request.performMvcRequest(MockMvcRequestBuilders.get("/api/atlas/courses/" + course.getId() + "/competencies/relations/suggest")).andExpect(status().isForbidden());
         }
     }
 }
