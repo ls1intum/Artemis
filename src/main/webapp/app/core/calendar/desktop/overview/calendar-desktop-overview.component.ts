@@ -14,7 +14,6 @@ import { CalendarDesktopMonthPresentationComponent } from 'app/core/calendar/des
 import { CalendarDesktopWeekPresentationComponent } from 'app/core/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
-import { AlertService } from 'app/shared/service/alert.service';
 import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 
 @Component({
@@ -34,7 +33,6 @@ import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/c
 export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
     private calendarService = inject(CalendarService);
     private translateService = inject(TranslateService);
-    private alertService = inject(AlertService);
     private activatedRoute = inject(ActivatedRoute);
     private activatedRouteSubscription?: Subscription;
     private currentLocaleSubscription?: Subscription;
@@ -48,7 +46,7 @@ export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
     firstDayOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     firstDayOfCurrentWeek = signal<Dayjs>(dayjs().startOf('isoWeek'));
     isLoading = signal<boolean>(false);
-    calendarSubscriptionToken = signal<string | undefined>(undefined);
+    calendarSubscriptionToken = this.calendarService.subscriptionToken;
     currentCourseId = signal<number | undefined>(undefined);
 
     ngOnInit(): void {
@@ -64,10 +62,7 @@ export class CalendarDesktopOverviewComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.calendarService.loadSubscriptionToken().subscribe({
-            next: (token) => this.calendarSubscriptionToken.set(token),
-            error: () => this.alertService.addErrorAlert(''), // TODO: add error message string
-        });
+        this.calendarService.loadSubscriptionToken().subscribe();
     }
 
     ngOnDestroy() {

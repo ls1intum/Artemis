@@ -33,8 +33,10 @@ export class CalendarService {
     );
     private currentCourseId?: number;
     private firstDayOfCurrentMonth?: Dayjs;
+    private currentSubscriptionToken = signal<string | undefined>(undefined);
     private currentEventMap = signal<Map<string, CalendarEvent[]>>(new Map());
     readonly eventMap = computed(() => this.filterEventMapByOptions(this.currentEventMap(), this.includedEventFilterOptions()));
+    readonly subscriptionToken = computed<string | undefined>(() => this.currentSubscriptionToken());
 
     eventFilterOptions: CalendarEventFilterOption[] = [
         CalendarEventFilterOption.LectureEvents,
@@ -57,12 +59,23 @@ export class CalendarService {
         if (currentCourseId && firstDayOfCurrentMonth) {
             this.loadEventsForCurrentMonth(currentCourseId, firstDayOfCurrentMonth).subscribe();
         }
+        this.loadSubscriptionToken().subscribe();
     }
 
-    loadSubscriptionToken(): Observable<string> {
-        return this.httpClient.get(`${this.resourceUrl}/subscription-token`, {
-            responseType: 'text',
-        });
+    loadSubscriptionToken(): Observable<void> {
+        return this.httpClient
+            .get(`${this.resourceUrl}/subscription-token`, {
+                responseType: 'text',
+            })
+            .pipe(
+                map((token: string) => {
+                    this.currentSubscriptionToken.set(token);
+                }),
+                catchError((error) => {
+                    this.alertService.addErrorAlert('artemisApp.calendar.tokenLoadingError');
+                    return throwError(() => error);
+                }),
+            );
     }
 
     loadEventsForCurrentMonth(courseId: number, firstDayOfCurrentMonth: Dayjs): Observable<void> {
@@ -87,7 +100,7 @@ export class CalendarService {
                     this.firstDayOfCurrentMonth = firstDayOfCurrentMonth;
                 }),
                 catchError((error) => {
-                    this.alertService.addErrorAlert('artemisApp.calendar.loadingError');
+                    this.alertService.addErrorAlert('artemisApp.calendar.eventsLoadingError');
                     return throwError(() => error);
                 }),
             );
