@@ -80,7 +80,7 @@ export class AgentChatService {
         return this.generateCompetencyResponse(message, courseId);
     }
 
-    // TODO: This method will be used when integrating with actual competency creation API
+    /*
     private convertToCompetencyDrafts(competencies: any[]): CompetencyDraft[] {
         return competencies.map((comp) => ({
             title: comp.title || comp.name,
@@ -104,7 +104,7 @@ export class AgentChatService {
         if (upper.includes('CREATE')) return CompetencyTaxonomy.CREATE;
 
         return CompetencyTaxonomy.UNDERSTAND; // Default
-    }
+    }*/
 
     private isCompetencyRequest(message: string): boolean {
         const competencyKeywords = ['competenc', 'learning objective', 'skill', 'knowledge', 'create', 'generate', 'suggest', 'help me with', 'course', 'topic', 'subject'];
