@@ -6,13 +6,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AgentChatService } from './agent-chat.service';
-
-export interface ChatMessage {
-    id: string;
-    content: string;
-    isUser: boolean;
-    timestamp: Date;
-}
+import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
 
 @Component({
     selector: 'jhi-agent-chat-modal',
@@ -107,7 +101,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewChecked {
     }
 
     private generateMessageId(): string {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        return Date.now().toString(36) + Math.random().toString(36).slice(2);
     }
 
     private scrollToBottom(): void {

@@ -77,7 +77,7 @@ describe('AgentChatModalComponent', () => {
         const textarea = fixture.debugElement.query(By.css('.message-input'));
         const event = new KeyboardEvent('keypress', { key: 'Enter' });
 
-        textarea.nativeElement.dispatchEvent(event);
+        textarea.triggerEventHandler('keypress', event);
 
         expect(component.messages.length).toBeGreaterThanOrEqual(2);
         const userMessage = component.messages.find((m) => m.content === 'Test message' && m.isUser);
@@ -117,7 +117,7 @@ describe('AgentChatModalComponent', () => {
         expect(typingIndicator.nativeElement.textContent).toContain('artemisApp.agent.chat.typing');
     });
 
-    it('should handle service errors gracefully', () => {
+    it('should handle service errors gracefully', async () => {
         jest.spyOn(mockAgentChatService, 'sendMessage').mockImplementation(() => {
             return new Observable((subscriber) => {
                 subscriber.error(new Error('Service error'));
@@ -127,6 +127,10 @@ describe('AgentChatModalComponent', () => {
         fixture.detectChanges();
         component.currentMessage = 'Test message';
         component.sendMessage();
+
+        // Wait for async operations to complete
+        await fixture.whenStable();
+        fixture.detectChanges();
 
         // Should add user message and error response
         expect(component.messages.length).toBeGreaterThanOrEqual(2);
@@ -170,7 +174,7 @@ describe('AgentChatModalComponent', () => {
         expect(textarea.nativeElement.style.height).toBe('60px');
     });
 
-    it('should handle competency-related queries appropriately', () => {
+    it('should handle competency-related queries appropriately', async () => {
         jest.spyOn(mockAgentChatService, 'sendMessage').mockReturnValue(
             of('Great! For sorting algorithms, I suggest competencies like: Algorithm Analysis, Divide & Conquer strategies, and Implementation Skills.'),
         );
@@ -181,11 +185,13 @@ describe('AgentChatModalComponent', () => {
 
         expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Help me create competencies for sorting algorithms', 123);
 
+        // Wait for async operations to complete
+        await fixture.whenStable();
+        fixture.detectChanges();
+
         // Check that agent responds with competency-specific information
-        setTimeout(() => {
-            const agentMessage = component.messages.find((m) => m.content.includes('Algorithm Analysis') && !m.isUser);
-            expect(agentMessage).toBeTruthy();
-        }, 1000);
+        const agentMessage = component.messages.find((m) => m.content.includes('Algorithm Analysis') && !m.isUser);
+        expect(agentMessage).toBeTruthy();
     });
 
     it('should handle general programming queries', () => {
@@ -212,15 +218,148 @@ describe('AgentChatModalComponent', () => {
         expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Yes, create these competencies', 123);
     });
 
-    it('should scroll to bottom after new messages', () => {
+    it('should handle textarea focus and blur events', () => {
+        fixture.detectChanges();
+        const textarea = fixture.debugElement.query(By.css('.message-input'));
+
+        textarea.triggerEventHandler('focus', {});
+        expect(textarea.nativeElement).toBeTruthy();
+
+        textarea.triggerEventHandler('blur', {});
+        expect(textarea.nativeElement).toBeTruthy();
+    });
+
+    it('should clear current message after sending', () => {
+        fixture.detectChanges();
+        component.currentMessage = 'Test message';
+
+        component.sendMessage();
+
+        expect(component.currentMessage).toBe('');
+    });
+
+    it('should set typing indicator correctly during message sending', async () => {
+        fixture.detectChanges();
+        component.currentMessage = 'Test message';
+
+        expect(component.isAgentTyping).toBeFalsy();
+
+        component.sendMessage();
+        expect(component.isAgentTyping).toBeTruthy();
+
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.isAgentTyping).toBeFalsy();
+    });
+
+    it('should generate unique message IDs consistently', () => {
+        const ids = new Set();
+
+        for (let i = 0; i < 100; i++) {
+            const id = (component as any).generateMessageId();
+            expect(ids.has(id)).toBeFalsy();
+            ids.add(id);
+        }
+    });
+
+    it('should handle scroll container properly', () => {
+        fixture.detectChanges();
+
+        // Mock messagesContainer
+        component['messagesContainer'] = {
+            nativeElement: {
+                scrollTop: 0,
+                scrollHeight: 1000,
+            },
+        } as any;
+
+        (component as any).scrollToBottom();
+
+        expect(component['messagesContainer'].nativeElement.scrollTop).toBe(1000);
+    });
+
+    it('should handle empty textarea input gracefully', () => {
+        fixture.detectChanges();
+        component.currentMessage = '';
+
+        const textarea = fixture.debugElement.query(By.css('.message-input'));
+        textarea.triggerEventHandler('input', {});
+
+        expect(component.currentMessage).toBe('');
+    });
+
+    it('should prevent form submission on Enter without shift', () => {
+        fixture.detectChanges();
+        component.currentMessage = 'Test message';
+
+        const event = new KeyboardEvent('keypress', { key: 'Enter', shiftKey: false });
+        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+
+        component.onKeyPress(event);
+
+        expect(preventDefaultSpy).toHaveBeenCalled();
+    });
+
+    it('should allow new line on Shift+Enter', () => {
+        fixture.detectChanges();
+        component.currentMessage = 'Test message';
+
+        const event = new KeyboardEvent('keypress', { key: 'Enter', shiftKey: true });
+        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+
+        component.onKeyPress(event);
+
+        expect(preventDefaultSpy).not.toHaveBeenCalled();
+    });
+
+    it('should handle non-Enter key presses', () => {
+        fixture.detectChanges();
+        component.currentMessage = 'Test message';
+
+        const event = new KeyboardEvent('keypress', { key: 'a' });
+        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+
+        component.onKeyPress(event);
+
+        expect(preventDefaultSpy).not.toHaveBeenCalled();
+        expect(component.messages).toHaveLength(1); // Only welcome message
+    });
+
+    it('should handle textarea with no element reference', () => {
+        fixture.detectChanges();
+
+        // Mock messageInput as undefined
+        component['messageInput'] = undefined as any;
+
+        expect(() => component.onTextareaInput()).not.toThrow();
+    });
+
+    it('should enforce maximum textarea height', () => {
+        fixture.detectChanges();
+        const textarea = fixture.debugElement.query(By.css('.message-input'));
+
+        // Mock large scroll height
+        Object.defineProperty(textarea.nativeElement, 'scrollHeight', {
+            get: jest.fn(() => 150),
+        });
+
+        component.onTextareaInput();
+
+        expect(textarea.nativeElement.style.height).toBe('120px'); // Max height enforced
+    });
+
+    it('should scroll to bottom after new messages', async () => {
         const scrollSpy = jest.spyOn(component as any, 'scrollToBottom');
 
         fixture.detectChanges();
         component.currentMessage = 'Test message';
         component.sendMessage();
 
-        // Should trigger scroll after adding messages
+        // Wait for async operations and view updates
+        await fixture.whenStable();
         fixture.detectChanges();
+
         expect(scrollSpy).toHaveBeenCalled();
     });
 });

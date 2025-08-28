@@ -1,24 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable, delay, of } from 'rxjs';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyDraft } from 'app/atlas/shared/entities/chat-message.model';
 import dayjs from 'dayjs/esm';
-
-export interface ChatMessage {
-    content: string;
-    isUser: boolean;
-    timestamp: Date;
-    canCreateCompetencies?: boolean;
-    suggestedCompetencies?: CompetencyDraft[];
-}
-
-export interface CompetencyDraft {
-    title: string;
-    description: string;
-    taxonomy: CompetencyTaxonomy;
-    masteryThreshold: number;
-    optional: boolean;
-    softDueDate?: dayjs.Dayjs;
-}
 
 export interface AgentChatRequest {
     message: string;
