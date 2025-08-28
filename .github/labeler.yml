@@ -110,7 +110,6 @@ hyperion:
           - src/main/java/de/tum/cit/aet/artemis/hyperion/**/*
           - src/test/java/de/tum/cit/aet/artemis/hyperion/**/*
           - src/main/webapp/app/hyperion/**/*
-          - openapi/hyperion.yaml
 
 lecture:
   - changed-files:

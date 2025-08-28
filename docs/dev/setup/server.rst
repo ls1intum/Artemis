@@ -70,7 +70,6 @@ You only need to modify them if your specific work or production environments re
        athena:
             # If you want to use Athena, refer to the dedicated configuration section. Under Administration Guide, Setup of Extension Services.
 
-
 **Note:**
 If you use a password for authentication, update it in ``gradle/liquibase.gradle``.
 
@@ -259,14 +258,14 @@ sure to pass the active profiles to the ``gradlew`` command like this:
 Hyperion (Optional)
 ^^^^^^^^^^^^^^^^^^^^
 
-Hyperion provides AI-assisted exercise creation features via Spring AI. No external Hyperion service is required.
+Hyperion provides AI-assisted exercise creation features via Spring AI. No external Edutelligence service is required, only a LLM provider such as OpenAI or Azure OpenAI.
 
 Quick setup for development
 """""""""""""""""""""""
 
 1. Enable the profile
 
-   Add ``hyperion`` to your Spring profiles when you want Hyperion endpoints available:
+   Add ``hyperion`` to your Spring profiles when you want Hyperion features available:
 
    .. code-block:: bash
 
@@ -276,20 +275,7 @@ Quick setup for development
 
    Set up your preferred provider in ``application-local.yml``. Examples:
 
-   OpenAI
-
-   .. code-block:: yaml
-
-      spring:
-        ai:
-          openai:
-            api-key: ${OPENAI_API_KEY}
-            base-url: https://api.openai.com
-            chat:
-              options:
-                model: gpt-4o-mini
-
-   Azure OpenAI
+   Azure OpenAI (recommended)
 
    .. code-block:: yaml
 
@@ -302,3 +288,16 @@ Quick setup for development
               chat:
                 options:
                   deployment-name: gpt-5-mini
+
+   OpenAI
+
+   .. code-block:: yaml
+
+      spring:
+        ai:
+          openai:
+            api-key: ${OPENAI_API_KEY}
+            base-url: https://api.openai.com
+            chat:
+              options:
+                model: gpt-5-mini
