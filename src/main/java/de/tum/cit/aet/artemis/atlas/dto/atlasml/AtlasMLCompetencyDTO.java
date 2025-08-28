@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 
 /**
  * DTO for AtlasML API communication representing a competency.
@@ -32,6 +33,6 @@ public record AtlasMLCompetencyDTO(Long id, String title, String description, @J
      * Note: This creates a basic competency without all the domain-specific fields.
      */
     public Competency toDomain() {
-        return new Competency(title, description, null, null, CompetencyTaxonomy.UNDERSTAND, false);
+        return new Competency(title, description, null, CourseCompetency.DEFAULT_MASTERY_THRESHOLD, CompetencyTaxonomy.UNDERSTAND, false);
     }
 }
