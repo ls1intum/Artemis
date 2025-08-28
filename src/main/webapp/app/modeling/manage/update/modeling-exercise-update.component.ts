@@ -231,6 +231,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     ngOnDestroy() {
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
+        this.teamSubscription?.unsubscribe();
     }
 
     async calculateFormSectionStatus() {
@@ -300,31 +301,36 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
      * Only applies to form inputs, not Apollon Editor elements
      */
     handleEnterKeyNavigation(event: Event): void {
+        // Always block the implicit submit caused by the hidden submit button
+        event.preventDefault();
+        event.stopPropagation();
         const activeElement = document.activeElement as HTMLElement;
 
         // Let multiline editors/fields handle Enter
         if (activeElement?.tagName === 'TEXTAREA' || activeElement?.isContentEditable) {
-            return;
+            return; // default submit already suppressed above
         }
 
-        // Check if we're inside Apollon Editor - if so, don't interfere
-        const apollonContainer = document.querySelector('.apollon-container');
-        if (apollonContainer?.contains(activeElement)) {
-            return; // Let Apollon handle its own navigation
-        }
-
-        // Only handle navigation for regular form inputs within this form
+        // Only handle navigation within this form
         const formRoot = this.editFormEl?.nativeElement as HTMLElement | undefined;
         if (!formRoot) {
             return;
         }
+
+        // Check if we're inside Apollon Editor inside this form - let it handle Enter
+        const apollonContainer = formRoot.querySelector('.apollon-container');
+        if (apollonContainer?.contains(activeElement)) {
+            return; // default submit already suppressed above
+        }
+
         const focusableElements = Array.from(
-            formRoot.querySelectorAll('input:not([disabled]):not([readonly]):not([tabindex="-1"]):not([hidden]), ' + 'select:not([disabled]):not([tabindex="-1"]):not([hidden])'),
+            formRoot.querySelectorAll(
+                'input:not([disabled]):not([readonly]):not([tabindex="-1"]):not([hidden]):not([type="hidden"]), ' + 'select:not([disabled]):not([tabindex="-1"]):not([hidden])',
+            ),
         ) as HTMLElement[];
 
         const currentIndex = focusableElements.indexOf(activeElement);
         if (currentIndex >= 0 && currentIndex < focusableElements.length - 1) {
-            event.preventDefault();
             focusableElements[currentIndex + 1].focus();
         }
     }
