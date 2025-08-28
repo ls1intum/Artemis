@@ -108,7 +108,7 @@ public class CalendarResource {
 
         boolean includeTutorialEvents = filterOptions.contains(CalendarEventFilterOption.TUTORIALS);
         boolean includeExamEvents = filterOptions.contains(CalendarEventFilterOption.EXAMS);
-        boolean includeLectureEvents = filterOptions.contains(CalendarEventFilterOption.EXERCISES);
+        boolean includeLectureEvents = filterOptions.contains(CalendarEventFilterOption.LECTURES);
         boolean includeExerciseEvents = filterOptions.contains(CalendarEventFilterOption.EXERCISES);
 
         Set<CalendarEventDTO> tutorialEventDTOs = includeTutorialEvents

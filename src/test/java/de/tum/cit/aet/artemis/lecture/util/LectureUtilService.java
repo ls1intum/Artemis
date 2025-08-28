@@ -140,7 +140,7 @@ public class LectureUtilService {
      */
     public Lecture createLecture(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Lecture lecture = new Lecture();
-        lecture.setDescription("Test Lecture");
+        lecture.setTitle("Test Lecture");
         lecture.setCourse(course);
         lecture.setVisibleDate(visibleDate);
         lecture.setStartDate(startDate);

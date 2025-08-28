@@ -5,14 +5,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -33,6 +39,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.service.CalendarSubscriptionService.CalendarEventFilterOption;
 import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.DateUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -47,6 +54,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
@@ -243,7 +251,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                         + TEST_LANGUAGE_STRING;
                 Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession.getStart(),
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, tutorialGroup.getTitle(), tutorialGroupSession.getStart(),
                         tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
@@ -264,7 +272,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                         + TEST_LANGUAGE_STRING;
                 Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession.getStart(),
+                CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, tutorialGroup.getTitle(), tutorialGroupSession.getStart(),
                         tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
                 Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
                 expectedResponse.put(expectedEvent.startDate().withZoneSameInstant(TEST_TIMEZONE).toLocalDate().toString(), List.of(expectedEvent));
@@ -1297,11 +1305,11 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                     + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession1.getStart(),
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, tutorialGroup.getTitle(), tutorialGroupSession1.getStart(),
                     tutorialGroupSession1.getEnd(), tutorialGroupSession1.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession2.getStart(),
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, tutorialGroup.getTitle(), tutorialGroupSession2.getStart(),
                     tutorialGroupSession2.getEnd(), tutorialGroupSession2.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
-            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession3.getStart(),
+            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, tutorialGroup.getTitle(), tutorialGroupSession3.getStart(),
                     tutorialGroupSession3.getEnd(), tutorialGroupSession3.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3)
                     .collect(Collectors.groupingBy(dto -> dto.startDate().toLocalDate().toString()));
@@ -1322,14 +1330,14 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
             ZoneId timezone = tutorialGroupSession.getStart().getZone();
-            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession.getStart(),
+            CalendarEventDTO expectedEvent1 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, tutorialGroup.getTitle(), tutorialGroupSession.getStart(),
                     tutorialGroupSession.getStart().toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone),
                     tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
-            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session",
+            CalendarEventDTO expectedEvent2 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, tutorialGroup.getTitle(),
                     tutorialGroupSession.getStart().plusDays(1).toLocalDate().atStartOfDay(timezone),
                     tutorialGroupSession.getStart().plusDays(1).toLocalDate().atTime(DateUtil.END_OF_DAY).atZone(timezone),
                     tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
-            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session",
+            CalendarEventDTO expectedEvent3 = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, tutorialGroup.getTitle(),
                     tutorialGroupSession.getStart().plusDays(2).toLocalDate().atStartOfDay(timezone), tutorialGroupSession.getEnd(),
                     tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
             Map<String, List<CalendarEventDTO>> expectedResponse = Stream.of(expectedEvent1, expectedEvent2, expectedEvent3)
@@ -1353,7 +1361,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             String URL = "/api/core/calendar/courses/" + courseId + "/calendar-events?monthKeys=2025-05&timeZone=" + otherTimeZone + "&language=" + TEST_LANGUAGE_STRING;
             Map<String, List<CalendarEventDTO>> actualResponse = request.get(URL, HttpStatus.OK, EVENT_MAP_RETURN_TYPE);
 
-            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, "Tutorial Session", tutorialGroupSession.getStart(),
+            CalendarEventDTO expectedEvent = new CalendarEventDTO(null, CalendarEventType.TUTORIAL, tutorialGroup.getTitle(), tutorialGroupSession.getStart(),
                     tutorialGroupSession.getEnd(), tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus(), tutor.getFirstName() + " " + tutor.getLastName());
             Map<String, List<CalendarEventDTO>> expectedResponse = new HashMap<>();
             expectedResponse.put(tutorialGroupSession.getStart().withZoneSameInstant(ZoneId.of(otherTimeZone)).toLocalDate().toString(), List.of(expectedEvent));
@@ -1365,6 +1373,276 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Nested
     class GetCalendarEventSubscriptionFileTests {
+
+        private static final DateTimeFormatter ICS_TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC);
+
+        private String buildUrl(long courseId, String token, CalendarEventFilterOption[] filterOptions, Language language) {
+            String tokenParameter = "token=" + token;
+            String filterOptionsParameter = "filterOptions=" + Arrays.stream(filterOptions).map(Enum::name).collect(Collectors.joining(","));
+            String languageParameter = "language=" + language;
+            return "/api/core/calendar/courses/" + courseId + "/subscription/calendar-events.ics?" + tokenParameter + "&" + filterOptionsParameter + "&" + languageParameter;
+        }
+
+        private String generateUniqueTestToken() {
+            return UUID.randomUUID().toString().replace("-", "");
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldReturnNotFoundWhenCourseDoesNotExist() throws Exception {
+            String expectedToken = generateUniqueTestToken();
+            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            long courseId = -3;
+            String URL = buildUrl(courseId, expectedToken, CalendarEventFilterOption.values(), Language.ENGLISH);
+            request.get(URL, HttpStatus.NOT_FOUND, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldReturnForbiddenWhenUserWithTokenDoesNotExist() throws Exception {
+            String expectedToken = generateUniqueTestToken();
+            long courseId = course.getId();
+            String URL = buildUrl(courseId, expectedToken, CalendarEventFilterOption.values(), Language.ENGLISH);
+            request.get(URL, HttpStatus.FORBIDDEN, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = NOT_STUDENT_LOGIN, roles = "USER")
+        void shouldReturnForbiddenWhenUserNotParticipantOfCourse() throws Exception {
+            userUtilService.addStudent("notstudent", NOT_STUDENT_LOGIN);
+            User notStudent = userUtilService.getUserByLogin(NOT_STUDENT_LOGIN);
+            String expectedToken = generateUniqueTestToken();
+            userUtilService.setUserCalendarSubscriptionTokenAndSave(notStudent, expectedToken);
+            long courseId = course.getId();
+            String URL = buildUrl(courseId, expectedToken, CalendarEventFilterOption.values(), Language.ENGLISH);
+            request.get(URL, HttpStatus.FORBIDDEN, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldGenerateCorrectICSFileHeaders() throws Exception {
+            String expectedProductId = "PRODID:-//TUM//Artemis//EN";
+            String expectedICalendarSpecificationVersion = "VERSION:2.0";
+            String expectedICalendarScale = "CALSCALE:GREGORIAN";
+            String expectedMethod = "METHOD:PUBLISH";
+
+            String expectedToken = generateUniqueTestToken();
+            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            long courseId = course.getId();
+            String URL = buildUrl(courseId, expectedToken, CalendarEventFilterOption.values(), Language.ENGLISH);
+
+            String result = request.get(URL, HttpStatus.OK, String.class);
+            assertThat(result).contains(expectedProductId);
+            assertThat(result).contains(expectedICalendarSpecificationVersion);
+            assertThat(result).contains(expectedICalendarScale);
+            assertThat(result).contains(expectedMethod);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldNotIncludeVeventsFromUnreleasedEntitiesInICSFileForStudents() throws Exception {
+            textExerciseUtilService.createIndividualTextExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, null);
+
+            String expectedToken = generateUniqueTestToken();
+            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            long courseId = course.getId();
+            String URL = buildUrl(courseId, expectedToken, CalendarEventFilterOption.values(), Language.ENGLISH);
+
+            String result = request.get(URL, HttpStatus.OK, String.class);
+
+            assertThat(result).doesNotContain("UID");
+        }
+
+        @Test
+        @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "USER")
+        void shouldIncludeVeventsFromUnreleasedEntitiesInICSFileForCourseStaff() throws Exception {
+            textExerciseUtilService.createIndividualTextExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, null);
+
+            String expectedToken = generateUniqueTestToken();
+            userUtilService.setUserCalendarSubscriptionTokenAndSave(instructor, expectedToken);
+            long courseId = course.getId();
+            String URL = buildUrl(courseId, expectedToken, CalendarEventFilterOption.values(), Language.ENGLISH);
+
+            String result = request.get(URL, HttpStatus.OK, String.class);
+
+            int uidCount = 0;
+            Matcher matcher = Pattern.compile("(?m)^UID:").matcher(result);
+            while (matcher.find()) {
+                uidCount++;
+            }
+            assertThat(uidCount).isEqualTo(2);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldIncludeCorrectlyStructuredVeventsInICSFile() throws Exception {
+            String tutorialGroupName = "Test Tutorial Group";
+            TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), tutorialGroupName, "", 10, false, "Garching", Language.ENGLISH.name(), tutor,
+                    new HashSet<>(Set.of(student)));
+            TutorialGroupSession tutorialGroupSession = tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusHours(2),
+                    5);
+
+            String expectedSummary = "SUMMARY:" + course.getShortName() + " Tutorial | " + tutorialGroupName;
+            String expectedStart = "DTSTART:" + ICS_TIMESTAMP_FORMATTER.format(tutorialGroupSession.getStart().toInstant());
+            String expectedEnd = "DTEND:" + ICS_TIMESTAMP_FORMATTER.format(tutorialGroupSession.getEnd().toInstant());
+            String expectedLocation = "LOCATION:" + tutorialGroupSession.getLocation() + " - " + tutorialGroup.getCampus();
+            String expectedContact = "CONTACT:" + tutor.getFirstName() + " " + tutor.getLastName();
+
+            String expectedToken = generateUniqueTestToken();
+            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            long courseId = course.getId();
+            String URL = buildUrl(courseId, expectedToken, CalendarEventFilterOption.values(), Language.ENGLISH);
+
+            String result = request.get(URL, HttpStatus.OK, String.class);
+
+            int uidCount = 0;
+            Matcher matcher = Pattern.compile("(?m)^UID:").matcher(result);
+            while (matcher.find()) {
+                uidCount++;
+            }
+            assertThat(uidCount).isEqualTo(1);
+            assertThat(result).contains(expectedSummary);
+            assertThat(result).contains(expectedStart);
+            assertThat(result).contains(expectedEnd);
+            assertThat(result).contains(expectedLocation);
+            assertThat(result).contains(expectedContact);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldIncludeEndEqualToStartForVeventsWithNoEndDate() throws Exception {
+            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, null, null, QuizMode.INDIVIDUAL);
+
+            String expectedStart = "DTSTART:" + ICS_TIMESTAMP_FORMATTER.format(PAST_DATE.toInstant());
+            String expectedEnd = "DTEND:" + ICS_TIMESTAMP_FORMATTER.format(PAST_DATE.toInstant());
+
+            String expectedToken = generateUniqueTestToken();
+            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            long courseId = course.getId();
+            String URL = buildUrl(courseId, expectedToken, CalendarEventFilterOption.values(), Language.ENGLISH);
+
+            String result = request.get(URL, HttpStatus.OK, String.class);
+
+            int uidCount = 0;
+            Matcher matcher = Pattern.compile("(?m)^UID:").matcher(result);
+            while (matcher.find()) {
+                uidCount++;
+            }
+            assertThat(uidCount).isEqualTo(1);
+            assertThat(result).contains(expectedStart);
+            assertThat(result).contains(expectedEnd);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldGenerateStableIdsForVeventsInICSFile() throws Exception {
+            lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE.minusHours(2), PAST_DATE);
+
+            String expectedToken = UUID.randomUUID().toString().replace("-", "");
+            ;
+            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            long courseId = course.getId();
+            String url = buildUrl(courseId, expectedToken, CalendarEventFilterOption.values(), Language.ENGLISH);
+
+            String result = request.get(url, HttpStatus.OK, String.class);
+
+            Pattern uidLinePattern = Pattern.compile("(?m)^UID:(.+)$");
+            Matcher matcher = uidLinePattern.matcher(result);
+            int firstUidCount = 0;
+            String firstUid = null;
+            while (matcher.find()) {
+                firstUidCount++;
+                if (firstUid == null) {
+                    firstUid = matcher.group(1).trim();
+                }
+            }
+            assertThat(firstUid).isNotNull();
+            assertThat(firstUidCount).isEqualTo(1);
+
+            for (int i = 0; i < 5; i++) {
+                String nextResult = request.get(url, HttpStatus.OK, String.class);
+
+                Matcher nextMatcher = uidLinePattern.matcher(nextResult);
+                int nextUidCount = 0;
+                String nextUid = null;
+                while (nextMatcher.find()) {
+                    nextUidCount++;
+                    if (nextUid == null) {
+                        nextUid = nextMatcher.group(1).trim();
+                    }
+                }
+                assertThat(nextUidCount).isEqualTo(1);
+                assertThat(nextUid).isEqualTo(firstUid);
+            }
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldIncludeVeventsFromAllEntitiesInICSFile() throws Exception {
+            TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", Language.ENGLISH.name(),
+                    tutor, new HashSet<>(Set.of(student)));
+            tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusHours(2), 5);
+            Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE.minusHours(2), PAST_DATE);
+            Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), PAST_DATE.plusDays(1), PAST_DATE.plusDays(2),
+                    PAST_DATE.plusDays(3), "Test-Examiner");
+            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, PAST_DATE, PAST_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
+            TextExercise nonQuizExercise = textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
+
+            String tutorialGroupTitle = tutorialGroup.getTitle();
+            String lectureTitle = lecture.getTitle();
+            String examTitle = exam.getTitle();
+            String quizExerciseTitle = quizExercise.getTitle();
+            String nonQuizExerciseTitle = nonQuizExercise.getTitle();
+
+            String expectedToken = generateUniqueTestToken();
+            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            long courseId = course.getId();
+            String URL = buildUrl(courseId, expectedToken, CalendarEventFilterOption.values(), Language.ENGLISH);
+
+            String result = request.get(URL, HttpStatus.OK, String.class);
+            assertThat(result).contains(tutorialGroupTitle);
+            assertThat(result).contains(lectureTitle);
+            assertThat(result).contains(examTitle);
+            assertThat(result).contains(quizExerciseTitle);
+            assertThat(result).contains(nonQuizExerciseTitle);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+        void shouldIncludeVeventsFromFilteredEntitiesInICSFile() throws Exception {
+            TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(course.getId(), "Test Tutorial Group", "", 10, false, "Garching", Language.ENGLISH.name(),
+                    tutor, new HashSet<>(Set.of(student)));
+            tutorialGroupUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), FIXED_DATE, FIXED_DATE.plusHours(2), 5);
+            Lecture lecture = lectureUtilService.createLecture(course, PAST_DATE.minusDays(1), PAST_DATE.minusHours(2), PAST_DATE);
+            Exam exam = examUtilService.addExam(course, PAST_DATE, PAST_DATE.plusHours(2), PAST_DATE.plusHours(3), PAST_DATE.plusDays(1), PAST_DATE.plusDays(2),
+                    PAST_DATE.plusDays(3), "Test-Examiner");
+            QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuizWithAllQuestionTypes(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, QuizMode.INDIVIDUAL);
+            TextExercise nonQuizExercise = textExerciseUtilService.createIndividualTextExercise(course, PAST_DATE, PAST_DATE.plusDays(1), null, null);
+
+            String tutorialGroupTitle = tutorialGroup.getTitle();
+            String lectureTitle = lecture.getTitle();
+            String examTitle = exam.getTitle();
+            String quizExerciseTitle = quizExercise.getTitle();
+            String nonQuizExerciseTitle = nonQuizExercise.getTitle();
+
+            String expectedToken = generateUniqueTestToken();
+            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            long courseId = course.getId();
+            String URL = buildUrl(courseId, expectedToken,
+                    new CalendarEventFilterOption[] { CalendarEventFilterOption.TUTORIALS, CalendarEventFilterOption.LECTURES, CalendarEventFilterOption.EXAMS }, Language.ENGLISH);
+
+            String result = request.get(URL, HttpStatus.OK, String.class);
+            assertThat(result).contains(tutorialGroupTitle);
+            assertThat(result).contains(lectureTitle);
+            assertThat(result).contains(examTitle);
+            assertThat(result).doesNotContain(quizExerciseTitle);
+            assertThat(result).doesNotContain(nonQuizExerciseTitle);
+        }
+
+    }
+
+    @Nested
+    class GetCalendarEventSubscriptionTokenTests {
 
         @Test
         @WithUserDetails(value = STUDENT_LOGIN, setupBefore = TestExecutionEvent.TEST_EXECUTION)
@@ -1388,10 +1666,5 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(actualToken.length()).isEqualTo(32);
             assertThat(actualToken).matches("^[0-9a-f]+$");
         }
-    }
-
-    @Nested
-    class GetCalendarEventSubscriptionTokenTests {
-
     }
 }
