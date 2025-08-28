@@ -12,7 +12,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.hibernate.LazyInitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
@@ -61,7 +62,7 @@ public class CodeGenerationExecutionService {
 
     private final GitService gitService;
 
-    private final CodeGenerationStrategy codeGenerationStrategy;
+    private final ApplicationContext applicationContext;
 
     private final RepositoryService repositoryService;
 
@@ -77,13 +78,12 @@ public class CodeGenerationExecutionService {
 
     private final RepositoryStructureService repositoryStructureService;
 
-    public CodeGenerationExecutionService(GitService gitService, @Qualifier("solutionRepositoryStrategy") CodeGenerationStrategy codeGenerationStrategy,
-            RepositoryService repositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, ResultRepository resultRepository,
-            ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            RepositoryStructureService repositoryStructureService) {
+    public CodeGenerationExecutionService(GitService gitService, ApplicationContext applicationContext, RepositoryService repositoryService,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ResultRepository resultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, RepositoryStructureService repositoryStructureService) {
         this.gitService = gitService;
-        this.codeGenerationStrategy = codeGenerationStrategy;
+        this.applicationContext = applicationContext;
         this.repositoryService = repositoryService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -105,15 +105,34 @@ public class CodeGenerationExecutionService {
     }
 
     /**
+     * Resolves the appropriate code generation strategy based on repository type.
+     *
+     * @param repositoryType the type of repository (SOLUTION, TEMPLATE, TESTS)
+     * @return the corresponding code generation strategy
+     * @throws IllegalArgumentException if repository type is not supported
+     */
+    private CodeGenerationStrategy resolveStrategy(RepositoryType repositoryType) {
+        String strategyBeanName = switch (repositoryType) {
+            case SOLUTION -> "solutionRepositoryStrategy";
+            case TEMPLATE -> "templateRepositoryStrategy";
+            case TESTS -> "testRepositoryStrategy";
+            default -> throw new IllegalArgumentException("Unsupported repository type for code generation: " + repositoryType);
+        };
+
+        return applicationContext.getBean(strategyBeanName, CodeGenerationStrategy.class);
+    }
+
+    /**
      * Sets up repository for code generation by validating URI and checking out repository.
      *
-     * @param exercise the programming exercise
+     * @param exercise       the programming exercise
+     * @param repositoryType the type of repository to set up (TEMPLATE, SOLUTION, or TESTS)
      * @return repository setup result containing repository and commit hash
      */
-    private RepositorySetupResult setupRepository(ProgrammingExercise exercise) {
-        var repositoryUri = exercise.getVcsSolutionRepositoryUri();
+    private RepositorySetupResult setupRepository(ProgrammingExercise exercise, RepositoryType repositoryType) {
+        var repositoryUri = exercise.getRepositoryURL(repositoryType);
         if (repositoryUri == null) {
-            log.error("Could not get repository URI for exercise {}", exercise.getId());
+            log.error("Could not get {} repository URI for exercise {}", repositoryType, exercise.getId());
             return new RepositorySetupResult(null, null, false);
         }
 
@@ -236,16 +255,17 @@ public class CodeGenerationExecutionService {
      * @param user          the user
      * @param repository    the repository
      * @param repositoryUri the repository URI
+     * @param strategy      the code generation strategy to use
      * @param lastBuildLogs previous build logs for context
      * @param iteration     current iteration number (for logging)
      * @return iteration result with success status and build logs
      */
-    private IterationResult executeGenerationIteration(ProgrammingExercise exercise, User user, Repository repository, VcsRepositoryUri repositoryUri, String lastBuildLogs,
-            int iteration) {
+    private IterationResult executeGenerationIteration(ProgrammingExercise exercise, User user, Repository repository, VcsRepositoryUri repositoryUri,
+            CodeGenerationStrategy strategy, String lastBuildLogs, int iteration) {
         try {
             String repositoryStructure = repositoryStructureService.getRepositoryStructure(repository);
 
-            List<GeneratedFile> generatedFiles = codeGenerationStrategy.generateCode(user, exercise, lastBuildLogs, repositoryStructure);
+            List<GeneratedFile> generatedFiles = strategy.generateCode(user, exercise, lastBuildLogs, repositoryStructure);
 
             if (generatedFiles == null || generatedFiles.isEmpty()) {
                 log.warn("No files generated for exercise {} on attempt {}. Skipping repository update.", exercise.getId(), iteration);
@@ -291,25 +311,27 @@ public class CodeGenerationExecutionService {
      * Runs up to MAX_ITERATIONS attempts, using build failure feedback to improve code generation.
      * Manages Git repository operations, code generation, compilation, and cleanup.
      *
-     * @param exercise the programming exercise to generate code for
-     * @param user     the user initiating the code generation
+     * @param exercise       the programming exercise to generate code for
+     * @param user           the user initiating the code generation
+     * @param repositoryType the type of repository to generate code for (SOLUTION, TEMPLATE, TESTS)
      * @return the final build result, or null if all attempts failed
      */
-    public Result generateAndCompileCode(ProgrammingExercise exercise, User user) {
-        log.warn("Starting code generation and compilation for exercise {}\n\n\n", exercise.getId());
+    public Result generateAndCompileCode(ProgrammingExercise exercise, User user, RepositoryType repositoryType) {
+        log.warn("Starting code generation and compilation for exercise {} with repository type {}\n\n\n", exercise.getId(), repositoryType);
 
-        RepositorySetupResult setupResult = setupRepository(exercise);
+        RepositorySetupResult setupResult = setupRepository(exercise, repositoryType);
         if (!setupResult.success()) {
             return null;
         }
 
-        var repositoryUri = exercise.getVcsSolutionRepositoryUri();
+        var repositoryUri = exercise.getRepositoryURL(repositoryType);
         try {
+            CodeGenerationStrategy strategy = resolveStrategy(repositoryType);
             String lastBuildLogs = null;
             Result result = null;
 
             for (int i = 0; i < MAX_ITERATIONS; i++) {
-                IterationResult iterationResult = executeGenerationIteration(exercise, user, setupResult.repository(), repositoryUri, lastBuildLogs, i + 1);
+                IterationResult iterationResult = executeGenerationIteration(exercise, user, setupResult.repository(), repositoryUri, strategy, lastBuildLogs, i + 1);
 
                 result = iterationResult.result();
                 if (iterationResult.successful()) {

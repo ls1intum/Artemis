@@ -238,11 +238,9 @@ public abstract class RepositoryResource {
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
-            try (Repository repository = getRepository(domainId, RepositoryActionType.READ, true, false)) {
-                repositoryService.pullChanges(repository);
-
-                return new ResponseEntity<>(HttpStatus.OK);
-            }
+            Repository repository = getRepository(domainId, RepositoryActionType.READ, true, false);
+            repositoryService.pullChanges(repository);
+            return new ResponseEntity<>(HttpStatus.OK);
         });
     }
 

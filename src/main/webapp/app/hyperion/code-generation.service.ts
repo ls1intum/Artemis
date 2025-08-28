@@ -5,7 +5,9 @@ import { Observable } from 'rxjs';
 /**
  * Request DTO for code generation
  */
-export type CodeGenerationRequestDTO = object;
+export interface CodeGenerationRequestDTO {
+    repositoryType?: 'TEMPLATE' | 'SOLUTION' | 'TESTS';
+}
 
 /**
  * Response DTO for code generation
@@ -28,7 +30,7 @@ export class CodeGenerationService {
     /**
      * Generates code for a programming exercise using AI
      * @param exerciseId the ID of the programming exercise
-     * @param request the request options (currently empty)
+     * @param request the request options including repository type
      * @returns Observable of the generation result
      */
     generateCode(exerciseId: number, request: CodeGenerationRequestDTO = {}): Observable<CodeGenerationResultDTO> {

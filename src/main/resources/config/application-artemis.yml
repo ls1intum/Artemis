@@ -131,6 +131,9 @@ spring:
             model: ${AZURE_OPENAI_MODEL:gpt-5-mini}
             # Some Azure/OpenAI deployments (e.g., gpt-5) only support the default temperature (1.0)
             temperature: 1.0
+        client:
+          connect-timeout: 30s
+          read-timeout: 5m
     # Fallback OpenAI config can remain for local testing if desired
     openai:
       api-key: ${OPENAI_API_KEY:}
@@ -140,6 +143,9 @@ spring:
           model: ${OPENAI_MODEL:gpt-5-mini}
           # Ensure temperature is set to the model-supported default
           temperature: 1.0
+      client:
+        connect-timeout: 30s
+        read-timeout: 5m
     # Retry/response handling tuning for AI providers (applies when Spring AI auto-config is active)
     retry:
       # Treat HTTP 429 as transient to allow auto-retry by Spring AI

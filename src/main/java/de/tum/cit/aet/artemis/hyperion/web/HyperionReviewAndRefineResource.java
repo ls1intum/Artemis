@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.ConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.ProblemStatementRewriteService;
 import de.tum.cit.aet.artemis.hyperion.service.codegeneration.CodeGenerationExecutionService;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -197,15 +198,18 @@ public class HyperionReviewAndRefineResource {
     @PostMapping("exercises/{exerciseId}/generate-code")
     public ResponseEntity<CodeGenerationResultDTO> generateExerciseCode(
             @Parameter(description = "ID of the programming exercise to generate code for", required = true) @PathVariable Long exerciseId,
-            @Parameter(description = "Request containing generation options", required = true) @RequestBody CodeGenerationRequestDTO requestDTO) {
+            @Parameter(description = "Request containing generation options including repository type", required = true) @RequestBody CodeGenerationRequestDTO requestDTO) {
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
-        log.info("Starting code generation for exercise {} by user {}", exerciseId, user.getLogin());
+        // Default to SOLUTION if repository type is not provided for backward compatibility
+        RepositoryType repositoryType = requestDTO.repositoryType() != null ? requestDTO.repositoryType() : RepositoryType.SOLUTION;
+
+        log.info("Starting code generation for exercise {} by user {} for repository type {}", exerciseId, user.getLogin(), repositoryType);
 
         try {
-            var result = codeGenerationExecutionService.generateAndCompileCode(programmingExercise, user);
+            var result = codeGenerationExecutionService.generateAndCompileCode(programmingExercise, user, repositoryType);
 
             if (result != null && result.isSuccessful()) {
                 log.info("Code generation successful for exercise {}", exerciseId);

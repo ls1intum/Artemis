@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.hyperion.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+
 /**
  * DTO for requesting code generation for a programming exercise.
- * Currently empty but can be extended with generation options in the future.
+ * Contains the repository type to determine which generation strategy to use.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CodeGenerationRequestDTO() {
+public record CodeGenerationRequestDTO(RepositoryType repositoryType) {
 }

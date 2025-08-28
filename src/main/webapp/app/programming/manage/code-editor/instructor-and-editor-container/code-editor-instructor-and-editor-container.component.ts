@@ -75,9 +75,20 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
+        // Only allow code generation for supported repository types
+        if (this.selectedRepository !== RepositoryType.TEMPLATE && this.selectedRepository !== RepositoryType.SOLUTION && this.selectedRepository !== RepositoryType.TESTS) {
+            this.codeGenAlertService.addAlert({
+                type: AlertType.WARNING,
+                translationKey: 'artemisApp.programmingExercise.codeGeneration.unsupportedRepository',
+            });
+            return;
+        }
+
         this.isGeneratingCode = true;
 
-        this.codeGenerationService.generateCode(this.exercise.id).subscribe({
+        const request = { repositoryType: this.selectedRepository };
+
+        this.codeGenerationService.generateCode(this.exercise.id, request).subscribe({
             next: (response) => {
                 this.isGeneratingCode = false;
 
@@ -85,11 +96,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     this.codeGenAlertService.addAlert({
                         type: AlertType.SUCCESS,
                         translationKey: 'artemisApp.programmingExercise.codeGeneration.success',
+                        translationParams: { repositoryType: this.selectedRepository },
                     });
                 } else {
                     this.codeGenAlertService.addAlert({
                         type: AlertType.WARNING,
                         translationKey: 'artemisApp.programmingExercise.codeGeneration.partialSuccess',
+                        translationParams: { repositoryType: this.selectedRepository },
                     });
                 }
             },
@@ -98,6 +111,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 this.codeGenAlertService.addAlert({
                     type: AlertType.DANGER,
                     translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
+                    translationParams: { repositoryType: this.selectedRepository },
                 });
             },
         });

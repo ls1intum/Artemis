@@ -225,9 +225,10 @@
                 "generating": "Generiere...",
                 "description": "Generiere Lösung, Template und Test-Code mit KI",
                 "tooltip": "KI Code-Generierung - Generiere Lösung, Template und Test-Code",
-                "success": "Code-Generierung erfolgreich abgeschlossen!",
-                "partialSuccess": "Code-Generierung mit einigen Problemen abgeschlossen. Bitte überprüfen Sie den generierten Code.",
-                "error": "Code-Generierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
+                "success": "{{repositoryType}} Code-Generierung erfolgreich abgeschlossen!",
+                "partialSuccess": "{{repositoryType}} Code-Generierung mit einigen Problemen abgeschlossen. Bitte überprüfen Sie den generierten Code.",
+                "error": "{{repositoryType}} Code-Generierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
+                "unsupportedRepository": "Code-Generierung wird nur für Template-, Lösung- und Test-Repositories unterstützt.",
                 "attempts": "Versuche: {{attempts}}"
             },
             "status": {
