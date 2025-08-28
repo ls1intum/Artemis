@@ -49,7 +49,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewChecked {
         this.activeModal.close();
     }
 
-    sendMessage(): void {
+    protected sendMessage(): void {
         const message = this.currentMessage.trim();
         if (!message || this.isAgentTyping) {
             return;

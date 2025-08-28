@@ -60,9 +60,13 @@ describe('AgentChatModalComponent', () => {
     it('should send message when send button is clicked', () => {
         fixture.detectChanges();
         component.currentMessage = 'Test message';
+        fixture.detectChanges(); // Update button enabled state
 
-        // Call the method directly since DOM click might not trigger correctly in test
-        component.sendMessage();
+        const sendButton = fixture.debugElement.query(By.css('.send-button'));
+        expect(sendButton.nativeElement.disabled).toBeFalsy(); // Verify button is enabled
+
+        sendButton.nativeElement.click();
+        fixture.detectChanges();
 
         expect(component.messages.length).toBeGreaterThanOrEqual(2);
         const userMessage = component.messages.find((m) => m.content === 'Test message' && m.isUser);
@@ -126,7 +130,13 @@ describe('AgentChatModalComponent', () => {
 
         fixture.detectChanges();
         component.currentMessage = 'Test message';
-        component.sendMessage();
+        fixture.detectChanges(); // Update button enabled state
+
+        const sendButton = fixture.debugElement.query(By.css('.send-button'));
+        expect(sendButton.nativeElement.disabled).toBeFalsy(); // Verify button is enabled
+
+        sendButton.nativeElement.click();
+        fixture.detectChanges();
 
         // Wait for async operations to complete
         await fixture.whenStable();
@@ -181,7 +191,13 @@ describe('AgentChatModalComponent', () => {
 
         fixture.detectChanges();
         component.currentMessage = 'Help me create competencies for sorting algorithms';
-        component.sendMessage();
+        fixture.detectChanges(); // Update button enabled state
+
+        const sendButton = fixture.debugElement.query(By.css('.send-button'));
+        expect(sendButton.nativeElement.disabled).toBeFalsy(); // Verify button is enabled
+
+        sendButton.nativeElement.click();
+        fixture.detectChanges();
 
         expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Help me create competencies for sorting algorithms', 123);
 
@@ -201,7 +217,13 @@ describe('AgentChatModalComponent', () => {
 
         fixture.detectChanges();
         component.currentMessage = 'I need help with Java programming competencies';
-        component.sendMessage();
+        fixture.detectChanges(); // Update button enabled state
+
+        const sendButton = fixture.debugElement.query(By.css('.send-button'));
+        expect(sendButton.nativeElement.disabled).toBeFalsy(); // Verify button is enabled
+
+        sendButton.nativeElement.click();
+        fixture.detectChanges();
 
         expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('I need help with Java programming competencies', 123);
     });
@@ -213,7 +235,13 @@ describe('AgentChatModalComponent', () => {
 
         fixture.detectChanges();
         component.currentMessage = 'Yes, create these competencies';
-        component.sendMessage();
+        fixture.detectChanges(); // Update button enabled state
+
+        const sendButton = fixture.debugElement.query(By.css('.send-button'));
+        expect(sendButton.nativeElement.disabled).toBeFalsy(); // Verify button is enabled
+
+        sendButton.nativeElement.click();
+        fixture.detectChanges();
 
         expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Yes, create these competencies', 123);
     });
@@ -232,8 +260,13 @@ describe('AgentChatModalComponent', () => {
     it('should clear current message after sending', () => {
         fixture.detectChanges();
         component.currentMessage = 'Test message';
+        fixture.detectChanges(); // Update button enabled state
 
-        component.sendMessage();
+        const sendButton = fixture.debugElement.query(By.css('.send-button'));
+        expect(sendButton.nativeElement.disabled).toBeFalsy(); // Verify button is enabled
+
+        sendButton.nativeElement.click();
+        fixture.detectChanges();
 
         expect(component.currentMessage).toBe('');
     });
@@ -252,10 +285,15 @@ describe('AgentChatModalComponent', () => {
 
         fixture.detectChanges();
         component.currentMessage = 'Test message';
+        fixture.detectChanges(); // Update button enabled state
 
         expect(component.isAgentTyping).toBeFalsy();
 
-        component.sendMessage();
+        const sendButton = fixture.debugElement.query(By.css('.send-button'));
+        expect(sendButton.nativeElement.disabled).toBeFalsy(); // Verify button is enabled
+
+        sendButton.nativeElement.click();
+        fixture.detectChanges();
         expect(component.isAgentTyping).toBeTruthy();
 
         // Wait for the observable to complete
@@ -368,7 +406,9 @@ describe('AgentChatModalComponent', () => {
 
         fixture.detectChanges();
         component.currentMessage = 'Test message';
-        component.sendMessage();
+        const sendButton = fixture.debugElement.query(By.css('.send-button'));
+        sendButton.nativeElement.click();
+        fixture.detectChanges();
 
         // Wait for async operations and view updates
         await fixture.whenStable();
