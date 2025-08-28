@@ -12,6 +12,5 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Request to rewrite a problem statement")
-public record ProblemStatementRewriteRequestDTO(
-        @NotNull @NotBlank @Schema(description = "Original problem statement text to be improved", example = "Write a function that calculates the sum of two numbers") String problemStatementText) {
+public record ProblemStatementRewriteRequestDTO(@NotNull @NotBlank @Schema(description = "Original problem statement text to be improved") String problemStatementText) {
 }

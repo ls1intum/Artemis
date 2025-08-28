@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.dto;
 
-import com.fasterxml.jackson.annotation.JsonValue;
-
 /**
  * Unified category enum for consistency issues. Composed of structural and semantic categories.
  */
@@ -12,9 +10,4 @@ public enum ConsistencyIssueCategory {
 
     // Semantic
     IDENTIFIER_NAMING_INCONSISTENCY;
-
-    @JsonValue
-    public String getValue() {
-        return name();
-    }
 }

@@ -21,7 +21,7 @@ export interface ConsistencyIssue {
     /**
      * Category of the issue
      */
-    category: string;
+    category: ConsistencyIssue.CategoryEnum;
     /**
      * Detailed description of the issue
      */
@@ -42,6 +42,15 @@ export namespace ConsistencyIssue {
         High: 'HIGH'
     } as const;
     export type SeverityEnum = typeof SeverityEnum[keyof typeof SeverityEnum];
+    export const CategoryEnum = {
+        MethodReturnTypeMismatch: 'METHOD_RETURN_TYPE_MISMATCH',
+        MethodParameterMismatch: 'METHOD_PARAMETER_MISMATCH',
+        ConstructorParameterMismatch: 'CONSTRUCTOR_PARAMETER_MISMATCH',
+        AttributeTypeMismatch: 'ATTRIBUTE_TYPE_MISMATCH',
+        VisibilityMismatch: 'VISIBILITY_MISMATCH',
+        IdentifierNamingInconsistency: 'IDENTIFIER_NAMING_INCONSISTENCY'
+    } as const;
+    export type CategoryEnum = typeof CategoryEnum[keyof typeof CategoryEnum];
 }
 
 

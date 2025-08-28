@@ -34,7 +34,8 @@ export namespace ArtifactLocation {
     export const TypeEnum = {
         ProblemStatement: 'PROBLEM_STATEMENT',
         TemplateRepository: 'TEMPLATE_REPOSITORY',
-        SolutionRepository: 'SOLUTION_REPOSITORY'
+        SolutionRepository: 'SOLUTION_REPOSITORY',
+        TestsRepository: 'TESTS_REPOSITORY'
     } as const;
     export type TypeEnum = typeof TypeEnum[keyof typeof TypeEnum];
 }

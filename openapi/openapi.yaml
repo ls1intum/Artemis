@@ -335,10 +335,7 @@ components:
       type: object
       description: Response containing rewritten problem statement
       properties:
-        rewrittenText: {type: string, description: Improved problem statement text,
-          example: Write a Java function that calculates the sum of two integers.
-            The function should handle edge cases like null inputs and return appropriate
-            error messages.}
+        rewrittenText: {type: string, description: Improved problem statement text}
         improved: {type: boolean, description: Whether the text was actually improved,
           example: true}
       required: [improved, rewrittenText]
@@ -414,10 +411,7 @@ components:
           type: array
           description: List of consistency issues found
           items: {$ref: '#/components/schemas/ConsistencyIssue'}
-        hasIssues: {type: boolean, description: Whether any issues were found, example: true}
-        summary: {type: string, description: Summary of the consistency check, example: Found
-            3 consistency issues}
-      required: [hasIssues, issues, summary]
+      required: [issues]
     TutorialGroupFreePeriodRequest:
       type: object
       properties:
@@ -432,14 +426,12 @@ components:
         type:
           type: string
           description: Type of artifact
-          enum: [PROBLEM_STATEMENT, TEMPLATE_REPOSITORY, SOLUTION_REPOSITORY]
+          enum: [PROBLEM_STATEMENT, TEMPLATE_REPOSITORY, SOLUTION_REPOSITORY, TESTS_REPOSITORY]
           example: PROBLEM_STATEMENT
         filePath: {type: string, description: 'Path to file, empty or problem_statement.md
             for problem statement', example: src/main/java/Main.java}
-        startLine: {type: integer, format: int32, description: Start line number (1-based),
-          example: 10}
-        endLine: {type: integer, format: int32, description: End line number (1-based),
-          example: 15}
+        startLine: {type: integer, format: int32, description: Start line number (1-based)}
+        endLine: {type: integer, format: int32, description: End line number (1-based)}
       required: [endLine, filePath, startLine, type]
     ConsistencyIssue:
       type: object
@@ -450,7 +442,12 @@ components:
           description: Severity of the issue
           enum: [LOW, MEDIUM, HIGH]
           example: HIGH
-        category: {type: string, description: Category of the issue, example: PROBLEM_STATEMENT_MISMATCH}
+        category:
+          type: string
+          description: Category of the issue
+          enum: [METHOD_RETURN_TYPE_MISMATCH, METHOD_PARAMETER_MISMATCH, CONSTRUCTOR_PARAMETER_MISMATCH,
+            ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH, IDENTIFIER_NAMING_INCONSISTENCY]
+          example: METHOD_RETURN_TYPE_MISMATCH
         description: {type: string, description: Detailed description of the issue,
           example: Problem statement does not match test cases}
         suggestedFix: {type: string, description: Suggested fix for the issue, example: Update
@@ -505,8 +502,7 @@ components:
       description: Request containing the problem statement to rewrite
       properties:
         problemStatementText: {type: string, description: Original problem statement
-            text to be improved, example: Write a function that calculates the sum
-            of two numbers, minLength: 1}
+            text to be improved, minLength: 1}
       required: [problemStatementText]
     StudentExport:
       type: object
