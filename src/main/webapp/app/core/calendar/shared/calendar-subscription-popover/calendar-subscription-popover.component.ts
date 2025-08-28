@@ -30,6 +30,9 @@ export class CalendarSubscriptionPopoverComponent implements OnDestroy, OnInit {
             value: 'GERMAN' as const,
         },
     ];
+    private onlyOneEventTypeSelected = computed<boolean>(() => {
+        return [this.includeLectureEvents(), this.includeExerciseEvents(), this.includeTutorialEvents(), this.includeExamEvents()].filter(Boolean).length === 1;
+    });
 
     readonly faCopy = faCopy;
     readonly faCheck = faCheck;
@@ -43,6 +46,10 @@ export class CalendarSubscriptionPopoverComponent implements OnDestroy, OnInit {
     includeExerciseEvents = signal(true);
     includeTutorialEvents = signal(true);
     includeExamEvents = signal(true);
+    lecturesIsLastSelectedEventType = computed<boolean>(() => this.onlyOneEventTypeSelected() && this.includeLectureEvents());
+    exercisesIsLastSelectedEventType = computed<boolean>(() => this.onlyOneEventTypeSelected() && this.includeExerciseEvents());
+    tutorialsIsLastSelectedEventType = computed<boolean>(() => this.onlyOneEventTypeSelected() && this.includeTutorialEvents());
+    examsIsLastSelectedEventType = computed<boolean>(() => this.onlyOneEventTypeSelected() && this.includeExamEvents());
     language = signal<'ENGLISH' | 'GERMAN'>('ENGLISH');
     languageOptions = signal<{ label: string; value: 'ENGLISH' | 'GERMAN' }[]>(this.buildLanguageOptions());
     subscriptionUrl = computed<string>(() =>
