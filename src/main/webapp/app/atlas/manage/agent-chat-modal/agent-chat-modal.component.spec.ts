@@ -119,7 +119,7 @@ describe('AgentChatModalComponent', () => {
 
     it('should handle service errors gracefully', async () => {
         jest.spyOn(mockAgentChatService, 'sendMessage').mockImplementation(() => {
-            return new Observable((subscriber) => {
+            return new Observable<string>((subscriber) => {
                 subscriber.error(new Error('Service error'));
             });
         });
@@ -240,7 +240,7 @@ describe('AgentChatModalComponent', () => {
 
     it('should set typing indicator correctly during message sending', async () => {
         // Mock the service to return a delayed observable
-        const mockObservable = new Observable((subscriber) => {
+        const mockObservable = new Observable<string>((subscriber) => {
             // Set typing to true initially, then false when response comes
             setTimeout(() => {
                 subscriber.next('Mock response');
