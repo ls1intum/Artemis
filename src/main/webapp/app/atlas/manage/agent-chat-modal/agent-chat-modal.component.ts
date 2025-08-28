@@ -55,7 +55,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewChecked {
         this.activeModal.close();
     }
 
-    protected sendMessage(): void {
+    sendMessage(): void {
         const message = this.currentMessage.trim();
         if (!message || this.isAgentTyping) {
             return;
@@ -81,14 +81,14 @@ export class AgentChatModalComponent implements OnInit, AfterViewChecked {
         });
     }
 
-    protected onKeyPress(event: KeyboardEvent): void {
+    onKeyPress(event: KeyboardEvent): void {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             this.sendMessage();
         }
     }
 
-    protected onTextareaInput(): void {
+    onTextareaInput(): void {
         // Auto-resize textarea
         const textarea = this.messageInput.nativeElement;
         textarea.style.height = 'auto';

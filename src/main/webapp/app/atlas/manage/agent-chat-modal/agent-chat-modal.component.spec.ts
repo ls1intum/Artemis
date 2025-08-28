@@ -138,7 +138,6 @@ describe('AgentChatModalComponent', () => {
         fixture.detectChanges();
         component.currentMessage = 'Test message';
 
-        const textarea = fixture.debugElement.query(By.css('.message-input'));
         const event = new KeyboardEvent('keypress', { key: 'Enter', shiftKey: true });
         const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
 
