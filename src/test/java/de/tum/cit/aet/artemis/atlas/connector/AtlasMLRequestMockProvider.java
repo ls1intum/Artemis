@@ -78,4 +78,13 @@ public class AtlasMLRequestMockProvider {
         mockServer.expect(MockRestRequestMatchers.requestTo(url)).andExpect(MockRestRequestMatchers.method(org.springframework.http.HttpMethod.GET))
                 .andRespond(MockRestResponseCreators.withSuccess(mapper.writeValueAsString(response), MediaType.APPLICATION_JSON));
     }
+
+    /**
+     * Allows any save call to AtlasML to succeed (used as default to avoid external calls in tests).
+     */
+    public void mockSaveCompetenciesAny() {
+        var url = URI.create(config.getAtlasmlBaseUrl() + "api/v1/competency/save");
+        mockServer.expect(MockRestRequestMatchers.requestTo(url)).andExpect(MockRestRequestMatchers.method(org.springframework.http.HttpMethod.POST))
+                .andRespond(MockRestResponseCreators.withSuccess("", MediaType.APPLICATION_JSON));
+    }
 }

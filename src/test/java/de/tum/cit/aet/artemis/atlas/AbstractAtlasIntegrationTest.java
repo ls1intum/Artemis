@@ -175,4 +175,13 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected TeamUtilService teamUtilService;
+
+    @Autowired
+    protected de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider atlasMLRequestMockProvider;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setupAtlasMLMocks() {
+        atlasMLRequestMockProvider.enableMockingOfRequests();
+        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+    }
 }

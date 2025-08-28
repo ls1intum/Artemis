@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
@@ -63,8 +64,14 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     protected TextExercise textExercise;
 
+    @Autowired
+    protected de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider atlasMLRequestMockProvider;
+
     // BeforeEach
     void setupTestScenario(String TEST_PREFIX, Function<Course, CourseCompetency> createCourseCompetencyForCourse) {
+        // Mock AtlasML saves to avoid external calls in tests that create/import competencies
+        atlasMLRequestMockProvider.enableMockingOfRequests();
+        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
 
