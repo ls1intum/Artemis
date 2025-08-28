@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.Size;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -20,6 +21,10 @@ public class QuizTrainingLeaderboard extends DomainObject {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn
     private Course course;
+
+    @Size(max = 50)
+    @Column(name = "leaderboard_name", length = 50)
+    private String leaderboardName;
 
     @Column(name = "league_id")
     private long leagueId;
@@ -53,6 +58,14 @@ public class QuizTrainingLeaderboard extends DomainObject {
 
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    public String getLeaderboardName() {
+        return leaderboardName;
+    }
+
+    public void setLeaderboardName(String leaderboardName) {
+        this.leaderboardName = leaderboardName;
     }
 
     public long getLeagueId() {

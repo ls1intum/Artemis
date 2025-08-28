@@ -68,7 +68,6 @@ public class QuizTrainingLeaderboardService {
         else {
             studentLeagueId = 0;
         }
-        // Replace this with the league selected by the user in the UI
         long leagueId;
         if (studentLeagueId == 0) {
             leagueId = 3;
@@ -78,12 +77,17 @@ public class QuizTrainingLeaderboardService {
         }
 
         List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueIdAndCourseIdOrderByScoreDesc(leagueId, courseId);
+        List<LeaderboardEntryDTO> leaderboard = getLeaderboardEntryDTOS(leaderboardEntries, leagueId, studentLeagueId);
+        return leaderboard;
+    }
+
+    private static List<LeaderboardEntryDTO> getLeaderboardEntryDTOS(List<QuizTrainingLeaderboard> leaderboardEntries, long leagueId, long studentLeagueId) {
         List<LeaderboardEntryDTO> leaderboard = new ArrayList<>();
         int rank = 1;
         for (QuizTrainingLeaderboard leaderboardEntry : leaderboardEntries) {
-            String username = leaderboardEntry.getUser() != null ? leaderboardEntry.getUser().getName() : "Unknown User";
-            leaderboard.add(new LeaderboardEntryDTO(rank++, leagueId, studentLeagueId, username, leaderboardEntry.getScore(), leaderboardEntry.getAnsweredCorrectly(),
-                    leaderboardEntry.getAnsweredWrong(), leaderboardEntry.getTotalQuestions()));
+            String username = leaderboardEntry.getLeaderboardName() != null ? leaderboardEntry.getLeaderboardName() : leaderboardEntry.getUser().getName();
+            leaderboard.add(new LeaderboardEntryDTO(rank++, leagueId, studentLeagueId, username, leaderboardEntry.getTotalScore(), leaderboardEntry.getScore(),
+                    leaderboardEntry.getAnsweredCorrectly(), leaderboardEntry.getAnsweredWrong(), leaderboardEntry.getTotalQuestions()));
         }
         return leaderboard;
     }
@@ -100,6 +104,7 @@ public class QuizTrainingLeaderboardService {
             QuizTrainingLeaderboard entry = new QuizTrainingLeaderboard();
             entry.setUser(user);
             entry.setCourse(course);
+            entry.setLeaderboardName(user.getFirstName()); // This will be adapted to the chosen name of the user later
             entry.setLeagueId(3);
             entry.setScore(0);
             entry.setAnsweredCorrectly(0);
@@ -120,13 +125,10 @@ public class QuizTrainingLeaderboardService {
         int delta = 0;
         for (QuizQuestionProgressData data : answeredQuestions) {
             double lastScore = data.getLastScore();
-            int repetition = data.getRepetition();
             int box = data.getBox();
-            int sessionCount = data.getSessionCount();
-            double easinessFactor = data.getEasinessFactor();
 
-            // Example progress-based formula (adjust weights as you like)
-            double questionDelta = lastScore * ((lastScore * 2) + (repetition * 3) + (box * 2) + sessionCount + (Math.max(0, 2.5 - easinessFactor) * 4));
+            // Preliminary formula for score calculation
+            double questionDelta = 2 * lastScore + box * lastScore;
 
             delta += (int) Math.round(questionDelta);
         }
@@ -176,6 +178,7 @@ public class QuizTrainingLeaderboardService {
             QuizTrainingLeaderboard entry = new QuizTrainingLeaderboard();
             entry.setUser(user);
             entry.setCourse(course);
+            entry.setLeaderboardName(user.getFirstName()); // This will be adapted to the chosen name of the user later
             entry.setLeagueId(3);
             entry.setScore(score);
             entry.setAnsweredCorrectly(answeredCorrectly);
@@ -195,7 +198,7 @@ public class QuizTrainingLeaderboardService {
         }
     }
 
-    @Scheduled(cron = "0 09 17 * * MON")
+    @Scheduled(cron = "0 0 2 * * *")
     public void weeklyLeaderboardRebuild() {
         List<Course> allCourses = courseRepository.findAll();
         for (Course course : allCourses) {
