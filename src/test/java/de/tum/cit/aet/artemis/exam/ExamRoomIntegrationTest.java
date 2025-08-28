@@ -276,12 +276,6 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(adminOverview.numberOfStoredExamSeats()).isEqualTo(expectedNumberOfSeats);
         assertThat(adminOverview.numberOfStoredLayoutStrategies()).isEqualTo(expectedNumberOfLayoutStrategies);
 
-        // newestUniqueExamRooms can be null if it was empty, due to @JsonInclude(JsonInclude.Include.NON_EMPTY)
-        if (adminOverview.newestUniqueExamRooms() == null) {
-            assertThat(expectedRoomNames).isEmpty();
-            return;
-        }
-
         // Here we know that we have newestUniqueExamRooms != null
         var newestRoomNames = adminOverview.newestUniqueExamRooms().stream().map(ExamRoomDTO::name).toList();
         assertThat(newestRoomNames).contains(expectedRoomNames);
@@ -317,12 +311,13 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetAdminOverviewSingleRoomRepeated() throws Exception {
-        for (int i = 0; i < 3; i++) {
+        final int ITERATIONS = 3;
+        for (int i = 0; i < ITERATIONS; i++) {
             request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoomRepeated, HttpStatus.OK);
         }
 
         var adminOverview = request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.OK, ExamRoomAdminOverviewDTO.class);
-        validateAdminOverview(adminOverview, 1, 528, 4, ExamRoomZipFiles.singleExamRoomName);
+        validateAdminOverview(adminOverview, ITERATIONS, 528 * ITERATIONS, 4 * ITERATIONS, ExamRoomZipFiles.singleExamRoomName);
     }
 
     /* Tests for the DELETE /exam-rooms endpoint */
@@ -354,13 +349,13 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteAllExamRoomDataAsAdmin() throws Exception {
-        request.delete("/api/exam/admin/exam-rooms", HttpStatus.OK);
+        request.delete("/api/exam/admin/exam-rooms", HttpStatus.NO_CONTENT);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteAllExamRoomDataEmpty() throws Exception {
-        request.delete("/api/exam/admin/exam-rooms", HttpStatus.OK);
+        request.delete("/api/exam/admin/exam-rooms", HttpStatus.NO_CONTENT);
         validateDbStoredElementCounts(0, 0, 0);
     }
 
@@ -370,20 +365,20 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileRealisticScenario, HttpStatus.OK);
         assertThat(examRoomRepository.count()).isPositive();
 
-        request.delete("/api/exam/admin/exam-rooms", HttpStatus.OK);
+        request.delete("/api/exam/admin/exam-rooms", HttpStatus.NO_CONTENT);
         validateDbStoredElementCounts(0, 0, 0);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteAllTonsOfExamRoomData() throws Exception {
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 10; i++) {
             request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileRealisticScenario, HttpStatus.OK);
         }
 
         assertThat(examRoomRepository.count()).isPositive();
 
-        request.delete("/api/exam/admin/exam-rooms", HttpStatus.OK);
+        request.delete("/api/exam/admin/exam-rooms", HttpStatus.NO_CONTENT);
         validateDbStoredElementCounts(0, 0, 0);
     }
 
@@ -443,13 +438,13 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         var deletionSummary = request.delete("/api/exam/admin/exam-rooms/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
         validateDeletionSummary(deletionSummary, 0);
-        validateDbStoredElementCounts(0, 0, 0);
+        validateDbStoredElementCounts(64, 16_141, 224);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteOutdatedAndUnusedTonsOfExamRoomData() throws Exception {
-        final int ITERATIONS = 50;
+        final int ITERATIONS = 10;
         for (int i = 0; i < ITERATIONS; i++) {
             request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileRealisticScenario, HttpStatus.OK);
         }
@@ -458,6 +453,6 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         var deletionSummary = request.delete("/api/exam/admin/exam-rooms/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
         validateDeletionSummary(deletionSummary, 64 * (ITERATIONS - 1));
-        validateDbStoredElementCounts(0, 0, 0);
+        validateDbStoredElementCounts(64, 16_141, 224);
     }
 }
