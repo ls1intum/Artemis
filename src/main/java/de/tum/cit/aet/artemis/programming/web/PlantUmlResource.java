@@ -50,7 +50,7 @@ public class PlantUmlResource {
     @GetMapping("png")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> generatePng(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
-            throws IOException {
+            throws IOException, InterruptedException {
         long start = System.nanoTime();
         final var png = plantUmlService.generatePng(plantuml, useDarkTheme);
         log.debug("PlantUml.generatePng took {}", formatDurationFrom(start));
@@ -69,7 +69,7 @@ public class PlantUmlResource {
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<String> generateSvg(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
-            throws IOException {
+            throws IOException, InterruptedException {
         long start = System.nanoTime();
         final var svg = plantUmlService.generateSvg(plantuml, useDarkTheme);
         log.debug("PlantUml.generateSvg took {}", formatDurationFrom(start));

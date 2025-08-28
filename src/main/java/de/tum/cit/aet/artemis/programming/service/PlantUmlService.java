@@ -1,12 +1,18 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.util.NativeImageUtil.isNativeImage;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.ProcessBuilder.Redirect;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import jakarta.annotation.PostConstruct;
@@ -25,6 +31,13 @@ import net.sourceforge.plantuml.FileFormat;
 import net.sourceforge.plantuml.FileFormatOption;
 import net.sourceforge.plantuml.SourceStringReader;
 
+/**
+ * Renders PlantUML either in-process (JVM) via the library,
+ * or (when running as a GraalVM native image) by invoking the PlantUML native CLI.
+ *
+ * For native runs, make sure a 'plantuml' executable is on PATH (or configure artemis.plantuml.binary-path).
+ * Recommended flags for the CLI are used: "-pipe -t{svg|png}".
+ */
 @Profile(PROFILE_CORE)
 @Service
 public class PlantUmlService {
@@ -39,20 +52,30 @@ public class PlantUmlService {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    public PlantUmlService(ResourceLoaderService resourceLoaderService, @Value("${artemis.temp-path}") Path tempPath) {
+    /**
+     * Path to the PlantUML native CLI binary used when running as a GraalVM native image.
+     * Default: "plantuml" (must be on PATH). You can also set an absolute path.
+     */
+    private final String plantumlBinaryPath;
+
+    /**
+     * Max time to wait for the external PlantUML process (native mode).
+     */
+    private final Duration cliTimeout;
+
+    public PlantUmlService(ResourceLoaderService resourceLoaderService, @Value("${artemis.temp-path}") Path tempPath,
+            @Value("${artemis.plantuml.binary-path:plantuml}") String plantumlBinaryPath, @Value("${artemis.plantuml.cli-timeout-seconds:20}") long cliTimeoutSeconds) {
         this.resourceLoaderService = resourceLoaderService;
         this.PATH_TMP_THEME = tempPath.resolve("artemis-puml-theme");
+        this.plantumlBinaryPath = plantumlBinaryPath;
+        this.cliTimeout = Duration.ofSeconds(Math.max(cliTimeoutSeconds, 1));
     }
 
     /**
      * Initializes themes and sets system properties for PlantUML security when the application is ready.
-     * EventListener cannot be used here, as the bean is lazy
-     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
-     *
      * <p>
-     * Deletes temporary theme files to ensure updates, ensures themes are available, and configures PlantUML security settings.
-     *
-     * @throws IOException if an I/O error occurs during file deletion
+     * EventListener cannot be used here, as the bean is lazy.
+     * </p>
      */
     @PostConstruct
     public void applicationReady() throws IOException {
@@ -61,8 +84,10 @@ public class PlantUmlService {
         Files.deleteIfExists(PATH_TMP_THEME.resolve(LIGHT_THEME_FILE_NAME));
         ensureThemes();
 
+        // Restrict PlantUML include paths to our temp theme directory
         System.setProperty("PLANTUML_SECURITY_PROFILE", "ALLOWLIST");
         System.setProperty("plantuml.allowlist.path", PATH_TMP_THEME.toAbsolutePath().toString());
+        log.debug("PlantUML allowlist set to {}", PATH_TMP_THEME.toAbsolutePath());
     }
 
     private void ensureThemes() {
@@ -76,45 +101,53 @@ public class PlantUmlService {
                     log.debug("UML theme stored successfully to {}", path);
                 }
                 catch (IOException e) {
-                    log.error("Unable to store UML dark theme", e);
-                    throw new RuntimeException("Unable to store UML dark theme", e); // NOPMD
+                    log.error("Unable to store UML theme {}", fileName, e);
+                    throw new RuntimeException("Unable to store UML theme: " + fileName, e); // NOPMD
                 }
             }
         });
     }
 
     /**
-     * Generate PNG diagram for given PlantUML commands
+     * Generate PNG diagram for given PlantUML commands.
      *
      * @param plantUml     PlantUML command(s)
      * @param useDarkTheme whether the dark theme should be used
      * @return The generated PNG as a byte array
-     * @throws IOException if generateImage can't create the PNG
+     * @throws IOException if generation fails
      */
     @Cacheable(value = "plantUmlPng", unless = "#result == null || #result.length == 0")
-    public byte[] generatePng(final String plantUml, final boolean useDarkTheme) throws IOException {
-        var input = validateInputAndApplyTheme(plantUml, useDarkTheme);
+    public byte[] generatePng(final String plantUml, final boolean useDarkTheme) throws IOException, InterruptedException {
+        final var input = validateInputAndApplyTheme(plantUml, useDarkTheme);
+
+        if (isNativeImage()) {
+            return runPlantUmlCli(input, "png");
+        }
+
         try (final var bos = new ByteArrayOutputStream()) {
-            final var reader = new SourceStringReader(input);
-            reader.outputImage(bos, new FileFormatOption(FileFormat.PNG));
+            new SourceStringReader(input).outputImage(bos, new FileFormatOption(FileFormat.PNG));
             return bos.toByteArray();
         }
     }
 
     /**
-     * Generate SVG diagram for given PlantUML commands
+     * Generate SVG diagram for given PlantUML commands.
      *
      * @param plantUml     PlantUML command(s)
      * @param useDarkTheme whether the dark theme should be used
-     * @return ResponseEntity PNG stream
-     * @throws IOException if generateImage can't create the SVG
+     * @return The generated SVG text
+     * @throws IOException if generation fails
      */
     @Cacheable(value = "plantUmlSvg", unless = "#result == null || #result.isEmpty()")
-    public String generateSvg(final String plantUml, final boolean useDarkTheme) throws IOException {
-        var input = validateInputAndApplyTheme(plantUml, useDarkTheme);
+    public String generateSvg(final String plantUml, final boolean useDarkTheme) throws IOException, InterruptedException {
+        final var input = validateInputAndApplyTheme(plantUml, useDarkTheme);
+
+        if (isNativeImage()) {
+            return new String(runPlantUmlCli(input, "svg"), StandardCharsets.UTF_8);
+        }
+
         try (final var bos = new ByteArrayOutputStream()) {
-            final var reader = new SourceStringReader(input);
-            reader.outputImage(bos, new FileFormatOption(FileFormat.SVG));
+            new SourceStringReader(input).outputImage(bos, new FileFormatOption(FileFormat.SVG));
             return bos.toString(StandardCharsets.UTF_8);
         }
     }
@@ -123,19 +156,51 @@ public class PlantUmlService {
         if (!StringUtils.hasText(plantUml)) {
             throw new IllegalArgumentException("The plantUml input cannot be empty");
         }
-        if (plantUml.length() > 10000) {
-            throw new IllegalArgumentException("Cannot parse plantUml input longer than 10.000 characters");
+        if (plantUml.length() > 10_000) {
+            throw new IllegalArgumentException("Cannot parse plantUml input longer than 10,000 characters");
         }
 
         if (!plantUml.contains("!theme")) {
             ensureThemes();
-            if (useDarkTheme) {
-                return plantUml.replace("@startuml", "@startuml\n!theme artemisdark from " + PATH_TMP_THEME.toAbsolutePath());
-            }
-            else {
-                return plantUml.replace("@startuml", "@startuml\n!theme artemislight from " + PATH_TMP_THEME.toAbsolutePath());
+            final String themeLine = useDarkTheme ? "!theme artemisdark from " + PATH_TMP_THEME.toAbsolutePath() : "!theme artemislight from " + PATH_TMP_THEME.toAbsolutePath();
+
+            // Insert the theme right after @startuml
+            if (plantUml.contains("@startuml")) {
+                return plantUml.replace("@startuml", "@startuml\n" + themeLine);
             }
         }
         return plantUml;
+    }
+
+    /**
+     * Invoke the PlantUML native CLI with "-pipe -t{format}", write UML to stdin and read the bytes from stdout.
+     */
+    private byte[] runPlantUmlCli(String uml, String format) throws IOException, InterruptedException {
+        final List<String> cmd = List.of(plantumlBinaryPath, "-pipe", "-t" + format);
+        log.debug("Executing PlantUML CLI: {}", String.join(" ", cmd));
+
+        final ProcessBuilder pb = new ProcessBuilder(cmd);
+        pb.redirectError(Redirect.INHERIT); // stream stderr to container logs for easier debugging
+        final Process p = pb.start();
+
+        try (OutputStream stdin = p.getOutputStream()) {
+            stdin.write(uml.getBytes(StandardCharsets.UTF_8));
+            stdin.flush();
+        }
+
+        final byte[] out = p.getInputStream().readAllBytes();
+
+        final boolean finished = p.waitFor(cliTimeout.toMillis(), TimeUnit.MILLISECONDS);
+        if (!finished) {
+            p.destroyForcibly();
+            throw new IOException("PlantUML CLI timed out after " + cliTimeout.getSeconds() + "s");
+        }
+
+        final int exit = p.exitValue();
+        if (exit != 0 || out.length == 0) {
+            throw new IOException("PlantUML CLI failed: exit=" + exit + ", bytes=" + out.length);
+        }
+
+        return out;
     }
 }
