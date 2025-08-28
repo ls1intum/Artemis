@@ -64,7 +64,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     private Set<ProgrammingExerciseTask> tasks = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("testCases")
+    @JsonIgnore
     private ProgrammingExercise exercise;
 
     @Enumerated(EnumType.STRING)
