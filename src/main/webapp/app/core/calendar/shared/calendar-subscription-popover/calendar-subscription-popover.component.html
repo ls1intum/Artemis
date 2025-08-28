@@ -52,7 +52,14 @@
             </div>
         } @else {
             <div class="configure-events-row">
-                <p-selectbutton [options]="languageOptions()" [ngModel]="language()" (ngModelChange)="language.set($event)" optionLabel="label" optionValue="value" />
+                <p-selectbutton
+                    data-testid="language-select"
+                    [options]="languageOptions()"
+                    [ngModel]="language()"
+                    (ngModelChange)="language.set($event)"
+                    optionLabel="label"
+                    optionValue="value"
+                />
                 <div class="events-checkbox-and-label">
                     <p-checkbox
                         inputId="lectureEventsCheckbox"
@@ -61,7 +68,7 @@
                         [ngModel]="includeLectureEvents()"
                         (ngModelChange)="includeLectureEvents.set($event)"
                     />
-                    <label for="lectureEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.lectures"></label>
+                    <label data-testid="lecture-events-checkbox-label" for="lectureEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.lectures"></label>
                 </div>
                 <div class="events-checkbox-and-label">
                     <p-checkbox
@@ -71,7 +78,7 @@
                         [ngModel]="includeExerciseEvents()"
                         (ngModelChange)="includeExerciseEvents.set($event)"
                     />
-                    <label for="exerciseEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.exercises"></label>
+                    <label data-testid="exercise-events-checkbox-label" for="exerciseEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.exercises"></label>
                 </div>
                 <div class="events-checkbox-and-label">
                     <p-checkbox
@@ -81,7 +88,7 @@
                         [ngModel]="includeTutorialEvents()"
                         (ngModelChange)="includeTutorialEvents.set($event)"
                     />
-                    <label for="tutorialEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.tutorials"></label>
+                    <label data-testid="tutorial-events-checkbox-label" for="tutorialEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.tutorials"></label>
                 </div>
                 <div class="events-checkbox-and-label">
                     <p-checkbox
@@ -91,7 +98,7 @@
                         [ngModel]="includeExamEvents()"
                         (ngModelChange)="includeExamEvents.set($event)"
                     />
-                    <label for="examEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.exams"></label>
+                    <label data-testid="exam-events-checkbox-label" for="examEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.exams"></label>
                 </div>
             </div>
         }

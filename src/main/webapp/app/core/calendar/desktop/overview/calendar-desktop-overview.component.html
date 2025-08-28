@@ -8,7 +8,7 @@
         @if (courseId && subscriptionToken) {
             <div>
                 <button
-                    #subscriptionButton
+                    data-testid="subscribe-button"
                     type="button"
                     class="btn btn-outline-primary"
                     (click)="subscriptionPopover.open($event)"

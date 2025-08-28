@@ -11,12 +11,14 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarDesktopWeekPresentationComponent } from 'app/core/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
 import { CalendarDesktopMonthPresentationComponent } from 'app/core/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
+import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { CalendarEventFilterComponent } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarDesktopOverviewComponent } from './calendar-desktop-overview.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 describe('CalendarDesktopOverviewComponent', () => {
     let component: CalendarDesktopOverviewComponent;
@@ -48,6 +50,7 @@ describe('CalendarDesktopOverviewComponent', () => {
                 { provide: CalendarService, useValue: calendarServiceMock },
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
                 { provide: TranslateService, useClass: MockTranslateService },
+                provideNoopAnimations(),
             ],
         }).compileComponents();
 
@@ -177,5 +180,21 @@ describe('CalendarDesktopOverviewComponent', () => {
         nextButton.click();
         fixture.detectChanges();
         expect(heading()).toBe('October 2025');
+    });
+
+    it('should open subscription popover when the subscribe button is clicked', () => {
+        const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarSubscriptionPopoverComponent));
+        expect(popoverDebugElement).toBeTruthy();
+
+        const popover = popoverDebugElement.componentInstance as CalendarSubscriptionPopoverComponent;
+        const openSpy = jest.spyOn(popover, 'open');
+
+        const subscribeButton = fixture.debugElement.query(By.css('[data-testid="subscribe-button"]')).nativeElement;
+        expect(subscribeButton).toBeTruthy();
+
+        subscribeButton.click();
+        fixture.detectChanges();
+
+        expect(openSpy).toHaveBeenCalledOnce();
     });
 });

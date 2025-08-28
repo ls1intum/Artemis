@@ -16,6 +16,7 @@ import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 
 describe('CalendarMobileOverviewComponent', () => {
     let fixture: ComponentFixture<CalendarMobileOverviewComponent>;
@@ -191,5 +192,21 @@ describe('CalendarMobileOverviewComponent', () => {
 
         expect(component.firstDateOfCurrentMonth().isSame(today.startOf('month'), 'day')).toBeTrue();
         expect(component.selectedDate()).toBeUndefined();
+    });
+
+    it('should open subscription popover when the subscribe button is clicked', () => {
+        const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarSubscriptionPopoverComponent));
+        expect(popoverDebugElement).toBeTruthy();
+
+        const popover = popoverDebugElement.componentInstance as CalendarSubscriptionPopoverComponent;
+        const openSpy = jest.spyOn(popover, 'open');
+
+        const subscribeButton = fixture.debugElement.query(By.css('[data-testid="subscribe-button"]')).nativeElement;
+        expect(subscribeButton).toBeTruthy();
+
+        subscribeButton.click();
+        fixture.detectChanges();
+
+        expect(openSpy).toHaveBeenCalledOnce();
     });
 });

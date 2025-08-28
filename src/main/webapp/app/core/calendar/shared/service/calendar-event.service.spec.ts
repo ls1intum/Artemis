@@ -208,6 +208,17 @@ describe('CalendarService', () => {
         tick();
     }));
 
+    it('should load subscription token and set token property', fakeAsync(() => {
+        service.loadSubscriptionToken().subscribe(() => {
+            const result = service.subscriptionToken();
+            expect(result).toBe(testToken);
+        });
+
+        const tokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
+        tokenRequest.flush(testToken);
+        tick();
+    }));
+
     it('should refresh', fakeAsync(() => {
         service.includedEventFilterOptions.set([CalendarEventFilterOption.LectureEvents, CalendarEventFilterOption.ExamEvents]);
         service.loadEventsForCurrentMonth(courseId, date).subscribe();
