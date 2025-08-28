@@ -225,31 +225,31 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
     void testGetAdminOverviewAsStudent() throws Exception {
-        request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.FORBIDDEN, ExamRoomUploadInformationDTO.class);
+        request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.FORBIDDEN, Void.class);
     }
 
     @Test
     @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void testGetAdminOverviewAsTutor() throws Exception {
-        request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.FORBIDDEN, ExamRoomUploadInformationDTO.class);
+        request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.FORBIDDEN, Void.class);
     }
 
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
     void testGetAdminOverviewAsEditor() throws Exception {
-        request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.FORBIDDEN, ExamRoomUploadInformationDTO.class);
+        request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.FORBIDDEN, Void.class);
     }
 
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testGetAdminOverviewAsInstructor() throws Exception {
-        request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.FORBIDDEN, ExamRoomUploadInformationDTO.class);
+        request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.FORBIDDEN, Void.class);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetAdminOverviewAsAdmin() throws Exception {
-        request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.OK, ExamRoomUploadInformationDTO.class);
+        request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.OK, Void.class);
     }
 
     @Test
@@ -270,22 +270,29 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         validateAdminOverview(adminOverview, 4, 994, 15, ExamRoomZipFiles.fourExamRoomNames);
     }
 
-    private void validateAdminOverview(ExamRoomAdminOverviewDTO adminOverview, int expectedNumberOfRooms, int expectedNumberOfSeats, int expectedNumberOfLayoutStrategies,
-            String... expectedRoomNames) {
-        assertThat(adminOverview.numberOfStoredExamRooms()).isEqualTo(expectedNumberOfRooms);
-        assertThat(adminOverview.numberOfStoredExamSeats()).isEqualTo(expectedNumberOfSeats);
-        assertThat(adminOverview.numberOfStoredLayoutStrategies()).isEqualTo(expectedNumberOfLayoutStrategies);
+    private void validateAdminOverview(ExamRoomAdminOverviewDTO adminOverview, int expectedNumberOfStoredRooms, int expectedNumberOfStoredSeats,
+            int expectedNumberOfStoredLayoutStrategies, String... expectedNewRoomNames) {
+        assertThat(adminOverview.numberOfStoredExamRooms()).isEqualTo(expectedNumberOfStoredRooms);
+        assertThat(adminOverview.numberOfStoredExamSeats()).isEqualTo(expectedNumberOfStoredSeats);
+        assertThat(adminOverview.numberOfStoredLayoutStrategies()).isEqualTo(expectedNumberOfStoredLayoutStrategies);
+
+        if (adminOverview.newestUniqueExamRooms() == null) {
+            assertThat(expectedNewRoomNames).isEmpty();
+            return;
+        }
 
         // Here we know that we have newestUniqueExamRooms != null
         var newestRoomNames = adminOverview.newestUniqueExamRooms().stream().map(ExamRoomDTO::name).toList();
-        assertThat(newestRoomNames).contains(expectedRoomNames);
+        assertThat(newestRoomNames).contains(expectedNewRoomNames);
 
-        var newestUniqueExamRoomsFromDb = examRoomRepository.findAllNewestExamRoomVersionsWithEagerLayoutStrategies().stream()
-                .map(er -> new ExamRoomDTO(er.getRoomNumber(), er.getName(), er.getBuilding(), er.getSeats().size(),
-                        er.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
+        var newestUniqueExamRoomsFromDb = examRoomRepository.findAllNewestExamRoomVersionsWithEagerLayoutStrategies().stream().map(er -> new ExamRoomDTO(er.getRoomNumber(),
+                er.getName(), er.getBuilding(), er.getSeats().size(),
+                // Because of the INCLUDE.NON_EMPTY on the admin overview, we need to map to null on empty lists
+                er.getLayoutStrategies().isEmpty() ? null
+                        : er.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
                 .toList();
 
-        assertThat(newestUniqueExamRoomsFromDb).containsAll(adminOverview.newestUniqueExamRooms());
+        assertThat(adminOverview.newestUniqueExamRooms()).containsAll(newestUniqueExamRoomsFromDb);
     }
 
     @Test
@@ -318,6 +325,16 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         var adminOverview = request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.OK, ExamRoomAdminOverviewDTO.class);
         validateAdminOverview(adminOverview, ITERATIONS, 528 * ITERATIONS, 4 * ITERATIONS, ExamRoomZipFiles.singleExamRoomName);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetAdminOverviewSingleRoomIntoExistingData() throws Exception {
+        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileRealisticScenario, HttpStatus.OK);
+        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
+
+        var adminOverview = request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.OK, ExamRoomAdminOverviewDTO.class);
+        validateAdminOverview(adminOverview, 64 + 1, 16_141 + 528, 224 + 4, ExamRoomZipFiles.singleExamRoomName);
     }
 
     /* Tests for the DELETE /exam-rooms endpoint */

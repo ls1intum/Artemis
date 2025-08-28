@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 // @formatter:off
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamRoomAdminOverviewDTO(
     @NotNull Integer numberOfStoredExamRooms,
     @NotNull Integer numberOfStoredExamSeats,

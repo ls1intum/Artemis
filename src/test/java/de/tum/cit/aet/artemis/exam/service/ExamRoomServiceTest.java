@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.exam.test_repository.ExamRoomTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamRoomZipFiles;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-public class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
+class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "examroomservicetest";
 
@@ -144,23 +144,6 @@ public class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTes
         assertThat(overview.numberOfStoredLayoutStrategies()).isEqualTo(4 * 3);
 
         assertContainsOnlyFriedrichLBauerRoomDTO(overview.newestUniqueExamRooms());
-    }
-
-    @Test
-    void testDeleteAllExamRooms() {
-        // used to check that we don't accidentally write to the DB
-        examRoomService.deleteAllExamRooms();
-        assertThat(examRoomRepository.findAll()).isEmpty();
-
-        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
-        assertThat(examRoomRepository.findAll()).isNotEmpty();
-        examRoomService.deleteAllExamRooms();
-        assertThat(examRoomRepository.findAll()).isEmpty();
-
-        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
-        assertThat(examRoomRepository.findAll()).isNotEmpty();
-        examRoomService.deleteAllExamRooms();
-        assertThat(examRoomRepository.findAll()).isEmpty();
     }
 
     @Test
