@@ -112,7 +112,7 @@ public class Course extends DomainObject {
     @Column(name = "online_course")
     private Boolean onlineCourse = false;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
@@ -226,7 +226,7 @@ public class Course extends DomainObject {
     @OrderBy("title")
     private Set<Prerequisite> prerequisites = new HashSet<>();
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JoinColumn(name = "tutorial_groups_configuration_id")
     @JsonIgnoreProperties("course")
     private TutorialGroupsConfiguration tutorialGroupsConfiguration;

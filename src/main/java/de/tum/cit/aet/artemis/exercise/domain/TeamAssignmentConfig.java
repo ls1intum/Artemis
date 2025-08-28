@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exercise.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
@@ -27,7 +26,7 @@ import de.tum.cit.aet.artemis.exercise.web.TeamAssignmentConfigConstraints;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TeamAssignmentConfig extends DomainObject {
 
-    @OneToOne(mappedBy = "teamAssignmentConfig", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "teamAssignmentConfig")
     @JsonIgnoreProperties("teamAssignmentConfig")
     private Exercise exercise;
 

@@ -28,7 +28,7 @@ public class QuizPointStatistic extends QuizStatistic {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<PointCounter> pointCounters = new HashSet<>();
 
-    @OneToOne(mappedBy = "quizPointStatistic", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "quizPointStatistic")
     @JsonIgnore
     private QuizExercise quiz;
 
