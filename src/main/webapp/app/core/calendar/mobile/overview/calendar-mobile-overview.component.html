@@ -5,14 +5,14 @@
                 <fa-icon [icon]="faChevronLeft" />
             </div>
         </button>
-        <button type="button" class="header-button secondary-button" (click)="goToToday()">
+        <button data-testid="today-button" type="button" class="header-button secondary-button" (click)="goToToday()">
             <span class="today-label" jhiTranslate="artemisApp.calendar.todayButtonLabel"></span>
         </button>
         @let courseId = currentCourseId();
         @let subscriptionToken = calendarSubscriptionToken();
         @if (courseId && subscriptionToken) {
             <div>
-                <button type="button" class="header-button secondary-button" (click)="subscriptionPopover.open($event)">
+                <button data-testid="subscribe-button" type="button" class="header-button secondary-button" (click)="subscriptionPopover.open($event)">
                     <span class="today-label" jhiTranslate="artemisApp.calendar.subscribeButtonLabel"></span>
                 </button>
                 <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="courseId" [isMobile]="true" #subscriptionPopover />

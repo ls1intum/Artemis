@@ -4,9 +4,8 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
@@ -17,6 +16,7 @@ import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/ca
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarDesktopOverviewComponent } from './calendar-desktop-overview.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CalendarDesktopOverviewComponent', () => {
     let component: CalendarDesktopOverviewComponent;
@@ -25,6 +25,8 @@ describe('CalendarDesktopOverviewComponent', () => {
     const calendarServiceMock = {
         eventMap: signal(new Map<string, CalendarEvent[]>()),
         loadEventsForCurrentMonth: jest.fn().mockReturnValue(of([])),
+        subscriptionToken: signal('testToken'),
+        loadSubscriptionToken: jest.fn().mockReturnValue(of([])),
     };
 
     const activatedRouteMock = {
@@ -33,27 +35,24 @@ describe('CalendarDesktopOverviewComponent', () => {
         },
     };
 
-    const translateServiceMock = {
-        currentLang: 'en',
-        onLangChange: of({ lang: 'en' }),
-    };
-
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CalendarDesktopOverviewComponent, CalendarDesktopWeekPresentationComponent, CalendarDesktopMonthPresentationComponent, FaIconComponent],
             declarations: [
                 MockComponent(CalendarEventDetailPopoverComponent),
                 MockComponent(CalendarDayBadgeComponent),
-                MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CalendarEventFilterComponent),
             ],
             providers: [
                 { provide: CalendarService, useValue: calendarServiceMock },
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
-                { provide: TranslateService, useValue: translateServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
+
+        const translateService = TestBed.inject(TranslateService) as MockTranslateService;
+        translateService.currentLang = 'en';
 
         fixture = TestBed.createComponent(CalendarDesktopOverviewComponent);
         component = fixture.componentInstance;

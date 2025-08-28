@@ -35,7 +35,6 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     private calendarService = inject(CalendarService);
     private activatedRoute = inject(ActivatedRoute);
     private activatedRouteSubscription?: Subscription;
-    private courseId?: number;
 
     readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
     readonly faXmark = faXmark;
@@ -109,10 +108,11 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     }
 
     private loadEventsForCurrentMonth(): void {
-        if (!this.courseId) return;
+        const courseId = this.currentCourseId();
+        if (!courseId) return;
         this.isLoading.set(true);
         this.calendarService
-            .loadEventsForCurrentMonth(this.courseId, this.firstDateOfCurrentMonth())
+            .loadEventsForCurrentMonth(courseId, this.firstDateOfCurrentMonth())
             .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe();
     }

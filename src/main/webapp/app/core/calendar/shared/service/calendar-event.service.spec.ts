@@ -16,7 +16,9 @@ describe('CalendarService', () => {
 
     const courseId = 42;
     const date = dayjs('2025-10-01');
-    const expectedUrl = `/api/core/calendar/courses/${courseId}/calendar-events`;
+    const expectedEventUrl = `/api/core/calendar/courses/${courseId}/calendar-events`;
+    const expectedTokenUrl = '/api/core/calendar/subscription-token';
+    const testToken = 'testToken';
 
     const testRequestResponse = {
         '2025-10-01': [
@@ -127,7 +129,7 @@ describe('CalendarService', () => {
             });
         });
 
-        const testRequest = httpMock.expectOne((request) => request.url === expectedUrl);
+        const testRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
         expect(testRequest.request.method).toBe('GET');
         testRequest.flush(testRequestResponse);
         tick();
@@ -160,7 +162,7 @@ describe('CalendarService', () => {
             });
         });
 
-        const testRequest = httpMock.expectOne((request) => request.url === expectedUrl);
+        const testRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
         expect(testRequest.request.method).toBe('GET');
         expect(testRequest.request.params.get('monthKeys')).toBe('2025-09,2025-10,2025-11');
         expect(testRequest.request.params.get('timeZone')).toBeTruthy();
@@ -200,7 +202,7 @@ describe('CalendarService', () => {
             });
         });
 
-        const testRequest = httpMock.expectOne((request) => request.url === expectedUrl);
+        const testRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
         expect(testRequest.request.method).toBe('GET');
         testRequest.flush(smallHttpResponse);
         tick();
@@ -209,17 +211,22 @@ describe('CalendarService', () => {
     it('should refresh', fakeAsync(() => {
         service.includedEventFilterOptions.set([CalendarEventFilterOption.LectureEvents, CalendarEventFilterOption.ExamEvents]);
         service.loadEventsForCurrentMonth(courseId, date).subscribe();
+        service.loadSubscriptionToken().subscribe();
 
-        const initialRequest = httpMock.expectOne((request) => request.url === expectedUrl);
-        expect(initialRequest.request.method).toBe('GET');
-        initialRequest.flush({});
+        const initialEventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
+        expect(initialEventRequest.request.method).toBe('GET');
+        initialEventRequest.flush({});
+        const initialTokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
+        initialTokenRequest.flush(testToken);
         tick();
 
         service.refresh();
 
-        const refreshRequest = httpMock.expectOne((request) => request.url === expectedUrl);
-        expect(refreshRequest.request.method).toBe('GET');
-        refreshRequest.flush({});
+        const refreshEventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
+        expect(refreshEventRequest.request.method).toBe('GET');
+        refreshEventRequest.flush({});
+        const refreshTokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
+        refreshTokenRequest.flush(testToken);
         tick();
     }));
 });
