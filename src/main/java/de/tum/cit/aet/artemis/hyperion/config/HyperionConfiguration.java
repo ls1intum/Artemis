@@ -15,7 +15,6 @@ public class HyperionConfiguration {
 
     @Bean
     public ChatClient chatClient(ChatClient.Builder builder) {
-        // Build a default ChatClient; provider (Azure OpenAI) and deployment are configured via properties
         return builder.build();
     }
 }
