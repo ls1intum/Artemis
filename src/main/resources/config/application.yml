@@ -219,6 +219,8 @@ spring:
             hibernate.jdbc.lob.non_contextual_creation: true
             # limit fetch depth to prevent queries from getting too large because of eager fetching
             hibernate.max_fetch_depth: 2
+            hibernate.bytecode.provider: none
+            hibernate.bytecode.use_reflection_optimizer: false
             jakarta.persistence.validation.mode: none # disable validation for faster startup
     liquibase:
         contexts: prod

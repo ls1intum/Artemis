@@ -42,9 +42,6 @@ graalvmNative {
             buildArgs.add('--report-unsupported-elements-at-runtime')
             buildArgs.add('-Dspring.profiles.active=prod,localci,localvc,artemis,scheduling,iris,buildagent,core,local')
 
-            // Include webapp resources in the native image
-            buildArgs.add('-H:IncludeResources=static/.*')
-
             // ⬇️ Delay class initialization
             // ICU4J (for JPlag)
             buildArgs.add('--initialize-at-build-time=com.ibm.icu.charset.CharsetProviderICU')
@@ -123,25 +120,22 @@ graalvmNative {
 //                '--initialize-at-run-time=jdk.management.jfr.SettingDescriptorInfo',
 //                '--initialize-at-run-time=javax.script.ScriptEngineManager'
 //            ])
+            buildArgs.add("--initialize-at-run-time=net.sourceforge.plantuml.klimt,net.sourceforge.plantuml.klimt.font")
+            buildArgs.add("--initialize-at-run-time=org.apache.batik")
+
+            resources.autodetect();
         }
     }
 }
 
-hibernate {
-    enhancement {
-        lazyInitialization = true
-    }
-}
+
 tasks.named("processAot") {
     systemProperty "spring.profiles.active", "prod,localci,localvc,artemis,scheduling,iris,buildagent,core,local"
     environment "SPRING_APPLICATION_JSON", '{"jhipster":{"security":{"authentication":{"jwt":{"base64Secret":"QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQQ=="}}}}}'
 }
-tasks.named("classes") { dependsOn("hibernateEnhance") }
-
 nativeCompile {
     dependsOn processResources
 }
-
 group = "de.tum.cit.aet.artemis"
 version = "8.4.0"
 description = "Interactive Learning with Individual Feedback"

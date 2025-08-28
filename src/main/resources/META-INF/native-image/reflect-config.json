@@ -120,6 +120,9 @@
     "name": "[Ljava.lang.Object;"
   },
   {
+    "name": "[Ljava.lang.StackTraceElement;"
+  },
+  {
     "name": "[Ljava.lang.String;"
   },
   {
@@ -5458,6 +5461,15 @@
     "allPublicMethods": true
   },
   {
+    "name": "com.zaxxer.hikari.pool.HikariProxyConnection",
+    "methods": [
+      {
+        "name": "getSchema",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "com.zaxxer.hikari.pool.PoolBase",
     "fields": [
       {
@@ -6749,92 +6761,6 @@
         "parameterTypes": []
       },
       {
-        "name": "addFeedback",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.assessment.domain.Feedback"
-        ]
-      },
-      {
-        "name": "addFeedbacks",
-        "parameterTypes": [
-          "java.util.List"
-        ]
-      },
-      {
-        "name": "assessmentType",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.assessment.domain.AssessmentType"
-        ]
-      },
-      {
-        "name": "calculateScoreForProgrammingExercise",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise"
-        ]
-      },
-      {
-        "name": "calculateTotalPointsForProgrammingExercises",
-        "parameterTypes": []
-      },
-      {
-        "name": "compareTo",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.assessment.domain.Result"
-        ]
-      },
-      {
-        "name": "completionDate",
-        "parameterTypes": [
-          "java.time.ZonedDateTime"
-        ]
-      },
-      {
-        "name": "copyProgrammingExerciseCounters",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.assessment.domain.Result"
-        ]
-      },
-      {
-        "name": "createFilteredFeedbacks",
-        "parameterTypes": [
-          "boolean",
-          "de.tum.cit.aet.artemis.exercise.domain.Exercise"
-        ]
-      },
-      {
-        "name": "determineAssessmentType",
-        "parameterTypes": []
-      },
-      {
-        "name": "evaluateQuizSubmission",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.quiz.domain.QuizExercise"
-        ]
-      },
-      {
-        "name": "feedbacks",
-        "parameterTypes": [
-          "java.util.List"
-        ]
-      },
-      {
-        "name": "filterSensitiveFeedbacks",
-        "parameterTypes": [
-          "boolean"
-        ]
-      },
-      {
-        "name": "filterSensitiveFeedbacks",
-        "parameterTypes": [
-          "boolean",
-          "de.tum.cit.aet.artemis.exercise.domain.Exercise"
-        ]
-      },
-      {
-        "name": "filterSensitiveInformation",
-        "parameterTypes": []
-      },
-      {
         "name": "getAssessmentNote",
         "parameterTypes": []
       },
@@ -6863,10 +6789,6 @@
         "parameterTypes": []
       },
       {
-        "name": "getLastModifiedDate",
-        "parameterTypes": []
-      },
-      {
         "name": "getPassedTestCaseCount",
         "parameterTypes": []
       },
@@ -6883,33 +6805,7 @@
         "parameterTypes": []
       },
       {
-        "name": "hasComplaint",
-        "parameterTypes": []
-      },
-      {
-        "name": "hasComplaint",
-        "parameterTypes": [
-          "java.lang.Boolean"
-        ]
-      },
-      {
-        "name": "isAssessmentComplete",
-        "parameterTypes": []
-      },
-      {
-        "name": "isAthenaBased",
-        "parameterTypes": []
-      },
-      {
-        "name": "isAutomatic",
-        "parameterTypes": []
-      },
-      {
         "name": "isExampleResult",
-        "parameterTypes": []
-      },
-      {
-        "name": "isManual",
         "parameterTypes": []
       },
       {
@@ -6919,30 +6815,6 @@
       {
         "name": "isSuccessful",
         "parameterTypes": []
-      },
-      {
-        "name": "rated",
-        "parameterTypes": [
-          "boolean"
-        ]
-      },
-      {
-        "name": "removeFeedback",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.assessment.domain.Feedback"
-        ]
-      },
-      {
-        "name": "score",
-        "parameterTypes": [
-          "java.lang.Double"
-        ]
-      },
-      {
-        "name": "setAssessmentNote",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.assessment.domain.AssessmentNote"
-        ]
       },
       {
         "name": "setAssessmentNote",
@@ -7029,28 +6901,9 @@
         ]
       },
       {
-        "name": "setRatedIfNotAfterDueDate",
-        "parameterTypes": []
-      },
-      {
-        "name": "setScore",
-        "parameterTypes": [
-          "double",
-          "double",
-          "de.tum.cit.aet.artemis.core.domain.Course"
-        ]
-      },
-      {
         "name": "setScore",
         "parameterTypes": [
           "java.lang.Double"
-        ]
-      },
-      {
-        "name": "setScore",
-        "parameterTypes": [
-          "java.lang.Double",
-          "de.tum.cit.aet.artemis.core.domain.Course"
         ]
       },
       {
@@ -7078,6 +6931,165 @@
         ]
       },
       {
+        "name": "addFeedback",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.assessment.domain.Feedback"
+        ]
+      },
+      {
+        "name": "addFeedbacks",
+        "parameterTypes": [
+          "java.util.List"
+        ]
+      },
+      {
+        "name": "assessmentType",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.assessment.domain.AssessmentType"
+        ]
+      },
+      {
+        "name": "calculateScoreForProgrammingExercise",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise"
+        ]
+      },
+      {
+        "name": "calculateTotalPointsForProgrammingExercises",
+        "parameterTypes": []
+      },
+      {
+        "name": "compareTo",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.assessment.domain.Result"
+        ]
+      },
+      {
+        "name": "completionDate",
+        "parameterTypes": [
+          "java.time.ZonedDateTime"
+        ]
+      },
+      {
+        "name": "copyProgrammingExerciseCounters",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.assessment.domain.Result"
+        ]
+      },
+      {
+        "name": "createFilteredFeedbacks",
+        "parameterTypes": [
+          "boolean",
+          "de.tum.cit.aet.artemis.exercise.domain.Exercise"
+        ]
+      },
+      {
+        "name": "determineAssessmentType",
+        "parameterTypes": []
+      },
+      {
+        "name": "evaluateQuizSubmission",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.quiz.domain.QuizExercise"
+        ]
+      },
+      {
+        "name": "feedbacks",
+        "parameterTypes": [
+          "java.util.List"
+        ]
+      },
+      {
+        "name": "filterSensitiveFeedbacks",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "filterSensitiveFeedbacks",
+        "parameterTypes": [
+          "boolean",
+          "de.tum.cit.aet.artemis.exercise.domain.Exercise"
+        ]
+      },
+      {
+        "name": "filterSensitiveInformation",
+        "parameterTypes": []
+      },
+      {
+        "name": "getLastModifiedDate",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasComplaint",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasComplaint",
+        "parameterTypes": [
+          "java.lang.Boolean"
+        ]
+      },
+      {
+        "name": "isAssessmentComplete",
+        "parameterTypes": []
+      },
+      {
+        "name": "isAthenaBased",
+        "parameterTypes": []
+      },
+      {
+        "name": "isAutomatic",
+        "parameterTypes": []
+      },
+      {
+        "name": "isManual",
+        "parameterTypes": []
+      },
+      {
+        "name": "rated",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "removeFeedback",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.assessment.domain.Feedback"
+        ]
+      },
+      {
+        "name": "score",
+        "parameterTypes": [
+          "java.lang.Double"
+        ]
+      },
+      {
+        "name": "setAssessmentNote",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.assessment.domain.AssessmentNote"
+        ]
+      },
+      {
+        "name": "setRatedIfNotAfterDueDate",
+        "parameterTypes": []
+      },
+      {
+        "name": "setScore",
+        "parameterTypes": [
+          "double",
+          "double",
+          "de.tum.cit.aet.artemis.core.domain.Course"
+        ]
+      },
+      {
+        "name": "setScore",
+        "parameterTypes": [
+          "java.lang.Double",
+          "de.tum.cit.aet.artemis.core.domain.Course"
+        ]
+      },
+      {
         "name": "submission",
         "parameterTypes": [
           "de.tum.cit.aet.artemis.exercise.domain.Submission"
@@ -7099,15 +7111,6 @@
           "java.util.List",
           "boolean"
         ]
-      }
-    ]
-  },
-  {
-    "name": "de.tum.cit.aet.artemis.assessment.domain.Result$HibernateProxy$dvCasdCj",
-    "methods": [
-      {
-        "name": "<init>",
-        "parameterTypes": []
       }
     ]
   },
@@ -7165,7 +7168,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.assessment.domain.Result_Accessor_ak1f52",
+    "name": "de.tum.cit.aet.artemis.assessment.domain.Result_Accessor_973voq",
     "queryAllPublicConstructors": true,
     "methods": [
       {
@@ -9690,18 +9693,6 @@
         "parameterTypes": []
       },
       {
-        "name": "addAllCourseLearnerProfiles",
-        "parameterTypes": [
-          "java.util.Collection"
-        ]
-      },
-      {
-        "name": "addCourseLearnerProfile",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile"
-        ]
-      },
-      {
         "name": "getCourseLearnerProfiles",
         "parameterTypes": []
       },
@@ -9712,20 +9703,6 @@
       {
         "name": "getFeedbackFormality",
         "parameterTypes": []
-      },
-      {
-        "name": "getUser",
-        "parameterTypes": []
-      },
-      {
-        "name": "hasSetupFeedbackPreferences",
-        "parameterTypes": []
-      },
-      {
-        "name": "removeCourseLearnerProfile",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile"
-        ]
       },
       {
         "name": "setCourseLearnerProfiles",
@@ -9756,15 +9733,32 @@
         "parameterTypes": [
           "de.tum.cit.aet.artemis.core.domain.User"
         ]
-      }
-    ]
-  },
-  {
-    "name": "de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile$HibernateProxy$qOFwS4w0",
-    "methods": [
+      },
       {
-        "name": "<init>",
+        "name": "addAllCourseLearnerProfiles",
+        "parameterTypes": [
+          "java.util.Collection"
+        ]
+      },
+      {
+        "name": "addCourseLearnerProfile",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile"
+        ]
+      },
+      {
+        "name": "getUser",
         "parameterTypes": []
+      },
+      {
+        "name": "hasSetupFeedbackPreferences",
+        "parameterTypes": []
+      },
+      {
+        "name": "removeCourseLearnerProfile",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile"
+        ]
       }
     ]
   },
@@ -11478,10 +11472,10 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.communication.domain.ConductAgreement$HibernateAccessOptimizer$UTqaWHep",
+    "name": "de.tum.cit.aet.artemis.communication.domain.ConductAgreement$HibernateAccessOptimizer$MgAWFJe7",
     "fields": [
       {
-        "name": "invocationTarget$l7imcr1"
+        "name": "invocationTarget$eej55j0"
       }
     ],
     "methods": [
@@ -11492,7 +11486,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.communication.domain.ConductAgreement$HibernateInstantiator$x7JdJMtH",
+    "name": "de.tum.cit.aet.artemis.communication.domain.ConductAgreement$HibernateInstantiator$jpQkPsEz",
     "methods": [
       {
         "name": "<init>",
@@ -11750,7 +11744,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.communication.domain.CourseNotification$HibernateProxy$jGHEM0aM",
+    "name": "de.tum.cit.aet.artemis.communication.domain.CourseNotification$HibernateProxy$9Hnl8inQ",
     "methods": [
       {
         "name": "<init>",
@@ -17289,10 +17283,10 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.core.domain.Authority$HibernateAccessOptimizer$iLs5elUi",
+    "name": "de.tum.cit.aet.artemis.core.domain.Authority$HibernateAccessOptimizer$sDMN0XAu",
     "fields": [
       {
-        "name": "invocationTarget$ebo4ur0"
+        "name": "invocationTarget$gntsnk0"
       }
     ],
     "methods": [
@@ -17303,7 +17297,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.core.domain.Authority$HibernateInstantiator$lxT7sDdf",
+    "name": "de.tum.cit.aet.artemis.core.domain.Authority$HibernateInstantiator$TqfNZskO",
     "methods": [
       {
         "name": "<init>",
@@ -18096,7 +18090,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.core.domain.Course$HibernateProxy$YhxdyBTJ",
+    "name": "de.tum.cit.aet.artemis.core.domain.Course$HibernateProxy$fkhXTQh8",
     "methods": [
       {
         "name": "<init>",
@@ -19615,7 +19609,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.core.domain.User$HibernateProxy$WJa77Eyy",
+    "name": "de.tum.cit.aet.artemis.core.domain.User$HibernateProxy$XT7zrOqa",
     "methods": [
       {
         "name": "<init>",
@@ -19802,7 +19796,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.core.domain.User_Accessor_kb7uj6",
+    "name": "de.tum.cit.aet.artemis.core.domain.User_Accessor_tp5snn",
     "queryAllPublicConstructors": true,
     "methods": [
       {
@@ -20913,7 +20907,10 @@
     "name": "de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException"
   },
   {
-    "name": "de.tum.cit.aet.artemis.core.exception.BadRequestAlertException"
+    "name": "de.tum.cit.aet.artemis.core.exception.BadRequestAlertException",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllDeclaredConstructors": true
   },
   {
     "name": "de.tum.cit.aet.artemis.core.exception.ConflictException"
@@ -20940,6 +20937,13 @@
         "parameterTypes": [
           "java.io.IOException",
           "jakarta.servlet.http.HttpServletRequest"
+        ]
+      },
+      {
+        "name": "handleBadRequestAlertException",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.core.exception.BadRequestAlertException",
+          "org.springframework.web.context.request.NativeWebRequest"
         ]
       },
       {
@@ -20970,6 +20974,21 @@
   },
   {
     "name": "de.tum.cit.aet.artemis.core.exception.GitException"
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.core.exception.HttpStatusException",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true,
+    "methods": [
+      {
+        "name": "getEntityName",
+        "parameterTypes": []
+      },
+      {
+        "name": "getErrorKey",
+        "parameterTypes": []
+      }
+    ]
   },
   {
     "name": "de.tum.cit.aet.artemis.core.exception.LocalCIException"
@@ -22268,6 +22287,13 @@
         ]
       },
       {
+        "name": "existsByIdAndUserId",
+        "parameterTypes": [
+          "java.lang.Long",
+          "java.lang.Long"
+        ]
+      },
+      {
         "name": "existsByParticipationId",
         "parameterTypes": [
           "long"
@@ -22420,16 +22446,10 @@
         ]
       },
       {
-        "name": "findAllByExerciseIdWithEagerStudents",
+        "name": "findAllByExerciseIdAndStudentLogin",
         "parameterTypes": [
-          "de.tum.cit.aet.artemis.exercise.domain.Exercise",
-          "java.lang.Long"
-        ]
-      },
-      {
-        "name": "findAllByExerciseIdWithEagerStudents",
-        "parameterTypes": [
-          "java.lang.Long"
+          "long",
+          "java.lang.String"
         ]
       },
       {
@@ -23253,9 +23273,21 @@
         ]
       },
       {
+        "name": "findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow",
+        "parameterTypes": [
+          "long"
+        ]
+      },
+      {
         "name": "findByIdWithTemplateParticipationElseThrow",
         "parameterTypes": [
           "long"
+        ]
+      },
+      {
+        "name": "findByKeyHash",
+        "parameterTypes": [
+          "java.lang.String"
         ]
       },
       {
@@ -23306,6 +23338,18 @@
         "name": "findByQuizExerciseAndStudentLogin",
         "parameterTypes": [
           "de.tum.cit.aet.artemis.quiz.domain.QuizExercise",
+          "java.lang.String"
+        ]
+      },
+      {
+        "name": "findByRepositoryUri",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      },
+      {
+        "name": "findByRepositoryUriElseThrow",
+        "parameterTypes": [
           "java.lang.String"
         ]
       },
@@ -23703,6 +23747,18 @@
         "parameterTypes": [
           "java.lang.Long",
           "java.lang.Long"
+        ]
+      },
+      {
+        "name": "findNewestByParticipationId",
+        "parameterTypes": [
+          "long"
+        ]
+      },
+      {
+        "name": "findNewestByRepositoryUri",
+        "parameterTypes": [
+          "java.lang.String"
         ]
       },
       {
@@ -24304,6 +24360,12 @@
         ]
       },
       {
+        "name": "findWithSubmissionPolicyByProjectKey",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      },
+      {
         "name": "findWithSubmissionsAndTeamStudentsByExerciseId",
         "parameterTypes": [
           "long"
@@ -24335,6 +24397,12 @@
       },
       {
         "name": "findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigById",
+        "parameterTypes": [
+          "long"
+        ]
+      },
+      {
+        "name": "findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById",
         "parameterTypes": [
           "long"
         ]
@@ -24402,6 +24470,18 @@
         "name": "getDynamicSpecification",
         "parameterTypes": [
           "java.util.Collection"
+        ]
+      },
+      {
+        "name": "getExamTitle",
+        "parameterTypes": [
+          "long"
+        ]
+      },
+      {
+        "name": "getExerciseTitle",
+        "parameterTypes": [
+          "java.lang.Long"
         ]
       },
       {
@@ -24834,6 +24914,19 @@
         "parameterTypes": [
           "de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise",
           "de.tum.cit.aet.artemis.core.domain.Course"
+        ]
+      },
+      {
+        "name": "findAllByExerciseIdWithEagerStudents",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.exercise.domain.Exercise",
+          "java.lang.Long"
+        ]
+      },
+      {
+        "name": "findAllByExerciseIdWithEagerStudents",
+        "parameterTypes": [
+          "java.lang.Long"
         ]
       }
     ]
@@ -27914,7 +28007,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.exam.domain.ExamSession_Accessor_o76kkp",
+    "name": "de.tum.cit.aet.artemis.exam.domain.ExamSession_Accessor_nihxdh",
     "queryAllPublicConstructors": true,
     "methods": [
       {
@@ -28117,7 +28210,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.exam.domain.ExamUser_Accessor_4e0idg",
+    "name": "de.tum.cit.aet.artemis.exam.domain.ExamUser_Accessor_vzqv6a",
     "queryAllPublicConstructors": true,
     "methods": [
       {
@@ -28490,7 +28583,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.exam.domain.StudentExam_Accessor_kqof4i",
+    "name": "de.tum.cit.aet.artemis.exam.domain.StudentExam_Accessor_v8zq3d",
     "queryAllPublicConstructors": true,
     "methods": [
       {
@@ -28646,7 +28739,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.exam.domain.event.ExamWideAnnouncementEvent_Accessor_ezv1fj",
+    "name": "de.tum.cit.aet.artemis.exam.domain.event.ExamWideAnnouncementEvent_Accessor_vh4yk6",
     "queryAllPublicConstructors": true,
     "methods": [
       {
@@ -28727,7 +28820,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.exam.domain.event.ProblemStatementUpdateEvent_Accessor_9yne1t",
+    "name": "de.tum.cit.aet.artemis.exam.domain.event.ProblemStatementUpdateEvent_Accessor_rovjaf",
     "queryAllPublicConstructors": true,
     "methods": [
       {
@@ -28799,7 +28892,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent_Accessor_52mkbj",
+    "name": "de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent_Accessor_u9h9d4",
     "queryAllPublicConstructors": true,
     "methods": [
       {
@@ -29310,6 +29403,12 @@
       },
       {
         "name": "findWithStudentExamsExercisesById",
+        "parameterTypes": [
+          "long"
+        ]
+      },
+      {
+        "name": "getExamTitle",
         "parameterTypes": [
           "long"
         ]
@@ -29868,6 +29967,12 @@
         ]
       },
       {
+        "name": "getExamTitle",
+        "parameterTypes": [
+          "java.lang.Long"
+        ]
+      },
+      {
         "name": "getExamsForCourse",
         "parameterTypes": [
           "java.lang.Long"
@@ -30055,14 +30160,6 @@
         ]
       },
       {
-        "name": "deleteTestRun",
-        "parameterTypes": [
-          "java.lang.Long",
-          "java.lang.Long",
-          "java.lang.Long"
-        ]
-      },
-      {
         "name": "findAllTestRunsForExam",
         "parameterTypes": [
           "java.lang.Long",
@@ -30168,6 +30265,14 @@
           "java.lang.Long",
           "java.lang.Long",
           "java.lang.Integer"
+        ]
+      },
+      {
+        "name": "deleteTestRun",
+        "parameterTypes": [
+          "java.lang.Long",
+          "java.lang.Long",
+          "java.lang.Long"
         ]
       }
     ]
@@ -31165,7 +31270,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion_Accessor_tbtxpz",
+    "name": "de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion_Accessor_ahxc65",
     "queryAllPublicConstructors": true,
     "methods": [
       {
@@ -31284,14 +31389,6 @@
         "parameterTypes": []
       },
       {
-        "name": "copyTeamAssignmentConfig",
-        "parameterTypes": []
-      },
-      {
-        "name": "getExercise",
-        "parameterTypes": []
-      },
-      {
         "name": "getMaxTeamSize",
         "parameterTypes": []
       },
@@ -31318,16 +31415,15 @@
         ]
       },
       {
-        "name": "toString",
+        "name": "copyTeamAssignmentConfig",
         "parameterTypes": []
-      }
-    ]
-  },
-  {
-    "name": "de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig$HibernateProxy$YhTjehYH",
-    "methods": [
+      },
       {
-        "name": "<init>",
+        "name": "getExercise",
+        "parameterTypes": []
+      },
+      {
+        "name": "toString",
         "parameterTypes": []
       }
     ]
@@ -31434,26 +31530,6 @@
     "queryAllDeclaredConstructors": true,
     "methods": [
       {
-        "name": "addPracticePrefixIfTestRun",
-        "parameterTypes": [
-          "java.lang.String"
-        ]
-      },
-      {
-        "name": "addSubmission",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.exercise.domain.Submission"
-        ]
-      },
-      {
-        "name": "findLatestResult",
-        "parameterTypes": []
-      },
-      {
-        "name": "findLatestSubmission",
-        "parameterTypes": []
-      },
-      {
         "name": "getAttempt",
         "parameterTypes": []
       },
@@ -31475,22 +31551,6 @@
       },
       {
         "name": "getSubmissions",
-        "parameterTypes": []
-      },
-      {
-        "name": "initializationDate",
-        "parameterTypes": [
-          "java.time.ZonedDateTime"
-        ]
-      },
-      {
-        "name": "initializationState",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.exercise.domain.InitializationState"
-        ]
-      },
-      {
-        "name": "isPracticeMode",
         "parameterTypes": []
       },
       {
@@ -31519,12 +31579,6 @@
         "name": "setInitializationState",
         "parameterTypes": [
           "de.tum.cit.aet.artemis.exercise.domain.InitializationState"
-        ]
-      },
-      {
-        "name": "setPracticeMode",
-        "parameterTypes": [
-          "boolean"
         ]
       },
       {
@@ -31559,6 +31613,48 @@
       },
       {
         "name": "setTestRun",
+        "parameterTypes": [
+          "boolean"
+        ]
+      },
+      {
+        "name": "addPracticePrefixIfTestRun",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      },
+      {
+        "name": "addSubmission",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.exercise.domain.Submission"
+        ]
+      },
+      {
+        "name": "findLatestResult",
+        "parameterTypes": []
+      },
+      {
+        "name": "findLatestSubmission",
+        "parameterTypes": []
+      },
+      {
+        "name": "initializationDate",
+        "parameterTypes": [
+          "java.time.ZonedDateTime"
+        ]
+      },
+      {
+        "name": "initializationState",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.exercise.domain.InitializationState"
+        ]
+      },
+      {
+        "name": "isPracticeMode",
+        "parameterTypes": []
+      },
+      {
+        "name": "setPracticeMode",
         "parameterTypes": [
           "boolean"
         ]
@@ -32032,15 +32128,6 @@
     "queryAllDeclaredConstructors": true
   },
   {
-    "name": "de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentPayload"
-  },
-  {
-    "name": "de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType"
-  },
-  {
-    "name": "de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO"
-  },
-  {
     "name": "de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository",
     "queryAllDeclaredMethods": true,
     "queryAllPublicMethods": true
@@ -32206,6 +32293,12 @@
         "parameterTypes": [
           "java.lang.Long",
           "java.time.ZonedDateTime"
+        ]
+      },
+      {
+        "name": "getExerciseTitle",
+        "parameterTypes": [
+          "java.lang.Long"
         ]
       },
       {
@@ -32959,9 +33052,6 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.exercise.service.team.TeamImportStrategy"
-  },
-  {
     "name": "de.tum.cit.aet.artemis.exercise.service.team.TeamService",
     "queryAllDeclaredMethods": true,
     "methods": [
@@ -33058,6 +33148,12 @@
       },
       {
         "name": "getExerciseForAssessmentDashboard",
+        "parameterTypes": [
+          "java.lang.Long"
+        ]
+      },
+      {
+        "name": "getExerciseTitle",
         "parameterTypes": [
           "java.lang.Long"
         ]
@@ -33258,8 +33354,8 @@
   },
   {
     "name": "de.tum.cit.aet.artemis.exercise.web.TeamResource",
-    "allDeclaredFields": true,
     "queryAllDeclaredMethods": true,
+    "allDeclaredFields": true,
     "methods": [
       {
         "name": "<init>",
@@ -33283,25 +33379,6 @@
         "parameterTypes": [
           "long",
           "java.lang.Long"
-        ]
-      }
-    ]
-  },
-  {
-    "name": "de.tum.cit.aet.artemis.exercise.web.TeamResource$$SpringCGLIB$$0",
-    "fields": [
-      {
-        "name": "CGLIB$CALLBACK_FILTER"
-      },
-      {
-        "name": "CGLIB$FACTORY_DATA"
-      }
-    ],
-    "methods": [
-      {
-        "name": "CGLIB$SET_THREAD_CALLBACKS",
-        "parameterTypes": [
-          "org.springframework.cglib.proxy.Callback[]"
         ]
       }
     ]
@@ -33912,10 +33989,10 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent$HibernateAccessOptimizer$jlDyBZBn",
+    "name": "de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent$HibernateAccessOptimizer$0ySeTecE",
     "fields": [
       {
-        "name": "invocationTarget$6aln1n1"
+        "name": "invocationTarget$7gqpv00"
       }
     ],
     "methods": [
@@ -34841,10 +34918,10 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings$HibernateAccessOptimizer$3IUzrJXU",
+    "name": "de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings$HibernateAccessOptimizer$RSwItTpk",
     "fields": [
       {
-        "name": "invocationTarget$p8ti040"
+        "name": "invocationTarget$hfka9r0"
       }
     ],
     "methods": [
@@ -38860,10 +38937,6 @@
         ]
       },
       {
-        "name": "filterSensitiveInformation",
-        "parameterTypes": []
-      },
-      {
         "name": "getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod",
         "parameterTypes": []
       },
@@ -38877,10 +38950,6 @@
       },
       {
         "name": "getSimilarityThreshold",
-        "parameterTypes": []
-      },
-      {
-        "name": "hashCode",
         "parameterTypes": []
       },
       {
@@ -38928,16 +38997,15 @@
         ]
       },
       {
-        "name": "toString",
+        "name": "filterSensitiveInformation",
         "parameterTypes": []
-      }
-    ]
-  },
-  {
-    "name": "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig$HibernateProxy$b6oKiZ5k",
-    "methods": [
+      },
       {
-        "name": "<init>",
+        "name": "hashCode",
+        "parameterTypes": []
+      },
+      {
+        "name": "toString",
         "parameterTypes": []
       }
     ]
@@ -39487,15 +39555,7 @@
     "queryAllDeclaredConstructors": true,
     "methods": [
       {
-        "name": "filterSensitiveInformation",
-        "parameterTypes": []
-      },
-      {
         "name": "getBuildPlanId",
-        "parameterTypes": []
-      },
-      {
-        "name": "getExercise",
         "parameterTypes": []
       },
       {
@@ -39517,12 +39577,6 @@
       {
         "name": "setRepositoryUri",
         "parameterTypes": [
-          "de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri"
-        ]
-      },
-      {
-        "name": "setRepositoryUri",
-        "parameterTypes": [
           "java.lang.String"
         ]
       },
@@ -39530,6 +39584,20 @@
         "name": "setTestRun",
         "parameterTypes": [
           "java.lang.Boolean"
+        ]
+      },
+      {
+        "name": "filterSensitiveInformation",
+        "parameterTypes": []
+      },
+      {
+        "name": "getExercise",
+        "parameterTypes": []
+      },
+      {
+        "name": "setRepositoryUri",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri"
         ]
       },
       {
@@ -40089,7 +40157,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise$HibernateProxy$OWz9LkYZ",
+    "name": "de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise$HibernateProxy$fYfFJTNS",
     "methods": [
       {
         "name": "<init>",
@@ -40106,14 +40174,6 @@
     "methods": [
       {
         "name": "<init>",
-        "parameterTypes": []
-      },
-      {
-        "name": "filterSensitiveInformation",
-        "parameterTypes": []
-      },
-      {
-        "name": "generateAndSetBuildPlanAccessSecret",
         "parameterTypes": []
       },
       {
@@ -40149,10 +40209,6 @@
         "parameterTypes": []
       },
       {
-        "name": "getProgrammingExercise",
-        "parameterTypes": []
-      },
-      {
         "name": "getSolutionCheckoutPath",
         "parameterTypes": []
       },
@@ -40170,10 +40226,6 @@
       },
       {
         "name": "getWindfile",
-        "parameterTypes": []
-      },
-      {
-        "name": "hasBuildPlanAccessSecretSet",
         "parameterTypes": []
       },
       {
@@ -40275,16 +40327,23 @@
         ]
       },
       {
-        "name": "toString",
+        "name": "filterSensitiveInformation",
         "parameterTypes": []
-      }
-    ]
-  },
-  {
-    "name": "de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig$HibernateProxy$ESsY77RW",
-    "methods": [
+      },
       {
-        "name": "<init>",
+        "name": "generateAndSetBuildPlanAccessSecret",
+        "parameterTypes": []
+      },
+      {
+        "name": "getProgrammingExercise",
+        "parameterTypes": []
+      },
+      {
+        "name": "hasBuildPlanAccessSecretSet",
+        "parameterTypes": []
+      },
+      {
+        "name": "toString",
         "parameterTypes": []
       }
     ]
@@ -40401,10 +40460,6 @@
         "parameterTypes": []
       },
       {
-        "name": "getVcsRepositoryUri",
-        "parameterTypes": []
-      },
-      {
         "name": "setStudent",
         "parameterTypes": [
           "de.tum.cit.aet.artemis.core.domain.User"
@@ -40421,6 +40476,10 @@
         "parameterTypes": [
           "java.lang.Boolean"
         ]
+      },
+      {
+        "name": "getVcsRepositoryUri",
+        "parameterTypes": []
       }
     ]
   },
@@ -40736,7 +40795,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase$HibernateProxy$wGDsT6Bv",
+    "name": "de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase$HibernateProxy$d5qviwjx",
     "methods": [
       {
         "name": "<init>",
@@ -40962,14 +41021,6 @@
         "parameterTypes": []
       },
       {
-        "name": "getProgrammingExercise",
-        "parameterTypes": []
-      },
-      {
-        "name": "getType",
-        "parameterTypes": []
-      },
-      {
         "name": "setProgrammingExercise",
         "parameterTypes": [
           "de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise"
@@ -40980,14 +41031,13 @@
         "parameterTypes": [
           "java.lang.Boolean"
         ]
-      }
-    ]
-  },
-  {
-    "name": "de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation$HibernateProxy$cMLxF1QO",
-    "methods": [
+      },
       {
-        "name": "<init>",
+        "name": "getProgrammingExercise",
+        "parameterTypes": []
+      },
+      {
+        "name": "getType",
         "parameterTypes": []
       }
     ]
@@ -41087,14 +41137,6 @@
         "parameterTypes": []
       },
       {
-        "name": "getProgrammingExercise",
-        "parameterTypes": []
-      },
-      {
-        "name": "getType",
-        "parameterTypes": []
-      },
-      {
         "name": "setProgrammingExercise",
         "parameterTypes": [
           "de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise"
@@ -41105,14 +41147,13 @@
         "parameterTypes": [
           "java.lang.Boolean"
         ]
-      }
-    ]
-  },
-  {
-    "name": "de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation$HibernateProxy$m16A5J3h",
-    "methods": [
+      },
       {
-        "name": "<init>",
+        "name": "getProgrammingExercise",
+        "parameterTypes": []
+      },
+      {
+        "name": "getType",
         "parameterTypes": []
       }
     ]
@@ -42171,7 +42212,49 @@
     "name": "de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO",
     "allDeclaredFields": true,
     "queryAllDeclaredMethods": true,
-    "queryAllDeclaredConstructors": true
+    "queryAllDeclaredConstructors": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.lang.Long",
+          "java.lang.String",
+          "java.lang.String",
+          "java.lang.String",
+          "java.time.ZonedDateTime",
+          "java.time.ZonedDateTime",
+          "java.time.ZonedDateTime"
+        ]
+      },
+      {
+        "name": "creationDate",
+        "parameterTypes": []
+      },
+      {
+        "name": "expiryDate",
+        "parameterTypes": []
+      },
+      {
+        "name": "id",
+        "parameterTypes": []
+      },
+      {
+        "name": "keyHash",
+        "parameterTypes": []
+      },
+      {
+        "name": "label",
+        "parameterTypes": []
+      },
+      {
+        "name": "lastUsedDate",
+        "parameterTypes": []
+      },
+      {
+        "name": "publicKey",
+        "parameterTypes": []
+      }
+    ]
   },
   {
     "name": "de.tum.cit.aet.artemis.programming.dto.aeolus.Action",
@@ -42504,6 +42587,12 @@
         ]
       },
       {
+        "name": "findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow",
+        "parameterTypes": [
+          "long"
+        ]
+      },
+      {
         "name": "findByIdWithTemplateParticipationElseThrow",
         "parameterTypes": [
           "long"
@@ -42562,6 +42651,12 @@
     "queryAllDeclaredMethods": true,
     "queryAllPublicMethods": true,
     "methods": [
+      {
+        "name": "findByRepositoryUriElseThrow",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      },
       {
         "name": "findWithSubmissionsByRepositoryUriElseThrow",
         "parameterTypes": [
@@ -44375,9 +44470,34 @@
         ]
       },
       {
+        "name": "saveAccessLog",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.core.domain.User",
+          "de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation",
+          "de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType",
+          "de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism",
+          "java.lang.String",
+          "java.lang.String"
+        ]
+      },
+      {
         "name": "saveVcsAccesslog",
         "parameterTypes": [
           "de.tum.cit.aet.artemis.programming.domain.VcsAccessLog"
+        ]
+      },
+      {
+        "name": "updateCommitHash",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation",
+          "java.lang.String"
+        ]
+      },
+      {
+        "name": "updateRepositoryActionType",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri",
+          "de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType"
         ]
       }
     ]
@@ -44725,6 +44845,13 @@
         "name": "createProgrammingExercise",
         "parameterTypes": [
           "de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise"
+        ]
+      },
+      {
+        "name": "deleteProgrammingExercise",
+        "parameterTypes": [
+          "long",
+          "boolean"
         ]
       },
       {
@@ -45312,6 +45439,18 @@
         ]
       },
       {
+        "name": "addSshPublicKey",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO"
+        ]
+      },
+      {
+        "name": "deleteSshPublicKey",
+        "parameterTypes": [
+          "java.lang.Long"
+        ]
+      },
+      {
         "name": "getSshPublicKeys",
         "parameterTypes": []
       }
@@ -45781,7 +45920,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion$HibernateProxy$Zm6DKK2Q",
+    "name": "de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion$HibernateProxy$9MyGogVM",
     "methods": [
       {
         "name": "<init>",
@@ -46528,6 +46667,22 @@
         "parameterTypes": []
       },
       {
+        "name": "getPointCounters",
+        "parameterTypes": []
+      },
+      {
+        "name": "setPointCounters",
+        "parameterTypes": [
+          "java.util.Set"
+        ]
+      },
+      {
+        "name": "setQuiz",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.quiz.domain.QuizExercise"
+        ]
+      },
+      {
         "name": "addPointCounters",
         "parameterTypes": [
           "de.tum.cit.aet.artemis.quiz.domain.PointCounter"
@@ -46545,10 +46700,6 @@
         "parameterTypes": [
           "java.lang.Double"
         ]
-      },
-      {
-        "name": "getPointCounters",
-        "parameterTypes": []
       },
       {
         "name": "getQuiz",
@@ -46572,28 +46723,7 @@
         "parameterTypes": []
       },
       {
-        "name": "setPointCounters",
-        "parameterTypes": [
-          "java.util.Set"
-        ]
-      },
-      {
-        "name": "setQuiz",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.quiz.domain.QuizExercise"
-        ]
-      },
-      {
         "name": "toString",
-        "parameterTypes": []
-      }
-    ]
-  },
-  {
-    "name": "de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic$HibernateProxy$nd4u4Cuz",
-    "methods": [
-      {
-        "name": "<init>",
         "parameterTypes": []
       }
     ]
@@ -46829,48 +46959,12 @@
     "queryAllDeclaredConstructors": true,
     "methods": [
       {
-        "name": "addResult",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer",
-          "boolean"
-        ]
-      },
-      {
-        "name": "changeStatisticBasedOnResult",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer",
-          "boolean",
-          "int"
-        ]
-      },
-      {
-        "name": "getQuizQuestion",
-        "parameterTypes": []
-      },
-      {
         "name": "getRatedCorrectCounter",
         "parameterTypes": []
       },
       {
         "name": "getUnRatedCorrectCounter",
         "parameterTypes": []
-      },
-      {
-        "name": "removeOldResult",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer",
-          "boolean"
-        ]
-      },
-      {
-        "name": "resetStatistic",
-        "parameterTypes": []
-      },
-      {
-        "name": "setQuestion",
-        "parameterTypes": [
-          "de.tum.cit.aet.artemis.quiz.domain.QuizQuestion"
-        ]
       },
       {
         "name": "setQuizQuestion",
@@ -46891,16 +46985,43 @@
         ]
       },
       {
-        "name": "toString",
-        "parameterTypes": []
-      }
-    ]
-  },
-  {
-    "name": "de.tum.cit.aet.artemis.quiz.domain.QuizQuestionStatistic$HibernateProxy$g4gTKYoj",
-    "methods": [
+        "name": "addResult",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer",
+          "boolean"
+        ]
+      },
       {
-        "name": "<init>",
+        "name": "changeStatisticBasedOnResult",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer",
+          "boolean",
+          "int"
+        ]
+      },
+      {
+        "name": "getQuizQuestion",
+        "parameterTypes": []
+      },
+      {
+        "name": "removeOldResult",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer",
+          "boolean"
+        ]
+      },
+      {
+        "name": "resetStatistic",
+        "parameterTypes": []
+      },
+      {
+        "name": "setQuestion",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.quiz.domain.QuizQuestion"
+        ]
+      },
+      {
+        "name": "toString",
         "parameterTypes": []
       }
     ]
@@ -47353,7 +47474,7 @@
     ]
   },
   {
-    "name": "de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion$HibernateProxy$ASGsUkj4",
+    "name": "de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion$HibernateProxy$kzw4aaqr",
     "methods": [
       {
         "name": "<init>",
@@ -51806,7 +51927,7 @@
       {
         "name": "<init>",
         "parameterTypes": [
-          "jdk.proxy2.$Proxy256"
+          "jdk.proxy2.$Proxy257"
         ]
       },
       {
@@ -51970,7 +52091,7 @@
       {
         "name": "from",
         "parameterTypes": [
-          "jdk.proxy2.$Proxy256"
+          "jdk.proxy2.$Proxy257"
         ]
       },
       {
@@ -52062,7 +52183,7 @@
       {
         "name": "of",
         "parameterTypes": [
-          "jdk.proxy2.$Proxy256"
+          "jdk.proxy2.$Proxy257"
         ]
       },
       {
@@ -52127,6 +52248,30 @@
       {
         "name": "valueOf",
         "parameterTypes": [
+          "jdk.proxy2.$Proxy257"
+        ]
+      },
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "jdk.proxy2.$Proxy256"
+        ]
+      },
+      {
+        "name": "from",
+        "parameterTypes": [
+          "jdk.proxy2.$Proxy256"
+        ]
+      },
+      {
+        "name": "of",
+        "parameterTypes": [
+          "jdk.proxy2.$Proxy256"
+        ]
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
           "jdk.proxy2.$Proxy256"
         ]
       }
@@ -52140,7 +52285,7 @@
       {
         "name": "<init>",
         "parameterTypes": [
-          "jdk.proxy2.$Proxy255"
+          "jdk.proxy2.$Proxy256"
         ]
       },
       {
@@ -52183,7 +52328,7 @@
       {
         "name": "from",
         "parameterTypes": [
-          "jdk.proxy2.$Proxy255"
+          "jdk.proxy2.$Proxy256"
         ]
       },
       {
@@ -52209,13 +52354,37 @@
       {
         "name": "of",
         "parameterTypes": [
-          "jdk.proxy2.$Proxy255"
+          "jdk.proxy2.$Proxy256"
         ]
       },
       {
         "name": "unwrap",
         "parameterTypes": [
           "java.lang.Class"
+        ]
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "jdk.proxy2.$Proxy256"
+        ]
+      },
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "jdk.proxy2.$Proxy255"
+        ]
+      },
+      {
+        "name": "from",
+        "parameterTypes": [
+          "jdk.proxy2.$Proxy255"
+        ]
+      },
+      {
+        "name": "of",
+        "parameterTypes": [
+          "jdk.proxy2.$Proxy255"
         ]
       },
       {
@@ -52567,7 +52736,7 @@
       {
         "name": "<init>",
         "parameterTypes": [
-          "org.springframework.web.servlet.handler.HandlerMappingIntrospector$$Lambda/0x00007acc055dfc00"
+          "org.springframework.web.servlet.handler.HandlerMappingIntrospector$$Lambda/0x00007759f55e37b0"
         ]
       },
       {
@@ -52601,7 +52770,7 @@
       {
         "name": "from",
         "parameterTypes": [
-          "org.springframework.web.servlet.handler.HandlerMappingIntrospector$$Lambda/0x00007acc055dfc00"
+          "org.springframework.web.servlet.handler.HandlerMappingIntrospector$$Lambda/0x00007759f55e37b0"
         ]
       },
       {
@@ -52637,7 +52806,7 @@
       {
         "name": "of",
         "parameterTypes": [
-          "org.springframework.web.servlet.handler.HandlerMappingIntrospector$$Lambda/0x00007acc055dfc00"
+          "org.springframework.web.servlet.handler.HandlerMappingIntrospector$$Lambda/0x00007759f55e37b0"
         ]
       },
       {
@@ -52662,6 +52831,30 @@
         "name": "valueOf",
         "parameterTypes": [
           "org.springframework.web.filter.ServletRequestPathFilter"
+        ]
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "org.springframework.web.servlet.handler.HandlerMappingIntrospector$$Lambda/0x00007759f55e37b0"
+        ]
+      },
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "org.springframework.web.servlet.handler.HandlerMappingIntrospector$$Lambda/0x00007acc055dfc00"
+        ]
+      },
+      {
+        "name": "from",
+        "parameterTypes": [
+          "org.springframework.web.servlet.handler.HandlerMappingIntrospector$$Lambda/0x00007acc055dfc00"
+        ]
+      },
+      {
+        "name": "of",
+        "parameterTypes": [
+          "org.springframework.web.servlet.handler.HandlerMappingIntrospector$$Lambda/0x00007acc055dfc00"
         ]
       },
       {
@@ -53060,7 +53253,15 @@
     "name": "java.io.File"
   },
   {
-    "name": "java.io.FileNotFoundException"
+    "name": "java.io.FileNotFoundException",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.lang.String"
+        ]
+      }
+    ]
   },
   {
     "name": "java.io.IOException",
@@ -54656,7 +54857,13 @@
     "name": "java.nio.file.FileAlreadyExistsException"
   },
   {
+    "name": "java.nio.file.FileSystemException"
+  },
+  {
     "name": "java.nio.file.InvalidPathException"
+  },
+  {
+    "name": "java.nio.file.NoSuchFileException"
   },
   {
     "name": "java.nio.file.Path",
@@ -54706,7 +54913,43 @@
     "name": "java.security.GeneralSecurityException"
   },
   {
+    "name": "java.security.KeyFactory",
+    "methods": [
+      {
+        "name": "getInstance",
+        "parameterTypes": [
+          "java.lang.String",
+          "java.lang.String"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "java.security.KeyPairGenerator",
+    "methods": [
+      {
+        "name": "getInstance",
+        "parameterTypes": [
+          "java.lang.String",
+          "java.lang.String"
+        ]
+      }
+    ]
+  },
+  {
     "name": "java.security.KeyStoreSpi"
+  },
+  {
+    "name": "java.security.MessageDigest",
+    "methods": [
+      {
+        "name": "getInstance",
+        "parameterTypes": [
+          "java.lang.String",
+          "java.lang.String"
+        ]
+      }
+    ]
   },
   {
     "name": "java.security.NoSuchAlgorithmException"
@@ -54723,6 +54966,9 @@
   },
   {
     "name": "java.security.SecureRandomParameters"
+  },
+  {
+    "name": "java.security.cert.PKIXRevocationChecker"
   },
   {
     "name": "java.security.interfaces.ECPrivateKey"
@@ -54903,6 +55149,12 @@
   },
   {
     "name": "java.util.Collections$EmptyList",
+    "allDeclaredFields": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllDeclaredConstructors": true
+  },
+  {
+    "name": "java.util.Collections$EmptySet",
     "allDeclaredFields": true,
     "queryAllDeclaredMethods": true,
     "queryAllDeclaredConstructors": true
@@ -55156,10 +55408,16 @@
     "name": "java.util.concurrent.CompletableFuture"
   },
   {
+    "name": "java.util.concurrent.CompletionException"
+  },
+  {
     "name": "java.util.concurrent.ConcurrentMap"
   },
   {
     "name": "java.util.concurrent.CountDownLatch"
+  },
+  {
+    "name": "java.util.concurrent.ExecutionException"
   },
   {
     "name": "java.util.concurrent.Executor",
@@ -56082,6 +56340,9 @@
   {
     "name": "net.bytebuddy.utility.JavaModule$Resolver",
     "queryAllPublicMethods": true
+  },
+  {
+    "name": "net.i2p.crypto.eddsa.EdDSAKey"
   },
   {
     "name": "net.sf.jsqlparser.parser.JSqlParser"
@@ -57353,6 +57614,33 @@
     "queryAllDeclaredMethods": true
   },
   {
+    "name": "org.apache.sshd.common.util.security.SunJCESecurityProviderRegistrar",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.apache.sshd.common.util.security.bouncycastle.BouncyCastleSecurityProviderRegistrar",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.apache.sshd.common.util.security.eddsa.EdDSASecurityProviderRegistrar",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "org.apache.sshd.common.util.threads.ExecutorServiceProvider",
     "queryAllDeclaredMethods": true,
     "queryAllPublicMethods": true,
@@ -57736,6 +58024,986 @@
     "name": "org.bouncycastle.asn1.ASN1Sequence"
   },
   {
+    "name": "org.bouncycastle.jcajce.interfaces.EdDSAKey"
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.COMPOSITE$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.CONTEXT$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.CompositeSignatures$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.DH$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.DSA$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.DSTU4145$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.Dilithium$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.EC$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.ECGOST$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.EXTERNAL$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.EdEC$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.ElGamal$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.Falcon$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.GM$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.GOST$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.IES$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.LMS$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.MLDSA$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.MLKEM$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.NTRU$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.NoSig$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.RSA$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.SLHDSA$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.SPHINCSPlus$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.X509$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.ec.KeyPairGeneratorSpi$EC",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.edec.KeyFactorySpi$Ed25519",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.Blake2b$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.Blake2s$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.Blake3$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.DSTU7564$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.GOST3411$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.Haraka$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.Keccak$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.MD2$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.MD4$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.MD5$Digest",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.MD5$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.RIPEMD128$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.RIPEMD160$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.RIPEMD256$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.RIPEMD320$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.SHA1$Digest",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.SHA1$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.SHA224$Digest",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.SHA224$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.SHA256$Digest",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.SHA256$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.SHA3$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.SHA384$Digest",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.SHA384$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.SHA512$Digest",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.SHA512$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.SM3$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.Skein$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.Tiger$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.digest.Whirlpool$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.drbg.DRBG$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.keystore.BC$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.keystore.BCFKS$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.keystore.PKCS12$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.AES$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.ARC4$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.ARIA$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.Blowfish$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.CAST5$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.CAST6$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.Camellia$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.ChaCha$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.DES$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.DESede$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.DSTU7624$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.GOST28147$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.GOST3412_2015$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.Grain128$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.Grainv1$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.HC128$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.HC256$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.IDEA$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.Noekeon$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.OpenSSLPBKDF$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.PBEPBKDF1$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.PBEPBKDF2$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.PBEPKCS12$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.Poly1305$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.RC2$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.RC5$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.RC6$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.Rijndael$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.SCRYPT$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.SEED$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.SM4$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.Salsa20$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.Serpent$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.Shacal2$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.SipHash$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.SipHash128$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.Skipjack$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.TEA$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.TLSKDF$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.Threefish$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.Twofish$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.VMPC$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.VMPCKSA3$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.XSalsa20$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.XTEA$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.symmetric.Zuc$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.bouncycastle.jce.provider.BouncyCastleProvider",
+    "fields": [
+      {
+        "name": "PROVIDER_NAME"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
     "name": "org.brotli.dec.BrotliInputStream"
   },
   {
@@ -57844,6 +59112,9 @@
     "name": "org.eclipse.jgit.api.errors.InvalidRefNameException"
   },
   {
+    "name": "org.eclipse.jgit.api.errors.InvalidRemoteException"
+  },
+  {
     "name": "org.eclipse.jgit.dircache.DirCache$DirCacheVersion",
     "methods": [
       {
@@ -57853,7 +59124,13 @@
     ]
   },
   {
+    "name": "org.eclipse.jgit.errors.NoRemoteRepositoryException"
+  },
+  {
     "name": "org.eclipse.jgit.errors.RepositoryNotFoundException"
+  },
+  {
+    "name": "org.eclipse.jgit.errors.TransportException"
   },
   {
     "name": "org.eclipse.jgit.http.server.GitServlet",
@@ -57912,6 +59189,16 @@
         "parameterTypes": [
           "org.eclipse.jgit.transport.resolver.UploadPackFactory"
         ]
+      }
+    ]
+  },
+  {
+    "name": "org.eclipse.jgit.http.server.HttpServerText",
+    "allPublicFields": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
       }
     ]
   },
@@ -58782,6 +60069,12 @@
   {
     "name": "org.hibernate.dialect.PostgreSQLDialect",
     "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "org.hibernate.engine.jdbc.dialect.spi.DialectResolutionInfo"
+        ]
+      },
       {
         "name": "<init>",
         "parameterTypes": []
@@ -67523,6 +68816,30 @@
     "queryAllDeclaredMethods": true,
     "queryAllPublicMethods": true,
     "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "org.springframework.cloud.client.loadbalancer.LoadBalancerDefaultMappingsProviderAutoConfiguration$$Lambda/0x00007759f47c67e0"
+        ]
+      },
+      {
+        "name": "from",
+        "parameterTypes": [
+          "org.springframework.cloud.client.loadbalancer.LoadBalancerDefaultMappingsProviderAutoConfiguration$$Lambda/0x00007759f47c67e0"
+        ]
+      },
+      {
+        "name": "of",
+        "parameterTypes": [
+          "org.springframework.cloud.client.loadbalancer.LoadBalancerDefaultMappingsProviderAutoConfiguration$$Lambda/0x00007759f47c67e0"
+        ]
+      },
+      {
+        "name": "valueOf",
+        "parameterTypes": [
+          "org.springframework.cloud.client.loadbalancer.LoadBalancerDefaultMappingsProviderAutoConfiguration$$Lambda/0x00007759f47c67e0"
+        ]
+      },
       {
         "name": "<init>",
         "parameterTypes": [
@@ -81624,6 +82941,363 @@
   },
   {
     "name": "weblogic.websocket.tyrus.TyrusServletWriter"
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.assessment.domain.Result$HibernateProxy$dvCasdCj",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.assessment.domain.Result_Accessor_ak1f52",
+    "queryAllPublicConstructors": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.assessment.domain.Result"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile$HibernateProxy$qOFwS4w0",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.communication.domain.ConductAgreement$HibernateAccessOptimizer$UTqaWHep",
+    "fields": [
+      {
+        "name": "invocationTarget$l7imcr1"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.communication.domain.ConductAgreement$HibernateInstantiator$x7JdJMtH",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.communication.domain.CourseNotification$HibernateProxy$jGHEM0aM",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.core.domain.Authority$HibernateAccessOptimizer$iLs5elUi",
+    "fields": [
+      {
+        "name": "invocationTarget$ebo4ur0"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.core.domain.Authority$HibernateInstantiator$lxT7sDdf",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.core.domain.Course$HibernateProxy$YhxdyBTJ",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.core.domain.User$HibernateProxy$WJa77Eyy",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.core.domain.User_Accessor_kb7uj6",
+    "queryAllPublicConstructors": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.core.domain.User"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.exam.domain.ExamSession_Accessor_o76kkp",
+    "queryAllPublicConstructors": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.exam.domain.ExamSession"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.exam.domain.ExamUser_Accessor_4e0idg",
+    "queryAllPublicConstructors": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.exam.domain.ExamUser"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.exam.domain.StudentExam_Accessor_kqof4i",
+    "queryAllPublicConstructors": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.exam.domain.StudentExam"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.exam.domain.event.ExamWideAnnouncementEvent_Accessor_ezv1fj",
+    "queryAllPublicConstructors": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.exam.domain.event.ExamWideAnnouncementEvent"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.exam.domain.event.ProblemStatementUpdateEvent_Accessor_9yne1t",
+    "queryAllPublicConstructors": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.exam.domain.event.ProblemStatementUpdateEvent"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent_Accessor_52mkbj",
+    "queryAllPublicConstructors": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion_Accessor_tbtxpz",
+    "queryAllPublicConstructors": true,
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig$HibernateProxy$YhTjehYH",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentPayload"
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType"
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO"
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.exercise.service.team.TeamImportStrategy"
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.exercise.web.TeamResource$$SpringCGLIB$$0",
+    "fields": [
+      {
+        "name": "CGLIB$CALLBACK_FILTER"
+      },
+      {
+        "name": "CGLIB$FACTORY_DATA"
+      }
+    ],
+    "methods": [
+      {
+        "name": "CGLIB$SET_THREAD_CALLBACKS",
+        "parameterTypes": [
+          "org.springframework.cglib.proxy.Callback[]"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent$HibernateAccessOptimizer$jlDyBZBn",
+    "fields": [
+      {
+        "name": "invocationTarget$6aln1n1"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings$HibernateAccessOptimizer$3IUzrJXU",
+    "fields": [
+      {
+        "name": "invocationTarget$p8ti040"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig$HibernateProxy$b6oKiZ5k",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise$HibernateProxy$OWz9LkYZ",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig$HibernateProxy$ESsY77RW",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase$HibernateProxy$wGDsT6Bv",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation$HibernateProxy$cMLxF1QO",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation$HibernateProxy$m16A5J3h",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion$HibernateProxy$Zm6DKK2Q",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic$HibernateProxy$nd4u4Cuz",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.quiz.domain.QuizQuestionStatistic$HibernateProxy$g4gTKYoj",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion$HibernateProxy$ASGsUkj4",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
   },
   {
     "name": "liquibase.ui.LoggerUIService",
