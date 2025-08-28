@@ -93,6 +93,6 @@ public enum NebulaTranscriptionStatus {
 
     @Override
     public String toString() {
-        return value;
+        return name();
     }
 }
