@@ -18,12 +18,17 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -34,6 +39,9 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
 
     @Autowired
     private FeatureToggleService featureToggleService;
+
+    @Autowired
+    private AtlasMLRequestMockProvider atlasMLRequestMockProvider;
 
     @BeforeEach
     void setupTestScenario() {
@@ -385,8 +393,13 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
             featureToggleService.enableFeature(Feature.AtlasML);
 
             var requestBody = new SuggestCompetencyRequestDTO("test description", 1L);
-            request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON)
-                    .content(new ObjectMapper().writeValueAsString(requestBody))).andExpect(status().isOk());
+            var mockedResponse = new SuggestCompetencyResponseDTO(List.of(new AtlasMLCompetencyDTO(1L, "Mocked", "Desc", 1L)));
+            atlasMLRequestMockProvider.enableMockingOfRequests();
+            atlasMLRequestMockProvider.mockSuggestCompetencies(requestBody, mockedResponse);
+
+            var response = request.postWithResponseBody("/api/atlas/competencies/suggest", requestBody, SuggestCompetencyResponseDTO.class, HttpStatus.OK);
+            // minimal assertion to ensure our mocked data is returned
+            assert response.competencies() != null && response.competencies().size() == 1;
         }
 
         @Test
@@ -397,6 +410,20 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
             var requestBody = new SuggestCompetencyRequestDTO("test description", 1L);
             request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON)
                     .content(new ObjectMapper().writeValueAsString(requestBody))).andExpect(status().isForbidden());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnMockedSuggestedRelationsWhenFeatureEnabled() throws Exception {
+            featureToggleService.enableFeature(Feature.AtlasML);
+
+            long courseId = course.getId();
+            var mockedRelations = new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "ASSUMES")));
+            atlasMLRequestMockProvider.enableMockingOfRequests();
+            atlasMLRequestMockProvider.mockSuggestCompetencyRelations(courseId, mockedRelations);
+
+            var response = request.get("/api/atlas/courses/" + courseId + "/competencies/relations/suggest", HttpStatus.OK, SuggestCompetencyRelationsResponseDTO.class);
+            assert response.relations() != null && response.relations().size() == 1;
         }
     }
 }
