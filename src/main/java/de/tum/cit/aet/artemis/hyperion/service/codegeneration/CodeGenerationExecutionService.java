@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.hibernate.LazyInitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -17,9 +18,11 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFile;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -27,7 +30,9 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 
 /**
  * Service responsible for orchestrating the iterative code generation and compilation process.
@@ -65,15 +70,22 @@ public class CodeGenerationExecutionService {
 
     private final ResultRepository resultRepository;
 
+    private final ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
+
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
     public CodeGenerationExecutionService(GitService gitService, @Qualifier("solutionRepositoryStrategy") CodeGenerationStrategy codeGenerationStrategy,
             RepositoryService repositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, ResultRepository resultRepository) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, ResultRepository resultRepository,
+            ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.gitService = gitService;
         this.codeGenerationStrategy = codeGenerationStrategy;
         this.repositoryService = repositoryService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.resultRepository = resultRepository;
+        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     /**
@@ -168,17 +180,31 @@ public class CodeGenerationExecutionService {
     }
 
     /**
-     * Commits changes and returns the new commit hash.
+     * Commits changes, triggers CI build, and returns the new commit hash.
      *
      * @param repository    the repository
      * @param user          the user making the commit
      * @param repositoryUri the repository URI
+     * @param exercise      the programming exercise (needed for triggering CI build)
      * @return the new commit hash
      * @throws GitAPIException if git operations fail
      */
-    private String commitAndGetHash(Repository repository, User user, VcsRepositoryUri repositoryUri) throws GitAPIException {
+    private String commitAndGetHash(Repository repository, User user, VcsRepositoryUri repositoryUri, ProgrammingExercise exercise) throws GitAPIException {
         repositoryService.commitChanges(repository, user);
-        return gitService.getLastCommitHash(repositoryUri).getName();
+        String newCommitHash = gitService.getLastCommitHash(repositoryUri).getName();
+
+        // Trigger CI build for the new commit
+        try {
+            ProgrammingExerciseParticipation solutionParticipation = programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
+            continuousIntegrationTriggerService.triggerBuild(solutionParticipation, newCommitHash, null);
+            log.debug("Successfully triggered CI build for commit {} in exercise {}", newCommitHash, exercise.getId());
+        }
+        catch (ContinuousIntegrationException e) {
+            log.warn("Failed to trigger CI build for commit {} in exercise {}: {}", newCommitHash, exercise.getId(), e.getMessage());
+            // Continue anyway - the build might still be picked up automatically in some systems
+        }
+
+        return newCommitHash;
     }
 
     /**
@@ -189,7 +215,13 @@ public class CodeGenerationExecutionService {
      */
     private String extractBuildLogs(Result result) {
         if (result != null && result.getSubmission() instanceof ProgrammingSubmission programmingSubmission) {
-            return programmingSubmission.getBuildLogEntries().stream().map(BuildLogEntry::getLog).collect(Collectors.joining("\n"));
+            try {
+                return programmingSubmission.getBuildLogEntries().stream().map(BuildLogEntry::getLog).collect(Collectors.joining("\n"));
+            }
+            catch (LazyInitializationException e) {
+                log.warn("Could not load build log entries for submission {}: {}. Using fallback message.", programmingSubmission.getId(), e.getMessage());
+                return "Build logs could not be retrieved due to session constraints. Build failed with errors.";
+            }
         }
         return "Build failed to produce a result.";
     }
@@ -218,7 +250,7 @@ public class CodeGenerationExecutionService {
             log.debug("Generated {} files for exercise {} on attempt {}", generatedFiles.size(), exercise.getId(), iteration);
 
             processGeneratedFiles(repository, generatedFiles, exercise);
-            String newCommitHash = commitAndGetHash(repository, user, repositoryUri);
+            String newCommitHash = commitAndGetHash(repository, user, repositoryUri, exercise);
             Result result = waitForBuildResult(exercise, newCommitHash);
 
             if (result != null && result.isSuccessful()) {
