@@ -28,7 +28,7 @@ plugins {
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
     id "org.openapi.generator" version "7.14.0"
     id 'org.graalvm.buildtools.native' version '0.11.0'
-    id 'org.hibernate.orm' version "${hibernate_version}"
+    id 'org.hibernate.orm' version "7.1.0.Final"
 }
 graalvmNative {
     metadataRepository {
@@ -127,7 +127,12 @@ graalvmNative {
         }
     }
 }
-
+hibernate {
+    useSameVersion = false
+    enhancement {
+        enableLazyInitialization = true
+    }
+    }
 
 tasks.named("processAot") {
     systemProperty "spring.profiles.active", "prod,localci,localvc,artemis,scheduling,iris,buildagent,core,local"
@@ -631,7 +636,10 @@ checkstyle {
 gradleLint {
     rules  = ["dependency-parentheses"]
 }
-
+tasks.withType(Checkstyle).configureEach {
+    exclude("**/build/generated/**")
+    exclude("**/build/generated/sources/**")
+}
 
 def isNonStable = { String version ->
     def stableKeyword = ["RELEASE", "FINAL", "GA"].any { it -> version.toUpperCase().contains(it) }
