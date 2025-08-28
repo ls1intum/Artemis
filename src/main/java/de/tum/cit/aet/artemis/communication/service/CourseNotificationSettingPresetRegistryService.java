@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.communication.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,15 +9,15 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotification;
+import de.tum.cit.aet.artemis.communication.domain.setting_presets.AllActivityUserCourseNotificationSettingPreset;
+import de.tum.cit.aet.artemis.communication.domain.setting_presets.DefaultUserCourseNotificationSettingPreset;
+import de.tum.cit.aet.artemis.communication.domain.setting_presets.IgnoreUserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.communication.domain.setting_presets.UserCourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.communication.dto.UserCourseNotificationSettingPresetDTO;
 
@@ -34,41 +33,38 @@ public class CourseNotificationSettingPresetRegistryService {
     private final Map<Integer, UserCourseNotificationSettingPreset> presets = new HashMap<>();
 
     /**
-     * Constructs a new CourseNotificationSettingPresetRegistry and automatically scans the application context for all
-     * classes annotated with {@link CourseNotificationSettingPreset} in the {@code communication.domain.setting_presets}
-     * directory. The registry then creates an instance for all preset types.
+     * Constructs a new CourseNotificationSettingPresetRegistry and explicitly registers all known preset classes.
+     * This ensures consistent behavior between JVM and native image modes.
      */
     public CourseNotificationSettingPresetRegistryService() {
-        ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
-        scanner.addIncludeFilter(new AnnotationTypeFilter(CourseNotificationSettingPreset.class));
-        String basePackage = "de.tum.cit.aet.artemis.communication.domain.setting_presets";
+        registerPreset(DefaultUserCourseNotificationSettingPreset.class);
+        registerPreset(AllActivityUserCourseNotificationSettingPreset.class);
+        registerPreset(IgnoreUserCourseNotificationSettingPreset.class);
+    }
 
-        for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
-            try {
-                Class<?> classType = Class.forName(bd.getBeanClassName());
-
-                if (UserCourseNotificationSettingPreset.class.isAssignableFrom(classType)) {
-                    CourseNotificationSettingPreset annotation = classType.getAnnotation(CourseNotificationSettingPreset.class);
-                    int typeId = annotation.value();
-
-                    if (typeId == 0) {
-                        throw new RuntimeException("The value 0 of the CourseNotificationSettingPreset decorator is "
-                                + "reserved for 'Custom' specification and cannot be used. Please change to a different one.");
-                    }
-
-                    try {
-                        UserCourseNotificationSettingPreset preset = (UserCourseNotificationSettingPreset) classType.getDeclaredConstructor().newInstance();
-                        log.debug("Registering notification setting preset: {}, {}", typeId, classType.getSimpleName());
-                        presets.put(typeId, preset);
-                    }
-                    catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                        log.error("Failed to instantiate preset class {}: {}", classType.getName(), e.getMessage());
-                    }
-                }
+    /**
+     * Registers a preset class by instantiating it and adding it to the registry.
+     */
+    private void registerPreset(Class<? extends UserCourseNotificationSettingPreset> presetClass) {
+        try {
+            CourseNotificationSettingPreset annotation = presetClass.getAnnotation(CourseNotificationSettingPreset.class);
+            if (annotation == null) {
+                log.error("Class {} is not annotated with @CourseNotificationSettingPreset", presetClass.getName());
+                return;
             }
-            catch (ClassNotFoundException e) {
-                log.error("Failed to load notification setting preset class", e);
+
+            int typeId = annotation.value();
+            if (typeId == 0) {
+                throw new RuntimeException("The value 0 of the CourseNotificationSettingPreset decorator is "
+                        + "reserved for 'Custom' specification and cannot be used. Please change to a different one.");
             }
+
+            UserCourseNotificationSettingPreset preset = presetClass.getDeclaredConstructor().newInstance();
+            log.debug("Registering notification setting preset: {}, {}", typeId, presetClass.getSimpleName());
+            presets.put(typeId, preset);
+        }
+        catch (Exception e) {
+            log.error("Failed to instantiate preset class {}: {}", presetClass.getName(), e.getMessage());
         }
     }
 
