@@ -239,6 +239,17 @@ describe('AgentChatModalComponent', () => {
     });
 
     it('should set typing indicator correctly during message sending', async () => {
+        // Mock the service to return a delayed observable
+        const mockObservable = new Observable((subscriber) => {
+            // Set typing to true initially, then false when response comes
+            setTimeout(() => {
+                subscriber.next('Mock response');
+                subscriber.complete();
+            }, 50);
+        });
+
+        jest.spyOn(mockAgentChatService, 'sendMessage').mockReturnValue(mockObservable);
+
         fixture.detectChanges();
         component.currentMessage = 'Test message';
 
@@ -247,6 +258,8 @@ describe('AgentChatModalComponent', () => {
         component.sendMessage();
         expect(component.isAgentTyping).toBeTruthy();
 
+        // Wait for the observable to complete
+        await new Promise((resolve) => setTimeout(resolve, 100));
         await fixture.whenStable();
         fixture.detectChanges();
 
@@ -284,7 +297,8 @@ describe('AgentChatModalComponent', () => {
         component.currentMessage = '';
 
         const textarea = fixture.debugElement.query(By.css('.message-input'));
-        textarea.triggerEventHandler('input', {});
+        const event = { target: { value: '' } };
+        textarea.triggerEventHandler('input', event);
 
         expect(component.currentMessage).toBe('');
     });

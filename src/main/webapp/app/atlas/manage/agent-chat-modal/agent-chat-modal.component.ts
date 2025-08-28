@@ -84,6 +84,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewChecked {
 
     onTextareaInput(): void {
         // Auto-resize textarea
+        if (!this.messageInput?.nativeElement) {
+            return;
+        }
         const textarea = this.messageInput.nativeElement;
         textarea.style.height = 'auto';
         textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
