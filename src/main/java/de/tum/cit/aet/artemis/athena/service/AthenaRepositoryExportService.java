@@ -3,27 +3,25 @@ package de.tum.cit.aet.artemis.athena.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
+import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 
 /**
  * Service for exporting programming exercise repositories for Athena.
@@ -35,27 +33,18 @@ public class AthenaRepositoryExportService {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaRepositoryExportService.class);
 
-    // The downloaded repos should be cloned into another path in order to not interfere with the repo used by the student
-    // We reuse the same directory as the programming exercise export service for this.
-    @Value("${artemis.repo-download-clone-path}")
-    private Path repoDownloadClonePath;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ProgrammingExerciseExportService programmingExerciseExportService;
-
-    private final FileService fileService;
+    private final GitRepositoryExportService gitRepositoryExportService;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    public AthenaRepositoryExportService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseExportService programmingExerciseExportService,
-            FileService fileService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+    public AthenaRepositoryExportService(ProgrammingExerciseRepository programmingExerciseRepository, GitRepositoryExportService gitRepositoryExportService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.programmingExerciseExportService = programmingExerciseExportService;
-        this.fileService = fileService;
+        this.gitRepositoryExportService = gitRepositoryExportService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
@@ -74,51 +63,41 @@ public class AthenaRepositoryExportService {
     }
 
     /**
-     * Export the repository for the given exercise and participation to a zip file.
-     * The ZIP file will be deleted automatically after 15 minutes.
+     * Export the repository for the given exercise and participation directly to memory.
+     * This method avoids creating temporary files on disk.
      *
      * @param exerciseId     the id of the exercise to export the repository for
      * @param submissionId   the id of the submission to export the repository for (only for student repository, otherwise pass null)
      * @param repositoryType the type of repository to export. Pass null to export the student repository.
-     * @return the path to the zip file containing the exported repository
+     * @return InputStreamResource containing the zipped repository content
      * @throws IOException              if the export fails
      * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
      */
-    public Path exportRepository(long exerciseId, Long submissionId, RepositoryType repositoryType) throws IOException {
+    public InputStreamResource exportRepository(long exerciseId, Long submissionId, RepositoryType repositoryType) throws IOException {
         log.debug("Exporting repository for exercise {}, submission {}", exerciseId, submissionId);
 
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        // Load exercise with template and solution participation for repository URI access
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming exercise with id " + exerciseId + " not found"));
         checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise);
 
-        // Athena currently does not support individual due dates
-        var exportOptions = new RepositoryExportOptionsDTO(false, true, false, programmingExercise.getDueDate(), false, false, false, true, false);
-
-        if (!Files.exists(repoDownloadClonePath)) {
-            Files.createDirectories(repoDownloadClonePath);
-        }
-
-        Path exportDir = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 15);
-        Path zipFilePath = null;
+        List<String> exportErrors = new ArrayList<>();
+        InputStreamResource resource = null;
 
         if (repositoryType == null) { // Export student repository
             var submission = programmingSubmissionRepository.findById(submissionId).orElseThrow();
             // Load participation with eager submissions
             var participation = programmingExerciseStudentParticipationRepository.findWithSubmissionsById(submission.getParticipation().getId()).getFirst();
-            zipFilePath = programmingExerciseExportService.getRepositoryWithParticipation(programmingExercise, participation, exportOptions, exportDir, exportDir, true);
+            resource = gitRepositoryExportService.exportStudentRepositoryInMemory(programmingExercise, participation, exportErrors);
         }
         else {
-            List<String> exportErrors = List.of();
-            var exportFile = programmingExerciseExportService.exportInstructorRepositoryForExercise(programmingExercise.getId(), repositoryType, exportDir, exportDir,
-                    exportErrors);
-            if (exportFile.isPresent()) {
-                zipFilePath = exportFile.get().toPath();
-            }
+            resource = gitRepositoryExportService.exportInstructorRepositoryForExerciseInMemory(programmingExercise, repositoryType, exportErrors);
         }
 
-        if (zipFilePath == null) {
+        if (resource == null) {
             throw new IOException("Failed to export repository");
         }
 
-        return zipFilePath;
+        return resource;
     }
 }

@@ -34,4 +34,17 @@ public final class ResponseUtil implements tech.jhipster.web.util.ResponseUtil {
             throw new EntityNotFoundException("File not found");
         }
     }
+
+    /**
+     * Sends an OK response entity that contains an InputStreamResource (e.g., in-memory files).
+     * This method sets appropriate headers for file downloads.
+     *
+     * @param resource the InputStreamResource to send as a response
+     * @return the response with proper headers for file download
+     * @throws IOException if the resource content length cannot be determined
+     */
+    public static ResponseEntity<Resource> ok(InputStreamResource resource) throws IOException {
+        return ResponseEntity.ok().contentLength(resource.contentLength()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", resource.getFilename())
+                .body(resource);
+    }
 }

@@ -12,6 +12,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
@@ -81,11 +82,12 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
 
         programmingExerciseUtilService.createGitRepository();
 
-        Path resultStudentRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), null);
-        Path resultSolutionRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), RepositoryType.SOLUTION);
+        InputStreamResource resultStudentRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), null);
+        InputStreamResource resultSolutionRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(),
+                RepositoryType.SOLUTION);
 
-        assertThat(resultStudentRepo).isEqualTo(Path.of("repo.zip")); // The student repository ZIP is returned
-        assertThat(resultSolutionRepo).exists(); // The solution repository ZIP can actually be created in the test
+        assertThat(resultStudentRepo.getFilename()).isEqualTo("repo.zip"); // The student repository ZIP is returned
+        assertThat(resultSolutionRepo.exists()).isTrue(); // The solution repository ZIP can actually be created in the test
     }
 
     @Test
