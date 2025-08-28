@@ -47,6 +47,14 @@ public class CalendarSubscriptionService {
         this.artemisServerUrl = artemisServerUrl;
     }
 
+    /**
+     * Returns the existing calendar subscription token of a given user if present or generates a new one.
+     * The token is a unique, shared secret between the user and the server and is embedded into the URLs of
+     * the iCalendar subscriptions to enable authentication and authorization.
+     *
+     * @param user the {@link User} for whom the subscription token is requested
+     * @return the existing or newly generated token
+     */
     public String getOrCreateSubscriptionTokenFor(User user) {
         String token = user.getCalendarSubscriptionToken();
         if (token == null) {
@@ -55,6 +63,14 @@ public class CalendarSubscriptionService {
         return token;
     }
 
+    /**
+     * Uses a CSPRNG that is part of SecureRandom to generate a cryptographically secure, random subscription token.
+     * Each token is a string of 32 lower-case, hexadecimal characters.
+     * Generates new tokens as long as a different user already uses the current token to ensure uniqueness.
+     *
+     * @param user the {@link User} for whom the subscription token is requested
+     * @return the generated token
+     */
     private String generateUniqueSubscriptionTokenFor(User user) {
         String token;
         boolean generationSuccessful;
@@ -88,6 +104,19 @@ public class CalendarSubscriptionService {
         return hexString.toString();
     }
 
+    /**
+     * Builds an iCalendar (.ics) file as a string for the given course and language,
+     * including all provided calendar events.
+     * <p>
+     * Each {@link CalendarEventDTO} is converted into a {@link VEvent} with a stable
+     * UUID, a summary, a start and end date and optionally location/contact details.
+     * </p>
+     *
+     * @param courseShortName   short name of the course, included in the summary
+     * @param language          used to localize the summary
+     * @param calendarEventDTOs set of events that is converted into Vevents ans included in the .ics file
+     * @return the .ics file content as a string
+     */
     public String getICSFileAsString(String courseShortName, Language language, Set<CalendarEventDTO> calendarEventDTOs) {
         Calendar calendar = new Calendar();
         calendar.add(new ProdId("-//TUM//Artemis//" + language.getShortName().toUpperCase()));
