@@ -1,47 +1,67 @@
-[
-    {
-        "name": "java.time.ZonedDateTime"
-    },
-    {
-        "name": "java.time.LocalDateTime"
-    },
-    {
-        "name": "java.time.LocalDate"
-    },
-    {
-        "name": "java.time.LocalTime"
-    },
-    {
-        "name": "java.time.ZoneId"
-    },
-    {
-        "name": "java.time.ZoneOffset"
-    },
-    {
-        "name": "java.time.OffsetDateTime"
-    },
-    {
-        "name": "java.time.Instant"
-    },
-    {
-        "name": "java.time.Ser"
-    },
-    {
-        "name": "java.util.ImmutableCollections$ListN"
-    },
-    {
-        "name": "java.util.ImmutableCollections$SetN"
-    },
-    {
-        "name": "java.util.ImmutableCollections$MapN"
-    },
-    {
-        "name": "java.util.ImmutableCollections$List12"
-    },
-    {
-        "name": "java.util.ImmutableCollections$Set12"
-    },
-    {
-        "name": "java.util.CollSer"
-    }
-]
+{
+    "types": [
+        { "name": "ch.qos.logback.classic.model.ConfigurationModel" },
+        { "name": "ch.qos.logback.classic.model.LoggerContextListenerModel" },
+        { "name": "ch.qos.logback.classic.model.LoggerModel" },
+        { "name": "ch.qos.logback.classic.model.RootLoggerModel" },
+        { "name": "ch.qos.logback.core.model.AppenderModel" },
+        { "name": "ch.qos.logback.core.model.AppenderRefModel" },
+        { "name": "ch.qos.logback.core.model.ComponentModel" },
+        { "name": "ch.qos.logback.core.model.ConversionRuleModel" },
+        { "name": "ch.qos.logback.core.model.ImplicitModel" },
+        { "name": "ch.qos.logback.core.model.IncludeModel" },
+        { "name": "ch.qos.logback.core.model.Model" },
+        { "name": "ch.qos.logback.core.model.NamedComponentModel" },
+        { "name": "ch.qos.logback.core.model.NamedModel" },
+        { "name": "ch.qos.logback.core.model.PropertyModel" },
+        { "name": "ch.qos.logback.core.model.ResourceModel" },
+        { "name": "ch.qos.logback.core.model.StatusListenerModel" },
+        { "name": "de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO" },
+        { "name": "de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDetailsDTO" },
+        { "name": "de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation" },
+        { "name": "de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation$BuildAgentStatus" },
+        { "name": "de.tum.cit.aet.artemis.buildagent.dto.BuildConfig" },
+        { "name": "de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem" },
+        { "name": "de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO" },
+        { "name": "de.tum.cit.aet.artemis.buildagent.dto.BuildResult" },
+        { "name": "de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo" },
+        { "name": "de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO" },
+        { "name": "de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO" },
+        { "name": "de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo" },
+        { "name": "de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem" },
+        { "name": "de.tum.cit.aet.artemis.core.service.feature.Feature" },
+        { "name": "de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus" },
+        { "name": "de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage" },
+        { "name": "de.tum.cit.aet.artemis.programming.domain.ProjectType" },
+        { "name": "de.tum.cit.aet.artemis.programming.domain.RepositoryType" },
+        { "name": "de.tum.cit.aet.artemis.programming.domain.build.BuildStatus" },
+        { "name": "java.lang.Boolean" },
+        { "name": "java.lang.Enum" },
+        { "name": "java.lang.Long" },
+        { "name": "java.lang.Number" },
+        { "name": "java.lang.Object[]" },
+        { "name": "java.lang.String" },
+        { "name": "java.time.Ser" },
+        { "name": "java.time.ZonedDateTime" },
+        { "name": "java.util.ArrayList" },
+        { "name": "java.util.CollSer" },
+        { "name": "java.util.ImmutableCollections$List12" },
+        { "name": "java.util.ImmutableCollections$ListN" },
+        { "name": "org.hibernate.cache.internal.BasicCacheKeyImplementation" },
+        { "name": "org.springframework.cache.interceptor.SimpleKey" },
+        { "name": "java.time.LocalDateTime" },
+        { "name": "java.time.LocalDate" },
+        { "name": "java.time.LocalTime" },
+        { "name": "java.time.ZoneId" },
+        { "name": "java.time.ZoneOffset" },
+        { "name": "java.time.OffsetDateTime" },
+        { "name": "java.time.Instant" },
+        { "name": "java.util.ImmutableCollections$SetN" },
+        { "name": "java.util.ImmutableCollections$MapN" },
+        { "name": "java.util.ImmutableCollections$Set12" },
+        { "name": "org.hibernate.cache.internal.CollectionCacheKey" },
+        { "name": "org.hibernate.cache.internal.EntityCacheKey" }
+    ],
+    "lambdaCapturingTypes": [],
+    "proxies": []
+}

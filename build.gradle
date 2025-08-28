@@ -27,7 +27,7 @@ plugins {
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
     id "org.openapi.generator" version "7.14.0"
-    id 'org.graalvm.buildtools.native' version '0.10.6'
+    id 'org.graalvm.buildtools.native' version '0.11.0'
     id 'org.hibernate.orm' version "${hibernate_version}"
 }
 graalvmNative {
@@ -126,10 +126,18 @@ graalvmNative {
         }
     }
 }
+
+hibernate {
+    enhancement {
+        lazyInitialization = true
+    }
+}
 tasks.named("processAot") {
     systemProperty "spring.profiles.active", "prod,localci,localvc,artemis,scheduling,iris,buildagent,core,local"
     environment "SPRING_APPLICATION_JSON", '{"jhipster":{"security":{"authentication":{"jwt":{"base64Secret":"QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQQ=="}}}}}'
 }
+tasks.named("classes") { dependsOn("hibernateEnhance") }
+
 nativeCompile {
     dependsOn processResources
 }
