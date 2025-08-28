@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.dto.room;
 
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -12,7 +13,7 @@ public record ExamRoomAdminOverviewDTO(
     @NotNull Integer numberOfStoredExamRooms,
     @NotNull Integer numberOfStoredExamSeats,
     @NotNull Integer numberOfStoredLayoutStrategies,
-    @NotNull Set<ExamRoomDTO> newestUniqueExamRooms
+    @Nullable Set<ExamRoomDTO> newestUniqueExamRooms
 ) {
 }
 // @formatter:on
