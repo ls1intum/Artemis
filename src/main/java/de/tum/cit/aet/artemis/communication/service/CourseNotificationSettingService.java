@@ -215,7 +215,8 @@ public class CourseNotificationSettingService {
         Map<Short, Map<NotificationChannelOption, Boolean>> notificationTypeChannels = new HashMap<>();
 
         for (var entry : currentPreset.getPresetMap().entrySet()) {
-            notificationTypeChannels.put(courseNotificationRegistryService.getNotificationIdentifier(entry.getKey()), entry.getValue());
+            Short notificationId = courseNotificationRegistryService.getNotificationIdentifier(entry.getKey());
+            notificationTypeChannels.put(notificationId, entry.getValue());
         }
 
         if (presetId == 0) {

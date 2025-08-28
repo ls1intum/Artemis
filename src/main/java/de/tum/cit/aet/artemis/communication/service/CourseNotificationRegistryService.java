@@ -7,14 +7,36 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationType;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.AddedToChannelNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.AttachmentChangedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.ChannelDeletedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.DeregisteredFromTutorialGroupNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.DuplicateTestCaseNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseAssessedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseOpenForPracticeNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseUpdatedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnnouncementNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnswerNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewCpcPlagiarismCaseNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewExerciseNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewManualFeedbackRequestNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPlagiarismCaseNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.PlagiarismCaseVerdictNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.ProgrammingBuildRunUpdateNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.ProgrammingTestCasesChangedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.QuizExerciseStartedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.RegisteredToTutorialGroupNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.RemovedFromChannelNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.TutorialGroupAssignedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.TutorialGroupDeletedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.TutorialGroupUnassignedNotification;
 
 /**
  * Registry service that discovers and maps all {@link CourseNotification}
@@ -34,34 +56,44 @@ public class CourseNotificationRegistryService {
     private final Map<Class<? extends CourseNotification>, Short> notificationTypeIdentifiers = new HashMap<>();
 
     /**
-     * Constructs a new NotificationRegistry and automatically scans the application context for all classes annotated
-     * with {@link CourseNotificationType} in the {@code communication.domain.notifications} directory. The
-     * registry maps each notification type's numeric identifier to its class type.
+     * Constructs a new NotificationRegistry and explicitly registers all notification types.
+     * This replaces classpath scanning to ensure compatibility with GraalVM native images.
      */
     public CourseNotificationRegistryService() {
-        ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
-        scanner.addIncludeFilter(new AnnotationTypeFilter(CourseNotificationType.class));
-        String basePackage = "de.tum.cit.aet.artemis.communication.domain.course_notifications";
+        registerNotification(NewPostNotification.class);
+        registerNotification(NewAnswerNotification.class);
+        registerNotification(NewMentionNotification.class);
+        registerNotification(NewAnnouncementNotification.class);
+        registerNotification(NewExerciseNotification.class);
+        registerNotification(ExerciseOpenForPracticeNotification.class);
+        registerNotification(ExerciseAssessedNotification.class);
+        registerNotification(ExerciseUpdatedNotification.class);
+        registerNotification(QuizExerciseStartedNotification.class);
+        registerNotification(AttachmentChangedNotification.class);
+        registerNotification(NewManualFeedbackRequestNotification.class);
+        registerNotification(DuplicateTestCaseNotification.class);
+        registerNotification(NewCpcPlagiarismCaseNotification.class);
+        registerNotification(NewPlagiarismCaseNotification.class);
+        registerNotification(ProgrammingBuildRunUpdateNotification.class);
+        registerNotification(ProgrammingTestCasesChangedNotification.class);
+        registerNotification(PlagiarismCaseVerdictNotification.class);
+        registerNotification(ChannelDeletedNotification.class);
+        registerNotification(AddedToChannelNotification.class);
+        registerNotification(RemovedFromChannelNotification.class);
+        registerNotification(TutorialGroupAssignedNotification.class);
+        registerNotification(TutorialGroupDeletedNotification.class);
+        registerNotification(RegisteredToTutorialGroupNotification.class);
+        registerNotification(DeregisteredFromTutorialGroupNotification.class);
+        registerNotification(TutorialGroupUnassignedNotification.class);
+    }
 
-        for (BeanDefinition bd : scanner.findCandidateComponents(basePackage)) {
-            try {
-                Class<?> classType = Class.forName(bd.getBeanClassName());
-
-                if (CourseNotification.class.isAssignableFrom(classType)) {
-                    CourseNotificationType annotation = classType.getAnnotation(CourseNotificationType.class);
-                    Short typeId = (short) annotation.value();
-
-                    @SuppressWarnings("unchecked")
-                    Class<? extends CourseNotification> notificationClass = (Class<? extends CourseNotification>) classType;
-
-                    log.debug("Registering notification: {}, {}", typeId, notificationClass);
-                    notificationTypes.put(typeId, notificationClass);
-                    notificationTypeIdentifiers.put(notificationClass, typeId);
-                }
-            }
-            catch (ClassNotFoundException e) {
-                log.error("Failed to load notification class", e);
-            }
+    private void registerNotification(Class<? extends CourseNotification> notificationClass) {
+        CourseNotificationType annotation = notificationClass.getAnnotation(CourseNotificationType.class);
+        if (annotation != null) {
+            Short typeId = (short) annotation.value();
+            log.debug("Registering notification: {}, {}", typeId, notificationClass);
+            notificationTypes.put(typeId, notificationClass);
+            notificationTypeIdentifiers.put(notificationClass, typeId);
         }
     }
 
