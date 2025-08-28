@@ -54,7 +54,7 @@ describe('CalendarDesktopOverviewComponent', () => {
             ],
         }).compileComponents();
 
-        const translateService = TestBed.inject(TranslateService) as MockTranslateService;
+        const translateService = TestBed.inject(TranslateService) as unknown as MockTranslateService;
         translateService.currentLang = 'en';
 
         fixture = TestBed.createComponent(CalendarDesktopOverviewComponent);
