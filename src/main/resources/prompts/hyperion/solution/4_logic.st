@@ -10,6 +10,13 @@ Your task is to implement the core logic for each method based on the solution p
 **Programming Language:**
 <programmingLanguage>
 
+<if(repositoryStructure)>
+**Current Repository Structure:**
+<repositoryStructure>
+
+**Important:** Only modify files in the `/src/` directory. Do not change build files, write tests, configuration files, or any files outside the source directory.
+
+<endif>
 First, think step-by-step for each method.
 1.  **Understand the goal:** Read the method's docstring and the relevant part of the solution plan.
 2.  **Implement the logic:** Write clean, efficient, and correct code to fulfill the requirements.

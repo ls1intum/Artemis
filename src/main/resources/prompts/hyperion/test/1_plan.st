@@ -10,6 +10,13 @@ Your task is to create a detailed testing plan based on the problem statement an
 **Programming Language:**
 <programmingLanguage>
 
+<if(repositoryStructure)>
+**Current Repository Structure:**
+<repositoryStructure>
+
+**Important:** Only modify files in the `/test/` directory. Do not change source code, build files, or configuration files.
+
+<endif>
 <if(previousBuildLogs)>
 **Previous Build Errors:**
 <previousBuildLogs>

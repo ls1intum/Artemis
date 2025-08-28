@@ -7,6 +7,13 @@ Based on the following solution plan and programming language, determine the nec
 **Programming Language:**
 <programmingLanguage>
 
+<if(repositoryStructure)>
+**Current Repository Structure:**
+<repositoryStructure>
+
+**Important:** Only modify files in the `/src/` directory. Do not change build files, write tests, configuration files, or any files outside the source directory.
+
+<endif>
 First, think step-by-step.
 1.  **Analyze the plan:** Review the classes and components mentioned in the solution plan.
 2.  **Apply conventions:** Consider the standard project layout and file naming conventions for the given programming language.

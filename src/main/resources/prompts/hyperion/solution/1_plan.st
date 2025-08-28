@@ -7,6 +7,13 @@ Your task is to create a detailed implementation plan.
 **Programming Language:**
 <programmingLanguage>
 
+<if(repositoryStructure)>
+**Current Repository Structure:**
+<repositoryStructure>
+
+**Important:** Only modify files in the `/src/` directory. Do not change build files, write tests, configuration files, or any files outside the source directory.
+
+<endif>
 <if(previousBuildLogs)>
 **Previous Build Errors:**
 <previousBuildLogs>

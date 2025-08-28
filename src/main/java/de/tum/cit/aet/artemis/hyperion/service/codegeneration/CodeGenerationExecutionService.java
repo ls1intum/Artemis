@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFile;
+import de.tum.cit.aet.artemis.hyperion.service.RepositoryStructureService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -74,10 +75,13 @@ public class CodeGenerationExecutionService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final RepositoryStructureService repositoryStructureService;
+
     public CodeGenerationExecutionService(GitService gitService, @Qualifier("solutionRepositoryStrategy") CodeGenerationStrategy codeGenerationStrategy,
             RepositoryService repositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ResultRepository resultRepository,
-            ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            RepositoryStructureService repositoryStructureService) {
         this.gitService = gitService;
         this.codeGenerationStrategy = codeGenerationStrategy;
         this.repositoryService = repositoryService;
@@ -86,6 +90,7 @@ public class CodeGenerationExecutionService {
         this.resultRepository = resultRepository;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.repositoryStructureService = repositoryStructureService;
     }
 
     /**
@@ -193,7 +198,6 @@ public class CodeGenerationExecutionService {
         repositoryService.commitChanges(repository, user);
         String newCommitHash = gitService.getLastCommitHash(repositoryUri).getName();
 
-        // Trigger CI build for the new commit
         try {
             ProgrammingExerciseParticipation solutionParticipation = programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
             continuousIntegrationTriggerService.triggerBuild(solutionParticipation, newCommitHash, null);
@@ -201,7 +205,6 @@ public class CodeGenerationExecutionService {
         }
         catch (ContinuousIntegrationException e) {
             log.warn("Failed to trigger CI build for commit {} in exercise {}: {}", newCommitHash, exercise.getId(), e.getMessage());
-            // Continue anyway - the build might still be picked up automatically in some systems
         }
 
         return newCommitHash;
@@ -240,7 +243,9 @@ public class CodeGenerationExecutionService {
     private IterationResult executeGenerationIteration(ProgrammingExercise exercise, User user, Repository repository, VcsRepositoryUri repositoryUri, String lastBuildLogs,
             int iteration) {
         try {
-            List<GeneratedFile> generatedFiles = codeGenerationStrategy.generateCode(user, exercise, lastBuildLogs);
+            String repositoryStructure = repositoryStructureService.getRepositoryStructure(repository);
+
+            List<GeneratedFile> generatedFiles = codeGenerationStrategy.generateCode(user, exercise, lastBuildLogs, repositoryStructure);
 
             if (generatedFiles == null || generatedFiles.isEmpty()) {
                 log.warn("No files generated for exercise {} on attempt {}. Skipping repository update.", exercise.getId(), iteration);

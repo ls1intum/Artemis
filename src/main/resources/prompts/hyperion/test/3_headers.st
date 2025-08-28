@@ -10,6 +10,13 @@ Your task is to generate the boilerplate code for each test file based on the te
 **Programming Language:**
 <programmingLanguage>
 
+<if(repositoryStructure)>
+**Current Repository Structure:**
+<repositoryStructure>
+
+**Important:** Only modify files in the `/test/` directory. Do not change source code, build files, or configuration files.
+
+<endif>
 First, think step-by-step for each test file.
 1.  **Create test classes:** For each source file, define the public test class.
 2.  **Add test method signatures:** Inside each class, add the test methods outlined in the plan (e.g., `@Test void testEmptyArray()`).

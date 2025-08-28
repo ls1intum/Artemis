@@ -54,17 +54,18 @@ public abstract class CodeGenerationStrategy {
      * Generates code files using the 4-step AI generation pipeline.
      * Orchestrates solution planning, file structure definition, header generation, and core logic implementation.
      *
-     * @param user              the user requesting code generation
-     * @param exercise          the programming exercise to generate code for
-     * @param previousBuildLogs build failure logs from previous attempts for iterative improvement
+     * @param user                the user requesting code generation
+     * @param exercise            the programming exercise to generate code for
+     * @param previousBuildLogs   build failure logs from previous attempts for iterative improvement
+     * @param repositoryStructure tree-format representation of current repository structure
      * @return list of generated code files
      * @throws NetworkingException if AI service communication fails
      */
-    public List<GeneratedFile> generateCode(User user, ProgrammingExercise exercise, String previousBuildLogs) throws NetworkingException {
-        var solutionPlanResponse = generateSolutionPlan(user, exercise, previousBuildLogs);
-        defineFileStructure(user, exercise, solutionPlanResponse.getSolutionPlan());
-        generateClassAndMethodHeaders(user, exercise, solutionPlanResponse.getSolutionPlan());
-        var coreLogicResponse = generateCoreLogic(user, exercise, solutionPlanResponse.getSolutionPlan());
+    public List<GeneratedFile> generateCode(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure) throws NetworkingException {
+        var solutionPlanResponse = generateSolutionPlan(user, exercise, previousBuildLogs, repositoryStructure);
+        defineFileStructure(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure);
+        generateClassAndMethodHeaders(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure);
+        var coreLogicResponse = generateCoreLogic(user, exercise, solutionPlanResponse.getSolutionPlan(), repositoryStructure);
 
         return coreLogicResponse.getFiles();
     }
@@ -96,49 +97,57 @@ public abstract class CodeGenerationStrategy {
      * Generates a high-level solution plan for the programming exercise.
      * First step in the 4-step generation pipeline.
      *
-     * @param user              the user requesting code generation
-     * @param exercise          the programming exercise to analyze
-     * @param previousBuildLogs build failure logs from previous attempts for correction
+     * @param user                the user requesting code generation
+     * @param exercise            the programming exercise to analyze
+     * @param previousBuildLogs   build failure logs from previous attempts for correction
+     * @param repositoryStructure tree-format representation of current repository structure
      * @return AI response containing the solution plan
      * @throws NetworkingException if AI service communication fails
      */
-    protected abstract CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs) throws NetworkingException;
+    protected abstract CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure)
+            throws NetworkingException;
 
     /**
      * Defines the file structure and organization for the solution.
      * Second step in the 4-step generation pipeline.
      *
-     * @param user         the user requesting code generation
-     * @param exercise     the programming exercise to structure
-     * @param solutionPlan the high-level solution plan from step 1
+     * @param user                the user requesting code generation
+     * @param exercise            the programming exercise to structure
+     * @param solutionPlan        the high-level solution plan from step 1
+     * @param repositoryStructure tree-format representation of current repository structure
      * @return AI response containing file structure definitions
      * @throws NetworkingException if AI service communication fails
      */
-    protected abstract CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan) throws NetworkingException;
+    protected abstract CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure)
+            throws NetworkingException;
 
     /**
      * Generates class definitions and method signatures.
      * Third step in the 4-step generation pipeline.
      *
-     * @param user         the user requesting code generation
-     * @param exercise     the programming exercise to create headers for
-     * @param solutionPlan the high-level solution plan from step 1
+     * @param user                the user requesting code generation
+     * @param exercise            the programming exercise to create headers for
+     * @param solutionPlan        the high-level solution plan from step 1
+     * @param repositoryStructure tree-format representation of current repository structure
      * @return AI response containing class and method headers
      * @throws NetworkingException if AI service communication fails
      */
-    protected abstract CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan) throws NetworkingException;
+    protected abstract CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure)
+            throws NetworkingException;
 
     /**
      * Generates the core implementation logic for the solution.
      * Fourth and final step in the 4-step generation pipeline.
      *
-     * @param user         the user requesting code generation
-     * @param exercise     the programming exercise to implement
-     * @param solutionPlan the high-level solution plan from step 1
+     * @param user                the user requesting code generation
+     * @param exercise            the programming exercise to implement
+     * @param solutionPlan        the high-level solution plan from step 1
+     * @param repositoryStructure tree-format representation of current repository structure
      * @return AI response containing complete implementation with generated files
      * @throws NetworkingException if AI service communication fails
      */
-    protected abstract CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan) throws NetworkingException;
+    protected abstract CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure)
+            throws NetworkingException;
 
     /**
      * Returns the repository type that this strategy generates code for.

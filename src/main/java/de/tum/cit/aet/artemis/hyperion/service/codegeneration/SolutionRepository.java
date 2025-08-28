@@ -26,31 +26,34 @@ public class SolutionRepository extends CodeGenerationStrategy {
     }
 
     @Override
-    protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs) throws NetworkingException {
+    protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure)
+            throws NetworkingException {
         var templateVariables = Map.<String, Object>of("problemStatement", exercise.getProblemStatement(), "programmingLanguage", exercise.getProgrammingLanguage(),
-                "previousBuildLogs", previousBuildLogs != null ? previousBuildLogs : "");
+                "previousBuildLogs", previousBuildLogs != null ? previousBuildLogs : "", "repositoryStructure", repositoryStructure != null ? repositoryStructure : "");
         return callChatClient("/prompts/hyperion/solution/1_plan.st", templateVariables);
     }
 
     @Override
-    protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan) throws NetworkingException {
-        var templateVariables = Map.<String, Object>of("solutionPlan", solutionPlan, "programmingLanguage", exercise.getProgrammingLanguage());
+    protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure) throws NetworkingException {
+        var templateVariables = Map.<String, Object>of("solutionPlan", solutionPlan, "programmingLanguage", exercise.getProgrammingLanguage(), "repositoryStructure",
+                repositoryStructure != null ? repositoryStructure : "");
         return callChatClient("/prompts/hyperion/solution/2_file_structure.st", templateVariables);
     }
 
     @Override
-    protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan) throws NetworkingException {
-        var fileStructure = defineFileStructure(user, exercise, solutionPlan);
+    protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure)
+            throws NetworkingException {
+        var fileStructure = defineFileStructure(user, exercise, solutionPlan, repositoryStructure);
         var templateVariables = Map.<String, Object>of("solutionPlan", solutionPlan, "fileStructure", fileStructure.getFiles(), "programmingLanguage",
-                exercise.getProgrammingLanguage());
+                exercise.getProgrammingLanguage(), "repositoryStructure", repositoryStructure != null ? repositoryStructure : "");
         return callChatClient("/prompts/hyperion/solution/3_headers.st", templateVariables);
     }
 
     @Override
-    protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan) throws NetworkingException {
-        var headers = generateClassAndMethodHeaders(user, exercise, solutionPlan);
+    protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure) throws NetworkingException {
+        var headers = generateClassAndMethodHeaders(user, exercise, solutionPlan, repositoryStructure);
         var templateVariables = Map.<String, Object>of("solutionPlan", solutionPlan, "filesWithHeaders", headers.getFiles(), "programmingLanguage",
-                exercise.getProgrammingLanguage());
+                exercise.getProgrammingLanguage(), "repositoryStructure", repositoryStructure != null ? repositoryStructure : "");
         return callChatClient("/prompts/hyperion/solution/4_logic.st", templateVariables);
     }
 

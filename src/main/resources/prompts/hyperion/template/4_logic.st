@@ -4,6 +4,13 @@ Your task is to take a complete solution and create a template for students by r
 **Complete Solution Code:**
 <solutionCode>
 
+<if(repositoryStructure)>
+**Current Repository Structure:**
+<repositoryStructure>
+
+**Important:** Only modify files in the `/src/` directory. Do not change build files, write tests, configuration files, or any files outside the source directory.
+
+<endif>
 First, think step-by-step for each file and method.
 1.  **Identify core logic:** Locate the implementation logic inside each method body.
 2.  **Remove the logic:** Delete the core logic.

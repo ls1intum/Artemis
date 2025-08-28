@@ -38,24 +38,26 @@ public class TemplateRepository extends CodeGenerationStrategy {
     }
 
     @Override
-    protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs) throws NetworkingException {
-        return solutionRepository.generateSolutionPlan(user, exercise, previousBuildLogs);
+    protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, String previousBuildLogs, String repositoryStructure)
+            throws NetworkingException {
+        return solutionRepository.generateSolutionPlan(user, exercise, previousBuildLogs, repositoryStructure);
     }
 
     @Override
-    protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan) throws NetworkingException {
-        return solutionRepository.defineFileStructure(user, exercise, solutionPlan);
+    protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure) throws NetworkingException {
+        return solutionRepository.defineFileStructure(user, exercise, solutionPlan, repositoryStructure);
     }
 
     @Override
-    protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan) throws NetworkingException {
-        return solutionRepository.generateClassAndMethodHeaders(user, exercise, solutionPlan);
+    protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure)
+            throws NetworkingException {
+        return solutionRepository.generateClassAndMethodHeaders(user, exercise, solutionPlan, repositoryStructure);
     }
 
     @Override
-    protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan) throws NetworkingException {
-        var solutionCode = solutionRepository.generateCoreLogic(user, exercise, solutionPlan);
-        var templateVariables = Map.<String, Object>of("solutionCode", solutionCode.getFiles());
+    protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, String solutionPlan, String repositoryStructure) throws NetworkingException {
+        var solutionCode = solutionRepository.generateCoreLogic(user, exercise, solutionPlan, repositoryStructure);
+        var templateVariables = Map.<String, Object>of("solutionCode", solutionCode.getFiles(), "repositoryStructure", repositoryStructure != null ? repositoryStructure : "");
         return callChatClient("/prompts/hyperion/template/4_logic.st", templateVariables);
     }
 
