@@ -71,7 +71,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     @Column(name = "duration")
     private Integer duration;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(unique = true)
     private QuizPointStatistic quizPointStatistic;
 
