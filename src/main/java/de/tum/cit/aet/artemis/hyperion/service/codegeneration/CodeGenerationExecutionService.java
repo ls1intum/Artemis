@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -40,6 +41,18 @@ public class CodeGenerationExecutionService {
 
     private static final int MAX_ITERATIONS = 3;
 
+    /**
+     * Holds repository setup results
+     */
+    private record RepositorySetupResult(Repository repository, String originalCommitHash, boolean success) {
+    }
+
+    /**
+     * Holds iteration execution results
+     */
+    private record IterationResult(Result result, String buildLogs, boolean successful) {
+    }
+
     private final GitService gitService;
 
     private final CodeGenerationStrategy codeGenerationStrategy;
@@ -52,9 +65,9 @@ public class CodeGenerationExecutionService {
 
     private final ResultRepository resultRepository;
 
-    public CodeGenerationExecutionService(GitService gitService, CodeGenerationStrategy codeGenerationStrategy, RepositoryService repositoryService,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ResultRepository resultRepository) {
+    public CodeGenerationExecutionService(GitService gitService, @Qualifier("solutionRepositoryStrategy") CodeGenerationStrategy codeGenerationStrategy,
+            RepositoryService repositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, ResultRepository resultRepository) {
         this.gitService = gitService;
         this.codeGenerationStrategy = codeGenerationStrategy;
         this.repositoryService = repositoryService;
@@ -65,22 +78,174 @@ public class CodeGenerationExecutionService {
 
     /**
      * Gets the default branch name for the given repository.
+     * Uses the configured default branch from GitService.
      *
      * @param repositoryUri the URI of the repository to check
      * @return the default branch name
-     * @throws GitAPIException if Git operations fail
-     * @throws IOException     if I/O operations fail
      */
-    private String getDefaultBranch(VcsRepositoryUri repositoryUri) throws GitAPIException, IOException {
-        Repository tempRepo = null;
-        try {
-            tempRepo = gitService.getOrCheckoutRepository(repositoryUri, true, null, true);
-            return tempRepo.getBranch();
+    private String getDefaultBranch(VcsRepositoryUri repositoryUri) {
+        return gitService.getDefaultBranch();
+    }
+
+    /**
+     * Sets up repository for code generation by validating URI and checking out repository.
+     *
+     * @param exercise the programming exercise
+     * @return repository setup result containing repository and commit hash
+     */
+    private RepositorySetupResult setupRepository(ProgrammingExercise exercise) {
+        var repositoryUri = exercise.getVcsSolutionRepositoryUri();
+        if (repositoryUri == null) {
+            log.error("Could not get repository URI for exercise {}", exercise.getId());
+            return new RepositorySetupResult(null, null, false);
         }
-        finally {
-            if (tempRepo != null) {
-                gitService.deleteLocalRepository(tempRepo);
+
+        try {
+            String defaultBranch = getDefaultBranch(repositoryUri);
+            Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true, defaultBranch, false);
+
+            if (repository == null) {
+                log.error("Failed to checkout repository for exercise {}", exercise.getId());
+                return new RepositorySetupResult(null, null, false);
             }
+
+            String originalCommitHash = gitService.getLastCommitHash(repositoryUri).getName();
+            return new RepositorySetupResult(repository, originalCommitHash, true);
+
+        }
+        catch (GitAPIException e) {
+            log.error("Failed to setup repository for exercise {}: {}", exercise.getId(), e.getMessage(), e);
+            return new RepositorySetupResult(null, null, false);
+        }
+    }
+
+    /**
+     * Updates a single file in the repository, handling deletion of existing file and creation of new one.
+     *
+     * @param repository the repository
+     * @param file       the generated file to update
+     * @param exercise   the programming exercise (for logging)
+     * @throws IOException if file operations fail
+     */
+    private void updateSingleFile(Repository repository, GeneratedFile file, ProgrammingExercise exercise) throws IOException {
+        // Check if file exists before attempting to delete
+        if (gitService.getFileByName(repository, file.path()).isPresent()) {
+            try {
+                repositoryService.deleteFile(repository, file.path());
+                log.debug("Deleted existing file: {}", file.path());
+            }
+            catch (Exception e) {
+                log.warn("Failed to delete existing file {}: {}", file.path(), e.getMessage());
+            }
+        }
+        else {
+            log.debug("File {} does not exist, will create new", file.path());
+        }
+
+        try {
+            InputStream inputStream = new ByteArrayInputStream(file.content().getBytes(StandardCharsets.UTF_8));
+            repositoryService.createFile(repository, file.path(), inputStream);
+            log.debug("Created/updated file: {}", file.path());
+        }
+        catch (IOException e) {
+            log.error("Failed to create file {} for exercise {}: {}", file.path(), exercise.getId(), e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * Processes all generated files by updating them in the repository.
+     *
+     * @param repository     the repository
+     * @param generatedFiles list of generated files to process
+     * @param exercise       the programming exercise (for logging)
+     * @throws IOException if file operations fail
+     */
+    private void processGeneratedFiles(Repository repository, List<GeneratedFile> generatedFiles, ProgrammingExercise exercise) throws IOException {
+        for (GeneratedFile file : generatedFiles) {
+            updateSingleFile(repository, file, exercise);
+        }
+    }
+
+    /**
+     * Commits changes and returns the new commit hash.
+     *
+     * @param repository    the repository
+     * @param user          the user making the commit
+     * @param repositoryUri the repository URI
+     * @return the new commit hash
+     * @throws GitAPIException if git operations fail
+     */
+    private String commitAndGetHash(Repository repository, User user, VcsRepositoryUri repositoryUri) throws GitAPIException {
+        repositoryService.commitChanges(repository, user);
+        return gitService.getLastCommitHash(repositoryUri).getName();
+    }
+
+    /**
+     * Extracts build logs from a result.
+     *
+     * @param result the build result
+     * @return extracted build logs or default message
+     */
+    private String extractBuildLogs(Result result) {
+        if (result != null && result.getSubmission() instanceof ProgrammingSubmission programmingSubmission) {
+            return programmingSubmission.getBuildLogEntries().stream().map(BuildLogEntry::getLog).collect(Collectors.joining("\n"));
+        }
+        return "Build failed to produce a result.";
+    }
+
+    /**
+     * Executes a single iteration of code generation, compilation, and build checking.
+     *
+     * @param exercise      the programming exercise
+     * @param user          the user
+     * @param repository    the repository
+     * @param repositoryUri the repository URI
+     * @param lastBuildLogs previous build logs for context
+     * @param iteration     current iteration number (for logging)
+     * @return iteration result with success status and build logs
+     */
+    private IterationResult executeGenerationIteration(ProgrammingExercise exercise, User user, Repository repository, VcsRepositoryUri repositoryUri, String lastBuildLogs,
+            int iteration) {
+        try {
+            List<GeneratedFile> generatedFiles = codeGenerationStrategy.generateCode(user, exercise, lastBuildLogs);
+
+            if (generatedFiles == null || generatedFiles.isEmpty()) {
+                log.warn("No files generated for exercise {} on attempt {}. Skipping repository update.", exercise.getId(), iteration);
+                return new IterationResult(null, lastBuildLogs, false);
+            }
+
+            log.debug("Generated {} files for exercise {} on attempt {}", generatedFiles.size(), exercise.getId(), iteration);
+
+            processGeneratedFiles(repository, generatedFiles, exercise);
+            String newCommitHash = commitAndGetHash(repository, user, repositoryUri);
+            Result result = waitForBuildResult(exercise, newCommitHash);
+
+            if (result != null && result.isSuccessful()) {
+                log.info("Code generation and compilation successful for exercise {} on attempt {}", exercise.getId(), iteration);
+                return new IterationResult(result, null, true);
+            }
+
+            String buildLogs = extractBuildLogs(result);
+            log.info("Code generation and compilation failed for exercise {} on attempt {}. Retrying...", exercise.getId(), iteration);
+            return new IterationResult(result, buildLogs, false);
+
+        }
+        catch (IOException | GitAPIException | InterruptedException | NetworkingException e) {
+            log.error("Error during iteration {} for exercise {}: {}", iteration, exercise.getId(), e.getMessage(), e);
+            return new IterationResult(null, lastBuildLogs, false);
+        }
+    }
+
+    /**
+     * Cleans up repository by resetting to original state.
+     *
+     * @param repository         the repository to clean up
+     * @param originalCommitHash the original commit hash to reset to
+     */
+    private void cleanupRepository(Repository repository, String originalCommitHash) {
+        if (repository != null && originalCommitHash != null) {
+            gitService.resetToOriginHead(repository);
         }
     }
 
@@ -94,61 +259,36 @@ public class CodeGenerationExecutionService {
      * @return the final build result, or null if all attempts failed
      */
     public Result generateAndCompileCode(ProgrammingExercise exercise, User user) {
-        var repositoryUri = exercise.getVcsSolutionRepositoryUri();
-        if (repositoryUri == null) {
-            log.error("Could not get repository URI for exercise {}", exercise.getId());
+        log.warn("Starting code generation and compilation for exercise {}\n\n\n", exercise.getId());
+
+        RepositorySetupResult setupResult = setupRepository(exercise);
+        if (!setupResult.success()) {
             return null;
         }
 
-        Repository repository = null;
-        String originalCommitHash = null;
-        String lastBuildLogs = null;
-        Result result = null;
-
+        var repositoryUri = exercise.getVcsSolutionRepositoryUri();
         try {
-            String defaultBranch = getDefaultBranch(repositoryUri);
-            repository = gitService.getOrCheckoutRepository(repositoryUri, true, defaultBranch, false);
-            originalCommitHash = gitService.getLastCommitHash(repositoryUri).getName();
+            String lastBuildLogs = null;
+            Result result = null;
 
             for (int i = 0; i < MAX_ITERATIONS; i++) {
-                List<GeneratedFile> generatedFiles = codeGenerationStrategy.generateCode(user, exercise, lastBuildLogs);
+                IterationResult iterationResult = executeGenerationIteration(exercise, user, setupResult.repository(), repositoryUri, lastBuildLogs, i + 1);
 
-                repositoryService.deleteAllContentInRepository(repository);
-                for (GeneratedFile file : generatedFiles) {
-                    InputStream inputStream = new ByteArrayInputStream(file.content().getBytes(StandardCharsets.UTF_8));
-                    repositoryService.createFile(repository, file.path(), inputStream);
-                }
-
-                repositoryService.commitChanges(repository, user);
-                String newCommitHash = gitService.getLastCommitHash(repositoryUri).getName();
-
-                result = waitForBuildResult(exercise, newCommitHash);
-
-                if (result != null && result.isSuccessful()) {
-                    log.info("Code generation and compilation successful for exercise {} on attempt {}", exercise.getId(), i + 1);
+                result = iterationResult.result();
+                if (iterationResult.successful()) {
                     return result;
                 }
 
-                if (result != null && result.getSubmission() instanceof ProgrammingSubmission programmingSubmission) {
-                    lastBuildLogs = programmingSubmission.getBuildLogEntries().stream().map(BuildLogEntry::getLog).collect(Collectors.joining("\n"));
-                }
-                else {
-                    lastBuildLogs = "Build failed to produce a result.";
-                }
-                log.info("Code generation and compilation failed for exercise {} on attempt {}. Retrying...", exercise.getId(), i + 1);
+                lastBuildLogs = iterationResult.buildLogs();
             }
-        }
-        catch (GitAPIException | IOException | InterruptedException | NetworkingException e) {
-            log.error("Error during code generation and compilation loop for exercise {}", exercise.getId(), e);
+
+            log.warn("Code generation and compilation failed for exercise {} after {} attempts.", exercise.getId(), MAX_ITERATIONS);
+            return result;
+
         }
         finally {
-            if (repository != null && originalCommitHash != null) {
-                gitService.resetToOriginHead(repository);
-            }
+            cleanupRepository(setupResult.repository(), setupResult.originalCommitHash());
         }
-
-        log.warn("Code generation and compilation failed for exercise {} after {} attempts.", exercise.getId(), MAX_ITERATIONS);
-        return result;
     }
 
     /**

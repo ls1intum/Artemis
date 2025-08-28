@@ -146,6 +146,15 @@ public class GitService extends AbstractGitService {
     }
 
     /**
+     * Returns the configured default branch name.
+     *
+     * @return the default branch name (e.g., "main")
+     */
+    public String getDefaultBranch() {
+        return defaultBranch;
+    }
+
+    /**
      * initialize the GitService, in particular which authentication mechanism should be used
      * Artemis uses the following order for authentication:
      * 1. ssh key (if available)
