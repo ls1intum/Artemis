@@ -1380,7 +1380,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             String tokenParameter = "token=" + token;
             String filterOptionsParameter = "filterOptions=" + Arrays.stream(filterOptions).map(Enum::name).collect(Collectors.joining(","));
             String languageParameter = "language=" + language;
-            return "/api/core/calendar/courses/" + courseId + "/subscription/calendar-events.ics?" + tokenParameter + "&" + filterOptionsParameter + "&" + languageParameter;
+            return "/api/core/calendar/courses/" + courseId + "/calendar-events.ics?" + tokenParameter + "&" + filterOptionsParameter + "&" + languageParameter;
         }
 
         private String generateUniqueTestToken() {

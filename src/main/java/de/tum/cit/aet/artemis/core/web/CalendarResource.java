@@ -87,6 +87,14 @@ public class CalendarResource {
         this.calendarSubscriptionService = calendarSubscriptionService;
     }
 
+    /**
+     * GET api/core/calendar/subscription-token : retrieves the subscription token associated to the logged-in user or creates it if not already present.
+     * The token is a unique, shared secret between the user and the server and is embedded into the URLs of the iCalendar subscriptions to enable
+     * authentication and authorization.
+     *
+     * @return {@code 200 (OK)} with the token.
+     * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user is not at least a student
+     */
     @GetMapping("subscription-token")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getCalendarEventSubscriptionToken() {
@@ -95,7 +103,19 @@ public class CalendarResource {
         return ResponseEntity.ok(token);
     }
 
-    @GetMapping("courses/{courseId}/subscription/calendar-events.ics")
+    /**
+     * GET api/core/calendar/course/:courseId/calendar-events.ics : gets all {@link CalendarEventDTO}s associated to the given course
+     * that are visible to the user associated to the given and converst the
+     *
+     * @param courseId      the id of the course for which the events should be fetched
+     * @param token         a shared secret between user and server that enables authentication/authorization
+     * @param filterOptions a list of options that determines what DTOs are included in the .ics file
+     * @param language      the language that is used to localize Vevent summaries
+     * @return {@code 200 (OK)} with an .ics file containing Vevents representing the DTOs.
+     * @throws EntityNotFoundException  {@code 404 (Not Found)} if no course exists for the provided courseId
+     * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user associated to the token is not at least student in the course or if no user is associated to the token
+     */
+    @GetMapping("courses/{courseId}/calendar-events.ics")
     public ResponseEntity<String> getCalendarEventSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
             @RequestParam("filterOptions") Set<CalendarEventFilterOption> filterOptions, @RequestParam("language") Language language) {
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -132,11 +152,13 @@ public class CalendarResource {
     }
 
     /**
-     * GET calendar/course/:courseId/calendar-events : gets all {@link CalendarEventDTO}s associated to the given course falling into the requested month
+     * GET api/core/calendar/course/:courseId/calendar-events : gets all {@link CalendarEventDTO}s associated to the given course falling into the requested month
+     * that are visible to the logged-in user
      *
      * @param courseId  the id of the course for which the events should be fetched
      * @param monthKeys a list of ISO 8601 formatted strings representing months
      * @param timeZone  the clients time zone as IANA time zone ID
+     * @param language  the language that is used to localize DTO titles
      * @return {@code 200 (OK)} with a map of DTOs keyed by day from client timezone perspective. All timestamps conform to ISO 8601 format.
      * @throws EntityNotFoundException  {@code 404 (Not Found)} if no course exists for the provided courseId
      * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user does not have at least student role or if the user is not at least student in the course
