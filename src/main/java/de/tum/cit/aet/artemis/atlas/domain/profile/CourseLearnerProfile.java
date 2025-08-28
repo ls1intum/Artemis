@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.domain.profile;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
@@ -39,7 +40,7 @@ public class CourseLearnerProfile extends DomainObject {
     @JoinColumn(name = "learner_profile_id")
     private LearnerProfile learnerProfile;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id")
     private Course course;
 

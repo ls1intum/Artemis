@@ -38,7 +38,7 @@ public class BuildJob extends DomainObject {
     @Column(name = "participation_id")
     private Long participationId;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(unique = true)
     private Result result;
 

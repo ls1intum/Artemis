@@ -198,7 +198,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "external_llm_usage_accepted")
     private ZonedDateTime externalLLMUsageAccepted = null;
 
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("user")
     @JoinColumn(name = "learner_profile_id")
     private LearnerProfile learnerProfile;
