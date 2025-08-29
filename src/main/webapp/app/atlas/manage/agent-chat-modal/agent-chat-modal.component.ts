@@ -4,14 +4,14 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faRobot, faUser, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { AgentChatService } from './agent-chat.service';
 import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
 
 @Component({
     selector: 'jhi-agent-chat-modal',
     standalone: true,
-    imports: [CommonModule, TranslateDirective, FontAwesomeModule, FormsModule],
+    imports: [CommonModule, DatePipe, TranslateDirective, FontAwesomeModule, FormsModule],
     templateUrl: './agent-chat-modal.component.html',
     styleUrl: './agent-chat-modal.component.scss',
 })
