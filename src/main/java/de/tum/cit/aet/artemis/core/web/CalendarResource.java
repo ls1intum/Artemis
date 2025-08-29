@@ -105,7 +105,7 @@ public class CalendarResource {
 
     /**
      * GET api/core/calendar/course/:courseId/calendar-events.ics : gets all {@link CalendarEventDTO}s associated to the given course
-     * that are visible to the user and returns them as an .ics file
+     * that are visible to the user and returns them as an .ics file.
      *
      * @param courseId      the id of the course for which the events should be fetched
      * @param token         a shared secret between user and server that enables authentication/authorization
@@ -153,7 +153,7 @@ public class CalendarResource {
 
     /**
      * GET api/core/calendar/course/:courseId/calendar-events : gets all {@link CalendarEventDTO}s associated to the given course falling into the requested month
-     * that are visible to the logged-in user
+     * that are visible to the logged-in user.
      *
      * @param courseId  the id of the course for which the events should be fetched
      * @param monthKeys a list of ISO 8601 formatted strings representing months
