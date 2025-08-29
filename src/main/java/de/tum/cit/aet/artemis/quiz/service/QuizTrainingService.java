@@ -35,6 +35,7 @@ public class QuizTrainingService {
      * @param userId                 the id of the user who is submitting the quiz
      * @param studentSubmittedAnswer the answer submitted by the user
      * @param answeredAt             the time when the question was answered
+     * @param courseId               the id of the course the quiz question belongs to
      * @return a DTO containing the submitted answer after the evaluation
      */
     public SubmittedAnswerAfterEvaluationDTO submitForTraining(long quizQuestionId, long userId, QuizTrainingAnswerDTO studentSubmittedAnswer, ZonedDateTime answeredAt,

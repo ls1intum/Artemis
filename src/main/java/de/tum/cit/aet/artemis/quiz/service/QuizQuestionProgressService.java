@@ -226,6 +226,7 @@ public class QuizQuestionProgressService {
      * @param userId     The id of the user
      * @param answer     The submitted answer for the question
      * @param answeredAt The time when the question was answered
+     * @param courseId   The id of the course
      */
     public void saveProgressFromTraining(QuizQuestion question, Long userId, SubmittedAnswer answer, ZonedDateTime answeredAt, long courseId) {
         QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(new QuizQuestionProgress());
