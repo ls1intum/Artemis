@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.quiz;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.springframework.http.HttpStatus.OK;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,9 +60,6 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     QuizQuestionRepository quizQuestionRepository;
-
-    @Autowired
-    CourseTestRepository courseRepository;
 
     @BeforeEach
     void setUp() {
@@ -220,5 +219,24 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         assertThat(quizTrainingLeaderboard.getTotalQuestions()).isEqualTo(1);
         assertThat(quizTrainingLeaderboard.getAnsweredCorrectly()).isEqualTo(1);
         assertThat(quizTrainingLeaderboard.getAnsweredWrong()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetQuizQuestionsForPractice() throws Exception {
+        User user = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        Course course = courseUtilService.createCourse();
+        course.setEnrollmentEnabled(true);
+        course.setStudentGroupName("Test");
+        user.setGroups(Set.of("Test"));
+        user.setAuthorities(Set.of(Authority.USER_AUTHORITY));
+        userTestRepository.save(user);
+        courseTestRepository.save(course);
+        courseAccessService.enrollUserForCourseOrThrow(user, course);
+        quizTrainingLeaderboardService.initializeLeaderboard(user.getId(), course.getId(), 1);
+
+        List<LeaderboardEntryDTO> entries = request.getList("/api/quiz/courses/" + course.getId() + "/training/leaderboard", OK, LeaderboardEntryDTO.class);
+
+        Assertions.assertThat(entries).isNotNull();
     }
 }
