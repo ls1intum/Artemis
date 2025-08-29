@@ -1,0 +1,11 @@
+{
+    "artemisApp": {
+        "agent": {
+            "chat": {
+                "title": "AI Competency Assistant",
+                "inputHint": "Press Enter to send, Shift+Enter for new line",
+                "typing": "Agent is thinking..."
+            }
+        }
+    }
+}

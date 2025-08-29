@@ -22,7 +22,7 @@
                                 {{ message.isUser ? 'You' : 'AI Assistant' }}
                             </span>
                             <span class="message-time text-muted">
-                                {{ message.timestamp }}
+                                {{ message.timestamp | date: 'HH:mm' }}
                             </span>
                         </div>
                         <div class="message-text">{{ message.content }}</div>
