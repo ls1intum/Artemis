@@ -104,7 +104,7 @@ export class CalendarSubscriptionPopoverComponent implements OnDestroy, OnInit {
         language: 'ENGLISH' | 'GERMAN',
     ): string {
         const origin = window.location.origin;
-        const route = `/api/core/calendar/courses/${courseId}/calendar-events.ics`;
+        const route = `/api/core/calendar/courses/${courseId}/calendar-events-ics`;
 
         const filterOptions: string[] = [];
         if (includeLectureEvents) filterOptions.push('LECTURES');

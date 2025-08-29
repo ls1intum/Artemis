@@ -104,7 +104,7 @@ public class CalendarResource {
     }
 
     /**
-     * GET api/core/calendar/course/:courseId/calendar-events.ics : gets all {@link CalendarEventDTO}s associated to the given course
+     * GET api/core/calendar/course/:courseId/calendar-events-ics : gets all {@link CalendarEventDTO}s associated to the given course
      * that are visible to the user and returns them as an .ics file.
      *
      * @param courseId      the id of the course for which the events should be fetched
@@ -115,7 +115,7 @@ public class CalendarResource {
      * @throws EntityNotFoundException  {@code 404 (Not Found)} if no course exists for the provided courseId
      * @throws AccessForbiddenException {@code 403 (Forbidden)} if the user associated to the token is not at least student in the course or if no user is associated to the token
      */
-    @GetMapping("courses/{courseId}/calendar-events.ics")
+    @GetMapping("courses/{courseId}/calendar-events-ics")
     public ResponseEntity<String> getCalendarEventSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
             @RequestParam("filterOptions") Set<CalendarEventFilterOption> filterOptions, @RequestParam("language") Language language) {
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -148,7 +148,7 @@ public class CalendarResource {
 
         String icsFileString = calendarSubscriptionService.getICSFileAsString(course.getShortName(), language, calendarEventDTOs);
         return ResponseEntity.ok().contentType(MediaType.parseMediaType("text/calendar; charset=utf-8"))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=calendarEvents.ics").body(icsFileString);
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"calendar-events.ics\"; filename*=UTF-8''calendar-events.ics").body(icsFileString);
     }
 
     /**
