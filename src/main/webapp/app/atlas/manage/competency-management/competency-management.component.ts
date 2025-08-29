@@ -21,15 +21,19 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { CourseCompetenciesRelationModalComponent } from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
 import { CourseCompetencyExplanationModalComponent } from 'app/atlas/manage/course-competency-explanation-modal/course-competency-explanation-modal.component';
+import { AgentChatModalComponent } from 'app/atlas/manage/agent-chat-modal/agent-chat-modal.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 
 @Component({
     selector: 'jhi-competency-management',
     templateUrl: './competency-management.component.html',
+    styleUrl: './competency-management.component.scss',
     imports: [
         CompetencyManagementTableComponent,
         TranslateDirective,
@@ -38,6 +42,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
+        HasAnyAuthorityDirective,
     ],
 })
 export class CompetencyManagementComponent implements OnInit {
@@ -52,6 +57,7 @@ export class CompetencyManagementComponent implements OnInit {
     readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'Competencies';
     readonly CourseCompetencyType = CourseCompetencyType;
+    readonly Authority = Authority;
 
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
@@ -179,5 +185,16 @@ export class CompetencyManagementComponent implements OnInit {
             backdrop: 'static',
             windowClass: 'course-competency-explanation-modal',
         });
+    }
+
+    /**
+     * Opens the Agent Chat Modal for AI-powered competency assistance.
+     */
+    protected openAgentChatModal(): void {
+        const modalRef = this.modalService.open(AgentChatModalComponent, {
+            size: 'lg',
+            backdrop: 'static',
+        });
+        modalRef.componentInstance.courseId = this.courseId();
     }
 }
