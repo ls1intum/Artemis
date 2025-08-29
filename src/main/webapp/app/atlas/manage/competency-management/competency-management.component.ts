@@ -28,6 +28,7 @@ import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -41,6 +42,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
+        HasAnyAuthorityDirective,
     ],
 })
 export class CompetencyManagementComponent implements OnInit {
