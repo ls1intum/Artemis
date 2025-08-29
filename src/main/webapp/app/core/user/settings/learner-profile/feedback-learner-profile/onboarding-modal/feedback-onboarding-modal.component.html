@@ -58,7 +58,7 @@
     </div>
     <div class="footer-right">
         @if (step < totalSteps - 1) {
-            @if (selected[step] === null) {
+            @if (selected[step] === undefined) {
                 <jhi-button [btnType]="ButtonType.SECONDARY" [title]="'artemisApp.learnerProfile.onboardingModal.buttons.skip'" (onClick)="next()" />
             } @else {
                 <jhi-button [btnType]="ButtonType.PRIMARY" [title]="'artemisApp.learnerProfile.onboardingModal.buttons.next'" (onClick)="next()" />

@@ -77,7 +77,8 @@
                     "next": "Weiter",
                     "finish": "Fertig"
                 }
-            }
+            },
+            "loadFailed": "Lernprofil konnte nicht geladen werden"
         }
     }
 }

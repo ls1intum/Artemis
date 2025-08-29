@@ -10,34 +10,7 @@ import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { onError } from 'app/shared/util/global.utils';
-
-let mockWorkerSrc = '';
-
-jest.mock('pdfjs-dist', () => {
-    return {
-        getDocument: jest.fn(() => ({
-            promise: Promise.resolve({
-                numPages: 1,
-                getPage: jest.fn(() =>
-                    Promise.resolve({
-                        getViewport: jest.fn(() => ({ width: 600, height: 800, scale: 1 })),
-                        render: jest.fn(() => ({
-                            promise: Promise.resolve(),
-                        })),
-                    }),
-                ),
-            }),
-        })),
-        GlobalWorkerOptions: {
-            get workerSrc() {
-                return mockWorkerSrc;
-            },
-            set workerSrc(value: string) {
-                mockWorkerSrc = value;
-            },
-        },
-    };
-});
+import { HttpErrorResponse } from '@angular/common/http';
 
 jest.mock('pdfjs-dist/build/pdf.worker', () => {
     return {};
@@ -117,7 +90,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             },
         };
 
-        await component.ngOnChanges(changes);
+        component.ngOnChanges(changes);
 
         expect(spyRenderPages).toHaveBeenCalled();
     });
@@ -811,11 +784,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const originalRenderPages = component.renderPages;
 
             component.renderPages = async function () {
-                try {
-                    throw mockError;
-                } catch (error) {
-                    onError(this.alertService, error);
-                }
+                onError(this.alertService, mockError as HttpErrorResponse);
             };
 
             await component.renderPages();
@@ -891,77 +860,61 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             expect(removeSpy2).toHaveBeenCalled();
         });
 
-        it('should append pages and scroll to bottom when isAppendingFile is true', async () => {
-            const mockPages = [
-                {
-                    slideId: 'slide1',
-                    initialIndex: 1,
-                    order: 1,
-                    sourcePdfId: 'source1',
-                    sourceIndex: 0,
-                    pageProxy: {
-                        getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
-                        render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
+        describe('renderPages scroll behavior', () => {
+            it.each([
+                { name: 'append pages and scroll to bottom when isAppendingFile is true', isAppending: true, shouldScroll: true },
+                { name: 'not scroll to bottom when isAppendingFile is false', isAppending: false, shouldScroll: false },
+            ])('$name', async ({ isAppending, shouldScroll }: { isAppending: boolean; shouldScroll: boolean }) => {
+                const mockPages = [
+                    {
+                        slideId: 'slide1',
+                        initialIndex: 1,
+                        order: 1,
+                        sourcePdfId: 'source1',
+                        sourceIndex: 0,
+                        pageProxy: {
+                            getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
+                            render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
+                        },
                     },
-                },
-            ];
+                ];
 
-            const originalRenderPages = component.renderPages;
-            component.renderPages = async function () {
-                if (this.isAppendingFile()) {
-                    this.scrollToBottom();
+                const originalRenderPages = component.renderPages;
+                const originalConsoleError = console.error;
+
+                try {
+                    // silence console.error only in the non-appending case
+                    if (!isAppending) {
+                        console.error = jest.fn();
+                    }
+
+                    // override renderPages to only test the scroll behavior
+                    component.renderPages = async function () {
+                        if (this.isAppendingFile()) {
+                            this.scrollToBottom();
+                        }
+                    };
+
+                    const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+                    fixture.componentRef.setInput('isAppendingFile', isAppending);
+                    fixture.componentRef.setInput('orderedPages', mockPages);
+                    fixture.detectChanges();
+
+                    await component.renderPages();
+
+                    if (shouldScroll) {
+                        expect(scrollToBottomSpy).toHaveBeenCalled();
+                    } else {
+                        expect(scrollToBottomSpy).not.toHaveBeenCalled();
+                    }
+
+                    scrollToBottomSpy.mockRestore();
+                } finally {
+                    component.renderPages = originalRenderPages;
+                    console.error = originalConsoleError;
                 }
-            };
-
-            const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
-
-            fixture.componentRef.setInput('isAppendingFile', true);
-            fixture.componentRef.setInput('orderedPages', mockPages);
-            fixture.detectChanges();
-
-            await component.renderPages();
-
-            expect(scrollToBottomSpy).toHaveBeenCalled();
-            component.renderPages = originalRenderPages;
-        });
-
-        it('should not scroll to bottom when isAppendingFile is false', async () => {
-            const originalConsoleError = console.error;
-            console.error = jest.fn();
-
-            const mockPages = [
-                {
-                    slideId: 'slide1',
-                    initialIndex: 1,
-                    order: 1,
-                    sourcePdfId: 'source1',
-                    sourceIndex: 0,
-                    pageProxy: {
-                        getViewport: jest.fn().mockReturnValue({ width: 600, height: 800, scale: 1 }),
-                        render: jest.fn().mockReturnValue({ promise: Promise.resolve() }),
-                    },
-                },
-            ];
-
-            const originalRenderPages = component.renderPages;
-            component.renderPages = async function () {
-                if (this.isAppendingFile()) {
-                    this.scrollToBottom();
-                }
-            };
-
-            const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
-
-            fixture.componentRef.setInput('isAppendingFile', false);
-            fixture.componentRef.setInput('orderedPages', mockPages);
-            fixture.detectChanges();
-
-            await component.renderPages();
-
-            expect(scrollToBottomSpy).not.toHaveBeenCalled();
-
-            component.renderPages = originalRenderPages;
-            console.error = originalConsoleError;
+            });
         });
 
         it('should handle case where page container is not found', async () => {

@@ -1,12 +1,12 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import dayjs from 'dayjs/esm';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -33,8 +33,8 @@ describe('ProgrammingExercise Service', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
+                LocalStorageService,
                 { provide: AccountService, useClass: MockAccountService },
             ],
         })
@@ -308,8 +308,6 @@ describe('ProgrammingExercise Service', () => {
     it('should reset Exercise', fakeAsync(() => {
         const exerciseId = 1;
         const options = {
-            deleteBuildPlans: true,
-            deleteRepositories: true,
             deleteParticipationsSubmissionsAndResults: true,
             recreateBuildPlans: true,
         };

@@ -8,8 +8,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
-import { LocalStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 
 class MockActiveModal {
     close = jest.fn();
@@ -33,7 +31,6 @@ describe('FeedbackOnboardingModalComponent', () => {
                 MockProvider(LearnerProfileApiService),
                 { provide: NgbActiveModal, useClass: MockActiveModal },
                 { provide: AlertService, useClass: MockAlertService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -53,7 +50,7 @@ describe('FeedbackOnboardingModalComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
-        expect(component.selected).toEqual([null, null]);
+        expect(component.selected).toEqual([undefined, undefined]);
         expect(component.step).toBe(0);
     });
 
@@ -73,7 +70,7 @@ describe('FeedbackOnboardingModalComponent', () => {
         component.select(0, 1);
         expect(component.selected[0]).toBe(1);
         component.select(0, 1);
-        expect(component.selected[0]).toBeNull();
+        expect(component.selected[0]).toBeUndefined();
         component.select(1, 0);
         expect(component.selected[1]).toBe(0);
         component.select(1, 1);
@@ -110,7 +107,7 @@ describe('FeedbackOnboardingModalComponent', () => {
         });
 
         it('should handle non-HTTP error and close modal', async () => {
-            component.selected = [null, null];
+            component.selected = [undefined, undefined];
             jest.spyOn(learnerProfileApiService, 'putUpdatedLearnerProfile').mockRejectedValue(new Error('fail'));
             await component.finish();
             expect(alertService.addAlert).toHaveBeenCalledWith({

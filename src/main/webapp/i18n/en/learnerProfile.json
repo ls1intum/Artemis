@@ -77,7 +77,8 @@
                     "next": "Next",
                     "finish": "Finish"
                 }
-            }
+            },
+            "loadFailed": "Learner profile could not be loaded"
         }
     }
 }

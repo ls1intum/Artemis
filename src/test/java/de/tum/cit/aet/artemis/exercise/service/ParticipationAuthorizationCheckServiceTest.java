@@ -58,7 +58,7 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
     private ProgrammingExerciseStudentParticipation participation;
 
     @BeforeEach
-    void setup() throws Exception {
+    void setup() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
 
         final var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
