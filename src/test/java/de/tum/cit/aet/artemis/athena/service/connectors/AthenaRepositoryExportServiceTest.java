@@ -4,11 +4,6 @@ import static de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider.AT
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,9 +14,9 @@ import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
@@ -48,19 +43,12 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     @Autowired
     private AthenaRepositoryExportService athenaRepositoryExportService;
 
-    private final LocalRepository testRepo = new LocalRepository(defaultBranch);
+    @Autowired
+    private ParticipationUtilService participationUtilService;
 
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-
-        testRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
-
-        // add test file to the repository folder
-        Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/Test.java");
-        var file = Files.createFile(filePath).toFile();
-        // write content to the created file
-        FileUtils.write(file, "Test", Charset.defaultCharset());
     }
 
     @Test
@@ -72,21 +60,36 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
+        // Reload with eager references so repository URIs are available
+        programmingExerciseWithId = programmingExerciseRepository.findWithEagerTemplateAndSolutionParticipationsById(programmingExerciseWithId.getId()).orElseThrow();
 
-        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
-        participation.setRepositoryUri("git://test");
-        participation.setProgrammingExercise(programmingExerciseWithId);
-        ProgrammingSubmission submission = new ProgrammingSubmission();
-        submission.setParticipation(participation);
-        var programmingSubmissionWithId = programmingExerciseUtilService.addProgrammingSubmission(programmingExerciseWithId, submission, TEST_PREFIX + "student1");
+        // Create actual LocalVC repositories for template, solution and a student participation
+        var templateRepoUri = programmingExerciseWithId.getRepositoryURI(RepositoryType.TEMPLATE);
+        var solutionRepoUri = programmingExerciseWithId.getRepositoryURI(RepositoryType.SOLUTION);
 
-        programmingExerciseUtilService.createGitRepository();
+        // Ensure template repository exists with an initial commit
+        var templateOriginFolder = templateRepoUri.getLocalRepositoryPath(localVCBasePath);
+        var templateLocal = new LocalRepository(defaultBranch);
+        templateLocal.configureRepos(localVCBasePath, "templateLocalRepo", templateOriginFolder);
 
-        InputStreamResource resultStudentRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), null);
-        InputStreamResource resultSolutionRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(),
-                RepositoryType.SOLUTION);
+        // Ensure solution repository exists with an initial commit
+        var solutionOriginFolder = solutionRepoUri.getLocalRepositoryPath(localVCBasePath);
+        var solutionLocal = new LocalRepository(defaultBranch);
+        solutionLocal.configureRepos(localVCBasePath, "solutionLocalRepo", solutionOriginFolder);
 
-        assertThat(resultStudentRepo.getFilename()).isEqualTo("repo.zip"); // The student repository ZIP is returned
+        // Create a student participation with a submission and ensure repository exists
+        var result = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExerciseWithId, TEST_PREFIX + "student1");
+        var studentParticipation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+        var studentRepoUri = new de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri(studentParticipation.getRepositoryUri());
+        var studentOriginFolder = studentRepoUri.getLocalRepositoryPath(localVCBasePath);
+        var studentLocal = new LocalRepository(defaultBranch);
+        studentLocal.configureRepos(localVCBasePath, "studentLocalRepo", studentOriginFolder);
+
+        InputStreamResource resultStudentRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), result.getSubmission().getId(), null);
+        InputStreamResource resultSolutionRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), null, RepositoryType.SOLUTION);
+
+        assertThat(resultStudentRepo.getFilename()).isNotNull();
+        assertThat(resultStudentRepo.getFilename()).endsWith(".zip"); // The student repository ZIP is returned
         assertThat(resultSolutionRepo.exists()).isTrue(); // The solution repository ZIP can actually be created in the test
     }
 

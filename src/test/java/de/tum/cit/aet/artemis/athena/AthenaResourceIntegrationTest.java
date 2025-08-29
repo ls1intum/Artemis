@@ -41,8 +41,10 @@ import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRep
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -380,8 +382,27 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         programmingExerciseRepository.save(programmingExercise);
 
-        // Add Git repo for export
-        programmingExerciseUtilService.createGitRepository();
+        // Ensure LocalVC repositories exist with an initial commit for template, solution, and tests
+        programmingExercise = programmingExerciseRepository.findWithEagerTemplateAndSolutionParticipationsById(programmingExercise.getId()).orElseThrow();
+        var templateRepoUri = programmingExercise.getRepositoryURI(RepositoryType.TEMPLATE);
+        var solutionRepoUri = programmingExercise.getRepositoryURI(RepositoryType.SOLUTION);
+        var testsRepoUri = programmingExercise.getRepositoryURI(RepositoryType.TESTS);
+
+        if (templateRepoUri != null) {
+            var templateOriginFolder = templateRepoUri.getLocalRepositoryPath(localVCRepoPath);
+            var templateLocal = new LocalRepository("main");
+            templateLocal.configureRepos(localVCRepoPath, "templateLocalRepo", templateOriginFolder);
+        }
+        if (solutionRepoUri != null) {
+            var solutionOriginFolder = solutionRepoUri.getLocalRepositoryPath(localVCRepoPath);
+            var solutionLocal = new LocalRepository("main");
+            solutionLocal.configureRepos(localVCRepoPath, "solutionLocalRepo", solutionOriginFolder);
+        }
+        if (testsRepoUri != null) {
+            var testsOriginFolder = testsRepoUri.getLocalRepositoryPath(localVCRepoPath);
+            var testsLocal = new LocalRepository("main");
+            testsLocal.configureRepos(localVCRepoPath, "testsLocalRepo", testsOriginFolder);
+        }
 
         // Get exports from endpoint
         var authHeaders = new HttpHeaders();
