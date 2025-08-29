@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -16,11 +17,18 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.course.CourseAccessService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.QuizTrainingLeaderboard;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
+import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizTrainingLeaderboardRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTest {
@@ -42,9 +50,21 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private CourseTestRepository courseTestRepository;
 
+    @Autowired
+    QuizQuestionProgressRepository quizQuestionProgressRepository;
+
+    @Autowired
+    QuizExerciseTestRepository quizExerciseTestRepository;
+
+    @Autowired
+    QuizQuestionRepository quizQuestionRepository;
+
+    @Autowired
+    CourseTestRepository courseRepository;
+
     @BeforeEach
     void setUp() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
     }
 
     private QuizTrainingLeaderboard getQuizTrainingLeaderboard(Course course, User user) {
@@ -133,5 +153,72 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         assertThat(leaderboardEntryDTO.get(0).totalQuestions()).isEqualTo(30);
         assertThat(leaderboardEntryDTO.get(0).student()).isEqualTo("Timm");
         assertThat(leaderboardEntryDTO.get(0).studentLeague()).isEqualTo(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLeaderboardEntryNotStudent() {
+        User user = userTestRepository.findAll().get(0);
+        User instructor = userTestRepository.findAll().get(1);
+        Course course = courseUtilService.createCourse();
+        course.setEnrollmentEnabled(true);
+        user.setGroups(Set.of("Test"));
+        user.setAuthorities(Set.of(Authority.USER_AUTHORITY));
+        course.setStudentGroupName("Test");
+        userTestRepository.save(user);
+        courseTestRepository.save(course);
+        courseAccessService.enrollUserForCourseOrThrow(user, course);
+        QuizTrainingLeaderboard quizTrainingLeaderboard = getQuizTrainingLeaderboard(course, instructor);
+        quizTrainingLeaderboard.setLeagueId(3);
+        quizTrainingLeaderboardRepository.save(quizTrainingLeaderboard);
+        List<LeaderboardEntryDTO> leaderboardEntryDTO = quizTrainingLeaderboardService.getLeaderboard(instructor.getId(), course.getId());
+        assertThat(leaderboardEntryDTO.size()).isEqualTo(1);
+        assertThat(leaderboardEntryDTO.get(0).studentLeague()).isEqualTo(0);
+        assertThat(leaderboardEntryDTO.get(0).league()).isEqualTo(3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testInitializeLeaderboardForCourse() {
+        User user = userTestRepository.findAll().get(0);
+        Course course = courseUtilService.createCourse();
+        course.setEnrollmentEnabled(true);
+        user.setGroups(Set.of("Test"));
+        user.setAuthorities(Set.of(Authority.USER_AUTHORITY));
+        course.setStudentGroupName("Test");
+        userTestRepository.save(user);
+        courseTestRepository.save(course);
+        courseAccessService.enrollUserForCourseOrThrow(user, course);
+        QuizExercise quizExercise = new QuizExercise();
+        QuizQuestion quizQuestion = new MultipleChoiceQuestion();
+        quizQuestion.setExercise(quizExercise);
+        quizExercise.setCourse(course);
+        quizExercise.setQuizQuestions(List.of(quizQuestion));
+        quizExercise.setIsOpenForPractice(true);
+        course.setExercises(Set.of(quizExercise));
+        courseTestRepository.save(course);
+        quizExerciseTestRepository.save(quizExercise);
+        quizQuestionRepository.save(quizQuestion);
+        List<QuizQuestion> quizQuestions = quizQuestionRepository.findAll();
+        Long questionId = quizQuestions.stream().findFirst().orElseThrow().getId();
+        QuizQuestionProgress progress = new QuizQuestionProgress();
+        progress.setUserId(user.getId());
+        progress.setQuizQuestionId(questionId);
+        QuizQuestionProgressData data = new QuizQuestionProgressData();
+        data.setLastScore(1.0);
+        data.setBox(2);
+        progress.setProgressJson(data);
+        progress.setLastAnsweredAt(ZonedDateTime.now());
+        quizQuestionProgressRepository.save(progress);
+        quizTrainingLeaderboardService.weeklyLeaderboardRebuild();
+        QuizTrainingLeaderboard quizTrainingLeaderboard = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(user.getId(), course.getId()).orElseThrow();
+        assertThat(quizTrainingLeaderboard.getLeagueId()).isEqualTo(3);
+        assertThat(quizTrainingLeaderboard.getCourse().getId()).isEqualTo(course.getId());
+        assertThat(quizTrainingLeaderboard.getUser().getId()).isEqualTo(user.getId());
+        assertThat(quizTrainingLeaderboard.getLeaderboardName()).isEqualTo(user.getFirstName());
+        assertThat(quizTrainingLeaderboard.getScore()).isEqualTo(4);
+        assertThat(quizTrainingLeaderboard.getTotalQuestions()).isEqualTo(1);
+        assertThat(quizTrainingLeaderboard.getAnsweredCorrectly()).isEqualTo(1);
+        assertThat(quizTrainingLeaderboard.getAnsweredWrong()).isEqualTo(0);
     }
 }
