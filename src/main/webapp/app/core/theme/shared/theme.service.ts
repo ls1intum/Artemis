@@ -222,7 +222,7 @@ export class ThemeService {
     }
 
     /**
-     * @param newDisplayAttribute that is set for the {@link NotificationSidebarComponent}
+     * @param newDisplayAttribute to reset the notification sidebar to its previous state
      * @return displayAttribute of the notification sidebar before hiding it
      */
     private modifyNotificationSidebarDisplayStyling(newDisplayAttribute?: string): string {
