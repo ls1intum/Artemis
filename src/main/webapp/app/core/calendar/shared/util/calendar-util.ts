@@ -1,10 +1,7 @@
 import dayjs, { Dayjs } from 'dayjs/esm';
-import isoWeek from 'dayjs/esm/plugin/isoWeek';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChalkboardUser, faCheckDouble, faDiagramProject, faFileArrowUp, faFont, faGraduationCap, faKeyboard, faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
-
-dayjs.extend(isoWeek);
 
 export function getDatesInWeekOf(date: Dayjs): Dayjs[] {
     const start = date.startOf('isoWeek');

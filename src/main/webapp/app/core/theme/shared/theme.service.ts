@@ -171,9 +171,9 @@ export class ThemeService {
     private applyTheme(theme: Theme) {
         const html = document.documentElement;
         if (theme === Theme.DARK) {
-            html.setAttribute('data-prime-theme', 'dark');
+            html.setAttribute('prime-ng-use-dark-theme', 'true');
         } else {
-            html.removeAttribute('data-prime-theme');
+            html.setAttribute('prime-ng-use-dark-theme', 'false');
         }
 
         // Get current <link> theme override

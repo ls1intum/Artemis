@@ -35,8 +35,8 @@ export class CalendarService {
     private firstDayOfCurrentMonth?: Dayjs;
     private currentSubscriptionToken = signal<string | undefined>(undefined);
     private currentEventMap = signal<Map<string, CalendarEvent[]>>(new Map());
-    readonly eventMap = computed(() => this.filterEventMapByOptions(this.currentEventMap(), this.includedEventFilterOptions()));
     readonly subscriptionToken = computed<string | undefined>(() => this.currentSubscriptionToken());
+    readonly eventMap = computed(() => this.filterEventMapByOptions(this.currentEventMap(), this.includedEventFilterOptions()));
 
     eventFilterOptions: CalendarEventFilterOption[] = [
         CalendarEventFilterOption.LectureEvents,

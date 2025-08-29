@@ -50,7 +50,7 @@ export class CalendarSubscriptionPopoverComponent implements OnDestroy, OnInit {
     exercisesIsLastSelectedEventType = computed<boolean>(() => this.onlyOneEventTypeSelected() && this.includeExerciseEvents());
     tutorialsIsLastSelectedEventType = computed<boolean>(() => this.onlyOneEventTypeSelected() && this.includeTutorialEvents());
     examsIsLastSelectedEventType = computed<boolean>(() => this.onlyOneEventTypeSelected() && this.includeExamEvents());
-    language = signal<'ENGLISH' | 'GERMAN'>('ENGLISH');
+    selectedLanguage = signal<'ENGLISH' | 'GERMAN'>('ENGLISH');
     languageOptions = signal<{ label: string; value: 'ENGLISH' | 'GERMAN' }[]>(this.buildLanguageOptions());
     subscriptionUrl = computed<string>(() =>
         this.buildCalendarSubscriptionURL(
@@ -60,17 +60,14 @@ export class CalendarSubscriptionPopoverComponent implements OnDestroy, OnInit {
             this.includeExerciseEvents(),
             this.includeTutorialEvents(),
             this.includeExamEvents(),
-            this.language(),
+            this.selectedLanguage(),
         ),
     );
 
     constructor() {
         effect(() => {
             if (this.copiedUrl()) {
-                const timer = setTimeout(() => {
-                    this.copiedUrl.set(false);
-                }, 1500);
-                return () => clearTimeout(timer);
+                return this.setTimerToToggleBackCopiedUrl();
             }
         });
     }
@@ -122,5 +119,12 @@ export class CalendarSubscriptionPopoverComponent implements OnDestroy, OnInit {
         queryParameters.set('language', language);
 
         return origin + route + '?' + queryParameters.toString();
+    }
+
+    private setTimerToToggleBackCopiedUrl(): () => void {
+        const id = window.setTimeout(() => {
+            this.copiedUrl.set(false);
+        }, 1500);
+        return () => clearTimeout(id);
     }
 }

@@ -4,8 +4,8 @@ import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/c
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
-const paramsOf = (urlStr: string) => new URL(urlStr, 'http://dummy.invalid').searchParams;
-const splitFilters = (parameters: URLSearchParams) => (parameters.get('filterOptions') ?? '').split(',').filter(Boolean).sort();
+const getParametersOf = (urlStr: string) => new URL(urlStr, 'http://dummy.invalid').searchParams;
+const splitFilterParameters = (parameters: URLSearchParams) => (parameters.get('filterOptions') ?? '').split(',').filter(Boolean).sort();
 
 describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
     let fixture: ComponentFixture<CalendarSubscriptionPopoverComponent>;
@@ -29,28 +29,28 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
 
     it('builds an initial URL with all event types and ENGLISH', () => {
         const url = component.subscriptionUrl();
-        const parameters = paramsOf(url);
+        const parameters = getParametersOf(url);
 
         expect(parameters.get('token')).toBe('testToken');
         expect(parameters.get('language')).toBe('ENGLISH');
-        expect(splitFilters(parameters)).toEqual(['EXAMS', 'EXERCISES', 'LECTURES', 'TUTORIALS']);
+        expect(splitFilterParameters(parameters)).toEqual(['EXAMS', 'EXERCISES', 'LECTURES', 'TUTORIALS']);
     });
 
-    it('updates URL when exercise events are unchecked (set signal)', () => {
+    it('updates URL when exercise events are unchecked', () => {
         component.includeExerciseEvents.set(false);
         fixture.detectChanges();
 
         const url = component.subscriptionUrl();
-        const parameters = paramsOf(url);
-        expect(splitFilters(parameters)).toEqual(['EXAMS', 'LECTURES', 'TUTORIALS']);
+        const parameters = getParametersOf(url);
+        expect(splitFilterParameters(parameters)).toEqual(['EXAMS', 'LECTURES', 'TUTORIALS']);
     });
 
-    it('updates URL when language is switched to GERMAN (set signal)', () => {
-        component.language.set('GERMAN');
+    it('updates URL when language is switched to GERMAN', () => {
+        component.selectedLanguage.set('GERMAN');
         fixture.detectChanges();
 
         const url = component.subscriptionUrl();
-        const parameters = paramsOf(url);
+        const parameters = getParametersOf(url);
         expect(parameters.get('language')).toBe('GERMAN');
     });
 

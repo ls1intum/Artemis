@@ -3,9 +3,9 @@
         <h5 jhiTranslate="artemisApp.calendar.subscriptionPopover.title"></h5>
         <span jhiTranslate="artemisApp.calendar.subscriptionPopover.configurationExplanation"></span>
         @if (isMobile()) {
-            <p-selectbutton [options]="languageOptions()" [ngModel]="language()" (ngModelChange)="language.set($event)" optionLabel="label" optionValue="value" />
-            <div class="configure-events-row">
-                <div class="configure-events-column">
+            <p-selectbutton [options]="languageOptions()" [ngModel]="selectedLanguage()" (ngModelChange)="selectedLanguage.set($event)" optionLabel="label" optionValue="value" />
+            <div class="configuration-controls-row">
+                <div class="configuration-controls-column">
                     <div class="events-checkbox-and-label">
                         <p-checkbox
                             inputId="lectureEventsCheckbox"
@@ -27,7 +27,7 @@
                         <label for="tutorialEventsCheckbox" jhiTranslate="artemisApp.calendar.filterOption.tutorials"></label>
                     </div>
                 </div>
-                <div class="configure-events-column">
+                <div class="configuration-controls-column">
                     <div class="events-checkbox-and-label">
                         <p-checkbox
                             inputId="exerciseEventsCheckbox"
@@ -51,12 +51,12 @@
                 </div>
             </div>
         } @else {
-            <div class="configure-events-row">
+            <div class="configuration-controls-row">
                 <p-selectbutton
                     data-testid="language-select"
                     [options]="languageOptions()"
-                    [ngModel]="language()"
-                    (ngModelChange)="language.set($event)"
+                    [ngModel]="selectedLanguage()"
+                    (ngModelChange)="selectedLanguage.set($event)"
                     optionLabel="label"
                     optionValue="value"
                 />
