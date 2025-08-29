@@ -162,15 +162,6 @@ const routes: Routes = [
         },
     },
     {
-        path: 'lecture-transcription-ingestion',
-        loadComponent: () =>
-            import('app/core/admin/lecture-transcription-ingestion/lecture-transcription-ingestion.component').then((m) => m.LectureTranscriptionIngestionComponent),
-        data: {
-            authorities: [Authority.ADMIN],
-            pageTitle: 'global.menu.admin.lectureTranscription',
-        },
-    },
-    {
         path: 'exam-rooms',
         loadComponent: () => import('app/core/admin/exam-rooms/exam-rooms.component').then((m) => m.ExamRoomsComponent),
         data: {

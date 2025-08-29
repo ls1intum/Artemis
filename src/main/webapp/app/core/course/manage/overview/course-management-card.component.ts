@@ -6,7 +6,6 @@ import { ExerciseRowType } from 'app/core/course/manage/overview/course-manageme
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/core/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
-import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import {
     faAngleDown,
     faAngleUp,
@@ -28,7 +27,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementExerciseRowComponent } from './course-management-exercise-row.component';
@@ -48,7 +47,7 @@ import { getContrastingTextColor } from 'app/shared/util/color.utils';
     imports: [
         NgStyle,
         RouterLink,
-        SecuredImageComponent,
+        ImageComponent,
         TranslateDirective,
         FaIconComponent,
         CourseManagementExerciseRowComponent,
@@ -65,7 +64,6 @@ export class CourseManagementCardComponent implements OnInit, OnChanges {
 
     private readonly profileService = inject(ProfileService);
 
-    CachingStrategy = CachingStrategy;
     // TODO: can we merge the 3 courses here?
     @Input() course: Course;
     @Input() courseStatistics?: CourseManagementOverviewStatisticsDto;
