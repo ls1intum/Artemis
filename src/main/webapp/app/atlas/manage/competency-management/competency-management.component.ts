@@ -28,7 +28,7 @@ import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -42,7 +42,6 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
         CourseTitleBarActionsDirective,
-        HasAnyAuthorityDirective,
     ],
 })
 export class CompetencyManagementComponent implements OnInit {
@@ -57,7 +56,6 @@ export class CompetencyManagementComponent implements OnInit {
     readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'Competencies';
     readonly CourseCompetencyType = CourseCompetencyType;
-    readonly Authority = Authority;
 
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
@@ -67,6 +65,7 @@ export class CompetencyManagementComponent implements OnInit {
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly sessionStorageService = inject(SessionStorageService);
+    private readonly accountService = inject(AccountService);
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly isLoading = signal<boolean>(false);
@@ -77,6 +76,7 @@ export class CompetencyManagementComponent implements OnInit {
 
     irisCompetencyGenerationEnabled = signal<boolean>(false);
     standardizedCompetenciesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies), { requireSync: true });
+    agentChatEnabled = signal<boolean>(false);
 
     constructor() {
         effect(() => {
@@ -89,6 +89,11 @@ export class CompetencyManagementComponent implements OnInit {
                 if (irisEnabled) {
                     await this.loadIrisEnabled();
                 }
+            });
+        });
+        effect(() => {
+            untracked(async () => {
+                await this.loadAgentChatEnabled();
             });
         });
     }
@@ -107,6 +112,15 @@ export class CompetencyManagementComponent implements OnInit {
             this.irisCompetencyGenerationEnabled.set(combinedCourseSettings?.irisCompetencyGenerationSettings?.enabled ?? false);
         } catch (error) {
             this.alertService.error(error);
+        }
+    }
+
+    private async loadAgentChatEnabled() {
+        try {
+            const hasAuthority = await this.accountService.hasAnyAuthority([Authority.ADMIN, Authority.INSTRUCTOR]);
+            this.agentChatEnabled.set(hasAuthority);
+        } catch (error) {
+            this.agentChatEnabled.set(false);
         }
     }
 
