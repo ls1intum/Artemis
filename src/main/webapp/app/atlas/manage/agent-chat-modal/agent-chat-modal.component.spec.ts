@@ -152,13 +152,12 @@ describe('AgentChatModalComponent', () => {
         fixture.detectChanges();
         component.currentMessage = 'Test message';
 
-        const event = new KeyboardEvent('keypress', { key: 'Enter', shiftKey: true });
-        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
-
-        component.onKeyPress(event);
-
-        expect(preventDefaultSpy).not.toHaveBeenCalled();
-        expect(component.messages).toHaveLength(1); // Only welcome message
+        const textarea = fixture.debugElement.query(By.css('.message-input'));
+        const preventDefault = jest.fn();
+        textarea.triggerEventHandler('keypress', { key: 'Enter', shiftKey: true, preventDefault });
+        fixture.detectChanges();
+        expect(preventDefault).not.toHaveBeenCalled();
+        expect(component.messages).toHaveLength(1);
     });
 
     it('should generate unique message IDs', () => {
