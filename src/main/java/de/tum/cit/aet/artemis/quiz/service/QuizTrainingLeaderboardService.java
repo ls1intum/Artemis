@@ -264,7 +264,7 @@ public class QuizTrainingLeaderboardService {
     }
 
     /**
-     * Scheduled task that rebuilds all leaderboards for all courses weekly.
+     * Scheduled task that rebuilds all leaderboards for all courses weekly between sunday and monday.
      */
     @Scheduled(cron = "0 0 2 * * *")
     public void weeklyLeaderboardRebuild() {
