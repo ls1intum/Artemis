@@ -22,7 +22,7 @@ describe('SegmentedToggleComponent', () => {
 
         fixture = TestBed.createComponent(SegmentedToggleComponent<number>);
         component = fixture.componentInstance;
-        component.options.set(mockOptions);
+        fixture.componentRef.setInput('options', mockOptions);
         fixture.detectChanges();
     });
 
@@ -44,7 +44,7 @@ describe('SegmentedToggleComponent', () => {
     });
 
     it('should handle empty options array', () => {
-        component.options.set([]);
+        fixture.componentRef.setInput('options', []);
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
@@ -53,7 +53,7 @@ describe('SegmentedToggleComponent', () => {
     });
 
     it('should render all options correctly', () => {
-        component.options.set(mockOptions);
+        fixture.componentRef.setInput('options', mockOptions);
         fixture.detectChanges();
 
         const compiled = fixture.nativeElement;
@@ -66,7 +66,7 @@ describe('SegmentedToggleComponent', () => {
     });
 
     it('should apply selected class to the active option', () => {
-        component.options.set(mockOptions);
+        fixture.componentRef.setInput('options', mockOptions);
         component.selected.set(2);
         fixture.detectChanges();
 
