@@ -180,14 +180,16 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testInitializeLeaderboardForCourse() {
         User user = userTestRepository.findAll().get(0);
-        Course course = courseUtilService.createCourse();
-        course.setEnrollmentEnabled(true);
         user.setGroups(Set.of("Test"));
         user.setAuthorities(Set.of(Authority.USER_AUTHORITY));
+
+        Course course = courseUtilService.createCourse();
+        course.setEnrollmentEnabled(true);
         course.setStudentGroupName("Test");
+
         userTestRepository.save(user);
-        courseTestRepository.save(course);
         courseAccessService.enrollUserForCourseOrThrow(user, course);
+
         QuizExercise quizExercise = new QuizExercise();
         QuizQuestion quizQuestion = new MultipleChoiceQuestion();
         quizQuestion.setExercise(quizExercise);
@@ -195,9 +197,11 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         quizExercise.setQuizQuestions(List.of(quizQuestion));
         quizExercise.setIsOpenForPractice(true);
         course.setExercises(Set.of(quizExercise));
+
         courseTestRepository.save(course);
         quizExerciseTestRepository.save(quizExercise);
         quizQuestionRepository.save(quizQuestion);
+
         List<QuizQuestion> quizQuestions = quizQuestionRepository.findAll();
         Long questionId = quizQuestions.stream().findFirst().orElseThrow().getId();
         QuizQuestionProgress progress = new QuizQuestionProgress();
@@ -209,6 +213,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         progress.setProgressJson(data);
         progress.setLastAnsweredAt(ZonedDateTime.now());
         quizQuestionProgressRepository.save(progress);
+
         quizTrainingLeaderboardService.weeklyLeaderboardRebuild();
         QuizTrainingLeaderboard quizTrainingLeaderboard = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(user.getId(), course.getId()).orElseThrow();
         assertThat(quizTrainingLeaderboard.getLeagueId()).isEqualTo(3);
@@ -225,11 +230,13 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetQuizQuestionsForPractice() throws Exception {
         User user = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        user.setGroups(Set.of("Test"));
+        user.setAuthorities(Set.of(Authority.USER_AUTHORITY));
+
         Course course = courseUtilService.createCourse();
         course.setEnrollmentEnabled(true);
         course.setStudentGroupName("Test");
-        user.setGroups(Set.of("Test"));
-        user.setAuthorities(Set.of(Authority.USER_AUTHORITY));
+
         userTestRepository.save(user);
         courseTestRepository.save(course);
         courseAccessService.enrollUserForCourseOrThrow(user, course);

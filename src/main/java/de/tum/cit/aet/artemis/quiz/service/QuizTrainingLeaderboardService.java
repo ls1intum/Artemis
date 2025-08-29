@@ -52,12 +52,28 @@ public class QuizTrainingLeaderboardService {
         this.authorizationCheckService = authorizationCheckService;
     }
 
+    /**
+     * Returns the league ID for a given user and course.
+     *
+     * @param userId   the ID of the user
+     * @param courseId the ID of the course
+     * @return the league ID of the user in the course
+     * @throws IllegalArgumentException if the user is not found in the leaderboard
+     */
     public long getLeagueForUser(Long userId, Long courseId) {
         QuizTrainingLeaderboard entry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found in leaderboard"));
         return entry.getLeagueId();
     }
 
+    /**
+     * Retrieves the leaderboard entries for a given user and course.
+     *
+     * @param userId   the ID of the user
+     * @param courseId the ID of the course
+     * @return a list of leaderboard entry DTOs
+     * @throws IllegalArgumentException if the user or course is not found
+     */
     public List<LeaderboardEntryDTO> getLeaderboard(long userId, long courseId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
@@ -81,6 +97,14 @@ public class QuizTrainingLeaderboardService {
         return leaderboard;
     }
 
+    /**
+     * Converts a list of leaderboard entities to DTOs, including rank and league information.
+     *
+     * @param leaderboardEntries the list of leaderboard entities
+     * @param leagueId           the league ID to use for the entries
+     * @param studentLeagueId    the league ID of the student
+     * @return a list of leaderboard entry DTOs
+     */
     private static List<LeaderboardEntryDTO> getLeaderboardEntryDTOS(List<QuizTrainingLeaderboard> leaderboardEntries, long leagueId, long studentLeagueId) {
         List<LeaderboardEntryDTO> leaderboard = new ArrayList<>();
         int rank = 1;
@@ -92,6 +116,14 @@ public class QuizTrainingLeaderboardService {
         return leaderboard;
     }
 
+    /**
+     * Updates the leaderboard score for a user in a course based on answered questions.
+     *
+     * @param userId            the ID of the user
+     * @param courseId          the ID of the course
+     * @param answeredQuestions the set of answered question progress data
+     * @throws IllegalArgumentException if the user or course is not found
+     */
     public void updateLeaderboardScore(long userId, long courseId, Set<QuizQuestionProgressData> answeredQuestions) {
         int delta = calculateScoreDelta(answeredQuestions);
         int correctAnswers = calculateCorrectAnswers(answeredQuestions);
@@ -121,6 +153,12 @@ public class QuizTrainingLeaderboardService {
         quizTrainingLeaderboardRepository.save(leaderboardEntry);
     }
 
+    /**
+     * Calculates the score delta based on the answered questions.
+     *
+     * @param answeredQuestions the set of answered question progress data
+     * @return the calculated score delta
+     */
     private int calculateScoreDelta(Set<QuizQuestionProgressData> answeredQuestions) {
         int delta = 0;
         for (QuizQuestionProgressData data : answeredQuestions) {
@@ -135,6 +173,12 @@ public class QuizTrainingLeaderboardService {
         return delta;
     }
 
+    /**
+     * Calculates the number of correctly answered questions.
+     *
+     * @param answeredQuestions the set of answered question progress data
+     * @return the number of correct answers
+     */
     private int calculateCorrectAnswers(Set<QuizQuestionProgressData> answeredQuestions) {
         int correctCount = 0;
         for (QuizQuestionProgressData data : answeredQuestions) {
@@ -145,6 +189,12 @@ public class QuizTrainingLeaderboardService {
         return correctCount;
     }
 
+    /**
+     * Calculates the number of incorrectly answered questions.
+     *
+     * @param answeredQuestions the set of answered question progress data
+     * @return the number of wrong answers
+     */
     private int calculateWrongAnswers(Set<QuizQuestionProgressData> answeredQuestions) {
         int wrongCount = 0;
         for (QuizQuestionProgressData data : answeredQuestions) {
@@ -155,6 +205,14 @@ public class QuizTrainingLeaderboardService {
         return wrongCount;
     }
 
+    /**
+     * Initializes the leaderboard entry for a user in a course.
+     *
+     * @param userId                  the ID of the user
+     * @param courseId                the ID of the course
+     * @param totalAvailableQuestions the total number of available questions in the course
+     * @throws IllegalArgumentException if the user or course is not found
+     */
     public void initializeLeaderboard(long userId, long courseId, int totalAvailableQuestions) {
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -189,6 +247,13 @@ public class QuizTrainingLeaderboardService {
         quizTrainingLeaderboardRepository.save(leaderboardEntry);
     }
 
+    /**
+     * Initializes leaderboard entries for all users in a course.
+     *
+     * @param courseId                the ID of the course
+     * @param totalAvailableQuestions the total number of available questions in the course
+     * @throws IllegalArgumentException if the course is not found
+     */
     public void initializeLeaderboardsForCourse(long courseId, int totalAvailableQuestions) {
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
         Set<User> users = userRepository.getUsersInCourse(course);
@@ -198,6 +263,9 @@ public class QuizTrainingLeaderboardService {
         }
     }
 
+    /**
+     * Scheduled task that rebuilds all leaderboards for all courses weekly.
+     */
     @Scheduled(cron = "0 0 2 * * *")
     public void weeklyLeaderboardRebuild() {
         List<Course> allCourses = courseRepository.findAll();
