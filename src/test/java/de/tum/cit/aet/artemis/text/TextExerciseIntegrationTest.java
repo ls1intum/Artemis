@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -139,6 +140,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private AtlasMLRequestMockProvider atlasMLRequestMockProvider;
 
     private Course course;
 
@@ -322,6 +326,27 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setDueDate(someMoment);
         request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
         assertThat(exerciseGroup.getExercises()).doesNotContain(textExercise);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void atlasML_isCalledOnCreateUpdateAndDelete() throws Exception {
+        atlasMLRequestMockProvider.enableMockingOfRequests();
+        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+        // Create
+        courseUtilService.enableMessagingForCourse(course);
+        textExercise.setId(null);
+        textExercise.setTitle("AtlasML Create");
+        textExercise.setChannelName("atlasml-create");
+        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+
+        // Update
+        textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
+        textExercise.setTitle("AtlasML Update");
+        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+
+        // Delete
+        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
