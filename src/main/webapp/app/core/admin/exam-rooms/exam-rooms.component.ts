@@ -5,7 +5,7 @@ import {
     ExamRoomDTOExtended,
     ExamRoomDeletionSummaryDTO,
     ExamRoomUploadInformationDTO,
-    numberOfStored,
+    NumberOfStored,
 } from 'app/core/admin/exam-rooms/exam-rooms.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
@@ -73,7 +73,7 @@ export class ExamRoomsComponent {
                 ?.newestUniqueExamRooms?.map((examRoomDTO) => examRoomDTO.layoutStrategies?.length ?? 0)
                 .reduce((acc, val) => acc + val, 0) ?? 0,
     );
-    numberOf: Signal<numberOfStored | undefined> = computed(() => {
+    numberOf: Signal<NumberOfStored | undefined> = computed(() => {
         if (!this.hasOverview()) {
             return undefined;
         }
@@ -85,7 +85,7 @@ export class ExamRoomsComponent {
             uniqueExamRooms: this.numberOfUniqueExamRooms(),
             uniqueExamSeats: this.numberOfUniqueExamSeats(),
             uniqueLayoutStrategies: this.numberOfUniqueLayoutStrategies(),
-        } as numberOfStored;
+        } as NumberOfStored;
     });
     distinctLayoutStrategyNames: Signal<string> = computed(() =>
         [...new Set(this.overview()?.newestUniqueExamRooms?.flatMap((examRoomDTO) => examRoomDTO.layoutStrategies?.map((layoutStrategy) => layoutStrategy.name)) ?? [])]
@@ -142,7 +142,7 @@ export class ExamRoomsComponent {
      * @param event A file selection event
      */
     onFileSelectedAcceptZip(event: Event): void {
-        const { files }: File[] = event.target as HTMLInputElement;
+        const { files } = event.target as HTMLInputElement;
         if (!files || files.length <= 0) {
             this.showErrorNotification('invalidFile');
             this.selectedFile.set(undefined);

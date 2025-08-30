@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
@@ -7,7 +7,13 @@ import { of, throwError } from 'rxjs';
 import { ExamRoomsComponent } from 'app/core/admin/exam-rooms/exam-rooms.component';
 import { ExamRoomsService } from 'app/core/admin/exam-rooms/exam-rooms.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ExamRoomAdminOverviewDTO, ExamRoomDTO, ExamRoomLayoutStrategyDTO, ExamRoomUploadInformationDTO } from 'app/core/admin/exam-rooms/exam-rooms.model';
+import {
+    ExamRoomAdminOverviewDTO,
+    ExamRoomDTO,
+    ExamRoomDeletionSummaryDTO,
+    ExamRoomLayoutStrategyDTO,
+    ExamRoomUploadInformationDTO,
+} from 'app/core/admin/exam-rooms/exam-rooms.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
@@ -38,16 +44,20 @@ describe('ExamRoomsComponentTest', () => {
 
         // getAdminOverview gets implicitly called each time the page is opened
         jest.spyOn(service, 'getAdminOverview').mockReturnValue(
-            of({
-                body: {
+            of(
+                convertBodyToHttpResponse({
                     numberOfStoredExamRooms: 0,
                     numberOfStoredExamSeats: 0,
                     numberOfStoredLayoutStrategies: 0,
                     newestUniqueExamRooms: [],
-                } as ExamRoomAdminOverviewDTO,
-            }),
+                } as ExamRoomAdminOverviewDTO),
+            ),
         );
     });
+
+    function convertBodyToHttpResponse<T>(body: T): HttpResponse<T> {
+        return new HttpResponse<T>({ status: 200, body: body });
+    }
 
     afterEach(() => {
         jest.restoreAllMocks();
@@ -98,7 +108,7 @@ describe('ExamRoomsComponentTest', () => {
         expect(component.distinctLayoutStrategyNames()).toBe('default');
         expect(component.hasExamRoomData()).toBeTrue();
         expect(component.examRoomData()).toHaveLength(1);
-        expect(component.examRoomData()[0]).toEqual({
+        expect(component.examRoomData()![0]).toEqual({
             ...uploadedRoom,
             maxCapacity: 30,
             layoutStrategyNames: 'default',
@@ -250,11 +260,11 @@ describe('ExamRoomsComponentTest', () => {
 
         // THEN
         expect(component.hasUploadInformation()).toBeTrue();
-        expect(component.uploadInformation().uploadedFileName).toEqual(uploadData.uploadedFileName);
-        expect(component.uploadInformation().uploadDuration).toEqual(uploadData.uploadDuration);
-        expect(component.uploadInformation().numberOfUploadedRooms).toEqual(uploadData.numberOfUploadedRooms);
-        expect(component.uploadInformation().numberOfUploadedSeats).toEqual(uploadData.numberOfUploadedSeats);
-        expect(component.uploadInformation().uploadedRoomNames).toEqual(uploadData.uploadedRoomNames);
+        expect(component.uploadInformation()!.uploadedFileName).toEqual(uploadData.uploadedFileName);
+        expect(component.uploadInformation()!.uploadDuration).toEqual(uploadData.uploadDuration);
+        expect(component.uploadInformation()!.numberOfUploadedRooms).toEqual(uploadData.numberOfUploadedRooms);
+        expect(component.uploadInformation()!.numberOfUploadedSeats).toEqual(uploadData.numberOfUploadedSeats);
+        expect(component.uploadInformation()!.uploadedRoomNames).toEqual(uploadData.uploadedRoomNames);
     });
 
     function mockServiceUploadSingleRoom(): ExamRoomUploadInformationDTO {
@@ -266,7 +276,7 @@ describe('ExamRoomsComponentTest', () => {
             uploadedRoomNames: ['Audimax'],
         } as ExamRoomUploadInformationDTO;
 
-        jest.spyOn(service, 'uploadRoomDataZipFile').mockReturnValue(of({ body: uploadData }));
+        jest.spyOn(service, 'uploadRoomDataZipFile').mockReturnValue(of(convertBodyToHttpResponse(uploadData)));
 
         return uploadData;
     }
@@ -288,14 +298,14 @@ describe('ExamRoomsComponentTest', () => {
         } as ExamRoomDTO;
 
         jest.spyOn(service, 'getAdminOverview').mockReturnValue(
-            of({
-                body: {
+            of(
+                convertBodyToHttpResponse({
                     numberOfStoredExamRooms: 1,
                     numberOfStoredExamSeats: 50,
                     numberOfStoredLayoutStrategies: 1,
                     newestUniqueExamRooms: [examRoom],
-                } as ExamRoomAdminOverviewDTO,
-            }),
+                } as ExamRoomAdminOverviewDTO),
+            ),
         );
 
         return examRoom;
@@ -303,7 +313,7 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should call deletion service on delete all button click', () => {
         // GIVEN
-        jest.spyOn(service, 'deleteAllExamRooms').mockReturnValue(of({}));
+        jest.spyOn(service, 'deleteAllExamRooms').mockReturnValue(of(convertBodyToHttpResponse({})));
         const deleteAllButton = fixture.debugElement.nativeElement.querySelector('#roomDataDeleteAll');
 
         // WHEN
@@ -334,12 +344,12 @@ describe('ExamRoomsComponentTest', () => {
     it('should call delete outdated and unused service on delete outdated and unused button click', () => {
         // GIVEN
         jest.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(
-            of({
-                body: {
+            of(
+                convertBodyToHttpResponse({
                     deleteDuration: '19ms',
                     numberOfDeletedExamRooms: 4,
-                },
-            }),
+                } as ExamRoomDeletionSummaryDTO),
+            ),
         );
         const deleteOutdatedAndUnusedButton = fixture.debugElement.nativeElement.querySelector('#roomDataDeleteOutdatedAndUnused');
 
@@ -371,12 +381,12 @@ describe('ExamRoomsComponentTest', () => {
     it('should show deletion summary on successful outdated and unused deletion', () => {
         // GIVEN
         jest.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(
-            of({
-                body: {
+            of(
+                convertBodyToHttpResponse({
                     deleteDuration: '19ms',
                     numberOfDeletedExamRooms: 4,
-                },
-            }),
+                } as ExamRoomDeletionSummaryDTO),
+            ),
         );
         const deleteOutdatedAndUnusedButton = fixture.debugElement.nativeElement.querySelector('#roomDataDeleteOutdatedAndUnused');
 
@@ -387,7 +397,7 @@ describe('ExamRoomsComponentTest', () => {
         // THEN
         expect(component.hasDeletionInformation()).toBeTrue();
         expect(component.deletionInformation()).toBeDefined();
-        expect(component.deletionInformation().deleteDuration).toBe('19ms');
-        expect(component.deletionInformation().numberOfDeletedExamRooms).toBe(4);
+        expect(component.deletionInformation()!.deleteDuration).toBe('19ms');
+        expect(component.deletionInformation()!.numberOfDeletedExamRooms).toBe(4);
     });
 });
