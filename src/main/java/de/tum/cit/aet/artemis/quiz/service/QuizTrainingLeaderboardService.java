@@ -79,7 +79,7 @@ public class QuizTrainingLeaderboardService {
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
         long studentLeagueId;
         if (authorizationCheckService.isStudentInCourse(course, user)) {
-            studentLeagueId = getLeagueForUser(userId, courseId);
+            studentLeagueId = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).map(QuizTrainingLeaderboard::getLeagueId).orElse(3L);
         }
         else {
             studentLeagueId = 0;
@@ -92,7 +92,7 @@ public class QuizTrainingLeaderboardService {
             leagueId = studentLeagueId;
         }
 
-        List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueIdAndCourseIdOrderByScoreDesc(leagueId, courseId);
+        List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueIdAndCourseIdOrderByScoreDescTotalScoreDescUserAscId(leagueId, courseId);
         List<LeaderboardEntryDTO> leaderboard = getLeaderboardEntryDTOS(leaderboardEntries, leagueId, studentLeagueId);
         return leaderboard;
     }
@@ -264,7 +264,7 @@ public class QuizTrainingLeaderboardService {
     }
 
     /**
-     * Scheduled task that rebuilds all leaderboards for all courses weekly between sunday and monday.
+     * Scheduled task that rebuilds all leaderboards for all courses daily at 2 am.
      */
     @Scheduled(cron = "0 0 2 * * *")
     public void weeklyLeaderboardRebuild() {
