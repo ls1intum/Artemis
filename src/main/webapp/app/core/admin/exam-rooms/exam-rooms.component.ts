@@ -180,13 +180,11 @@ export class ExamRoomsComponent {
                 this.actionStatus.set('uploadSuccess');
                 this.selectedFile.set(undefined);
                 this.actionInformation.set(uploadInformationResponse.body as ExamRoomUploadInformationDTO);
+                this.loadExamRoomOverview();
             },
             error: (errorResponse: HttpErrorResponse) => {
                 this.showErrorNotification('uploadError', {}, errorResponse.message);
                 this.actionStatus.set(undefined);
-            },
-            complete: () => {
-                this.loadExamRoomOverview();
             },
         });
     }
@@ -203,6 +201,7 @@ export class ExamRoomsComponent {
                 next: () => {
                     this.actionStatus.set('deletionSuccess');
                     this.actionInformation.set(undefined);
+                    this.loadExamRoomOverview();
                 },
                 error: (errorResponse: HttpErrorResponse) => {
                     this.showErrorNotification('deletionError', {}, errorResponse.message);
@@ -210,7 +209,6 @@ export class ExamRoomsComponent {
                 },
                 complete: () => {
                     this.dialogErrorSource.next(''); // this.showErrorNotification is easier to use
-                    this.loadExamRoomOverview();
                 },
             });
         });
@@ -238,13 +236,11 @@ export class ExamRoomsComponent {
             next: (examRoomDeletionSummaryResponse: HttpResponse<ExamRoomDeletionSummaryDTO>) => {
                 this.actionInformation.set(examRoomDeletionSummaryResponse.body as ExamRoomDeletionSummaryDTO);
                 this.actionStatus.set('deletionSuccess');
+                this.loadExamRoomOverview();
             },
             error: (errorResponse: HttpErrorResponse) => {
                 this.showErrorNotification('deletionError', {}, errorResponse.message);
                 this.actionStatus.set(undefined);
-            },
-            complete: () => {
-                this.loadExamRoomOverview();
             },
         });
     }

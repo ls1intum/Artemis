@@ -12,6 +12,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { MockDeleteDialogService } from 'test/helpers/mocks/service/mock-delete-dialog.service';
+import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 
 describe('ExamRoomsComponentTest', () => {
     let component: ExamRoomsComponent;
@@ -104,6 +105,18 @@ describe('ExamRoomsComponentTest', () => {
         });
     });
 
+    it('should show error message on loadExamRoomOverview fail', () => {
+        // GIVEN
+        jest.spyOn(service, 'getAdminOverview').mockReturnValue(throwError(() => new Error()));
+
+        // WHEN
+        fixture.detectChanges();
+
+        // THEN
+        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+        expect(component.hasOverview()).toBeFalse();
+    });
+
     it('should reject non-zip files', () => {
         // GIVEN
         const onFileSelectedSpy = jest.spyOn(component, 'onFileSelectedAcceptZip');
@@ -143,6 +156,25 @@ describe('ExamRoomsComponentTest', () => {
         expect(uploadButton.disabled).toBeTrue();
     });
 
+    it('should reject too big of a file', () => {
+        // GIVEN
+        const onFileSelectedSpy = jest.spyOn(component, 'onFileSelectedAcceptZip');
+        const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
+        const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
+        const sizeInBytes = MAX_FILE_SIZE + 100;
+        const bytes = new Uint8Array(sizeInBytes);
+        const zipFile = new File([bytes], 'my_file.zip', { type: 'application/zip' });
+
+        // WHEN
+        setInputFiles(fileSelectButton, [zipFile]);
+        fixture.detectChanges();
+
+        // THEN
+        expect(onFileSelectedSpy).toHaveBeenCalledOnce();
+        expect(component.hasSelectedFile()).toBeFalse();
+        expect(uploadButton.disabled).toBeTrue();
+    });
+
     it('should make upload button clickable on valid file', () => {
         // GIVEN
         const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
@@ -163,7 +195,7 @@ describe('ExamRoomsComponentTest', () => {
     it('should make upload service call and refresh overview on valid zip file upload', () => {
         // GIVEN
         mockServiceUploadSingleRoom();
-        const uploadSpy = jest.spyOn(service, 'uploadRoomDataZipFile');
+        jest.spyOn(service, 'uploadRoomDataZipFile');
         const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
         const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
         const zipFile = new File(['ignored content'], 'my_file.zip', { type: 'application/zip' });
@@ -175,10 +207,32 @@ describe('ExamRoomsComponentTest', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(uploadSpy).toHaveBeenCalledOnce();
+        expect(service.uploadRoomDataZipFile).toHaveBeenCalledOnce();
+        expect(service.uploadRoomDataZipFile).toHaveBeenCalledWith(zipFile);
         expect(component.hasSelectedFile()).toBeFalse();
         // once from the initial page load, and once from clicking the upload button
         expect(service.getAdminOverview).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not show upload information on failure', () => {
+        // GIVEN
+        jest.spyOn(service, 'uploadRoomDataZipFile').mockReturnValue(throwError(() => new Error()));
+        jest.spyOn(service, 'uploadRoomDataZipFile');
+        const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
+        const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
+        const zipFile = new File(['ignored content'], 'my_file.zip', { type: 'application/zip' });
+
+        // WHEN
+        setInputFiles(fileSelectButton, [zipFile]);
+        fixture.detectChanges(); // required or else the upload button is still disabled
+        uploadButton.click();
+        fixture.detectChanges();
+
+        // THEN
+        expect(service.uploadRoomDataZipFile).toHaveBeenCalledOnce();
+        expect(service.uploadRoomDataZipFile).toHaveBeenCalledWith(zipFile);
+        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+        expect(component.hasUploadInformation()).toBeFalse();
     });
 
     it('should show upload summary on successful upload', () => {
