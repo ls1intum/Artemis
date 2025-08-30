@@ -42,7 +42,7 @@ public class QuizTrainingLeaderboard extends DomainObject {
     private int answeredWrong;
 
     @Column(name = "total_questions")
-    private int totalQuestions;
+    private long totalQuestions;
 
     public User getUser() {
         return user;
@@ -108,11 +108,11 @@ public class QuizTrainingLeaderboard extends DomainObject {
         this.answeredWrong = answeredWrong;
     }
 
-    public int getTotalQuestions() {
+    public long getTotalQuestions() {
         return totalQuestions;
     }
 
-    public void setTotalQuestions(int totalQuestions) {
+    public void setTotalQuestions(long totalQuestions) {
         this.totalQuestions = totalQuestions;
     }
 }

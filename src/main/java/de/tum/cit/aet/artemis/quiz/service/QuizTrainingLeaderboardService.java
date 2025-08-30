@@ -128,7 +128,7 @@ public class QuizTrainingLeaderboardService {
         int delta = calculateScoreDelta(answeredQuestions);
         int correctAnswers = calculateCorrectAnswers(answeredQuestions);
         int wrongAnswers = calculateWrongAnswers(answeredQuestions);
-        int totalAvailableQuestions = quizQuestionRepository.countOfQuizQuestionsAvailableForPractice(courseId);
+        long totalAvailableQuestions = quizQuestionRepository.countOfQuizQuestionsAvailableForPractice(courseId);
 
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
@@ -213,7 +213,7 @@ public class QuizTrainingLeaderboardService {
      * @param totalAvailableQuestions the total number of available questions in the course
      * @throws IllegalArgumentException if the user or course is not found
      */
-    public void initializeLeaderboard(long userId, long courseId, int totalAvailableQuestions) {
+    public void initializeLeaderboard(long userId, long courseId, long totalAvailableQuestions) {
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -254,7 +254,7 @@ public class QuizTrainingLeaderboardService {
      * @param totalAvailableQuestions the total number of available questions in the course
      * @throws IllegalArgumentException if the course is not found
      */
-    public void initializeLeaderboardsForCourse(long courseId, int totalAvailableQuestions) {
+    public void initializeLeaderboardsForCourse(long courseId, long totalAvailableQuestions) {
         Course course = courseRepository.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
         Set<User> users = userRepository.getUsersInCourse(course);
 
@@ -270,7 +270,7 @@ public class QuizTrainingLeaderboardService {
     public void weeklyLeaderboardRebuild() {
         List<Course> allCourses = courseRepository.findAll();
         for (Course course : allCourses) {
-            int totalQuestions = quizQuestionRepository.countOfQuizQuestionsAvailableForPractice(course.getId());
+            long totalQuestions = quizQuestionRepository.countOfQuizQuestionsAvailableForPractice(course.getId());
             initializeLeaderboardsForCourse(course.getId(), totalQuestions);
         }
     }
