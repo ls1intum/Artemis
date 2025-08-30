@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.match.MockRestRequestMatchers;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
@@ -84,7 +85,7 @@ public class AtlasMLRequestMockProvider {
      */
     public void mockSaveCompetenciesAny() {
         var url = URI.create(config.getAtlasmlBaseUrl() + "api/v1/competency/save");
-        mockServer.expect(MockRestRequestMatchers.requestTo(url)).andExpect(MockRestRequestMatchers.method(org.springframework.http.HttpMethod.POST))
+        mockServer.expect(ExpectedCount.manyTimes(), MockRestRequestMatchers.requestTo(url)).andExpect(MockRestRequestMatchers.method(org.springframework.http.HttpMethod.POST))
                 .andRespond(MockRestResponseCreators.withSuccess("", MediaType.APPLICATION_JSON));
     }
 }
