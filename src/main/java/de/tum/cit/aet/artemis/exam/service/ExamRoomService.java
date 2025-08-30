@@ -125,7 +125,7 @@ public class ExamRoomService {
                 int roomNumberEndIndex = entryName.lastIndexOf(".json");
                 String roomNumber = entryName.substring(roomNumberStartIndex, roomNumberEndIndex);
 
-                ExamRoomInput examRoomInput = objectMapper.readValue(zis.readAllBytes(), ExamRoomInput.class);
+                ExamRoomInput examRoomInput = objectMapper.readValue(zis, ExamRoomInput.class);
 
                 var examRoom = convertRoomNumberAndExamRoomInputToExamRoom(roomNumber, examRoomInput);
                 if (examRoom == null) {
@@ -133,6 +133,7 @@ public class ExamRoomService {
                 }
 
                 examRooms.add(examRoom);
+                zis.closeEntry();
             }
 
         }
@@ -194,7 +195,7 @@ public class ExamRoomService {
         // for relative layouts will only be done if the rooms have already been parsed
         List<ExamSeatDTO> seats = convertRowInputsToExamSeatDTOs(examRoomInput.rows);
         if (seats == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Couldn't parse room" + room.getRoomNumber() + "because the seats couldn't be converted");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Couldn't parse room " + room.getRoomNumber() + " because the seats couldn't be converted");
         }
         room.setSeats(seats);
 
@@ -275,7 +276,7 @@ public class ExamRoomService {
                 case "auto_layout" -> layoutStrategy.setType(LayoutStrategyType.RELATIVE_DISTANCE);
                 // useable_seats is a common typo in the JSON files
                 case "usable_seats", "useable_seats" -> layoutStrategy.setType(LayoutStrategyType.FIXED_SELECTION);
-                default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted");
+                default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Couldn't parse room " + room.getRoomNumber() + " because the layouts couldn't be converted");
             }
             layoutStrategy.setParametersJson(String.valueOf(layoutDetailNode));
 
@@ -283,14 +284,14 @@ public class ExamRoomService {
             switch (layoutStrategy.getType()) {
                 case LayoutStrategyType.FIXED_SELECTION -> {
                     if (!layoutDetailNode.isArray()) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted");
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Couldn't parse room " + room.getRoomNumber() + " because the layouts couldn't be converted");
                     }
 
                     layoutStrategy.setCapacity(layoutDetailNode.size());
                 }
                 case LayoutStrategyType.RELATIVE_DISTANCE -> {
                     if (!layoutDetailNode.isObject()) {
-                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted");
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Couldn't parse room " + room.getRoomNumber() + " because the layouts couldn't be converted");
                     }
 
                     layoutStrategy.setCapacity(calculateSeatsFromRelativeDistanceLayout(layoutDetailNode, room));
