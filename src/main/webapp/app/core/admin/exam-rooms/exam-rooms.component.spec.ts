@@ -55,7 +55,7 @@ describe('ExamRoomsComponentTest', () => {
         );
     });
 
-    function convertBodyToHttpResponse<T>(body: T): HttpResponse<T> {
+    function convertBodyToHttpResponse<T>(body?: T): HttpResponse<T> {
         return new HttpResponse<T>({ status: 200, body: body });
     }
 
@@ -313,7 +313,7 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should call deletion service on delete all button click', () => {
         // GIVEN
-        jest.spyOn(service, 'deleteAllExamRooms').mockReturnValue(of(convertBodyToHttpResponse({})));
+        jest.spyOn(service, 'deleteAllExamRooms').mockReturnValue(of(convertBodyToHttpResponse<void>()));
         const deleteAllButton = fixture.debugElement.nativeElement.querySelector('#roomDataDeleteAll');
 
         // WHEN
