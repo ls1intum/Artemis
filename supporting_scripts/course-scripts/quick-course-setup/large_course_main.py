@@ -22,8 +22,6 @@ COMMITS_PER_STUDENT: int = int(config.get("Settings", "commits"))
 EXERCISES_TO_CREATE: int = int(config.get("Settings", "exercises"))
 EXERCISES_NAME: str = str(config.get("Settings", "exercise_name"))
 CREATE_EXERCISES: bool = config.get("Settings", "create_exercises").lower() == "true"
-EXERCISE_IDS: list[int] = list(map(int, config.get("Settings", "exercise_Ids").split(",")))
-
 CLIENT_URL: str = config.get("Settings", "client_url")
 SERVER_URL: str = config.get("Settings", "server_url")
 ADMIN_USER: str = config.get("Settings", "admin_user")
@@ -89,8 +87,12 @@ def main() -> None:
             admin_session, course_id, SERVER_URL, EXERCISES_TO_CREATE, EXERCISES_NAME
         )
     else:
-        exercise_Ids.extend(EXERCISE_IDS)
-
+        ids_raw = config.get("Settings", "exercise_Ids", fallback="")
+        ids = [int(x) for x in ids_raw.split(",") if x.strip()]
+        if not ids:
+            logging.warning("No exercise IDs provided in config; nothing to process.")
+            return
+        exercise_Ids.extend(ids)
     # Step 6: Add participation and commit for each user (in parallel)
     logging.info("Created users and their credentials:")
     if not user_credentials:
