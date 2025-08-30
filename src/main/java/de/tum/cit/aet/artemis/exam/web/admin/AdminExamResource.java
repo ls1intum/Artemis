@@ -89,8 +89,9 @@ public class AdminExamResource {
             throw new BadRequestAlertException("The rooms file is empty", ENTITY_NAME, "roomsFileEmpty");
         }
 
-        DataSize maxSize = multipartProperties.getMaxFileSize();
-        if (zipFile.getSize() > maxSize.toBytes()) {
+        final DataSize maxSize = multipartProperties.getMaxFileSize();
+        final long maxBytes = maxSize.toBytes();
+        if (maxBytes > 0 && zipFile.getSize() > maxBytes) {
             throw new BadRequestAlertException("The rooms file exceeds the %s limit".formatted(maxSize.toString()), ENTITY_NAME, "roomsFileTooLarge");
         }
 
