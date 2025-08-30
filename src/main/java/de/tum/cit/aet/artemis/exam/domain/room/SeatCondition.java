@@ -12,6 +12,13 @@ public enum SeatCondition {
 
     USABLE, NO_TABLE, DEFECT, WHEELCHAIR;
 
+    /**
+     * Converts a flag, as stored in the JSON input files, or as stored in the DB, to the respective enum instance
+     *
+     * @param flag The flag
+     * @return The enum instance that was converted from the given flag
+     * @throws IllegalArgumentException If the flag was not recognized
+     */
     public static SeatCondition seatConditionFromFlag(String flag) {
         if (flag == null) {
             throw new IllegalArgumentException("Seat condition flag can not be null");

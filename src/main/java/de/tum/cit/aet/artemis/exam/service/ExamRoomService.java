@@ -140,8 +140,9 @@ public class ExamRoomService {
                 ExamRoomInput examRoomInput = objectMapper.readValue(zis.readAllBytes(), ExamRoomInput.class);
 
                 var examRoom = convertRoomNumberAndExamRoomInputToExamRoom(roomNumber, examRoomInput);
-                if (examRoom == null)
+                if (examRoom == null) {
                     continue;
+                }
 
                 examRooms.add(examRoom);
             }
