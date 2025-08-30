@@ -224,7 +224,7 @@ public class ReactionService {
      * @param actual           the actual course to verify
      * @throws BadRequestAlertException if the actual course is null or does not match the expected course ID
      */
-    private void assertBelongsToCourse(Long expectedCourseId, Course actual) {
+    private void checkThatCourseHasCourseIdElseThrow(Long expectedCourseId, Course actual) {
         if (actual == null || !Objects.equals(actual.getId(), expectedCourseId)) {
             throw new BadRequestAlertException("Reaction does not belong to the given course", METIS_REACTION_ENTITY_NAME, "wrongCourse");
         }
