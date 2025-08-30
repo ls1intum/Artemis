@@ -240,7 +240,7 @@ public class QuizQuestionProgressService {
         QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(new QuizQuestionProgress());
         QuizQuestionProgressData data = existingProgress.getProgressJson() != null ? existingProgress.getProgressJson() : new QuizQuestionProgressData();
 
-        ZonedDateTime dueDate = data.getDueDate() != null ? data.getDueDate() : null;
+        ZonedDateTime dueDate = data.getDueDate();
         if (dueDate == null || !dueDate.isAfter(answeredAt)) {
             existingProgress.setQuizQuestionId(question.getId());
             existingProgress.setUserId(userId);
