@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Selection, UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
@@ -122,8 +122,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     result?: Result;
     resultWithComplaint?: Result;
 
-    selectedEntities: string[];
-    selectedRelationships: string[];
+    selectedElementIds: string[];
 
     submission: ModelingSubmission;
     submissionId: number | undefined;
@@ -773,48 +772,25 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     /**
      * Handles changes of the model element selection in Apollon. This is used for displaying
      * only the feedback of the selected model elements.
-     * @param selection the new selection
+     * @param selectedElementIds the new selection
      */
-    onSelectionChanged(selection: Selection) {
-        // console.log('DEBUG Modeling-submission onSelectionChanged ', JSON.stringify(selection));
-        // this.selectedEntities = Object.entries(selection.nodes)
-        //     .filter(([, selected]) => selected)
-        //     .map(([elementId]) => elementId);
-        // for (const selectedEntity of this.selectedEntities) {
-        //     this.selectedEntities.push(...this.getSelectedChildren(selectedEntity));
-        // }
-        // this.selectedRelationships = Object.entries(selection.relationships)
-        //     .filter(([, selected]) => selected)
-        //     .map(([elementId]) => elementId);
+    onSelectedElementIdsChanged(selectedElementIds: string[]) {
+        this.selectedElementIds = selectedElementIds;
     }
-
-    // /**
-    //  * Returns the elementIds of all the children of the element with the given elementId
-    //  * or an empty list, if no children exist for this element.
-    //  */
-    // private getSelectedChildren(elementId: string): string[] {
-    //     if (!this.umlModel || !this.umlModel.nodes) {
-    //         return [];
-    //     }
-    //     return Object.values(this.umlModel.nodes)
-    //         .filter((element) => element.parentId === elementId)
-    //         .map((element) => element.id);
-    // }
 
     /**
      * Checks whether a model element in the modeling editor is selected.
      */
     shouldBeDisplayed(feedback: Feedback): boolean {
-        return false;
-        // if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
-        //     return true;
-        // }
-        // const referencedModelType = feedback.referenceType! as UMLElementType;
-        // if (referencedModelType in UMLRelationshipType) {
-        //     return this.selectedRelationships.indexOf(feedback.referenceId!) > -1;
-        // } else {
-        //     return this.selectedEntities.indexOf(feedback.referenceId!) > -1;
-        // }
+        // If no elements are selected, show all feedback
+        if (this.selectedElementIds.length === 0) {
+            return true;
+        }
+        if (!feedback.referenceId) {
+            return false;
+        }
+
+        return this.selectedElementIds.includes(feedback.referenceId);
     }
 
     canDeactivate(): boolean {

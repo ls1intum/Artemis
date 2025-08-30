@@ -71,7 +71,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     private initializeApollonEditor(): void {
         if (this.apollonEditor) {
-            this.apollonEditor.unsubscribeFromModelChange(this.modelSubscription);
+            this.apollonEditor.unsubscribe(this.modelSubscription);
             this.apollonEditor.destroy();
         }
 
@@ -103,7 +103,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     private destroyApollonEditor(): void {
         if (this.apollonEditor) {
             if (this.modelSubscription) {
-                this.apollonEditor.unsubscribeFromModelChange(this.modelSubscription);
+                this.apollonEditor.unsubscribe(this.modelSubscription);
             }
             // if (this.modelPatchSubscription) {
             //     this.apollonEditor.unsubscribeFromModelChangePatches(this.modelPatchSubscription);

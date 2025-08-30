@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
-import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -36,7 +36,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     @Input() highlightDifferences: boolean;
 
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
-    @Output() selectionChanged = new EventEmitter<Selection>();
+    @Output() selectedElementIdsChanged = new EventEmitter<string[]>();
 
     @Input() highlightedElements: Map<string, string>; // map elementId -> highlight color
     @Input() elementCounts?: ModelElementCount[];
@@ -125,6 +125,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 this.feedbackChanged.emit(this.referencedFeedbacks);
             }
         });
+
+        if (this.readOnly) {
+            this.apollonEditor.subscribeToAssessmentSelection((selections) => this.selectedElementIdsChanged.emit(selections));
+        }
         // this.apollonEditor!.subscribeToSelectionChange((selection: Selection) => {
         //     if (this.readOnly) {
         //         this.selectionChanged.emit(selection);
@@ -159,15 +163,15 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 }
                 feedback.credits = assessment.score;
                 feedback.text = assessment.feedback;
-                // if (assessment.dropInfo && assessment.dropInfo.instruction?.id) {
-                //     feedback.gradingInstruction = assessment.dropInfo.instruction;
-                // }
-                // if (feedback.gradingInstruction && assessment.dropInfo == undefined) {
-                //     feedback.gradingInstruction = undefined;
-                // }
+                if (assessment.dropInfo && (assessment.dropInfo as any).instruction?.id) {
+                    feedback.gradingInstruction = (assessment.dropInfo as any).instruction;
+                }
+                if (feedback.gradingInstruction && assessment.dropInfo == undefined) {
+                    feedback.gradingInstruction = undefined;
+                }
             } else {
-                // feedback = Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo);
-                feedback = Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, undefined);
+                feedback = Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo as DropInfo);
+                // feedback = Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, undefined);
             }
             newElementFeedback.set(assessment.modelElementId, feedback);
         }
