@@ -4,9 +4,11 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,9 +46,12 @@ public class AdminExamResource {
 
     private final ExamRoomService examRoomService;
 
-    public AdminExamResource(ExamRepository examRepository, ExamRoomService examRoomService, ExamRoomRepository examRoomRepository) {
+    private final MultipartProperties multipartProperties;
+
+    public AdminExamResource(ExamRepository examRepository, ExamRoomService examRoomService, ExamRoomRepository examRoomRepository, MultipartProperties multipartProperties) {
         this.examRepository = examRepository;
         this.examRoomService = examRoomService;
+        this.multipartProperties = multipartProperties;
     }
 
     /**
@@ -82,6 +87,11 @@ public class AdminExamResource {
         log.debug("REST request to parse rooms from a zip file: {}", zipFile.getOriginalFilename());
         if (zipFile.isEmpty()) {
             throw new BadRequestAlertException("The rooms file is empty", ENTITY_NAME, "roomsFileEmpty");
+        }
+
+        DataSize maxSize = multipartProperties.getMaxFileSize();
+        if (zipFile.getSize() > maxSize.toBytes()) {
+            throw new BadRequestAlertException("The rooms file exceeds the %s limit".formatted(maxSize.toString()), ENTITY_NAME, "roomsFileTooLarge");
         }
 
         var uploadInformationDTO = examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFile);
