@@ -8,11 +8,16 @@
             {{ selectedFileName() }}
         }
     </label>
-    <button jhiTranslate="entity.action.save" class="btn btn-primary" (click)="upload()" [disabled]="!canUpload()"></button>
+    <button id="roomDataUpload" jhiTranslate="entity.action.save" class="btn btn-primary" (click)="upload()" [disabled]="!canUpload()"></button>
     <p></p>
     <p></p>
-    <button jhiTranslate="artemisApp.examRooms.adminOverview.deleteAllExamRooms" class="btn btn-danger" (click)="clearExamRooms()"></button>
-    <button jhiTranslate="artemisApp.examRooms.adminOverview.deleteExamRoomsSafe" class="btn btn-warning" (click)="deleteOutdatedAndUnusedExamRooms()"></button>
+    <button id="roomDataDeleteAll" jhiTranslate="artemisApp.examRooms.adminOverview.deleteAllExamRooms" class="btn btn-danger" (click)="clearExamRooms()"></button>
+    <button
+        id="roomDataDeleteOutdatedAndUnused"
+        jhiTranslate="artemisApp.examRooms.adminOverview.deleteExamRoomsSafe"
+        class="btn btn-warning"
+        (click)="deleteOutdatedAndUnusedExamRooms()"
+    ></button>
 
     @if (isUploading()) {
         <div jhiTranslate="entity.action.saving" class="text info"></div>
@@ -49,12 +54,12 @@
         <h3>
             <div jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.title"></div>
         </h3>
-        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.totalExamRooms"></span> {{ overview()!.numberOfStoredExamRooms }}</div>
-        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.totalSeats"></span> {{ overview()!.numberOfStoredExamSeats }}</div>
-        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.totalLayoutStrategies"></span> {{ overview()!.numberOfStoredLayoutStrategies }}</div>
-        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.uniqueExamRooms"></span> {{ numberOfUniqueExamRooms() }}</div>
-        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.uniqueSeats"></span> {{ numberOfUniqueExamSeats() }}</div>
-        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.uniqueLayoutStrategies"></span> {{ numberOfUniqueLayoutStrategies() }}</div>
+        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.totalExamRooms"></span> {{ numberOf()!.examRooms }}</div>
+        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.totalSeats"></span> {{ numberOf()!.examSeats }}</div>
+        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.totalLayoutStrategies"></span> {{ numberOf()!.layoutStrategies }}</div>
+        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.uniqueExamRooms"></span> {{ numberOf()!.uniqueExamRooms }}</div>
+        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.uniqueSeats"></span> {{ numberOf()!.uniqueExamSeats }}</div>
+        <div><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.uniqueLayoutStrategies"></span> {{ numberOf()!.uniqueLayoutStrategies }}</div>
         <div>
             <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.distinctLayoutStrategyNames"></span>
             {{ distinctLayoutStrategyNames() }}

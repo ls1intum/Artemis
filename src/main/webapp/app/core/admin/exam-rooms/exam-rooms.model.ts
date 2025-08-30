@@ -14,10 +14,24 @@ export interface ExamRoomDTO {
     layoutStrategies: ExamRoomLayoutStrategyDTO[];
 }
 
+export interface ExamRoomDTOExtended extends ExamRoomDTO {
+    maxCapacity: number;
+    layoutStrategyNames: string;
+}
+
 export interface ExamRoomLayoutStrategyDTO {
     name: string;
     type: string;
     capacity: number | undefined;
+}
+
+export interface NumberOfStored {
+    examRooms: number;
+    examSeats: number;
+    layoutStrategies: number;
+    uniqueExamRooms: number;
+    uniqueExamSeats: number;
+    uniqueLayoutStrategies: number;
 }
 
 export interface ExamRoomAdminOverviewDTO {

@@ -1,0 +1,339 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { of, throwError } from 'rxjs';
+
+import { ExamRoomsComponent } from 'app/core/admin/exam-rooms/exam-rooms.component';
+import { ExamRoomsService } from 'app/core/admin/exam-rooms/exam-rooms.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ExamRoomAdminOverviewDTO, ExamRoomDTO, ExamRoomLayoutStrategyDTO, ExamRoomUploadInformationDTO } from 'app/core/admin/exam-rooms/exam-rooms.model';
+import { AlertService } from 'app/shared/service/alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
+import { MockDeleteDialogService } from 'test/helpers/mocks/service/mock-delete-dialog.service';
+
+describe('ExamRoomsComponentTest', () => {
+    let component: ExamRoomsComponent;
+    let fixture: ComponentFixture<ExamRoomsComponent>;
+    let service: ExamRoomsService;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ExamRoomsComponent],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AlertService, useClass: MockAlertService },
+                { provide: DeleteDialogService, useClass: MockDeleteDialogService },
+                ExamRoomsService,
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ExamRoomsComponent);
+        component = fixture.componentInstance;
+        service = TestBed.inject(ExamRoomsService);
+
+        // getAdminOverview gets implicitly called each time the page is opened
+        jest.spyOn(service, 'getAdminOverview').mockReturnValue(
+            of({
+                body: {
+                    numberOfStoredExamRooms: 0,
+                    numberOfStoredExamSeats: 0,
+                    numberOfStoredLayoutStrategies: 0,
+                    newestUniqueExamRooms: [],
+                } as ExamRoomAdminOverviewDTO,
+            }),
+        );
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('should initialize', () => {
+        fixture.detectChanges();
+        expect(component).toBeDefined();
+    });
+
+    it('should load exam room overview on page load', () => {
+        // WHEN
+        fixture.detectChanges();
+        fixture.whenStable();
+
+        // THEN
+        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+        expect(component.hasOverview()).toBeTrue();
+        expect(component.numberOf()!.examRooms).toBe(0);
+        expect(component.numberOf()!.examSeats).toBe(0);
+        expect(component.numberOf()!.layoutStrategies).toBe(0);
+        expect(component.numberOf()!.uniqueExamRooms).toBe(0);
+        expect(component.numberOf()!.uniqueExamSeats).toBe(0);
+        expect(component.numberOf()!.uniqueLayoutStrategies).toBe(0);
+
+        expect(component.distinctLayoutStrategyNames()).toBe('');
+        expect(component.hasExamRoomData()).toBeFalse();
+    });
+
+    it('should properly extract values from admin overview', () => {
+        // GIVEN
+        const uploadedRoom: ExamRoomDTO = mockServiceGetAdminOverviewSingleRoom();
+
+        // WHEN
+        fixture.detectChanges(); // required or else the upload button is still disabled
+
+        // THEN
+        expect(component.hasOverview()).toBeTrue();
+        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+
+        expect(component.numberOf()!.examRooms).toBe(1);
+        expect(component.numberOf()!.examSeats).toBe(50);
+        expect(component.numberOf()!.layoutStrategies).toBe(1);
+        expect(component.numberOf()!.uniqueExamRooms).toBe(1);
+        expect(component.numberOf()!.uniqueExamSeats).toBe(50);
+        expect(component.numberOf()!.uniqueLayoutStrategies).toBe(1);
+
+        expect(component.distinctLayoutStrategyNames()).toBe('default');
+        expect(component.hasExamRoomData()).toBeTrue();
+        expect(component.examRoomData()).toHaveLength(1);
+        expect(component.examRoomData()[0]).toEqual({
+            ...uploadedRoom,
+            maxCapacity: 30,
+            layoutStrategyNames: 'default',
+        });
+    });
+
+    it('should reject non-zip files', () => {
+        // GIVEN
+        const onFileSelectedSpy = jest.spyOn(component, 'onFileSelectedAcceptZip');
+        const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
+        const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
+
+        const nonZipFile = new File(['ignored content'], 'non.zip.txt', { type: 'text/plain' });
+
+        // WHEN
+        setInputFiles(fileSelectButton, [nonZipFile]);
+        fixture.detectChanges();
+
+        // THEN
+        expect(onFileSelectedSpy).toHaveBeenCalledOnce();
+        expect(component.hasSelectedFile()).toBeFalse();
+        expect(uploadButton.disabled).toBeTrue();
+    });
+
+    function setInputFiles(input: HTMLInputElement, files: File[]) {
+        Object.defineProperty(input, 'files', { value: files });
+        input.dispatchEvent(new Event('change'));
+    }
+
+    it('should reject empty input', () => {
+        // GIVEN
+        const onFileSelectedSpy = jest.spyOn(component, 'onFileSelectedAcceptZip');
+        const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
+        const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
+
+        // WHEN
+        setInputFiles(fileSelectButton, []);
+        fixture.detectChanges();
+
+        // THEN
+        expect(onFileSelectedSpy).toHaveBeenCalledOnce();
+        expect(component.hasSelectedFile()).toBeFalse();
+        expect(uploadButton.disabled).toBeTrue();
+    });
+
+    it('should make upload button clickable on valid file', () => {
+        // GIVEN
+        const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
+        const fileSelectLabel = fixture.debugElement.nativeElement.querySelector('label[for="roomDataFileSelect"]');
+        const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
+        const zipFile = new File(['ignored content'], 'my_file.zip', { type: 'application/zip' });
+
+        // WHEN
+        setInputFiles(fileSelectButton, [zipFile]);
+        fixture.detectChanges();
+
+        // THEN
+        expect(component.hasSelectedFile()).toBeTrue();
+        expect(fileSelectLabel.textContent.trim()).toBe('my_file.zip');
+        expect(uploadButton.disabled).toBeFalse();
+    });
+
+    it('should make upload service call and refresh overview on valid zip file upload', () => {
+        // GIVEN
+        mockServiceUploadSingleRoom();
+        const uploadSpy = jest.spyOn(service, 'uploadRoomDataZipFile');
+        const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
+        const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
+        const zipFile = new File(['ignored content'], 'my_file.zip', { type: 'application/zip' });
+
+        // WHEN
+        setInputFiles(fileSelectButton, [zipFile]);
+        fixture.detectChanges(); // required or else the upload button is still disabled
+        uploadButton.click();
+        fixture.detectChanges();
+
+        // THEN
+        expect(uploadSpy).toHaveBeenCalledOnce();
+        expect(component.hasSelectedFile()).toBeFalse();
+        // once from the initial page load, and once from clicking the upload button
+        expect(service.getAdminOverview).toHaveBeenCalledTimes(2);
+    });
+
+    it('should show upload summary on successful upload', () => {
+        // GIVEN
+        const uploadData: ExamRoomUploadInformationDTO = mockServiceUploadSingleRoom();
+        const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
+        const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
+        const zipFile = new File(['ignored content'], 'my_file.zip', { type: 'application/zip' });
+
+        // WHEN
+        setInputFiles(fileSelectButton, [zipFile]);
+        fixture.detectChanges(); // required or else the upload button is still disabled
+        uploadButton.click();
+        fixture.detectChanges();
+
+        // THEN
+        expect(component.hasUploadInformation()).toBeTrue();
+        expect(component.uploadInformation().uploadedFileName).toEqual(uploadData.uploadedFileName);
+        expect(component.uploadInformation().uploadDuration).toEqual(uploadData.uploadDuration);
+        expect(component.uploadInformation().numberOfUploadedRooms).toEqual(uploadData.numberOfUploadedRooms);
+        expect(component.uploadInformation().numberOfUploadedSeats).toEqual(uploadData.numberOfUploadedSeats);
+        expect(component.uploadInformation().uploadedRoomNames).toEqual(uploadData.uploadedRoomNames);
+    });
+
+    function mockServiceUploadSingleRoom(): ExamRoomUploadInformationDTO {
+        const uploadData: ExamRoomUploadInformationDTO = {
+            uploadedFileName: 'my_file.zip',
+            uploadDuration: '12ms',
+            numberOfUploadedRooms: 1,
+            numberOfUploadedSeats: 50,
+            uploadedRoomNames: ['Audimax'],
+        } as ExamRoomUploadInformationDTO;
+
+        jest.spyOn(service, 'uploadRoomDataZipFile').mockReturnValue(of({ body: uploadData }));
+
+        return uploadData;
+    }
+
+    /// Returns the exam room it uses
+    function mockServiceGetAdminOverviewSingleRoom(): ExamRoomDTO {
+        const examRoom: ExamRoomDTO = {
+            roomNumber: '123.456.789',
+            name: 'Audimax',
+            building: 'MI',
+            numberOfSeats: 50,
+            layoutStrategies: [
+                {
+                    name: 'default',
+                    type: 'certainType',
+                    capacity: 30,
+                } as ExamRoomLayoutStrategyDTO,
+            ],
+        } as ExamRoomDTO;
+
+        jest.spyOn(service, 'getAdminOverview').mockReturnValue(
+            of({
+                body: {
+                    numberOfStoredExamRooms: 1,
+                    numberOfStoredExamSeats: 50,
+                    numberOfStoredLayoutStrategies: 1,
+                    newestUniqueExamRooms: [examRoom],
+                } as ExamRoomAdminOverviewDTO,
+            }),
+        );
+
+        return examRoom;
+    }
+
+    it('should call deletion service on delete all button click', () => {
+        // GIVEN
+        jest.spyOn(service, 'deleteAllExamRooms').mockReturnValue(of({}));
+        const deleteAllButton = fixture.debugElement.nativeElement.querySelector('#roomDataDeleteAll');
+
+        // WHEN
+        deleteAllButton.click();
+        fixture.detectChanges();
+
+        // THEN
+        expect(service.deleteAllExamRooms).toHaveBeenCalledOnce();
+        // once from the initial load, once from the button click
+        expect(service.getAdminOverview).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not reload overview if deletion fails on delete all button click', () => {
+        // GIVEN
+        jest.spyOn(service, 'deleteAllExamRooms').mockReturnValue(throwError(() => new Error()));
+        const deleteAllButton = fixture.debugElement.nativeElement.querySelector('#roomDataDeleteAll');
+
+        // WHEN
+        deleteAllButton.click();
+        fixture.detectChanges();
+
+        // THEN
+        expect(service.deleteAllExamRooms).toHaveBeenCalledOnce();
+        // once from the initial load
+        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+    });
+
+    it('should call delete outdated and unused service on delete outdated and unused button click', () => {
+        // GIVEN
+        jest.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(
+            of({
+                body: {
+                    deleteDuration: '19ms',
+                    numberOfDeletedExamRooms: 4,
+                },
+            }),
+        );
+        const deleteOutdatedAndUnusedButton = fixture.debugElement.nativeElement.querySelector('#roomDataDeleteOutdatedAndUnused');
+
+        // WHEN
+        deleteOutdatedAndUnusedButton.click();
+        fixture.detectChanges();
+
+        // THEN
+        expect(service.deleteOutdatedAndUnusedExamRooms).toHaveBeenCalledOnce();
+        // once from the initial load, once from the button click
+        expect(service.getAdminOverview).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not reload overview if deletion fails on delete outdated and unused button click', () => {
+        // GIVEN
+        jest.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(throwError(() => new Error()));
+        const deleteOutdatedAndUnusedButton = fixture.debugElement.nativeElement.querySelector('#roomDataDeleteOutdatedAndUnused');
+
+        // WHEN
+        deleteOutdatedAndUnusedButton.click();
+        fixture.detectChanges();
+
+        // THEN
+        expect(service.deleteOutdatedAndUnusedExamRooms).toHaveBeenCalledOnce();
+        // once from the initial load
+        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+    });
+
+    it('should show deletion summary on successful outdated and unused deletion', () => {
+        // GIVEN
+        jest.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(
+            of({
+                body: {
+                    deleteDuration: '19ms',
+                    numberOfDeletedExamRooms: 4,
+                },
+            }),
+        );
+        const deleteOutdatedAndUnusedButton = fixture.debugElement.nativeElement.querySelector('#roomDataDeleteOutdatedAndUnused');
+
+        // WHEN
+        deleteOutdatedAndUnusedButton.click();
+        fixture.detectChanges();
+
+        // THEN
+        expect(component.hasDeletionInformation()).toBeTrue();
+        expect(component.deletionInformation()).toBeDefined();
+        expect(component.deletionInformation().deleteDuration).toBe('19ms');
+        expect(component.deletionInformation().numberOfDeletedExamRooms).toBe(4);
+    });
+});

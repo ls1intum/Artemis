@@ -1,5 +1,12 @@
 import { Component, EventEmitter, Signal, WritableSignal, computed, effect, inject, signal } from '@angular/core';
-import { ExamRoomAdminOverviewDTO, ExamRoomDTO, ExamRoomDeletionSummaryDTO, ExamRoomUploadInformationDTO } from 'app/core/admin/exam-rooms/exam-rooms.model';
+import {
+    ExamRoomAdminOverviewDTO,
+    ExamRoomDTO,
+    ExamRoomDTOExtended,
+    ExamRoomDeletionSummaryDTO,
+    ExamRoomUploadInformationDTO,
+    numberOfStored,
+} from 'app/core/admin/exam-rooms/exam-rooms.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortService } from 'app/shared/service/sort.service';
@@ -16,12 +23,6 @@ import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
-
-// privately used interfaces, i.e., not sent from the server like this
-interface ExamRoomDTOExtended extends ExamRoomDTO {
-    maxCapacity: number;
-    layoutStrategyNames: string;
-}
 
 @Component({
     selector: 'jhi-exam-rooms',
@@ -43,11 +44,11 @@ export class ExamRoomsComponent {
     private selectedFile: WritableSignal<File | undefined> = signal(undefined);
     private actionStatus: WritableSignal<'uploading' | 'uploadSuccess' | 'deleting' | 'deletionSuccess' | undefined> = signal(undefined);
     private actionInformation: WritableSignal<ExamRoomUploadInformationDTO | ExamRoomDeletionSummaryDTO | undefined> = signal(undefined);
-    overview: WritableSignal<ExamRoomAdminOverviewDTO | undefined> = signal(undefined);
+    private overview: WritableSignal<ExamRoomAdminOverviewDTO | undefined> = signal(undefined);
 
     // Computed signals
     hasSelectedFile: Signal<boolean> = computed(() => !!this.selectedFile());
-    selectedFileName: Signal<string | undefined> = computed(() => this.selectedFile()?.name);
+    selectedFileName: Signal<string | undefined> = computed(() => this.selectedFile()?.name.trim());
     canUpload: Signal<boolean> = computed(() => this.hasSelectedFile() && !this.isUploading());
     isUploading: Signal<boolean> = computed(() => this.actionStatus() === 'uploading');
     hasUploadInformation: Signal<boolean> = computed(() => this.actionStatus() === 'uploadSuccess' && !!this.uploadInformation());
@@ -55,20 +56,37 @@ export class ExamRoomsComponent {
     hasDeletionInformation: Signal<boolean> = computed(() => this.actionStatus() === 'deletionSuccess' && !!this.deletionInformation());
     uploadInformation: Signal<ExamRoomUploadInformationDTO | undefined> = computed(() => this.actionInformation() as ExamRoomUploadInformationDTO);
     deletionInformation: Signal<ExamRoomDeletionSummaryDTO | undefined> = computed(() => this.actionInformation() as ExamRoomDeletionSummaryDTO);
+    /**
+     * Indicates if we have the {@link numberOf} and {@link distinctLayoutStrategyNames} fields
+     */
     hasOverview: Signal<boolean> = computed(() => !!this.overview());
-    numberOfUniqueExamRooms: Signal<number> = computed(() => this.overview()?.newestUniqueExamRooms?.length ?? 0);
-    numberOfUniqueExamSeats: Signal<number> = computed(
+    private numberOfUniqueExamRooms: Signal<number> = computed(() => this.overview()?.newestUniqueExamRooms?.length ?? 0);
+    private numberOfUniqueExamSeats: Signal<number> = computed(
         () =>
             this.overview()
                 ?.newestUniqueExamRooms?.map((examRoomDTO) => examRoomDTO.numberOfSeats)
                 .reduce((acc, val) => acc + val, 0) ?? 0,
     );
-    numberOfUniqueLayoutStrategies: Signal<number> = computed(
+    private numberOfUniqueLayoutStrategies: Signal<number> = computed(
         () =>
             this.overview()
                 ?.newestUniqueExamRooms?.map((examRoomDTO) => examRoomDTO.layoutStrategies?.length ?? 0)
                 .reduce((acc, val) => acc + val, 0) ?? 0,
     );
+    numberOf: Signal<numberOfStored | undefined> = computed(() => {
+        if (!this.hasOverview()) {
+            return undefined;
+        }
+
+        return {
+            examRooms: this.overview()!.numberOfStoredExamRooms,
+            examSeats: this.overview()!.numberOfStoredExamSeats,
+            layoutStrategies: this.overview()!.numberOfStoredLayoutStrategies,
+            uniqueExamRooms: this.numberOfUniqueExamRooms(),
+            uniqueExamSeats: this.numberOfUniqueExamSeats(),
+            uniqueLayoutStrategies: this.numberOfUniqueLayoutStrategies(),
+        } as numberOfStored;
+    });
     distinctLayoutStrategyNames: Signal<string> = computed(() =>
         [...new Set(this.overview()?.newestUniqueExamRooms?.flatMap((examRoomDTO) => examRoomDTO.layoutStrategies?.map((layoutStrategy) => layoutStrategy.name)) ?? [])]
             .slice()
@@ -124,14 +142,14 @@ export class ExamRoomsComponent {
      * @param event A file selection event
      */
     onFileSelectedAcceptZip(event: Event): void {
-        const { files } = event.target as HTMLInputElement;
+        const { files }: File[] = event.target as HTMLInputElement;
         if (!files || files.length <= 0) {
             this.showErrorNotification('invalidFile');
             this.selectedFile.set(undefined);
             return;
         }
 
-        const file = files[0];
+        const file: File = files[0];
         if (!file.name.toLowerCase().endsWith('.zip')) {
             this.showErrorNotification('noZipFile');
             this.selectedFile.set(undefined);
