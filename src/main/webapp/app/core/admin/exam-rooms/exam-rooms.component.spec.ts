@@ -71,7 +71,6 @@ describe('ExamRoomsComponentTest', () => {
     it('should load exam room overview on page load', () => {
         // WHEN
         fixture.detectChanges();
-        fixture.whenStable();
 
         // THEN
         expect(service.getAdminOverview).toHaveBeenCalledOnce();
@@ -92,7 +91,7 @@ describe('ExamRoomsComponentTest', () => {
         const uploadedRoom: ExamRoomDTO = mockServiceGetAdminOverviewSingleRoom();
 
         // WHEN
-        fixture.detectChanges(); // required or else the upload button is still disabled
+        fixture.detectChanges(); // let the onInit effect run
 
         // THEN
         expect(component.hasOverview()).toBeTrue();
@@ -129,6 +128,7 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should reject non-zip files', () => {
         // GIVEN
+        fixture.detectChanges(); // initial render
         const onFileSelectedSpy = jest.spyOn(component, 'onFileSelectedAcceptZip');
         const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
         const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
@@ -152,6 +152,7 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should reject empty input', () => {
         // GIVEN
+        fixture.detectChanges(); // initial render
         const onFileSelectedSpy = jest.spyOn(component, 'onFileSelectedAcceptZip');
         const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
         const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
@@ -168,6 +169,7 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should reject too big of a file', () => {
         // GIVEN
+        fixture.detectChanges(); // initial render
         const onFileSelectedSpy = jest.spyOn(component, 'onFileSelectedAcceptZip');
         const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
         const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
@@ -187,6 +189,7 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should make upload button clickable on valid file', () => {
         // GIVEN
+        fixture.detectChanges(); // initial render
         const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
         const fileSelectLabel = fixture.debugElement.nativeElement.querySelector('label[for="roomDataFileSelect"]');
         const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
@@ -204,8 +207,8 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should make upload service call and refresh overview on valid zip file upload', () => {
         // GIVEN
-        mockServiceUploadSingleRoom();
-        jest.spyOn(service, 'uploadRoomDataZipFile');
+        fixture.detectChanges(); // initial render
+        mockServiceUploadRoomDataZipFile();
         const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
         const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
         const zipFile = new File(['ignored content'], 'my_file.zip', { type: 'application/zip' });
@@ -226,8 +229,8 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should not show upload information on failure', () => {
         // GIVEN
+        fixture.detectChanges(); // initial render
         jest.spyOn(service, 'uploadRoomDataZipFile').mockReturnValue(throwError(() => new Error()));
-        jest.spyOn(service, 'uploadRoomDataZipFile');
         const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
         const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
         const zipFile = new File(['ignored content'], 'my_file.zip', { type: 'application/zip' });
@@ -247,7 +250,8 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should show upload summary on successful upload', () => {
         // GIVEN
-        const uploadData: ExamRoomUploadInformationDTO = mockServiceUploadSingleRoom();
+        fixture.detectChanges(); // initial render
+        const uploadData: ExamRoomUploadInformationDTO = mockServiceUploadRoomDataZipFile();
         const fileSelectButton = fixture.debugElement.nativeElement.querySelector('#roomDataFileSelect');
         const uploadButton = fixture.debugElement.nativeElement.querySelector('#roomDataUpload');
         const zipFile = new File(['ignored content'], 'my_file.zip', { type: 'application/zip' });
@@ -267,7 +271,7 @@ describe('ExamRoomsComponentTest', () => {
         expect(component.uploadInformation()!.uploadedRoomNames).toEqual(uploadData.uploadedRoomNames);
     });
 
-    function mockServiceUploadSingleRoom(): ExamRoomUploadInformationDTO {
+    function mockServiceUploadRoomDataZipFile(): ExamRoomUploadInformationDTO {
         const uploadData: ExamRoomUploadInformationDTO = {
             uploadedFileName: 'my_file.zip',
             uploadDuration: '12ms',
@@ -313,6 +317,7 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should call deletion service on delete all button click', () => {
         // GIVEN
+        fixture.detectChanges(); // initial render
         jest.spyOn(service, 'deleteAllExamRooms').mockReturnValue(of(convertBodyToHttpResponse<void>()));
         const deleteAllButton = fixture.debugElement.nativeElement.querySelector('#roomDataDeleteAll');
 
@@ -328,6 +333,7 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should not reload overview if deletion fails on delete all button click', () => {
         // GIVEN
+        fixture.detectChanges(); // initial render
         jest.spyOn(service, 'deleteAllExamRooms').mockReturnValue(throwError(() => new Error()));
         const deleteAllButton = fixture.debugElement.nativeElement.querySelector('#roomDataDeleteAll');
 
@@ -343,6 +349,7 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should call delete outdated and unused service on delete outdated and unused button click', () => {
         // GIVEN
+        fixture.detectChanges(); // initial render
         jest.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(
             of(
                 convertBodyToHttpResponse({
@@ -365,6 +372,7 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should not reload overview if deletion fails on delete outdated and unused button click', () => {
         // GIVEN
+        fixture.detectChanges(); // initial render
         jest.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(throwError(() => new Error()));
         const deleteOutdatedAndUnusedButton = fixture.debugElement.nativeElement.querySelector('#roomDataDeleteOutdatedAndUnused');
 
@@ -380,6 +388,7 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should show deletion summary on successful outdated and unused deletion', () => {
         // GIVEN
+        fixture.detectChanges(); // initial render
         jest.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(
             of(
                 convertBodyToHttpResponse({

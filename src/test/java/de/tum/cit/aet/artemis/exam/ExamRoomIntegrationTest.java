@@ -283,7 +283,8 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // Here we know that we have newestUniqueExamRooms != null
         var newestRoomNames = adminOverview.newestUniqueExamRooms().stream().map(ExamRoomDTO::name).toList();
-        assertThat(newestRoomNames).contains(expectedNewRoomNames);
+        assertThat(newestRoomNames).contains(expectedNewRoomNames);  // we want to test the subset containment
+        // because `newestRoomNames` could contain older rooms we didn't upload in the latest run
 
         var newestUniqueExamRoomsFromDb = examRoomRepository.findAllNewestExamRoomVersionsWithEagerLayoutStrategies().stream().map(er -> new ExamRoomDTO(er.getRoomNumber(),
                 er.getName(), er.getBuilding(), er.getSeats().size(),
@@ -292,7 +293,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                         : er.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
                 .toList();
 
-        assertThat(adminOverview.newestUniqueExamRooms()).containsAll(newestUniqueExamRoomsFromDb);
+        assertThat(adminOverview.newestUniqueExamRooms()).containsExactlyInAnyOrderElementsOf(newestUniqueExamRoomsFromDb);
     }
 
     @Test

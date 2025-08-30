@@ -231,7 +231,7 @@ public class ExamRoomService {
         List<ExamSeatDTO> seats = new ArrayList<>();
 
         for (RowInput rowInput : rows) {
-            if (rowInput == null) {
+            if (rowInput == null || rowInput.seats == null) {
                 return null;
             }
 
@@ -264,10 +264,19 @@ public class ExamRoomService {
      * @return A list of all layout strategies this room has to offer.
      */
     private static List<LayoutStrategy> convertLayoutInputsToLayoutStrategies(Map<String, JsonNode> layoutNamesToLayoutNode, ExamRoom room) {
+        if (layoutNamesToLayoutNode == null) {
+            throw new BadRequestAlertException("Couldn't parse room " + room.getRoomNumber() + " because the layouts are missing", ENTITY_NAME, "layoutsMissing");
+        }
+
         List<LayoutStrategy> layouts = new ArrayList<>();
 
         // Iterate over all possible room layout names, e.g., "default" or "wide"
         layoutNamesToLayoutNode.forEach((layoutName, layoutNode) -> {
+            if (layoutNode == null || !layoutNode.fieldNames().hasNext()) {
+                throw new BadRequestAlertException("Couldn't parse room " + room.getRoomNumber() + " because the layouts couldn't be converted", ENTITY_NAME,
+                        "cannotConvertLayout");
+            }
+
             // We assume there's only a single layout type, e.g., "auto_layout" or "usable_seats"
             final String layoutType = layoutNode.fieldNames().next();
             final JsonNode layoutDetailNode = layoutNode.path(layoutType);
@@ -280,7 +289,7 @@ public class ExamRoomService {
                 // useable_seats is a common typo in the JSON files
                 case "usable_seats", "useable_seats" -> layoutStrategy.setType(LayoutStrategyType.FIXED_SELECTION);
                 default -> throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted", ENTITY_NAME,
-                        "cannotConvertUnknownLayout");
+                        "cannotConvertLayout");
             }
             layoutStrategy.setParametersJson(String.valueOf(layoutDetailNode));
 

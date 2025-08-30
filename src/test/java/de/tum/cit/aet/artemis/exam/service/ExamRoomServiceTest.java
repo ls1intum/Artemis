@@ -77,7 +77,7 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testParseAndStoreZipFileIllegalExamRooms() {
         // Illegal exam rooms should throw an exception
         assertThatExceptionOfType(ResponseStatusException.class).isThrownBy(() -> examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileIllegalExamRooms))
-                .withMessageContaining("400 BAD_REQUEST");
+                .satisfies(ex -> assertThat(ex.getStatusCode().value()).isEqualTo(400));
     }
 
     @Test
@@ -150,7 +150,7 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testDeleteAllOutdatedAndUnusedExamRooms_empty() {
         var deletionSummary = examRoomService.deleteAllOutdatedAndUnusedExamRooms();
         assertThat(deletionSummary).isNotNull();
-        assertThat(deletionSummary.deleteDuration()).endsWith("ms");
+        assertThat(deletionSummary.deleteDuration()).matches(".*\\d+ms");
         assertThat(deletionSummary.numberOfDeletedExamRooms()).isZero();
     }
 

@@ -9,9 +9,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 // @formatter:off
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamRoomAdminOverviewDTO(
-    @NotNull Integer numberOfStoredExamRooms,
-    @NotNull Integer numberOfStoredExamSeats,
-    @NotNull Integer numberOfStoredLayoutStrategies,
+    int numberOfStoredExamRooms,
+    int numberOfStoredExamSeats,
+    int numberOfStoredLayoutStrategies,
     @NotNull Set<ExamRoomDTO> newestUniqueExamRooms
 ) {
 }

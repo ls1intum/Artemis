@@ -98,8 +98,10 @@ public class RequestUtilService {
         return request;
     }
 
-    public Void postMultipartFileOnly(String path, MockMultipartFile file, HttpStatus expectedStatus) throws Exception {
-        return postMultipartFileOnlyWithResponseBody(path, file, Void.class, expectedStatus);
+    public void postMultipartFileOnly(String path, MockMultipartFile file, HttpStatus expectedStatus) throws Exception {
+        var builder = MockMvcRequestBuilders.multipart(new URI(path)).file(file);
+        performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
     }
 
     public <R> R postMultipartFileOnlyWithResponseBody(String path, MockMultipartFile file, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
