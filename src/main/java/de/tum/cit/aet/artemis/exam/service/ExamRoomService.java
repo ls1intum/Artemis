@@ -124,6 +124,9 @@ public class ExamRoomService {
                 int roomNumberStartIndex = entryName.lastIndexOf('/') + 1;
                 int roomNumberEndIndex = entryName.lastIndexOf(".json");
                 String roomNumber = entryName.substring(roomNumberStartIndex, roomNumberEndIndex);
+                if (roomNumber.isBlank()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid room file name: missing room number");
+                }
 
                 ExamRoomInput examRoomInput = objectMapper.readValue(zis, ExamRoomInput.class);
 
@@ -229,8 +232,14 @@ public class ExamRoomService {
 
                 final String seatLabel = seatInput.label == null ? "" : seatInput.label;
                 final String seatName = rowLabel.isEmpty() ? seatLabel : (rowLabel + ", " + seatLabel);
-
-                ExamSeatDTO seat = new ExamSeatDTO(seatName, SeatCondition.seatConditionFromFlag(seatInput.condition), seatInput.position.x, seatInput.position.y);
+                SeatCondition seatCondition;
+                try {
+                    seatCondition = SeatCondition.valueOf(seatInput.condition);
+                }
+                catch (IllegalArgumentException e) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid seat condition: " + e.getMessage());
+                }
+                ExamSeatDTO seat = new ExamSeatDTO(seatName, seatCondition, seatInput.position.x, seatInput.position.y);
 
                 seats.add(seat);
             }
