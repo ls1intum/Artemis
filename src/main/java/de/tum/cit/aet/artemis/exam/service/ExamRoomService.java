@@ -28,7 +28,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
@@ -41,9 +40,7 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
-import de.tum.cit.aet.artemis.exam.repository.ExamRoomAssignmentRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
-import de.tum.cit.aet.artemis.exam.repository.LayoutStrategyRepository;
 
 /*
  * Service implementation for managing exam rooms.
@@ -55,21 +52,12 @@ public class ExamRoomService {
 
     private static final Logger log = LoggerFactory.getLogger(ExamRoomService.class);
 
-    private static final String ENTITY_NAME = "examRoom";
-
     private final ExamRoomRepository examRoomRepository;
-
-    private final LayoutStrategyRepository layoutStrategyRepository;
-
-    private final ExamRoomAssignmentRepository examRoomAssignmentRepository;
 
     private final ObjectMapper objectMapper;
 
-    public ExamRoomService(ExamRoomRepository examRoomRepository, LayoutStrategyRepository layoutStrategyRepository, ExamRoomAssignmentRepository examRoomAssignmentRepository,
-            ObjectMapper objectMapper) {
+    public ExamRoomService(ExamRoomRepository examRoomRepository, ObjectMapper objectMapper) {
         this.examRoomRepository = examRoomRepository;
-        this.layoutStrategyRepository = layoutStrategyRepository;
-        this.examRoomAssignmentRepository = examRoomAssignmentRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -149,7 +137,7 @@ public class ExamRoomService {
 
         }
         catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Internal error while trying to read the rooms");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
         log.info("Parsed rooms in {}", TimeLogUtil.formatDurationFrom(startTime));
 
@@ -181,7 +169,7 @@ public class ExamRoomService {
         }
 
         if (examRoomInput.name == null || examRoomInput.building == null) {
-            throw new BadRequestAlertException("Room name and building are required fields", ENTITY_NAME, "roomNameAndBuildingRequired");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Room name and building are required fields");
         }
 
         /* Extract simple exam room fields */
@@ -206,7 +194,7 @@ public class ExamRoomService {
         // for relative layouts will only be done if the rooms have already been parsed
         List<ExamSeatDTO> seats = convertRowInputsToExamSeatDTOs(examRoomInput.rows);
         if (seats == null) {
-            throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the seats couldn't be converted", ENTITY_NAME, "cannotConvertSeats");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Couldn't parse room" + room.getRoomNumber() + "because the seats couldn't be converted");
         }
         room.setSeats(seats);
 
@@ -265,7 +253,7 @@ public class ExamRoomService {
      */
     private static List<LayoutStrategy> convertLayoutInputsToLayoutStrategies(Map<String, JsonNode> layoutNamesToLayoutNode, ExamRoom room) {
         if (layoutNamesToLayoutNode == null) {
-            throw new BadRequestAlertException("Couldn't parse room " + room.getRoomNumber() + " because the layouts are missing", ENTITY_NAME, "layoutsMissing");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Couldn't parse room " + room.getRoomNumber() + " because the layouts are missing");
         }
 
         List<LayoutStrategy> layouts = new ArrayList<>();
@@ -273,8 +261,7 @@ public class ExamRoomService {
         // Iterate over all possible room layout names, e.g., "default" or "wide"
         layoutNamesToLayoutNode.forEach((layoutName, layoutNode) -> {
             if (layoutNode == null || !layoutNode.fieldNames().hasNext()) {
-                throw new BadRequestAlertException("Couldn't parse room " + room.getRoomNumber() + " because the layouts couldn't be converted", ENTITY_NAME,
-                        "cannotConvertLayout");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Couldn't parse room " + room.getRoomNumber() + " because the layouts couldn't be converted");
             }
 
             // We assume there's only a single layout type, e.g., "auto_layout" or "usable_seats"
@@ -288,8 +275,7 @@ public class ExamRoomService {
                 case "auto_layout" -> layoutStrategy.setType(LayoutStrategyType.RELATIVE_DISTANCE);
                 // useable_seats is a common typo in the JSON files
                 case "usable_seats", "useable_seats" -> layoutStrategy.setType(LayoutStrategyType.FIXED_SELECTION);
-                default -> throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted", ENTITY_NAME,
-                        "cannotConvertLayout");
+                default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted");
             }
             layoutStrategy.setParametersJson(String.valueOf(layoutDetailNode));
 
@@ -297,16 +283,14 @@ public class ExamRoomService {
             switch (layoutStrategy.getType()) {
                 case LayoutStrategyType.FIXED_SELECTION -> {
                     if (!layoutDetailNode.isArray()) {
-                        throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted", ENTITY_NAME,
-                                "cannotConvertLayout");
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted");
                     }
 
                     layoutStrategy.setCapacity(layoutDetailNode.size());
                 }
                 case LayoutStrategyType.RELATIVE_DISTANCE -> {
                     if (!layoutDetailNode.isObject()) {
-                        throw new BadRequestAlertException("Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted", ENTITY_NAME,
-                                "cannotConvertLayout");
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Couldn't parse room" + room.getRoomNumber() + "because the layouts couldn't be converted");
                     }
 
                     layoutStrategy.setCapacity(calculateSeatsFromRelativeDistanceLayout(layoutDetailNode, room));
@@ -399,9 +383,9 @@ public class ExamRoomService {
     public ExamRoomAdminOverviewDTO getExamRoomAdminOverview() {
         final List<ExamRoom> examRooms = examRoomRepository.findAllExamRoomsWithEagerLayoutStrategies();
 
-        final Integer numberOfStoredExamRooms = examRooms.size();
-        final Integer numberOfStoredExamSeats = examRooms.stream().mapToInt(er -> er.getSeats().size()).sum();
-        final Integer numberOfStoredLayoutStrategies = examRooms.stream().mapToInt(er -> er.getLayoutStrategies().size()).sum();
+        final int numberOfStoredExamRooms = examRooms.size();
+        final int numberOfStoredExamSeats = examRooms.stream().mapToInt(er -> er.getSeats().size()).sum();
+        final int numberOfStoredLayoutStrategies = examRooms.stream().mapToInt(er -> er.getLayoutStrategies().size()).sum();
 
         final Set<ExamRoomDTO> examRoomDTOS = examRooms.stream()
                 .map(examRoom -> new ExamRoomDTO(examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoom.getSeats().size(),
