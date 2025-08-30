@@ -105,7 +105,7 @@ public class ReactionService {
         Reaction reaction = reactionRepository.findByIdElseThrow(reactionId);
 
         Course reactionCourse = getReactionCourseElseThrow(reaction);
-        assertBelongsToCourse(courseId, reactionCourse);
+        checkThatCourseHasCourseIdElseThrow(courseId, reactionCourse);
 
         // check if user that wants to delete reaction is user that created the reaction
         if (!user.equals(reaction.getUser())) {
