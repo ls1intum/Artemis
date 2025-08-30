@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
 
 /**
@@ -48,7 +47,7 @@ public class AdminExamResource {
 
     private final MultipartProperties multipartProperties;
 
-    public AdminExamResource(ExamRepository examRepository, ExamRoomService examRoomService, ExamRoomRepository examRoomRepository, MultipartProperties multipartProperties) {
+    public AdminExamResource(ExamRepository examRepository, ExamRoomService examRoomService, MultipartProperties multipartProperties) {
         this.examRepository = examRepository;
         this.examRoomService = examRoomService;
         this.multipartProperties = multipartProperties;
