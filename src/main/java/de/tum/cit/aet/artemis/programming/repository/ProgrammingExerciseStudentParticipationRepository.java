@@ -98,14 +98,12 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndTeamStudentsByExerciseId(long exerciseId);
 
     @Query("""
-                        SELECT DISTINCT participation
-                        FROM ProgrammingExerciseStudentParticipation participation
-                             JOIN FETCH participation.submissions s
-                        WHERE participation.exercise.id = :exerciseId
-                            AND s.id = (
-                                SELECT MAX(s2.id)
-                                FROM participation.submissions s2
-                            )
+            SELECT DISTINCT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN FETCH participation.submissions s
+            WHERE participation.exercise.id = :exerciseId
+                AND s.id = (SELECT MAX(s2.id)
+                            FROM participation.submissions s2)
             """)
     Set<ProgrammingExerciseStudentParticipation> findWithLatestSubmissionByExerciseId(@Param("exerciseId") long exerciseId);
 
