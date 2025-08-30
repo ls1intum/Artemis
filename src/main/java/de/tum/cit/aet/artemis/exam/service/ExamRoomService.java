@@ -169,7 +169,7 @@ public class ExamRoomService {
             return null;
         }
 
-        if (examRoomInput.name == null || examRoomInput.building == null) {
+        if (examRoomInput.name == null || examRoomInput.name.isBlank() || examRoomInput.building == null || examRoomInput.building.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Room name and building are required fields");
         }
 
@@ -194,9 +194,6 @@ public class ExamRoomService {
         // It is imperative that the seats are parsed before the layout strategies are parsed, as the size calculation
         // for relative layouts will only be done if the rooms have already been parsed
         List<ExamSeatDTO> seats = convertRowInputsToExamSeatDTOs(examRoomInput.rows);
-        if (seats == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Couldn't parse room " + room.getRoomNumber() + " because the seats couldn't be converted");
-        }
         room.setSeats(seats);
 
         /* Extract the layouts */
@@ -214,20 +211,20 @@ public class ExamRoomService {
      */
     private static List<ExamSeatDTO> convertRowInputsToExamSeatDTOs(List<RowInput> rows) {
         if (rows == null) {
-            return null;
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Seats are missing");
         }
 
         List<ExamSeatDTO> seats = new ArrayList<>();
 
         for (RowInput rowInput : rows) {
             if (rowInput == null || rowInput.seats == null) {
-                return null;
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Malformed row: seats missing");
             }
 
             final String rowLabel = rowInput.label == null ? "" : rowInput.label;
             for (SeatInput seatInput : rowInput.seats) {
                 if (seatInput == null || seatInput.position == null) {
-                    return null;
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Malformed seat: position missing");
                 }
 
                 final String seatLabel = seatInput.label == null ? "" : seatInput.label;
@@ -335,7 +332,7 @@ public class ExamRoomService {
                 // Filter out all exam rooms that are not default usable
                 .filter(examSeatDTO -> examSeatDTO.seatCondition() == SeatCondition.USABLE)
                 // Sort by X, then by Y to ensure stable processing later
-                .sorted(Comparator.comparingDouble(ExamSeatDTO::yCoordinate).thenComparingDouble(ExamSeatDTO::xCoordinate)).toList();
+                .sorted(Comparator.comparingDouble(ExamSeatDTO::xCoordinate).thenComparingDouble(ExamSeatDTO::yCoordinate)).toList();
 
         List<ExamSeatDTO> selectedSeats = new ArrayList<>();
         for (ExamSeatDTO examSeatDTO : examSeatsFilteredAndSorted) {

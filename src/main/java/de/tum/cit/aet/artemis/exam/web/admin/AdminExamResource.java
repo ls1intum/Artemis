@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -54,7 +55,7 @@ public class AdminExamResource {
     }
 
     /**
-     * GET /exams/upcoming: Find all current and upcoming exams.
+     * GET /courses/upcoming-exams: Find all current and upcoming exams.
      *
      * @return the ResponseEntity with status 200 (OK) and a list of exams.
      */
@@ -81,7 +82,7 @@ public class AdminExamResource {
      *
      * @return a response entity with status 200 and information about the upload process.
      */
-    @PostMapping("exam-rooms/upload")
+    @PostMapping(value = "exam-rooms/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ExamRoomUploadInformationDTO> uploadRoomZip(@RequestParam("file") MultipartFile zipFile) {
         log.debug("REST request to parse rooms from a zip file: {}", zipFile.getOriginalFilename());
         if (zipFile.isEmpty()) {
@@ -105,7 +106,7 @@ public class AdminExamResource {
      */
     @GetMapping("exam-rooms/admin-overview")
     public ResponseEntity<ExamRoomAdminOverviewDTO> getExamRoomAdminOverview() {
-        log.debug("REST request to get exam room admin overview");
+        log.info("REST request to get exam room admin overview");
 
         var examRoomAdminOverviewDTO = examRoomService.getExamRoomAdminOverview();
         return ResponseEntity.ok(examRoomAdminOverviewDTO);
@@ -118,7 +119,7 @@ public class AdminExamResource {
      */
     @DeleteMapping("exam-rooms")
     public ResponseEntity<Void> deleteAllExamRooms() {
-        log.debug("REST request to delete ALL exam rooms");
+        log.info("REST request to delete ALL exam rooms");
 
         examRoomService.deleteAllExamRooms();
         return ResponseEntity.noContent().build();
