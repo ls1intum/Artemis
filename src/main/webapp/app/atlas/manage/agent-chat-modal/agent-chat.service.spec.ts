@@ -1,16 +1,57 @@
 import { TestBed } from '@angular/core/testing';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { AgentChatService } from './agent-chat.service';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { MockProvider } from 'ng-mocks';
 
 describe('AgentChatService', () => {
     let service: AgentChatService;
+    let courseCompetencyService: jest.Mocked<CourseCompetencyService>;
+    let courseManagementService: jest.Mocked<CourseManagementService>;
+    let competencyService: jest.Mocked<CompetencyService>;
+    let websocketService: jest.Mocked<WebsocketService>;
 
     beforeEach(() => {
+        const mockCourseCompetencyService = {
+            generateCompetenciesFromCourseDescription: jest.fn().mockReturnValue(of({})),
+            getAllForCourse: jest.fn().mockReturnValue(of({ body: [] })),
+        };
+
+        const mockCourseManagementService = {
+            find: jest.fn().mockReturnValue(of({ body: { description: 'Test course description' } })),
+        };
+
+        const mockCompetencyService = {
+            createBulk: jest.fn().mockReturnValue(of({})),
+        };
+
+        const mockWebsocketService = {
+            subscribe: jest.fn(),
+            receive: jest.fn().mockReturnValue(of({ result: [] })),
+            unsubscribe: jest.fn(),
+        };
+
         TestBed.configureTestingModule({
-            providers: [AgentChatService],
+            providers: [
+                AgentChatService,
+                MockProvider(CourseCompetencyService, mockCourseCompetencyService),
+                MockProvider(CourseManagementService, mockCourseManagementService),
+                MockProvider(CompetencyService, mockCompetencyService),
+                MockProvider(WebsocketService, mockWebsocketService),
+                MockProvider(AlertService),
+            ],
         });
+
         service = TestBed.inject(AgentChatService);
+        courseCompetencyService = TestBed.inject(CourseCompetencyService) as jest.Mocked<CourseCompetencyService>;
+        courseManagementService = TestBed.inject(CourseManagementService) as jest.Mocked<CourseManagementService>;
+        competencyService = TestBed.inject(CompetencyService) as jest.Mocked<CompetencyService>;
+        websocketService = TestBed.inject(WebsocketService) as jest.Mocked<WebsocketService>;
     });
 
     afterEach(() => {
@@ -28,8 +69,9 @@ describe('AgentChatService', () => {
             await firstValueFrom(service.sendMessage('create competencies for programming', 123));
             // Now confirm creation
             const response = await firstValueFrom(service.sendMessage('yes, create them', 123));
-            expect(response).toContain('Mock: Created');
+            expect(response).toContain('Successfully created');
             expect(response).toContain('competencies for your course');
+            expect(competencyService.createBulk).toHaveBeenCalled();
         });
 
         it('should handle competency-related requests', async () => {
@@ -101,7 +143,51 @@ describe('AgentChatService', () => {
 
         it('should not create competencies without confirmation', async () => {
             const response = await firstValueFrom(service.sendMessage('maybe later', 123));
-            expect(response).not.toContain('Mock: Created');
+            expect(response).not.toContain('Successfully created');
+        });
+
+        it('should handle course description generation requests', async () => {
+            const response = await firstValueFrom(service.sendMessage('Generate competencies from course description', 123));
+            expect(response).toContain('Analyzing course description');
+            expect(courseManagementService.find).toHaveBeenCalledWith(123);
+        });
+
+        it('should handle course description generation when no description exists', async () => {
+            courseManagementService.find.mockReturnValue(of({ body: { description: '' } }));
+            const response = await firstValueFrom(service.sendMessage('Generate competencies from course description', 123));
+            expect(response).toContain("couldn't find a course description");
+        });
+
+        it('should identify course description requests correctly', () => {
+            const isGenerateFromDescriptionMethod = (service as any).isGenerateFromDescriptionRequest;
+
+            expect(isGenerateFromDescriptionMethod('Generate competencies from course description')).toBeTruthy();
+            expect(isGenerateFromDescriptionMethod('based on course content')).toBeTruthy();
+            expect(isGenerateFromDescriptionMethod('create competencies for programming')).toBeFalsy();
+        });
+
+        it('should handle course description display requests', async () => {
+            const response = await firstValueFrom(service.sendMessage('What is the course description?', 123));
+            expect(response).toContain('Course Description');
+            expect(response).toContain('Test course description');
+            expect(response).toContain('Would you like me to generate competencies');
+            expect(courseManagementService.find).toHaveBeenCalledWith(123);
+        });
+
+        it('should handle course description requests when no description exists', async () => {
+            courseManagementService.find.mockReturnValue(of({ body: { description: '' } }));
+            const response = await firstValueFrom(service.sendMessage('Show course description', 123));
+            expect(response).toContain("doesn't have a description set up yet");
+            expect(response).toContain('course settings');
+        });
+
+        it('should identify course description display requests correctly', () => {
+            const isCourseDescriptionRequestMethod = (service as any).isCourseDescriptionRequest;
+
+            expect(isCourseDescriptionRequestMethod('show course description')).toBeTruthy();
+            expect(isCourseDescriptionRequestMethod('what is the course description')).toBeTruthy();
+            expect(isCourseDescriptionRequestMethod('tell me about the course')).toBeTruthy();
+            expect(isCourseDescriptionRequestMethod('create competencies')).toBeFalsy();
         });
     });
 
@@ -159,7 +245,8 @@ describe('AgentChatService', () => {
 
             const prompt = getCompetencyPromptMethod();
             expect(prompt).toContain("I'd love to help you create competencies");
-            expect(prompt).toContain('What topic or subject');
+            expect(prompt).toContain('Auto-generate from course description');
+            expect(prompt).toContain('Generate competencies from course description');
         });
     });
 
@@ -183,7 +270,8 @@ describe('AgentChatService', () => {
 
             // Step 2: Confirm creation
             const confirmResponse = await firstValueFrom(service.sendMessage('yes create them', 123));
-            expect(confirmResponse).toContain('Mock: Created');
+            expect(confirmResponse).toContain('Successfully created');
+            expect(competencyService.createBulk).toHaveBeenCalled();
 
             // Step 3: Try to confirm again (should have no pending)
             const emptyResponse = await firstValueFrom(service.sendMessage('yes', 123));
