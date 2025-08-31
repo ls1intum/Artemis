@@ -8,7 +8,7 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Course } from 'app/entities/course/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockProvider } from 'ng-mocks';
 
 describe('AgentChatService', () => {
