@@ -1,5 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, delay, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import dayjs from 'dayjs/esm';
 import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
@@ -69,66 +71,37 @@ export class AgentChatService {
      * Returns the course description to the user
      */
     private getCourseDescriptionResponse(courseId: number): Observable<string> {
-        return new Observable<string>((subscriber) => {
-            this.getCourseDescription(courseId)
-                .then((courseDescription) => {
-                    if (!courseDescription || courseDescription.trim().length === 0) {
-                        subscriber.next(
-                            "📚 **Course Description**\n\nThis course doesn't have a description set up yet.\n\n💡 **Tip:** You can add a course description in the course settings.\n\nHow else can I help you with this course?",
-                        );
-                        subscriber.complete();
-                        return;
-                    }
-
-                    const response = `📚 **Course Description**\n\n${courseDescription}\n\nIs there anything specific you'd like me to help you with for this course?`;
-
-                    subscriber.next(response);
-                    subscriber.complete();
-                })
-                .catch(() => {
-                    subscriber.next("❌ I couldn't retrieve the course description. Please try again or contact your administrator if the problem persists.");
-                    subscriber.complete();
-                });
-        });
+        return this.courseManagementService.find(courseId).pipe(
+            map((courseResponse: HttpResponse<Course>) => {
+                const courseDescription = courseResponse.body?.description?.trim() ?? '';
+                if (!courseDescription) {
+                    return "📚 **Course Description**\n\nThis course doesn't have a description set up yet.\n\n💡 **Tip:** You can add a course description in the course settings.\n\nHow else can I help you with this course?";
+                }
+                return `📚 **Course Description**\n\n${courseDescription}\n\nIs there anything specific you'd like me to help you with for this course?`;
+            }),
+            catchError(() => of("❌ I couldn't retrieve the course description. Please try again or contact your administrator if the problem persists.")),
+        );
     }
 
     /**
      * Returns the course exercises to the user
      */
     private getCourseExercisesResponse(courseId: number): Observable<string> {
-        return new Observable<string>((subscriber) => {
-            this.courseManagementService.findWithExercises(courseId).subscribe({
-                next: (courseResponse: HttpResponse<Course>) => {
-                    const exercises: Exercise[] = courseResponse.body?.exercises || [];
-
-                    if (exercises.length === 0) {
-                        subscriber.next(
-                            "📋 **Course Exercises**\n\nThis course doesn't have any exercises yet.\n\n💡 **Tip:** You can add exercises through the course management interface.\n\nHow else can I help you?",
-                        );
-                        subscriber.complete();
-                        return;
-                    }
-
-                    let response = `📋 **Course Exercises** (${exercises.length} total)\n\n`;
-
-                    exercises.forEach((exercise: Exercise, index: number) => {
-                        const type = exercise.type || 'Exercise';
-                        const dueDate = exercise.dueDate ? new Date(exercise.dueDate.toString()).toLocaleDateString() : 'No due date';
-                        response += `**${index + 1}. ${exercise.title}**\n`;
-                        response += `📝 Type: ${type} | 📅 Due: ${dueDate}\n\n`;
-                    });
-
-                    response += "Is there anything specific you'd like to know about these exercises?";
-
-                    subscriber.next(response);
-                    subscriber.complete();
-                },
-                error: () => {
-                    subscriber.next("❌ I couldn't retrieve the course exercises. Please try again or contact your administrator if the problem persists.");
-                    subscriber.complete();
-                },
-            });
-        });
+        return this.courseManagementService.findWithExercises(courseId).pipe(
+            map((courseResponse: HttpResponse<Course>) => {
+                const exercises: Exercise[] = courseResponse.body?.exercises || [];
+                if (exercises.length === 0) {
+                    return "📋 **Course Exercises**\n\nThis course doesn't have any exercises yet.\n\n💡 **Tip:** You can add exercises through the course management interface.\n\nHow else can I help you?";
+                }
+                const lines = exercises.map((exercise: Exercise, index: number) => {
+                    const type = exercise.type || 'Exercise';
+                    const dueDate = exercise.dueDate ? dayjs(exercise.dueDate).format('LL') : 'No due date';
+                    return `**${index + 1}. ${exercise.title}**\n📝 Type: ${type} | 📅 Due: ${dueDate}\n`;
+                });
+                return `📋 **Course Exercises** (${exercises.length} total)\n\n${lines.join('\n')}\n\nIs there anything specific you'd like to know about these exercises?`;
+            }),
+            catchError(() => of("❌ I couldn't retrieve the course exercises. Please try again or contact your administrator if the problem persists.")),
+        );
     }
 
     /**

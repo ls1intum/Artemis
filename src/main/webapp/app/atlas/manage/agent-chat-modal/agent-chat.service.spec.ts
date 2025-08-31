@@ -172,7 +172,7 @@ describe('AgentChatService', () => {
             courseManagementService.find.mockReturnValue(new Observable((subscriber) => subscriber.error(new Error('Network error'))));
 
             const response = await firstValueFrom(service.sendMessage('What is the course description?', 123));
-            expect(response).toContain("This course doesn't have a description set up yet");
+            expect(response).toContain("I couldn't retrieve the course description");
         });
     });
 });
