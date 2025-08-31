@@ -80,8 +80,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     protected isCreateAssignmentRepoDisabled: boolean;
     /** Debounced tick stream consumed by the sidebar preview */
     previewEvents$ = this.problemStatementChanges$.pipe(
-        debounceTime(200),    // TODO: consider to prune to 300–500ms for PlantUML-heavy content
-        map(() => void 0),  // Observable<void>
+        debounceTime(200), // TODO: consider to prune to 300–500ms for PlantUML-heavy content
+        map(() => void 0), // Observable<void>
         shareReplay({ bufferSize: 1, refCount: true }), // replay latest for late subscribers
     );
 

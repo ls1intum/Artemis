@@ -8,7 +8,18 @@ import interact from 'interactjs';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorFileBrowserDeleteComponent } from 'app/programming/manage/code-editor/file-browser/delete/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
-import { faAngleDoubleDown, faAngleDoubleUp, faChevronLeft, faChevronRight, faCircleNotch, faFile, faListAlt, faFolder, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
+import {
+    faAngleDoubleDown,
+    faAngleDoubleUp,
+    faChevronLeft,
+    faChevronRight,
+    faCircleNotch,
+    faFile,
+    faFolder,
+    faFolderOpen,
+    faListAlt,
+    faPlus,
+} from '@fortawesome/free-solid-svg-icons';
 import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

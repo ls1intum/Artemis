@@ -14,7 +14,8 @@
                         }
                         @if (isEditor) {
                             <span class="header" jhiTranslate="artemisApp.exercise.problemStatementEditor"></span>
-                        }                    }
+                        }
+                    }
                     @if (isAssessmentMode) {
                         <span class="ms-2" jhiTranslate="artemisApp.exercise.instructions"></span>
                     }
@@ -22,7 +23,9 @@
             }
             @if (collapsed) {
                 <span class="collapsed-instructions-card">
-                    @if (!disableCollapse) { <fa-icon class="top-icon" [icon]="faChevronLeft" /> }
+                    @if (!disableCollapse) {
+                        <fa-icon class="top-icon" [icon]="faChevronLeft" />
+                    }
                     <fa-icon [icon]="farListAlt" class="fa-rotate-90" id="panel-symbol" />
                     @if (!isAssessmentMode) {
                         @if (!isEditor) {
@@ -35,7 +38,9 @@
                     @if (isAssessmentMode) {
                         <span class="header" jhiTranslate="artemisApp.exercise.instructions"></span>
                     }
-                    @if (!disableCollapse) { <fa-icon class="bottom-icon" [icon]="faChevronLeft" /> }
+                    @if (!disableCollapse) {
+                        <fa-icon class="bottom-icon" [icon]="faChevronLeft" />
+                    }
                 </span>
             }
         </h3>
