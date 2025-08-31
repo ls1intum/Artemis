@@ -29,9 +29,8 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { providePrimeNG } from 'primeng/config';
-import Aura from '@primeuix/themes/aura';
+import { AuraArtemis } from './primeng-artemis-theme';
 
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -119,9 +118,13 @@ export const appConfig: ApplicationConfig = {
             useClass: ArtemisVersionInterceptor,
             multi: true,
         },
-        provideAnimationsAsync(),
         providePrimeNG({
-            theme: { preset: Aura },
+            theme: {
+                preset: AuraArtemis,
+                options: {
+                    darkModeSelector: '[prime-ng-use-dark-theme="true"]',
+                },
+            },
         }),
     ],
 };
