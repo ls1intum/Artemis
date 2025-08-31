@@ -64,7 +64,7 @@ public class ReactionService {
      * Checks reaction validity, determines the reaction's user,
      * retrieves the associated posting and persists the mutual association
      *
-     * @param courseId    if of course the according posting belongs to
+     * @param courseId    id of the course the corresponding posting belongs to
      * @param reactionDTO reaction to create
      * @return created reaction that was persisted
      */
@@ -88,11 +88,13 @@ public class ReactionService {
         var answerPostOpt = answerPostRepository.findById(targetId);
         if (answerPostOpt.isPresent()) {
             var answerPost = answerPostOpt.get();
+            checkThatCourseHasCourseIdElseThrow(course.getId(), answerPost.getCoursePostingBelongsTo());
             reaction.setAnswerPost(answerPost);
             return createReactionForAnswer(reaction, answerPost, user, course);
         }
 
         var post = postRepository.findByIdElseThrow(targetId);
+        checkThatCourseHasCourseIdElseThrow(course.getId(), post.getCoursePostingBelongsTo());
         reaction.setPost(post);
         return createReactionForPost(reaction, post, user, course);
     }
