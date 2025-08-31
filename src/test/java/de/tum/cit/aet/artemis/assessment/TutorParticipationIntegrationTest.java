@@ -19,6 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.dto.TutorParticipationDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
@@ -103,11 +104,12 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTutorParticipateInModelingExerciseWithExampleSubmission(boolean usedForTutorial) throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(usedForTutorial);
-        var tutorParticipation = request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.OK);
-        assertThat(tutorParticipation.getTrainedExampleSubmissions()).as("Tutor participation has example submission").hasSize(1);
-        assertThat(tutorParticipation.getTutor().getLogin()).as("Tutor participation belongs to correct tutor").isEqualTo(TEST_PREFIX + "tutor1");
-        assertThat(tutorParticipation.getAssessedExercise()).as("Tutor participation belongs to correct exercise").isEqualTo(modelingExercise);
-        assertThat(tutorParticipation.getStatus()).as("Tutor participation has correct status").isEqualTo(TutorParticipationStatus.TRAINED);
+        var tutorParticipationDto = request.postWithResponseBody(path, exampleSubmission, TutorParticipationDTO.class, HttpStatus.OK);
+        assertThat(tutorParticipationDto.trainedCount()).as("Tutor participation has example submission").isEqualTo(1);
+        var tutorId = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1").getId();
+        assertThat(tutorParticipationDto.tutorId()).as("Tutor participation belongs to correct tutor").isEqualTo(tutorId);
+        assertThat(tutorParticipationDto.exerciseId()).as("Tutor participation belongs to correct exercise").isEqualTo(modelingExercise.getId());
+        assertThat(tutorParticipationDto.status()).as("Tutor participation has correct status").isEqualTo("TRAINED");
     }
 
     /**
@@ -129,7 +131,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         submissionWithResults.getLatestResult().addFeedback(ParticipationFactory.createManualTextFeedback(1D, textBlockIds.get(1)));
 
         var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
-        request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(path, exampleSubmission, TutorParticipationDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -150,7 +152,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         submissionWithResults.getLatestResult().addFeedback(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
 
         var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
-        request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(path, exampleSubmission, TutorParticipationDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -171,7 +173,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
         exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createManualTextFeedback(1D, "6aba5764-d102-4740-9675-b2bd0a4f2680"));
         var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
-        request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(path, exampleSubmission, TutorParticipationDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -191,7 +193,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
         exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
         var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
-        request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(path, exampleSubmission, TutorParticipationDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @NotNull
@@ -228,7 +230,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
             resultService.addFeedbackToResult(result, List.of(feedback), true);
         }
 
-        request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/tutor-participations", null, TutorParticipation.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/tutor-participations", null, TutorParticipationDTO.class, HttpStatus.CREATED);
         return exampleSubmission;
     }
 
@@ -242,7 +244,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
             result.setExampleResult(true);
             resultRepository.save(result);
         }
-        request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/tutor-participations", null, TutorParticipation.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/tutor-participations", null, TutorParticipationDTO.class, HttpStatus.CREATED);
         return exampleSubmission;
     }
 }
