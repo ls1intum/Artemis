@@ -128,7 +128,7 @@ public class ExamRoomService {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid room file name: missing room number");
                 }
 
-                ExamRoomInput examRoomInput = objectMapper.readValue(zis, ExamRoomInput.class);
+                ExamRoomInput examRoomInput = objectMapper.readValue(zis.readAllBytes(), ExamRoomInput.class);
 
                 var examRoom = convertRoomNumberAndExamRoomInputToExamRoom(roomNumber, examRoomInput);
                 if (examRoom == null) {
@@ -234,10 +234,10 @@ public class ExamRoomService {
                 final String seatName = rowLabel.isEmpty() ? seatLabel : (rowLabel + ", " + seatLabel);
                 SeatCondition seatCondition;
                 try {
-                    seatCondition = SeatCondition.valueOf(seatInput.condition);
+                    seatCondition = SeatCondition.seatConditionFromFlag(seatInput.condition);
                 }
                 catch (IllegalArgumentException e) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid seat condition: " + e.getMessage());
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid seat condition (= \"" + seatInput.condition + "\"): " + e.getMessage());
                 }
                 ExamSeatDTO seat = new ExamSeatDTO(seatName, seatCondition, seatInput.position.x, seatInput.position.y);
 
