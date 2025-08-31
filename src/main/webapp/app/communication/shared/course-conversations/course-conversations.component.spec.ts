@@ -778,5 +778,27 @@ examples.forEach((activeConversation) => {
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(444);
             });
         });
+
+        describe('clearSearchAndRevertToOriginalView', () => {
+            it('should clear search results when refresh button is clicked', () => {
+                component.courseWideSearchConfig = {
+                    searchTerm: 'test search',
+                    selectedConversations: [1, 2],
+                    selectedAuthors: ['user1'],
+                };
+                const mockGlobalSearchComponent = { clearSearch: jest.fn() };
+                component.globalSearchComponent = signal(mockGlobalSearchComponent as any);
+                const onSearchSpy = jest.spyOn(component, 'onSearch');
+
+                component.clearSearchAndRevertToOriginalView();
+
+                expect(mockGlobalSearchComponent.clearSearch).toHaveBeenCalledOnce();
+                expect(onSearchSpy).toHaveBeenCalledWith({
+                    searchTerm: '',
+                    selectedConversations: [],
+                    selectedAuthors: [],
+                });
+            });
+        });
     });
 });

@@ -65,6 +65,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -872,4 +873,19 @@ describe('CourseOverviewComponent', () => {
         expect((component as any).selectableSettingPresets).toBeDefined();
         expect((component as any).selectedSettingPreset).toBeDefined();
     }));
+
+    describe('Refresh button clears search in conversations', () => {
+        it('should call clearSearchAndRevertToOriginalView when refreshing in conversations view', () => {
+            const mockConversationsComponent = {
+                clearSearchAndRevertToOriginalView: jest.fn(),
+            };
+            Object.setPrototypeOf(mockConversationsComponent, CourseConversationsComponent.prototype);
+            component.activatedComponentReference = jest.fn().mockReturnValue(mockConversationsComponent);
+            const courseServiceSpy = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse({ body: course1 })));
+
+            component.loadCourse(true);
+
+            expect(mockConversationsComponent.clearSearchAndRevertToOriginalView).toHaveBeenCalledOnce();
+        });
+    });
 });
