@@ -76,6 +76,23 @@ describe('CodeEditorFileBrowserComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('places Problem Statement at the top of the tree', () => {
+        comp.displayOnly = false;
+        comp.ngOnInit();
+
+        comp.repositoryFiles = {
+            [comp.PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
+            'b.txt': FileType.FILE,
+            'a.txt': FileType.FILE,
+        };
+
+        comp.setupTreeview();
+
+        const values = comp.filesTreeViewItem.map((i) => i.value);
+        expect(values[0]).toBe(comp.PROBLEM_STATEMENT_IDENTIFIER);
+        expect(values.slice(1)).toEqual(['a.txt', 'b.txt']);
+    });
+
     it('adds the Problem Statement entry when not in displayOnly mode', () => {
         // ensure fresh state
         (comp as any).repositoryFiles = undefined;
