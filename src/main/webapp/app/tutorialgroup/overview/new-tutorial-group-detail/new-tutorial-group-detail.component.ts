@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, effect, input, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -11,10 +11,14 @@ import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SelectButton } from 'primeng/selectbutton';
 import { FormsModule } from '@angular/forms';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
+import { Color, PieChartComponent, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
+import { TableModule } from 'primeng/table';
 
 @Component({
     selector: 'jhi-new-tutorial-group-detail',
-    imports: [ProfilePictureComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, SelectButton, FormsModule],
+    imports: [ProfilePictureComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, SelectButton, FormsModule, PieChartModule, TableModule],
     templateUrl: './new-tutorial-group-detail.component.html',
     styleUrl: './new-tutorial-group-detail.component.scss',
 })
@@ -33,7 +37,19 @@ export class NewTutorialGroupDetailComponent {
 
     course = input.required<Course>();
     tutorialGroup = input.required<TutorialGroup>();
+    tutorialGroupSessions = computed<TutorialGroupSession[] | undefined>(() => this.tutorialGroup()?.tutorialGroupSessions);
     teachingAssistantImageUrl = computed(() => addPublicFilePrefix(this.tutorialGroup().teachingAssistantImageUrl));
+    pieChart = viewChild(PieChartComponent);
+    ngxData: NgxChartsSingleSeriesDataEntry[] = [
+        { name: 'Attended', value: 60 },
+        { name: 'Not Attended', value: 40 },
+    ];
+    ngxColor = {
+        name: 'vivid',
+        selectable: true,
+        group: ScaleType.Ordinal,
+        domain: [GraphColors.GREEN, GraphColors.RED, GraphColors.LIGHT_GREY],
+    } as Color;
 
     readonly faRotateRight = faRotateRight;
     readonly faFlag = faFlag;
@@ -45,7 +61,14 @@ export class NewTutorialGroupDetailComponent {
     readonly faMapPin = faMapPin;
     readonly faBuildingColumns = faBuildingColumns;
 
-    constructor() {}
+    constructor() {
+        effect(() => {
+            const pieChart = this.pieChart();
+            if (!pieChart) return;
+            pieChart.margins = [0, 0, 0, 0];
+            pieChart.update();
+        });
+    }
 
     tutorialGroupLanguage = computed<string>(() => {
         const language = this.tutorialGroup().language;
@@ -123,4 +146,5 @@ export class NewTutorialGroupDetailComponent {
     ];
 
     value: string = 'off';
+    protected readonly TutorialGroupSession = TutorialGroupSession;
 }

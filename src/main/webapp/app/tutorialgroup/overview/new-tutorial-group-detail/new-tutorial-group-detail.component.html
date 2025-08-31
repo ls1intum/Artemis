@@ -50,7 +50,10 @@
     <div class="card-row">
         <div class="card small">
             <h5 jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.averageAttendanceCardTitle"></h5>
-            <div class="tutor-card-content"></div>
+            <div class="attendance-card-content position-relative">
+                <div class="doughnut-chart-text">Ø 10%</div>
+                <ngx-charts-pie-chart [view]="[128, 128]" [results]="ngxData" [scheme]="ngxColor" [doughnut]="true" [labels]="false" [legend]="false" [arcWidth]="0.3" />
+            </div>
         </div>
         <div class="card big">
             <h5 jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.nextSessionCardTitle"></h5>
@@ -83,4 +86,27 @@
         </div>
     </div>
     <p-selectbutton [options]="stateOptions" [(ngModel)]="value" optionLabel="label" optionValue="value" aria-labelledby="basic" />
+    <!--
+    @let sessions = tutorialGroupSessions();
+    @if(sessions) {
+        <p-table [value]="sessions">
+            <ng-template #header>
+                <tr>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Quantity</th>
+                </tr>
+            </ng-template>
+            <ng-template #body let-session>
+                <tr>
+                    <td>{{ session.code }}</td>
+                    <td>{{ session.name }}</td>
+                    <td>{{ session.category }}</td>
+                    <td>{{ product.quantity }}</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    }
+    -->
 </div>

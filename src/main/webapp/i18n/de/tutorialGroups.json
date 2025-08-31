@@ -268,7 +268,7 @@
                 "cardTitles": {
                     "tutorCardTitle": "Tutor:in",
                     "generalInfoCardTitle": "Allgemeine Information",
-                    "averageAttendanceCardTitle": "Durchschn. Auslastung",
+                    "averageAttendanceCardTitle": "Auslastung",
                     "nextSessionCardTitle": "Nächste Session"
                 },
                 "language": "Sprache",
