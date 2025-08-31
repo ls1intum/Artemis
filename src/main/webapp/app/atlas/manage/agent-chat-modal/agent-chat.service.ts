@@ -5,7 +5,6 @@ import dayjs from 'dayjs/esm';
 import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { firstValueFrom } from 'rxjs';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -32,7 +31,7 @@ export class AgentChatService {
             return this.createCompetencyFromMessage(message, courseId);
         }
 
-        return this.generateGeneralResponse(message);
+        return this.generateGeneralResponse();
     }
 
     /**
@@ -169,21 +168,9 @@ export class AgentChatService {
     }
 
     /**
-     * Gets the course description
-     */
-    private async getCourseDescription(courseId: number): Promise<string> {
-        try {
-            const courseResponse = await firstValueFrom(this.courseManagementService.find(courseId));
-            return courseResponse.body?.description ?? '';
-        } catch (error) {
-            return '';
-        }
-    }
-
-    /**
      * Generates general helpful responses
      */
-    private generateGeneralResponse(message: string): Observable<string> {
+    private generateGeneralResponse(): Observable<string> {
         const responses = [
             `I'm here to help you with your course! I can:\n\n📚 **Show course description** - "What is the course description?"\n📋 **List course exercises** - "Show me the exercises"\n✏️ **Create competencies** - "Create competency for [topic]"\n\nWhat would you like to do?`,
 
