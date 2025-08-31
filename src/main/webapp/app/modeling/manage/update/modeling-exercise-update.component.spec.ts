@@ -349,4 +349,76 @@ describe('ModelingExerciseUpdateComponent', () => {
         expect(comp.bonusPointsSubscription?.closed).toBeTrue();
         expect(comp.pointsSubscription?.closed).toBeTrue();
     });
+
+    describe('Enter key navigation handling', () => {
+        beforeEach(() => {
+            jest.spyOn(console, 'error').mockImplementation(); // Suppress console errors
+        });
+
+        it('should have hidden submit button to intercept Enter key', () => {
+            // GIVEN
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            // WHEN
+            const form = fixture.debugElement.nativeElement.querySelector('form');
+            const hiddenButton = form.querySelector('button[type="submit"][style*="display: none"]');
+
+            // THEN
+            expect(hiddenButton).toBeTruthy();
+            expect(hiddenButton.style.display).toBe('none');
+            expect(hiddenButton.type).toBe('submit');
+        });
+
+        it('should always prevent default form submission and stop propagation', () => {
+            // GIVEN
+            const mockEvent = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as any as Event;
+
+            // WHEN
+            comp.handleEnterKeyNavigation(mockEvent);
+
+            // THEN
+            expect(mockEvent.preventDefault).toHaveBeenCalledOnce();
+            expect(mockEvent.stopPropagation).toHaveBeenCalledOnce();
+        });
+
+        it('should prevent Enter key from triggering unwanted modals or form submissions', () => {
+            // GIVEN - Simulate real Enter key event that would trigger modal
+            const realEnterEvent = new KeyboardEvent('keydown', {
+                key: 'Enter',
+                bubbles: true,
+                cancelable: true,
+            });
+            const preventDefaultSpy = jest.spyOn(realEnterEvent, 'preventDefault');
+            const stopPropagationSpy = jest.spyOn(realEnterEvent, 'stopPropagation');
+
+            // WHEN - Our handler processes the event
+            comp.handleEnterKeyNavigation(realEnterEvent);
+
+            // THEN - Event is blocked from causing unwanted behavior
+            expect(preventDefaultSpy).toHaveBeenCalledOnce();
+            expect(stopPropagationSpy).toHaveBeenCalledOnce();
+            expect(realEnterEvent.defaultPrevented).toBeTrue();
+        });
+    });
+
+    describe('Component cleanup', () => {
+        it('should unsubscribe from teamSubscription on destroy', () => {
+            // GIVEN
+            const mockSubscription = {
+                unsubscribe: jest.fn(),
+                closed: false,
+            };
+            comp.teamSubscription = mockSubscription as any;
+
+            // WHEN
+            comp.ngOnDestroy();
+
+            // THEN
+            expect(mockSubscription.unsubscribe).toHaveBeenCalledOnce();
+        });
+    });
 });
