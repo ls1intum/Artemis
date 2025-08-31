@@ -114,9 +114,9 @@ describe('AgentChatService', () => {
 
         it('should handle general chat requests', async () => {
             const response = await firstValueFrom(service.sendMessage('How can you help me?', 123));
-            expect(response).toContain('I can assist you with managing your course');
-            expect(response).toContain('Show course description');
-            expect(response).toContain('Create competency');
+            expect(response).toContain('As your course assistant, I can help you with');
+            expect(response).toContain('Exercise listings');
+            expect(response).toContain('Creating new competencies');
         });
 
         it('should handle empty messages gracefully', async () => {
