@@ -190,6 +190,20 @@ export class AgentChatService {
                                             subscriber.complete();
                                         }
 
+                                        if (update.stages && update.stages.some((stage: IrisStageDTO) => stage.state === IrisStageStateDTO.ERROR)) {
+                                            subscriber.next(
+                                                '❌ **Generation Failed**\n\n' +
+                                                    "I couldn't generate competencies from the course description. This might be due to:\n\n" +
+                                                    '• AI service not being available\n' +
+                                                    '• Server configuration issues\n' +
+                                                    '• Network connectivity problems\n\n' +
+                                                    "💡 **Alternative:** I can still help you create competencies manually! Just tell me what topics you'd like to cover.",
+                                            );
+                                            subscriber.complete();
+                                            this.websocketService.unsubscribe(websocketTopic);
+                                            this.isGeneratingFromDescription = false;
+                                        }
+
                                         if (
                                             update.stages &&
                                             update.stages.every(
@@ -200,10 +214,14 @@ export class AgentChatService {
                                             this.isGeneratingFromDescription = false;
                                         }
                                     },
-                                    error: () => {
+                                    error: (error) => {
                                         subscriber.next(
-                                            'I encountered an error while generating competencies.' +
-                                                " Please try again or provide specific topics you'd like me to create competencies for.",
+                                            '❌ **Connection Error**\n\n' +
+                                                'I lost connection while generating competencies. This could be due to:\n\n' +
+                                                '• Network connectivity issues\n' +
+                                                '• Server timeout\n' +
+                                                '• Websocket connection failure\n\n' +
+                                                "💡 **Try again:** You can retry by saying 'Generate competencies from course description' again.",
                                         );
                                         subscriber.complete();
                                         this.websocketService.unsubscribe(websocketTopic);
@@ -211,11 +229,25 @@ export class AgentChatService {
                                     },
                                 });
                             },
-                            error: () => {
-                                subscriber.next(
-                                    "I couldn't generate competencies from the course description." +
-                                        " Please try again or provide specific topics you'd like me to create competencies for.",
-                                );
+                            error: (error) => {
+                                let errorMessage = '❌ **API Error**\n\n';
+
+                                if (error?.status === 404) {
+                                    errorMessage +=
+                                        'The competency generation service is not available. This might be because:\n\n' +
+                                        '• IRIS AI profile is not enabled for this server\n' +
+                                        '• The feature is not configured properly\n\n';
+                                } else if (error?.status === 403) {
+                                    errorMessage += "You don't have permission to use the AI competency generation feature.\n\n";
+                                } else if (error?.status === 500) {
+                                    errorMessage += 'The server encountered an internal error while processing your request.\n\n';
+                                } else {
+                                    errorMessage += `Request failed with error: ${error?.message || 'Unknown error'}\n\n`;
+                                }
+
+                                errorMessage += "💡 **Alternative:** I can still help you create competencies manually! Just tell me what topics you'd like to cover.";
+
+                                subscriber.next(errorMessage);
                                 subscriber.complete();
                                 this.isGeneratingFromDescription = false;
                             },

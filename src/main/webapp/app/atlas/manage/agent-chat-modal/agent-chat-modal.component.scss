@@ -32,6 +32,27 @@
         padding: 1rem;
         background-color: #fff;
 
+        /* Custom scrollbar styling */
+        scrollbar-width: thin;
+        scrollbar-color: #c1c1c1 transparent;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        &::-webkit-scrollbar-thumb:hover {
+            background-color: #a1a1a1;
+        }
+
         .message-wrapper {
             margin-bottom: 1.5rem;
 
@@ -160,30 +181,6 @@
                     cursor: not-allowed;
                 }
             }
-        }
-    }
-}
-
-/* Custom scrollbar styling */
-
-.messages-container {
-    scrollbar-width: thin;
-    scrollbar-color: #c1c1c1 transparent;
-
-    &::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background-color: #c1c1c1;
-        border-radius: 3px;
-
-        &:hover {
-            background-color: #a8a8a8;
         }
     }
 }

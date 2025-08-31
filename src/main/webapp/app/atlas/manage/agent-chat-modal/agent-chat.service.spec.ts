@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { firstValueFrom, of } from 'rxjs';
+import { Observable, firstValueFrom, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { AgentChatService } from './agent-chat.service';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
@@ -150,6 +150,46 @@ describe('AgentChatService', () => {
             expect(courseManagementService.find).toHaveBeenCalledWith(123);
         });
 
+        it('should complete full competency generation workflow from course description', async () => {
+            // Mock successful course fetch with description
+            courseManagementService.find.mockReturnValue(
+                of(new HttpResponse({ body: { description: 'Java programming course covering OOP principles, data structures, and algorithms' } as Course })),
+            );
+
+            const courseCompetencyService = TestBed.inject(CourseCompetencyService) as jest.Mocked<CourseCompetencyService>;
+            const websocketService = TestBed.inject(WebsocketService) as jest.Mocked<WebsocketService>;
+
+            // Mock successful API call
+            courseCompetencyService.generateCompetenciesFromCourseDescription.mockReturnValue(of({}));
+
+            // Mock websocket response with generated competencies
+            const mockCompetencies = [
+                { title: 'Object-Oriented Programming', description: 'Understanding OOP principles', taxonomy: 'APPLY' },
+                { title: 'Data Structures', description: 'Implementing common data structures', taxonomy: 'CREATE' },
+            ];
+
+            websocketService.receive.mockReturnValue(
+                of({
+                    result: mockCompetencies,
+                    stages: [{ state: 'DONE' }],
+                }),
+            );
+
+            // Step 1: Generate competencies from course description
+            const generateResponse = await firstValueFrom(service.sendMessage('Generate competencies from course description', 123));
+            expect(generateResponse).toContain('Analyzing course description');
+            expect(courseCompetencyService.generateCompetenciesFromCourseDescription).toHaveBeenCalledWith(
+                123,
+                'Java programming course covering OOP principles, data structures, and algorithms',
+                [],
+            );
+
+            // Step 2: Confirm creation
+            const confirmResponse = await firstValueFrom(service.sendMessage('yes create them', 123));
+            expect(confirmResponse).toContain('Successfully created');
+            expect(competencyService.createBulk).toHaveBeenCalled();
+        });
+
         it('should handle course description generation when no description exists', async () => {
             courseManagementService.find.mockReturnValue(of(new HttpResponse({ body: { description: '' } as Course })));
             const response = await firstValueFrom(service.sendMessage('Generate competencies from course description', 123));
@@ -246,6 +286,19 @@ describe('AgentChatService', () => {
             expect(prompt).toContain('Auto-generate from course description');
             expect(prompt).toContain('Generate competencies from course description');
         });
+
+        it('should map taxonomy strings correctly', () => {
+            const mapToTaxonomyMethod = (service as any).mapToTaxonomy;
+
+            expect(mapToTaxonomyMethod('REMEMBER')).toBe(CompetencyTaxonomy.REMEMBER);
+            expect(mapToTaxonomyMethod('UNDERSTAND')).toBe(CompetencyTaxonomy.UNDERSTAND);
+            expect(mapToTaxonomyMethod('APPLY')).toBe(CompetencyTaxonomy.APPLY);
+            expect(mapToTaxonomyMethod('ANALYZE')).toBe(CompetencyTaxonomy.ANALYZE);
+            expect(mapToTaxonomyMethod('EVALUATE')).toBe(CompetencyTaxonomy.EVALUATE);
+            expect(mapToTaxonomyMethod('CREATE')).toBe(CompetencyTaxonomy.CREATE);
+            expect(mapToTaxonomyMethod('')).toBe(CompetencyTaxonomy.UNDERSTAND);
+            expect(mapToTaxonomyMethod(undefined)).toBe(CompetencyTaxonomy.UNDERSTAND);
+        });
     });
 
     describe('error handling', () => {
@@ -257,6 +310,94 @@ describe('AgentChatService', () => {
         it('should handle very short messages', async () => {
             const response = await firstValueFrom(service.sendMessage('hi', 123));
             expect(response).toBeTruthy();
+        });
+
+        it('should handle API error when generating from course description', async () => {
+            const courseCompetencyService = TestBed.inject(CourseCompetencyService) as jest.Mocked<CourseCompetencyService>;
+            courseCompetencyService.generateCompetenciesFromCourseDescription.mockReturnValue(
+                new Observable((subscriber) => subscriber.error({ status: 404, message: 'Not found' })),
+            );
+
+            return new Promise<void>((resolve) => {
+                const observable = service.sendMessage('Generate competencies from course description', 123);
+                let messageCount = 0;
+
+                observable.subscribe({
+                    next: (response) => {
+                        messageCount++;
+                        if (messageCount === 1) {
+                            expect(response).toContain('Analyzing course description');
+                        } else {
+                            expect(response).toContain('IRIS AI profile is not enabled');
+                            resolve();
+                        }
+                    },
+                    error: () => resolve(),
+                });
+            });
+        });
+
+        it('should handle websocket error during generation', async () => {
+            const courseCompetencyService = TestBed.inject(CourseCompetencyService) as jest.Mocked<CourseCompetencyService>;
+            const websocketService = TestBed.inject(WebsocketService) as jest.Mocked<WebsocketService>;
+
+            courseCompetencyService.generateCompetenciesFromCourseDescription.mockReturnValue(of({}));
+            websocketService.receive.mockReturnValue(new Observable((subscriber) => subscriber.error(new Error('Connection lost'))));
+
+            return new Promise<void>((resolve) => {
+                const observable = service.sendMessage('Generate competencies from course description', 123);
+                let messageCount = 0;
+
+                observable.subscribe({
+                    next: (response) => {
+                        messageCount++;
+                        if (messageCount === 1) {
+                            expect(response).toContain('Analyzing course description');
+                        } else {
+                            expect(response).toContain('Connection Error');
+                            resolve();
+                        }
+                    },
+                    error: () => resolve(),
+                });
+            });
+        });
+
+        it('should handle generation failure in stages', async () => {
+            const courseCompetencyService = TestBed.inject(CourseCompetencyService) as jest.Mocked<CourseCompetencyService>;
+            const websocketService = TestBed.inject(WebsocketService) as jest.Mocked<WebsocketService>;
+
+            courseCompetencyService.generateCompetenciesFromCourseDescription.mockReturnValue(of({}));
+            websocketService.receive.mockReturnValue(
+                of({
+                    stages: [{ state: 'ERROR' }],
+                }),
+            );
+
+            return new Promise<void>((resolve) => {
+                const observable = service.sendMessage('Generate competencies from course description', 123);
+                let messageCount = 0;
+
+                observable.subscribe({
+                    next: (response) => {
+                        messageCount++;
+                        if (messageCount === 1) {
+                            expect(response).toContain('Analyzing course description');
+                        } else {
+                            expect(response).toContain('Generation Failed');
+                            resolve();
+                        }
+                    },
+                    error: () => resolve(),
+                });
+            });
+        });
+
+        it('should handle concurrent generation requests', async () => {
+            service.sendMessage('Generate competencies from course description', 123);
+            const response2 = await firstValueFrom(service.sendMessage('Generate competencies from course description', 123));
+
+            expect(response2).toContain("I'm already generating competencies");
         });
     });
 
