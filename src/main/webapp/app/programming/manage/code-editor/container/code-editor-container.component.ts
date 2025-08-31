@@ -55,6 +55,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
+    readonly PROBLEM_STATEMENT_IDENTIFIER = "__problem_statement__";
+    @ViewChild('rightInstructions', { static: false }) rightInstructions: CodeEditorInstructionsComponent;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
     @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
@@ -110,10 +112,17 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     /** END WIP */
 
-    // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
-    selectedFile?: string;
+        // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
+    private selectedFileValue?: string;
     unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
     fileBadges: { [fileName: string]: FileBadge[] };
+    get selectedFile(): string | undefined {
+        return this.selectedFileValue;
+    }
+
+    set selectedFile(file: string | undefined) {
+        this.selectedFileValue = file;
+    }
 
     /** Code Editor State Variables **/
     editorState: EditorState;

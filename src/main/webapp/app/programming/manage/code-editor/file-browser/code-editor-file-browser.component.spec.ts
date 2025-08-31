@@ -20,6 +20,7 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CodeEditorFileBrowserProblemStatementComponent } from 'app/programming/manage/code-editor/file-browser/problem-statement/code-editor-file-browser-problem-statement.component';
 
 describe('CodeEditorFileBrowserComponent', () => {
     let comp: CodeEditorFileBrowserComponent;
@@ -47,6 +48,7 @@ describe('CodeEditorFileBrowserComponent', () => {
                 CodeEditorFileBrowserCreateNodeComponent,
                 MockComponent(CodeEditorStatusComponent),
                 TranslatePipeMock,
+                CodeEditorFileBrowserProblemStatementComponent,
             ],
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
@@ -74,9 +76,62 @@ describe('CodeEditorFileBrowserComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('should NOT render Problem Statement in repository view (displayOnly=true)', () => {
+        comp.repositoryFiles = {};
+        comp.displayOnly = true;
+        triggerChanges(comp, { property: 'displayOnly', currentValue: true });
+
+        comp.repositoryFiles = { 'a.txt': FileType.FILE, folder: FileType.FOLDER };
+        comp.setupTreeview();
+        fixture.detectChanges();
+
+        expect(Object.keys(comp.repositoryFiles)).not.toContain(comp.PROBLEM_STATEMENT_IDENTIFIER);
+        expect(comp.filesTreeViewItem.find((i) => i.value === comp.PROBLEM_STATEMENT_IDENTIFIER)).toBeUndefined();
+
+        const psNode = debugElement.query(By.css('#file-browser-problem-statement, jhi-code-editor-file-browser-problem-statement'));
+        expect(psNode).toBeNull();
+    });
+
+    it('should NOT add Problem Statement on error in repository view (displayOnly=true)', () => {
+        comp.repositoryFiles = {};
+        comp.displayOnly = true;
+        triggerChanges(comp, { property: 'displayOnly', currentValue: true });
+
+        const status$ = new Subject<any>();
+        getStatusStub.mockReturnValue(status$);
+
+        comp.commitState = CommitState.UNDEFINED;
+        triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
+        fixture.detectChanges();
+
+        status$.error('fatal');
+        fixture.detectChanges();
+
+        expect(comp.filesTreeViewItem).toEqual([]);
+        const psNode = debugElement.query(By.css('#file-browser-problem-statement, jhi-code-editor-file-browser-problem-statement'));
+        expect(psNode).toBeNull();
+    });
+
+    it('should render Problem Statement when not in repository view (displayOnly=false)', () => {
+        comp.displayOnly = false;
+        triggerChanges(comp, { property: 'displayOnly', currentValue: false });
+
+        comp.repositoryFiles = {};
+        // even with empty repo ensure PS is added, then build tree
+        (comp as any).initializeRepositoryFiles();
+        comp.setupTreeview();
+        fixture.detectChanges();
+
+        expect(Object.keys(comp.repositoryFiles)).toContain(comp.PROBLEM_STATEMENT_IDENTIFIER);
+        const psItem = comp.filesTreeViewItem.find((i) => i.value === comp.PROBLEM_STATEMENT_IDENTIFIER);
+        expect(psItem).toBeDefined();
+
+        const psNode = debugElement.query(By.css('#file-browser-problem-statement, jhi-code-editor-file-browser-problem-statement'));
+        expect(psNode).not.toBeNull();
+    });
+
     it('should create no treeviewItems if getRepositoryContent returns an empty result', () => {
         const repositoryContent: { [fileName: string]: string } = {};
-        const expectedFileTreeItems: TreeViewItem<string>[] = [];
         getRepositoryContentStub.mockReturnValue(of(repositoryContent));
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
@@ -85,8 +140,16 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
 
         expect(comp.isLoadingFiles).toBeFalse();
-        expect(comp.repositoryFiles).toEqual(repositoryContent);
-        expect(comp.filesTreeViewItem).toEqual(expectedFileTreeItems);
+        // repositoryFiles now contains only PS
+        expect(comp.repositoryFiles).toEqual({
+            [comp.PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
+        });
+
+        // tree now has exactly 1 item: PS
+        expect(comp.filesTreeViewItem).toHaveLength(1);
+        expect(comp.filesTreeViewItem[0].value).toBe(comp.PROBLEM_STATEMENT_IDENTIFIER);
+
+        // still no regular folders/files rendered
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).toHaveLength(0);
@@ -102,7 +165,10 @@ describe('CodeEditorFileBrowserComponent', () => {
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
         expect(comp.isLoadingFiles).toBeFalse();
-        expect(comp.repositoryFiles).toEqual(repositoryContent);
+        expect(comp.repositoryFiles).toEqual({
+            ...repositoryContent,
+            [comp.PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
+        });
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).toHaveLength(1);
@@ -233,23 +299,24 @@ describe('CodeEditorFileBrowserComponent', () => {
             ...allowedFiles,
             ...forbiddenFiles,
         };
-        const expectedFileTreeItems = [
-            new TreeViewItem({
-                internalDisabled: false,
-                internalChecked: false,
-                internalCollapsed: false,
-                text: 'file1',
-                value: 'file1',
-            } as any),
-        ].map((x) => x.toString());
         getRepositoryContentStub.mockReturnValue(of(repositoryContent));
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
         expect(comp.isLoadingFiles).toBeFalse();
-        expect(comp.repositoryFiles).toEqual(allowedFiles);
-        expect(comp.filesTreeViewItem.map((x) => x.toString())).toEqual(expectedFileTreeItems);
+        expect(comp.repositoryFiles).toEqual({
+            ...allowedFiles,
+            [comp.PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
+        });
+
+        // tree should contain exactly the allowed file and PS
+        expect(comp.filesTreeViewItem).toHaveLength(2);
+        const values = comp.filesTreeViewItem.map((i) => i.value);
+        expect(values).toContain('allowedFile.java');
+        expect(values).toContain(comp.PROBLEM_STATEMENT_IDENTIFIER);
+
+        // rendered components: one file, zero folders
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).toHaveLength(0);
@@ -295,10 +362,20 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
         expect(comp.commitState).toEqual(CommitState.COULD_NOT_BE_RETRIEVED);
         expect(comp.isLoadingFiles).toBeFalse();
-        expect(comp.repositoryFiles).toBeUndefined();
-        expect(comp.filesTreeViewItem).toBeUndefined();
+
+        // PS is still present
+        expect(comp.repositoryFiles).toEqual({
+            [comp.PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
+        });
+
+        // tree was built to show PS
+        expect(comp.filesTreeViewItem).toHaveLength(1);
+        expect(comp.filesTreeViewItem[0].value).toBe(comp.PROBLEM_STATEMENT_IDENTIFIER);
+
         expect(onErrorSpy).toHaveBeenCalledOnce();
         expect(loadFilesSpy).not.toHaveBeenCalled();
+
+        // still no regular folders/files rendered
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).toHaveLength(0);
@@ -321,9 +398,14 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         fixture.detectChanges();
         expect(comp.isLoadingFiles).toBeFalse();
-        expect(comp.repositoryFiles).toBeUndefined();
-        expect(comp.filesTreeViewItem).toBeUndefined();
+        expect(comp.repositoryFiles).toEqual({
+            [comp.PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
+        });
+        expect(comp.filesTreeViewItem).toHaveLength(1);
+        expect(comp.filesTreeViewItem[0].value).toBe(comp.PROBLEM_STATEMENT_IDENTIFIER);
+
         expect(onErrorSpy).toHaveBeenCalledOnce();
+
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).toHaveLength(0);
@@ -628,8 +710,11 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(renameFileStub).toHaveBeenCalledWith(fileName, afterRename);
         expect(comp.renamingFile).toBeUndefined();
         expect(onFileChangeSpy).toHaveBeenCalledOnce();
-        expect(comp.repositoryFiles).toEqual({ folder2: FileType.FOLDER, [afterRename]: FileType.FILE });
-
+        expect(comp.repositoryFiles).toEqual({
+            folder2: FileType.FOLDER,
+            [afterRename]: FileType.FILE,
+            [comp.PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
+        });
         filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(filesInTreeHtml).toHaveLength(1);
         foldersInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
@@ -706,6 +791,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             [[afterRename, 'file2'].join('/')]: FileType.FILE,
             [afterRename]: FileType.FOLDER,
             folder2: FileType.FOLDER,
+            [comp.PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
         });
 
         filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));

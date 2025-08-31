@@ -10,6 +10,7 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 export enum FileType {
     FILE = 'FILE',
     FOLDER = 'FOLDER',
+    PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
 }
 
 export abstract class FileChange {}

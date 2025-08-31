@@ -5,9 +5,10 @@ import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { fromPairs, toPairs } from 'lodash-es';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorFileBrowserDeleteComponent } from 'app/programming/manage/code-editor/file-browser/delete/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
-import { faAngleDoubleDown, faAngleDoubleUp, faChevronLeft, faChevronRight, faCircleNotch, faFile, faFolder, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDoubleDown, faAngleDoubleUp, faChevronLeft, faChevronRight, faCircleNotch, faFile, faListAlt, faFolder, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -15,6 +16,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CodeEditorFileBrowserCreateNodeComponent } from './create-node/code-editor-file-browser-create-node.component';
 import { CodeEditorFileBrowserFolderComponent } from './folder/code-editor-file-browser-folder.component';
 import { CodeEditorFileBrowserFileComponent } from './file/code-editor-file-browser-file.component';
+import { CodeEditorFileBrowserProblemStatementComponent } from './problem-statement/code-editor-file-browser-problem-statement.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TreeItem, TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { TreeViewComponent } from 'app/programming/shared/code-editor/treeview/components/tree-view/tree-view.component';
@@ -61,6 +63,7 @@ export interface FileTreeItem extends TreeItem<string> {
         CodeEditorFileBrowserCreateNodeComponent,
         TreeViewComponent,
         CodeEditorStatusComponent,
+        CodeEditorFileBrowserProblemStatementComponent,
         CodeEditorFileBrowserFolderComponent,
         CodeEditorFileBrowserFileComponent,
         ArtemisTranslatePipe,
@@ -75,10 +78,12 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     CommitState = CommitState;
     FileType = FileType;
-
+    // Problem Statement identifier constant
+    readonly PROBLEM_STATEMENT_IDENTIFIER = '__problem_statement__';
     @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
     @ViewChild('treeview', { static: false }) treeview: TreeViewComponent<string>;
-
+    @Input()
+    participation?: Participation;
     @Input()
     get selectedFile(): string | undefined {
         return this.selectedFileValue;
@@ -122,7 +127,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     commitStateValue: CommitState;
     repositoryFiles: { [fileName: string]: FileType };
     repositoryFilesWithInformationAboutChange: { [fileName: string]: boolean } | undefined;
-    filesTreeViewItem: TreeViewItem<string>[];
+    filesTreeViewItem: TreeViewItem<string>[] = [];
     compressFolders = true;
 
     collapsed = false;
@@ -153,6 +158,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     faChevronLeft = faChevronLeft;
     faCircleNotch = faCircleNotch;
     faFile = faFile;
+    faListAlt = faListAlt;
     faAngleDoubleUp = faAngleDoubleUp;
     faAngleDoubleDown = faAngleDoubleDown;
 
@@ -168,12 +174,28 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     ngOnInit(): void {
         this.conflictSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
-            // When the git conflict was resolved, unset the selectedFile, as it can't be assured that it still exists.
             if (this.gitConflictState === GitConflictState.CHECKOUT_CONFLICT && gitConflictState === GitConflictState.OK) {
                 this.selectedFile = undefined;
             }
             this.gitConflictState = gitConflictState;
         });
+
+        // Initialize repository files with Problem Statement if not in display-only mode
+        this.initializeRepositoryFiles();
+    }
+
+    /**
+     * Initialize repositoryFiles with Problem Statement as a first-class file type
+     */
+    private initializeRepositoryFiles(): void {
+        if (!this.repositoryFiles) {
+            this.repositoryFiles = {};
+        }
+
+        // Add Problem Statement as a first-class file type (not in display-only mode)
+        if (!this.displayOnly) {
+            this.repositoryFiles[this.PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
+        }
     }
 
     /**
@@ -201,6 +223,34 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             this.renamingFile = undefined;
             this.setupTreeview();
         }
+
+        // Handle displayOnly changes - add/remove Problem Statement from repositoryFiles
+        if (changes.displayOnly) {
+            this.handleDisplayOnlyChange();
+        }
+
+        // Handle participation changes
+        if (changes.participation) {
+            this.initializeRepositoryFiles();
+        }
+    }
+
+    /**
+     * Handle displayOnly mode changes by adding/removing Problem Statement from repositoryFiles
+     */
+    private handleDisplayOnlyChange(): void {
+        // Ensure the map exists before we mutate / render
+        if (!this.repositoryFiles) {
+            this.repositoryFiles = {};
+        }
+
+        if (this.displayOnly) {
+            delete this.repositoryFiles[this.PROBLEM_STATEMENT_IDENTIFIER];
+        } else {
+            this.repositoryFiles[this.PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
+        }
+
+        this.setupTreeview();
     }
 
     initializeComponent = () => {
@@ -223,6 +273,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 }),
                 tap((files) => {
                     this.repositoryFiles = files;
+                    // Ensure Problem Statement is present if not in display-only mode
+                    this.initializeRepositoryFiles();
                     this.unsavedFiles = [];
                 }),
                 switchMap(() => {
@@ -241,6 +293,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             .subscribe({
                 error: (error: Error) => {
                     this.isLoadingFiles = false;
+                    // TODO: Should PS be shown even when status/content loading failed
+                    this.initializeRepositoryFiles();
+                    this.setupTreeview();
                     this.onError.emit(error.message);
                 },
             });
@@ -308,7 +363,19 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * Process the file array, compress it and then transforms it to a TreeViewItem
      */
     setupTreeview() {
-        let tree = this.buildTree(Object.keys(this.repositoryFiles).sort());
+        // nothing to render yet
+        if (!this.repositoryFiles) {
+            this.filesTreeViewItem = [];
+            return;
+        }
+
+        const fileKeys = Object.keys(this.repositoryFiles).sort((a, b) => {
+            if (a === this.PROBLEM_STATEMENT_IDENTIFIER) return -1;
+            if (b === this.PROBLEM_STATEMENT_IDENTIFIER) return 1;
+            return a.localeCompare(b);
+        });
+
+        let tree = this.buildTree(fileKeys);
         if (this.compressFolders) {
             tree = tree.map(this.compressTree.bind(this));
         }
