@@ -2,15 +2,13 @@ package de.tum.cit.aet.artemis.communication.dto;
 
 import java.time.ZonedDateTime;
 
-import jakarta.validation.constraints.NotNull;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ReactionDTO(Long id, AuthorDTO user, ZonedDateTime creationDate, @NotNull String emojiId, @NotNull Long relatedPostId) {
+public record ReactionDTO(Long id, AuthorDTO user, ZonedDateTime creationDate, String emojiId, Long relatedPostId) {
 
     /**
      * Maps a Reaction entity to a ReactionDTO for data transfer to clients.

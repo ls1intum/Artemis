@@ -114,6 +114,7 @@
         "assignmentRepositoryNotAllowed": "Assignment repositories are not supported for exam exercises. Please use the test run feature instead to try out the exercise.",
         "wrongCourse": "The reaction does not belong to the selected course.",
         "reactionNotFound": "The reaction could not be found.",
-        "missingAssociation": "The reaction must be associated with a post or an answer post."
+        "missingAssociation": "The reaction must be associated with a post or an answer post.",
+        "emojiIdMissing": "emojiId must be set"
     }
 }
