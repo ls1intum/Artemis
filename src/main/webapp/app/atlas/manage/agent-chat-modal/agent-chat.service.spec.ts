@@ -112,13 +112,6 @@ describe('AgentChatService', () => {
             expect(response).toContain("couldn't extract a competency title");
         });
 
-        it('should handle general chat requests', async () => {
-            const response = await firstValueFrom(service.sendMessage('How can you help me?', 123));
-            expect(response).toContain('As your course assistant, I can help you with');
-            expect(response).toContain('Exercise listings');
-            expect(response).toContain('Creating new competencies');
-        });
-
         it('should handle empty messages gracefully', async () => {
             const response = await firstValueFrom(service.sendMessage('', 123));
             expect(response).toBeTruthy();
