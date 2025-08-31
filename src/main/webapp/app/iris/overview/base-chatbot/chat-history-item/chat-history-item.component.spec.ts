@@ -89,7 +89,7 @@ describe('ChatHistoryItemComponent', () => {
     it('should render correct icon with correct tooltip and entity name for lecture session', () => {
         const session: IrisSessionDTO = {
             id: 1,
-            title: 'New Chat',
+            title: 'New chat',
             creationDate: new Date(),
             chatMode: ChatServiceMode.LECTURE,
             entityId: 42,
@@ -101,7 +101,7 @@ describe('ChatHistoryItemComponent', () => {
     it('should render correct icon with correct tooltip and entity name for programming exercise session', () => {
         const session: IrisSessionDTO = {
             id: 2,
-            title: 'New Chat',
+            title: 'New chat',
             creationDate: new Date(),
             chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 77,
@@ -113,7 +113,7 @@ describe('ChatHistoryItemComponent', () => {
     it('should not render an icon and entity name for course session', () => {
         const session: IrisSessionDTO = {
             id: 3,
-            title: 'New Chat',
+            title: 'New chat',
             creationDate: new Date(),
             chatMode: ChatServiceMode.COURSE,
             entityId: 123,
