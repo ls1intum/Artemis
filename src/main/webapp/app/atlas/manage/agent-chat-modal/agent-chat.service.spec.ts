@@ -160,7 +160,7 @@ describe('AgentChatService', () => {
             const websocketService = TestBed.inject(WebsocketService) as jest.Mocked<WebsocketService>;
 
             // Mock successful API call
-            courseCompetencyService.generateCompetenciesFromCourseDescription.mockReturnValue(of({}));
+            courseCompetencyService.generateCompetenciesFromCourseDescription.mockReturnValue(of(new HttpResponse<void>()));
 
             // Mock websocket response with generated competencies
             const mockCompetencies = [
@@ -341,7 +341,7 @@ describe('AgentChatService', () => {
             const courseCompetencyService = TestBed.inject(CourseCompetencyService) as jest.Mocked<CourseCompetencyService>;
             const websocketService = TestBed.inject(WebsocketService) as jest.Mocked<WebsocketService>;
 
-            courseCompetencyService.generateCompetenciesFromCourseDescription.mockReturnValue(of({}));
+            courseCompetencyService.generateCompetenciesFromCourseDescription.mockReturnValue(of(new HttpResponse<void>()));
             websocketService.receive.mockReturnValue(new Observable((subscriber) => subscriber.error(new Error('Connection lost'))));
 
             return new Promise<void>((resolve) => {
@@ -367,7 +367,7 @@ describe('AgentChatService', () => {
             const courseCompetencyService = TestBed.inject(CourseCompetencyService) as jest.Mocked<CourseCompetencyService>;
             const websocketService = TestBed.inject(WebsocketService) as jest.Mocked<WebsocketService>;
 
-            courseCompetencyService.generateCompetenciesFromCourseDescription.mockReturnValue(of({}));
+            courseCompetencyService.generateCompetenciesFromCourseDescription.mockReturnValue(of(new HttpResponse<void>()));
             websocketService.receive.mockReturnValue(
                 of({
                     stages: [{ state: 'ERROR' }],
