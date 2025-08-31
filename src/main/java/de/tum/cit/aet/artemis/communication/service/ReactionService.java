@@ -73,10 +73,6 @@ public class ReactionService {
             throw new BadRequestAlertException("A new reaction cannot already have an ID", METIS_REACTION_ENTITY_NAME, "idExists");
         }
 
-        if (reactionDTO.relatedPostId() == null) {
-            throw new BadRequestAlertException("Reaction must be associated with a Post or AnswerPost.", METIS_REACTION_ENTITY_NAME, "missingAssociation");
-        }
-
         if (reactionDTO.emojiId() == null || reactionDTO.emojiId().isBlank()) {
             throw new BadRequestAlertException("emojiId must be set", METIS_REACTION_ENTITY_NAME, "emojiIdMissing");
         }

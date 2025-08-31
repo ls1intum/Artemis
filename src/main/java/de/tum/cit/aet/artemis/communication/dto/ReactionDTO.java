@@ -2,13 +2,16 @@ package de.tum.cit.aet.artemis.communication.dto;
 
 import java.time.ZonedDateTime;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ReactionDTO(Long id, AuthorDTO user, ZonedDateTime creationDate, String emojiId, Long relatedPostId) {
+public record ReactionDTO(Long id, AuthorDTO user, ZonedDateTime creationDate, @NotBlank String emojiId, @Positive long relatedPostId) {
 
     /**
      * Maps a Reaction entity to a ReactionDTO for data transfer to clients.
@@ -20,13 +23,13 @@ public record ReactionDTO(Long id, AuthorDTO user, ZonedDateTime creationDate, S
     }
 
     /**
-     * Determines the related post ID for the reaction, ensuring null safety.
+     * Determines the related post ID for the reaction
      *
      * @param reaction the Reaction entity
      * @return the ID of the associated Post or AnswerPost
      * @throws BadRequestAlertException if neither association exists
      */
-    private static Long relatedPostIdOrThrow(Reaction reaction) {
+    private static long relatedPostIdOrThrow(Reaction reaction) {
         if (reaction.getPost() != null)
             return reaction.getPost().getId();
         if (reaction.getAnswerPost() != null)
