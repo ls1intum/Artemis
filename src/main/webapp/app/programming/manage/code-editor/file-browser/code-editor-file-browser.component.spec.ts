@@ -76,6 +76,31 @@ describe('CodeEditorFileBrowserComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('adds the Problem Statement entry when not in displayOnly mode', () => {
+        // ensure fresh state
+        (comp as any).repositoryFiles = undefined;
+        comp.displayOnly = false;
+
+        comp.ngOnInit();
+        comp.setupTreeview();
+
+        expect(comp.repositoryFiles[comp.PROBLEM_STATEMENT_IDENTIFIER]).toBe(FileType.PROBLEM_STATEMENT);
+        expect(comp.filesTreeViewItem.map((i) => i.value)).toContain(comp.PROBLEM_STATEMENT_IDENTIFIER);
+    });
+
+    it('removes the Problem Statement entry when displayOnly toggles to true', () => {
+        // start with PS present
+        comp.displayOnly = false;
+        comp.ngOnInit();
+        (comp as any).handleDisplayOnlyChange?.();
+
+        // toggle to repository view (no PS)
+        comp.displayOnly = true;
+        (comp as any).handleDisplayOnlyChange?.();
+
+        expect(comp.repositoryFiles?.[comp.PROBLEM_STATEMENT_IDENTIFIER]).toBeUndefined();
+    });
+
     it('should NOT render Problem Statement in repository view (displayOnly=true)', () => {
         comp.repositoryFiles = {};
         comp.displayOnly = true;

@@ -105,14 +105,18 @@ File browser tree
                     background: var(--bs-primary);
                 }
 
-                .problem-statement-icon { color: var(--bs-primary); }
+                .problem-statement-icon {
+                    color: var(--bs-primary);
+                }
                 .list-group-item__fileName {
                     color: var(--bs-primary);
                     font-weight: 600;
                 }
             }
 
-            &.node-selected::before { display: none; }
+            &.node-selected::before {
+                display: none;
+            }
             &.node-selected .problem-statement-icon,
             &.node-selected .list-group-item__fileName {
                 color: inherit;
@@ -121,4 +125,3 @@ File browser tree
         }
     }
 }
-

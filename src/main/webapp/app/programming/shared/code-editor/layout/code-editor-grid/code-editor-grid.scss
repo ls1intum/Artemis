@@ -7,10 +7,16 @@
     grid-template-rows: min-content auto auto;
     grid-row-gap: 10px;
 
-    .collapsed--horizontal { width: 50px !important; }
-    .collapsed--vertical   { height: 42px !important; }
+    .collapsed--horizontal {
+        width: 50px !important;
+    }
+    .collapsed--vertical {
+        height: 42px !important;
+    }
 
-    .editor-statusbar { padding: 0.5rem 0; }
+    .editor-statusbar {
+        padding: 0.5rem 0;
+    }
 
     .editor-main {
         display: grid;
@@ -39,7 +45,9 @@
             flex: 1 1 auto;
             min-width: 0; /* let center shrink */
 
-            .card { height: 100%; }
+            .card {
+                height: 100%;
+            }
         }
 
         .editor-sidebar-right {
@@ -69,10 +77,16 @@
         height: 200px;
 
         /* Hide grip when bottom area is empty */
-        .rg-bottom-bottom { display: none; }
-        > * + .rg-bottom-bottom { display: inherit !important; }
+        .rg-bottom-bottom {
+            display: none;
+        }
+        > * + .rg-bottom-bottom {
+            display: inherit !important;
+        }
 
-        > * { height: inherit; }
+        > * {
+            height: inherit;
+        }
     }
 }
 
@@ -87,11 +101,15 @@
     .card-header {
         height: 100%;
         width: 100%;
-        > fa-icon { display: none; }
+        > fa-icon {
+            display: none;
+        }
     }
 
     .card-body,
-    .card-second-header { display: none !important; }
+    .card-second-header {
+        display: none !important;
+    }
 
     .collapsed-file-browser {
         width: 50px;
@@ -105,10 +123,22 @@
             left: 25%;
         }
 
-        fa-icon { position: absolute; left: 15px; }
-        .top-icon { top: 15px; }
-        #panel-symbol { position: absolute; top: 66%; left: 25%; padding-right: 0 !important; }
-        .bottom-icon { bottom: 15px; }
+        fa-icon {
+            position: absolute;
+            left: 15px;
+        }
+        .top-icon {
+            top: 15px;
+        }
+        #panel-symbol {
+            position: absolute;
+            top: 66%;
+            left: 25%;
+            padding-right: 0 !important;
+        }
+        .bottom-icon {
+            bottom: 15px;
+        }
     }
 }
 
@@ -124,12 +154,16 @@
 }
 
 .editor-sidebar-left.collapsed--horizontal .code-editor-status {
-    > :not(:last-child) { padding-bottom: 5px; }
+    > :not(:last-child) {
+        padding-bottom: 5px;
+    }
     > :not(:first-child) {
         padding-top: 5px;
         border-top: 1px solid rgba(0, 0, 0, 0.125);
     }
-    span { display: none !important; }
+    span {
+        display: none !important;
+    }
 }
 
 /* Instructions (right pane) */
@@ -139,17 +173,23 @@
     .card-header {
         height: 100%;
         width: 100%;
-        > fa-icon { display: none; }
+        > fa-icon {
+            display: none;
+        }
     }
 
     .instructions-wrapper__content {
         height: auto !important;
 
         .editable-instruction-container__save,
-        .editable-instruction-container__editor { display: none; }
+        .editable-instruction-container__editor {
+            display: none;
+        }
     }
 
-    .card-second-header { display: none !important; }
+    .card-second-header {
+        display: none !important;
+    }
 
     .collapsed-instructions-card {
         width: 50px;
@@ -162,20 +202,38 @@
             left: 25%;
         }
 
-        fa-icon { position: absolute; right: 15px; }
-        .top-icon { top: 15px; }
-        #panel-symbol { position: absolute; top: 18%; left: 40%; padding-right: 0 !important; }
-        .bottom-icon { bottom: 15px; }
+        fa-icon {
+            position: absolute;
+            right: 15px;
+        }
+        .top-icon {
+            top: 15px;
+        }
+        #panel-symbol {
+            position: absolute;
+            top: 18%;
+            left: 40%;
+            padding-right: 0 !important;
+        }
+        .bottom-icon {
+            bottom: 15px;
+        }
     }
 
     /* Hide status area when collapsed */
-    .editable-instruction-container__status { display: none !important; }
+    .editable-instruction-container__status {
+        display: none !important;
+    }
 
-    .instructions__content { height: auto; }
+    .instructions__content {
+        height: auto;
+    }
 }
 
 /* Build output */
-.editor-bottom.collapsed--vertical .card-body { display: none; }
+.editor-bottom.collapsed--vertical .card-body {
+    display: none;
+}
 
 /* ==========================================================================
    Resizable drag elements
@@ -190,7 +248,9 @@
     justify-self: center;
 }
 
-.rg-main-bottom { cursor: row-resize; }
+.rg-main-bottom {
+    cursor: row-resize;
+}
 
 .rg-sidebar-left,
 .rg-sidebar-right {
@@ -206,7 +266,9 @@
     z-index: 3;
 }
 
-.separator { margin: 5px; }
+.separator {
+    margin: 5px;
+}
 
 /* ==========================================================================
    Problem Statement (center) – keep content inside the card and allow shrink

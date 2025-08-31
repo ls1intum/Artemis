@@ -6,9 +6,13 @@
     height: 100%;
 
     /* Wider Bootstrap tooltip */
-    .tooltip-inner { width: 500px; }
+    .tooltip-inner {
+        width: 500px;
+    }
 
-    &__instructions { height: 100%; }
+    &__instructions {
+        height: 100%;
+    }
 
     &__editor {
         display: flex;
@@ -40,7 +44,9 @@
     .card-second-header {
         background-color: var(--markdown-preview-editor-background);
     }
-    .card-second-header { padding: 10px 15px; }
+    .card-second-header {
+        padding: 10px 15px;
+    }
 
     &__save {
         position: absolute;
@@ -73,7 +79,7 @@
                 grid-template-columns: 1fr 1fr;
                 align-items: center;
                 border-left: 1px solid rgba(0, 0, 0, 0.125);
-                padding-left: .75rem;
+                padding-left: 0.75rem;
 
                 > * {
                     justify-self: center;
