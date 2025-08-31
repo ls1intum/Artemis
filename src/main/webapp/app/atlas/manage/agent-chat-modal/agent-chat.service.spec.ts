@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom, of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 import { AgentChatService } from './agent-chat.service';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
@@ -7,14 +8,13 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { Course } from 'app/entities/course/course.model';
 import { MockProvider } from 'ng-mocks';
 
 describe('AgentChatService', () => {
     let service: AgentChatService;
-    let courseCompetencyService: jest.Mocked<CourseCompetencyService>;
     let courseManagementService: jest.Mocked<CourseManagementService>;
     let competencyService: jest.Mocked<CompetencyService>;
-    let websocketService: jest.Mocked<WebsocketService>;
 
     beforeEach(() => {
         const mockCourseCompetencyService = {
@@ -23,7 +23,7 @@ describe('AgentChatService', () => {
         };
 
         const mockCourseManagementService = {
-            find: jest.fn().mockReturnValue(of({ body: { description: 'Test course description' } })),
+            find: jest.fn().mockReturnValue(of(new HttpResponse({ body: { description: 'Test course description' } as Course }))),
         };
 
         const mockCompetencyService = {
@@ -48,10 +48,8 @@ describe('AgentChatService', () => {
         });
 
         service = TestBed.inject(AgentChatService);
-        courseCompetencyService = TestBed.inject(CourseCompetencyService) as jest.Mocked<CourseCompetencyService>;
         courseManagementService = TestBed.inject(CourseManagementService) as jest.Mocked<CourseManagementService>;
         competencyService = TestBed.inject(CompetencyService) as jest.Mocked<CompetencyService>;
-        websocketService = TestBed.inject(WebsocketService) as jest.Mocked<WebsocketService>;
     });
 
     afterEach(() => {
@@ -153,7 +151,7 @@ describe('AgentChatService', () => {
         });
 
         it('should handle course description generation when no description exists', async () => {
-            courseManagementService.find.mockReturnValue(of({ body: { description: '' } }));
+            courseManagementService.find.mockReturnValue(of(new HttpResponse({ body: { description: '' } as Course })));
             const response = await firstValueFrom(service.sendMessage('Generate competencies from course description', 123));
             expect(response).toContain("couldn't find a course description");
         });
@@ -175,7 +173,7 @@ describe('AgentChatService', () => {
         });
 
         it('should handle course description requests when no description exists', async () => {
-            courseManagementService.find.mockReturnValue(of({ body: { description: '' } }));
+            courseManagementService.find.mockReturnValue(of(new HttpResponse({ body: { description: '' } as Course })));
             const response = await firstValueFrom(service.sendMessage('Show course description', 123));
             expect(response).toContain("doesn't have a description set up yet");
             expect(response).toContain('course settings');
