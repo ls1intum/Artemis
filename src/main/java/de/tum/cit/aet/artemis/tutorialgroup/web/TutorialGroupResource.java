@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -51,6 +52,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -66,6 +68,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
@@ -204,6 +207,22 @@ public class TutorialGroupResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         var tutorialGroup = tutorialGroupService.getOneOfCourse(course, user, tutorialGroupId);
         return ResponseEntity.ok().body(tutorialGroup);
+    }
+
+    @GetMapping("courses/{courseId}/tutorial-group-detail/tutorial-groups/{tutorialGroupId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<TutorialGroupDetailGroupDTO> getTutorialGroupDetailGroupDTO(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, ZoneId zoneId) {
+        log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        String timeZoneString = course.getTimeZone();
+        if (timeZoneString == null) {
+            throw new InternalServerErrorException("The course of the tutorial group has an invalid timezone value. This should never happen when tutorial groups exist.");
+        }
+        ZoneId timeZone = ZoneId.of(timeZoneString);
+        var groupDto = tutorialGroupService.getTutorialGroupDetailTutorialGroupDTO(tutorialGroupId, timeZone);
+        return ResponseEntity.ok().body(groupDto);
     }
 
     /**

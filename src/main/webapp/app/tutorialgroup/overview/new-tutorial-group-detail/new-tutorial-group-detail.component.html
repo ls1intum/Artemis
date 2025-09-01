@@ -10,7 +10,6 @@
                     fontSizeInRem="2"
                     imageId="tutor-profile-picture"
                     defaultPictureId="tutor-default-profile-picture"
-                    [authorId]="tutorialGroup().teachingAssistantId"
                     [authorName]="tutorialGroup().teachingAssistantName"
                     [imageUrl]="teachingAssistantImageUrl()"
                 />
@@ -24,7 +23,7 @@
                     <div class="info-item">
                         <fa-icon [icon]="faFlag" />
                         <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.language' | artemisTranslate) + ':' }}</span>
-                        <span jhiTranslate="{{ tutorialGroupLanguage() }}"></span>
+                        {{ tutorialGroupLanguage() }}
                     </div>
                     <div class="info-item">
                         <fa-icon [icon]="faUsers" />
@@ -58,30 +57,37 @@
         <div class="card big">
             <h5 jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.nextSessionCardTitle"></h5>
             <div class="info-card-content">
-                <div class="info-stack">
-                    <div class="info-item">
-                        <fa-icon [icon]="faCalendarDay" />
-                        <span class="info-label"> {{ ('artemisApp.pages.tutorialGroupDetail.weekday' | artemisTranslate) + ':' }}</span>
-                        <span jhiTranslate="{{ nextSessionWeekday() }}"></span>
+                @let nextSession = nextSessionData();
+                @if (nextSession) {
+                    @let nextSessionWeekday = nextSession.weekday;
+                    @let nextSessionDate = nextSession.date;
+                    @let nextSessionTime = nextSession.time;
+                    @let nextSessionLocation = nextSession.location;
+                    <div class="info-stack">
+                        <div class="info-item">
+                            <fa-icon [icon]="faCalendarDay" />
+                            <span class="info-label"> {{ ('artemisApp.pages.tutorialGroupDetail.weekday' | artemisTranslate) + ':' }}</span>
+                            <span jhiTranslate="{{ nextSessionWeekday }}"></span>
+                        </div>
+                        <div class="info-item">
+                            <fa-icon [icon]="faCalendar" />
+                            <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.date' | artemisTranslate) + ':' }}</span>
+                            {{ nextSessionDate }}
+                        </div>
                     </div>
-                    <div class="info-item">
-                        <fa-icon [icon]="faCalendar" />
-                        <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.date' | artemisTranslate) + ':' }}</span>
-                        {{ nextSessionDate() }}
+                    <div class="info-stack">
+                        <div class="info-item">
+                            <fa-icon [icon]="faClock" />
+                            <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.time' | artemisTranslate) + ':' }}</span>
+                            {{ nextSessionTime }}
+                        </div>
+                        <div class="info-item">
+                            <fa-icon [icon]="faMapPin" />
+                            <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.location' | artemisTranslate) + ':' }}</span>
+                            {{ nextSessionLocation }}
+                        </div>
                     </div>
-                </div>
-                <div class="info-stack">
-                    <div class="info-item">
-                        <fa-icon [icon]="faClock" />
-                        <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.time' | artemisTranslate) + ':' }}</span>
-                        {{ nextSessionTime() }}
-                    </div>
-                    <div class="info-item">
-                        <fa-icon [icon]="faMapPin" />
-                        <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.location' | artemisTranslate) + ':' }}</span>
-                        {{ nextSessionLocation() }}
-                    </div>
-                </div>
+                }
             </div>
         </div>
     </div>

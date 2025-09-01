@@ -5,6 +5,8 @@ import static jakarta.persistence.Persistence.getPersistenceUtil;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,6 +44,7 @@ import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
@@ -50,6 +53,10 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailScheduleDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTOStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
@@ -623,6 +630,52 @@ public class TutorialGroupService {
             tutorialGroup.hidePrivacySensitiveInformation();
         }
         return TutorialGroup.preventCircularJsonConversion(tutorialGroup);
+    }
+
+    public TutorialGroupDetailGroupDTO getTutorialGroupDetailTutorialGroupDTO(Long tutorialGroupId, ZoneId courseTimeZone) {
+        TutorialGroupDetailGroupDTO groupDto = tutorialGroupRepository.getTutorialGroupDetailGroupDTO(tutorialGroupId)
+                .orElseThrow(() -> new EntityNotFoundException("Tutorial Group Not Found with id: " + tutorialGroupId));
+        Set<TutorialGroupDetailSessionDTO> sessionDtos = tutorialGroupSessionRepository.getTutorialGroupDetailSessionDTOs(tutorialGroupId);
+        TutorialGroupDetailScheduleDTO scheduleDto = groupDto.getSchedule();
+        int scheduleDayOfWeek = scheduleDto.dayOfWeek();
+        LocalTime scheduleStart = LocalTime.parse(scheduleDto.startTime());
+        LocalTime scheduleEnd = LocalTime.parse(scheduleDto.endTime());
+        String scheduleLocation = scheduleDto.location();
+        for (TutorialGroupDetailSessionDTO sessionDto : sessionDtos) {
+            TutorialGroupDetailSessionDTOStatus status = computeStatus(courseTimeZone, sessionDto, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation);
+            sessionDto.setStatus(status);
+        }
+        groupDto.setSessions(sessionDtos);
+        return groupDto;
+    }
+
+    private TutorialGroupDetailSessionDTOStatus computeStatus(ZoneId courseTimeZone, TutorialGroupDetailSessionDTO session, int scheduleDayOfWeek, LocalTime scheduleStart,
+            LocalTime scheduleEnd, String scheduleLocation) {
+        if (session.getOriginSessionStatus() == TutorialGroupSessionStatus.CANCELLED) {
+            return TutorialGroupDetailSessionDTOStatus.CANCELLED;
+        }
+
+        ZonedDateTime sessionStart = session.getStart().withZoneSameInstant(courseTimeZone);
+        ZonedDateTime sessionEnd = session.getEnd().withZoneSameInstant(courseTimeZone);
+
+        boolean sameDay = sessionStart.getDayOfWeek().getValue() == scheduleDayOfWeek;
+
+        // TODO: verify that sessionStart and sessionTime always only have minute precision (in UI only minute precision can be chosen ->
+        // verify that no seconds or more precise time units are sent to server)
+        boolean sameTime = sessionStart.toLocalTime().equals(scheduleStart) && sessionEnd.toLocalTime().equals(scheduleEnd);
+
+        boolean sameLocation = session.getLocation().equals(scheduleLocation);
+
+        if (sameDay && sameTime && sameLocation) {
+            return TutorialGroupDetailSessionDTOStatus.ACTIVE;
+        }
+        if (sameDay && sameTime && !sameLocation) {
+            return TutorialGroupDetailSessionDTOStatus.RELOCATED;
+        }
+        if ((!sameDay || !sameTime) && sameLocation) {
+            return TutorialGroupDetailSessionDTOStatus.RESCHEDULED;
+        }
+        return TutorialGroupDetailSessionDTOStatus.RESCHEDULED_AND_RELOCATED;
     }
 
     /**

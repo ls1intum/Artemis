@@ -1,16 +1,17 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroup, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Observable } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupDetailSessionDTO, TutorialGroupDetailSessionDTOStatus, TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
 import { Student } from 'app/openapi/model/student';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
 import { TutorialGroupExport } from 'app/openapi/model/tutorialGroupExport';
+import dayjs from 'dayjs/esm';
 
 type EntityResponseType = HttpResponse<TutorialGroup>;
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
@@ -42,6 +43,34 @@ export class TutorialGroupsService {
         return this.httpClient
             .get<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupResponseDatesFromServer(res)));
+    }
+
+    getTutorialGroupDetailGroupDTO(courseId: number, tutorialGroupId: number) {
+        return this.httpClient.get<any>(`${this.resourceURL}/courses/${courseId}/tutorial-group-detail/tutorial-groups/${tutorialGroupId}`).pipe(
+            map(
+                (response) =>
+                    new TutorialGroupDetailGroupDTO(
+                        response.id,
+                        response.title,
+                        response.language,
+                        response.isOnline,
+                        (response.sessions ?? []).map(
+                            (session: any) =>
+                                new TutorialGroupDetailSessionDTO(
+                                    dayjs(session.start),
+                                    dayjs(session.end),
+                                    session.location,
+                                    session.status as TutorialGroupDetailSessionDTOStatus,
+                                    session.attendanceCount,
+                                ),
+                        ),
+                        response.teachingAssistantName,
+                        response.teachingAssistantImageUrl,
+                        response.capacity,
+                        response.campus,
+                    ),
+            ),
+        );
     }
 
     create(tutorialGroup: TutorialGroup, courseId: number): Observable<EntityResponseType> {

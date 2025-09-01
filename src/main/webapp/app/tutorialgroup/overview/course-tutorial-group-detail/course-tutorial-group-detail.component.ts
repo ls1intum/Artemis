@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -28,7 +28,7 @@ export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
     private profileService = inject(ProfileService);
 
     isLoading$ = new BehaviorSubject<boolean>(false);
-    tutorialGroup?: TutorialGroup;
+    tutorialGroup?: TutorialGroupDetailGroupDTO;
     course?: Course;
     private paramsSubscription: Subscription;
     isProduction = true;
@@ -46,7 +46,7 @@ export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
                         const courseId = parseInt(courseIdParams.courseId, 10);
                         return forkJoin({
                             courseResult: this.courseManagementService.find(courseId),
-                            tutorialGroupResult: this.tutorialGroupService.getOneOfCourse(courseId, tutorialGroupId),
+                            tutorialGroupResult: this.tutorialGroupService.getTutorialGroupDetailGroupDTO(courseId, tutorialGroupId),
                         });
                     }),
                     tap({
@@ -62,7 +62,7 @@ export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
                 )
                 .subscribe({
                     next: ({ courseResult, tutorialGroupResult }) => {
-                        this.tutorialGroup = tutorialGroupResult.body ?? undefined;
+                        this.tutorialGroup = tutorialGroupResult;
                         this.course = courseResult.body ?? undefined;
                     },
                 });
