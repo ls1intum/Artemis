@@ -71,7 +71,6 @@ import de.tum.cit.aet.artemis.exam.service.StudentExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
@@ -190,14 +189,7 @@ public class StudentExamResource {
         }
 
         studentExam.getUser().setVisibleRegistrationNumber();
-        Set<ExamGradeScoreDTO> examGrades;
-        if (studentExam.isTestRun()) {
-            examGrades = studentParticipationRepository.findGradesByExamIdAndStudentIdForTestRun(examId, studentExam.getUser().getId());
-        }
-        else {
-            examGrades = studentParticipationRepository.findGradesByExamIdAndStudentId(examId, studentExam.getUser().getId());
-        }
-        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, examGrades);
+        StudentExamWithGradeDTO studentExamWithGradeDTO = studentExamService.getStudentExamWithGradeDTO(examId, studentExam);
 
         return ResponseEntity.ok(studentExamWithGradeDTO);
     }

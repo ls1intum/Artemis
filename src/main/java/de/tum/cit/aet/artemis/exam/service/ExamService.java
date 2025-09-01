@@ -391,7 +391,7 @@ public class ExamService {
         var maxPoints = calculateMaxPointsSum(exercises, exam.getCourse());
         var maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
         var gradingType = gradingScale.map(GradingScale::getGradeType).orElse(null);
-        var achievedPointsPerExercise = calculateAchievedPointsForExercises(studentExamGrades, exam.getCourse(), plagiarismMapping);
+        var achievedPointsPerExercise = calculatePointsStudentAchievedInExercises(studentExamGrades, exam.getCourse(), plagiarismMapping);
         return new StudentExamWithGradeDTO(maxPoints, maxBonusPoints, gradingType, studentExam, studentResult, achievedPointsPerExercise);
     }
 
@@ -701,23 +701,11 @@ public class ExamService {
             if (!examGrade.includedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
                 overallPointsAchieved += achievedPoints;
             }
-            if (calculateFirstCorrectionPoints && exam.getNumberOfCorrectionRoundsInExam() == 2
-                    && !examGrade.includedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
-                Optional<Submission> latestSubmission = studentParticipation != null ? studentParticipation.getSubmissions().stream().max(Comparator.comparing(DomainObject::getId))
-                        : Optional.empty();
-                if (latestSubmission.isPresent()) {
-                    Submission submission = latestSubmission.get();
-                    if (submission.getManualResults().size() > 1) {
-                        Result firstManualResult = submission.getFirstManualResult();
-                        double achievedPointsInFirstCorrection = 0.0;
-                        if (firstManualResult != null) {
-                            double firstRoundScore = firstManualResult.getScore() != null ? firstManualResult.getScore() : 0.0;
-                            achievedPointsInFirstCorrection = calculateAchievedPoints(examGrade.maxPoints(), firstRoundScore, exam.getCourse(), plagiarismPointDeductionPercentage);
-                        }
-                        overallPointsAchievedInFirstCorrection += achievedPointsInFirstCorrection;
-                    }
-                }
+            if (calculateFirstCorrectionPoints) {
+                double firstCorrectionPoints = calculateFirstCorrectionPoints(studentParticipation, exam, examGrade, plagiarismPointDeductionPercentage);
+                overallPointsAchievedInFirstCorrection += firstCorrectionPoints;
             }
+
             boolean hasNonEmptySubmission = studentParticipation != null && hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise);
             if (exercise instanceof QuizExercise && quizSubmittedAnswerCounts != null && studentParticipation != null) {
                 hasNonEmptySubmission = hasNonEmptySubmissionInQuiz(studentParticipation, quizSubmittedAnswerCounts);
@@ -731,6 +719,7 @@ public class ExamService {
             exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
                     new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
         }
+        // Round the points again to prevent floating point issues that might occur when summing up the exercise points (e.g. 0.3 + 0.3 + 0.3 = 0.8999999999999999)
         overallPointsAchieved = roundScoreSpecifiedByCourseSettings(overallPointsAchieved, exam.getCourse());
         var overallGrade = "";
         var overallGradeInFirstCorrection = "";
@@ -770,6 +759,42 @@ public class ExamService {
             }
         }
         return false;
+    }
+
+    /**
+     * Calculates the points achieved in the first correction round if applicable.
+     *
+     * @param participation                      the participation of the student in the exercise
+     * @param exam                               the exam the exercise belongs to
+     * @param examGrade                          the exam grade dto containing the score and max points of the exercise
+     * @param plagiarismPointDeductionPercentage the percentage of points to be deducted due to plagiarism
+     * @return the points achieved in the first correction round or 0.0 if not applicable
+     */
+    private double calculateFirstCorrectionPoints(StudentParticipation participation, Exam exam, ExamGradeScoreDTO examGrade, double plagiarismPointDeductionPercentage) {
+        if (exam.getNumberOfCorrectionRoundsInExam() != 2) {
+            return 0.0;
+        }
+        if (examGrade.includedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) {
+            return 0.0;
+        }
+        if (participation == null) {
+            return 0.0;
+        }
+
+        Optional<Submission> latestSubmission = participation.getSubmissions().stream().max(Comparator.comparing(DomainObject::getId));
+        if (latestSubmission.isEmpty()) {
+            return 0.0;
+        }
+
+        Submission submission = latestSubmission.get();
+        if (submission.getManualResults().size() <= 1) {
+            return 0.0;
+        }
+
+        Result firstManualResult = submission.getFirstManualResult();
+        double firstRoundScore = (firstManualResult != null && firstManualResult.getScore() != null) ? firstManualResult.getScore() : 0.0;
+
+        return calculateAchievedPoints(examGrade.maxPoints(), firstRoundScore, exam.getCourse(), plagiarismPointDeductionPercentage);
     }
 
     /**
@@ -841,7 +866,7 @@ public class ExamService {
         return achievedPoints;
     }
 
-    private Map<Long, Double> calculateAchievedPointsForExercises(Set<ExamGradeScoreDTO> studentExamGrades, Course course, PlagiarismMapping plagiarismMapping) {
+    private Map<Long, Double> calculatePointsStudentAchievedInExercises(Set<ExamGradeScoreDTO> studentExamGrades, Course course, PlagiarismMapping plagiarismMapping) {
         return studentExamGrades.stream().collect(Collectors.toMap(ExamGradeScoreDTO::exerciseId, grade -> {
             PlagiarismCase plagiarismCase = plagiarismMapping.getPlagiarismCase(grade.userId(), grade.exerciseId());
             double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;

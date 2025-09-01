@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeInformationDTO;
+import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
@@ -331,9 +333,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         CourseGradeInformationDTO courseGradeInformationDTO = request.get("/api/assessment/courses/" + course.getId() + "/grade-scores", HttpStatus.OK,
                 CourseGradeInformationDTO.class);
         assertThat(courseGradeInformationDTO).isNotNull();
-        var gradeScoreDTOs = courseGradeInformationDTO.gradeScores();
-        // 3 x text,quiz and programming should be included. Modeling should be excluded because it has a due date in the future
-        assertThat(gradeScoreDTOs).hasSize(5);
+        Collection<CourseGradeScoreDTO> courseGradeScoreDTOS = courseGradeInformationDTO.gradeScores();
+        // 3 x text, 1 x quiz and 1 x programming should be included. Modeling should be excluded because it has a due date in the future
+        assertThat(courseGradeScoreDTOS).hasSize(5);
 
         Map<Long, IdsMapValue> expectedValuesMap = new HashMap<>();
         expectedValuesMap.put(programmingParticipation.getId(), new IdsMapValue(programmingExercise.getId(), programmingParticipation.getParticipant().getId(), 100.00));
@@ -345,7 +347,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         expectedValuesMap.put(studentTextParticipation.getId(), new IdsMapValue(textExercise.getId(), studentTextParticipation.getParticipant().getId(), 50));
         expectedValuesMap.put(quizParticipation.getId(), new IdsMapValue(quizExercise.getId(), quizParticipation.getParticipant().getId(), 100.00));
 
-        gradeScoreDTOs.forEach(gradeScoreDTO -> {
+        courseGradeScoreDTOS.forEach(gradeScoreDTO -> {
             long participationId = gradeScoreDTO.participationId();
             long exerciseId = gradeScoreDTO.exerciseId();
             long userId = gradeScoreDTO.userId();

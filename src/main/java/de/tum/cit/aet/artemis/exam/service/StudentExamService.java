@@ -41,12 +41,14 @@ import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
@@ -89,6 +91,8 @@ public class StudentExamService {
 
     private final ParticipationService participationService;
 
+    private final ExamService examService;
+
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -126,7 +130,7 @@ public class StudentExamService {
             ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler) {
+            @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -144,6 +148,7 @@ public class StudentExamService {
         this.cacheManager = cacheManager;
         this.websocketMessagingService = websocketMessagingService;
         this.scheduler = scheduler;
+        this.examService = examService;
     }
 
     /**
@@ -505,6 +510,24 @@ public class StudentExamService {
             }
         }
         return unsubmittedStudentExams;
+    }
+
+    /**
+     * Get the StudentExamWithGradeDTO for the given studentExam.
+     *
+     * @param examId      the examId of the studentExam
+     * @param studentExam the studentExam for which the StudentExamWithGradeDTO should be calculated
+     * @return the StudentExamWithGradeDTO for the given studentExam
+     */
+    public StudentExamWithGradeDTO getStudentExamWithGradeDTO(long examId, StudentExam studentExam) {
+        Set<ExamGradeScoreDTO> examGrades;
+        if (studentExam.isTestRun()) {
+            examGrades = studentParticipationRepository.findGradesByExamIdAndStudentIdForTestRun(examId, studentExam.getUser().getId());
+        }
+        else {
+            examGrades = studentParticipationRepository.findGradesByExamIdAndStudentId(examId, studentExam.getUser().getId());
+        }
+        return examService.calculateStudentResultWithGradeAndPoints(studentExam, examGrades);
     }
 
     /**

@@ -73,21 +73,36 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     // NOTE: we have an edge case for quizzes where we need to take the first submission and not the last one
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore, de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ)
-            FROM StudentParticipation p
-                JOIN p.student u
-                JOIN p.exercise ex
-                JOIN p.submissions s
-                JOIN s.results r
-            WHERE ex.course.id IN :courseIds
-                AND u.id = :studentId
-                AND TYPE(ex) = QuizExercise
-                AND p.testRun = FALSE
-                AND r.rated = TRUE
-                AND r.completionDate IS NOT NULL
-                AND r.score IS NOT NULL
-                AND s.submissionDate = (SELECT MIN(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p)
-                AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
+
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(
+            participation.id,
+            student.id,
+            exercise.id,
+            result.score,
+            participation.presentationScore,
+            de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ)
+            FROM StudentParticipation participation
+                JOIN participation.student student
+                JOIN participation.exercise exercise
+                JOIN participation.submissions submission
+                JOIN submission.results result
+            WHERE exercise.course.id IN :courseIds
+             AND student.id = :studentId
+             AND TYPE(exercise) = QuizExercise
+             AND participation.testRun = FALSE
+             AND result.rated = TRUE
+             AND result.completionDate IS NOT NULL
+             AND result.score IS NOT NULL
+             AND submission.submissionDate = (
+                 SELECT MIN(innerSubmission.submissionDate)
+                 FROM Submission innerSubmission
+                 WHERE innerSubmission.participation = participation
+                 )
+                 AND result.completionDate = (
+                 SELECT MAX(innerResult.completionDate)
+                 FROM Result innerResult
+                 WHERE innerResult.submission = submission
+                 )
             """)
     Set<CourseGradeScoreDTO> findIndividualQuizGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
 
@@ -284,15 +299,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s)
             """)
     Set<ExamGradeScoreDTO> findGradesByExamId(@Param("examId") long examId);
-
-    @Query("""
-            SELECT p
-            FROM StudentParticipation p
-            WHERE p.exercise.exerciseGroup.exam.id = :examId
-                AND p.testRun = FALSE
-
-            """)
-    Set<StudentParticipation> findAllByExamId(@Param("examId") long examId);
 
     @Query("""
             SELECT DISTINCT p
@@ -871,7 +877,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND (s.submissionDate IS NULL OR s.submissionDate = (SELECT MAX(s2.submissionDate) FROM Submission s2 WHERE s2.participation = p))
                 AND (r.completionDate IS NULL OR r.completionDate = (SELECT MAX(r2.completionDate) FROM Result r2 WHERE r2.submission = s))
             """)
-    Set<StudentParticipation> findByStudentIdAndIndividualExercisesWithLatestSubmissionsLatestResult(@Param("studentId") long studentId,
+    Set<StudentParticipation> findByStudentIdAndIndividualExercisesWithLatestSubmissionLatestResult(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises, @Param("includeTestRuns") boolean includeTestRuns);
 
     @Query("""
@@ -1189,7 +1195,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
         // 1st: fetch participations, submissions and results for individual exercises
         Set<StudentParticipation> individualParticipations = individualExercises.isEmpty() ? Set.of()
-                : findByStudentIdAndIndividualExercisesWithLatestSubmissionsLatestResult(user.getId(), individualExercises, includeTestRuns);
+                : findByStudentIdAndIndividualExercisesWithLatestSubmissionLatestResult(user.getId(), individualExercises, includeTestRuns);
 
         // 2nd: fetch participations, submissions and results for team exercises
         Set<StudentParticipation> teamParticipations = teamExercises.isEmpty() ? Set.of()
