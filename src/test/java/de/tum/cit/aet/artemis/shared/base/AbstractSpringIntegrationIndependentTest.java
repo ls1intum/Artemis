@@ -8,7 +8,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SHARING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
@@ -42,9 +41,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 // TODO: PROFILE_AEOLUS is bound to PROGRAMMING and LOCAL_VC and should not be active in an independent test context.
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_IRIS, PROFILE_AEOLUS,
-        PROFILE_LTI, PROFILE_SHARING, "local" })
-@TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.user-management.passkey.enabled=true",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent", "artemis.nebula.enabled=false" })
+        PROFILE_LTI, "local" })
+@TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.user-management.passkey.enabled=true",
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractSpringIntegrationIndependentTest.class);

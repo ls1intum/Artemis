@@ -259,6 +259,7 @@ public class SecurityConfiguration {
                     // LocalVCFetchFilter/LocalVCPushFilter handle auth
                     .requestMatchers("/git/**").permitAll();
 
+
                     // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
                     requests.requestMatchers("/**").authenticated();
                 }

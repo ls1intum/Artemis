@@ -23,7 +23,7 @@ public record SharingInfoDTO(
 
         @NotNull String checksum,
 
-        @NotNull int exercisePosition) {
+        int exercisePosition) {
 
     @Override
     public boolean equals(Object o) {

@@ -11,7 +11,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SHARING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
@@ -78,10 +77,10 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 // NOTE: in a "single node" environment, PROFILE_BUILDAGENT must be before PROFILE_CORE to avoid issues
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_BUILDAGENT, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_LDAP, PROFILE_LTI,
-        PROFILE_AEOLUS, PROFILE_THEIA, PROFILE_IRIS, PROFILE_SHARING, PROFILE_ATHENA, "local" })
+        PROFILE_AEOLUS, PROFILE_THEIA, PROFILE_IRIS, PROFILE_ATHENA, "local" })
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.user-management.use-external=false",
-        "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=1",
+        "artemis.sharing.enabled=true", "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=1",
         "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
         "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000",
         "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500", "info.contact=test@localhost", "artemis.version-control.ssh-port=1236",

@@ -5,17 +5,21 @@
             "expiresAt": "Verbindung zur Austauschplattform läuft um <strong>{{expirationDate}}</strong> ab",
             "importedExercise": "Importierte Aufgaben",
             "courseToImport": "Kurs in den die Aufgabe importiert werden soll",
-            "noExercisesFound": "Keine importierten Aufgaben gefunden?",
+            "noExercisesFound": "Keine importierten Aufgaben gefunden!",
             "exerciseToImport": "Bitte die zu importierende Aufgabe auswählen",
             "loginAsInstructorOrEditor": "Bitte melden dich als Instruktor oder Editor an!",
+            "coursesLoading": "Kurse werden geladen, bitte ein wenig Geduld",
             "error": {
                 "loadingStatus": "Sharing Profile ist nicht aktiv!",
+                "missingParameters": "Es fehlen Parameter!",
                 "statusError": "Status der Sharing Platform kann nicht identifiziert werden",
                 "navigation": "Navigation zur Importseite fehlgeschlagen",
                 "importError": "Das importieren der Aufgabe ist fehlgeschlagen",
                 "missingToken": "Token aus der Sharing-Plattform fehlt",
                 "noImportedExercises": "Keine importierten Aufgaben gefunden",
-                "loadingCourses": "Fehler beim Laden der Kurse"
+                "loadingCourses": "Fehler beim Laden der Kurse",
+                "loadingBasket": "Fehler beim Laden des Imports",
+                "atLeastEditorNeeded": "Du musst mindestens Editorrechte haben! Bitte melde Dich entsprechend an."
             }
         }
     },

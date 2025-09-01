@@ -4,9 +4,9 @@ import { ProgrammingExerciseSharingService } from 'app/programming/manage/servic
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
 import { TranslateService } from '@ngx-translate/core';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -35,8 +35,8 @@ describe('ProgrammingExercise Sharing Service', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
             ],
         })

@@ -8,8 +8,7 @@ import { MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { SharingComponent } from 'app/sharing/sharing.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
@@ -37,8 +36,8 @@ describe('SharingComponent', () => {
             navigate: jest.fn().mockResolvedValue(true), // mock a successful navigation
         };
         TestBed.configureTestingModule({
-            imports: [MockModule(ReactiveFormsModule)],
-            declarations: [SharingComponent, TranslatePipeMock, MockDirective(TranslateDirective)],
+            imports: [SharingComponent, MockModule(ReactiveFormsModule)],
+            declarations: [TranslatePipeMock, MockDirective(TranslateDirective)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -47,7 +46,7 @@ describe('SharingComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: routerMock },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
 
                 MockProvider(ProfileService),
                 MockProvider(StaticContentService),
@@ -92,7 +91,7 @@ describe('SharingComponent', () => {
 
         req.flush(testBasket);
 
-        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/with-user-stats');
+        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/course-management-overview');
 
         courseReq.flush(courses);
 
@@ -175,7 +174,7 @@ describe('SharingComponent', () => {
             url: basketUrl,
         });
 
-        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/with-user-stats');
+        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/course-management-overview');
 
         courseReq.flush(courses);
 
@@ -206,7 +205,7 @@ describe('SharingComponent', () => {
 
         req.flush(testBasket);
 
-        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/with-user-stats');
+        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/course-management-overview');
 
         const errorSpy = jest.spyOn(alertService, 'error');
 

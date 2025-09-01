@@ -1,21 +1,25 @@
 {
     "artemisApp": {
         "sharing": {
-            "title": "Import from Sharing Plattform",
-            "expiresAt": "Connection to Sharing Plattform expires at <strong>{{expirationDate}}</strong>",
+            "title": "Import from Sharing Platform",
+            "expiresAt": "Connection to Sharing Platform expires at <strong>{{expirationDate}}</strong>",
             "importedExercise": "Imported Exercise",
             "courseToImport": "Course to import Exercise into",
-            "noExercisesFound": "No imported exercises found?",
+            "noExercisesFound": "No imported exercises found!",
             "exerciseToImport": "Please select exercise to import",
             "loginAsInstructorOrEditor": "Please ensure to log in as instructor or editor!",
+            "coursesLoading": "Courses are loading, please stand by.",
             "error": {
                 "loadingStatus": "Sharing profile is not activated",
+                "missingParameters": "some parameters are missing!",
                 "statusError": "Status of Sharing Platform cannot be determined",
                 "navigation": "cannot navigate to import page",
                 "importError": "An error occurred while importing the exercise",
                 "missingToken": "Missing token from sharing platform",
                 "noImportedExercises": "No imported exercises found",
-                "loadingCourses": "Courses could not be loaded"
+                "loadingCourses": "Courses could not be loaded",
+                "loadingBasket": "Imports could not be loaded",
+                "atLeastEditorNeeded": "You need at least editor rights! Please login with an appropriate user."
             }
         }
     },
