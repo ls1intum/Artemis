@@ -52,8 +52,13 @@ public class ProgrammingExerciseImportFromSharingService {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (sharingSetupInfo.exercise().getCourseViaExerciseGroupOrCourseMember() == null) {
+            if (sharingSetupInfo.course() == null) {
+                throw new SharingException("Target course is missing for import");
+            }
             sharingSetupInfo.exercise().setCourse(sharingSetupInfo.course());
         }
-        return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(sharingSetupInfo.exercise(), zipFileO.get(), sharingSetupInfo.course(), user, true);
+        try (SharingMultipartZipFile zip = zipFileO.get()) {
+            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(sharingSetupInfo.exercise(), zip, sharingSetupInfo.course(), user, true);
+        }
     }
 }

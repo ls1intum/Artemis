@@ -23,6 +23,7 @@ export class ProgrammingExerciseSharingService {
     resourceUrl = 'api/programming/sharing/import';
     resourceUrlBasket = 'api/programming/sharing/import/basket/';
     resourceUrlExport = 'api/programming/sharing/export';
+    resourceUrlSetupImport = 'api/programming/sharing/setup-import';
 
     private readonly http = inject(HttpClient);
 
@@ -43,7 +44,9 @@ export class ProgrammingExerciseSharingService {
     }
 
     loadDetailsForExercises(sharingInfo: SharingInfo): Observable<ProgrammingExercise> {
-        return this.http.post<ProgrammingExercise>(this.resourceUrlBasket + 'exercise-details', sharingInfo);
+        return this.http
+            .post<ProgrammingExercise>(this.resourceUrlBasket + 'exercise-details', sharingInfo, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res).body!));
     }
 
     /**
@@ -56,7 +59,7 @@ export class ProgrammingExerciseSharingService {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
-            .post<ProgrammingExercise>('api/programming/sharing/setup-import', { exercise: copy, course, sharingInfo }, { observe: 'response' })
+            .post<ProgrammingExercise>(this.resourceUrlSetupImport, { exercise: copy, course, sharingInfo }, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
@@ -76,13 +79,14 @@ export class ProgrammingExerciseSharingService {
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
         if (copy.templateParticipation) {
-            const { exercise, ...filteredTemplateParticipation } = copy.templateParticipation;
+            const { exercise: _ignoredExercise, results: _ignoredResults, submissions: _ignoredSubmissions, ...filteredTemplateParticipation } = copy.templateParticipation as any;
             copy.templateParticipation = { ...filteredTemplateParticipation } as TemplateProgrammingExerciseParticipation;
         }
         if (copy.solutionParticipation) {
-            const { exercise, ...filteredSolutionParticipation } = copy.solutionParticipation;
+            const { exercise: _ignoredExercise, results: _ignoredResults, submissions: _ignoredSubmissions, ...filteredSolutionParticipation } = copy.solutionParticipation as any;
             copy.solutionParticipation = { ...filteredSolutionParticipation } as SolutionProgrammingExerciseParticipation;
         }
+
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
 
         return copy as ProgrammingExercise;

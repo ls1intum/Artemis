@@ -18,7 +18,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgStyle } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { combineLatest, take } from 'rxjs';
-
+import { finalize } from 'rxjs/operators';
 /**
  * controls the import of an exercise from the sharing platform.
  */
@@ -30,14 +30,14 @@ import { combineLatest, take } from 'rxjs';
     standalone: true,
 })
 export class SharingComponent implements OnInit {
-    courses: Course[];
+    courses: Course[] = [];
     coursesLoading = true;
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     reverseSorting: boolean = false;
     sortColumn = 'id';
 
-    shoppingBasket: ShoppingBasket;
+    shoppingBasket?: ShoppingBasket;
     /**
      * holder for all data needed to import the exercise
      */
@@ -71,16 +71,19 @@ export class SharingComponent implements OnInit {
      */
     loadAll() {
         this.coursesLoading = true;
-        this.courseService.getCourseOverview({}).subscribe({
-            next: (res: HttpResponse<Course[]>) => {
-                this.courses = res.body!;
-                this.coursesLoading = false;
-            },
-            error: (res: HttpErrorResponse) => {
-                this.coursesLoading = false;
-                this.alertService.error('artemisApp.sharing.error.loadingCourses');
-            },
-        });
+        this.courseService
+            .getCourseOverview({})
+            .pipe(finalize(() => (this.coursesLoading = false)))
+            .subscribe({
+                next: (res: HttpResponse<Course[]>) => {
+                    this.courses = res.body!;
+                    this.coursesLoading = false;
+                },
+                error: (res: HttpErrorResponse) => {
+                    this.coursesLoading = false;
+                    this.alertService.error('artemisApp.sharing.error.loadingCourses');
+                },
+            });
     }
 
     onCourseSelected(course: Course): void {
@@ -101,7 +104,7 @@ export class SharingComponent implements OnInit {
      * @param item - Current course
      */
     trackId(index: number, item: Course) {
-        return item.id;
+        return item.id ?? index;
     }
 
     /**

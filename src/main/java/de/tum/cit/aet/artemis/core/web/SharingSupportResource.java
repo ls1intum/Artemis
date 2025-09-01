@@ -59,7 +59,9 @@ public class SharingSupportResource {
     @GetMapping(SHARINGCONFIG_RESOURCE_PATH)
     public ResponseEntity<SharingPluginConfig> getConfig(@SuppressWarnings("OptionalUsedAsFieldOrParameterType") @RequestHeader("Authorization") Optional<String> sharingApiKey,
             @RequestParam String apiBaseUrl, @SuppressWarnings("OptionalUsedAsFieldOrParameterType") @RequestParam Optional<String> installationName) {
-        if (sharingApiKey.isPresent() && sharingConnectorService.validateApiKey(sharingApiKey.get())) {
+        final String BEARER_PREFIX = "Bearer ";
+        final Optional<String> token = sharingApiKey.map(v -> v.startsWith(BEARER_PREFIX) ? v.substring(BEARER_PREFIX.length()) : v);
+        if (token.isPresent() && sharingConnectorService.validateApiKey(token.get())) {
             log.info("Delivered Sharing Config ");
             URL parsedApiBaseUrl;
             try {
@@ -72,7 +74,7 @@ public class SharingSupportResource {
             return ResponseEntity.ok(sharingConnectorService.getPluginConfig(parsedApiBaseUrl, installationName));
         }
         log.warn("Received wrong or missing api key");
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     /**

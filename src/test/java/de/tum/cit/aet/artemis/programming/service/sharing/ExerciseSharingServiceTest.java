@@ -111,12 +111,12 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @Test
     void shouldReturnEmptyBasketInfoOnNullToken() {
-        assertThat(exerciseSharingService.getBasketInfo(null, "unused")).isEmpty();
+        assertThat(exerciseSharingService.getBasketInfo(null, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN)).isEmpty();
     }
 
     @Test
     void shouldReturnEmptyBasketInfoOnInvalidToken() {
-        assertThat(exerciseSharingService.getBasketInfo("&%$!äöü", "unused")).isEmpty();
+        assertThat(exerciseSharingService.getBasketInfo("&%$!äöü", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN)).isEmpty();
     }
 
     @Test
@@ -153,12 +153,6 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         assertThat(basket).isEmpty();
         // Could be more assertions, however not really helpful here
-    }
-
-    @Test
-    void testGetBasketInfoWithNullToken() {
-        Optional<ShoppingBasket> basket = exerciseSharingService.getBasketInfo(null, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN);
-        assertThat(basket).isEmpty();
     }
 
     @Test

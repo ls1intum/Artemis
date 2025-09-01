@@ -25,12 +25,10 @@ import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 
 // Mock the diff.utils module to avoid Monaco Editor issues in tests
@@ -73,20 +71,15 @@ describe('ProgrammingExerciseDetailComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
     let statisticsService: StatisticsService;
     let exerciseService: ProgrammingExerciseService;
-    let profileService: ProfileService;
     let submissionPolicyService: SubmissionPolicyService;
     let programmingLanguageFeatureService: ProgrammingLanguageFeatureService;
 
-    const mockProgrammingExercise = {
+    const mockProgrammingExercise = Object.assign(new ProgrammingExercise(new Course(), undefined), {
         id: 1,
         categories: [{ category: 'Important' }],
-        templateParticipation: {
-            id: 1,
-        } as TemplateProgrammingExerciseParticipation,
-        solutionParticipation: {
-            id: 2,
-        } as SolutionProgrammingExerciseParticipation,
-    } as ProgrammingExercise;
+        templateParticipation: { id: 1 } as TemplateProgrammingExerciseParticipation,
+        solutionParticipation: { id: 2 } as SolutionProgrammingExerciseParticipation,
+    });
 
     const mockDiffInformation = {
         diffInformations: [
@@ -124,11 +117,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
 
-    const profileInfo = {
-        activeProfiles: [],
-        activeModuleFeatures: [MODULE_FEATURE_PLAGIARISM],
-    } as unknown as ProfileInfo;
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot()],
@@ -149,10 +137,11 @@ describe('ProgrammingExerciseDetailComponent', () => {
         }).compileComponents();
 
         // Mock the ResizeObserver, which is not available in the test environment
+        const originalResizeObserver = global.ResizeObserver;
+        (global as any).__origResizeObserver = originalResizeObserver;
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
-
         fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
         comp = fixture.componentInstance;
 
@@ -160,11 +149,9 @@ describe('ProgrammingExerciseDetailComponent', () => {
         jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(exerciseStatistics));
 
         exerciseService = TestBed.inject(ProgrammingExerciseService);
-        profileService = TestBed.inject(ProfileService);
         submissionPolicyService = TestBed.inject(SubmissionPolicyService);
 
         programmingLanguageFeatureService = TestBed.inject(ProgrammingLanguageFeatureService);
-        TestBed.inject(Router);
 
         jest.spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
             of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })),
@@ -177,7 +164,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         );
         jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
 
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
         jest.spyOn(programmingLanguageFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
             plagiarismCheckSupported: true,
         } as ProgrammingLanguageFeature);
@@ -185,6 +171,12 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        // Restore original ResizeObserver to avoid cross-test pollution
+        const orig = (global as any).__origResizeObserver;
+        if (orig) {
+            global.ResizeObserver = orig;
+            delete (global as any).__origResizeObserver;
+        }
     });
 
     describe('onInit for sharing import exercise', () => {
@@ -201,7 +193,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             httpMock.verify();
         });
 
-        it('should be in sharing mode', async () => {
+        it('should be in sharing mode', () => {
             // WHEN
             comp.ngOnInit();
             comp.programmingExercise = mockProgrammingExercise;
@@ -214,11 +206,10 @@ describe('ProgrammingExerciseDetailComponent', () => {
             expect(comp.isExportToSharingEnabled).toBeTruthy();
         });
 
-        it('should not be in sharing mode', async () => {
+        it('should not be in sharing mode', () => {
             // WHEN
             comp.ngOnInit();
             comp.programmingExercise = mockProgrammingExercise;
-            comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
 
             const req = httpMock.expectOne({ method: 'GET', url: 'api/core/sharing/config/is-enabled' });
             req.flush(
@@ -233,7 +224,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             expect(comp.isExportToSharingEnabled).toBeFalsy();
         });
 
-        it('should not be in sharing mode because profile enabled but body empty', async () => {
+        it('should not be in sharing mode because profile enabled but body empty', () => {
             // WHEN
             comp.ngOnInit();
             comp.programmingExercise = mockProgrammingExercise;

@@ -1,10 +1,14 @@
 package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -18,13 +22,23 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
     private SharingConnectorService sharingConnectorService;
 
     @BeforeEach
-    void startUp() throws Exception {
-        sharingPlatformMockProvider.connectRequestFromSharingPlatform();
+    void startUp() {
+        try {
+            sharingPlatformMockProvider.connectRequestFromSharingPlatform();
+        }
+        catch (Exception e) {
+            fail(e);
+        }
     }
 
     @AfterEach
-    void tearDown() throws Exception {
-        sharingPlatformMockProvider.reset();
+    void tearDown() {
+        try {
+            sharingPlatformMockProvider.reset();
+        }
+        catch (Exception e) {
+            fail(e);
+        }
     }
 
     @Test
@@ -44,9 +58,11 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
         assertThat(sharingConnectorService.getSharingApiKeyOrNull()).isNotNull();
     }
 
-    @Test
-    void validateApiKey_withNullKey_shouldReturnFalse() {
-        assertThat(sharingConnectorService.validateApiKey(null)).isFalse();
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { " ", "\t", "\n" })
+    void validateApiKey_withNullOrBlankKey_shouldReturnFalse(String key) {
+        assertThat(sharingConnectorService.validateApiKey(key)).isFalse();
     }
 
     @Test
@@ -57,6 +73,16 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
         String hugeKey = "huge" + "0123456789".repeat(50);
 
         assertThat(sharingConnectorService.validateApiKey(hugeKey)).isFalse();
+        assertThat(sharingConnectorService.validateApiKey(hugeKey.substring(0, SharingConnectorService.MAX_API_KEY_LENGTH + 1))).isFalse();
+        String admissibleKey = hugeKey.substring(0, SharingConnectorService.MAX_API_KEY_LENGTH);
+        String configuredApiKey = sharingConnectorService.getSharingApiKeyOrNull();
+        try {
+            sharingConnectorService.setSharingApiKey(admissibleKey);
+            assertThat(sharingConnectorService.validateApiKey(admissibleKey)).isTrue();
+        }
+        finally {
+            sharingConnectorService.setSharingApiKey(configuredApiKey);
+        }
     }
 
     @Test

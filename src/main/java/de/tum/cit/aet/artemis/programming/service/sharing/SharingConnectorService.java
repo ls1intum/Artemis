@@ -43,7 +43,10 @@ public class SharingConnectorService {
      */
     public static final String UNKNOWN_INSTALLATION_NAME = "unknown installation name";
 
-    private static final int MAX_API_KEY_LENGTH = 200;
+    /**
+     * protected, to be reused in tests.
+     */
+    protected static final int MAX_API_KEY_LENGTH = 200;
 
     public static class HealthStatus {
 

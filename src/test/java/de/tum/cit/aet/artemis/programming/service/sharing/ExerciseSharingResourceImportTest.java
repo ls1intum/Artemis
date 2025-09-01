@@ -49,7 +49,6 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
@@ -108,10 +107,9 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
     @BeforeEach
     void setupObjectMapper() {
-        objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper = new ObjectMapper();
         objectMapper.findAndRegisterModules();
-
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     @AfterEach

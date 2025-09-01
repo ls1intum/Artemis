@@ -15,6 +15,7 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -23,11 +24,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.WebApplicationException;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -156,7 +157,7 @@ public class ExerciseSharingService {
             SharingMultipartZipFile zipFileItem = new SharingMultipartZipFile(getBasketFileName(sharingInfo.basketToken(), itemPosition), Files.newInputStream(cachedZipFile));
             return Optional.of(zipFileItem);
         }
-        catch (WebApplicationException | IOException | ExecutionException wae) {
+        catch (IOException | ExecutionException wae) {
             log.warn("Exception during shared exercise retrieval", wae);
             throw new SharingException("Could not retrieve basket item", wae);
         }
@@ -201,7 +202,7 @@ public class ExerciseSharingService {
                         return basketFilePath;
                     }
                     catch (IOException e) {
-                        log.warn("Cannot load sharing Info", e);
+                        log.warn("Cannot load sharing info for basket {} item {} from {}.", sharingInfo.basketToken(), itemPosition, sharingInfo.apiBaseURL(), e);
                         throw new SharingException("Cannot load sharing Info", e);
                     }
 
@@ -246,7 +247,7 @@ public class ExerciseSharingService {
 
     /**
      * Retrieves an entry from a given Sharing basket, selected by a RegEx and returns the content as a String.
-     * If nothing is found, null is returned.
+     * If nothing is found, Optional.empty() is returned.
      *
      * @param matchingPattern RegEx matching the entry to return.
      * @param sharingInfo     of the basket to retrieve the entry from
@@ -254,35 +255,38 @@ public class ExerciseSharingService {
      * @throws IOException if a reading error occurs
      */
     public Optional<String> getEntryFromBasket(Pattern matchingPattern, SharingInfoDTO sharingInfo) throws IOException {
-        try (SharingMultipartZipFile zipFile = this.getCachedBasketItem(sharingInfo).orElse(null)) {
-            if (zipFile == null) {
-                return Optional.empty();
-            }
-            try (ZipInputStream zippedRepositoryStream = new ZipInputStream(zipFile.getInputStream())) {
-
-                ZipEntry entry;
-                while ((entry = zippedRepositoryStream.getNextEntry()) != null) {
-                    Matcher matcher = matchingPattern.matcher(entry.getName());
-                    if (matcher.find()) {
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        byte[] buffer = new byte[COPY_BUFFER_SIZE];
-                        int bytesRead;
-                        while ((bytesRead = zippedRepositoryStream.read(buffer)) != -1) {
-                            baos.write(buffer, 0, bytesRead);
-                        }
-                        String entryContent = new String(baos.toByteArray(), StandardCharsets.UTF_8);
-                        zippedRepositoryStream.closeEntry();
-                        return Optional.of(entryContent);
-                    }
-                    zippedRepositoryStream.closeEntry();
-                }
-                return Optional.empty(); // Not found
-            }
+        Optional<SharingMultipartZipFile> zipOpt;
+        try {
+            zipOpt = this.getCachedBasketItem(sharingInfo);
         }
         catch (SharingException e) {
             log.error("Cannot read input Template for {}", sharingInfo.basketToken(), e);
             return Optional.empty();
         }
+        if (zipOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        try (SharingMultipartZipFile zipFile = zipOpt.get(); ZipInputStream zippedRepositoryStream = new ZipInputStream(zipFile.getInputStream())) {
+
+            ZipEntry entry;
+            while ((entry = zippedRepositoryStream.getNextEntry()) != null) {
+                Matcher matcher = matchingPattern.matcher(entry.getName());
+                if (matcher.find()) {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[COPY_BUFFER_SIZE];
+                    int bytesRead;
+                    while ((bytesRead = zippedRepositoryStream.read(buffer)) != -1) {
+                        baos.write(buffer, 0, bytesRead);
+                    }
+                    String entryContent = baos.toString(StandardCharsets.UTF_8);
+                    zippedRepositoryStream.closeEntry();
+                    return Optional.of(entryContent);
+                }
+                zippedRepositoryStream.closeEntry();
+            }
+            return Optional.empty(); // Not found
+        }
+
     }
 
     /**
@@ -308,19 +312,25 @@ public class ExerciseSharingService {
             }
 
             // remove the 'repoDownloadClonePath' part and 'zip' extension
-            String token = Path.of(repoDownloadClonePath).relativize(zipFilePath).toString().replace(".zip", "");
-            // We encode the zip-file path as a Base64-Token
+            Path baseDir = Path.of(repoDownloadClonePath).toAbsolutePath().normalize();
+            Path zipAbs = zipFilePath.toAbsolutePath().normalize();
+            if (!zipAbs.startsWith(baseDir)) {
+                throw new SharingException("Export path is outside of configured clone directory");
+            }
+            String token = baseDir.relativize(zipAbs).toString().replace(".zip", "");            // We encode the zip-file path as a Base64-Token
             // to simplify the token, we strip trailing "=".
             // We cannot guarantee that the sharing platform connects to the same jvm instance, we have to find the file with the token on the (shared) file system.
             String tokenInB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(token.getBytes(StandardCharsets.UTF_8));
             String tokenIntegrity = createHMAC(tokenInB64);
 
             URL apiBaseUrl = sharingConnectorService.getSharingApiBaseUrlOrNull();
-            String sharingImportEndPoint = "/exercise/import";
             URIBuilder callBackBuilder = new URIBuilder(artemisServerUrl + "/api/programming/sharing/export/" + tokenInB64);
             callBackBuilder.addParameter("sec", tokenIntegrity);
             URIBuilder builder = new URIBuilder();
-            builder.setScheme(apiBaseUrl.getProtocol()).setHost(apiBaseUrl.getHost()).setPath(apiBaseUrl.getPath().concat(sharingImportEndPoint)).setPort(apiBaseUrl.getPort())
+
+            var baseSegments = Arrays.stream(apiBaseUrl.getPath().split("/")).filter(s -> !s.isBlank()).toArray(String[]::new);
+            builder.setScheme(apiBaseUrl.getProtocol()).setHost(apiBaseUrl.getHost()).setPort(apiBaseUrl.getPort())
+                    .setPathSegments(Stream.concat(Arrays.stream(baseSegments), Stream.of("exercise", "import")).toArray(String[]::new))
                     .addParameter("exerciseUrl", callBackBuilder.build().toString());
 
             return builder.build().toURL();
@@ -399,7 +409,7 @@ public class ExerciseSharingService {
 
         String decodedToken = new String(Base64.getUrlDecoder().decode(b64Token), StandardCharsets.UTF_8);
         Path zipPath = Paths.get(repoDownloadClonePath, decodedToken + ".zip");
-        if (!Files.exists(zipPath)) {
+        if (!Files.isRegularFile(zipPath)) {
             return Optional.empty();
         }
         // Integrity is ensured via HMAC validation; decodedToken is a safe relative path segment
@@ -407,7 +417,7 @@ public class ExerciseSharingService {
     }
 
     private boolean isInvalidToken(String token) {
-        return StringUtils.isEmpty(token) || token.length() >= MAX_EXPORT_TOKEN_LENGTH || !token.matches("^[a-zA-Z0-9_-]+$");
+        return StringUtils.isBlank(token) || token.length() >= MAX_EXPORT_TOKEN_LENGTH || !token.matches("^[a-zA-Z0-9_-]+$");
     }
 
     /**
@@ -417,7 +427,8 @@ public class ExerciseSharingService {
      * @param itemPosition of the retrieved file
      */
     private String getBasketFileName(String basketToken, int itemPosition) {
-        return "sharingBasket" + basketToken + "-" + itemPosition + ".zip";
+        String safeToken = basketToken.replaceAll("[^a-zA-Z0-9_-]", "");
+        return "sharingBasket" + safeToken + "-" + itemPosition + ".zip";
     }
 
 }

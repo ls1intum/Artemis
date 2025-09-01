@@ -72,7 +72,7 @@ public class RestTemplateConfiguration {
     @Bean
     @Profile(PROFILE_SHARING)
     public RestTemplate sharingRestTemplate() {
-        return createRestTemplate();
+        return createShortTimeoutRestTemplate();
     }
 
     /**
