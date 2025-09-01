@@ -19,6 +19,8 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 
 import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -63,6 +65,8 @@ public class CourseScoreCalculationService {
 
     private static final double SCORE_NORMALIZATION_VALUE = 0.01;
 
+    private static final Logger log = LoggerFactory.getLogger(CourseScoreCalculationService.class);
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ExerciseRepository exerciseRepository;
@@ -89,8 +93,7 @@ public class CourseScoreCalculationService {
     /**
      * Calculates max and reachable max points for the given exercises. Also calculates the reachable presentation points for the course, if a grading scale with course is given.
      * Max points are the sum of the points for all included (see {@link #includeIntoScoreCalculation(ExerciseCourseScoreDTO)}) exercises, whose due date is over or unset or who
-     * are
-     * automatically assessed and the buildAndTestStudentSubmissionsAfterDueDate is in the past.
+     * are automatically assessed and the buildAndTestStudentSubmissionsAfterDueDate is in the past.
      * Reachable max points contain only those points where the exercise's assessmentDueDate is in the past. (see {@link #isAssessmentDone(ExerciseCourseScoreDTO)}).
      * Example: An exercise that is not automatically assessed (e.g. text exercise), that has the dueDate in the past but the assessmentDueDate set in the future is included in
      * the max points calculation,
@@ -147,7 +150,7 @@ public class CourseScoreCalculationService {
             return null;
         }
         long courseId = course.getId();
-        Set<ExerciseCourseScoreDTO> courseExercises = exerciseRepository.findCourseExerciseScoreInformationByCourseIds(Set.of(courseId));
+        Set<ExerciseCourseScoreDTO> courseExercises = exerciseRepository.findCourseExerciseScoreInformationByCourseId(courseId);
         if (courseExercises.isEmpty()) {
             return null;
         }
@@ -167,8 +170,8 @@ public class CourseScoreCalculationService {
         }
         else {
             var courseGradeScoreDtos = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId);
-            // These participations also contain participations for students with ids not included in 'studentIds'.
-            // Filter out those participations that belong to the students in 'studentIds'.
+            // These course grade score DTOs also contain DTOs for students with ids not included in 'studentIds'.
+            // Filter out those DTOs that belong to the students in 'studentIds'.
             // For the single student case, this is done in the db query.
             var studentIdSet = new HashSet<>(studentIds);
             for (CourseGradeScoreDTO courseGradeScoreDTO : courseGradeScoreDtos) {
@@ -317,20 +320,20 @@ public class CourseScoreCalculationService {
     }
 
     /**
-     * Calculates the presentation score, relative and absolute points for the given studentId and corresponding participationsOfStudent
+     * Calculates the presentation score, relative and absolute points for the given studentId and corresponding courseGradeScoreDTOsOfStudent
      * and takes the effects of related plagiarism verdicts on the grade into account.
      *
-     * @param course                  the course the scores are calculated for.
-     * @param gradingScale            the grading scale of the course.
-     * @param studentId               the id of the student who has participated in the course exercises.
-     * @param participationsOfStudent should be non-empty. The exercise participations of the given student.
-     * @param maxAndReachablePoints   max points and max reachable points in the given course.
-     * @param plagiarismCases         the plagiarism verdicts for the student.
-     * @param courseExercises         the exercises of the course with their properties relevant for the score calculation.
+     * @param course                        the course the scores are calculated for.
+     * @param gradingScale                  the grading scale of the course.
+     * @param studentId                     the id of the student who has participated in the course exercises.
+     * @param courseGradeScoreDTOsOfStudent should be non-empty. The exercise participations of the given student.
+     * @param maxAndReachablePoints         max points and max reachable points in the given course.
+     * @param plagiarismCases               the plagiarism verdicts for the student.
+     * @param courseExercises               the exercises of the course with their properties relevant for the score calculation.
      * @return a StudentScoresDTO instance with the presentation score, relative and absolute points achieved by the given student.
      */
     public StudentScoresDTO calculateCourseScoreForStudent(Course course, @Nullable GradingScale gradingScale, Long studentId,
-            Collection<CourseGradeScoreDTO> participationsOfStudent, MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases,
+            Collection<CourseGradeScoreDTO> courseGradeScoreDTOsOfStudent, MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases,
             Set<ExerciseCourseScoreDTO> courseExercises) {
 
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
@@ -339,8 +342,8 @@ public class CourseScoreCalculationService {
             return new StudentScoresDTO(0.0, 0.0, 0.0, 0);
         }
 
-        Map<Long, CourseGradeScoreDTO> participationMap = participationsOfStudent.stream()
-                .collect(Collectors.toMap(CourseGradeScoreDTO::exerciseId, participation -> participation));
+        Map<Long, CourseGradeScoreDTO> gradeScoreDTOMap = courseGradeScoreDTOsOfStudent.stream()
+                .collect(Collectors.toMap(CourseGradeScoreDTO::exerciseId, courseGradeScoreDTO -> courseGradeScoreDTO));
 
         double pointsAchievedByStudentInCourse = 0.0;
         double presentationScore = 0;
@@ -351,7 +354,7 @@ public class CourseScoreCalculationService {
                 continue;
             }
 
-            CourseGradeScoreDTO participation = participationMap.get(exercise.id());
+            CourseGradeScoreDTO participation = gradeScoreDTOMap.get(exercise.id());
             if (participation != null) {
                 double pointsAchievedFromExercise = calculatePointsAchievedFromExerciseScoreDTO(exercise, participation.score(), plagiarismCasesForStudent.get(exercise.id()),
                         course);
@@ -367,7 +370,7 @@ public class CourseScoreCalculationService {
         }
         // calculate presentation score for basic presentations
         else if (course.getPresentationScore() != null && course.getPresentationScore() > 0.0) {
-            presentationScore = participationsOfStudent.stream().filter(p -> p.presentationScore() != null && p.presentationScore() > 0.0).count();
+            presentationScore = courseGradeScoreDTOsOfStudent.stream().filter(p -> p.presentationScore() != null && p.presentationScore() > 0.0).count();
         }
 
         return getStudentScoresDTO(course, maxAndReachablePoints, pointsAchievedByStudentInCourse, presentationScore);

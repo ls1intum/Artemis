@@ -308,8 +308,7 @@ public class ExamService {
         var examGrades = studentParticipationRepository.findGradesByExamId(examId);
         List<QuizSubmittedAnswerCount> submittedAnswerCounts = studentParticipationRepository.findSubmittedAnswerCountForQuizzesInExam(examId);
 
-        // Counts how many participants each exercise has
-        Map<Long, Long> exerciseIdToNumberParticipations = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::exerciseId, Collectors.counting()));
+        Map<Long, Long> exerciseIdToNumberParticipants = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::exerciseId, Collectors.counting()));
         PlagiarismMapping plagiarismMapping = plagiarismCaseApi.map(api -> api.getPlagiarismMappingForExam(exam.getId())).orElse(PlagiarismMapping.empty());
         var exerciseGroups = new ArrayList<ExamScoresDTO.ExerciseGroup>();
 
@@ -325,7 +324,7 @@ public class ExamService {
             // Add information about exercise groups and exercises
 
             for (Exercise exercise : exerciseGroup.getExercises()) {
-                Long participantsForExercise = exerciseIdToNumberParticipations.get(exercise.getId());
+                Long participantsForExercise = exerciseIdToNumberParticipants.get(exercise.getId());
                 // If no participation exists for an exercise then no entry exists in the map
                 if (participantsForExercise == null) {
                     participantsForExercise = 0L;
@@ -413,7 +412,7 @@ public class ExamService {
         if (sourceGradingScale.getExam() == null && sourceGradingScale.getCourse() != null) {
             var courseId = sourceGradingScale.getCourse().getId();
             // fetch course with exercises to calculate reachable points
-            var exercises = exerciseRepository.findCourseExerciseScoreInformationByCourseIds(Set.of(courseId));
+            var exercises = exerciseRepository.findCourseExerciseScoreInformationByCourseId(courseId);
             tempSourceReachablePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, exercises);
         }
         final double sourceReachablePoints = tempSourceReachablePoints;
@@ -660,7 +659,7 @@ public class ExamService {
      * Calculates the corresponding grade if a GradingScale is given.
      *
      * @param studentExam                    a StudentExam instance that will have its points and grades calculated if it is assessed
-     * @param examGrades                     grades for the given studentExam with eagerly loaded latest submission and results
+     * @param examGrades                     grade DTOs for the given studentExam
      * @param exam                           the relevant exam
      * @param gradingScale                   optional GradingScale that will be used to set the grade type and the achieved grade if present
      * @param calculateFirstCorrectionPoints flag to determine whether to calculate the first correction results or not
