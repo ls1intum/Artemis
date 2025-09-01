@@ -23,6 +23,9 @@ import { AlertService } from 'app/shared/service/alert.service';
     imports: [ButtonComponent],
 })
 export class ProgrammingExerciseInstructorExerciseSharingComponent {
+    // Icons
+    protected readonly faDownload = faDownload;
+
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
@@ -32,14 +35,10 @@ export class ProgrammingExerciseInstructorExerciseSharingComponent {
 
     exerciseId = input<number>();
 
-    // Icons
-    faDownload = faDownload;
-
     /**
-     * **CodeAbility changes**: Used to initiate export of an exercise to
+     * Used to initiate export of an exercise to
      * Sharing.
      * Results in a redirect containing a callback-link to exposed exercise
-     * @param programmingExerciseId the id of the exercise to export
      */
     exportExerciseToSharing() {
         const programmingExerciseId = this.exerciseId();
@@ -52,7 +51,9 @@ export class ProgrammingExerciseInstructorExerciseSharingComponent {
                             if (!window.name) {
                                 window.name = 'artemis';
                             }
-                            this.sharingTab.location.href = `${redirectURL}&window=${window.name}`;
+                            const targetUrl = new URL(redirectURL, window.location.origin);
+                            targetUrl.searchParams.set('window', window.name);
+                            this.sharingTab.location.href = targetUrl.toString();
                             this.sharingTab.focus();
                         } else {
                             window.location.href = redirectURL;

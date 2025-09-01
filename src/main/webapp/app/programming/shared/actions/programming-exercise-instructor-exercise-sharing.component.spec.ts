@@ -3,21 +3,21 @@ import { By } from '@angular/platform-browser';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClient } from '@angular/common/http';
 import { ProgrammingExerciseInstructorExerciseSharingComponent } from './programming-exercise-instructor-exercise-sharing.component';
+import { AlertService } from 'app/shared/service/alert.service';
 import { Component, signal } from '@angular/core';
 
 @Component({
-    template: `<jhi-programming-exercise-instructor-exercise-sharing [exerciseId]="testValue"></jhi-programming-exercise-instructor-exercise-sharing>`,
-    standalone: true,
+    template: `<jhi-programming-exercise-instructor-exercise-sharing [exerciseId]="testValue()"></jhi-programming-exercise-instructor-exercise-sharing>`,
     imports: [ProgrammingExerciseInstructorExerciseSharingComponent],
 })
 class TestHostComponent {
-    testValue = signal(5);
+    testValue = signal<number | undefined>(5);
 }
 describe('ProgrammingExercise Instructor Exercise Sharing', () => {
     let hostFixture: ComponentFixture<TestHostComponent>;
@@ -25,14 +25,14 @@ describe('ProgrammingExercise Instructor Exercise Sharing', () => {
     let comp: ProgrammingExerciseInstructorExerciseSharingComponent;
     let httpMock: HttpTestingController;
     let consoleError: any;
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
             ],
         })
@@ -70,16 +70,22 @@ describe('ProgrammingExercise Instructor Exercise Sharing', () => {
                 focus: () => {},
             } as WindowProxy;
             comp.exportExerciseToSharing();
-            const req = httpMock.expectOne({ method: 'POST' });
+            const req = httpMock.expectOne((request) => request.method === 'POST' && request.url.includes('/programming/sharing/export/5'));
+            expect(req.request.body).toBe(window.location.href);
             req.flush('returnURL');
             tick();
         }));
 
         it('export to sharing initiation (fail Exercise not found)', fakeAsync(() => {
+            const alertService: AlertService = TestBed.inject(AlertService);
+            const errorSpy = jest.spyOn(alertService, 'error');
+
             comp.exportExerciseToSharing();
-            const req = httpMock.expectOne({ method: 'POST' });
+            const req = httpMock.expectOne((request) => request.method === 'POST' && request.url.includes('/programming/sharing/export/5'));
             req.flush('Exercise not found', { status: 404, statusText: 'Not Found' });
+
             tick();
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.sharing.error.export', { message: 'Exercise not found' });
         }));
     });
 

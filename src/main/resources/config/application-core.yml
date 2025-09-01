@@ -9,6 +9,16 @@ artemis:
         enabled: true
     text:
         enabled: true
+    sharing:
+        enabled: false
+        # the shared common secret
+        apikey: <placeholder>
+        # a url used to force reinitialization of Sharing Platform configuration
+        # if not set, you have to wait for the next scheduled reinitialization request from the sharing platform
+        # (typically every 5 minutes)
+        serverurl: http://localhost:9001
+        actionname: Export to Artemis@testInstance
+
     tutorialgroup:
         enabled: true
     user-management:

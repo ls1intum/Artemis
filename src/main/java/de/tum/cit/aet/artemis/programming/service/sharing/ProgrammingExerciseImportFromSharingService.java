@@ -2,21 +2,19 @@ package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
 
 @Service
-@Profile(Constants.PROFILE_SHARING)
+@ConditionalOnProperty(name = "artemis.sharing.enabled", havingValue = "true", matchIfMissing = false)
 @Lazy
 public class ProgrammingExerciseImportFromSharingService {
 
@@ -43,17 +41,19 @@ public class ProgrammingExerciseImportFromSharingService {
      */
     public ProgrammingExercise importProgrammingExerciseFromSharing(SharingSetupInfo sharingSetupInfo) throws SharingException, IOException, GitAPIException, URISyntaxException {
         if (sharingSetupInfo.exercise() == null) {
-            throw new SharingException("Exercise is null?");
+            throw new SharingException("Exercise should not be null?");
         }
-        Optional<SharingMultipartZipFile> zipFileO = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.sharingInfo());
-        if (zipFileO.isEmpty()) {
-            throw new SharingException("Failed to retrieve exercise zip file from sharing platform");
-        }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        try (SharingMultipartZipFile zip = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.sharingInfo())) {
 
-        if (sharingSetupInfo.exercise().getCourseViaExerciseGroupOrCourseMember() == null) {
-            sharingSetupInfo.exercise().setCourse(sharingSetupInfo.course());
+            User user = userRepository.getUserWithGroupsAndAuthorities();
+
+            if (sharingSetupInfo.exercise().getCourseViaExerciseGroupOrCourseMember() == null) {
+                if (sharingSetupInfo.course() == null) {
+                    throw new SharingException("Target course is missing for import");
+                }
+                sharingSetupInfo.exercise().setCourse(sharingSetupInfo.course());
+            }
+            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(sharingSetupInfo.exercise(), zip, sharingSetupInfo.course(), user, true);
         }
-        return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(sharingSetupInfo.exercise(), zipFileO.get(), sharingSetupInfo.course(), user, true);
     }
 }

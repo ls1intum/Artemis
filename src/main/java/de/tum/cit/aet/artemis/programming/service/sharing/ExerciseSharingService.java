@@ -15,6 +15,7 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -23,11 +24,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.NotFoundException;
-import jakarta.ws.rs.WebApplicationException;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -40,8 +42,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
@@ -55,7 +57,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -66,7 +67,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportServi
  * service for sharing exercises via the sharing platform.
  */
 @Service
-@Profile(Constants.PROFILE_SHARING)
+@ConditionalOnProperty(name = "artemis.sharing.enabled", havingValue = "true", matchIfMissing = false)
 @Lazy
 public class ExerciseSharingService {
 
@@ -149,14 +150,13 @@ public class ExerciseSharingService {
      * @return the exercise as a zip stream
      * @throws SharingException if exercise cannot be loaded
      */
-    public Optional<SharingMultipartZipFile> getBasketItem(SharingInfoDTO sharingInfo, int itemPosition) throws SharingException {
+    public SharingMultipartZipFile getBasketItem(SharingInfoDTO sharingInfo, int itemPosition) throws SharingException {
         try {
             Path cachedZipFile = repositoryCache.get(Pair.of(sharingInfo, itemPosition));
             // Ensure proper resource management - SharingMultipartZipFile should handle stream closing
-            SharingMultipartZipFile zipFileItem = new SharingMultipartZipFile(getBasketFileName(sharingInfo.basketToken(), itemPosition), Files.newInputStream(cachedZipFile));
-            return Optional.of(zipFileItem);
+            return new SharingMultipartZipFile(getBasketFileName(sharingInfo.basketToken(), itemPosition), Files.newInputStream(cachedZipFile));
         }
-        catch (WebApplicationException | IOException | ExecutionException wae) {
+        catch (IOException | ExecutionException wae) {
             log.warn("Exception during shared exercise retrieval", wae);
             throw new SharingException("Could not retrieve basket item", wae);
         }
@@ -165,20 +165,14 @@ public class ExerciseSharingService {
     /**
      * simple loading cache for paths to zip-files with 1-hour timeout.
      */
-    private final LoadingCache<Pair<SharingInfoDTO, Integer>, Path> repositoryCache = CacheBuilder.newBuilder().maximumSize(100).expireAfterAccess(1, TimeUnit.HOURS)
-            .removalListener(notification -> {
+    private final LoadingCache<@NotNull Pair<SharingInfoDTO, Integer>, @NotNull Path> repositoryCache = CacheBuilder.newBuilder().maximumSize(100)
+            .expireAfterAccess(1, TimeUnit.HOURS).removalListener(notification -> {
                 Path outdatedBasketZipfile = (Path) notification.getValue();
-                if (outdatedBasketZipfile != null) {
-                    boolean deleted = false;
-                    try {
-                        deleted = Files.deleteIfExists(outdatedBasketZipfile);
-                    }
-                    catch (IOException e) {
-                        log.info("Cannot delete {}", outdatedBasketZipfile, e);
-                    }
-                    if (!deleted) {
-                        log.info("Cannot delete {}", outdatedBasketZipfile);
-                    }
+                try {
+                    Files.deleteIfExists(outdatedBasketZipfile);
+                }
+                catch (IOException e) {
+                    log.info("Cannot delete {}", outdatedBasketZipfile, e);
                 }
             }).build(new CacheLoader<>() {
 
@@ -201,7 +195,7 @@ public class ExerciseSharingService {
                         return basketFilePath;
                     }
                     catch (IOException e) {
-                        log.warn("Cannot load sharing Info", e);
+                        log.warn("Cannot load sharing info for basket {} item {} from {}.", sharingInfo.basketToken(), itemPosition, sharingInfo.apiBaseURL(), e);
                         throw new SharingException("Cannot load sharing Info", e);
                     }
 
@@ -213,11 +207,11 @@ public class ExerciseSharingService {
      *
      * @return repository cache
      */
-    LoadingCache<Pair<SharingInfoDTO, Integer>, Path> getRepositoryCache() {
+    LoadingCache<@NotNull Pair<SharingInfoDTO, Integer>, @NotNull Path> getRepositoryCache() {
         return repositoryCache;
     }
 
-    public Optional<SharingMultipartZipFile> getCachedBasketItem(SharingInfoDTO sharingInfo) throws SharingException {
+    public SharingMultipartZipFile getCachedBasketItem(SharingInfoDTO sharingInfo) throws SharingException {
         int itemPosition = sharingInfo.exercisePosition();
         return getBasketItem(sharingInfo, itemPosition);
     }
@@ -246,43 +240,39 @@ public class ExerciseSharingService {
 
     /**
      * Retrieves an entry from a given Sharing basket, selected by a RegEx and returns the content as a String.
-     * If nothing is found, null is returned.
+     * If nothing is found, Optional.empty() is returned.
      *
      * @param matchingPattern RegEx matching the entry to return.
      * @param sharingInfo     of the basket to retrieve the entry from
-     * @return The content of the entry, or null if not found.
+     * @return The content of the entry, or Optional.empty() if not found.
      * @throws IOException if a reading error occurs
      */
     public Optional<String> getEntryFromBasket(Pattern matchingPattern, SharingInfoDTO sharingInfo) throws IOException {
-        try (SharingMultipartZipFile zipFile = this.getCachedBasketItem(sharingInfo).orElse(null)) {
-            if (zipFile == null) {
-                return Optional.empty();
-            }
-            try (ZipInputStream zippedRepositoryStream = new ZipInputStream(zipFile.getInputStream())) {
+        try (SharingMultipartZipFile zipFile = this.getCachedBasketItem(sharingInfo); ZipInputStream zippedRepositoryStream = new ZipInputStream(zipFile.getInputStream())) {
 
-                ZipEntry entry;
-                while ((entry = zippedRepositoryStream.getNextEntry()) != null) {
-                    Matcher matcher = matchingPattern.matcher(entry.getName());
-                    if (matcher.find()) {
-                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        byte[] buffer = new byte[COPY_BUFFER_SIZE];
-                        int bytesRead;
-                        while ((bytesRead = zippedRepositoryStream.read(buffer)) != -1) {
-                            baos.write(buffer, 0, bytesRead);
-                        }
-                        String entryContent = new String(baos.toByteArray(), StandardCharsets.UTF_8);
-                        zippedRepositoryStream.closeEntry();
-                        return Optional.of(entryContent);
+            ZipEntry entry;
+            while ((entry = zippedRepositoryStream.getNextEntry()) != null) {
+                Matcher matcher = matchingPattern.matcher(entry.getName());
+                if (matcher.find()) {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[COPY_BUFFER_SIZE];
+                    int bytesRead;
+                    while ((bytesRead = zippedRepositoryStream.read(buffer)) != -1) {
+                        baos.write(buffer, 0, bytesRead);
                     }
+                    String entryContent = baos.toString(StandardCharsets.UTF_8);
                     zippedRepositoryStream.closeEntry();
+                    return Optional.of(entryContent);
                 }
-                return Optional.empty(); // Not found
+                zippedRepositoryStream.closeEntry();
             }
+            return Optional.empty(); // Not found
         }
         catch (SharingException e) {
             log.error("Cannot read input Template for {}", sharingInfo.basketToken(), e);
             return Optional.empty();
         }
+
     }
 
     /**
@@ -308,29 +298,30 @@ public class ExerciseSharingService {
             }
 
             // remove the 'repoDownloadClonePath' part and 'zip' extension
-            String token = Path.of(repoDownloadClonePath).relativize(zipFilePath).toString().replace(".zip", "");
-            // We encode the zip-file path as a Base64-Token
+            Path baseDir = Path.of(repoDownloadClonePath).toAbsolutePath().normalize();
+            Path zipAbs = zipFilePath.toAbsolutePath().normalize();
+            if (!zipAbs.startsWith(baseDir)) {
+                throw new SharingException("Export path is outside of configured clone directory");
+            }
+            String token = baseDir.relativize(zipAbs).toString().replace(".zip", "");            // We encode the zip-file path as a Base64-Token
             // to simplify the token, we strip trailing "=".
             // We cannot guarantee that the sharing platform connects to the same jvm instance, we have to find the file with the token on the (shared) file system.
             String tokenInB64 = Base64.getUrlEncoder().withoutPadding().encodeToString(token.getBytes(StandardCharsets.UTF_8));
             String tokenIntegrity = createHMAC(tokenInB64);
 
             URL apiBaseUrl = sharingConnectorService.getSharingApiBaseUrlOrNull();
-            String sharingImportEndPoint = "/exercise/import";
             URIBuilder callBackBuilder = new URIBuilder(artemisServerUrl + "/api/programming/sharing/export/" + tokenInB64);
             callBackBuilder.addParameter("sec", tokenIntegrity);
             URIBuilder builder = new URIBuilder();
-            builder.setScheme(apiBaseUrl.getProtocol()).setHost(apiBaseUrl.getHost()).setPath(apiBaseUrl.getPath().concat(sharingImportEndPoint)).setPort(apiBaseUrl.getPort())
+
+            var baseSegments = Arrays.stream(apiBaseUrl.getPath().split("/")).filter(s -> !s.isBlank()).toArray(String[]::new);
+            builder.setScheme(apiBaseUrl.getProtocol()).setHost(apiBaseUrl.getHost()).setPort(apiBaseUrl.getPort())
+                    .setPathSegments(Stream.concat(Arrays.stream(baseSegments), Stream.of("exercise", "import")).toArray(String[]::new))
                     .addParameter("exerciseUrl", callBackBuilder.build().toString());
 
             return builder.build().toURL();
         }
-        catch (URISyntaxException e) {
-            String msg = "An error occurred during URL creation: " + e.getMessage();
-            log.error(msg, e);
-            throw new SharingException(msg, e);
-        }
-        catch (IOException | EntityNotFoundException e) {
+        catch (URISyntaxException | IOException | EntityNotFoundException e) {
             String msg = "Could not generate Zip file for export: " + e.getMessage();
             log.error(msg, e);
             throw new SharingException(msg, e);
@@ -398,13 +389,16 @@ public class ExerciseSharingService {
         }
 
         String decodedToken = new String(Base64.getUrlDecoder().decode(b64Token), StandardCharsets.UTF_8);
-        // with the HMAC key of the token, we ensure it has not been changed client-side after construction,
-        // therefore, we know that `decodedToken` points to a safe path
-        return Optional.of(Paths.get(repoDownloadClonePath, decodedToken + ".zip"));
+        Path zipPath = Paths.get(repoDownloadClonePath, decodedToken + ".zip");
+        if (!Files.isRegularFile(zipPath)) {
+            return Optional.empty();
+        }
+        // Integrity is ensured via HMAC validation; decodedToken is a safe relative path segment
+        return Optional.of(zipPath);
     }
 
     private boolean isInvalidToken(String token) {
-        return StringUtils.isEmpty(token) || token.length() >= MAX_EXPORT_TOKEN_LENGTH || !token.matches("^[a-zA-Z0-9_-]+$");
+        return StringUtils.isBlank(token) || token.length() >= MAX_EXPORT_TOKEN_LENGTH || !token.matches("^[a-zA-Z0-9_-]+$");
     }
 
     /**
@@ -414,7 +408,8 @@ public class ExerciseSharingService {
      * @param itemPosition of the retrieved file
      */
     private String getBasketFileName(String basketToken, int itemPosition) {
-        return "sharingBasket" + basketToken + "-" + itemPosition + ".zip";
+        String safeToken = basketToken.replaceAll("[^a-zA-Z0-9_-]", "");
+        return "sharingBasket" + safeToken + "-" + itemPosition + ".zip";
     }
 
 }

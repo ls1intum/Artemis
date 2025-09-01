@@ -19,10 +19,11 @@ export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
 /** the programming exercise sharing service */
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseSharingService {
-    baseSharingConfigUrl = 'api/core/sharing/config';
-    resourceUrl = 'api/programming/sharing/import';
-    resourceUrlBasket = 'api/programming/sharing/import/basket/';
-    resourceUrlExport = 'api/programming/sharing/export';
+    protected readonly baseSharingConfigUrl = 'api/core/sharing/config';
+    protected readonly resourceUrl = 'api/programming/sharing/import';
+    protected readonly resourceUrlBasket = 'api/programming/sharing/import/basket/';
+    protected readonly resourceUrlExport = 'api/programming/sharing/export';
+    protected readonly resourceUrlSetupImport = 'api/programming/sharing/setup-import';
 
     private readonly http = inject(HttpClient);
 
@@ -30,6 +31,10 @@ export class ProgrammingExerciseSharingService {
      * loads the Shopping Basket via the Service
      */
     getSharedExercises(sharingInfo: SharingInfo): Observable<ShoppingBasket> {
+        // Validate required parameters
+        if (!sharingInfo.basketToken || !sharingInfo.apiBaseURL || !sharingInfo.checksum || !sharingInfo.returnURL) {
+            throw new Error('Missing required sharing information: basketToken and apiBaseURL are required');
+        }
         return this.http
             .get<ShoppingBasket>(this.resourceUrl + '/basket', {
                 params: { basketToken: sharingInfo.basketToken, returnURL: sharingInfo.returnURL, apiBaseURL: sharingInfo.apiBaseURL, checksum: sharingInfo.checksum },
@@ -39,7 +44,9 @@ export class ProgrammingExerciseSharingService {
     }
 
     loadDetailsForExercises(sharingInfo: SharingInfo): Observable<ProgrammingExercise> {
-        return this.http.post<ProgrammingExercise>(this.resourceUrlBasket + 'exercise-details', sharingInfo);
+        return this.http
+            .post<ProgrammingExercise>(this.resourceUrlBasket + 'exercise-details', sharingInfo, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res).body!));
     }
 
     /**
@@ -52,7 +59,7 @@ export class ProgrammingExerciseSharingService {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         return this.http
-            .post<ProgrammingExercise>('api/programming/sharing/setup-import', { exercise: copy, course, sharingInfo }, { observe: 'response' })
+            .post<ProgrammingExercise>(this.resourceUrlSetupImport, { exercise: copy, course, sharingInfo }, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
@@ -72,13 +79,14 @@ export class ProgrammingExerciseSharingService {
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
         if (copy.templateParticipation) {
-            const { exercise, ...filteredTemplateParticipation } = copy.templateParticipation;
+            const { exercise: _ignoredExercise, results: _ignoredResults, submissions: _ignoredSubmissions, ...filteredTemplateParticipation } = copy.templateParticipation as any;
             copy.templateParticipation = { ...filteredTemplateParticipation } as TemplateProgrammingExerciseParticipation;
         }
         if (copy.solutionParticipation) {
-            const { exercise, ...filteredSolutionParticipation } = copy.solutionParticipation;
+            const { exercise: _ignoredExercise, results: _ignoredResults, submissions: _ignoredSubmissions, ...filteredSolutionParticipation } = copy.solutionParticipation as any;
             copy.solutionParticipation = { ...filteredSolutionParticipation } as SolutionProgrammingExerciseParticipation;
         }
+
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
 
         return copy as ProgrammingExercise;
@@ -115,9 +123,9 @@ export class ProgrammingExerciseSharingService {
 
     /**
      * Check if the Sharing platform integration has been enabled.
-     * If enabled the request will return a 200, and a 503 if not.
+     * If enabled the request will return a 200  and true or false, and a 503 if not.
      */
-    isSharingEnabled() {
+    isSharingEnabled(): Observable<HttpResponse<boolean>> {
         return this.http.get<boolean>(this.baseSharingConfigUrl + '/is-enabled', {
             observe: 'response',
         });

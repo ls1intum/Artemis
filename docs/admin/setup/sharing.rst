@@ -32,18 +32,19 @@ To connect to the sharing platform, you need an API key. To request one, contact
 **Configuration**
 ~~~~~~~~~~~~~~~~~
 
-Once you receive your API key, you should add it to the configuration file **``application-sharing.yml``** or your `.env` file:
+Once you receive your API key, you should add it to the configuration file **``application-core.yml``** or your `.env` file:
 
-**Option 1: application-sharing.yml**
+**Option 1: application-artemis.yml**
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: yaml
 
   artemis:
     sharing:
+      enabled: true
       # Shared common secret
       apikey: <your API Key>
-      serverurl: https://search.codeability.uibk.ac.at
+      serverurl: https://search.sharing-codeability.uibk.ac.at/
       actionname: Export to Artemis@myUniversity
 
 **Option 2: .env file for Docker initialization**
@@ -51,11 +52,10 @@ Once you receive your API key, you should add it to the configuration file **``a
 
 .. code-block:: bash
 
-  ARTEMIS_SHARING_SERVERURL=https://search.codeability.uibk.ac.at
+  ARTEMIS_SHARING_ENABLED=true
+  ARTEMIS_SHARING_SERVERURL=https://search.sharing-codeability.uibk.ac.at/
   ARTEMIS_SHARING_APIKEY=<Enter your API Key here>
   ARTEMIS_SHARING_ACTIONNAME=Export to Artemis@<Enter an ID here>
-
-Additionally, you must enable the **``sharing``** profile to activate the sharing connector.
 
 Once configured, restart your Artemis instance.
 

@@ -10,20 +10,19 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jakarta.annotation.PostConstruct;
+
 import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 
 /**
  * Service to support Sharing Platform functionality as a plugin.
@@ -31,7 +30,7 @@ import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
  * @see <a href="https://sharing-codeability.uibk.ac.at/sharing/codeability-sharing-platform/-/wikis/technical/Plugin-Interface">Plugin Tutorial</a>
  */
 @Service
-@Profile(Constants.PROFILE_SHARING)
+@ConditionalOnProperty(name = "artemis.sharing.enabled", havingValue = "true", matchIfMissing = false)
 @Lazy
 public class SharingConnectorService {
 
@@ -42,7 +41,10 @@ public class SharingConnectorService {
      */
     public static final String UNKNOWN_INSTALLATION_NAME = "unknown installation name";
 
-    private static final int MAX_API_KEY_LENGTH = 200;
+    /**
+     * protected, to be reused in tests.
+     */
+    protected static final int MAX_API_KEY_LENGTH = 200;
 
     public static class HealthStatus {
 
@@ -109,6 +111,7 @@ public class SharingConnectorService {
     private URL sharingApiBaseUrl = null;
 
     /**
+     * cmd
      * installation name forwarded in config for Sharing Platform
      */
     private String installationName = UNKNOWN_INSTALLATION_NAME; // to be set after first contact with sharing platform
@@ -121,7 +124,7 @@ public class SharingConnectorService {
 
     /**
      * the url of the sharing platform.
-     * Only needed for initial trigger an configuration exchange during startup.
+     * Only needed for initial trigger a configuration exchange during startup.
      */
     @Value("${artemis.sharing.serverurl:#{null}}")
     private String sharingUrl;
@@ -139,7 +142,7 @@ public class SharingConnectorService {
 
     private final RestTemplate restTemplate;
 
-    public SharingConnectorService(RestTemplate restTemplate, TaskScheduler taskScheduler) {
+    public SharingConnectorService(@Qualifier("sharingRestTemplate") RestTemplate restTemplate, TaskScheduler taskScheduler) {
         this.restTemplate = restTemplate;
         this.taskScheduler = taskScheduler;
     }
@@ -152,6 +155,11 @@ public class SharingConnectorService {
         return sharingApiBaseUrl;
     }
 
+    /**
+     * Sets the apiKey explicitly. For test purpose only.
+     *
+     * @param sharingApiKey the explicit api key
+     */
     public void setSharingApiKey(String sharingApiKey) {
         this.sharingApiKey = sharingApiKey;
     }
@@ -202,7 +210,7 @@ public class SharingConnectorService {
 
             return false;
         }
-        Pattern p = Pattern.compile("Bearer\\s+(\\S+)$");
+        Pattern p = Pattern.compile("^Bearer\\s+(\\S+)$");
         Matcher m = p.matcher(apiKey);
         if (m.matches()) {
             apiKey = m.group(1);
@@ -216,11 +224,12 @@ public class SharingConnectorService {
     }
 
     /**
-     * At (spring) full application startup, we request a reinitialization: i.e. we query the Sharing Platform to send a
+     * After bean creation, we trigger an reinitialization from the Sharing Platform:
+     * i.e. we query the Sharing Platform to send a
      * new config request immediately, not waiting for the next scheduled request.
-     * It starts a background thread in order not to block application startup.
+     * It starts a background thread via the spring task scheduler in order not to block application startup.
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void triggerSharingReinitAfterApplicationStart() {
         taskScheduler.schedule(this::triggerReinit, Instant.now().plusSeconds(10));
     }
@@ -236,9 +245,10 @@ public class SharingConnectorService {
     }
 
     /**
-     * request a reinitialization of the sharing platform
+     * request a reinitialization of the sharing platform.
+     * Not for external use, package visible for test purpose only.
      */
-    private void triggerReinit() {
+    void triggerReinit() {
         if (sharingUrl != null) {
             log.info("Requesting reinitialization from Sharing Platform");
             lastHealthStati.add(new HealthStatus("Requested reinitialization from Sharing Platform via " + sharingUrl));

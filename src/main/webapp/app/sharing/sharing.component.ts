@@ -17,8 +17,8 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgStyle } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { take } from 'rxjs';
-
+import { combineLatest, take } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 /**
  * controls the import of an exercise from the sharing platform.
  */
@@ -27,16 +27,20 @@ import { take } from 'rxjs';
     templateUrl: './sharing.component.html',
     styleUrls: ['./sharing.scss'],
     imports: [RouterLink, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgStyle],
-    standalone: true,
 })
 export class SharingComponent implements OnInit {
-    courses: Course[];
+    // Icons
+    protected readonly faPlus = faPlus;
+    protected readonly faSort = faSort;
+
+    courses: Course[] = [];
+    coursesLoading = true;
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     reverseSorting: boolean = false;
     sortColumn = 'id';
 
-    shoppingBasket: ShoppingBasket;
+    shoppingBasket?: ShoppingBasket;
     /**
      * holder for all data needed to import the exercise
      */
@@ -45,10 +49,6 @@ export class SharingComponent implements OnInit {
     selectedCourse: Course;
 
     isInstructorOrEditor = false;
-
-    // Icons
-    faPlus = faPlus;
-    faSort = faSort;
 
     private route = inject(ActivatedRoute);
     private router = inject(Router);
@@ -69,12 +69,20 @@ export class SharingComponent implements OnInit {
      * loads all courses from courseService
      */
     loadAll() {
-        this.courseService.getWithUserStats(false).subscribe({
-            next: (res: HttpResponse<Course[]>) => {
-                this.courses = res.body!;
-            },
-            error: (res: HttpErrorResponse) => this.alertService.error('artemisApp.sharing.error.loadingCourses'),
-        });
+        this.coursesLoading = true;
+        this.courseService
+            .getCourseOverview({})
+            .pipe(finalize(() => (this.coursesLoading = false)))
+            .subscribe({
+                next: (res: HttpResponse<Course[]>) => {
+                    this.courses = res.body!;
+                    this.coursesLoading = false;
+                },
+                error: (error: HttpErrorResponse) => {
+                    this.coursesLoading = false;
+                    this.alertService.error('artemisApp.sharing.error.loadingCourses');
+                },
+            });
     }
 
     onCourseSelected(course: Course): void {
@@ -95,7 +103,7 @@ export class SharingComponent implements OnInit {
      * @param item - Current course
      */
     trackId(index: number, item: Course) {
-        return item.id;
+        return item.id ?? index;
     }
 
     /**
@@ -111,12 +119,25 @@ export class SharingComponent implements OnInit {
     navigateToImportFromSharing() {
         const importBaseRoute = ['/course-management', this.courseId(), 'programming-exercises'];
         importBaseRoute.push('import-from-sharing');
+
+        // check for missing parameters (technically this could never happen, because the button is disabled then)
+        if (
+            !this.sharingInfo.basketToken ||
+            !this.sharingInfo.apiBaseURL ||
+            !this.sharingInfo.returnURL ||
+            !this.sharingInfo.checksum ||
+            this.sharingInfo.selectedExercise === undefined ||
+            this.sharingInfo.selectedExercise === null
+        ) {
+            this.alertService.error('artemisApp.sharing.error.missingParameters');
+            return;
+        }
         this.router
             .navigate(importBaseRoute, {
                 queryParams: {
                     basketToken: this.sharingInfo.basketToken,
-                    apiBaseUrl: this.sharingInfo.apiBaseURL,
-                    returnUrl: this.sharingInfo.returnURL,
+                    apiBaseURL: this.sharingInfo.apiBaseURL,
+                    returnURL: this.sharingInfo.returnURL,
                     selectedExercise: this.sharingInfo.selectedExercise,
                     checksum: this.sharingInfo.checksum,
                 },
@@ -139,28 +160,30 @@ export class SharingComponent implements OnInit {
      * Initialises the sharing page for import
      */
     ngOnInit(): void {
-        // Extract and validate parameters
-        this.route.params.pipe(take(1)).subscribe((params) => {
+        combineLatest(this.route.params.pipe(take(1)), this.route.queryParams.pipe(take(1))).subscribe(([params, qparams]: [Params, Params]) => {
             this.sharingInfo.basketToken = params['basketToken'];
-            if (!this.sharingInfo.basketToken) {
-                this.alertService.error('artemisApp.sharing.error.missingToken');
-            }
-        });
-
-        this.route.queryParams.pipe(take(1)).subscribe((qparams: Params) => {
             this.sharingInfo.returnURL = qparams['returnURL'];
             this.sharingInfo.apiBaseURL = qparams['apiBaseURL'];
             this.sharingInfo.checksum = qparams['checksum'];
 
-            if (this.sharingInfo.basketToken) {
-                this.loadSharedExercises();
+            if (!this.sharingInfo.basketToken) {
+                this.alertService.error('artemisApp.sharing.error.missingToken');
+                return;
             }
-        });
-        this.userRouteAccessService.checkLogin([Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN], this.router.url).then((isLoggedIn) => {
-            if (isLoggedIn) {
+            if (!this.sharingInfo.apiBaseURL || !this.sharingInfo.returnURL || !this.sharingInfo.checksum) {
+                this.alertService.error('artemisApp.sharing.error.missingParameters');
+                return;
+            }
+
+            this.userRouteAccessService.checkLogin([Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN], this.router.url).then((isLoggedIn) => {
+                if (!isLoggedIn) {
+                    this.alertService.error('artemisApp.sharing.error.atLeastEditorNeeded');
+                    return;
+                }
                 this.isInstructorOrEditor = true;
                 this.loadAll();
-            }
+                this.loadSharedExercises();
+            });
         });
     }
 

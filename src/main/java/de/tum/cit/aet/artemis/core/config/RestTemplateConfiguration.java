@@ -5,12 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SHARING;
 
 import java.util.ArrayList;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -72,9 +72,12 @@ public class RestTemplateConfiguration {
      * @return a RestTemplate with short timeouts for sharing platform integration
      */
     @Bean
-    @Profile(PROFILE_SHARING)
+    @ConditionalOnProperty(name = "artemis.sharing.enabled",   // property key
+            havingValue = "true",              // required value
+            matchIfMissing = false             // default behavior if property is absent
+    )
     public RestTemplate sharingRestTemplate() {
-        return createRestTemplate();
+        return createShortTimeoutRestTemplate();
     }
 
     /**

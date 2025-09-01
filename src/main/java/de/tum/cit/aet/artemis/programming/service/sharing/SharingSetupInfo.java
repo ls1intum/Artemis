@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.sharing;
 
+import jakarta.validation.constraints.NotNull;
+
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -12,5 +14,5 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * @param sharingInfo the original sharing information from the sharing platform
  */
 
-public record SharingSetupInfo(ProgrammingExercise exercise, Course course, SharingInfoDTO sharingInfo) {
+public record SharingSetupInfo(@NotNull ProgrammingExercise exercise, @NotNull Course course, @NotNull SharingInfoDTO sharingInfo) {
 }

@@ -9,7 +9,7 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgramming
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { TranslateService } from '@ngx-translate/core';
-import { switchMap, tap } from 'rxjs/operators';
+import { switchMap, take, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -492,7 +492,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                                 this.isExamMode = true;
                                 this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                                     this.programmingExercise.exerciseGroup = res.body!;
-                                    if (!params['exerciseId'] && this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
+                                    if (
+                                        !params['exerciseId'] &&
+                                        this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage &&
+                                        !this.isImportFromFile &&
+                                        !this.isImportFromSharing
+                                    ) {
                                         this.selectedProgrammingLanguage = this.programmingExercise.exerciseGroup.exam.course.defaultProgrammingLanguage;
                                     }
                                 });
@@ -773,14 +778,17 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isImportFromFile) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
         } else if (this.isImportFromSharing) {
-            this.courseService.find(this.courseId).subscribe((res) => {
-                this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, res.body!, this.sharingInfo).subscribe({
-                    next: (response: HttpResponse<ProgrammingExercise>) => {
-                        this.alertService.success('artemisApp.programmingExercise.created', { param: this.programmingExercise.title });
-                        this.onSaveSuccess(response.body!);
-                    },
-                    error: (err) => this.onSaveError(err),
-                });
+            this.courseService.find(this.courseId).subscribe({
+                next: (res) => {
+                    this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, res.body!, this.sharingInfo).subscribe({
+                        next: (response: HttpResponse<ProgrammingExercise>) => {
+                            this.alertService.success('artemisApp.programmingExercise.created', { param: this.programmingExercise.title });
+                            this.onSaveSuccess(response.body!);
+                        },
+                        error: (err) => this.onSaveError(err),
+                    });
+                },
+                error: (err) => this.onSaveError(err),
             });
         } else if (this.isImportFromExistingExercise) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions));
@@ -1297,14 +1305,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private createProgrammingExerciseForImportFromSharing() {
-        this.activatedRoute.queryParams.subscribe((qparams: Params) => {
+        this.activatedRoute.queryParams.pipe(take(1)).subscribe((qparams: Params) => {
             this.sharingInfo.basketToken = qparams['basketToken'];
-            this.sharingInfo.returnURL = qparams['returnUrl'];
-            this.sharingInfo.apiBaseURL = qparams['apiBaseUrl'];
+            this.sharingInfo.returnURL = qparams['returnURL'];
+            this.sharingInfo.apiBaseURL = qparams['apiBaseURL'];
             this.sharingInfo.selectedExercise = qparams['selectedExercise'];
             this.sharingInfo.checksum = qparams['checksum'];
-            this.programmingExerciseSharingService.loadDetailsForExercises(this.sharingInfo).subscribe(
-                (exerciseDetails: ProgrammingExercise) => {
+            this.programmingExerciseSharingService.loadDetailsForExercises(this.sharingInfo).subscribe({
+                next: (exerciseDetails: ProgrammingExercise) => {
                     if (!exerciseDetails.buildConfig) {
                         exerciseDetails.buildConfig = new ProgrammingExerciseBuildConfig();
                     }
@@ -1312,11 +1320,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
                     this.createProgrammingExerciseForImportFromFile();
                 },
-                (error) => {
+                error: (error) => {
                     const errorMessage = error?.message || error?.error?.message || 'Unknown error occurred';
                     this.alertService.error('Failed to load exercise details from the sharing platform: ' + errorMessage);
                 },
-            );
+            });
         });
     }
 
