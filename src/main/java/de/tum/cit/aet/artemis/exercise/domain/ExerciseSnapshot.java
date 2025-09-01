@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
 import java.io.Serializable;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -70,10 +71,10 @@ public record ExerciseSnapshot(
         var quizData = exercise instanceof QuizExercise ? QuizExerciseData.of((QuizExercise) exercise) : null;
         var fileUploadData = exercise instanceof FileUploadExercise ? FileUploadExerciseData.of((FileUploadExercise) exercise) : null;
         return new ExerciseSnapshot(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getMaxPoints(), exercise.getBonusPoints(),
-                exercise.getAssessmentType(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(),
-                exercise.getExampleSolutionPublicationDate(), exercise.getDifficulty(), exercise.getMode(), exercise.getAllowComplaintsForAutomaticAssessments(),
-                exercise.getAllowFeedbackRequests(), exercise.getIncludedInOverallScore(), exercise.getProblemStatement(), exercise.getGradingInstructions(),
-                exercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkData::of).collect(Collectors.toSet()), exercise.getCategories(),
+                exercise.getAssessmentType(), toUtc(exercise.getReleaseDate()), toUtc(exercise.getStartDate()), toUtc(exercise.getDueDate()),
+                toUtc(exercise.getAssessmentDueDate()), toUtc(exercise.getExampleSolutionPublicationDate()), exercise.getDifficulty(), exercise.getMode(),
+                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getIncludedInOverallScore(), exercise.getProblemStatement(),
+                exercise.getGradingInstructions(), exercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkData::of).collect(Collectors.toSet()), exercise.getCategories(),
                 TeamAssignmentConfigData.of(exercise.getTeamAssignmentConfig()), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
                 exercise.getFeedbackSuggestionModule(), exercise.getCourse() != null ? exercise.getCourse().getId() : null,
                 exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null,
@@ -176,7 +177,7 @@ public record ExerciseSnapshot(
             }
             return new ProgrammingExerciseData(exercise.getTestRepositoryUri(), exercise.getAuxiliaryRepositories(), exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
                     exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(),
-                    exercise.getPackageName(), exercise.getShowTestNamesToStudents(), exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getProjectKey(),
+                    exercise.getPackageName(), exercise.getShowTestNamesToStudents(), toUtc(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()), exercise.getProjectKey(),
                     templateParticipation, solutionParticipation, exercise.getTestCases().stream().map(ProgrammingExerciseTestCaseDTO::of).collect(Collectors.toSet()),
                     exercise.getTasks().stream().map(ProgrammingExerciseTaskData::of).collect(Collectors.toList()),
                     exercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategoryData::of).collect(Collectors.toSet()),
@@ -249,5 +250,9 @@ public record ExerciseSnapshot(
         private static FileUploadExerciseData of(FileUploadExercise exercise) {
             return new FileUploadExerciseData(exercise.getExampleSolution(), exercise.getFilePattern());
         }
+    }
+
+    private static ZonedDateTime toUtc(ZonedDateTime zdt) {
+        return zdt == null ? null : zdt.withZoneSameInstant(ZoneOffset.UTC);
     }
 }

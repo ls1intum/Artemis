@@ -3,8 +3,15 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Iterator;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.hibernate.Interceptor;
+import org.hibernate.Transaction;
 import org.hibernate.type.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,10 +20,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -50,6 +54,16 @@ public class ExerciseVersionInterceptor implements Interceptor, ApplicationConte
         CREATE, UPDATE, DELETE
     }
 
+    private final Set<Exercise> exercisesToVersion = ConcurrentHashMap.newKeySet();
+
+    private User currentUser;
+
+    @Override
+    public void afterTransactionCompletion(Transaction tx) {
+        exercisesToVersion.forEach(this::createVersionSafely);
+        exercisesToVersion.clear();
+    }
+
     @Override
     public void setApplicationContext(@NonNull ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
@@ -58,8 +72,7 @@ public class ExerciseVersionInterceptor implements Interceptor, ApplicationConte
     // When an entity attached to Exercise is deleted, we need to create a new version for the Exercise
     @Override
     public void onDelete(Object entity, Object id, Object[] state, String[] propertyNames, Type[] types) {
-        log.info("ExerciseVersionInterceptor: onDelete: {}, with id {}", entity, id);
-        scheduleVersioningForRelevantEntity(entity, ActionTrigger.DELETE);
+        findExerciseToVersion(entity, ActionTrigger.DELETE);
     }
 
     // When an Exercise or entity attached to Exercise is updated/created,
@@ -67,17 +80,14 @@ public class ExerciseVersionInterceptor implements Interceptor, ApplicationConte
     // when an entity attached to Exercise is deleted, it does not trigger a postFlush with said entity
     @Override
     public void postFlush(Iterator<Object> entities) {
-        while (entities.hasNext()) {
-            Object entity = entities.next();
-            scheduleVersioningForRelevantEntity(entity, ActionTrigger.UPDATE);
-        }
+        Set<Object> objects = StreamSupport.stream(Spliterators.spliteratorUnknownSize(entities, Spliterator.ORDERED), false).collect(Collectors.toSet());
+        objects.forEach((entity) -> findExerciseToVersion(entity, ActionTrigger.CREATE));
     }
 
-    private void scheduleVersioningForRelevantEntity(Object entity, ActionTrigger trigger) {
+    private void findExerciseToVersion(Object entity, ActionTrigger trigger) {
         Exercise exerciseToVersion = switch (entity) {
             case Exercise exercise -> trigger == ActionTrigger.DELETE ? null : exercise;
             case CompetencyExerciseLink competencyExerciseLink -> competencyExerciseLink.getExercise();
-            case ExampleSubmission exampleSubmission -> exampleSubmission.getExercise();
             case AuxiliaryRepository auxiliaryRepository -> auxiliaryRepository.getExercise();
             case StaticCodeAnalysisCategory staticCodeAnalysisCategory -> staticCodeAnalysisCategory.getExercise();
             case SubmissionPolicy submissionPolicy -> submissionPolicy.getProgrammingExercise();
@@ -85,8 +95,10 @@ public class ExerciseVersionInterceptor implements Interceptor, ApplicationConte
             default -> null;
         };
         if (exerciseToVersion != null && exerciseToVersion.getId() != null) {
-            log.info("ExerciseVersionInterceptor: Exercise {} ({}), triggered by {} action on entity {}", exerciseToVersion.getId(), exerciseToVersion.getTitle(), trigger, entity);
-            scheduleVersionCreation(exerciseToVersion);
+            if (exercisesToVersion.stream().noneMatch(e -> e.getId().equals(exerciseToVersion.getId()))) {
+                exercisesToVersion.add(exerciseToVersion);
+                this.currentUser = getUser();
+            }
         }
     }
 
@@ -108,35 +120,12 @@ public class ExerciseVersionInterceptor implements Interceptor, ApplicationConte
     }
 
     /**
-     * Schedules version creation to happen after the current transaction commits.
-     * This ensures the exercise is fully persisted before we create the version.
-     */
-    private void scheduleVersionCreation(Exercise exercise) {
-        log.info("ExerciseVersionInterceptor: Scheduling version creation for exercise {}", exercise.getId());
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            log.info("Transaction not active, creating exercise version for exercise {} ({})", exercise.getId(), exercise.getTitle());
-            createVersionSafely(exercise);
-            return;
-        }
-        // Transaction exists - use synchronization to run after commit
-        log.info("Registering transaction synchronization for exercise {} version creation", exercise.getId());
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-
-            @Override
-            public void afterCommit() {
-                createVersionSafely(exercise);
-            }
-        });
-    }
-
-    /**
      * Safely creates an exercise version, handling any exceptions that might occur.
      * This prevents version creation failures from affecting the main exercise save operation.
      */
     private void createVersionSafely(Exercise exercise) {
-        log.info("Transaction committed, creating exercise version for exercise {} ({})", exercise.getId(), exercise.getTitle());
         try {
-            getExerciseVersionService().createExerciseVersion(exercise, getUser());
+            getExerciseVersionService().createExerciseVersion(exercise, this.currentUser);
         }
         catch (Exception e) {
             log.error("Failed to create exercise version for exercise {} ({}): {}", exercise.getId(), exercise.getTitle(), e.getMessage(), e);

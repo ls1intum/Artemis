@@ -178,6 +178,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnoreProperties("exercise")
     private PlagiarismDetectionConfig plagiarismDetectionConfig;
 
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("exercise")
+    private Set<ExerciseVersion> exerciseVersions = new HashSet<>();
+
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
     private DueDateStat numberOfSubmissionsTransient;
@@ -895,5 +899,13 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     public void disconnectRelatedEntities() {
         Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, plagiarismCases).filter(Objects::nonNull)
                 .forEach(Collection::clear);
+    }
+
+    public Set<ExerciseVersion> getExerciseVersions() {
+        return exerciseVersions;
+    }
+
+    public void setExerciseVersions(Set<ExerciseVersion> exerciseVersions) {
+        this.exerciseVersions = exerciseVersions;
     }
 }

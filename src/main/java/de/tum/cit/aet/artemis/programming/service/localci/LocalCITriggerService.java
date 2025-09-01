@@ -306,6 +306,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
         catch (NullPointerException e) {
             log.warn("Could not retrieve windfile for programming exercise {}. Using default windfile instead.", programmingExercise.getId());
+            // getDefaultWindfileFor uses the buildConfig from the exercise, there's a chance that it's not set.
+            programmingExercise.setBuildConfig(buildConfig);
             windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
             dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
         }

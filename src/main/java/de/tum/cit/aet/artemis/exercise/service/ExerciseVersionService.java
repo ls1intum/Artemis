@@ -10,7 +10,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseSnapshot;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
@@ -37,8 +36,6 @@ public class ExerciseVersionService {
 
     private final ExerciseVersionRepository exerciseVersionRepository;
 
-    private final UserRepository userRepository;
-
     private final GitService gitService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -51,23 +48,16 @@ public class ExerciseVersionService {
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
-    public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, UserRepository userRepository, GitService gitService,
-            ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository,
-            ModelingExerciseRepository modelingExerciseRepository, FileUploadExerciseRepository fileUploadExerciseRepository) {
+    public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
+            QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
+            FileUploadExerciseRepository fileUploadExerciseRepository) {
         this.exerciseVersionRepository = exerciseVersionRepository;
-        this.userRepository = userRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
-    }
-
-    @Async
-    public void createExerciseVersion(Exercise exercise) {
-        var user = userRepository.getUser();
-        createExerciseVersion(exercise, user);
     }
 
     /**
@@ -85,35 +75,27 @@ public class ExerciseVersionService {
     public void createExerciseVersion(Exercise exercise, User author) {
         try {
             Exercise eagerlyFetchedExercise = fetchExerciseEagerly(exercise);
-            log.info("Eagerly fetched {}", eagerlyFetchedExercise);
             if (eagerlyFetchedExercise == null) {
                 log.warn("Could not fetch exercise with id {} for versioning", exercise.getId());
                 return;
             }
             ExerciseVersion exerciseVersion = new ExerciseVersion();
-            exerciseVersion.setExercise(exercise);
+            exerciseVersion.setExercise(eagerlyFetchedExercise);
             exerciseVersion.setAuthor(author);
 
             var exerciseSnapshot = ExerciseSnapshot.of(eagerlyFetchedExercise, gitService);
-            var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
-            if (previousVersion.isPresent() && previousVersion.get().getExerciseSnapshot().equals(exerciseSnapshot)) {
-                log.info("Skipping version creation for exercise {} ({}) as it is already up to date", exercise.getId(), exercise.getTitle());
-                return;
+            var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(eagerlyFetchedExercise.getId());
+            if (previousVersion.isPresent()) {
+                var previousVersionSnapshot = previousVersion.get().getExerciseSnapshot();
+                var equal = previousVersionSnapshot.equals(exerciseSnapshot);
+                if (equal) {
+                    log.info("Skipping version creation for exercise {} ({}) as it is already up to date", eagerlyFetchedExercise.getId(), eagerlyFetchedExercise.getTitle());
+                    return;
+                }
             }
             exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
-            log.info("About to save exercise version for exercise {} ({})", exercise.getId(), exercise.getTitle());
-            log.info("exercise version snapshot to save: {}", exerciseVersion.getExerciseSnapshot());
-
-            // Save and flush to ensure the operation is committed and get the ID immediately
-            var savedExerciseVersion = exerciseVersionRepository.saveAndFlush(exerciseVersion);
-            if (savedExerciseVersion.getId() == null) {
-                log.error("Failed to save exercise version: savedExerciseVersion.getId() is null");
-                throw new RuntimeException("Failed to save exercise version - ID is null after save");
-            }
-            log.info("Successfully saved exercise version with id {}", savedExerciseVersion.getId());
-
-            log.info("User {} created exercise version for {} {} with id {}, version id {}", author.getLogin(), exercise.getClass().getSimpleName(), exercise.getTitle(),
-                    exercise.getId(), exerciseVersion.getId());
+            ;
+            exerciseVersionRepository.saveAndFlush(exerciseVersion);
         }
         catch (Exception e) {
             log.error("Error creating exercise version for exercise {} with id {}: {}", exercise.getTitle(), exercise.getId(), e.getMessage(), e);

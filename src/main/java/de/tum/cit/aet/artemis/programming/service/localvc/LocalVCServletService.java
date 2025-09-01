@@ -763,6 +763,9 @@ public class LocalVCServletService {
         }
 
         try {
+            if (!repositoryType.equals(RepositoryType.USER)) {
+                exerciseVersionService.createExerciseVersion(exercise, user);
+            }
             if (repositoryType.equals(RepositoryType.TESTS)) {
                 processNewPushToTestOrAuxRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation, repositoryType);
                 return;
@@ -792,9 +795,6 @@ public class LocalVCServletService {
             else {
                 var finalParticipation = participation;
                 vcsAccessLogService.ifPresent(service -> service.updateCommitHash(finalParticipation, finalCommitHash));
-            }
-            if (!repositoryType.equals(RepositoryType.USER)) {
-                exerciseVersionService.createExerciseVersion(exercise, user);
             }
         }
         catch (GitAPIException | IOException e) {
