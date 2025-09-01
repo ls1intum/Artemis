@@ -77,7 +77,7 @@ export class NewTutorialGroupDetailComponent {
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [GraphColors.GREEN, GraphColors.RED, GraphColors.LIGHT_GREY],
+        domain: [GraphColors.GREEN, GraphColors.LIGHT_GREY],
     } as Color;
     listOptions: any[] = [
         { label: 'All Sessions', value: 'all-sessions' as const },

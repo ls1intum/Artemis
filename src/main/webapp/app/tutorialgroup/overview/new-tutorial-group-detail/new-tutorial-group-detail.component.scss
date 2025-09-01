@@ -90,14 +90,20 @@
     }
 
     ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+        width: 20%;
         padding-top: 0;
         padding-bottom: 1rem;
         border-bottom: 1px solid var(--border-color) !important;
+        white-space: normal;
+        word-break: break-word;
     }
 
     ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+        width: 20%;
         padding-top: 1rem;
         padding-bottom: 1rem;
         border-bottom: 1px solid var(--border-color) !important;
+        white-space: normal;
+        word-break: break-word;
     }
 }
