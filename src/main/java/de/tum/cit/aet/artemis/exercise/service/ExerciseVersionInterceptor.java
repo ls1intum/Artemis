@@ -50,10 +50,6 @@ public class ExerciseVersionInterceptor implements Interceptor, ApplicationConte
 
     private UserRepository userRepository;
 
-    private enum ActionTrigger {
-        CREATE, UPDATE, DELETE
-    }
-
     private final Set<Exercise> exercisesToVersion = ConcurrentHashMap.newKeySet();
 
     private User currentUser;
@@ -72,7 +68,7 @@ public class ExerciseVersionInterceptor implements Interceptor, ApplicationConte
     // When an entity attached to Exercise is deleted, we need to create a new version for the Exercise
     @Override
     public void onDelete(Object entity, Object id, Object[] state, String[] propertyNames, Type[] types) {
-        findExerciseToVersion(entity, ActionTrigger.DELETE);
+        findExerciseToVersion(entity, true);
     }
 
     // When an Exercise or entity attached to Exercise is updated/created,
@@ -81,12 +77,12 @@ public class ExerciseVersionInterceptor implements Interceptor, ApplicationConte
     @Override
     public void postFlush(Iterator<Object> entities) {
         Set<Object> objects = StreamSupport.stream(Spliterators.spliteratorUnknownSize(entities, Spliterator.ORDERED), false).collect(Collectors.toSet());
-        objects.forEach((entity) -> findExerciseToVersion(entity, ActionTrigger.CREATE));
+        objects.forEach((entity) -> findExerciseToVersion(entity, false));
     }
 
-    private void findExerciseToVersion(Object entity, ActionTrigger trigger) {
+    private void findExerciseToVersion(Object entity, boolean isDeletingEntity) {
         Exercise exerciseToVersion = switch (entity) {
-            case Exercise exercise -> trigger == ActionTrigger.DELETE ? null : exercise;
+            case Exercise exercise -> isDeletingEntity ? null : exercise;
             case CompetencyExerciseLink competencyExerciseLink -> competencyExerciseLink.getExercise();
             case AuxiliaryRepository auxiliaryRepository -> auxiliaryRepository.getExercise();
             case StaticCodeAnalysisCategory staticCodeAnalysisCategory -> staticCodeAnalysisCategory.getExercise();
