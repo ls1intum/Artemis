@@ -31,6 +31,8 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { BASE_PATH } from 'app/openapi/variables';
+import { Configuration } from 'app/openapi/configuration';
 
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -120,5 +122,8 @@ export const appConfig: ApplicationConfig = {
             useClass: ArtemisVersionInterceptor,
             multi: true,
         },
+        // Configure OpenAPI client to use relative URLs (go through Angular dev proxy) and send cookies
+        { provide: BASE_PATH, useValue: '' },
+        { provide: Configuration, useFactory: () => new Configuration({ withCredentials: true, basePath: '' }) },
     ],
 };

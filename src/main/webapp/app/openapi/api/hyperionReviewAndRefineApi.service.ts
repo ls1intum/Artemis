@@ -39,9 +39,7 @@ export class HyperionReviewAndRefineApiService extends BaseService {
     }
 
     /**
-     * Check exercise consistency
-     * Analyzes a programming exercise for consistency issues between problem statement, template code, solution code, and test cases
-     * @param programmingExerciseId ID of the programming exercise to analyze
+     * @param programmingExerciseId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -94,9 +92,7 @@ export class HyperionReviewAndRefineApiService extends BaseService {
     }
 
     /**
-     * Rewrite problem statement
-     * Rewrites and improves a problem statement using AI assistance
-     * @param courseId ID of the course
+     * @param courseId 
      * @param problemStatementRewriteRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.

@@ -151,42 +151,25 @@ paths:
   /api/hyperion/programming-exercises/{programmingExerciseId}/consistency-check:
     post:
       tags: [hyperion-review-and-refine]
-      summary: Check exercise consistency
-      description: Analyzes a programming exercise for consistency issues between
-        problem statement, template code, solution code, and test cases
       operationId: checkExerciseConsistency
       parameters:
       - name: programmingExerciseId
         in: path
-        description: ID of the programming exercise to analyze
         required: true
         schema: {type: integer, format: int64}
       responses:
         '200':
-          description: Consistency check completed successfully
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ConsistencyCheckResponse'}
-        '503':
-          description: Hyperion service unavailable
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ConsistencyCheckResponse'}
-        '500':
-          description: Internal server error
+          description: OK
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ConsistencyCheckResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/rewrite:
     post:
       tags: [hyperion-review-and-refine]
-      summary: Rewrite problem statement
-      description: Rewrites and improves a problem statement using AI assistance
       operationId: rewriteProblemStatement
       parameters:
       - name: courseId
         in: path
-        description: ID of the course
         required: true
         schema: {type: integer, format: int64}
       requestBody:
@@ -196,22 +179,7 @@ paths:
         required: true
       responses:
         '200':
-          description: Problem statement rewritten successfully
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
-        '400':
-          description: Invalid request body
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
-        '503':
-          description: Hyperion service unavailable
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
-        '500':
-          description: Internal server error
+          description: OK
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
@@ -499,7 +467,7 @@ components:
       required: [date, endTime, startTime]
     ProblemStatementRewriteRequest:
       type: object
-      description: Request containing the problem statement to rewrite
+      description: Request to rewrite a problem statement
       properties:
         problemStatementText: {type: string, description: Original problem statement
             text to be improved, minLength: 1}

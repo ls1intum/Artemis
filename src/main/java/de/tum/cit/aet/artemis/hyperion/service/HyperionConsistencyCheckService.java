@@ -10,8 +10,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.retry.NonTransientAiException;
-import org.springframework.ai.retry.TransientAiException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -120,16 +118,7 @@ public class HyperionConsistencyCheckService {
             List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).collect(Collectors.toList());
             return new ConsistencyCheckResponseDTO(issueDTOs);
         }
-        catch (TransientAiException e) {
-            // Suggest retryable failure (e.g., 429/5xx). Let caller decide to retry at a higher level.
-            log.warn("Transient AI error during consistency check: {}", e.getMessage());
-            throw new NetworkingException("Temporary AI service issue. Please retry.", e);
-        }
-        catch (NonTransientAiException e) {
-            // Non-retryable (e.g., invalid request, auth). Provide actionable message.
-            log.error("Non-transient AI error during consistency check: {}", e.getMessage());
-            throw new NetworkingException("AI request failed due to configuration or input. Check model and request.", e);
-        }
+
         catch (Exception e) {
             throw new NetworkingException("An unexpected error occurred while performing consistency check", e);
         }
@@ -142,14 +131,7 @@ public class HyperionConsistencyCheckService {
             return chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.").user(rendered).call()
                     .entity(StructuredOutputSchema.StructuralConsistencyIssues.class);
         }
-        catch (TransientAiException e) {
-            log.warn("Transient AI error in {}: {}", resourcePath, e.getMessage());
-            return new StructuredOutputSchema.StructuralConsistencyIssues();
-        }
-        catch (NonTransientAiException e) {
-            log.error("Non-transient AI error in {}: {}", resourcePath, e.getMessage());
-            return new StructuredOutputSchema.StructuralConsistencyIssues();
-        }
+
         catch (RuntimeException e) {
             // JSON mapping or unexpected client errors. Do not fail the whole request; return empty issues.
             log.error("Failed to obtain or parse AI response for {}", resourcePath, e);
@@ -164,14 +146,7 @@ public class HyperionConsistencyCheckService {
             return chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.").user(rendered).call()
                     .entity(StructuredOutputSchema.SemanticConsistencyIssues.class);
         }
-        catch (TransientAiException e) {
-            log.warn("Transient AI error in {}: {}", resourcePath, e.getMessage());
-            return new StructuredOutputSchema.SemanticConsistencyIssues();
-        }
-        catch (NonTransientAiException e) {
-            log.error("Non-transient AI error in {}: {}", resourcePath, e.getMessage());
-            return new StructuredOutputSchema.SemanticConsistencyIssues();
-        }
+
         catch (RuntimeException e) {
             // JSON mapping or unexpected client errors. Do not fail the whole request; return empty issues.
             log.error("Failed to obtain or parse AI response for {}", resourcePath, e);

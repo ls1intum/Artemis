@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import org.springframework.ai.template.st.StTemplateRenderer;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
@@ -18,12 +17,10 @@ import org.springframework.util.StreamUtils;
 @Profile(PROFILE_HYPERION)
 public class HyperionPromptTemplateService {
 
-    // Internally render with Unicode angle quote delimiters « » (robust for JSON in prompts).
-    // To keep authoring simple, we also accept Mustache-style placeholders {{var}} and convert them.
-    private final StTemplateRenderer renderer = StTemplateRenderer.builder().startDelimiterToken('«').endDelimiterToken('»').build();
-
     /**
      * Render the template at the given classpath resource path with the provided variables.
+     *
+     * Supporting placeholders of the form {{var}}
      *
      * @param resourcePath classpath to the template resource
      * @param variables    map of variables used during rendering
@@ -33,12 +30,13 @@ public class HyperionPromptTemplateService {
         try {
             var resource = new ClassPathResource(resourcePath);
             String template = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
-            // Support {{var}} as authoring delimiters by translating to «var» for ST v4.
-            // Only replace the delimiter tokens to avoid touching JSON braces in the prompt content.
-            if (template.contains("{{") && template.contains("}}")) {
-                template = template.replace("{{", "«").replace("}}", "»");
+            String rendered = template;
+            for (Map.Entry<String, Object> entry : variables.entrySet()) {
+                String key = entry.getKey();
+                String value = String.valueOf(entry.getValue());
+                rendered = rendered.replace("{{" + key + "}}", value);
             }
-            return renderer.apply(template, Map.copyOf(variables));
+            return rendered;
         }
         catch (IOException e) {
             throw new RuntimeException("Failed to load template: " + resourcePath, e);

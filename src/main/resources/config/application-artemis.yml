@@ -124,7 +124,6 @@ spring:
 
     # openai:
     #   api-key: <openai_api_key>
-    #   base-url: https://api.openai.com
     #   chat:
     #     options:
     #       model: <openai_model>

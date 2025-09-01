@@ -182,7 +182,7 @@ dependencies {
     implementation "de.jplag:typescript:${jplag_version}"
 
     implementation platform("org.springframework.ai:spring-ai-bom:1.0.1")
-    implementation "org.springframework.ai:spring-ai-azure-openai"
+    implementation "org.springframework.ai:spring-ai-starter-model-azure-openai"
     implementation "org.springframework.ai:spring-ai-starter-model-openai"
 
     // we have to override those values to use the latest version

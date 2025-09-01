@@ -7,8 +7,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.retry.NonTransientAiException;
-import org.springframework.ai.retry.TransientAiException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -84,14 +82,7 @@ public class HyperionProblemStatementRewriteService {
             boolean improved = !result.equals(problemStatementText.trim());
             return new ProblemStatementRewriteResponseDTO(result, improved);
         }
-        catch (TransientAiException e) {
-            log.warn("Transient AI error during problem statement rewrite: {}", e.getMessage());
-            throw new NetworkingException("Temporary AI service issue. Please retry.", e);
-        }
-        catch (NonTransientAiException e) {
-            log.error("Non-transient AI error during problem statement rewrite: {}", e.getMessage());
-            throw new NetworkingException("AI request failed due to configuration or input. Check model and request.", e);
-        }
+
         catch (Exception e) {
             throw new NetworkingException("An unexpected error occurred while rewriting problem statement", e);
         }
