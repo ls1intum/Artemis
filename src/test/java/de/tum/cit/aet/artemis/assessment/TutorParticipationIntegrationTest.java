@@ -109,7 +109,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         var tutorId = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1").getId();
         assertThat(tutorParticipationDto.tutorId()).as("Tutor participation belongs to correct tutor").isEqualTo(tutorId);
         assertThat(tutorParticipationDto.exerciseId()).as("Tutor participation belongs to correct exercise").isEqualTo(modelingExercise.getId());
-        assertThat(tutorParticipationDto.status()).as("Tutor participation has correct status").isEqualTo("TRAINED");
+        assertThat(tutorParticipationDto.status().name()).as("Tutor participation has correct status").isEqualTo("TRAINED");
     }
 
     /**
@@ -123,8 +123,6 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // Tutor reviewed the instructions.
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        var tutorParticipation = tutorParticipationService.createNewParticipation(textExercise, tutor);
-        exampleSubmission.addTutorParticipations(tutorParticipation);
         exampleSubmission = exampleSubmissionService.save(exampleSubmission);
 
         Submission submissionWithResults = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(exampleSubmission.getSubmission().getId());
@@ -144,8 +142,6 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // Tutor reviewed the instructions.
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        var tutorParticipation = tutorParticipationService.createNewParticipation(textExercise, tutor);
-        exampleSubmission.addTutorParticipations(tutorParticipation);
         exampleSubmission = exampleSubmissionService.save(exampleSubmission);
 
         Submission submissionWithResults = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(exampleSubmission.getSubmission().getId());
@@ -230,7 +226,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
             resultService.addFeedbackToResult(result, List.of(feedback), true);
         }
 
-        request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/tutor-participations", null, TutorParticipationDTO.class, HttpStatus.CREATED);
+        request.post("/api/assessment/exercises/" + textExercise.getId() + "/tutor-participations", null, HttpStatus.CREATED);
         return exampleSubmission;
     }
 
@@ -244,7 +240,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
             result.setExampleResult(true);
             resultRepository.save(result);
         }
-        request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/tutor-participations", null, TutorParticipationDTO.class, HttpStatus.CREATED);
+        request.post("/api/assessment/exercises/" + modelingExercise.getId() + "/tutor-participations", null, HttpStatus.CREATED);
         return exampleSubmission;
     }
 }

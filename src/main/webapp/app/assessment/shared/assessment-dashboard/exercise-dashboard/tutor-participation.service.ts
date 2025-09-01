@@ -2,10 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
-import { TutorParticipation } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import { TutorParticipationDTO } from 'app/exercise/shared/entities/participation/tutor-participation-dto.model';
 
-export type EntityResponseType = HttpResponse<TutorParticipation>;
-export type EntityArrayResponseType = HttpResponse<TutorParticipation[]>;
+export type EntityResponseType = HttpResponse<TutorParticipationDTO>;
+export type EntityArrayResponseType = HttpResponse<TutorParticipationDTO[]>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorParticipationService {
@@ -18,14 +18,17 @@ export class TutorParticipationService {
      * features are available for the exercise (e.g. grading instructions) The method is valid only for tutors,
      * since it inits the tutor participation to the exercise, which is different from a standard participation
      *
-     * @param tutorParticipation The to be created tutor participation
      * @param exerciseId The ID of the exercise for which to init a participation
      * @return The new tutor participation
      */
-    create(tutorParticipation: TutorParticipation, exerciseId: number): Observable<HttpResponse<TutorParticipation>> {
-        return this.http.post<TutorParticipation>(`${this.resourceUrl}/${exerciseId}/tutor-participations`, tutorParticipation, {
-            observe: 'response',
-        });
+    create(exerciseId: number): Observable<HttpResponse<TutorParticipationDTO>> {
+        return this.http.post<TutorParticipationDTO>(
+            `${this.resourceUrl}/${exerciseId}/tutor-participations`,
+            {},
+            {
+                observe: 'response',
+            },
+        );
     }
 
     /**
@@ -36,7 +39,7 @@ export class TutorParticipationService {
      * @param exampleSubmission The to be added example submission
      * @param exerciseId The ID of the exercise of the tutor participation
      */
-    assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number): Observable<HttpResponse<TutorParticipation>> {
-        return this.http.post<TutorParticipation>(`${this.resourceUrl}/${exerciseId}/assess-example-submission`, exampleSubmission, { observe: 'response' });
+    assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number): Observable<HttpResponse<TutorParticipationDTO>> {
+        return this.http.post<TutorParticipationDTO>(`${this.resourceUrl}/${exerciseId}/assess-example-submission`, exampleSubmission, { observe: 'response' });
     }
 }

@@ -91,7 +91,7 @@ public class TutorParticipationResource {
 
         TutorParticipation tutorParticipation = tutorParticipationService.createNewParticipation(exercise, user);
         TutorParticipationDTO dto = new TutorParticipationDTO(tutorParticipation);
-        return ResponseEntity.created(new URI("/api/assessment/exercises/" + exerciseId + "tutor-participations/" + tutorParticipation.getId())).body(dto);
+        return ResponseEntity.created(new URI("/api/assessment/exercises/" + exerciseId + "/tutor-participations/" + tutorParticipation.getId())).body(dto);
     }
 
     /**
@@ -113,12 +113,6 @@ public class TutorParticipationResource {
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
         TutorParticipation resultTutorParticipation = tutorParticipationService.addExampleSubmission(exercise, exampleSubmission, user);
-
-        // Avoid infinite recursion for JSON
-        resultTutorParticipation.getTrainedExampleSubmissions().forEach(trainedExampleSubmission -> {
-            trainedExampleSubmission.setTutorParticipations(null);
-            trainedExampleSubmission.setExercise(null);
-        });
 
         TutorParticipationDTO dto = new TutorParticipationDTO(resultTutorParticipation);
         return ResponseEntity.ok().body(dto);
