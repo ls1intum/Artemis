@@ -118,7 +118,8 @@ export class CompetencyManagementComponent implements OnInit {
     private async loadAgentChatEnabled() {
         try {
             const hasAuthority = await this.accountService.hasAnyAuthority([Authority.ADMIN, Authority.INSTRUCTOR]);
-            this.agentChatEnabled.set(hasAuthority);
+            const isFeatureEnabled = await firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent));
+            this.agentChatEnabled.set(hasAuthority && isFeatureEnabled);
         } catch (error) {
             this.agentChatEnabled.set(false);
         }
