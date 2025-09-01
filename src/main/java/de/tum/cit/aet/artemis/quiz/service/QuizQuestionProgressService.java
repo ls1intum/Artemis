@@ -98,7 +98,7 @@ public class QuizQuestionProgressService {
 
         Map<Long, ZonedDateTime> dueDateMap = progressList.stream().collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> {
             QuizQuestionProgressData data = progress.getProgressJson();
-            return data != null ? data.getDueDate() : ZonedDateTime.now();
+            return (data != null && data.getDueDate() != null) ? data.getDueDate() : ZonedDateTime.now();
         }));
 
         ZonedDateTime now = ZonedDateTime.now();
