@@ -38,6 +38,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -454,7 +455,19 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should read and understood', () => {
         // GIVEN
         const tutorParticipationService = TestBed.inject(TutorParticipationService);
-        jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: {} })));
+        jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {
+                        id: 1,
+                        exerciseId: EXERCISE_ID,
+                        tutorId: 10,
+                        status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
+                        trainedCount: 0,
+                    },
+                }),
+            ),
+        );
         const alertSpy = jest.spyOn(alertService, 'success');
 
         const router = TestBed.inject(Router);

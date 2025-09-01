@@ -454,11 +454,18 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should call readInstruction', () => {
+        expect(comp.exerciseId).toBeDefined();
+        const tutorParticipationDto = {
+            id: 1,
+            exerciseId: comp.exerciseId!,
+            tutorId: 42,
+            status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
+            trainedCount: 0,
+        };
         const tutorParticipationServiceCreateStub = jest.spyOn(tutorParticipationService, 'create');
-        const tutorParticipation = { id: 1, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS };
-        tutorParticipationServiceCreateStub.mockImplementation(() => {
+        tutorParticipationServiceCreateStub.mockImplementation((exerciseId: number) => {
             expect(comp.isLoading).toBeTrue();
-            return of(new HttpResponse({ body: tutorParticipation, headers: new HttpHeaders() }));
+            return of(new HttpResponse({ body: tutorParticipationDto, headers: new HttpHeaders() }));
         });
 
         expect(comp.tutorParticipation).toBeUndefined();
@@ -468,7 +475,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         expect(comp.isLoading).toBeFalse();
 
-        expect(comp.tutorParticipation).toEqual(tutorParticipation);
         expect(comp.tutorParticipationStatus).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
     });
 
