@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Lazy;
@@ -374,7 +373,6 @@ public class CourseScoreCalculationService {
         return getStudentScoresDTO(course, maxAndReachablePoints, pointsAchievedByStudentInCourse, presentationScore);
     }
 
-    @NotNull
     private StudentScoresDTO getStudentScoresDTO(Course course, MaxAndReachablePointsDTO maxAndReachablePoints, double pointsAchievedByStudentInCourse, double presentationScore) {
         double absolutePoints = roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course);
         double relativeScore = maxAndReachablePoints.maxPoints() > 0

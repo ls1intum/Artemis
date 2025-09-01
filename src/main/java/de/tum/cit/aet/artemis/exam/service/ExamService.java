@@ -107,7 +107,6 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
@@ -188,7 +187,7 @@ public class ExamService {
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
             ExamLiveEventsService examLiveEventsService, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            CourseExamExportService courseExamExportService, GitService gitService, GradingScaleRepository gradingScaleRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi,
+            CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi,
             AuthorizationCheckService authorizationCheckService, BonusService bonusService, ExerciseDeletionService exerciseDeletionService,
             SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
             QuizResultService quizResultService, ExerciseRepository exerciseRepository) {
