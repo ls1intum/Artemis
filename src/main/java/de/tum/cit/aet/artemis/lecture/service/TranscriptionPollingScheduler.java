@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 @Conditional(NebulaEnabled.class)
 @Lazy
 @Component
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class TranscriptionPollingScheduler {
 
     private final LectureTranscriptionRepository transcriptionRepository;
