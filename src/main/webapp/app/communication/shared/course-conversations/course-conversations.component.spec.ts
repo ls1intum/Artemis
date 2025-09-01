@@ -781,11 +781,13 @@ examples.forEach((activeConversation) => {
 
         describe('clearSearchAndRevertToOriginalView', () => {
             it('should clear search results when refresh button is clicked', () => {
-                component.courseWideSearchConfig = {
-                    searchTerm: 'test search',
-                    selectedConversations: [generateExampleChannelDTO({} as ChannelDTO), generateExampleGroupChatDTO({} as GroupChatDTO)] as ConversationDTO[],
-                    selectedAuthors: [{ id: 1 } as any],
-                };
+                component.initializeCourseWideSearchConfig();
+                component.courseWideSearchConfig.searchTerm = 'test search';
+                component.courseWideSearchConfig.selectedConversations = [
+                    generateExampleChannelDTO({} as ChannelDTO),
+                    generateExampleGroupChatDTO({} as GroupChatDTO),
+                ] as ConversationDTO[];
+                component.courseWideSearchConfig.selectedAuthors = [{ id: 1 } as any];
                 const mockGlobalSearchComponent = { clearSearch: jest.fn() };
                 component.globalSearchComponent = signal(mockGlobalSearchComponent as any);
                 const onSearchSpy = jest.spyOn(component, 'onSearch');
