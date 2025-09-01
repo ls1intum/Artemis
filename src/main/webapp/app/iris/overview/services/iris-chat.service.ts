@@ -412,6 +412,15 @@ export class IrisChatService implements OnDestroy {
                 if (payload.suggestions) {
                     this.suggestions.next(payload.suggestions);
                 }
+                if (payload.sessionTitle && this.sessionId) {
+                    const sid = this.sessionId;
+                    if (this.latestStartedSession?.id === sid) {
+                        this.latestStartedSession = { ...this.latestStartedSession, title: payload.sessionTitle };
+                    }
+                    const curr = this.chatSessions.getValue();
+                    const next = curr.map((s) => (s.id === sid ? { ...s, title: payload.sessionTitle } : s));
+                    this.chatSessions.next(next);
+                }
                 break;
         }
     }

@@ -11,6 +11,7 @@ export class IrisChatWebsocketDTO {
     stages?: IrisStageDTO[];
     rateLimitInfo?: IrisRateLimitInformation;
     suggestions?: string[];
+    sessionTitle?: string;
 }
 
 export enum IrisChatWebsocketPayloadType {
