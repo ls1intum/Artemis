@@ -45,6 +45,7 @@ export abstract class QuizQuestion implements BaseEntity, CanBecomeInvalid, Exer
     public exportQuiz = false; // default value
     public type?: QuizQuestionType;
     public exerciseId?: number;
+    public isHighlighted? = false;
 
     protected constructor(type: QuizQuestionType) {
         this.type = type;
