@@ -5,11 +5,12 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-quiz-stepwizard',
-    imports: [ArtemisTranslatePipe, NgTemplateOutlet],
+    imports: [ArtemisTranslatePipe, NgTemplateOutlet, NgbTooltip, NgClass],
     templateUrl: './quiz-stepwizard.component.html',
     styleUrl: './quiz-stepwizard.component.scss',
 })

@@ -1,49 +1,47 @@
-<div class="col-md-auto ps-0">
-    <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard hide-scrollbar-unless-scrolling" [ngClass]="{ 'sticky-top-quiz': mode() === 'preview' }">
-        @for (question of quizExercise().quizQuestions; track question; let index = $index) {
-            <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
-                @switch (question.type) {
-                    @case (DRAG_AND_DROP) {
-                        <ng-template
-                            [ngTemplateOutlet]="stepwizardCircle"
-                            [ngTemplateOutletContext]="{ questionAnswers: dragAndDropMappings(), abbreviation: 'DD', questionColorClass: 'draganddropcolor-question' }"
-                        />
-                    }
-                    @case (MULTIPLE_CHOICE) {
-                        <ng-template
-                            [ngTemplateOutlet]="stepwizardCircle"
-                            [ngTemplateOutletContext]="{
-                                questionAnswers: selectedAnswerOptions(),
-                                abbreviation: 'MC',
-                                questionColorClass: 'multiplechoicecolor-question',
-                            }"
-                        />
-                    }
-                    @case (SHORT_ANSWER) {
-                        <ng-template
-                            [ngTemplateOutlet]="stepwizardCircle"
-                            [ngTemplateOutletContext]="{
-                                questionAnswers: shortAnswerSubmittedTexts(),
-                                abbreviation: 'SA',
-                                questionColorClass: 'shortanswercolor-question',
-                            }"
-                        />
-                    }
+<div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard hide-scrollbar-unless-scrolling" [ngClass]="{ 'sticky-top-quiz': mode() === 'preview' }">
+    @for (question of quizExercise().quizQuestions; track question; let index = $index) {
+        <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
+            @switch (question.type) {
+                @case (DRAG_AND_DROP) {
+                    <ng-template
+                        [ngTemplateOutlet]="stepwizardCircle"
+                        [ngTemplateOutletContext]="{ questionAnswers: dragAndDropMappings(), abbreviation: 'DD', questionColorClass: 'draganddropcolor-question' }"
+                    />
                 }
-                <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }} </ng-template>
-                <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }} </ng-template>
-                <ng-template #stepwizardCircle let-questionAnswers="questionAnswers" let-abbreviation="abbreviation" let-questionColorClass="questionColorClass">
-                    <span
-                        class="btn btn-light btn-circle"
-                        [class]="questionColorClass"
-                        (click)="navigateToQuestion(index)"
-                        [ngbTooltip]="!!questionAnswers.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                        [ngClass]="!!questionAnswers.get(question.id!)?.length ? 'changed-question' : ''"
-                    >
-                        <b class="fa">{{ abbreviation }}</b>
-                    </span>
-                </ng-template>
-            </div>
-        }
-    </div>
+                @case (MULTIPLE_CHOICE) {
+                    <ng-template
+                        [ngTemplateOutlet]="stepwizardCircle"
+                        [ngTemplateOutletContext]="{
+                            questionAnswers: selectedAnswerOptions(),
+                            abbreviation: 'MC',
+                            questionColorClass: 'multiplechoicecolor-question',
+                        }"
+                    />
+                }
+                @case (SHORT_ANSWER) {
+                    <ng-template
+                        [ngTemplateOutlet]="stepwizardCircle"
+                        [ngTemplateOutletContext]="{
+                            questionAnswers: shortAnswerSubmittedTexts(),
+                            abbreviation: 'SA',
+                            questionColorClass: 'shortanswercolor-question',
+                        }"
+                    />
+                }
+            }
+            <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }} </ng-template>
+            <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }} </ng-template>
+            <ng-template #stepwizardCircle let-questionAnswers="questionAnswers" let-abbreviation="abbreviation" let-questionColorClass="questionColorClass">
+                <span
+                    class="btn btn-light btn-circle"
+                    [class]="questionColorClass"
+                    (click)="questionSelected.emit(index)"
+                    [ngbTooltip]="!!questionAnswers.get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                    [ngClass]="!!questionAnswers.get(question.id!)?.length ? 'changed-question' : ''"
+                >
+                    <b class="fa">{{ abbreviation }}</b>
+                </span>
+            </ng-template>
+        </div>
+    }
 </div>

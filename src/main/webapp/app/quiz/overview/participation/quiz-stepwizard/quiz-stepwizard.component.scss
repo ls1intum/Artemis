@@ -1,0 +1,89 @@
+.stepwizardquiz {
+    max-height: calc(100vh - var(--header-height) - var(--exam-height-offset) - var(--exam-update-footer-offset));
+    overflow-y: auto;
+
+    &__step {
+        .btn {
+            cursor: help;
+        }
+    }
+}
+
+.sticky-top-stepwizard {
+    position: sticky;
+    top: 0; // Stick overview to the top, if not set explicitly sticky does not work
+    z-index: 18;
+}
+
+.sticky-top-quiz {
+    position: sticky;
+    top: 85px;
+    z-index: 18;
+}
+
+.draganddropcolor-question {
+    background-color: var(--quiz-participation-footer-dnd-background) !important;
+}
+
+.multiplechoicecolor-question {
+    background-color: var(--quiz-participation-footer-mc-background) !important;
+}
+
+.shortanswercolor-question {
+    background-color: var(--quiz-participation-footer-sa-background) !important;
+}
+
+.changed-question {
+    background-color: var(--quiz-participation-footer-changed-background) !important;
+}
+
+.btn-circle.btn-circle {
+    width: 30px;
+    height: 30px;
+    text-align: center;
+    font-size: 12px;
+    font-family: Arial, Helvetica, sans-serif;
+    border-radius: 15px;
+    border-spacing: 5px;
+    padding: 6px 0;
+
+    &.btn-light {
+        border-color: var(--quiz-participation-btn-circle-light-border-color);
+    }
+
+    @media (max-width: 990px) {
+        width: 23px;
+        height: 23px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        .fa {
+            font-size: 10px;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        width: 16px;
+        height: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        .fa {
+            font-size: 6px;
+        }
+    }
+}
+
+@media (max-width: 990px) {
+    .btn-circle.btn-circle {
+        width: 23px;
+        height: 23px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        .fa {
+            font-size: 10px;
+        }
+    }
+}

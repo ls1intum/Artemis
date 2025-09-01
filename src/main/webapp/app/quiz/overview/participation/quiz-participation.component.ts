@@ -46,6 +46,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
+import { QuizStepwizardComponent } from 'app/quiz/overview/participation/quiz-stepwizard/quiz-stepwizard.component';
 
 @Component({
     selector: 'jhi-quiz',
@@ -66,6 +67,7 @@ import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
         FaIconComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        QuizStepwizardComponent,
     ],
 })
 export class QuizParticipationComponent implements OnInit, OnDestroy {
