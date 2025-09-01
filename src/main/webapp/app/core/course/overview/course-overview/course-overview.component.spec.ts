@@ -880,8 +880,8 @@ describe('CourseOverviewComponent', () => {
                 clearSearchAndRevertToOriginalView: jest.fn(),
             };
             Object.setPrototypeOf(mockConversationsComponent, CourseConversationsComponent.prototype);
-            component.activatedComponentReference = jest.fn().mockReturnValue(mockConversationsComponent);
-            const courseServiceSpy = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse({ body: course1 })));
+            component.activatedComponentReference.set(mockConversationsComponent as unknown as CourseConversationsComponent);
+            jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse({ body: course1 })));
 
             component.loadCourse(true);
 
