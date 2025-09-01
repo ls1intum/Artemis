@@ -253,6 +253,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
                 AND e.id IN :exerciseIds
                 AND s.submitted = TRUE
+                AND p.testRun = FALSE
                 AND (s.submissionDate <= e.dueDate OR e.dueDate IS NULL)
             """)
     long countAllByExerciseIdsSubmittedBeforeDueDate(@Param("exerciseIds") Set<Long> exerciseIds);

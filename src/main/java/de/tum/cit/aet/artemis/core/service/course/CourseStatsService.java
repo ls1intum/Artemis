@@ -246,11 +246,13 @@ public class CourseStatsService {
 
         Set<Long> exerciseIds = courseExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
         start = System.currentTimeMillis();
-        long numberOfAssessments = resultRepository.countNumberOfAssessments(courseExerciseIdsWithManualAssessments);
+        long numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(exerciseIds);
+        log.error("number of assessments: {}", numberOfAssessments);
         log.debug("resultRepository.countNumberOfAssessments took {} ms for exercises with ids {}", System.currentTimeMillis() - start, courseExerciseIdsWithManualAssessments);
         start = System.currentTimeMillis();
         long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIds)
                 + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIds);
+        log.error("number of in time submissions: {}", numberOfInTimeSubmissions);
         log.debug(
                 "submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate and programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted took {} ms for exercises with ids {}",
                 System.currentTimeMillis() - start, exerciseIds);
@@ -259,7 +261,7 @@ public class CourseStatsService {
         log.debug("submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate took {} ms for exercises with ids {}", System.currentTimeMillis() - start, exerciseIds);
 
         long numberOfSubmissions = numberOfInTimeSubmissions + numberOfLateSubmissions;
-        // TODO: this number can be wrong in the client (over 100%)
+        log.error("number of late submissions: {}, total number of submissions: {}", numberOfLateSubmissions, numberOfSubmissions);
         var currentPercentageAssessments = calculatePercentage(numberOfAssessments, numberOfSubmissions);
 
         long currentAbsoluteComplaints = 0;

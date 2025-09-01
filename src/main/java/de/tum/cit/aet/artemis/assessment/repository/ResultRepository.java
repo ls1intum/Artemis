@@ -219,6 +219,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 JOIN s.participation p
             WHERE r.completionDate IS NOT NULL
                 AND r.assessor IS NOT NULL
+                AND p.testRun = false
+                AND r.rated = true
                 AND p.exercise.id IN :exerciseIds
             """)
     long countAssessmentsForExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
@@ -274,6 +276,22 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND (e.dueDate IS NULL OR r.submission.submissionDate <= e.dueDate)
             """)
     long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT COUNT(DISTINCT p)
+            FROM StudentParticipation p
+                JOIN p.submissions s
+                JOIN s.results r
+                JOIN p.exercise e
+            WHERE e.id IN :exerciseIds
+                AND p.testRun = FALSE
+                AND r.assessor IS NOT NULL
+                AND r.rated = TRUE
+                AND r.submission.submitted = TRUE
+                AND r.completionDate IS NOT NULL
+                AND (e.dueDate IS NULL OR r.submission.submissionDate <= e.dueDate)
+            """)
+    long countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * @param exerciseId id of exercise
