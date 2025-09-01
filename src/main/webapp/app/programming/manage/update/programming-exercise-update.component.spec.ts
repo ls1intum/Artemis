@@ -702,8 +702,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             route.url = of([{ path: 'import-from-sharing' } as UrlSegment]);
             route.queryParams = of({
                 basketToken: 'test-basket-token',
-                returnUrl: '/test-return-url',
-                apiBaseUrl: 'https://api.example.com',
+                returnURL: '/test-return-url',
+                apiBaseURL: 'https://api.example.com',
                 selectedExercise: 5,
                 checksum: 'test-checksum',
             });

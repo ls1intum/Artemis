@@ -773,14 +773,17 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.isImportFromFile) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
         } else if (this.isImportFromSharing) {
-            this.courseService.find(this.courseId).subscribe((res) => {
-                this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, res.body!, this.sharingInfo).subscribe({
-                    next: (response: HttpResponse<ProgrammingExercise>) => {
-                        this.alertService.success('artemisApp.programmingExercise.created', { param: this.programmingExercise.title });
-                        this.onSaveSuccess(response.body!);
-                    },
-                    error: (err) => this.onSaveError(err),
-                });
+            this.courseService.find(this.courseId).subscribe({
+                next: (res) => {
+                    this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, res.body!, this.sharingInfo).subscribe({
+                        next: (response: HttpResponse<ProgrammingExercise>) => {
+                            this.alertService.success('artemisApp.programmingExercise.created', { param: this.programmingExercise.title });
+                            this.onSaveSuccess(response.body!);
+                        },
+                        error: (err) => this.onSaveError(err),
+                    });
+                },
+                error: (err) => this.onSaveError(err),
             });
         } else if (this.isImportFromExistingExercise) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions));
@@ -1299,8 +1302,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private createProgrammingExerciseForImportFromSharing() {
         this.activatedRoute.queryParams.subscribe((qparams: Params) => {
             this.sharingInfo.basketToken = qparams['basketToken'];
-            this.sharingInfo.returnURL = qparams['returnUrl'];
-            this.sharingInfo.apiBaseURL = qparams['apiBaseUrl'];
+            this.sharingInfo.returnURL = qparams['returnURL'];
+            this.sharingInfo.apiBaseURL = qparams['apiBaseURL'];
             this.sharingInfo.selectedExercise = qparams['selectedExercise'];
             this.sharingInfo.checksum = qparams['checksum'];
             this.programmingExerciseSharingService.loadDetailsForExercises(this.sharingInfo).subscribe(
