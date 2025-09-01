@@ -1,5 +1,5 @@
 <div class="frame">
-    <h2>{{ tutorialGroup().title }}</h2>
+    <h2 id="page-title">{{ tutorialGroup().title }}</h2>
     <hr />
     <div class="card-row">
         <div class="card small">
@@ -59,27 +59,27 @@
             <div class="info-card-content">
                 @let nextSession = nextSessionData();
                 @if (nextSession) {
-                    @let nextSessionWeekday = nextSession.weekday;
                     @let nextSessionDate = nextSession.date;
                     @let nextSessionTime = nextSession.time;
+                    @let nextSessionStatus = nextSession.status;
                     @let nextSessionLocation = nextSession.location;
                     <div class="info-stack">
-                        <div class="info-item">
-                            <fa-icon [icon]="faCalendarDay" />
-                            <span class="info-label"> {{ ('artemisApp.pages.tutorialGroupDetail.weekday' | artemisTranslate) + ':' }}</span>
-                            <span jhiTranslate="{{ nextSessionWeekday }}"></span>
-                        </div>
                         <div class="info-item">
                             <fa-icon [icon]="faCalendar" />
                             <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.date' | artemisTranslate) + ':' }}</span>
                             {{ nextSessionDate }}
                         </div>
-                    </div>
-                    <div class="info-stack">
                         <div class="info-item">
                             <fa-icon [icon]="faClock" />
                             <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.time' | artemisTranslate) + ':' }}</span>
                             {{ nextSessionTime }}
+                        </div>
+                    </div>
+                    <div class="info-stack">
+                        <div class="info-item">
+                            <fa-icon [icon]="faCircleExclamation" />
+                            <span class="info-label"> {{ ('artemisApp.pages.tutorialGroupDetail.status' | artemisTranslate) + ':' }}</span>
+                            <jhi-tutorial-group-detail-session-status-indicator [status]="nextSessionStatus" />
                         </div>
                         <div class="info-item">
                             <fa-icon [icon]="faMapPin" />
@@ -91,28 +91,32 @@
             </div>
         </div>
     </div>
-    <p-selectbutton [options]="stateOptions" [(ngModel)]="value" optionLabel="label" optionValue="value" aria-labelledby="basic" />
-    <!--
+    <div class="list-controls-row">
+        <h3>Sessions</h3>
+        <p-selectbutton [options]="listOptions" [ngModel]="selectedListOption()" (ngModelChange)="selectedListOption.set($event)" optionLabel="label" optionValue="value" />
+    </div>
+
     @let sessions = tutorialGroupSessions();
-    @if(sessions) {
-        <p-table [value]="sessions">
+    @if (sessions) {
+        <p-table [value]="sessions" stripedRows>
             <ng-template #header>
                 <tr>
-                    <th>Code</th>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>Quantity</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Location</th>
+                    <th>Attendance</th>
+                    <th>Status</th>
                 </tr>
             </ng-template>
             <ng-template #body let-session>
-                <tr>
-                    <td>{{ session.code }}</td>
-                    <td>{{ session.name }}</td>
-                    <td>{{ session.category }}</td>
-                    <td>{{ product.quantity }}</td>
+                <tr class="table-row">
+                    <td>{{ session.date }}</td>
+                    <td>{{ session.time }}</td>
+                    <td>{{ session.location }}</td>
+                    <td>{{ session.attendance }}</td>
+                    <td><jhi-tutorial-group-detail-session-status-indicator [status]="session.status" /></td>
                 </tr>
             </ng-template>
         </p-table>
     }
-    -->
 </div>

@@ -1,0 +1,24 @@
+<div
+    class="frame"
+    [ngClass]="{
+        'status-regular': variant() === 'REGULAR',
+        'status-cancelled': variant() === 'CANCELLED',
+        'status-rescheduled': variant() === 'RESCHEDULED',
+        'status-relocated': variant() === 'RELOCATED',
+    }"
+>
+    @switch (variant()) {
+        @case ('REGULAR') {
+            <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.statusChipLabel.regular"></span>
+        }
+        @case ('CANCELLED') {
+            <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.statusChipLabel.cancelled"></span>
+        }
+        @case ('RESCHEDULED') {
+            <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.statusChipLabel.rescheduled"></span>
+        }
+        @case ('RELOCATED') {
+            <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.statusChipLabel.relocated"></span>
+        }
+    }
+</div>

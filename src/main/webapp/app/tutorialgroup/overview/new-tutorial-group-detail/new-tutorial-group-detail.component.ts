@@ -1,13 +1,13 @@
-import { Component, computed, effect, input, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBuildingColumns, faCalendar, faCalendarDay, faClock, faFlag, faMapPin, faTag, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faBuildingColumns, faCalendar, faCircleExclamation, faClock, faFlag, faMapPin, faTag, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { TutorialGroupDetailSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupDetailSessionDTO, TutorialGroupDetailSessionDTOStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SelectButton } from 'primeng/selectbutton';
 import { FormsModule } from '@angular/forms';
@@ -15,44 +15,59 @@ import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-data
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { Color, PieChartComponent, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { TableModule } from 'primeng/table';
+import { SelectModule } from 'primeng/select';
+import { TranslateService } from '@ngx-translate/core';
+import { TutorialGroupDetailSessionStatusIndicatorComponent } from 'app/tutorialgroup/overview/tutorial-group-detail-session-status-indicator/tutorial-group-detail-session-status-indicator.component';
 
-interface NextSessionData {
-    weekday: string;
+interface SessionData {
     date: string;
     time: string;
     location: string;
+    attendance?: string;
+    status: TutorialGroupDetailSessionDTOStatus;
 }
+
+type ListOption = 'all-sessions' | 'future-sessions';
 
 @Component({
     selector: 'jhi-new-tutorial-group-detail',
-    imports: [ProfilePictureComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, SelectButton, FormsModule, PieChartModule, TableModule],
+    imports: [
+        ProfilePictureComponent,
+        FaIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        SelectButton,
+        FormsModule,
+        PieChartModule,
+        TableModule,
+        SelectModule,
+        TutorialGroupDetailSessionStatusIndicatorComponent,
+    ],
     templateUrl: './new-tutorial-group-detail.component.html',
     styleUrl: './new-tutorial-group-detail.component.scss',
 })
 export class NewTutorialGroupDetailComponent {
-    nextSessionData = computed<NextSessionData | undefined>(() => {
-        const sessions = this.tutorialGroup().sessions;
-        if (sessions && sessions.length > 0) {
-            const now = dayjs();
-            const upcoming = sessions.filter((session) => dayjs(session.start).isAfter(now)).sort((first, second) => dayjs(first.start).diff(dayjs(second.start)));
-            if (upcoming.length > 0) {
-                const nextSession = upcoming[0];
-                const weekday = this.computeNextSessionWeekdayStringKey(nextSession.start);
-                const date = nextSession.start.format('DD.MM.YYYY');
-                const time = nextSession.start.format('HH:mm') + '-' + nextSession.end.format('HH:mm');
-                const location = nextSession.location;
-                const nextSessionData: NextSessionData = { weekday, date, time, location };
-                return nextSessionData;
-            }
-            return undefined;
-        }
-        return undefined;
-    });
+    private translateService = inject(TranslateService);
 
     course = input.required<Course>();
     tutorialGroup = input.required<TutorialGroupDetailGroupDTO>();
-    tutorialGroupSessions = computed<TutorialGroupDetailSessionDTO[]>(() => this.tutorialGroup().sessions);
+    tutorialGroupSessions = computed<SessionData[]>(() => {
+        const now = dayjs();
+        const selectedListOption = this.selectedListOption();
+        return this.tutorialGroup()
+            .sessions.filter((session) => {
+                if (selectedListOption === 'all-sessions') return true;
+                return session.start.isSameOrAfter(now);
+            })
+            .sort((first, second) => first.start.diff(second.start))
+            .map((session) => this.computeSessionDataFrom(session));
+    });
+    nextSessionData = computed<SessionData | undefined>(() => this.computeNextSessionDataUsing(this.tutorialGroup().sessions));
     teachingAssistantImageUrl = computed(() => addPublicFilePrefix(this.tutorialGroup().teachingAssistantImageUrl));
+    tutorialGroupLanguage = computed<string>(() => this.tutorialGroup().language);
+    tutorialGroupCapacity = computed<string>(() => String(this.tutorialGroup().capacity ?? '-'));
+    tutorialGroupMode = computed<string>(() => (this.tutorialGroup().isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline'));
+    tutorialGroupCampus = computed<string>(() => this.tutorialGroup().campus ?? '-');
     pieChart = viewChild(PieChartComponent);
     ngxData: NgxChartsSingleSeriesDataEntry[] = [
         { name: 'Attended', value: 60 },
@@ -64,11 +79,16 @@ export class NewTutorialGroupDetailComponent {
         group: ScaleType.Ordinal,
         domain: [GraphColors.GREEN, GraphColors.RED, GraphColors.LIGHT_GREY],
     } as Color;
+    listOptions: any[] = [
+        { label: 'All Sessions', value: 'all-sessions' as const },
+        { label: 'Future Sessions', value: 'future-sessions' as const },
+    ];
+    selectedListOption = signal<ListOption>('all-sessions');
 
     readonly faFlag = faFlag;
     readonly faUsers = faUsers;
     readonly faTag = faTag;
-    readonly faCalendarDay = faCalendarDay;
+    readonly faCircleExclamation = faCircleExclamation;
     readonly faCalendar = faCalendar;
     readonly faClock = faClock;
     readonly faMapPin = faMapPin;
@@ -83,23 +103,32 @@ export class NewTutorialGroupDetailComponent {
         });
     }
 
-    tutorialGroupLanguage = computed<string>(() => this.tutorialGroup().language);
+    private computeNextSessionDataUsing(sessions: TutorialGroupDetailSessionDTO[]): SessionData | undefined {
+        if (sessions && sessions.length > 0) {
+            const now = dayjs();
+            const upcoming = sessions.filter((session) => dayjs(session.start).isAfter(now)).sort((first, second) => dayjs(first.start).diff(dayjs(second.start)));
+            if (upcoming.length > 0) {
+                const nextSession = upcoming[0];
+                return this.computeSessionDataFrom(nextSession);
+            }
+            return undefined;
+        }
+        return undefined;
+    }
 
-    tutorialGroupCapacity = computed<string>(() => String(this.tutorialGroup().capacity ?? '-'));
+    private computeSessionDataFrom(session: TutorialGroupDetailSessionDTO): SessionData {
+        const weekdayStringKey = this.computeWeekdayStringKeyUsing(session.start);
+        const weekday = this.translateService.instant(weekdayStringKey);
+        const date = weekday + ', ' + session.start.format('DD.MM.YYYY');
+        const time = session.start.format('HH:mm') + '-' + session.end.format('HH:mm');
+        const location = session.location;
+        const attendance = session.attendanceCount ? session.attendanceCount + ' / ' + this.tutorialGroup().capacity : undefined;
+        const status = session.status;
+        return { date, time, location, attendance, status };
+    }
 
-    tutorialGroupMode = computed<string>(() => (this.tutorialGroup().isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline'));
-
-    tutorialGroupCampus = computed<string>(() => this.tutorialGroup().campus ?? '-');
-
-    stateOptions: any[] = [
-        { label: 'One-Way', value: 'one-way' },
-        { label: 'Return', value: 'return' },
-    ];
-
-    value: string = 'off';
-
-    private computeNextSessionWeekdayStringKey(nextSessionStart: Dayjs): string {
-        const weekDayIndex = nextSessionStart.day();
+    private computeWeekdayStringKeyUsing(sessionStart: Dayjs): string {
+        const weekDayIndex = sessionStart.day();
         const keys = [
             'global.weekdays.monday',
             'global.weekdays.tuesday',

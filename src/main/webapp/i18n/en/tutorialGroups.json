@@ -275,7 +275,13 @@
                 "capacity": "Capacity",
                 "mode": "Mode",
                 "campus": "Campus",
-                "weekday": "Weekday",
+                "status": "Status",
+                "statusChipLabel": {
+                    "regular": "Regular",
+                    "cancelled": "Cancelled",
+                    "rescheduled": "Rescheduled",
+                    "relocated": "Relocated"
+                },
                 "date": "Date",
                 "time": "Time",
                 "location": "Location",

@@ -275,7 +275,13 @@
                 "capacity": "Kapazität",
                 "mode": "Modus",
                 "campus": "Campus",
-                "weekday": "Wochentag",
+                "status": "Status",
+                "statusChipLabel": {
+                    "regular": "Regulär",
+                    "cancelled": "Abgesagt",
+                    "rescheduled": "Verschoben",
+                    "relocated": "Raumänderung"
+                },
                 "date": "Datum",
                 "time": "Uhrzeit",
                 "location": "Ort",

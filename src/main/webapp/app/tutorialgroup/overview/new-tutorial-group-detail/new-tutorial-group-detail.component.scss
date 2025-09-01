@@ -82,4 +82,22 @@
             }
         }
     }
+
+    .list-controls-row {
+        margin-top: 1rem;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+        padding-top: 0;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+
+    ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
 }
