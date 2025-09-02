@@ -121,8 +121,6 @@ export class CompetencyManagementComponent implements OnInit {
             const isFeatureEnabled = await firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent));
             this.agentChatEnabled.set(hasAuthority && isFeatureEnabled);
         } catch (error) {
-            this.alertService.error(error);
-        } finally {
             this.agentChatEnabled.set(false);
         }
     }
