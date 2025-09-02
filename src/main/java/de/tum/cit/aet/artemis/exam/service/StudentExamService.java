@@ -515,8 +515,8 @@ public class StudentExamService {
     /**
      * Get the StudentExamWithGradeDTO for the given studentExam.
      *
-     * @param examId      the examId of the studentExam
-     * @param studentExam the studentExam for which the StudentExamWithGradeDTO should be calculated
+     * @param examId        the examId of the studentExam
+     * @param studentExamId the studentExamId for which the StudentExamWithGradeDTO should be calculated
      * @return the StudentExamWithGradeDTO for the given studentExam
      */
     public StudentExamWithGradeDTO getStudentExamWithGradeDTO(long examId, long studentExamId) {
