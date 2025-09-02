@@ -68,17 +68,61 @@ export class NewTutorialGroupDetailComponent {
     tutorialGroupCapacity = computed<string>(() => String(this.tutorialGroup().capacity ?? '-'));
     tutorialGroupMode = computed<string>(() => (this.tutorialGroup().isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline'));
     tutorialGroupCampus = computed<string>(() => this.tutorialGroup().campus ?? '-');
+    private averageAttendanceRatio = computed<number | undefined>(() => {
+        const sessionsWithAttendance = this.tutorialGroup().sessions.filter((session) => session.attendanceCount);
+        if (sessionsWithAttendance.length === 0) return undefined;
+        const averageAttendance = sessionsWithAttendance.reduce((sum, session) => sum + session.attendanceCount!, 0) / sessionsWithAttendance.length;
+        const capacity = this.tutorialGroup().capacity;
+        if (capacity === undefined) return undefined;
+        return averageAttendance / capacity;
+    });
+    averageAttendancePercentage = computed<string | undefined>(() => {
+        const attendanceRatio = this.averageAttendanceRatio();
+        if (attendanceRatio === undefined) return undefined;
+        const percentage = attendanceRatio * 100;
+        return `Ø ${percentage.toFixed(0)}%`;
+    });
     pieChart = viewChild(PieChartComponent);
-    ngxData: NgxChartsSingleSeriesDataEntry[] = [
-        { name: 'Attended', value: 60 },
-        { name: 'Not Attended', value: 40 },
-    ];
-    ngxColor = {
-        name: 'vivid',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [GraphColors.GREEN, GraphColors.LIGHT_GREY],
-    } as Color;
+    pieChartData = computed<NgxChartsSingleSeriesDataEntry[]>(() => {
+        const averageAttendancePercentage = this.averageAttendanceRatio();
+        if (!averageAttendancePercentage) {
+            return [{ name: 'Not Attended', value: 100 }];
+        }
+        const attendedValue = averageAttendancePercentage * 100;
+        const notAttendedValue = 100 - attendedValue;
+        return [
+            { name: 'Attended', value: attendedValue },
+            { name: 'Not Attended', value: notAttendedValue },
+        ];
+    });
+    pieChartColors = computed<Color>(() => {
+        const averageAttendancePercentage = this.averageAttendanceRatio();
+        if (!averageAttendancePercentage) {
+            return {
+                name: 'vivid',
+                selectable: false,
+                group: ScaleType.Ordinal,
+                domain: [GraphColors.LIGHT_GREY],
+            } as Color;
+        } else {
+            let color: string | undefined = undefined;
+            if (averageAttendancePercentage >= 0.9) {
+                color = 'var(--red)';
+            } else if (averageAttendancePercentage >= 0.8) {
+                color = 'var(--orange)';
+            } else if (averageAttendancePercentage >= 0.7) {
+                color = 'var(--yellow)';
+            } else {
+                color = 'var(--green)';
+            }
+            return {
+                name: 'vivid',
+                selectable: false,
+                group: ScaleType.Ordinal,
+                domain: [color, GraphColors.LIGHT_GREY],
+            } as Color;
+        }
+    });
     listOptions: any[] = [
         { label: 'All Sessions', value: 'all-sessions' as const },
         { label: 'Future Sessions', value: 'future-sessions' as const },

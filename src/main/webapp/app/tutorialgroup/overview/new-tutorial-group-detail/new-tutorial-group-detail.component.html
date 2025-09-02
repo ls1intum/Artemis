@@ -50,8 +50,16 @@
         <div class="card small">
             <h5 jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.averageAttendanceCardTitle"></h5>
             <div class="attendance-card-content position-relative">
-                <div class="doughnut-chart-text">Ø 10%</div>
-                <ngx-charts-pie-chart [view]="[128, 128]" [results]="ngxData" [scheme]="ngxColor" [doughnut]="true" [labels]="false" [legend]="false" [arcWidth]="0.3" />
+                <div class="doughnut-chart-text">{{ averageAttendancePercentage() }}</div>
+                <ngx-charts-pie-chart
+                    [view]="[128, 128]"
+                    [results]="pieChartData()"
+                    [scheme]="pieChartColors()"
+                    [doughnut]="true"
+                    [labels]="false"
+                    [legend]="false"
+                    [arcWidth]="0.3"
+                />
             </div>
         </div>
         <div class="card big">
