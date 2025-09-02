@@ -311,7 +311,9 @@ public class SharedQueueProcessingService {
     private void removeProcessingJobsForNode(String memberAddress) {
         List<String> jobsToRemove = distributedDataAccessService.getProcessingJobIdsForAgent(memberAddress);
         log.debug("Removing {} processing jobs for offline node: {}", jobsToRemove.size(), memberAddress);
-        distributedDataAccessService.getDistributedProcessingJobs().removeAll(entry -> jobsToRemove.contains(entry.getKey()));
+        for (String jobId : jobsToRemove) {
+            distributedDataAccessService.getDistributedProcessingJobs().remove(jobId);
+        }
     }
 
     /**
