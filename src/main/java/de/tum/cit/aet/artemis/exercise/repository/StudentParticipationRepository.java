@@ -890,7 +890,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND p.exercise IN :exercises
                 AND (s.id = (SELECT MAX(s2.id) FROM p.submissions s2) OR s.id IS NULL)
             """)
-    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(@Param("studentId") long studentId,
+    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises);
 
     @Query("""
@@ -1077,7 +1077,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param withAssessor (only for non-test runs) if assessor should be loaded with the result
      * @return student's participations with submissions and results
      */
-    default List<StudentParticipation> findByStudentExamWithEagerLatestSubmissionsResult(StudentExam studentExam, boolean withAssessor) {
+    default List<StudentParticipation> findByStudentExamWithEagerLatestSubmissionResult(StudentExam studentExam, boolean withAssessor) {
         if (studentExam.isTestRun()) {
             return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
         }
@@ -1095,7 +1095,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 return findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultAndAssessorIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
             }
             else {
-                return findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
+                return findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
             }
         }
     }

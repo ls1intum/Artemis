@@ -345,10 +345,11 @@ public class ExamService {
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, studentIds);
 
         var studentResults = new ArrayList<ExamScoresDTO.StudentResult>();
+        var gradesByUser = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::userId, Collectors.toSet()));
         for (StudentExam studentExam : studentExams) {
-            var studentGrades = examGrades.stream().filter(grade -> Objects.equals(grade.userId(), studentExam.getUser().getId())).collect(Collectors.toSet());
+            var studentGrades = new HashSet<>(gradesByUser.getOrDefault(studentExam.getUser().getId(), Set.of()));
             var studentExercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
-            var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, false);
+            var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
             var studentResult = calculateStudentResultWithGrade(studentExam, studentGrades, exam, gradingScale, true, submittedAnswerCounts, plagiarismMapping, examBonusCalculator,
                     studentExercises, participations);
             studentResults.add(studentResult);
@@ -385,7 +386,7 @@ public class ExamService {
         var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCasesForStudent);
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, List.of(studentId));
         var exercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
-        var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, false);
+        var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
         var studentResult = calculateStudentResultWithGrade(studentExam, studentExamGrades, exam, gradingScale, false, null, plagiarismMapping, examBonusCalculator, exercises,
                 participations);
         var maxPoints = calculateMaxPointsSum(exercises, exam.getCourse());
@@ -548,7 +549,7 @@ public class ExamService {
 
     /**
      * Loads the quiz questions as is not possible to load them in a generic way with the entity graph used.
-     * See {@link StudentParticipationRepository#findByStudentExamWithEagerLatestSubmissionsResult}
+     * See {@link StudentParticipationRepository#findByStudentExamWithEagerLatestSubmissionResult}
      *
      * @param studentExam the studentExam for which to load exercises
      */
@@ -576,7 +577,7 @@ public class ExamService {
     public void fetchParticipationsSubmissionsAndResultsForExam(StudentExam studentExam, User currentUser) {
 
         // 1st: fetch participations, with latest submissions and results (a distinction for test runs, real exams and test exams is done within the following method)
-        var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, false);
+        var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
 
         // 2nd: fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);

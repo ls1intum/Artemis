@@ -354,9 +354,9 @@ public class CourseScoreCalculationService {
                 continue;
             }
 
-            CourseGradeScoreDTO participation = gradeScoreDTOMap.get(exercise.id());
-            if (participation != null) {
-                double pointsAchievedFromExercise = calculatePointsAchievedFromExerciseScoreDTO(exercise, participation.score(), plagiarismCasesForStudent.get(exercise.id()),
+            CourseGradeScoreDTO courseGradeScoreDTO = gradeScoreDTOMap.get(exercise.id());
+            if (courseGradeScoreDTO != null) {
+                double pointsAchievedFromExercise = calculatePointsAchievedFromExerciseScoreDTO(exercise, courseGradeScoreDTO.score(), plagiarismCasesForStudent.get(exercise.id()),
                         course);
                 pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
             }

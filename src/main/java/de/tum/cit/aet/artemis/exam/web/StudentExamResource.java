@@ -178,7 +178,7 @@ public class StudentExamResource {
         examService.loadQuizExercisesForStudentExam(studentExam);
         // fetch participations, latest submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
-        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, true);
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, true);
         // fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
 
