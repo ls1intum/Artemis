@@ -25,7 +25,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.atlas.config.AtlasMLRestTemplateConfiguration;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
@@ -245,69 +244,7 @@ public class AtlasMLService {
         }
     }
 
-    /**
-     * Saves a competency using domain object.
-     *
-     * @param competency    the competency to save
-     * @param operationType the operation type (UPDATE or DELETE)
-     * @return true if the save operation was successful, false otherwise
-     */
-    public boolean saveCompetency(Competency competency, OperationTypeDTO operationType) {
-        // Check if AtlasML feature is enabled
-        if (!featureToggleService.isFeatureEnabled(Feature.AtlasML)) {
-            log.debug("AtlasML feature is disabled, skipping competency save operation");
-            return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
-        }
-
-        try {
-            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromCompetency(competency, operationType);
-            saveCompetencies(request);
-            return true;
-        }
-        catch (Exception e) {
-            log.error("Failed to {} competency with id {}", operationType.value().toLowerCase(), competency != null ? competency.getId() : "null", e);
-            return false;
-        }
-    }
-
-    /**
-     * Saves a course competency using domain object.
-     *
-     * @param courseCompetency the course competency to save
-     * @param operationType    the operation type (UPDATE or DELETE)
-     * @return true if the save operation was successful, false otherwise
-     */
-    public boolean saveCourseCompetency(CourseCompetency courseCompetency, OperationTypeDTO operationType) {
-        // Check if AtlasML feature is enabled
-        if (!featureToggleService.isFeatureEnabled(Feature.AtlasML)) {
-            log.debug("AtlasML feature is disabled, skipping course competency save operation");
-            return true; // Return true to indicate operation was "successful" (not executed due to feature flag)
-        }
-
-        try {
-            // Convert CourseCompetency to Competency for AtlasML
-            Competency competency = new Competency(courseCompetency);
-            competency.setId(courseCompetency.getId());
-
-            SaveCompetencyRequestDTO request = SaveCompetencyRequestDTO.fromCompetency(competency, operationType);
-            saveCompetencies(request);
-            return true;
-        }
-        catch (Exception e) {
-            log.error("Failed to {} course competency with id {}", operationType.value().toLowerCase(), courseCompetency != null ? courseCompetency.getId() : "null", e);
-            return false;
-        }
-    }
-
-    /**
-     * Saves a competency using domain object with UPDATE operation type.
-     *
-     * @param competency the competency to save
-     * @return true if the save operation was successful, false otherwise
-     */
-    public boolean saveCompetency(Competency competency) {
-        return saveCompetency(competency, OperationTypeDTO.UPDATE);
-    }
+    // Removed single-entity save methods; always use list-based saveCompetencies
 
     /**
      * Saves multiple competencies using domain objects.
@@ -342,16 +279,6 @@ public class AtlasMLService {
     }
 
     /**
-     * Saves multiple competencies using domain objects with UPDATE operation type.
-     *
-     * @param competencies the competencies to save
-     * @return true if the save operation was successful, false otherwise
-     */
-    public boolean saveCompetencies(List<Competency> competencies) {
-        return saveCompetencies(competencies, OperationTypeDTO.UPDATE);
-    }
-
-    /**
      * Saves an exercise with competencies.
      *
      * @param exerciseId    the exercise identifier
@@ -380,20 +307,6 @@ public class AtlasMLService {
             log.error("Failed to {} exercise with id {}", opStr, exerciseId, e);
             return false;
         }
-    }
-
-    /**
-     * Saves an exercise with competencies with UPDATE operation type.
-     *
-     * @param exerciseId    the exercise identifier
-     * @param title         the exercise title
-     * @param description   the exercise description
-     * @param competencyIds the list of competency IDs associated with the exercise
-     * @param courseId      the course identifier
-     * @return true if the save operation was successful, false otherwise
-     */
-    public boolean saveExercise(Long exerciseId, String title, String description, List<Long> competencyIds, Long courseId) {
-        return saveExercise(exerciseId, title, description, competencyIds, courseId, OperationTypeDTO.UPDATE);
     }
 
     /**

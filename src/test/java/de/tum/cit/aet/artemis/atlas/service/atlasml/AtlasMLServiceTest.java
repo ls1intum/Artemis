@@ -257,132 +257,6 @@ class AtlasMLServiceTest {
     }
 
     @Test
-    void testSaveCompetency_WithOperationTypeDTO() {
-        // Given
-        Competency competency = new Competency();
-        competency.setId(1L);
-        competency.setTitle("Test Competency");
-        competency.setDescription("Test Description");
-        competency.setTaxonomy(CompetencyTaxonomy.APPLY);
-
-        ResponseEntity<String> response = new ResponseEntity<>(HttpStatus.OK);
-
-        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class))).thenReturn(response);
-
-        // When
-        boolean result = atlasMLService.saveCompetency(competency, OperationTypeDTO.UPDATE);
-
-        // Then
-        assertThat(result).isTrue();
-    }
-
-    @Test
-    void testSaveCompetency_DefaultOperationTypeDTO() {
-        // Given
-        Competency competency = new Competency();
-        competency.setId(1L);
-        competency.setTitle("Test Competency");
-        competency.setDescription("Test Description");
-        competency.setTaxonomy(CompetencyTaxonomy.APPLY);
-
-        ResponseEntity<String> response = new ResponseEntity<>(HttpStatus.OK);
-
-        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class))).thenReturn(response);
-
-        // When
-        boolean result = atlasMLService.saveCompetency(competency);
-
-        // Then
-        assertThat(result).isTrue();
-    }
-
-    @Test
-    void testSaveCompetency_WhenFeatureDisabled() {
-        // Given
-        Competency competency = new Competency();
-        competency.setId(1L);
-        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(false);
-
-        // When
-        boolean result = atlasMLService.saveCompetency(competency, OperationTypeDTO.UPDATE);
-
-        // Then
-        assertThat(result).isTrue();
-    }
-
-    @Test
-    void testSaveCompetency_WhenException() {
-        // Given
-        Competency competency = new Competency();
-        competency.setId(1L);
-        competency.setTitle("Test Competency");
-        competency.setDescription("Test Description");
-        competency.setTaxonomy(CompetencyTaxonomy.APPLY);
-
-        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
-                .thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
-
-        // When
-        boolean result = atlasMLService.saveCompetency(competency, OperationTypeDTO.UPDATE);
-
-        // Then
-        assertThat(result).isFalse();
-    }
-
-    @Test
-    void testSaveCompetencyAsCourseCompetency() {
-        // Given
-        Competency courseCompetency = new Competency();
-        courseCompetency.setId(1L);
-        courseCompetency.setTitle("Test Course Competency");
-        courseCompetency.setDescription("Test Description");
-        courseCompetency.setTaxonomy(CompetencyTaxonomy.APPLY);
-
-        ResponseEntity<String> response = new ResponseEntity<>("", HttpStatus.OK);
-
-        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class))).thenReturn(response);
-
-        // When
-        boolean result = atlasMLService.saveCourseCompetency(courseCompetency, OperationTypeDTO.UPDATE);
-
-        // Then
-        assertThat(result).isTrue();
-    }
-
-    @Test
-    void testSaveCourseCompetency_WhenFeatureDisabled() {
-        // Given
-        Competency courseCompetency = new Competency();
-        courseCompetency.setId(1L);
-        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(false);
-
-        // When
-        boolean result = atlasMLService.saveCourseCompetency(courseCompetency, OperationTypeDTO.UPDATE);
-
-        // Then
-        assertThat(result).isTrue();
-    }
-
-    @Test
-    void testSaveCourseCompetency_WhenException() {
-        // Given
-        Competency courseCompetency = new Competency();
-        courseCompetency.setId(1L);
-        courseCompetency.setTitle("Test Course Competency");
-        courseCompetency.setDescription("Test Description");
-        courseCompetency.setTaxonomy(CompetencyTaxonomy.APPLY);
-
-        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
-                .thenThrow(new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
-
-        // When
-        boolean result = atlasMLService.saveCourseCompetency(courseCompetency, OperationTypeDTO.UPDATE);
-
-        // Then
-        assertThat(result).isFalse();
-    }
-
-    @Test
     void testSaveExercise_WithAllParameters() {
         // Given
         Long exerciseId = 123L;
@@ -416,7 +290,7 @@ class AtlasMLServiceTest {
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class))).thenReturn(response);
 
         // When
-        boolean result = atlasMLService.saveExercise(exerciseId, title, description, competencyIds, courseId);
+        boolean result = atlasMLService.saveExercise(exerciseId, title, description, competencyIds, courseId, OperationTypeDTO.UPDATE);
 
         // Then
         assertThat(result).isTrue();

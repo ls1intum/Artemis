@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
@@ -33,27 +32,6 @@ public class AtlasMLApi extends AbstractAtlasApi {
     }
 
     /**
-     * Saves a competency to AtlasML.
-     *
-     * @param competency    the competency to save
-     * @param operationType the operation type (UPDATE or DELETE)
-     * @return true if successful, false otherwise
-     */
-    public boolean saveCompetency(Competency competency, OperationTypeDTO operationType) {
-        return atlasMLService.saveCompetency(competency, operationType);
-    }
-
-    /**
-     * Saves a competency to AtlasML with UPDATE operation type.
-     *
-     * @param competency the competency to save
-     * @return true if successful, false otherwise
-     */
-    public boolean saveCompetency(Competency competency) {
-        return atlasMLService.saveCompetency(competency);
-    }
-
-    /**
      * Saves multiple competencies to AtlasML.
      *
      * @param competencies  the competencies to save
@@ -62,27 +40,6 @@ public class AtlasMLApi extends AbstractAtlasApi {
      */
     public boolean saveCompetencies(List<Competency> competencies, OperationTypeDTO operationType) {
         return atlasMLService.saveCompetencies(competencies, operationType);
-    }
-
-    /**
-     * Saves multiple competencies to AtlasML with UPDATE operation type.
-     *
-     * @param competencies the competencies to save
-     * @return true if successful, false otherwise
-     */
-    public boolean saveCompetencies(List<Competency> competencies) {
-        return atlasMLService.saveCompetencies(competencies);
-    }
-
-    /**
-     * Saves a course competency to AtlasML.
-     *
-     * @param courseCompetency the course competency to save
-     * @param operationType    the operation type (UPDATE or DELETE)
-     * @return true if successful, false otherwise
-     */
-    public boolean saveCourseCompetency(CourseCompetency courseCompetency, OperationTypeDTO operationType) {
-        return atlasMLService.saveCourseCompetency(courseCompetency, operationType);
     }
 
     /**
@@ -104,17 +61,6 @@ public class AtlasMLApi extends AbstractAtlasApi {
      */
     public boolean saveExerciseWithCompetencies(Exercise exercise) {
         return atlasMLService.saveExerciseWithCompetencies(exercise, OperationTypeDTO.UPDATE);
-    }
-
-    /**
-     * Saves an exercise with its associated competencies by exercise ID to AtlasML.
-     *
-     * @param exerciseId    the exercise ID
-     * @param operationType the operation type (UPDATE or DELETE)
-     * @return true if successful, false otherwise
-     */
-    public boolean saveExerciseWithCompetenciesById(Long exerciseId, OperationTypeDTO operationType) {
-        return atlasMLService.saveExerciseWithCompetenciesById(exerciseId, operationType);
     }
 
     /**

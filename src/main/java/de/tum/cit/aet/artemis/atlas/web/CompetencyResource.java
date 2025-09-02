@@ -150,7 +150,7 @@ public class CompetencyResource {
 
         // Notify AtlasML about the new competency
         try {
-            atlasMLApi.saveCompetency(persistedCompetency, OperationTypeDTO.UPDATE);
+            atlasMLApi.saveCompetencies(List.of(persistedCompetency), OperationTypeDTO.UPDATE);
         }
         catch (Exception e) {
             log.warn("Failed to notify AtlasML about competency creation: {}", e.getMessage());
@@ -328,7 +328,7 @@ public class CompetencyResource {
 
         // Notify AtlasML about the competency update
         try {
-            atlasMLApi.saveCompetency(persistedCompetency, OperationTypeDTO.UPDATE);
+            atlasMLApi.saveCompetencies(List.of(persistedCompetency), OperationTypeDTO.UPDATE);
         }
         catch (Exception e) {
             log.warn("Failed to notify AtlasML about competency update: {}", e.getMessage());
@@ -355,7 +355,9 @@ public class CompetencyResource {
 
         // Notify AtlasML about the competency deletion before actual deletion
         try {
-            atlasMLApi.saveCourseCompetency(competency, OperationTypeDTO.DELETE);
+            Competency competencyForAtlasMl = new Competency(competency);
+            competencyForAtlasMl.setId(competency.getId());
+            atlasMLApi.saveCompetencies(List.of(competencyForAtlasMl), OperationTypeDTO.DELETE);
         }
         catch (Exception e) {
             log.warn("Failed to notify AtlasML about competency deletion: {}", e.getMessage());
