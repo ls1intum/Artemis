@@ -1,7 +1,7 @@
 import { AfterViewChecked, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faPaperPlane, faRobot, faUser, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faRobot, faUser } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { CommonModule, DatePipe } from '@angular/common';
@@ -19,7 +19,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewChecked {
     @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
     @ViewChild('messageInput') private messageInput!: ElementRef<HTMLTextAreaElement>;
 
-    protected readonly closeIcon = faXmark;
     protected readonly sendIcon = faPaperPlane;
     protected readonly robotIcon = faRobot;
     protected readonly userIcon = faUser;
@@ -36,6 +35,11 @@ export class AgentChatModalComponent implements OnInit, AfterViewChecked {
     ngOnInit(): void {
         // Add a welcome message
         this.addMessage("Hello! I'm your AI competency assistant. How can I help you with course competencies today?", false);
+
+        // Auto-focus on textarea when modal opens
+        setTimeout(() => {
+            this.focusMessageInput();
+        }, 100);
     }
 
     ngAfterViewChecked(): void {
@@ -67,10 +71,14 @@ export class AgentChatModalComponent implements OnInit, AfterViewChecked {
             next: (response) => {
                 this.isAgentTyping = false;
                 this.addMessage(response, false);
+                // Restore focus to input after agent responds
+                this.focusMessageInput();
             },
             error: () => {
                 this.isAgentTyping = false;
                 this.addMessage("I apologize, but I'm having trouble processing your request right now. Please try again.", false);
+                // Restore focus to input after error
+                this.focusMessageInput();
             },
         });
     }
@@ -105,6 +113,14 @@ export class AgentChatModalComponent implements OnInit, AfterViewChecked {
 
     private generateMessageId(): string {
         return Date.now().toString(36) + Math.random().toString(36).slice(2);
+    }
+
+    private focusMessageInput(): void {
+        if (this.messageInput?.nativeElement) {
+            setTimeout(() => {
+                this.messageInput.nativeElement.focus();
+            }, 50);
+        }
     }
 
     private scrollToBottom(): void {

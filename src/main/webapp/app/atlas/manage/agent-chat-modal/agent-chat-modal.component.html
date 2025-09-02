@@ -1,13 +1,11 @@
 <div class="agent-chat-modal">
     <!-- Header -->
-    <div class="modal-header border-bottom">
+    <div class="modal-header border-bottom bg-light">
         <div class="d-flex align-items-center">
             <fa-icon [icon]="robotIcon" class="text-primary me-2 fs-5" />
-            <h4 class="modal-title mb-0" jhiTranslate="artemisApp.agent.chat.title">AI Competency Assistant</h4>
+            <h4 class="modal-title mb-0 text-body" jhiTranslate="artemisApp.agent.chat.title">AI Competency Assistant</h4>
         </div>
-        <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()">
-            <fa-icon [icon]="closeIcon" class="text-muted" />
-        </button>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
     </div>
 
     <!-- Messages Container -->
@@ -53,7 +51,7 @@
     </div>
 
     <!-- Input Area -->
-    <div class="modal-footer border-top">
+    <div class="modal-footer border-top bg-light">
         <div class="input-container w-100">
             <div class="d-flex">
                 <textarea
@@ -70,7 +68,7 @@
                     <fa-icon [icon]="sendIcon" />
                 </button>
             </div>
-            <small class="text-muted mt-1" jhiTranslate="artemisApp.agent.chat.inputHint"> Press Enter to send, Shift+Enter for new line </small>
+            <small class="text-body-secondary mt-1" jhiTranslate="artemisApp.agent.chat.inputHint"> Press Enter to send, Shift+Enter for new line </small>
         </div>
     </div>
 </div>
