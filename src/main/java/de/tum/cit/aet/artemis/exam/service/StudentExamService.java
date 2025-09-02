@@ -519,7 +519,22 @@ public class StudentExamService {
      * @param studentExam the studentExam for which the StudentExamWithGradeDTO should be calculated
      * @return the StudentExamWithGradeDTO for the given studentExam
      */
-    public StudentExamWithGradeDTO getStudentExamWithGradeDTO(long examId, StudentExam studentExam) {
+    public StudentExamWithGradeDTO getStudentExamWithGradeDTO(long examId, long studentExamId) {
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndSessionsAndStudentParticipationsElseThrow(studentExamId);
+        examService.loadQuizExercisesForStudentExam(studentExam);
+        // fetch participations, latest submissions and results for these exercises, note: exams only contain individual exercises for now
+        // fetching all participations at once is more effective
+        List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, true);
+        // fetch all submitted answers for quizzes
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
+
+        // connect the exercises and student participations correctly and make sure all relevant associations are available
+        for (Exercise exercise : studentExam.getExercises()) {
+            // add participation with submission and result to each exercise
+            examService.filterParticipationForExercise(studentExam, exercise, participations, true);
+        }
+
+        studentExam.getUser().setVisibleRegistrationNumber();
         Set<ExamGradeScoreDTO> examGrades;
         if (studentExam.isTestRun()) {
             examGrades = studentParticipationRepository.findGradesByExamIdAndStudentIdForTestRun(examId, studentExam.getUser().getId());
