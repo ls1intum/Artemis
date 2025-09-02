@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.config.migration.entries.ResultExerciseIdMigrationEntry;
+
 /**
  * This component allows registering certain entries containing functionality that gets executed on application startup. The entries must extend {@link MigrationEntry}.
  * It should definitely be executed on startup, so we make it non-lazy.
@@ -30,6 +32,7 @@ public class MigrationRegistry {
     public MigrationRegistry(MigrationService migrationService) {
         this.migrationService = migrationService;
         // Here we define the order of the ChangeEntries
+        migrationEntryMap.put(1, ResultExerciseIdMigrationEntry.class);
     }
 
     /**
