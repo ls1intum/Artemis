@@ -1,8 +1,8 @@
-import { Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
-import { firstValueFrom, map } from 'rxjs';
+import { Subscription, firstValueFrom, map } from 'rxjs';
 import { faCircleQuestion, faEdit, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
@@ -44,7 +44,7 @@ import { AccountService } from 'app/core/auth/account.service';
         CourseTitleBarActionsDirective,
     ],
 })
-export class CompetencyManagementComponent implements OnInit {
+export class CompetencyManagementComponent implements OnInit, OnDestroy {
     protected readonly faEdit = faEdit;
     protected readonly faPlus = faPlus;
     protected readonly faFileImport = faFileImport;
@@ -78,6 +78,8 @@ export class CompetencyManagementComponent implements OnInit {
     standardizedCompetenciesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies), { requireSync: true });
     agentChatEnabled = signal<boolean>(false);
 
+    private agentChatSubscription?: Subscription;
+
     constructor() {
         effect(() => {
             const courseId = this.courseId();
@@ -91,11 +93,6 @@ export class CompetencyManagementComponent implements OnInit {
                 }
             });
         });
-        effect(() => {
-            untracked(async () => {
-                await this.loadAgentChatEnabled();
-            });
-        });
     }
 
     ngOnInit(): void {
@@ -104,6 +101,15 @@ export class CompetencyManagementComponent implements OnInit {
             this.openCourseCompetencyExplanation();
         }
         this.sessionStorageService.store('alreadyVisitedCompetencyManagement', true);
+
+        this.agentChatSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent).subscribe((isFeatureEnabled) => {
+            const hasAuthority = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
+            this.agentChatEnabled.set(hasAuthority && isFeatureEnabled);
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.agentChatSubscription?.unsubscribe();
     }
 
     private async loadIrisEnabled() {
@@ -112,16 +118,6 @@ export class CompetencyManagementComponent implements OnInit {
             this.irisCompetencyGenerationEnabled.set(combinedCourseSettings?.irisCompetencyGenerationSettings?.enabled ?? false);
         } catch (error) {
             this.alertService.error(error);
-        }
-    }
-
-    private async loadAgentChatEnabled() {
-        try {
-            const hasAuthority = await this.accountService.hasAnyAuthority([Authority.ADMIN, Authority.INSTRUCTOR]);
-            const isFeatureEnabled = await firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent));
-            this.agentChatEnabled.set(hasAuthority && isFeatureEnabled);
-        } catch (error) {
-            this.agentChatEnabled.set(false);
         }
     }
 

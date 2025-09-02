@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faRobot, faUser } from '@fortawesome/free-solid-svg-icons';
@@ -15,7 +15,7 @@ import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
     templateUrl: './agent-chat-modal.component.html',
     styleUrl: './agent-chat-modal.component.scss',
 })
-export class AgentChatModalComponent implements OnInit, AfterViewChecked {
+export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterViewChecked {
     @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
     @ViewChild('messageInput') private messageInput!: ElementRef<HTMLTextAreaElement>;
 
@@ -35,11 +35,11 @@ export class AgentChatModalComponent implements OnInit, AfterViewChecked {
     ngOnInit(): void {
         // Add a welcome message
         this.addMessage("Hello! I'm your AI competency assistant. How can I help you with course competencies today?", false);
+    }
 
-        // Auto-focus on textarea when modal opens
-        setTimeout(() => {
-            this.focusMessageInput();
-        }, 100);
+    ngAfterViewInit(): void {
+        // Auto-focus on textarea when modal opens - using same pattern as Iris
+        setTimeout(() => this.messageInput?.nativeElement?.focus(), 10);
     }
 
     ngAfterViewChecked(): void {
@@ -71,14 +71,14 @@ export class AgentChatModalComponent implements OnInit, AfterViewChecked {
             next: (response) => {
                 this.isAgentTyping = false;
                 this.addMessage(response, false);
-                // Restore focus to input after agent responds
-                this.focusMessageInput();
+                // Restore focus to input after agent responds - using Iris pattern
+                setTimeout(() => this.messageInput?.nativeElement?.focus(), 10);
             },
             error: () => {
                 this.isAgentTyping = false;
                 this.addMessage("I apologize, but I'm having trouble processing your request right now. Please try again.", false);
-                // Restore focus to input after error
-                this.focusMessageInput();
+                // Restore focus to input after error - using Iris pattern
+                setTimeout(() => this.messageInput?.nativeElement?.focus(), 10);
             },
         });
     }
@@ -113,14 +113,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewChecked {
 
     private generateMessageId(): string {
         return Date.now().toString(36) + Math.random().toString(36).slice(2);
-    }
-
-    private focusMessageInput(): void {
-        if (this.messageInput?.nativeElement) {
-            setTimeout(() => {
-                this.messageInput.nativeElement.focus();
-            }, 50);
-        }
     }
 
     private scrollToBottom(): void {

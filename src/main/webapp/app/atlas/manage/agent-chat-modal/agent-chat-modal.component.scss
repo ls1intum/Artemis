@@ -85,14 +85,10 @@
                 text-align: right;
 
                 .message-content {
-                    background-color: var(--bs-primary);
-                    color: var(--bs-white); // Ensure user text always visible
+                    background-color: $iris-my-chat-background;
+                    color: var(--bs-body-color);
                     margin-left: 20%;
                     border-radius: var(--bs-border-radius-xl) var(--bs-border-radius-xl) var(--bs-border-radius-sm) var(--bs-border-radius-xl);
-                }
-
-                .message-time {
-                    color: rgba(255, 255, 255, 0.8); // White but slightly muted
                 }
             }
 
@@ -100,21 +96,10 @@
                 text-align: left;
 
                 .message-content {
-                    // Use a stronger background for contrast in dark mode
-                    background-color: var(--bs-gray-800); // Dark bubble
-                    color: var(--bs-light); // Light text
+                    background-color: var(--iris-client-chat-background);
+                    color: var(--bs-body-color);
                     margin-right: 20%;
                     border-radius: var(--bs-border-radius-xl) var(--bs-border-radius-xl) var(--bs-border-radius-xl) var(--bs-border-radius-sm);
-                }
-
-                [data-bs-theme='light'] & .message-content {
-                    background-color: var(--bs-gray-100); // Light bubble
-                    color: var(--bs-dark); // Dark text
-                }
-
-                .message-time {
-                    font-size: 0.75rem;
-                    color: var(--bs-secondary); // Subtle but visible
                 }
             }
 
@@ -155,7 +140,7 @@
 
     .modal-footer {
         padding: 1rem 1.5rem;
-        background-color: var(--bs-body-bg);
+        background-color: var(--iris-client-chat-input);
         border-top: 1px solid var(--bs-border-color);
         border-radius: 0 0 var(--bs-border-radius-lg) var(--bs-border-radius-lg);
 
@@ -167,7 +152,7 @@
                 border-radius: var(--bs-border-radius-pill);
                 padding: 8px 16px;
                 border: 1px solid var(--bs-border-color);
-                background-color: var(--bs-gray-100); // Differentiate from modal bg
+                background-color: var(--bs-body-bg);
                 color: var(--bs-body-color);
 
                 &:focus {
