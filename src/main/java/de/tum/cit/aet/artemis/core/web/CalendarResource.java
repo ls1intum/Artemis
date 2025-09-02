@@ -118,37 +118,44 @@ public class CalendarResource {
     @GetMapping("courses/{courseId}/calendar-events-ics")
     public ResponseEntity<String> getCalendarEventSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
             @RequestParam("filterOptions") Set<CalendarEventFilterOption> filterOptions, @RequestParam("language") Language language) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
-        boolean userIsStudent = authorizationCheckService.isOnlyStudentInCourse(course, user);
-        boolean userIsCourseStaff = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-        if (!userIsStudent && !userIsCourseStaff) {
-            throw new AccessForbiddenException("You are not allowed to access this course's resources!");
+        long start = System.currentTimeMillis();
+        try {
+            Course course = courseRepository.findByIdElseThrow(courseId);
+            User user = userRepository.findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
+            boolean userIsStudent = authorizationCheckService.isOnlyStudentInCourse(course, user);
+            boolean userIsCourseStaff = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+            if (!userIsStudent && !userIsCourseStaff) {
+                throw new AccessForbiddenException("You are not allowed to access this course's resources!");
+            }
+
+            boolean includeTutorialEvents = filterOptions.contains(CalendarEventFilterOption.TUTORIALS);
+            boolean includeExamEvents = filterOptions.contains(CalendarEventFilterOption.EXAMS);
+            boolean includeLectureEvents = filterOptions.contains(CalendarEventFilterOption.LECTURES);
+            boolean includeExerciseEvents = filterOptions.contains(CalendarEventFilterOption.EXERCISES);
+
+            Set<CalendarEventDTO> tutorialEventDTOs = includeTutorialEvents
+                    ? tutorialGroupApi.map(api -> api.getCalendarEventDTOsFromTutorialsGroups(user.getId(), courseId)).orElse(Collections.emptySet())
+                    : Collections.emptySet();
+            Set<CalendarEventDTO> examEventDTOs = includeExamEvents
+                    ? examApi.map(api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent, language)).orElse(Collections.emptySet())
+                    : Collections.emptySet();
+            Set<CalendarEventDTO> lectureEventDTOs = includeLectureEvents ? lectureApi.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language) : Collections.emptySet();
+            Set<CalendarEventDTO> quizExerciseEventDTOs = includeExerciseEvents ? quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent, language)
+                    : Collections.emptySet();
+            Set<CalendarEventDTO> otherExerciseEventDTOs = includeExerciseEvents ? exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent, language)
+                    : Collections.emptySet();
+
+            Set<CalendarEventDTO> calendarEventDTOs = Stream.of(tutorialEventDTOs, lectureEventDTOs, examEventDTOs, quizExerciseEventDTOs, otherExerciseEventDTOs)
+                    .flatMap(Set::stream).collect(Collectors.toSet());
+
+            String icsFileString = calendarSubscriptionService.getICSFileAsString(course.getShortName(), language, calendarEventDTOs);
+            return ResponseEntity.ok().contentType(MediaType.parseMediaType("text/calendar; charset=utf-8"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"calendar-events.ics\"; filename*=UTF-8''calendar-events.ics").body(icsFileString);
         }
-
-        boolean includeTutorialEvents = filterOptions.contains(CalendarEventFilterOption.TUTORIALS);
-        boolean includeExamEvents = filterOptions.contains(CalendarEventFilterOption.EXAMS);
-        boolean includeLectureEvents = filterOptions.contains(CalendarEventFilterOption.LECTURES);
-        boolean includeExerciseEvents = filterOptions.contains(CalendarEventFilterOption.EXERCISES);
-
-        Set<CalendarEventDTO> tutorialEventDTOs = includeTutorialEvents
-                ? tutorialGroupApi.map(api -> api.getCalendarEventDTOsFromTutorialsGroups(user.getId(), courseId)).orElse(Collections.emptySet())
-                : Collections.emptySet();
-        Set<CalendarEventDTO> examEventDTOs = includeExamEvents
-                ? examApi.map(api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent, language)).orElse(Collections.emptySet())
-                : Collections.emptySet();
-        Set<CalendarEventDTO> lectureEventDTOs = includeLectureEvents ? lectureApi.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language) : Collections.emptySet();
-        Set<CalendarEventDTO> quizExerciseEventDTOs = includeExerciseEvents ? quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent, language)
-                : Collections.emptySet();
-        Set<CalendarEventDTO> otherExerciseEventDTOs = includeExerciseEvents ? exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent, language)
-                : Collections.emptySet();
-
-        Set<CalendarEventDTO> calendarEventDTOs = Stream.of(tutorialEventDTOs, lectureEventDTOs, examEventDTOs, quizExerciseEventDTOs, otherExerciseEventDTOs).flatMap(Set::stream)
-                .collect(Collectors.toSet());
-
-        String icsFileString = calendarSubscriptionService.getICSFileAsString(course.getShortName(), language, calendarEventDTOs);
-        return ResponseEntity.ok().contentType(MediaType.parseMediaType("text/calendar; charset=utf-8"))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"calendar-events.ics\"; filename*=UTF-8''calendar-events.ics").body(icsFileString);
+        finally {
+            long duration = System.currentTimeMillis() - start;
+            log.info("getCalendarEventSubscriptionFile for course {} took {} ms", courseId, duration);
+        }
     }
 
     /**
