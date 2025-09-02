@@ -282,7 +282,7 @@ NETWORK_UNSTABLE_CORE = ExperimentConfig(
     , identifier="network_unstable_core"
     , remote_command=NETWORK_UNSTABLE_COMMAND
     , execute_after_seconds=30
-    , timeout_experiment=60 * 5
+    , timeout_experiment=60 * 10
     , target_node_type=NodeTargetType.CORE
 )
 
@@ -297,7 +297,7 @@ NETWORK_SEVERE_UNSTABLE_CORE = ExperimentConfig(
     , identifier="network_severe_unstable_core"
     , remote_command=SEVERE_NETWORK_UNSTABLE_COMMAND
     , execute_after_seconds=30
-    , timeout_experiment=60 * 5
+    , timeout_experiment=60 * 10
     , target_node_type=NodeTargetType.CORE
 )
 
