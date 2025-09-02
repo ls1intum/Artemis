@@ -1564,4 +1564,26 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     long countPresentationScoresForParticipant(@Param("courseId") long courseId, @Param("participantId") long participantId,
             @Param("excludedParticipationId") long excludedParticipationId);
+
+    /**
+     * Bulk fetch all participations for multiple students and exercises with latest submission and result
+     *
+     * @param studentIds the student IDs to fetch participations for
+     * @param exercises  the exercises to fetch participations for
+     * @return list of student participations with the latest submission and result
+     */
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+            WHERE p.testRun = FALSE
+                AND p.student.id IN :studentIds
+                AND p.exercise IN :exercises
+                AND (s.id = (SELECT MAX(s2.id) FROM p.submissions s2))
+                AND (r.id = (SELECT MAX(r2.id) FROM s.results r2))
+                AND r.rated = TRUE
+            """)
+    List<StudentParticipation> findByStudentIdsAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(@Param("studentIds") Collection<Long> studentIds,
+            @Param("exercises") Collection<Exercise> exercises);
 }

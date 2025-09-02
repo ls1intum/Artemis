@@ -344,12 +344,33 @@ public class ExamService {
         List<Long> studentIds = studentExams.stream().map(studentExam -> studentExam.getUser().getId()).toList();
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, studentIds);
 
+        Map<Long, List<StudentParticipation>> participationsByStudentId = new HashMap<>();
+
+        List<StudentExam> regularStudentExams = studentExams.stream().filter(se -> !se.isTestRun() && !se.isTestExam()).toList();
+
+        if (!regularStudentExams.isEmpty()) {
+            var regularStudentIds = regularStudentExams.stream().map(se -> se.getUser().getId()).toList();
+            var allExercises = regularStudentExams.stream().flatMap(se -> se.getExercises().stream()).filter(Objects::nonNull).collect(Collectors.toSet());
+            List<StudentParticipation> regularParticipations = studentParticipationRepository
+                    .findByStudentIdsAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(regularStudentIds, allExercises);
+            regularParticipations.forEach(participation -> participation.getStudent()
+                    .ifPresent(student -> participationsByStudentId.computeIfAbsent(student.getId(), key -> new ArrayList<>()).add(participation)));
+        }
+
         var studentResults = new ArrayList<ExamScoresDTO.StudentResult>();
         var gradesByUser = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::userId, Collectors.toSet()));
         for (StudentExam studentExam : studentExams) {
             var studentGrades = new HashSet<>(gradesByUser.getOrDefault(studentExam.getUser().getId(), Set.of()));
             var studentExercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
-            var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
+
+            List<StudentParticipation> participations;
+            if (studentExam.isTestRun() || studentExam.isTestExam()) {
+                participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
+            }
+            else {
+                participations = participationsByStudentId.getOrDefault(studentExam.getUser().getId(), List.of());
+            }
+
             var studentResult = calculateStudentResultWithGrade(studentExam, studentGrades, exam, gradingScale, true, submittedAnswerCounts, plagiarismMapping, examBonusCalculator,
                     studentExercises, participations);
             studentResults.add(studentResult);
