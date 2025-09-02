@@ -73,7 +73,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     // NOTE: we have an edge case for quizzes where we need to take the first submission and not the last one
     @Query("""
-
             SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(
             participation.id,
             student.id,
