@@ -70,10 +70,10 @@ server:
 jhipster:
     # CORS is only enabled by default with the "dev" profile, so the client can access the API
     cors:
-        allowed-origin-patterns: '*'
-        allowed-methods: '*'
-        allowed-headers: '*'
-        exposed-headers: 'Authorization,Link,X-Total-Count'
+        allowed-origin-patterns: "*"
+        allowed-methods: "*"
+        allowed-headers: "*"
+        exposed-headers: "Authorization,Link,X-Total-Count"
         allow-credentials: true
         max-age: 1800
     security:
@@ -121,11 +121,11 @@ theia:
 
     images:
         java:
-            Java-17: 'java-17-latest'
-            Java-Test: 'java-17-latest'
-            Java-Test2: 'java-17-latest'
+            Java-17: "java-17-latest"
+            Java-Test: "java-17-latest"
+            Java-Test2: "java-17-latest"
         c:
-            C: 'c-latest'
+            C: "c-latest"
 
 artemis:
     push-notification-relay: https://hermes-sandbox.artemis.cit.tum.de
@@ -138,8 +138,8 @@ artemis:
         local-vcs-repo-path: ./local-vcs-repos
 
 helios:
-    status:
-        enabled: false
+  status:
+    enabled: false
 
 atlas:
     atlasml:
