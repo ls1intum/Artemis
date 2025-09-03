@@ -200,7 +200,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     examId = input.required<number>();
     courseId = input.required<number>();
-    testRunId = input.required<number>();
+    testRunId = input<number>();
     studentExamId = input<number>();
     /**
      * loads the exam from the server and initializes the view
@@ -211,7 +211,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
         this.loadingExam = true;
         if (this.testRunId()) {
-            this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()).subscribe({
+            this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()!).subscribe({
                 next: (studentExam) => {
                     this.studentExam = studentExam;
                     this.studentExam.exam!.course = new Course();
@@ -449,7 +449,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     // When we have already submitted load the existing submission
                     if (alreadySubmitted) {
                         if (this.testRunId()) {
-                            this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()).subscribe({
+                            this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()!).subscribe({
                                 next: (studentExam: StudentExam) => {
                                     this.studentExam = studentExam;
                                 },

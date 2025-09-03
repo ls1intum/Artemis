@@ -31,6 +31,7 @@ export class QuizExerciseExportComponent {
      */
     constructor() {
         effect(() => {
+            this.questions = [];
             this.loadForCourse(this.courseId());
         });
     }
