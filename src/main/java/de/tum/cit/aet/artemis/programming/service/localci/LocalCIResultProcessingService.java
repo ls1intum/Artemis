@@ -7,6 +7,11 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import jakarta.annotation.PostConstruct;
@@ -14,9 +19,12 @@ import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -76,6 +84,11 @@ public class LocalCIResultProcessingService {
 
     private UUID listenerId;
 
+    @Value("${artemis.continuous-integration.concurrent-result-processing-size:4}")
+    private int concurrentResultProcessingSize;
+
+    private ThreadPoolExecutor resultProcessingExecutor;
+
     public LocalCIResultProcessingService(ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
             BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository,
             ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
@@ -100,7 +113,18 @@ public class LocalCIResultProcessingService {
      */
     @PostConstruct
     public void init() {
+        initResultProcessingExecutor();
         this.listenerId = distributedDataAccessService.getDistributedBuildResultQueue().addListener(new ResultQueueListener());
+    }
+
+    private void initResultProcessingExecutor() {
+        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-result-%d")
+                .setUncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in result processing thread {}", t.getName(), e)).build();
+        // buffer up to 1000 tasks before rejecting new tasks. Rejections will not lead to loss because the results maintain in the queue but this speeds up
+        // result processing under high load so we do not need to wait for the polling schedule if many results are processed very fast.
+        resultProcessingExecutor = new ThreadPoolExecutor(concurrentResultProcessingSize, concurrentResultProcessingSize, 0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(1000), threadFactory, new ThreadPoolExecutor.AbortPolicy());
+        log.info("Initialized LocalCI result processing executor with pool size {}", concurrentResultProcessingSize);
     }
 
     /**
@@ -112,14 +136,47 @@ public class LocalCIResultProcessingService {
         if (distributedDataAccessService.isInstanceRunning()) {
             distributedDataAccessService.getDistributedBuildResultQueue().removeListener(this.listenerId);
         }
+        shutdownResultProcessingExecutor();
+    }
+
+    private void shutdownResultProcessingExecutor() {
+        if (resultProcessingExecutor == null || resultProcessingExecutor.isShutdown()) {
+            return;
+        }
+
+        resultProcessingExecutor.shutdown();
+        try {
+            boolean terminated = resultProcessingExecutor.awaitTermination(5, TimeUnit.SECONDS);
+            if (!terminated) {
+                log.warn("Result processing executor did not terminate in time, forcing shutdown");
+                resultProcessingExecutor.shutdownNow();
+            }
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("Result processing executor termination interrupted", e);
+            resultProcessingExecutor.shutdownNow();
+        }
     }
 
     /**
-     * Processes the build job results published by the build agents, notifies the user about the result and saves the result to the database.
+     * Submit an asynchronous task that polls one item from the result queue and processes it.
      */
-    public void processResult() {
+    public void processResultAsync() {
+        try {
+            resultProcessingExecutor.execute(this::processResult);
+        }
+        catch (RejectedExecutionException ex) {
+            // this is not an issue as we rely on the queue and will continue polling from it once another
+            // event listener or schedule triggers
+            log.debug("Result processing executor queue is full.");
+        }
+    }
 
-        // set lock to prevent multiple nodes from processing the same build job
+    /**
+     * Polls a build job result from the build job queue, notifies the user about the result and saves the result to the database.
+     */
+    private void processResult() {
         ResultQueueItem resultQueueItem = distributedDataAccessService.getDistributedBuildResultQueue().poll();
 
         if (resultQueueItem == null) {
@@ -284,13 +341,13 @@ public class LocalCIResultProcessingService {
 
         @Override
         public void itemAdded() {
-            log.debug("Result of build job added to queue");
-            processResult();
+            log.debug("Result added to queue");
+            processResultAsync();
         }
 
         @Override
         public void itemRemoved() {
-            log.debug("Result of build job removed from queue");
+            log.debug("Result of removed from queue");
         }
     }
 
