@@ -10,7 +10,7 @@ ext {
         "communication" :          ["INSTRUCTION": 0.850, "CLASS":  7],
         "core"          :          ["INSTRUCTION": 0.825, "CLASS": 48],
         "exam"          :          ["INSTRUCTION": 0.918, "CLASS":  2],
-        "exercise"      :          ["INSTRUCTION": 0.916, "CLASS":  0],
+        "exercise"      :          ["INSTRUCTION": 0.914, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.953, "CLASS":  0],
         "iris"          :          ["INSTRUCTION": 0.773, "CLASS": 29],
         "lecture"       :          ["INSTRUCTION": 0.896, "CLASS":  1],
