@@ -14,6 +14,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
  * A DTO primarily used to retrieve data about {@link QuizExercise}s that are needed to create {@link CalendarEventDTO}s.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record QuizExerciseCalendarEventDTO(@NotNull long originEntityId, @NotNull QuizMode quizMode, @NotNull String title, ZonedDateTime releaseDate, ZonedDateTime dueDate,
+public record QuizExerciseCalendarEventDTO(long originEntityId, @NotNull QuizMode quizMode, @NotNull String title, ZonedDateTime releaseDate, ZonedDateTime dueDate,
         QuizBatch quizBatch, Integer duration) {
 }
