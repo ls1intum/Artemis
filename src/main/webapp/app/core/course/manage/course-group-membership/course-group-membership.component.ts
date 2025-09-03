@@ -2,7 +2,7 @@ import { Component, OnInit, inject, input } from '@angular/core';
 import { Course, CourseGroup, courseGroups } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { UserService } from 'app/core/user/shared/user.service';
 import { Subscription } from 'rxjs';
@@ -18,13 +18,12 @@ import { CourseGroupComponent } from 'app/core/course/shared/course-group/course
 })
 export class CourseGroupMembershipComponent implements OnInit {
     private router = inject(Router);
-    private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
     private userService = inject(UserService);
     private accountService = inject(AccountService);
 
     allCourseGroupUsers: User[] = [];
-    course: Course;
+    course = input.required<Course>();
     courseGroup = input.required<CourseGroup>();
     isLoading = false;
     isAdmin = false;
@@ -39,9 +38,9 @@ export class CourseGroupMembershipComponent implements OnInit {
 
     userSearch = (loginOrName: string) => this.userService.search(loginOrName);
 
-    addToGroup = (login: string) => this.courseService.addUserToCourseGroup(this.course.id!, this.courseGroup(), login);
+    addToGroup = (login: string) => this.courseService.addUserToCourseGroup(this.course().id!, this.courseGroup(), login);
 
-    removeFromGroup = (login: string) => this.courseService.removeUserFromCourseGroup(this.course.id!, this.courseGroup(), login);
+    removeFromGroup = (login: string) => this.courseService.removeUserFromCourseGroup(this.course().id!, this.courseGroup(), login);
 
     /**
      * Update the number of filtered users
@@ -57,15 +56,12 @@ export class CourseGroupMembershipComponent implements OnInit {
     loadAll = () => {
         this.isLoading = true;
         this.isAdmin = this.accountService.isAdmin();
-        this.route.parent!.data.subscribe(({ course }) => {
-            this.course = course;
-            if (!courseGroups.includes(this.courseGroup())) {
-                return this.router.navigate(['/course-management']);
-            }
-            this.courseService.getAllUsersInCourseGroup(this.course.id!, this.courseGroup()).subscribe((usersResponse) => {
-                this.allCourseGroupUsers = usersResponse.body!;
-                this.isLoading = false;
-            });
+        if (!courseGroups.includes(this.courseGroup())) {
+            return this.router.navigate(['/course-management']);
+        }
+        this.courseService.getAllUsersInCourseGroup(this.course().id!, this.courseGroup()).subscribe((usersResponse) => {
+            this.allCourseGroupUsers = usersResponse.body!;
+            this.isLoading = false;
         });
     };
 
@@ -75,13 +71,13 @@ export class CourseGroupMembershipComponent implements OnInit {
     get courseGroupName() {
         switch (this.courseGroup()) {
             case CourseGroup.STUDENTS:
-                return this.course.studentGroupName;
+                return this.course().studentGroupName;
             case CourseGroup.TUTORS:
-                return this.course.teachingAssistantGroupName;
+                return this.course().teachingAssistantGroupName;
             case CourseGroup.EDITORS:
-                return this.course.editorGroupName;
+                return this.course().editorGroupName;
             case CourseGroup.INSTRUCTORS:
-                return this.course.instructorGroupName;
+                return this.course().instructorGroupName;
             default:
                 captureException('Unknown course group: ' + this.courseGroup);
                 return undefined;
@@ -97,6 +93,6 @@ export class CourseGroupMembershipComponent implements OnInit {
     }
 
     get exportFilename(): string {
-        return this.courseGroupEntityName.charAt(0).toUpperCase() + this.courseGroupEntityName.slice(1) + ' ' + this.course.title;
+        return this.courseGroupEntityName.charAt(0).toUpperCase() + this.courseGroupEntityName.slice(1) + ' ' + this.course().title;
     }
 }

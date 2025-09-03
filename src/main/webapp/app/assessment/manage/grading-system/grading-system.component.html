@@ -1,7 +1,7 @@
 <div class="d-flex align-items-center">
     <h2>
-        {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
-        {{ isExam ? childComponent?.exam?.title : childComponent?.course?.title }}
+        {{ isExam() ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
+        {{ isExam() ? childComponent?.exam?.title : childComponent?.course?.title }}
     </h2>
     <jhi-documentation-button [type]="documentationType" />
 </div>
@@ -24,11 +24,11 @@
         </div>
         <div class="dropdown-container">
             <div class="form-group">
-                <span class="colon-suffix no-flex-shrink" jhiTranslate="{{ isExam ? 'artemisApp.examManagement.maxPoints.title' : 'artemisApp.course.maxPoints.title' }}"></span>
-                @if (!isExam) {
+                <span class="colon-suffix no-flex-shrink" jhiTranslate="{{ isExam() ? 'artemisApp.examManagement.maxPoints.title' : 'artemisApp.course.maxPoints.title' }}"></span>
+                @if (!isExam()) {
                     <jhi-help-icon text="artemisApp.course.maxPoints.info" />
                 }
-                @if (isExam) {
+                @if (isExam()) {
                     <fa-icon [icon]="faExclamationTriangle" class="text-warning" ngbTooltip="{{ 'artemisApp.examManagement.maxPoints.warning' | artemisTranslate }}" />
                 }
                 <input type="number" class="form-control" [(ngModel)]="childComponent.maxPoints" min="1" (change)="childComponent.onChangeMaxPoints(childComponent.maxPoints)" />

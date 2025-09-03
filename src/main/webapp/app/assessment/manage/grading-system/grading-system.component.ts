@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
@@ -38,7 +38,7 @@ export class GradingSystemComponent {
 
     courseId = input.required<number>();
     examId = input.required<number>();
-    isExam = this.examId() !== undefined;
+    isExam = computed(() => this.examId() !== undefined);
     childComponent?: BaseGradingSystemComponent;
 
     readonly documentationType: DocumentationType = 'Grading';

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, effect, inject, input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -17,7 +17,7 @@ import { FormsModule } from '@angular/forms';
     styleUrls: ['./quiz-exercise-export.component.scss', '../../shared/quiz.scss'],
     imports: [TranslateDirective, FormsModule],
 })
-export class QuizExerciseExportComponent implements OnInit {
+export class QuizExerciseExportComponent {
     private quizExerciseService = inject(QuizExerciseService);
     private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
@@ -29,8 +29,10 @@ export class QuizExerciseExportComponent implements OnInit {
     /**
      * Load the quizzes of the course for export on init.
      */
-    ngOnInit() {
-        this.loadForCourse(this.courseId());
+    constructor() {
+        effect(() => {
+            this.loadForCourse(this.courseId());
+        });
     }
 
     /**

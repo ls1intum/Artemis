@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, effect, inject, input } from '@angular/core';
+import { Component, Input, effect, inject, input } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
@@ -14,7 +14,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     templateUrl: './example-solution.component.html',
     imports: [HeaderExercisePageWithDetailsComponent, TranslateDirective, ModelingEditorComponent, ArtemisTranslatePipe, HtmlForMarkdownPipe],
 })
-export class ExampleSolutionComponent implements OnInit {
+export class ExampleSolutionComponent {
     private exerciseService = inject(ExerciseService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
 
@@ -26,7 +26,7 @@ export class ExampleSolutionComponent implements OnInit {
 
     exerciseId = input.required<number>();
 
-    ngOnInit() {
+    constructor() {
         effect(() => {
             const didExerciseChange = this.displayedExerciseId !== this.exerciseId();
             this.displayedExerciseId = this.exerciseId();

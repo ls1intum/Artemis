@@ -1,5 +1,5 @@
 import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, inject, input } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -9,7 +9,7 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -91,7 +91,6 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     private websocketService = inject(WebsocketService);
-    private route = inject(ActivatedRoute);
     private router = inject(Router);
     private examParticipationService = inject(ExamParticipationService);
     private modelingSubmissionService = inject(ModelingSubmissionService);
@@ -124,7 +123,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly EXAM_HEIGHT_OFFSET = 88;
 
     testExam = false;
-    studentExamId: number;
     testStartTime?: dayjs.Dayjs;
 
     // determines if component was once drawn visited
@@ -203,19 +201,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     examId = input.required<number>();
     courseId = input.required<number>();
     testRunId = input.required<number>();
+    studentExamId = input<number>();
     /**
      * loads the exam from the server and initializes the view
      */
     ngOnInit(): void {
-        combineLatest({
-            parentParams: this.route.parent?.parent?.params ?? of({ courseId: undefined }),
-            currentParams: this.route.params,
-        });
-        // As a student can have multiple test exams, the studentExamId is passed as a parameter.
-        const studentExamId = this.route.firstChild?.snapshot.params['studentExamId'];
-        if (studentExamId) {
+        if (this.studentExamId()) {
             this.testExam = true;
-            this.studentExamId = parseInt(studentExamId, 10);
         }
         this.loadingExam = true;
         if (this.testRunId()) {
@@ -230,8 +222,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 },
                 error: () => (this.loadingExam = false),
             });
-        } else if (this.testExam && this.studentExamId) {
-            this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExamId).subscribe({
+        } else if (this.testExam && this.studentExamId()) {
+            this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExamId()!).subscribe({
                 next: (studentExam) => {
                     this.handleStudentExam(studentExam);
                 },

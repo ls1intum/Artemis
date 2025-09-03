@@ -3,7 +3,7 @@
     [courseGroup]="courseGroup()"
     [isLoadingAllGroupUsers]="isLoading"
     [isAdmin]="isAdmin"
-    [course]="course"
+    [course]="course()"
     [addUserToGroup]="addToGroup"
     [removeUserFromGroup]="removeFromGroup"
     [handleUsersSizeChange]="handleUsersSizeChange"
@@ -11,9 +11,9 @@
     [userSearch]="userSearch"
     (importFinish)="loadAll()"
 >
-    @if (course) {
+    @if (course()) {
         <span>
-            <span>{{ course?.title }} - </span>
+            <span>{{ course()?.title }} - </span>
             @if (filteredUsersSize < allCourseGroupUsers.length) {
                 <span>{{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"></span> </span>
             }
