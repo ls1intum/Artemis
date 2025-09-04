@@ -35,6 +35,7 @@ import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 
 describe('Example Modeling Submission Component', () => {
     let comp: ExampleModelingSubmissionComponent;
@@ -245,7 +246,19 @@ describe('Example Modeling Submission Component', () => {
     it('should read and understood', () => {
         // GIVEN
         const tutorParticipationService = TestBed.inject(TutorParticipationService);
-        jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: {} })));
+        jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {
+                        id: 1,
+                        exerciseId: exercise.id!,
+                        tutorId: 10,
+                        status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
+                        trainedCount: 0,
+                    },
+                }),
+            ),
+        );
         const alertSpy = jest.spyOn(alertService, 'success');
         const routerSpy = jest.spyOn(router, 'navigate');
         comp.exercise = exercise;
