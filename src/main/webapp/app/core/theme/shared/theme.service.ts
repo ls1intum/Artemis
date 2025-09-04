@@ -1,6 +1,6 @@
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { IconDefinition, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 export const THEME_LOCAL_STORAGE_KEY = 'artemisapp.theme.preference';
 export const THEME_OVERRIDE_ID = 'artemis-theme-override';
@@ -107,12 +107,12 @@ export class ThemeService {
      * Returns the theme preference stored in local storage or undefined if no preference is stored
      */
     private getStoredThemePreference(): Theme | undefined {
-        const storedIdentifier = this.localStorageService.retrieve(THEME_LOCAL_STORAGE_KEY);
+        const storedIdentifier = this.localStorageService.retrieve<string>(THEME_LOCAL_STORAGE_KEY);
         const storedTheme = Theme.all.find((theme) => theme.identifier === storedIdentifier);
 
         // An unknown theme was stored. Let's clear it
         if (storedIdentifier && !storedTheme) {
-            this.localStorageService.clear(THEME_LOCAL_STORAGE_KEY);
+            this.localStorageService.remove(THEME_LOCAL_STORAGE_KEY);
         }
 
         return storedTheme;
@@ -156,7 +156,7 @@ export class ThemeService {
         if (preference) {
             this.localStorageService.store(THEME_LOCAL_STORAGE_KEY, preference.identifier);
         } else {
-            this.localStorageService.clear(THEME_LOCAL_STORAGE_KEY);
+            this.localStorageService.remove(THEME_LOCAL_STORAGE_KEY);
         }
         this._userPreference.set(preference);
     }
@@ -222,7 +222,7 @@ export class ThemeService {
     }
 
     /**
-     * @param newDisplayAttribute that is set for the {@link NotificationSidebarComponent}
+     * @param newDisplayAttribute to reset the notification sidebar to its previous state
      * @return displayAttribute of the notification sidebar before hiding it
      */
     private modifyNotificationSidebarDisplayStyling(newDisplayAttribute?: string): string {

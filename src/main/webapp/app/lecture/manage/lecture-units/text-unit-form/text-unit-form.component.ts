@@ -14,6 +14,7 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 export interface TextUnitFormData {
     name?: string;
@@ -21,6 +22,11 @@ export interface TextUnitFormData {
     content?: string;
     competencyLinks?: CompetencyLectureUnitLink[];
 }
+
+export type MarkdownCache = {
+    markdown: string;
+    date: string;
+};
 
 @Component({
     selector: 'jhi-text-unit-form',
@@ -39,6 +45,7 @@ export interface TextUnitFormData {
 export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     private router = inject(Router);
     private translateService = inject(TranslateService);
+    private localStorageService = inject(LocalStorageService);
 
     protected readonly faTimes = faTimes;
 
@@ -90,11 +97,10 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnInit(): void {
-        if (window.localStorage && window.localStorage.getItem(this.router.url)) {
-            const cache = JSON.parse(window.localStorage.getItem(this.router.url)!);
-
+        const cache = this.localStorageService.retrieve<MarkdownCache>(this.router.url);
+        if (cache) {
             if (confirm(this.translateService.instant('artemisApp.textUnit.cachedMarkdown') + ' ' + cache.date)) {
-                this.content = cache.markdown!;
+                this.content = cache.markdown;
                 this.contentLoadedFromCache = true;
             }
         }
@@ -118,9 +124,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     submitForm() {
         const textUnitFormData: TextUnitFormData = { ...this.form.value };
         textUnitFormData.content = this.content;
-        if (window.localStorage) {
-            localStorage.removeItem(this.router.url);
-        }
+        this.localStorageService.remove(this.router.url);
         this.formSubmitted.emit(textUnitFormData);
     }
 
@@ -129,10 +133,8 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     private writeToLocalStorage(markdown: string) {
-        if (window.localStorage) {
-            const cache = { markdown, date: dayjs().format('MMM DD YYYY, HH:mm:ss') };
-            localStorage.setItem(this.router.url, JSON.stringify(cache));
-        }
+        const cache: MarkdownCache = { markdown, date: dayjs().format('MMM DD YYYY, HH:mm:ss') };
+        this.localStorageService.store<MarkdownCache>(this.router.url, cache);
     }
 
     cancelForm() {

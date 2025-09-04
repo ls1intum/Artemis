@@ -10,10 +10,11 @@ import { StudentsUploadImagesDialogComponent } from 'app/exam/manage/students/up
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 
@@ -59,7 +60,7 @@ describe('StudentsUploadImagesDialogComponent', () => {
     });
 
     it('should reset dialog when selecting pdf file', async () => {
-        component.notFoundUsers = { numberOfUsersNotFound: 1, numberOfImagesSaved: 10, listOfExamUserRegistrationNumbers: ['12345678'] };
+        component.notFoundUsers = { numberOfUsersNotFound: 1, numberOfImagesSaved: 10 };
         component.hasParsed = true;
 
         const event = { target: { files: [{ file: new File([''], 'testFile.pdf', { type: 'application/pdf' }), fileName: 'testFile' }] } };
