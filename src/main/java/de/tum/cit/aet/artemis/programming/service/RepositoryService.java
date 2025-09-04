@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -23,6 +24,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
@@ -197,6 +199,54 @@ public class RepositoryService {
     public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri) throws IOException {
         try (var bareRepository = gitService.getBareRepository(repositoryUri, false)) {
             return getFilesContentFromBareRepositoryForLastCommit(bareRepository);
+        }
+    }
+
+    /**
+     * Retrieves the contents of text-based files from the most recent commit on or before the specified deadline.
+     * Traverses the commit history from HEAD in descending commit time order and selects the first commit whose
+     * committer time is less than or equal to the provided deadline.
+     * Binary files and symlinks are excluded.
+     *
+     * @param repository the JGit {@link Repository} instance representing the bare repository.
+     * @param deadline   the cutoff time; selects the last commit at or before this instant. If null, falls back to HEAD.
+     * @return a map from file paths to UTF-8 content at the selected commit. Empty if no such commit exists.
+     * @throws IOException if an error occurs while accessing the repository.
+     */
+    public Map<String, String> getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(Repository repository, ZonedDateTime deadline) throws IOException {
+        if (deadline == null) {
+            return getFilesContentFromBareRepositoryForLastCommit(repository);
+        }
+
+        ObjectId headCommitId = repository.resolve("HEAD");
+        if (headCommitId == null) {
+            log.warn("Cannot resolve HEAD. The repository might be empty.");
+            return Map.of();
+        }
+
+        long epochSeconds = deadline.toInstant().getEpochSecond();
+        try (RevWalk walk = new RevWalk(repository)) {
+            walk.markStart(walk.parseCommit(headCommitId));
+            walk.sort(RevSort.COMMIT_TIME_DESC, true);
+
+            for (RevCommit commit : walk) {
+                if (((long) commit.getCommitTime()) <= epochSeconds) {
+                    return getFileContentFromBareRepositoryForCommitId(repository, commit.getId());
+                }
+            }
+        }
+
+        // No commit older than or equal to deadline
+        return Map.of();
+    }
+
+    /**
+     * Variant that opens the bare repository from a {@link LocalVCRepositoryUri} and applies
+     * {@link #getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(Repository, ZonedDateTime)}.
+     */
+    public Map<String, String> getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(LocalVCRepositoryUri repositoryUri, ZonedDateTime deadline) throws IOException {
+        try (var bareRepository = gitService.getBareRepository(repositoryUri, false)) {
+            return getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(bareRepository, deadline);
         }
     }
 

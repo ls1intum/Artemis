@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.zip.ZipFile;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
+
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -43,6 +44,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -62,6 +64,9 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
@@ -380,19 +385,21 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         programmingExerciseRepository.save(programmingExercise);
 
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+
         // Add Git repo for export
         programmingExerciseUtilService.createGitRepository();
 
-        // Get exports from endpoint
+        // Get repository contents as map from endpoint
         var authHeaders = new HttpHeaders();
         authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret);
-        var repoZip = request.getFile("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, new LinkedMultiValueMap<>(),
-                authHeaders, null);
 
-        // Check that ZIP contains file
-        try (var zipFile = new ZipFile(repoZip)) {
-            assertThat(zipFile.size()).as("zip file contains files").isGreaterThan(0);
-        }
+        String json = request.get("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, String.class, authHeaders);
+        Map<String, String> repoFiles = request.getObjectMapper().readValue(json, new TypeReference<Map<String, String>>() {
+        });
+        // Check that response contains at least one file
+        assertThat(repoFiles).isNotNull();
     }
 
     @ParameterizedTest

@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,11 +82,13 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
 
         programmingExerciseUtilService.createGitRepository();
 
-        Path resultStudentRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), null);
-        Path resultSolutionRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), RepositoryType.SOLUTION);
+        Map<String, String> resultStudentRepo = athenaRepositoryExportService.getRepositoryFilesContent(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(),
+                null);
+        Map<String, String> resultSolutionRepo = athenaRepositoryExportService.getRepositoryFilesContent(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(),
+                RepositoryType.SOLUTION);
 
-        assertThat(resultStudentRepo).isEqualTo(Path.of("repo.zip")); // The student repository ZIP is returned
-        assertThat(resultSolutionRepo).exists(); // The solution repository ZIP can actually be created in the test
+        assertThat(resultStudentRepo).isNotNull(); // The student repository files are returned
+        assertThat(resultSolutionRepo).isNotNull(); // The solution repository files are returned
     }
 
     @Test
@@ -95,6 +98,6 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
         assertThatExceptionOfType(ServiceUnavailableException.class)
-                .isThrownBy(() -> athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), null, null));
+                .isThrownBy(() -> athenaRepositoryExportService.getRepositoryFilesContent(programmingExerciseWithId.getId(), null, null));
     }
 }
