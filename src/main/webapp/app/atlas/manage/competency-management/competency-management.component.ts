@@ -204,7 +204,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     protected openAgentChatModal(): void {
         const modalRef = this.modalService.open(AgentChatModalComponent, {
             size: 'lg',
-            backdrop: 'static',
+            backdrop: true,
         });
         modalRef.componentInstance.courseId = this.courseId();
     }

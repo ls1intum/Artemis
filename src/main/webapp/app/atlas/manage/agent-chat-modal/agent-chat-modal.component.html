@@ -1,4 +1,4 @@
-<div class="agent-chat-modal" (click)="onModalBackdropClick($event)">
+<div class="agent-chat-modal">
     <!-- Header -->
     <div class="modal-header border-bottom bg-light">
         <div class="d-flex align-items-center">
@@ -9,7 +9,7 @@
     </div>
 
     <!-- Messages Container -->
-    <div class="modal-body p-0" (click)="$event.stopPropagation()">
+    <div class="modal-body p-0">
         <div class="messages-container" #messagesContainer>
             @for (message of messages; track message.id) {
                 <div class="message-wrapper" [class.user-message]="message.isUser" [class.agent-message]="!message.isUser">
@@ -51,7 +51,7 @@
     </div>
 
     <!-- Input Area -->
-    <div class="modal-footer border-top bg-light" (click)="$event.stopPropagation()">
+    <div class="modal-footer border-top bg-light">
         <div class="input-container w-100">
             <div class="d-flex">
                 <textarea

@@ -57,35 +57,14 @@ describe('AgentChatModalComponent', () => {
         expect(spyClose).toHaveBeenCalled();
     });
 
-    it('should close modal when clicking outside the modal content', () => {
+    it('should close modal via NgBootstrap backdrop clicking', () => {
+        // Note: NgBootstrap handles backdrop clicks automatically when backdrop: true
+        // This test verifies that the close method is accessible for NgBootstrap to call
         const spyClose = jest.spyOn(mockActiveModal, 'close');
 
-        // Simulate clicking on the backdrop (where event.target === event.currentTarget)
-        const backdropElement = document.createElement('div');
-        const mockEvent = {
-            target: backdropElement,
-            currentTarget: backdropElement,
-        } as unknown as MouseEvent;
-
-        (component as any).onModalBackdropClick(mockEvent);
+        (component as any).closeModal();
 
         expect(spyClose).toHaveBeenCalled();
-    });
-
-    it('should not close modal when clicking inside modal content', () => {
-        const spyClose = jest.spyOn(mockActiveModal, 'close');
-
-        // Simulate clicking inside modal content (where event.target !== event.currentTarget)
-        const mockEvent = {
-            target: document.createElement('div'),
-            currentTarget: document.createElement('div'),
-        } as unknown as MouseEvent;
-
-        // Keep target different from currentTarget to simulate content click
-
-        (component as any).onModalBackdropClick(mockEvent);
-
-        expect(spyClose).not.toHaveBeenCalled();
     });
 
     it('should send message when send button is clicked', () => {
