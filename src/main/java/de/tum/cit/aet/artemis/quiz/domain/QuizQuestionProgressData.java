@@ -19,7 +19,7 @@ public class QuizQuestionProgressData {
     // The easiness factor is a value that determines how easy a question is perceived by the user based on the SM-2 algorithm
     private double easinessFactor;
 
-    // The interval is the number of sessions until the question should be shown again
+    // The interval is the number of days until the question should be shown again
     private int interval;
 
     // The number of sessions the question has been answered
@@ -27,6 +27,9 @@ public class QuizQuestionProgressData {
 
     // The priority is used to determine the order in which questions are shown
     private int priority;
+
+    // The due date is the date when the question should be shown again
+    private ZonedDateTime dueDate;
 
     // The box is used to track the progress of the question based on the Leitner system - correct answers move the question to a higher box, incorrect answers move it to a lower
     // box
@@ -66,6 +69,14 @@ public class QuizQuestionProgressData {
     }
 
     // Getters and Setters
+
+    public ZonedDateTime getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(ZonedDateTime dueDate) {
+        this.dueDate = dueDate;
+    }
 
     public int getRepetition() {
         return repetition;
