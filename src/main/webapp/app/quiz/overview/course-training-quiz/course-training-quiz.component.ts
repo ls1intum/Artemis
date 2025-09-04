@@ -20,10 +20,11 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/QuizTrainingAnswer';
 import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluation';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-course-practice-quiz',
-    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent],
+    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent, TranslateDirective],
     templateUrl: './course-training-quiz.component.html',
 })
 export class CourseTrainingQuizComponent {
@@ -35,6 +36,8 @@ export class CourseTrainingQuizComponent {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private quizService = inject(CourseTrainingQuizService);
+
+    private static readonly INITIAL_QUESTIONS: QuizQuestion[] = [];
 
     currentIndex = signal(0);
     private alertService = inject(AlertService);
@@ -49,7 +52,7 @@ export class CourseTrainingQuizComponent {
             filter((id): id is number => id !== undefined),
             switchMap((id) => this.quizService.getQuizQuestions(id)),
         ),
-        { initialValue: [] },
+        { initialValue: CourseTrainingQuizComponent.INITIAL_QUESTIONS },
     );
     questions = computed(() => this.questionsSignal());
     courseSignal = toSignal(
@@ -62,6 +65,7 @@ export class CourseTrainingQuizComponent {
         { initialValue: undefined },
     );
     course = computed(() => this.courseSignal());
+    questionsLoaded = computed(() => this.questionsSignal() !== CourseTrainingQuizComponent.INITIAL_QUESTIONS);
 
     trainingAnswer = new QuizTrainingAnswer();
     showingResult = false;

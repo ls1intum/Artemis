@@ -7,6 +7,7 @@ export class AttachmentVideoUnit extends LectureUnit {
     public attachment?: Attachment;
     public slides?: Slide[];
     public videoSource?: string;
+    public transcriptionProperties?: LectureTranscriptionDTO;
     public pyrisIngestionState?: IngestionState;
 
     constructor() {
@@ -20,4 +21,17 @@ export enum IngestionState {
     DONE = 'DONE',
     ERROR = 'ERROR',
     PARTIALLY_INGESTED = 'PARTIALLY_INGESTED',
+}
+
+export interface LectureTranscriptionDTO {
+    lectureUnitId: number;
+    language: string;
+    segments: TranscriptionSegment[];
+}
+
+export interface TranscriptionSegment {
+    text?: string;
+    startTime?: number;
+    endTime?: number;
+    slideNumber?: number;
 }
