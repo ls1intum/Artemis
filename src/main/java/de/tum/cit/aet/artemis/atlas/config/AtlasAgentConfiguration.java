@@ -4,12 +4,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 /**
  * Configuration class for Atlas Agent with Azure OpenAI integration.
  */
+@Profile("atlas-agent")
 @Configuration
 @AtlasAgentEnabled
 @Lazy
@@ -26,6 +28,8 @@ public class AtlasAgentConfiguration {
 
     /**
      * REST template configured for Azure OpenAI API calls.
+     *
+     * @return a configured RestTemplate for Atlas Agent
      */
     @Bean("atlasAgentRestTemplate")
     @Lazy
