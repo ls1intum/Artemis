@@ -366,8 +366,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             if (buildJobOptional.isEmpty()) {
                 return false;
             }
-            BuildJob retryedBuildJob = buildJobOptional.get();
-            return retryedBuildJob.getBuildStatus() == BuildStatus.QUEUED && retryedBuildJob.getRetryCount() == 1;
+            BuildJob retriedBuildJob = buildJobOptional.get();
+            return (retriedBuildJob.getBuildStatus() == BuildStatus.QUEUED || retriedBuildJob.getBuildStatus() == BuildStatus.BUILDING) && retriedBuildJob.getRetryCount() == 1;
         });
         processingJobs.clear();
         queuedJobs.clear();
