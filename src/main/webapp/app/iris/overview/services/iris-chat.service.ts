@@ -341,6 +341,7 @@ export class IrisChatService implements OnDestroy {
             chatMode: chatMode,
             entityId: newIrisSession.entityId,
             entityName: '',
+            title: newIrisSession.title,
         };
 
         if (!this.isLatestSessionIncludedInHistory(newIrisSessionDTO, currentSessions)) {
@@ -417,8 +418,8 @@ export class IrisChatService implements OnDestroy {
                     if (this.latestStartedSession?.id === sid) {
                         this.latestStartedSession = { ...this.latestStartedSession, title: payload.sessionTitle };
                     }
-                    const curr = this.chatSessions.getValue();
-                    const next = curr.map((s) => (s.id === sid ? { ...s, title: payload.sessionTitle } : s));
+                    const current = this.chatSessions.getValue();
+                    const next = current.map((s) => (s.id === sid ? { ...s, title: payload.sessionTitle } : s));
                     this.chatSessions.next(next);
                 }
                 break;

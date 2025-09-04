@@ -112,7 +112,9 @@ public class IrisLectureChatSessionResource {
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
         user.hasAcceptedExternalLLMUsageElseThrow();
 
-        var session = irisLectureChatSessionRepository.save(new IrisLectureChatSession(lecture, user));
+        var session = new IrisLectureChatSession(lecture, user);
+        session.setTitle("New chat");
+        session = irisLectureChatSessionRepository.save(session);
         var uriString = "/api/iris/sessions/" + session.getId();
 
         return ResponseEntity.created(new URI(uriString)).body(session);

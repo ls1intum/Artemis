@@ -107,7 +107,9 @@ public class IrisTextExerciseChatSessionResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasAcceptedExternalLLMUsageElseThrow();
 
-        var session = irisTextExerciseChatSessionRepository.save(new IrisTextExerciseChatSession(textExercise, user));
+        var session = new IrisTextExerciseChatSession(textExercise, user);
+        session.setTitle("New chat");
+        session = irisTextExerciseChatSessionRepository.save(session);
         var uriString = "/api/iris/sessions/" + session.getId();
 
         return ResponseEntity.created(new URI(uriString)).body(session);
