@@ -3,7 +3,14 @@
         <h5 jhiTranslate="artemisApp.calendar.subscriptionPopover.title"></h5>
         <span jhiTranslate="artemisApp.calendar.subscriptionPopover.configurationExplanation"></span>
         @if (isMobile()) {
-            <p-selectbutton [options]="languageOptions()" [ngModel]="selectedLanguage()" (ngModelChange)="selectedLanguage.set($event)" optionLabel="label" optionValue="value" />
+            <p-selectbutton
+                [options]="languageOptions()"
+                [ngModel]="selectedLanguage()"
+                (ngModelChange)="selectedLanguage.set($event)"
+                [unselectable]="true"
+                optionLabel="label"
+                optionValue="value"
+            />
             <div class="configuration-controls-row">
                 <div class="configuration-controls-column">
                     <div class="events-checkbox-and-label">
@@ -57,6 +64,7 @@
                     [options]="languageOptions()"
                     [ngModel]="selectedLanguage()"
                     (ngModelChange)="selectedLanguage.set($event)"
+                    [unselectable]="true"
                     optionLabel="label"
                     optionValue="value"
                 />
