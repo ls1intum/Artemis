@@ -7,11 +7,10 @@
 }
 
 .highlight-box {
-    background: white; //linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 12px;
+    background: white;
     border: 1px solid #d1d5db;
+    border-radius: 5px;
     padding: 20px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     min-width: min-content;
 }
 
@@ -33,7 +32,7 @@
 
 .highlight-label {
     font-size: 0.875rem;
-    color: black; //rgba(255, 255, 255, 0.8);
+    color: black;
     margin-bottom: 4px;
     font-weight: 500;
 }
@@ -44,11 +43,14 @@
     font-weight: bold;
 }
 
+.picture {
+    padding-right: 10px;
+}
+
 .table-frame {
     border: 1px solid #d1d5db;
-    border-radius: 16px;
+    border-radius: 5px;
     background: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     overflow: hidden;
     width: 100%;
     min-width: min-content;
@@ -83,46 +85,26 @@
     tbody tr:last-child td {
         border-bottom: none;
     }
+
+    th:last-child,
+    td:last-child {
+        text-align: center;
+    }
 }
 
-.correct-icon {
-    color: #4caf50; /* Grün */
-    margin-right: 2px;
-}
+.points-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e0e0e0;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    margin-right: 5px;
+    vertical-align: middle;
 
-.wrong-icon {
-    color: #f44336; /* Rot */
-    margin-right: 2px;
-    margin-left: 8px;
-}
-
-.activity-container {
-    position: relative;
-    display: inline-block;
-    cursor: pointer;
-    margin-right: 2px;
-}
-
-.activity-container .tooltip-text {
-    visibility: hidden;
-    background-color: rgba(0, 0, 0, 0.7);
-    color: #fff;
-    text-align: center;
-    border-radius: 4px;
-    padding: 5px 10px;
-    position: absolute;
-    z-index: 1;
-    bottom: 125%;
-    left: 50%;
-    transform: translateX(-50%);
-    opacity: 0;
-    transition: opacity 0.3s;
-    white-space: nowrap;
-    font-size: 0.8rem;
-    font-weight: normal;
-}
-
-.activity-container:hover .tooltip-text {
-    visibility: visible;
-    opacity: 1;
+    svg {
+        width: 20px;
+        height: 20px;
+    }
 }

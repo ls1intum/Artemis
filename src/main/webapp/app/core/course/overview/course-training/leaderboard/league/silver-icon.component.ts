@@ -4,7 +4,7 @@ import { Component, input } from '@angular/core';
     selector: 'app-league-silver-icon',
     template: `
         @if (league() === 'Silver') {
-            <svg [class]="class()" width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg [class]="class()" [attr.width]="getSize()" [attr.height]="getSize()" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
                     fill-rule="evenodd"
                     clip-rule="evenodd"
@@ -20,4 +20,8 @@ import { Component, input } from '@angular/core';
 export class LeagueSilverIconComponent {
     class = input<string>('');
     league = input<string>('');
+
+    getSize(): string {
+        return this.class().includes('small-icon') ? '30' : '50';
+    }
 }

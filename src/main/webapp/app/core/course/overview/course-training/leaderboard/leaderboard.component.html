@@ -5,30 +5,16 @@
                 <span class="highlight-label">Rank</span>
                 <span class="highlight-value">#{{ currentUserRank }}</span>
             </div>
-            <!-- <div class="highlight-item">
-                <span class="highlight-label">Liga</span>
-                <span class="highlight-value">{{ currentUserLeague }}</span>
-            </div> -->
             <div class="highlight-item">
                 <span class="highlight-label">Student</span>
-                <span class="highlight-value">{{ currentUserStudent }}</span>
+                <span class="highlight-value">
+                    <jhi-profile-picture class="picture" [authorName]="currentUserStudent" [authorId]="currentUserRank" />
+                    {{ currentUserStudent }}
+                </span>
             </div>
             <div class="highlight-item">
                 <span class="highlight-label">Score</span>
                 <span class="highlight-value">{{ currentUserScore }}</span>
-            </div>
-            <div class="highlight-item">
-                <span class="highlight-label">Activity</span>
-                <span class="highlight-value">
-                    <span class="activity-container">
-                        <fa-icon [icon]="faArrowUp" class="correct-icon" /> {{ currentUserActivity.correct }}
-                        <span class="tooltip-text">Correct answered question</span>
-                    </span>
-                    <span class="activity-container">
-                        <fa-icon [icon]="faArrowDown" class="wrong-icon" /> {{ currentUserActivity.wrong }}
-                        <span class="tooltip-text">Wrong answered question</span>
-                    </span>
-                </span>
             </div>
         </div>
     </div>
@@ -38,23 +24,16 @@
             <thead>
                 <tr>
                     <th>Rank</th>
-                    <!-- <th>League</th> -->
                     <th>Student</th>
                     <th>Score</th>
-                    <th>Activity</th>
                 </tr>
             </thead>
             <tbody>
                 @for (entry of leaderboard(); track entry.rank) {
                     <tr>
                         <td class="not-user-column">{{ entry.rank }}</td>
-                        <!-- <td class="not-user-column">{{ entry.league }}</td> -->
-                        <td class="user-name">{{ entry.student }}</td>
+                        <td class="user-name"><jhi-profile-picture class="picture" [authorName]="entry.student" [authorId]="entry.rank" />{{ entry.student }}</td>
                         <td class="not-user-column">{{ entry.score }}</td>
-                        <td class="not-user-column">
-                            <span> <fa-icon [icon]="faArrowUp" class="correct-icon" /> {{ entry.answeredCorrectly }} </span>
-                            <span> <fa-icon [icon]="faArrowDown" class="wrong-icon" /> {{ entry.answeredWrong }} </span>
-                        </td>
                     </tr>
                 }
             </tbody>

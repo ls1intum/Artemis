@@ -11,6 +11,7 @@ import { LeagueSilverIconComponent } from 'app/core/course/overview/course-train
 import { LeagueBronzeIconComponent } from 'app/core/course/overview/course-training/leaderboard/league/bronze-icon.component';
 import { LeagueGoldIconComponent } from 'app/core/course/overview/course-training/leaderboard/league/gold-icon.component';
 import { Leaderboard } from 'app/core/course/overview/course-training/leaderboard/leaderboard.component';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-practice',
@@ -24,12 +25,19 @@ export class CourseTrainingComponent {
     private leaderboardService = inject(LeaderboardService);
     private accountService = inject(AccountService);
 
+    readonly setNameIcon = faCheck;
+    readonly pointsBronzeLeague = 100;
+    readonly pointsSilverLeague = 200;
+    readonly pointsGoldLeague = 300;
+
     paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
     courseId = computed(() => this.paramsSignal()?.['courseId']);
 
+    isRanked = signal<boolean>(true);
+
     league = computed(() => {
         const user = this.currentUser();
-        const entries = this.leaderboardEntries();
+        const entries = this._leaderboard();
 
         const userEntry = entries.find((entry) => entry.student === user.name);
         const league = userEntry?.studentLeague ?? 0;
@@ -47,11 +55,26 @@ export class CourseTrainingComponent {
     });
     points = computed(() => {
         const user = this.currentUser();
-        const entries = this.leaderboardEntries();
+        const entries = this._leaderboard();
 
         const userEntry = entries.find((entry) => entry.student === user.name);
         return userEntry?.score ?? 0;
     });
+    dueIn = computed(() => {
+        const user = this.currentUser();
+        const entries = this._leaderboard();
+
+        const userEntry = entries.find((entry) => entry.student === user.name);
+        return userEntry?.dueIn ?? 0;
+    });
+    streak = computed(() => {
+        const user = this.currentUser();
+        const entries = this._leaderboard();
+
+        const userEntry = entries.find((entry) => entry.student === user.name);
+        return userEntry?.streak ?? 0;
+    });
+
     currentUser = signal<UserPublicInfoDTO>(undefined!);
 
     leaderboardEntries = signal<LeaderboardEntry[]>([]);
@@ -86,8 +109,9 @@ export class CourseTrainingComponent {
         this.router.navigate(['courses', this.courseId(), 'training', 'quiz']);
     }
 
+    _league = 'Gold';
     _leaderboard = signal<LeaderboardEntry[]>([
-        { rank: 1, league: 1, student: 'Maria Musterfrau', score: 120, answeredCorrectly: 32, answeredWrong: 5 },
+        { rank: 1, studentLeague: 2, student: 'Maria Musterfrau', score: 120, answeredCorrectly: 32, answeredWrong: 5, dueIn: 5, streak: 10 },
         { rank: 2, league: 2, student: 'Bob Sample', score: 112, answeredCorrectly: 28, answeredWrong: 8 },
         { rank: 3, league: 3, student: 'Carol Test', score: 100, answeredCorrectly: 20, answeredWrong: 12 },
         { rank: 4, league: 3, student: 'Moritz Spengler', score: 92, answeredCorrectly: 18, answeredWrong: 15 },
