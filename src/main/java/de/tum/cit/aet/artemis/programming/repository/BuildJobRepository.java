@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -202,6 +203,23 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
               AND b.buildSubmissionDate <= :endTime
             ORDER BY b.buildSubmissionDate DESC
             """)
-    Slice<BuildJob> findJobsByStatusesInTimeRange(@Param("statuses") List<BuildStatus> statuses, @Param("startTime") ZonedDateTime startTime,
+    Slice<BuildJob> queryFindJobsByStatusesInTimeRange(@Param("statuses") List<BuildStatus> statuses, @Param("startTime") ZonedDateTime startTime,
             @Param("endTime") ZonedDateTime endTime, Pageable pageable);
+
+    /**
+     * Returns a slice of build jobs submitted within the given time range whose buildStatus is contained in the provided list, ordered by submission date descending.
+     * If the list of statuses is null or empty, an empty slice is returned.
+     *
+     * @param statuses  list of build statuses; may be null or empty
+     * @param startTime earliest build submission time (inclusive)
+     * @param endTime   latest build submission time (inclusive)
+     * @param pageable  pagination information
+     * @return slice of matching build jobs
+     */
+    default Slice<BuildJob> findJobsByStatusesInTimeRange(List<BuildStatus> statuses, ZonedDateTime startTime, ZonedDateTime endTime, Pageable pageable) {
+        if (statuses == null || statuses.isEmpty()) {
+            return new SliceImpl<>(List.of(), pageable, false);
+        }
+        return queryFindJobsByStatusesInTimeRange(statuses, startTime, endTime, pageable);
+    }
 }
