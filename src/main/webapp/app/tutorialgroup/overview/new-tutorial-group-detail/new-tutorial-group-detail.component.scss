@@ -90,7 +90,7 @@
         justify-content: space-between;
     }
 
-    ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+    th {
         width: 20%;
         padding-top: 0;
         padding-bottom: 1rem;
@@ -99,7 +99,7 @@
         word-break: break-word;
     }
 
-    ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+    td {
         width: 20%;
         padding-top: 1rem;
         padding-bottom: 1rem;

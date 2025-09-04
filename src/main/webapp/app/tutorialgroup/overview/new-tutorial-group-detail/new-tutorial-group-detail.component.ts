@@ -15,7 +15,6 @@ import { FormsModule } from '@angular/forms';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { Color, PieChartComponent, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
-import { TableModule } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupDetailSessionStatusIndicatorComponent } from 'app/tutorialgroup/overview/tutorial-group-detail-session-status-indicator/tutorial-group-detail-session-status-indicator.component';
@@ -43,7 +42,6 @@ type ListOption = 'all-sessions' | 'future-sessions';
         SelectButton,
         FormsModule,
         PieChartModule,
-        TableModule,
         SelectModule,
         TutorialGroupDetailSessionStatusIndicatorComponent,
         NgClass,

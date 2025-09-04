@@ -116,8 +116,8 @@
 
     @let sessions = tutorialGroupSessions();
     @if (sessions) {
-        <p-table [value]="sessions" stripedRows>
-            <ng-template #header>
+        <table>
+            <thead>
                 <tr>
                     <th>Date</th>
                     <th>Time</th>
@@ -125,44 +125,46 @@
                     <th>Attendance</th>
                     <th>Status</th>
                 </tr>
-            </ng-template>
-            <ng-template #body let-session>
-                <tr class="table-row">
-                    <td>
-                        <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
-                            {{ session.date }}
-                            @if (session.dateChanged) {
-                                <div class="change-indicator"></div>
-                            }
-                        </div>
-                    </td>
-                    <td>
-                        <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
-                            {{ session.time }}
-                            @if (session.timeChanged) {
-                                <div class="change-indicator"></div>
-                            }
-                        </div>
-                    </td>
-                    <td>
-                        <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
-                            {{ session.location }}
-                            @if (session.locationChanged) {
-                                <div class="change-indicator"></div>
-                            }
-                        </div>
-                    </td>
-                    <td>{{ session.attendance }}</td>
-                    <td>
-                        <jhi-tutorial-group-detail-session-status-indicator
-                            [isCancelled]="session.isCancelled"
-                            [locationChanged]="session.locationChanged"
-                            [timeChanged]="session.timeChanged"
-                            [dateChanged]="session.dateChanged"
-                        />
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
+            </thead>
+            <tbody>
+                @for (session of sessions; track session.date) {
+                    <tr>
+                        <td>
+                            <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
+                                {{ session.date }}
+                                @if (session.dateChanged) {
+                                    <div class="change-indicator"></div>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
+                                {{ session.time }}
+                                @if (session.timeChanged) {
+                                    <div class="change-indicator"></div>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
+                                {{ session.location }}
+                                @if (session.locationChanged) {
+                                    <div class="change-indicator"></div>
+                                }
+                            </div>
+                        </td>
+                        <td>{{ session.attendance }}</td>
+                        <td>
+                            <jhi-tutorial-group-detail-session-status-indicator
+                                [isCancelled]="session.isCancelled"
+                                [locationChanged]="session.locationChanged"
+                                [timeChanged]="session.timeChanged"
+                                [dateChanged]="session.dateChanged"
+                            />
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     }
 </div>
