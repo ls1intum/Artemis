@@ -232,10 +232,15 @@ public class TextExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         // Check that only allowed athena modules are used
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
-                () -> textExercise.setFeedbackSuggestionModule(null));
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME),
-                () -> textExercise.setPreliminaryFeedbackModule(null));
+        if (athenaApi.isPresent()) {
+            var api = athenaApi.get();
+            api.checkHasAccessToAthenaModule(textExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME);
+            api.checkHasAccessToAthenaModule(textExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME);
+        }
+        else {
+            textExercise.setFeedbackSuggestionModule(null);
+            textExercise.setPreliminaryFeedbackModule(null);
+        }
 
         TextExercise result = exerciseService.saveWithCompetencyLinks(textExercise, textExerciseRepository::save);
 
@@ -289,10 +294,15 @@ public class TextExerciseResource {
 
         // Check that only allowed athena modules are used
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExerciseBeforeUpdate);
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
-                () -> textExercise.setFeedbackSuggestionModule(null));
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME),
-                () -> textExercise.setPreliminaryFeedbackModule(null));
+        if (athenaApi.isPresent()) {
+            var api = athenaApi.get();
+            api.checkHasAccessToAthenaModule(textExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME);
+            api.checkHasAccessToAthenaModule(textExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME);
+        }
+        else {
+            textExercise.setFeedbackSuggestionModule(textExerciseBeforeUpdate.getFeedbackSuggestionModule());
+            textExercise.setPreliminaryFeedbackModule(textExerciseBeforeUpdate.getPreliminaryFeedbackModule());
+        }
         // Changing Athena module after the due date has passed is not allowed
         athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(textExerciseBeforeUpdate, textExercise, ENTITY_NAME));
 
@@ -537,18 +547,23 @@ public class TextExerciseResource {
 
         // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions or preliminary feedback for the imported exercise
         // If Athena is disabled and the service is not present, we also disable the corresponding functionality
-        try {
-            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(),
-                    AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME), () -> importedExercise.setFeedbackSuggestionModule(null));
+        if (athenaApi.isPresent()) {
+            var api = athenaApi.get();
+            try {
+                api.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME);
+            }
+            catch (BadRequestAlertException e) {
+                importedExercise.setFeedbackSuggestionModule(null);
+            }
+            try {
+                api.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME);
+            }
+            catch (BadRequestAlertException e) {
+                importedExercise.setPreliminaryFeedbackModule(null);
+            }
         }
-        catch (BadRequestAlertException e) {
+        else {
             importedExercise.setFeedbackSuggestionModule(null);
-        }
-        try {
-            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(),
-                    AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME), () -> importedExercise.setPreliminaryFeedbackModule(null));
-        }
-        catch (BadRequestAlertException e) {
             importedExercise.setPreliminaryFeedbackModule(null);
         }
 

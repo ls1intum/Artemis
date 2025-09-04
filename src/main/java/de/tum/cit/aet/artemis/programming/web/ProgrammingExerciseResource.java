@@ -268,10 +268,15 @@ public class ProgrammingExerciseResource {
         programmingExerciseValidationService.validateNewProgrammingExerciseSettings(programmingExercise, course);
 
         // Check that only allowed athena modules are used
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(programmingExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
-                () -> programmingExercise.setFeedbackSuggestionModule(null));
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(programmingExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME),
-                () -> programmingExercise.setPreliminaryFeedbackModule(null));
+        if (athenaApi.isPresent()) {
+            var api = athenaApi.get();
+            api.checkHasAccessToAthenaModule(programmingExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME);
+            api.checkHasAccessToAthenaModule(programmingExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME);
+        }
+        else {
+            programmingExercise.setFeedbackSuggestionModule(null);
+            programmingExercise.setPreliminaryFeedbackModule(null);
+        }
 
         try {
             // Setup all repositories etc
@@ -365,10 +370,16 @@ public class ProgrammingExerciseResource {
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);
 
         // Check that only allowed Athena modules are used
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME),
-                () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME),
-                () -> updatedProgrammingExercise.setPreliminaryFeedbackModule(null));
+        if (athenaApi.isPresent()) {
+            var api = athenaApi.get();
+            api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, AthenaModuleMode.FEEDBACK_SUGGESTIONS, ENTITY_NAME);
+            api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, AthenaModuleMode.PRELIMINARY_FEEDBACK, ENTITY_NAME);
+        }
+        else {
+            updatedProgrammingExercise.setFeedbackSuggestionModule(programmingExerciseBeforeUpdate.getFeedbackSuggestionModule());
+            updatedProgrammingExercise.setPreliminaryFeedbackModule(programmingExerciseBeforeUpdate.getPreliminaryFeedbackModule());
+        }
+
         // Changing Athena module after the due date has passed is not allowed
         athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
 

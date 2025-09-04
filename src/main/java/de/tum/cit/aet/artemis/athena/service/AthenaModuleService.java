@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +66,7 @@ public class AthenaModuleService {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private record AthenaModuleDTO(String name, String type, @JsonProperty("supports_graded_feedback_requests") boolean supportsGradedFeedbackRequests,
+    private record AthenaModuleDTO(@NotNull String name, @NotNull String type, @JsonProperty("supports_graded_feedback_requests") boolean supportsGradedFeedbackRequests,
             @JsonProperty("supports_non_graded_feedback_requests") boolean supportsNonGradedFeedbackRequests) {
     }
 
