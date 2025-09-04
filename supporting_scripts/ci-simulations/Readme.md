@@ -1,5 +1,6 @@
 # Artemis CI Simulations
-
+Run simulations for the CI system against an Artemis instance.
+If you want to run the scenarios that inject conditions into Artemis nodes, you need to have a valid public key to connect via ssh to the target node.
 ## Setup
 
 1. (Recommended) Create and activate a Python virtual environment:
