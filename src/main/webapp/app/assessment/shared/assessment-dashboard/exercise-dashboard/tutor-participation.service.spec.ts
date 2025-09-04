@@ -7,6 +7,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { AccountService } from 'app/core/auth/account.service';
 import { provideHttpClient } from '@angular/common/http';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 
 describe('Tutor Participation Service', () => {
     let service: TutorParticipationService;
@@ -27,7 +28,7 @@ describe('Tutor Participation Service', () => {
             id: 10,
             exerciseId,
             tutorId: 42,
-            status: 'REVIEWED_INSTRUCTIONS',
+            status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
             trainedCount: 0,
         };
 
@@ -46,7 +47,7 @@ describe('Tutor Participation Service', () => {
             id: 10,
             exerciseId,
             tutorId: 42,
-            status: 'TRAINED',
+            status: TutorParticipationStatus.TRAINED,
             trainedCount: 3,
         };
 

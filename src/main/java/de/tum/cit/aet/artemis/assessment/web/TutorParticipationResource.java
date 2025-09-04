@@ -90,7 +90,7 @@ public class TutorParticipationResource {
         }
 
         TutorParticipation tutorParticipation = tutorParticipationService.createNewParticipation(exercise, user);
-        TutorParticipationDTO dto = new TutorParticipationDTO(tutorParticipation);
+        TutorParticipationDTO dto = TutorParticipationDTO.of(tutorParticipation);
         return ResponseEntity.created(new URI("/api/assessment/exercises/" + exerciseId + "/tutor-participations/" + tutorParticipation.getId())).body(dto);
     }
 
@@ -114,7 +114,7 @@ public class TutorParticipationResource {
 
         TutorParticipation resultTutorParticipation = tutorParticipationService.addExampleSubmission(exercise, exampleSubmission, user);
 
-        TutorParticipationDTO dto = new TutorParticipationDTO(resultTutorParticipation);
+        TutorParticipationDTO dto = TutorParticipationDTO.of(resultTutorParticipation);
         return ResponseEntity.ok().body(dto);
     }
 }

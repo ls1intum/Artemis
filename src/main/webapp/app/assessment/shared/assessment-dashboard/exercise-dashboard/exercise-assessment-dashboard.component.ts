@@ -72,6 +72,7 @@ import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-he
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { TutorParticipationDTO } from 'app/exercise/shared/entities/participation/tutor-participation-dto.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -638,12 +639,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     readInstruction() {
         this.isLoading = true;
         this.tutorParticipationService
-            .create(this.tutorParticipation, this.exerciseId)
+            .create(this.exerciseId)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
-                next: (res: HttpResponse<TutorParticipation>) => {
-                    this.tutorParticipation = res.body!;
-                    this.tutorParticipationStatus = this.tutorParticipation.status!;
+                next: (res: HttpResponse<TutorParticipationDTO>) => {
+                    this.tutorParticipationStatus = res.body!.status;
                     this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
                 },
                 error: this.onError,

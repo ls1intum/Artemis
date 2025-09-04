@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.dto.TutorParticipationDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
@@ -59,6 +60,9 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private GradingCriterionRepository gradingCriterionRepository;
+
+    @Autowired
+    private TutorParticipationRepository tutorParticipationRepository;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -103,13 +107,14 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTutorParticipateInModelingExerciseWithExampleSubmission(boolean usedForTutorial) throws Exception {
-        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(usedForTutorial);
-        var tutorParticipationDto = request.postWithResponseBody(path, exampleSubmission, TutorParticipationDTO.class, HttpStatus.OK);
-        assertThat(tutorParticipationDto.trainedCount()).as("Tutor participation has example submission").isEqualTo(1);
         var tutorId = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1").getId();
-        assertThat(tutorParticipationDto.tutorId()).as("Tutor participation belongs to correct tutor").isEqualTo(tutorId);
-        assertThat(tutorParticipationDto.exerciseId()).as("Tutor participation belongs to correct exercise").isEqualTo(modelingExercise.getId());
-        assertThat(tutorParticipationDto.status().name()).as("Tutor participation has correct status").isEqualTo("TRAINED");
+
+        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(usedForTutorial);
+        var tutorParticipationDTO = request.postWithResponseBody(path, exampleSubmission, TutorParticipationDTO.class, HttpStatus.OK);
+        assertThat(tutorParticipationDTO.trainedExampleSubmissions()).as("Tutor participation has example submission").hasSize(1);
+        assertThat(tutorParticipationDTO.tutorId()).as("Tutor participation belongs to correct tutor").isEqualTo(tutorId);
+        assertThat(tutorParticipationDTO.exerciseId()).as("Tutor participation belongs to correct exercise").isEqualTo(modelingExercise.getId());
+        assertThat(tutorParticipationDTO.status()).as("Tutor participation has correct status").isEqualTo(TutorParticipationStatus.TRAINED);
     }
 
     /**
@@ -123,13 +128,15 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // Tutor reviewed the instructions.
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        var existing = tutorParticipationRepository.findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(textExercise, tutor);
+        exampleSubmission.addTutorParticipations(existing);
         exampleSubmission = exampleSubmissionService.save(exampleSubmission);
 
         Submission submissionWithResults = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(exampleSubmission.getSubmission().getId());
         submissionWithResults.getLatestResult().addFeedback(ParticipationFactory.createManualTextFeedback(1D, textBlockIds.get(1)));
 
         var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
-        request.postWithResponseBody(path, exampleSubmission, TutorParticipationDTO.class, HttpStatus.BAD_REQUEST);
+        request.post(path, exampleSubmission, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -142,13 +149,15 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // Tutor reviewed the instructions.
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        var existing = tutorParticipationRepository.findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(textExercise, tutor);
+        exampleSubmission.addTutorParticipations(existing);
         exampleSubmission = exampleSubmissionService.save(exampleSubmission);
 
         Submission submissionWithResults = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(exampleSubmission.getSubmission().getId());
         submissionWithResults.getLatestResult().addFeedback(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
 
         var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
-        request.postWithResponseBody(path, exampleSubmission, TutorParticipationDTO.class, HttpStatus.BAD_REQUEST);
+        request.post(path, exampleSubmission, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -169,7 +178,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
         exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createManualTextFeedback(1D, "6aba5764-d102-4740-9675-b2bd0a4f2680"));
         var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
-        request.postWithResponseBody(path, exampleSubmission, TutorParticipationDTO.class, HttpStatus.BAD_REQUEST);
+        request.post(path, exampleSubmission, HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -189,7 +198,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
 
         exampleSubmission.getSubmission().getLatestResult().addFeedback(ParticipationFactory.createPositiveFeedback(FeedbackType.MANUAL_UNREFERENCED));
         var path = "/api/assessment/exercises/" + textExercise.getId() + "/assess-example-submission";
-        request.postWithResponseBody(path, exampleSubmission, TutorParticipationDTO.class, HttpStatus.BAD_REQUEST);
+        request.post(path, exampleSubmission, HttpStatus.BAD_REQUEST);
     }
 
     @NotNull
