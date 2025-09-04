@@ -1,0 +1,17 @@
+spring:
+  profiles:
+    active: atlas-agent
+
+artemis:
+  atlas:
+    agent:
+      enabled: true
+      azure:
+        api-key: ${AZURE_OPENAI_KEY}
+        endpoint: ${AZURE_OPENAI_ENDPOINT}
+        api-version: ${AZURE_OPENAI_API_VERSION:2025-01-01-preview}
+      model: ${AZURE_OPENAI_MODEL:gpt-4o}
+
+logging:
+  level:
+    de.tum.cit.aet.artemis.atlas.agent: DEBUG

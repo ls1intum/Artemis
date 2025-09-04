@@ -313,6 +313,11 @@ public final class Constants {
     public static final String PROFILE_ATHENA = "athena";
 
     /**
+     * The name of the Spring profile used for Atlas Agent functionality.
+     */
+    public static final String PROFILE_ATLAS_AGENT = "atlas-agent";
+
+    /**
      * The name of the Spring profile used for Athena functionality.
      */
     public static final String PROFILE_APOLLON = "apollon";
