@@ -14,7 +14,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -187,39 +186,40 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     List<BuildJob> findAllByBuildStatusIn(List<BuildStatus> statuses);
 
     /**
-     * Find all build jobs with the given build statuses in the given time range, ordered by submission date descending.
+     * Returns a slice of missing build jobs submitted within the given time range for whose participation no newer job exists, ordered by submission date descending.
      *
-     * @param statuses  the list of build statuses
      * @param startTime earliest build submission time
      * @param endTime   latest build submission time
      * @param pageable  pagination information
-     * @return the list of build jobs
+     * @return slice of matching build jobs
      */
     @Query("""
             SELECT b
             FROM BuildJob b
-            WHERE b.buildStatus IN :statuses
+            WHERE b.buildStatus = de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.MISSING
               AND b.buildSubmissionDate >= :startTime
               AND b.buildSubmissionDate <= :endTime
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM BuildJob b2
+                  WHERE b2.participationId = b.participationId
+                    AND b2.buildSubmissionDate > b.buildSubmissionDate
+              )
             ORDER BY b.buildSubmissionDate DESC
             """)
-    Slice<BuildJob> queryFindJobsByStatusesInTimeRange(@Param("statuses") List<BuildStatus> statuses, @Param("startTime") ZonedDateTime startTime,
-            @Param("endTime") ZonedDateTime endTime, Pageable pageable);
+    Slice<BuildJob> findMissingJobsToRetryInTimeRange(@Param("startTime") ZonedDateTime startTime, @Param("endTime") ZonedDateTime endTime, Pageable pageable);
 
     /**
-     * Returns a slice of build jobs submitted within the given time range whose buildStatus is contained in the provided list, ordered by submission date descending.
-     * If the list of statuses is null or empty, an empty slice is returned.
+     * Increment the retry count of a build job by 1
      *
-     * @param statuses  list of build statuses; may be null or empty
-     * @param startTime earliest build submission time (inclusive)
-     * @param endTime   latest build submission time (inclusive)
-     * @param pageable  pagination information
-     * @return slice of matching build jobs
+     * @param buildJobId the ID of the build job
      */
-    default Slice<BuildJob> findJobsByStatusesInTimeRange(List<BuildStatus> statuses, ZonedDateTime startTime, ZonedDateTime endTime, Pageable pageable) {
-        if (statuses == null || statuses.isEmpty()) {
-            return new SliceImpl<>(List.of(), pageable, false);
-        }
-        return queryFindJobsByStatusesInTimeRange(statuses, startTime, endTime, pageable);
-    }
+    @Modifying
+    @Transactional
+    @Query("""
+            UPDATE BuildJob b
+            SET b.retryCount = b.retryCount + 1
+            WHERE b.buildJobId = :buildJobId
+            """)
+    void incrementRetryCount(@Param("buildJobId") String buildJobId);
 }

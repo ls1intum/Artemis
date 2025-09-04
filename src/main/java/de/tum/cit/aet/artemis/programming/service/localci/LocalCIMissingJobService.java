@@ -108,7 +108,7 @@ public class LocalCIMissingJobService {
     public void retryMissingJobs() {
         log.debug("Checking for missing build jobs to retry");
 
-        Slice<BuildJob> missingJobsSlice = getMissingJobsSliceOfLastHour(50);
+        Slice<BuildJob> missingJobsSlice = getMissingJobsToRetrySliceOfLastHour(50);
         List<BuildJob> missingJobs = missingJobsSlice.getContent();
         log.debug("Processing {} missing build jobs to retry", missingJobs.size());
 
@@ -118,9 +118,9 @@ public class LocalCIMissingJobService {
                         buildJob.getParticipationId(), maxMissingJobRetries);
                 continue;
             }
-
             try {
                 localCITriggerService.retryBuildJob(buildJob, (ProgrammingExerciseParticipation) participationRepository.findByIdElseThrow(buildJob.getParticipationId()));
+                buildJobRepository.incrementRetryCount(buildJob.getBuildJobId());
             }
             catch (Exception e) {
                 log.error("Failed to retry build job with id {} for participation {}", buildJob.getBuildJobId(), buildJob.getParticipationId(), e);
@@ -140,10 +140,16 @@ public class LocalCIMissingJobService {
         return queuedJobs.stream().anyMatch(job -> job.id().equals(buildJobId));
     }
 
-    private Slice<BuildJob> getMissingJobsSliceOfLastHour(int maxResults) {
+    /**
+     * Retrieves a slice of missing build jobs submitted within the last hour that do not have a newer job for the same participation.
+     *
+     * @param maxResults the maximum number of results to retrieve
+     * @return a slice of missing build jobs
+     */
+    private Slice<BuildJob> getMissingJobsToRetrySliceOfLastHour(int maxResults) {
         Pageable pageable = PageRequest.of(0, maxResults);
         ZonedDateTime now = ZonedDateTime.now();
         ZonedDateTime oneHourAgo = now.minusHours(1);
-        return buildJobRepository.findJobsByStatusesInTimeRange(List.of(BuildStatus.MISSING), oneHourAgo, now, pageable);
+        return buildJobRepository.findMissingJobsToRetryInTimeRange(oneHourAgo, now, pageable);
     }
 }
