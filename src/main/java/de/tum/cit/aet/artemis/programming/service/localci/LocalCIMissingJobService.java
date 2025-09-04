@@ -115,7 +115,7 @@ public class LocalCIMissingJobService {
         for (BuildJob buildJob : missingJobs) {
             if (buildJob.getRetryCount() >= maxMissingJobRetries) {
                 log.warn("Build job with id {} for participation {} has reached the maximum number of {} retries and will not be retried.", buildJob.getBuildJobId(),
-                        maxMissingJobRetries, buildJob.getParticipationId());
+                        buildJob.getParticipationId(), maxMissingJobRetries);
                 continue;
             }
 
