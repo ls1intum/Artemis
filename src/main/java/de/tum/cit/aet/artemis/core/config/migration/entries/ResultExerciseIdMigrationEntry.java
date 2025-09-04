@@ -2,8 +2,7 @@ package de.tum.cit.aet.artemis.core.config.migration.entries;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
@@ -22,14 +21,17 @@ public class ResultExerciseIdMigrationEntry extends MigrationEntry {
 
     @Override
     public void execute() {
-        Slice<Long> resultIds;
-        do {
-            resultIds = resultRepository.findResultIdsWithoutExerciseId(Pageable.ofSize(500));
-            log.info("Backfilling exerciseId for {} results", resultIds.getNumberOfElements());
-            var updatedCount = resultRepository.backfillExerciseIdBatch(resultIds.getContent());
-            log.info("Backfilled exerciseId for {} results", updatedCount);
+        long lastId = 0L;
+        while (true) {
+            var ids = resultRepository.findNextIds(lastId, PageRequest.of(0, 1000));
+            if (ids.isEmpty()) {
+                break;
+            }
+            long updatedCount = resultRepository.backfillExerciseIdBatch(ids);
+            log.info("{} results updated", updatedCount);
+
+            lastId = ids.getLast(); // Java 21 List#reversed/stream alternative if needed
         }
-        while (resultIds.hasNext());
 
     }
 

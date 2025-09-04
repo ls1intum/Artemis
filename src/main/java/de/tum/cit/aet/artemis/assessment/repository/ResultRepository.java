@@ -225,7 +225,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.assessor IS NOT NULL
                 AND p.testRun = false
                 AND r.rated = true
-                AND p.exercise.id IN :exerciseIds
+                AND r.exerciseId IN :exerciseIds
             """)
     long countAssessmentsForExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
 
@@ -287,7 +287,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 JOIN p.submissions s
                 JOIN s.results r
                 JOIN p.exercise e
-            WHERE e.id IN :exerciseIds
+            WHERE r.exerciseId IN :exerciseIds
                 AND p.testRun = FALSE
                 AND r.assessor IS NOT NULL
                 AND r.rated = TRUE
@@ -296,6 +296,22 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND (e.dueDate IS NULL OR r.submission.submissionDate <= e.dueDate)
             """)
     long countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    @Query("""
+            SELECT COUNT(DISTINCT p)
+            FROM StudentParticipation p
+                JOIN p.submissions s
+                JOIN s.results r
+                JOIN p.exercise e
+            WHERE e.id = :exerciseId
+                AND p.testRun = FALSE
+                AND r.assessor IS NOT NULL
+                AND r.rated = TRUE
+                AND r.submission.submitted = TRUE
+                AND r.completionDate IS NOT NULL
+                AND (e.dueDate IS NULL OR r.submission.submissionDate <= e.dueDate)
+            """)
+    long countNumberOfFinishedAssessmentsForExerciseIdIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
     /**
      * @param exerciseId id of exercise
@@ -931,7 +947,17 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 SELECT r.id
                   FROM Result r
                  WHERE r.exerciseId IS NULL
+                 ORDER BY r.id
             """)
     Slice<Long> findResultIdsWithoutExerciseId(Pageable pageable);
+
+    @Query("""
+              SELECT r.id
+                FROM Result r
+               WHERE r.exerciseId IS NULL
+                 AND r.id > :afterId
+            ORDER BY r.id
+            """)
+    List<Long> findNextIds(long afterId, Pageable pageable);
 
 }

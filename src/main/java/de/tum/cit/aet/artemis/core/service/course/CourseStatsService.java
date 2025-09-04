@@ -270,13 +270,12 @@ public class CourseStatsService {
 
         if (course.getComplaintsEnabled()) {
             start = System.currentTimeMillis();
-            currentAbsoluteComplaints = complaintResponseRepository
-                    .countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), COMPLAINT);
+            currentAbsoluteComplaints = complaintResponseRepository.countNumberOfComplaintsByComplaintTypeAndSubmittedTimeIsNotNullForExerciseIds(exerciseIds, COMPLAINT);
             log.debug(
                     "complaintResponseRepository.countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull took {} ms for course with id {}",
                     System.currentTimeMillis() - start, course.getId());
             start = System.currentTimeMillis();
-            currentMaxComplaints = complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(course.getId(), COMPLAINT);
+            currentMaxComplaints = complaintRepository.countByExerciseIdsAndComplaintType(exerciseIds, COMPLAINT);
             log.debug("complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType took {} ms for course with id {}",
                     System.currentTimeMillis() - start, course.getId());
             currentPercentageComplaints = calculatePercentage(currentAbsoluteComplaints, currentMaxComplaints);
@@ -288,13 +287,12 @@ public class CourseStatsService {
 
         if (course.getRequestMoreFeedbackEnabled()) {
             start = System.currentTimeMillis();
-            currentAbsoluteMoreFeedbacks = complaintResponseRepository
-                    .countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), MORE_FEEDBACK);
+            currentAbsoluteMoreFeedbacks = complaintResponseRepository.countNumberOfComplaintsByComplaintTypeAndSubmittedTimeIsNotNullForExerciseIds(exerciseIds, MORE_FEEDBACK);
             log.debug(
                     "complaintResponseRepository.countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull took {} ms for course with id {}",
                     System.currentTimeMillis() - start, course.getId());
             start = System.currentTimeMillis();
-            currentMaxMoreFeedbacks = complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(course.getId(), MORE_FEEDBACK);
+            currentMaxMoreFeedbacks = complaintRepository.countByExerciseIdsAndComplaintType(exerciseIds, MORE_FEEDBACK);
             log.debug("complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType took {} ms for course with id {}",
                     System.currentTimeMillis() - start, course.getId());
             currentPercentageMoreFeedbacks = calculatePercentage(currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks);

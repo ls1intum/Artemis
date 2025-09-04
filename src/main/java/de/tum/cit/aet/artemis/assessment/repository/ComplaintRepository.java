@@ -73,6 +73,14 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      */
     long countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(Long courseId, ComplaintType complaintType);
 
+    @Query("""
+            SELECT COUNT(c)
+            FROM Complaint c
+            WHERE c.result.exerciseId IN :exerciseIds
+                AND c.complaintType = :complaintType
+            """)
+    long countByExerciseIdsAndComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
+
     /**
      * This magic method counts the number of complaints by complaint type associated to an exam id
      *
