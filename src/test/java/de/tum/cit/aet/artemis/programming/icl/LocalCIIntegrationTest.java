@@ -330,7 +330,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         buildJob.setBuildSubmissionDate(ZonedDateTime.now().minusMinutes(6));
         buildJobRepository.save(buildJob);
 
-        hazelcastInstance.getQueue("buildJobQueue").clear();
+        queuedJobs.clear();
 
         localCIMissingJobService.checkPendingBuildJobsStatus();
 
@@ -369,6 +369,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             BuildJob retryedBuildJob = buildJobOptional.get();
             return retryedBuildJob.getBuildStatus() == BuildStatus.QUEUED && retryedBuildJob.getRetryCount() == 1;
         });
+        processingJobs.clear();
+        queuedJobs.clear();
     }
 
     @Test
@@ -378,13 +380,15 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         buildJob.setBuildStatus(BuildStatus.MISSING);
         buildJob.setRetryCount(maxMissingJobRetries);
         buildJob.setParticipationId(1L);
-        buildJobRepository.save(buildJob);
+        buildJob = buildJobRepository.save(buildJob);
 
         localCIMissingJobService.retryMissingJobs();
 
-        buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildJobIdDesc(buildJob.getParticipationId()).orElseThrow();
-        assertThat(buildJob.getBuildStatus()).isEqualTo(BuildStatus.MISSING);
-        assertThat(buildJob.getRetryCount()).isEqualTo(3);
+        // latest build job for the participation should be the same because no retry over the limit
+        BuildJob latestJob = buildJobRepository.findFirstByParticipationIdOrderByBuildJobIdDesc(buildJob.getParticipationId()).orElseThrow();
+        assertThat(latestJob.getBuildJobId()).isEqualTo(buildJob.getBuildJobId());
+        assertThat(latestJob.getBuildStatus()).isEqualTo(BuildStatus.MISSING);
+        assertThat(latestJob.getRetryCount()).isEqualTo(maxMissingJobRetries);
     }
 
     @Test
@@ -801,9 +805,8 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithGroupsAndAuthorities());
         await().until(() -> {
-            IQueue<BuildJobQueueItem> buildQueue = hazelcastInstance.getQueue("buildJobQueue");
             IMap<String, BuildJobQueueItem> buildJobMap = hazelcastInstance.getMap("processingJobs");
-            BuildJobQueueItem buildJobQueueItem = buildQueue.peek();
+            BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
 
             return buildJobQueueItem != null && buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash) && !buildJobMap.containsKey(buildJobQueueItem.id());
         });
