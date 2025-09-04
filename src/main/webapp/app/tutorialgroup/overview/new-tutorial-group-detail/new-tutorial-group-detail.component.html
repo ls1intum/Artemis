@@ -1,9 +1,9 @@
 <div class="frame">
-    <h2 id="page-title">{{ tutorialGroup().title }}</h2>
+    <h1 id="page-title">{{ tutorialGroup().title }}</h1>
     <hr />
     <div class="card-row">
-        <div class="card small">
-            <h5 jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.tutorCardTitle"></h5>
+        <section class="card small" aria-labelledby="tutor-card-title">
+            <h2 id="tutor-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.tutorCardTitle"></h2>
             <div class="tutor-card-content">
                 <jhi-profile-picture
                     imageSizeInRem="6"
@@ -13,44 +13,44 @@
                     [authorName]="tutorialGroup().teachingAssistantName"
                     [imageUrl]="teachingAssistantImageUrl()"
                 />
-                {{ tutorialGroup().teachingAssistantName }}
+                <span aria-hidden="true">{{ tutorialGroup().teachingAssistantName }}</span>
             </div>
-        </div>
-        <div class="card big">
-            <h5 jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.generalInfoCardTitle"></h5>
-            <div class="info-card-content">
+        </section>
+        <section class="card big" aria-labelledby="general-info-card-title">
+            <h2 id="general-info-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.generalInfoCardTitle"></h2>
+            <div class="info-card-content" role="list">
                 <div class="info-stack">
-                    <div class="info-item">
-                        <fa-icon [icon]="faFlag" />
-                        <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.language' | artemisTranslate) + ':' }}</span>
-                        {{ tutorialGroupLanguage() }}
+                    <div class="info-item" role="listitem" aria-labelledby="language-label" aria-describedby="language-value">
+                        <fa-icon [icon]="faFlag" aria-hidden="true" />
+                        <span class="info-label" id="date-label">{{ ('artemisApp.pages.tutorialGroupDetail.language' | artemisTranslate) + ':' }}</span>
+                        <span id="language-value">{{ tutorialGroupLanguage() }}</span>
                     </div>
-                    <div class="info-item">
-                        <fa-icon [icon]="faUsers" />
-                        <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.capacity' | artemisTranslate) + ':' }}</span>
-                        {{ tutorialGroupCapacity() }}
+                    <div class="info-item" role="listitem" aria-labelledby="capacity-label" aria-describedby="capacity-value">
+                        <fa-icon [icon]="faUsers" aria-hidden="true" />
+                        <span class="info-label" id="capacity-label">{{ ('artemisApp.pages.tutorialGroupDetail.capacity' | artemisTranslate) + ':' }}</span>
+                        <span id="language-value">{{ tutorialGroupCapacity() }}</span>
                     </div>
                 </div>
                 <div class="info-stack">
-                    <div class="info-item">
-                        <fa-icon [icon]="faTag" />
-                        <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.mode' | artemisTranslate) + ':' }}</span>
-                        <span jhiTranslate="{{ tutorialGroupMode() }}"></span>
+                    <div class="info-item" role="listitem" aria-labelledby="mode-label" aria-describedby="mode-value">
+                        <fa-icon [icon]="faTag" aria-hidden="true" />
+                        <span class="info-label" id="mode-label">>{{ ('artemisApp.pages.tutorialGroupDetail.mode' | artemisTranslate) + ':' }}</span>
+                        <span jhiTranslate="{{ tutorialGroupMode() }}" id="mode-value"></span>
                     </div>
-                    <div class="info-item">
-                        <fa-icon [icon]="faBuildingColumns" />
-                        <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.campus' | artemisTranslate) + ':' }}</span>
-                        {{ tutorialGroupCampus() }}
+                    <div class="info-item" role="listitem" aria-labelledby="campus-label" aria-describedby="campus-value">
+                        <fa-icon [icon]="faBuildingColumns" aria-hidden="true" />
+                        <span class="info-label" id="campus-label">{{ ('artemisApp.pages.tutorialGroupDetail.campus' | artemisTranslate) + ':' }}</span>
+                        <span id="campus-value">{{ tutorialGroupCampus() }}</span>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
     <div class="card-row">
-        <div class="card small">
-            <h5 jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.averageAttendanceCardTitle"></h5>
+        <section class="card small" aria-labelledby="attendance-card-title">
+            <h2 id="attendance-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.averageAttendanceCardTitle"></h2>
             <div class="attendance-card-content position-relative">
-                <div class="doughnut-chart-text">{{ averageAttendancePercentage() }}</div>
+                <span class="doughnut-chart-text">{{ averageAttendancePercentage() }}</span>
                 <ngx-charts-pie-chart
                     [view]="[128, 128]"
                     [results]="pieChartData()"
@@ -59,58 +59,60 @@
                     [labels]="false"
                     [legend]="false"
                     [arcWidth]="0.3"
+                    aria-hidden="true"
                 />
             </div>
-        </div>
-        <div class="card big">
-            <h5 jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.nextSessionCardTitle"></h5>
-            <div class="info-card-content">
+        </section>
+        <section class="card big" aria-labelledby="next-session-card-title">
+            <h2 id="next-session-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.nextSessionCardTitle"></h2>
+            <div class="info-card-content" role="list">
                 @let nextSession = nextSessionData();
                 @if (nextSession) {
                     <div class="info-stack">
-                        <div class="info-item">
-                            <fa-icon [icon]="faCalendar" />
-                            <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.date' | artemisTranslate) + ':' }}</span>
-                            <span [ngClass]="{ 'strikethrough-text': nextSession.isCancelled }">{{ nextSession.date }}</span>
+                        <div class="info-item" role="listitem" aria-labelledby="next-session-date-label" aria-describedby="next-session-date-value">
+                            <fa-icon [icon]="faCalendar" aria-hidden="true" />
+                            <span class="info-label" id="next-session-date-label">{{ ('artemisApp.pages.tutorialGroupDetail.date' | artemisTranslate) + ':' }}</span>
+                            <span [ngClass]="{ 'strikethrough-text': nextSession.isCancelled }" id="next-session-date-value">{{ nextSession.date }}</span>
                             @if (nextSession.dateChanged) {
-                                <div class="change-indicator"></div>
+                                <div class="change-indicator" aria-hidden="true"></div>
                             }
                         </div>
-                        <div class="info-item">
-                            <fa-icon [icon]="faClock" />
-                            <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.time' | artemisTranslate) + ':' }}</span>
-                            <span [ngClass]="{ 'strikethrough-text': nextSession.isCancelled }">{{ nextSession.time }}</span>
+                        <div class="info-item" role="listitem" aria-labelledby="next-session-time-label" aria-describedby="next-session-time-value">
+                            <fa-icon [icon]="faClock" aria-hidden="true" />
+                            <span class="info-label" id="next-session-time-label">{{ ('artemisApp.pages.tutorialGroupDetail.time' | artemisTranslate) + ':' }}</span>
+                            <span [ngClass]="{ 'strikethrough-text': nextSession.isCancelled }" id="next-session-time-value">{{ nextSession.time }}</span>
                             @if (nextSession.timeChanged) {
-                                <div class="change-indicator"></div>
+                                <div class="change-indicator" aria-hidden="true"></div>
                             }
                         </div>
                     </div>
                     <div class="info-stack">
-                        <div class="info-item">
-                            <fa-icon [icon]="faCircleExclamation" />
-                            <span class="info-label"> {{ ('artemisApp.pages.tutorialGroupDetail.status' | artemisTranslate) + ':' }}</span>
+                        <div class="info-item" role="listitem" aria-labelledby="next-session-status-label" aria-describedby="next-session-status-indicator">
+                            <fa-icon [icon]="faCircleExclamation" aria-hidden="true" />
+                            <span class="info-label" id="next-session-status-label"> {{ ('artemisApp.pages.tutorialGroupDetail.status' | artemisTranslate) + ':' }}</span>
                             <jhi-tutorial-group-detail-session-status-indicator
                                 [isCancelled]="nextSession.isCancelled"
                                 [locationChanged]="nextSession.locationChanged"
                                 [timeChanged]="nextSession.timeChanged"
                                 [dateChanged]="nextSession.dateChanged"
+                                id="next-session-status-indicator"
                             />
                         </div>
-                        <div class="info-item">
-                            <fa-icon [icon]="faMapPin" />
-                            <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.location' | artemisTranslate) + ':' }}</span>
-                            <span [ngClass]="{ 'strikethrough-text': nextSession.isCancelled }">{{ nextSession.location }}</span>
+                        <div class="info-item" role="listitem" aria-labelledby="next-session-location-label" aria-describedby="next-session-location-value">
+                            <fa-icon [icon]="faMapPin" aria-hidden="true" />
+                            <span class="info-label" id="next-session-location-label">{{ ('artemisApp.pages.tutorialGroupDetail.location' | artemisTranslate) + ':' }}</span>
+                            <span [ngClass]="{ 'strikethrough-text': nextSession.isCancelled }" id="next-session-location-value">{{ nextSession.location }}</span>
                             @if (nextSession.locationChanged) {
-                                <div class="change-indicator"></div>
+                                <div class="change-indicator" aria-hidden="true"></div>
                             }
                         </div>
                     </div>
                 }
             </div>
-        </div>
+        </section>
     </div>
     <div class="list-controls-row">
-        <h3>Sessions</h3>
+        <h2>Sessions</h2>
         <p-selectbutton [options]="listOptions" [ngModel]="selectedListOption()" (ngModelChange)="selectedListOption.set($event)" optionLabel="label" optionValue="value" />
     </div>
 
@@ -133,7 +135,7 @@
                             <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
                                 {{ session.date }}
                                 @if (session.dateChanged) {
-                                    <div class="change-indicator"></div>
+                                    <div class="change-indicator" aria-hidden="true"></div>
                                 }
                             </div>
                         </td>
@@ -141,7 +143,7 @@
                             <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
                                 {{ session.time }}
                                 @if (session.timeChanged) {
-                                    <div class="change-indicator"></div>
+                                    <div class="change-indicator" aria-hidden="true"></div>
                                 }
                             </div>
                         </td>
@@ -149,7 +151,7 @@
                             <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
                                 {{ session.location }}
                                 @if (session.locationChanged) {
-                                    <div class="change-indicator"></div>
+                                    <div class="change-indicator" aria-hidden="true"></div>
                                 }
                             </div>
                         </td>
