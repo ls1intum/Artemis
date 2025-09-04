@@ -79,7 +79,8 @@ public class LocalCIMissingJobService {
         var processingJobs = distributedDataAccessService.getProcessingJobIds();
 
         for (BuildJob buildJob : pendingBuildJobs) {
-            if (buildJob.getBuildSubmissionDate().isAfter(now.minusMinutes(buildJobExpirationInMinutes))) {
+            var submissionDate = buildJob.getBuildSubmissionDate();
+            if (submissionDate == null || submissionDate.isAfter(now.minusMinutes(buildJobExpirationInMinutes))) {
                 log.debug("Build job with id {} is too recent to check", buildJob.getBuildJobId());
                 continue;
             }
