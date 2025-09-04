@@ -53,6 +53,12 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         this.activeModal.close();
     }
 
+    protected onModalBackdropClick(event: MouseEvent): void {
+        if (event.target === event.currentTarget) {
+            this.closeModal();
+        }
+    }
+
     protected sendMessage(): void {
         const message = this.currentMessage.trim();
         if (!message || this.isAgentTyping) {
