@@ -56,7 +56,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailScheduleDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTOStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
@@ -642,40 +641,38 @@ public class TutorialGroupService {
         LocalTime scheduleEnd = LocalTime.parse(scheduleDto.endTime());
         String scheduleLocation = scheduleDto.location();
         for (TutorialGroupDetailSessionDTO sessionDto : sessionDtos) {
-            TutorialGroupDetailSessionDTOStatus status = computeStatus(courseTimeZone, sessionDto, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation);
-            sessionDto.setStatus(status);
+            setSessionStatusFlags(sessionDto, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone);
         }
         groupDto.setSessions(sessionDtos);
         return groupDto;
     }
 
-    private TutorialGroupDetailSessionDTOStatus computeStatus(ZoneId courseTimeZone, TutorialGroupDetailSessionDTO session, int scheduleDayOfWeek, LocalTime scheduleStart,
-            LocalTime scheduleEnd, String scheduleLocation) {
+    private void setSessionStatusFlags(TutorialGroupDetailSessionDTO session, int scheduleDayOfWeek, LocalTime scheduleStart, LocalTime scheduleEnd, String scheduleLocation,
+            ZoneId courseTimeZone) {
         if (session.getOriginSessionStatus() == TutorialGroupSessionStatus.CANCELLED) {
-            return TutorialGroupDetailSessionDTOStatus.CANCELLED;
+            session.setCancelled(true);
+            return;
         }
 
         ZonedDateTime sessionStart = session.getStart().withZoneSameInstant(courseTimeZone);
         ZonedDateTime sessionEnd = session.getEnd().withZoneSameInstant(courseTimeZone);
 
         boolean sameDay = sessionStart.getDayOfWeek().getValue() == scheduleDayOfWeek;
+        if (!sameDay) {
+            session.setDateChanged(!sameDay);
+        }
 
         // TODO: verify that sessionStart and sessionTime always only have minute precision (in UI only minute precision can be chosen ->
         // verify that no seconds or more precise time units are sent to server)
         boolean sameTime = sessionStart.toLocalTime().equals(scheduleStart) && sessionEnd.toLocalTime().equals(scheduleEnd);
+        if (!sameTime) {
+            session.setTimeChanged(true);
+        }
 
         boolean sameLocation = session.getLocation().equals(scheduleLocation);
-
-        if (sameDay && sameTime && sameLocation) {
-            return TutorialGroupDetailSessionDTOStatus.ACTIVE;
+        if (!sameLocation) {
+            session.setLocationChanged(true);
         }
-        if (sameDay && sameTime && !sameLocation) {
-            return TutorialGroupDetailSessionDTOStatus.RELOCATED;
-        }
-        if ((!sameDay || !sameTime) && sameLocation) {
-            return TutorialGroupDetailSessionDTOStatus.RESCHEDULED;
-        }
-        return TutorialGroupDetailSessionDTOStatus.RESCHEDULED_AND_RELOCATED;
     }
 
     /**

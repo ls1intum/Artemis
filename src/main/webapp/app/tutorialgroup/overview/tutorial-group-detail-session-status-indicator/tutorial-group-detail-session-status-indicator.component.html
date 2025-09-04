@@ -1,20 +1,14 @@
 <div class="frame">
-    @switch (status()) {
-        @case (TutorialGroupDetailSessionDTOStatus.ACTIVE) {
-            <jhi-tutorial-group-detail-session-status-chip [variant]="'REGULAR'" />
-        }
-        @case (TutorialGroupDetailSessionDTOStatus.CANCELLED) {
-            <jhi-tutorial-group-detail-session-status-chip [variant]="'CANCELLED'" />
-        }
-        @case (TutorialGroupDetailSessionDTOStatus.RESCHEDULED) {
-            <jhi-tutorial-group-detail-session-status-chip [variant]="'RESCHEDULED'" />
-        }
-        @case (TutorialGroupDetailSessionDTOStatus.RELOCATED) {
-            <jhi-tutorial-group-detail-session-status-chip [variant]="'RELOCATED'" />
-        }
-        @case (TutorialGroupDetailSessionDTOStatus.RESCHEDULED_AND_RELOCATED) {
-            <jhi-tutorial-group-detail-session-status-chip [variant]="'RESCHEDULED'" />
-            <jhi-tutorial-group-detail-session-status-chip [variant]="'RELOCATED'" />
-        }
+    @if (!isCancelled() && !locationChanged() && !timeChanged() && !dateChanged()) {
+        <jhi-tutorial-group-detail-session-status-chip [variant]="'REGULAR'" />
+    }
+    @if (isCancelled()) {
+        <jhi-tutorial-group-detail-session-status-chip [variant]="'CANCELLED'" />
+    }
+    @if (timeChanged() || dateChanged()) {
+        <jhi-tutorial-group-detail-session-status-chip [variant]="'RESCHEDULED'" />
+    }
+    @if (locationChanged()) {
+        <jhi-tutorial-group-detail-session-status-chip [variant]="'RELOCATED'" />
     }
 </div>

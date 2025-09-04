@@ -22,20 +22,15 @@ export class TutorialGroupSession implements BaseEntity {
     public attendanceCount?: number;
 }
 
-export enum TutorialGroupDetailSessionDTOStatus {
-    ACTIVE = 'ACTIVE',
-    CANCELLED = 'CANCELLED',
-    RESCHEDULED = 'RESCHEDULED',
-    RELOCATED = 'RELOCATED',
-    RESCHEDULED_AND_RELOCATED = 'RESCHEDULED_AND_RELOCATED',
-}
-
 export class TutorialGroupDetailSessionDTO {
     constructor(
         public start: Dayjs,
         public end: Dayjs,
         public location: string,
-        public status: TutorialGroupDetailSessionDTOStatus,
+        public isCancelled: boolean,
+        public locationChanged: boolean,
+        public timeChanged: boolean,
+        public dateChanged: boolean,
         public attendanceCount?: number,
     ) {}
 }

@@ -21,8 +21,13 @@ public class TutorialGroupDetailSessionDTO {
     @NotNull
     private final String location;
 
-    @NotNull
-    private TutorialGroupDetailSessionDTOStatus status;
+    private boolean isCancelled;
+
+    private boolean locationChanged;
+
+    private boolean timeChanged;
+
+    private boolean dateChanged;
 
     private final Integer attendanceCount;
 
@@ -35,7 +40,10 @@ public class TutorialGroupDetailSessionDTO {
         this.end = end;
         this.location = location;
         this.originSessionStatus = originSessionStatus;
-        this.status = TutorialGroupDetailSessionDTOStatus.ACTIVE;
+        this.isCancelled = false;
+        this.locationChanged = false;
+        this.timeChanged = false;
+        this.dateChanged = false;
         this.attendanceCount = attendanceCount;
     }
 
@@ -51,19 +59,43 @@ public class TutorialGroupDetailSessionDTO {
         return location;
     }
 
-    public TutorialGroupSessionStatus getOriginSessionStatus() {
-        return originSessionStatus;
+    public boolean isCancelled() {
+        return isCancelled;
     }
 
-    public TutorialGroupDetailSessionDTOStatus getStatus() {
-        return status;
+    public void setCancelled(boolean cancelled) {
+        isCancelled = cancelled;
     }
 
-    public void setStatus(TutorialGroupDetailSessionDTOStatus status) {
-        this.status = status;
+    public boolean isLocationChanged() {
+        return locationChanged;
+    }
+
+    public void setLocationChanged(boolean locationChanged) {
+        this.locationChanged = locationChanged;
+    }
+
+    public boolean isTimeChanged() {
+        return timeChanged;
+    }
+
+    public void setTimeChanged(boolean timeChanged) {
+        this.timeChanged = timeChanged;
+    }
+
+    public boolean isDateChanged() {
+        return dateChanged;
+    }
+
+    public void setDateChanged(boolean dateChanged) {
+        this.dateChanged = dateChanged;
     }
 
     public Integer getAttendanceCount() {
         return attendanceCount;
+    }
+
+    public TutorialGroupSessionStatus getOriginSessionStatus() {
+        return originSessionStatus;
     }
 }

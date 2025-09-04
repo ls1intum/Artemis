@@ -1,4 +1,5 @@
 import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -7,7 +8,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBuildingColumns, faCalendar, faCircleExclamation, faClock, faFlag, faMapPin, faTag, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { TutorialGroupDetailSessionDTO, TutorialGroupDetailSessionDTOStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupDetailSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SelectButton } from 'primeng/selectbutton';
 import { FormsModule } from '@angular/forms';
@@ -23,8 +24,11 @@ interface SessionData {
     date: string;
     time: string;
     location: string;
+    isCancelled: boolean;
+    locationChanged: boolean;
+    timeChanged: boolean;
+    dateChanged: boolean;
     attendance?: string;
-    status: TutorialGroupDetailSessionDTOStatus;
 }
 
 type ListOption = 'all-sessions' | 'future-sessions';
@@ -42,6 +46,7 @@ type ListOption = 'all-sessions' | 'future-sessions';
         TableModule,
         SelectModule,
         TutorialGroupDetailSessionStatusIndicatorComponent,
+        NgClass,
     ],
     templateUrl: './new-tutorial-group-detail.component.html',
     styleUrl: './new-tutorial-group-detail.component.scss',
@@ -166,9 +171,12 @@ export class NewTutorialGroupDetailComponent {
         const date = weekday + ', ' + session.start.format('DD.MM.YYYY');
         const time = session.start.format('HH:mm') + '-' + session.end.format('HH:mm');
         const location = session.location;
+        const isCancelled = session.isCancelled;
+        const locationChanged = session.locationChanged;
+        const timeChanged = session.timeChanged;
+        const dateChanged = session.dateChanged;
         const attendance = session.attendanceCount ? session.attendanceCount + ' / ' + this.tutorialGroup().capacity : undefined;
-        const status = session.status;
-        return { date, time, location, attendance, status };
+        return { date, time, location, isCancelled, locationChanged, timeChanged, dateChanged, attendance };
     }
 
     private computeWeekdayStringKeyUsing(sessionStart: Dayjs): string {

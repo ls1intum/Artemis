@@ -73,6 +73,7 @@
                     .info-item {
                         display: flex;
                         gap: 0.375rem;
+                        align-items: center;
 
                         .info-label {
                             color: var(--secondary);
@@ -105,5 +106,23 @@
         border-bottom: 1px solid var(--border-color) !important;
         white-space: normal;
         word-break: break-word;
+    }
+
+    .changeable-session-property {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: start;
+        align-items: center;
+    }
+
+    .strikethrough-text {
+        text-decoration: line-through;
+    }
+
+    .change-indicator {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 0.25rem;
+        background-color: var(--warning);
     }
 }

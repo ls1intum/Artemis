@@ -4,7 +4,7 @@ import { TutorialGroup, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/sh
 import { Observable } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
-import { TutorialGroupDetailSessionDTO, TutorialGroupDetailSessionDTOStatus, TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupDetailSessionDTO, TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
 import { Student } from 'app/openapi/model/student';
@@ -60,7 +60,10 @@ export class TutorialGroupsService {
                                     dayjs(session.start),
                                     dayjs(session.end),
                                     session.location,
-                                    session.status as TutorialGroupDetailSessionDTOStatus,
+                                    session.cancelled,
+                                    session.locationChanged,
+                                    session.timeChanged,
+                                    session.dateChanged,
                                     session.attendanceCount,
                                 ),
                         ),

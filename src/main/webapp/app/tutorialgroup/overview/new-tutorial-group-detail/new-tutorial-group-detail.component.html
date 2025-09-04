@@ -67,32 +67,42 @@
             <div class="info-card-content">
                 @let nextSession = nextSessionData();
                 @if (nextSession) {
-                    @let nextSessionDate = nextSession.date;
-                    @let nextSessionTime = nextSession.time;
-                    @let nextSessionStatus = nextSession.status;
-                    @let nextSessionLocation = nextSession.location;
                     <div class="info-stack">
                         <div class="info-item">
                             <fa-icon [icon]="faCalendar" />
                             <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.date' | artemisTranslate) + ':' }}</span>
-                            {{ nextSessionDate }}
+                            <span [ngClass]="{ 'strikethrough-text': nextSession.isCancelled }">{{ nextSession.date }}</span>
+                            @if (nextSession.dateChanged) {
+                                <div class="change-indicator"></div>
+                            }
                         </div>
                         <div class="info-item">
                             <fa-icon [icon]="faClock" />
                             <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.time' | artemisTranslate) + ':' }}</span>
-                            {{ nextSessionTime }}
+                            <span [ngClass]="{ 'strikethrough-text': nextSession.isCancelled }">{{ nextSession.time }}</span>
+                            @if (nextSession.timeChanged) {
+                                <div class="change-indicator"></div>
+                            }
                         </div>
                     </div>
                     <div class="info-stack">
                         <div class="info-item">
                             <fa-icon [icon]="faCircleExclamation" />
                             <span class="info-label"> {{ ('artemisApp.pages.tutorialGroupDetail.status' | artemisTranslate) + ':' }}</span>
-                            <jhi-tutorial-group-detail-session-status-indicator [status]="nextSessionStatus" />
+                            <jhi-tutorial-group-detail-session-status-indicator
+                                [isCancelled]="nextSession.isCancelled"
+                                [locationChanged]="nextSession.locationChanged"
+                                [timeChanged]="nextSession.timeChanged"
+                                [dateChanged]="nextSession.dateChanged"
+                            />
                         </div>
                         <div class="info-item">
                             <fa-icon [icon]="faMapPin" />
                             <span class="info-label">{{ ('artemisApp.pages.tutorialGroupDetail.location' | artemisTranslate) + ':' }}</span>
-                            {{ nextSessionLocation }}
+                            <span [ngClass]="{ 'strikethrough-text': nextSession.isCancelled }">{{ nextSession.location }}</span>
+                            @if (nextSession.locationChanged) {
+                                <div class="change-indicator"></div>
+                            }
                         </div>
                     </div>
                 }
@@ -118,11 +128,39 @@
             </ng-template>
             <ng-template #body let-session>
                 <tr class="table-row">
-                    <td>{{ session.date }}</td>
-                    <td>{{ session.time }}</td>
-                    <td>{{ session.location }}</td>
+                    <td>
+                        <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
+                            {{ session.date }}
+                            @if (session.dateChanged) {
+                                <div class="change-indicator"></div>
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
+                            {{ session.time }}
+                            @if (session.timeChanged) {
+                                <div class="change-indicator"></div>
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
+                            {{ session.location }}
+                            @if (session.locationChanged) {
+                                <div class="change-indicator"></div>
+                            }
+                        </div>
+                    </td>
                     <td>{{ session.attendance }}</td>
-                    <td><jhi-tutorial-group-detail-session-status-indicator [status]="session.status" /></td>
+                    <td>
+                        <jhi-tutorial-group-detail-session-status-indicator
+                            [isCancelled]="session.isCancelled"
+                            [locationChanged]="session.locationChanged"
+                            [timeChanged]="session.timeChanged"
+                            [dateChanged]="session.dateChanged"
+                        />
+                    </td>
                 </tr>
             </ng-template>
         </p-table>

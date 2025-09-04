@@ -1,5 +1,4 @@
 import { Component, input } from '@angular/core';
-import { TutorialGroupDetailSessionDTOStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { CourseTutorialGroupDetailSessionStatusChipComponent } from 'app/tutorialgroup/overview/tutorial-group-detail-session-status-chip/course-tutorial-group-detail-session-status-chip.component';
 
 @Component({
@@ -9,6 +8,8 @@ import { CourseTutorialGroupDetailSessionStatusChipComponent } from 'app/tutoria
     styleUrl: './tutorial-group-detail-session-status-indicator.component.scss',
 })
 export class TutorialGroupDetailSessionStatusIndicatorComponent {
-    readonly TutorialGroupDetailSessionDTOStatus = TutorialGroupDetailSessionDTOStatus;
-    status = input.required<TutorialGroupDetailSessionDTOStatus>();
+    isCancelled = input.required<boolean>();
+    locationChanged = input.required<boolean>();
+    timeChanged = input.required<boolean>();
+    dateChanged = input.required<boolean>();
 }
