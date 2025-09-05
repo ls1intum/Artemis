@@ -68,7 +68,7 @@ public class QuizTrainingResource {
      */
     @GetMapping("courses/{courseId}/training-questions")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<QuizQuestionWithSolutionDTO>> getQuizQuestionsForPractice(@PathVariable Long courseId) {
+    public ResponseEntity<List<QuizQuestionWithSolutionDTO>> getQuizQuestionsForPractice(@PathVariable long courseId) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -89,7 +89,7 @@ public class QuizTrainingResource {
      */
     @PostMapping("courses/{courseId}/training-questions/{quizQuestionId}/submit")
     @EnforceAtLeastStudent
-    public ResponseEntity<SubmittedAnswerAfterEvaluationDTO> submitForTraining(@PathVariable Long courseId, @PathVariable Long quizQuestionId,
+    public ResponseEntity<SubmittedAnswerAfterEvaluationDTO> submitForTraining(@PathVariable long courseId, @PathVariable long quizQuestionId,
             @Valid @RequestBody QuizTrainingAnswerDTO submittedAnswer) {
         log.debug("REST request to submit QuizQuestion for training : {}", submittedAnswer);
 
