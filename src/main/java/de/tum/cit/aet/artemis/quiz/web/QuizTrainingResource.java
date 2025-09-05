@@ -125,7 +125,6 @@ public class QuizTrainingResource {
     public ResponseEntity<List<LeaderboardEntryDTO>> getQuizTrainingLeaderboard(@PathVariable long courseId) {
         log.info("REST request to get leaderboard for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
         List<LeaderboardEntryDTO> leaderboard = quizTrainingLeaderboardService.getLeaderboard(user.getId(), courseId);
         return ResponseEntity.ok(leaderboard);
     }
