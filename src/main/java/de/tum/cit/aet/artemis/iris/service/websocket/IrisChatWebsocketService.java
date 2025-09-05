@@ -65,10 +65,11 @@ public class IrisChatWebsocketService {
     /**
      * Sends a status update over the websocket to a specific user
      *
-     * @param session     the session to send the status update to
-     * @param stages      the stages to send
-     * @param suggestions the suggestions to send
-     * @param tokens      token usage and cost send by Pyris
+     * @param session      the session to send the status update to
+     * @param stages       the stages to send
+     * @param sessionTitle the session title to send
+     * @param suggestions  the suggestions to send
+     * @param tokens       token usage and cost send by Pyris
      */
     public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages, String sessionTitle, List<String> suggestions, List<LLMRequest> tokens) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
