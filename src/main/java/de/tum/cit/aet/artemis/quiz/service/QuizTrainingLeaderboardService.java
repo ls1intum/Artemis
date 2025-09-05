@@ -103,9 +103,9 @@ public class QuizTrainingLeaderboardService {
         int rank = 1;
         for (QuizTrainingLeaderboard leaderboardEntry : leaderboardEntries) {
             String username = leaderboardEntry.getLeaderboardName() != null ? leaderboardEntry.getLeaderboardName() : leaderboardEntry.getUser().getName();
-            leaderboard.add(new LeaderboardEntryDTO(rank++, leagueId, studentLeagueId, leaderboardEntry.getUser(), username, leaderboardEntry.getScore(),
-                    leaderboardEntry.getAnsweredCorrectly(), leaderboardEntry.getAnsweredWrong(), leaderboardEntry.getTotalQuestions(), leaderboardEntry.getDueDate(),
-                    leaderboardEntry.getStreak()));
+            leaderboard.add(new LeaderboardEntryDTO(rank++, leagueId, studentLeagueId, leaderboardEntry.getUser().getId(), leaderboardEntry.getUser().getName(),
+                    leaderboardEntry.getUser().getImageUrl(), username, leaderboardEntry.getScore(), leaderboardEntry.getAnsweredCorrectly(), leaderboardEntry.getAnsweredWrong(),
+                    leaderboardEntry.getTotalQuestions(), leaderboardEntry.getDueDate(), leaderboardEntry.getStreak()));
         }
         return leaderboard;
     }
