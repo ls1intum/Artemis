@@ -287,7 +287,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 JOIN p.submissions s
                 JOIN s.results r
                 JOIN p.exercise e
-            WHERE r.exerciseId IN :exerciseIds
+            WHERE p.exercise.id IN :exerciseIds
                 AND p.testRun = FALSE
                 AND r.assessor IS NOT NULL
                 AND r.rated = TRUE
