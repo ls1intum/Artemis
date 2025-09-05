@@ -9,7 +9,7 @@
                 <span class="highlight-label">Student</span>
                 <span class="highlight-value">
                     <jhi-profile-picture class="picture" [authorName]="currentUserStudent" [authorId]="currentUserRank" />
-                    {{ currentUserStudent }}
+                    {{ leaderboardName() }}
                 </span>
             </div>
             <div class="highlight-item">
@@ -32,7 +32,14 @@
                 @for (entry of leaderboard(); track entry.rank) {
                     <tr>
                         <td class="not-user-column">{{ entry.rank }}</td>
-                        <td class="user-name"><jhi-profile-picture class="picture" [authorName]="entry.student" [authorId]="entry.rank" />{{ entry.student }}</td>
+                        <td class="user-name">
+                            <jhi-profile-picture class="picture" [authorName]="entry.student" [authorId]="entry.rank" />
+                            @if (entry.student === currentUserStudent) {
+                                {{ leaderboardName() }}
+                            } @else {
+                                {{ entry.student }}
+                            }
+                        </td>
                         <td class="not-user-column">{{ entry.score }}</td>
                     </tr>
                 }

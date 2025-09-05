@@ -34,6 +34,14 @@ export class CourseTrainingComponent {
     courseId = computed(() => this.paramsSignal()?.['courseId']);
 
     isRanked = signal<boolean>(true);
+    displayName = signal<string>('');
+
+    setDisplayName(name: string): void {
+        if (name && name.trim()) {
+            this.displayName.set(name.trim());
+            // API call to save the display name
+        }
+    }
 
     league = computed(() => {
         const user = this.currentUser();
@@ -60,12 +68,30 @@ export class CourseTrainingComponent {
         const userEntry = entries.find((entry) => entry.student === user.name);
         return userEntry?.score ?? 0;
     });
-    dueIn = computed(() => {
+    dueDate = computed(() => {
         const user = this.currentUser();
         const entries = this._leaderboard();
 
         const userEntry = entries.find((entry) => entry.student === user.name);
-        return userEntry?.dueIn ?? 0;
+        return userEntry?.dueDate ?? 0;
+    });
+    dueIn = computed(() => {
+        const dueDateValue = this.dueDate();
+
+        if (!dueDateValue) {
+            return 0;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const dueDate = new Date(dueDateValue);
+        dueDate.setHours(0, 0, 0, 0);
+
+        const diffTime = dueDate.getTime() - today.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        return Math.max(0, diffDays);
     });
     streak = computed(() => {
         const user = this.currentUser();
@@ -109,9 +135,8 @@ export class CourseTrainingComponent {
         this.router.navigate(['courses', this.courseId(), 'training', 'quiz']);
     }
 
-    _league = 'Gold';
     _leaderboard = signal<LeaderboardEntry[]>([
-        { rank: 1, studentLeague: 2, student: 'Maria Musterfrau', score: 120, answeredCorrectly: 32, answeredWrong: 5, dueIn: 5, streak: 10 },
+        { rank: 1, studentLeague: 2, student: 'Maria Musterfrau', score: 120, answeredCorrectly: 32, answeredWrong: 5, dueDate: new Date(Date.now()), streak: 10 },
         { rank: 2, league: 2, student: 'Bob Sample', score: 112, answeredCorrectly: 28, answeredWrong: 8 },
         { rank: 3, league: 3, student: 'Carol Test', score: 100, answeredCorrectly: 20, answeredWrong: 12 },
         { rank: 4, league: 3, student: 'Moritz Spengler', score: 92, answeredCorrectly: 18, answeredWrong: 15 },
