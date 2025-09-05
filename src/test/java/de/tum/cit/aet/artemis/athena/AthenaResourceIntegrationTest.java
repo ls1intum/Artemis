@@ -42,8 +42,10 @@ import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRep
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -388,8 +390,27 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
 
-        // Add Git repo for export
-        programmingExerciseUtilService.createGitRepository();
+        // Seed a LocalVC bare repository with content
+        var sourceRepo = new LocalRepository(defaultBranch);
+        sourceRepo.configureRepos(localVCRepoPath, "athenaSrcLocalRepo", "athenaSrcOriginRepo");
+
+        // Ensure tests repository URI exists on the exercise
+        var testsSlug = programmingExercise.getProjectKey().toLowerCase() + "-tests";
+        var testsUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), testsSlug);
+        programmingExercise.setTestRepositoryUri(testsUri.toString());
+        programmingExerciseRepository.save(programmingExercise);
+
+        var sourceUri = new LocalVCRepositoryUri(localVCBaseUri, sourceRepo.remoteBareGitRepoFile.toPath());
+
+        // Copy source repo contents to target (template, solution, tests)
+        var templateUri = new LocalVCRepositoryUri(programmingExercise.getTemplateRepositoryUri());
+        gitService.copyBareRepositoryWithoutHistory(sourceUri, templateUri, defaultBranch);
+
+        var solutionUri = new LocalVCRepositoryUri(programmingExercise.getSolutionRepositoryUri());
+        gitService.copyBareRepositoryWithoutHistory(sourceUri, solutionUri, defaultBranch);
+
+        var testsRepoUri = new LocalVCRepositoryUri(programmingExercise.getTestRepositoryUri());
+        gitService.copyBareRepositoryWithoutHistory(sourceUri, testsRepoUri, defaultBranch);
 
         // Get repository contents as map from endpoint
         var authHeaders = new HttpHeaders();
@@ -398,8 +419,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         String json = request.get("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, String.class, authHeaders);
         Map<String, String> repoFiles = request.getObjectMapper().readValue(json, new TypeReference<Map<String, String>>() {
         });
-        // Check that response contains at least one file
-        assertThat(repoFiles).isNotNull();
+        assertThat(repoFiles).as("export returns exactly one file: README.md").isNotNull().hasSize(1).containsOnlyKeys("README.md").containsEntry("README.md", "Initial commit");
     }
 
     @ParameterizedTest

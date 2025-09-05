@@ -75,7 +75,8 @@ public class AthenaRepositoryExportService {
     public Map<String, String> getRepositoryFilesContent(long exerciseId, Long submissionId, RepositoryType repositoryType) throws IOException {
         log.debug("Retrieving repository file contents for exercise {}, submission {} (repoType: {})", exerciseId, submissionId, repositoryType);
 
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        var programmingExercise = (repositoryType != null) ? programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId)
+                : programmingExerciseRepository.findByIdElseThrow(exerciseId);
         checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise);
 
         // Athena currently does not support individual due dates
