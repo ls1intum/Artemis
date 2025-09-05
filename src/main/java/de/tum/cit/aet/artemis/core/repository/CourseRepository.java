@@ -229,16 +229,18 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * @return A list with a map for every submission containing date and the username
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
-                SUBSTRING(CAST(s.submissionDate AS string), 1, 10),
-                p.student.login
-            )
-            FROM StudentParticipation p
+                SELECT NEW de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
+                  YEAR(s.submissionDate),
+                  MONTH(s.submissionDate),
+                  DAY(s.submissionDate),
+                  p.student.login
+                )
+                FROM StudentParticipation p
                 JOIN p.submissions s
-            WHERE p.exercise.id IN :exerciseIds
-                AND s.submissionDate >= :startDate
-                AND s.submissionDate <= :endDate
-            GROUP BY SUBSTRING(CAST(s.submissionDate AS string), 1, 10), p.student.login
+                WHERE p.exercise.id in :exerciseIds
+                  AND s.submissionDate >= :startDate
+                  AND s.submissionDate < :endDate
+               GROUP BY YEAR(s.submissionDate), MONTH(s.submissionDate), DAY(s.submissionDate), p.student.login
             """)
     List<StatisticsEntry> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
