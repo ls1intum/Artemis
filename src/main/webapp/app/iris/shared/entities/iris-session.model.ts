@@ -8,7 +8,7 @@ export class IrisSession implements BaseEntity {
     user?: User;
     messages?: IrisMessage[];
     latestSuggestions?: string;
-    title: string;
+    title?: string;
     creationDate: Date;
     chatMode: ChatServiceMode;
     entityId: number;
