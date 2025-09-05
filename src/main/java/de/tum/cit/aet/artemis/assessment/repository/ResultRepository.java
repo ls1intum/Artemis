@@ -17,14 +17,10 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -911,27 +907,5 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 )
             """)
     Optional<Result> findLatestResultWithFeedbacksBySubmissionId(@Param("submissionId") long submissionId, @Param("dateTime") ZonedDateTime dateTime);
-
-    @Transactional
-    @Modifying
-    @Query("""
-                UPDATE Result r
-                   SET r.exerciseId = (
-                       SELECT p.exercise.id
-                         FROM Submission s
-                         JOIN s.participation p
-                        WHERE s.id = r.submission.id
-                   )
-                 WHERE r.exerciseId IS NULL
-                   AND r.id IN :ids
-            """)
-    int backfillExerciseIdBatch(@Param("ids") List<Long> ids);
-
-    @Query("""
-                SELECT r.id
-                  FROM Result r
-                 WHERE r.exerciseId IS NULL
-            """)
-    Slice<Long> findResultIdsWithoutExerciseId(Pageable pageable);
 
 }
