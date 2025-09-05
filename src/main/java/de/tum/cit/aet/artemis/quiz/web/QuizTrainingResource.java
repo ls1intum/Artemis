@@ -61,12 +61,12 @@ public class QuizTrainingResource {
     }
 
     /**
-     * Retrieves all the quiz questions belonging to a course that are released for practice
+     * Retrieves 10 quiz questions for the training session for the given course. The questions are selected based on the spaced repetition algorithm.
      *
      * @param courseId the id of the course whose quiz questions should be retrieved
-     * @return a set of quiz questions from the specified course that are released for practice
+     * @return a list of 10 quiz questions for the training session
      */
-    @GetMapping("courses/{courseId}/training/questions")
+    @GetMapping("courses/{courseId}/training-questions")
     @EnforceAtLeastStudent
     public ResponseEntity<List<QuizQuestionWithSolutionDTO>> getQuizQuestionsForPractice(@PathVariable Long courseId) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
@@ -87,7 +87,7 @@ public class QuizTrainingResource {
      * @param submittedAnswer the submitted answer by the user for the quiz question
      * @return the ResponseEntity with status 200 (OK) and the result of the evaluated submitted answer as its body
      */
-    @PostMapping("courses/{courseId}/training/{quizQuestionId}/submit")
+    @PostMapping("courses/{courseId}/training-questions/{quizQuestionId}/submit")
     @EnforceAtLeastStudent
     public ResponseEntity<SubmittedAnswerAfterEvaluationDTO> submitForTraining(@PathVariable Long courseId, @PathVariable Long quizQuestionId,
             @Valid @RequestBody QuizTrainingAnswerDTO submittedAnswer) {
