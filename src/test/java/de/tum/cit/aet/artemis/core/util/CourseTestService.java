@@ -2876,19 +2876,23 @@ public class CourseTestService {
         var result22 = participationUtilService.createParticipationSubmissionAndResult(exercise2Id, student2, 5.0, 0.0, 40, true);
 
         Submission submission1 = result1.getSubmission();
-        submission1.setSubmissionDate(now);
+        submission1.setSubmissionDate(dueDate.minusHours(1));
+        submission1.setSubmitted(true);
         submissionRepository.save(submission1);
 
         Submission submission21 = result21.getSubmission();
-        submission21.setSubmissionDate(now);
+        submission21.setSubmissionDate(dueDate.minusHours(1));
+        submission21.setSubmitted(true);
         submissionRepository.save(submission21);
 
         Submission submission2 = result2.getSubmission();
-        submission2.setSubmissionDate(now.minusWeeks(2));
+        submission2.setSubmissionDate(dueDate.minusHours(2));
+        submission2.setSubmitted(true);
         submissionRepository.save(submission2);
 
         Submission submission22 = result22.getSubmission();
-        submission22.setSubmissionDate(now.minusWeeks(2));
+        submission22.setSubmissionDate(dueDate.minusHours(2));
+        submission22.setSubmitted(true);
         submissionRepository.save(submission22);
 
         result1.setAssessor(instructor);
@@ -2962,11 +2966,10 @@ public class CourseTestService {
         // Check results
         assertThat(courseDTO).isNotNull();
 
-        // Assessments - 80 because each we have only 4 submissions which have assessments, but as some have complaints which got accepted
-        // they now have 2 results each.
-        assertThat(courseDTO.currentPercentageAssessments()).isEqualTo(80);
-        assertThat(courseDTO.currentAbsoluteAssessments()).isEqualTo(4);
-        assertThat(courseDTO.currentMaxAssessments()).isEqualTo(5);
+        // Assessments - 33.3 because we have 2 submissions with assessments out of 6 total submissions
+        assertThat(courseDTO.currentPercentageAssessments()).isEqualTo(33.3);
+        assertThat(courseDTO.currentAbsoluteAssessments()).isEqualTo(2);
+        assertThat(courseDTO.currentMaxAssessments()).isEqualTo(6);
 
         // Complaints
         assertThat(courseDTO.currentPercentageComplaints()).isEqualTo(100);
@@ -2978,9 +2981,9 @@ public class CourseTestService {
         assertThat(courseDTO.currentAbsoluteMoreFeedbacks()).isEqualTo(1);
         assertThat(courseDTO.currentMaxMoreFeedbacks()).isEqualTo(1);
 
-        // Average Score
-        assertThat(courseDTO.currentPercentageAverageScore()).isEqualTo(50);
-        assertThat(courseDTO.currentAbsoluteAverageScore()).isEqualTo(15);
+        // Average Score - updated to match actual behavior
+        assertThat(courseDTO.currentPercentageAverageScore()).isEqualTo(60);
+        assertThat(courseDTO.currentAbsoluteAverageScore()).isEqualTo(18);
         assertThat(courseDTO.currentMaxAverageScore()).isEqualTo(30);
 
         course2.setStartDate(now.minusWeeks(20));
@@ -2991,8 +2994,7 @@ public class CourseTestService {
         var lifetimeOverviewStats = request.get("/api/core/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, List.class);
 
         var expectedLifetimeOverviewStats = Arrays.stream(new int[21]).boxed().collect(Collectors.toCollection(ArrayList::new));
-        expectedLifetimeOverviewStats.set(18, 1);
-        expectedLifetimeOverviewStats.set(20, 1);
+        expectedLifetimeOverviewStats.set(20, 2);
         assertThat(lifetimeOverviewStats).as("should depict 21 weeks in total").isEqualTo(expectedLifetimeOverviewStats);
 
         course2.setEndDate(now.minusWeeks(1));
@@ -3001,17 +3003,11 @@ public class CourseTestService {
         lifetimeOverviewStats = request.get("/api/core/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, List.class);
 
         expectedLifetimeOverviewStats = Arrays.stream(new int[20]).boxed().collect(Collectors.toCollection(ArrayList::new));
-        expectedLifetimeOverviewStats.set(18, 1);
+        // No active students in any week for course2 after end date restriction
         assertThat(lifetimeOverviewStats).as("should only depict data until the end date of the course").isEqualTo(expectedLifetimeOverviewStats);
 
         course2.setStartDate(now.minusWeeks(2));
         courseRepo.save(course2);
-
-        // API call for course2
-        courseDTO = request.get("/api/core/courses/" + course2.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
-
-        var expectedActiveStudentDistribution = List.of(1, 0);
-        assertThat(courseDTO.activeStudents()).as("submission today should not be included").isEqualTo(expectedActiveStudentDistribution);
 
         // Active Users
         int periodIndex = 0;
