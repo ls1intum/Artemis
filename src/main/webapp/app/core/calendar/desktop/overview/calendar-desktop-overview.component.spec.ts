@@ -84,15 +84,19 @@ describe('CalendarDesktopOverviewComponent', () => {
         fixture.detectChanges();
         let firstDayOfCurrentMonth = component.firstDayOfCurrentMonth();
         let firstDayOfCurrentWeek = component.firstDayOfCurrentWeek();
-        expect(firstDayOfCurrentMonth.isSame(initialFirstDayOfCurrentMonth.subtract(1, 'month'), 'day')).toBeTrue();
-        expect(firstDayOfCurrentWeek.isSame(firstDayOfCurrentMonth.startOf('isoWeek'), 'day')).toBeTrue();
+        let expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth.subtract(1, 'month');
+        let expectedFirstDayOfCurrentWeek = firstDayOfCurrentMonth.startOf('isoWeek');
+        expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBeTrue();
+        expect(firstDayOfCurrentWeek.isSame(expectedFirstDayOfCurrentWeek, 'day')).toBeTrue();
 
         nextButton.click();
         fixture.detectChanges();
         firstDayOfCurrentMonth = component.firstDayOfCurrentMonth();
         firstDayOfCurrentWeek = component.firstDayOfCurrentWeek();
-        expect(firstDayOfCurrentMonth.isSame(initialFirstDayOfCurrentMonth, 'day')).toBeTrue();
-        expect(firstDayOfCurrentWeek.isSame(initialFirstDayOfCurrentMonth.startOf('isoWeek'), 'day')).toBeTrue();
+        expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth;
+        expectedFirstDayOfCurrentWeek = initialFirstDayOfCurrentMonth.startOf('isoWeek');
+        expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBeTrue();
+        expect(firstDayOfCurrentWeek.isSame(expectedFirstDayOfCurrentWeek, 'day')).toBeTrue();
 
         weekButton.click();
         fixture.detectChanges();
@@ -104,15 +108,21 @@ describe('CalendarDesktopOverviewComponent', () => {
         fixture.detectChanges();
         firstDayOfCurrentMonth = component.firstDayOfCurrentMonth();
         firstDayOfCurrentWeek = component.firstDayOfCurrentWeek();
-        expect(firstDayOfCurrentMonth.isSame(initialFirstDayOfCurrentMonth, 'day')).toBeTrue();
-        expect(firstDayOfCurrentWeek.isSame(initialFirstDayOfCurrentMonth.startOf('isoWeek').add(1, 'week'), 'day')).toBeTrue();
+        expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth;
+        expectedFirstDayOfCurrentWeek = initialFirstDayOfCurrentMonth.startOf('isoWeek').add(1, 'week');
+        expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBeTrue();
+        expect(firstDayOfCurrentWeek.isSame(expectedFirstDayOfCurrentWeek, 'day')).toBeTrue();
 
         previousButton.click();
         fixture.detectChanges();
         firstDayOfCurrentMonth = component.firstDayOfCurrentMonth();
         firstDayOfCurrentWeek = component.firstDayOfCurrentWeek();
-        expect(firstDayOfCurrentMonth.isSame(initialFirstDayOfCurrentMonth.subtract(1, 'month'), 'day')).toBeTrue();
-        expect(firstDayOfCurrentWeek.isSame(initialFirstDayOfCurrentMonth.startOf('isoWeek'), 'day')).toBeTrue();
+        expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth.startOf('isoWeek').isBefore(initialFirstDayOfCurrentMonth)
+            ? initialFirstDayOfCurrentMonth.subtract(1, 'month')
+            : initialFirstDayOfCurrentMonth;
+        expectedFirstDayOfCurrentWeek = initialFirstDayOfCurrentMonth.startOf('isoWeek');
+        expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBeTrue();
+        expect(firstDayOfCurrentWeek.isSame(expectedFirstDayOfCurrentWeek, 'day')).toBeTrue();
     });
 
     it('should go to today', () => {
