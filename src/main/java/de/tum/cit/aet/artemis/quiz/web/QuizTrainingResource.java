@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
@@ -120,12 +121,11 @@ public class QuizTrainingResource {
      * @return the ResponseEntity containing a list of LeaderboardEntryDTO objects representing the leaderboard
      */
     @GetMapping("courses/{courseId}/training/leaderboard")
-    @EnforceAtLeastStudent
-    public ResponseEntity<List<LeaderboardEntryDTO>> getQuizTrainingLeaderboard(@PathVariable Long courseId) {
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<List<LeaderboardEntryDTO>> getQuizTrainingLeaderboard(@PathVariable long courseId) {
         log.info("REST request to get leaderboard for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         List<LeaderboardEntryDTO> leaderboard = quizTrainingLeaderboardService.getLeaderboard(user.getId(), courseId);
         return ResponseEntity.ok(leaderboard);
     }

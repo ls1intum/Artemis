@@ -20,8 +20,8 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizTrainingLeaderboard;
 public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<QuizTrainingLeaderboard, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = "user")
-    List<QuizTrainingLeaderboard> findByLeagueIdAndCourseIdOrderByScoreDescTotalScoreDescUserAscId(long leagueId, long courseId);
+    List<QuizTrainingLeaderboard> findByLeagueAndCourseIdOrderByScoreDescUserAscId(int leagueId, long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = "user")
-    Optional<QuizTrainingLeaderboard> findByUserIdAndCourseId(Long userId, Long courseId);
+    Optional<QuizTrainingLeaderboard> findByUserIdAndCourseId(long userId, long courseId);
 }

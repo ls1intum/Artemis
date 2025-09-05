@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
+import java.time.ZonedDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -7,11 +9,15 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.validation.constraints.Size;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 @Entity
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class QuizTrainingLeaderboard extends DomainObject {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -22,27 +28,38 @@ public class QuizTrainingLeaderboard extends DomainObject {
     @JoinColumn
     private Course course;
 
+    // The name the student sets for the leaderboard
     @Size(max = 50)
-    @Column(name = "leaderboard_name", length = 50)
+    @Column(nullable = false, name = "leaderboard_name", length = 50)
     private String leaderboardName;
 
-    @Column(name = "league_id")
-    private long leagueId;
+    // The league the student is in (1-3)
+    @Column(nullable = false, name = "league")
+    private int league;
 
-    @Column(name = "total_score")
-    private int totalScore;
-
-    @Column(name = "score")
+    // The leaderboard score of the student
+    @Column(nullable = false, name = "score")
     private int score;
 
-    @Column(name = "answered_correctly")
+    // The number of questions the student answered correctly in total
+    @Column(nullable = false, name = "answered_correctly")
     private int answeredCorrectly;
 
-    @Column(name = "answered_wrong")
+    // The number of questions the student answered wrong in total
+    @Column(nullable = false, name = "answered_wrong")
     private int answeredWrong;
 
-    @Column(name = "total_questions")
+    // The total number of questions available for training
+    @Column(nullable = false, name = "total_questions")
     private long totalQuestions;
+
+    // The due date for the next quiz training session
+    @Column(nullable = false, name = "due_date")
+    private ZonedDateTime dueDate;
+
+    // The current streak the student is on (number of training sessions done at the exact due date)
+    @Column(nullable = false, name = "streak")
+    private int streak;
 
     public User getUser() {
         return user;
@@ -68,20 +85,12 @@ public class QuizTrainingLeaderboard extends DomainObject {
         this.leaderboardName = leaderboardName;
     }
 
-    public long getLeagueId() {
-        return leagueId;
+    public int getLeague() {
+        return league;
     }
 
-    public void setLeagueId(long leagueId) {
-        this.leagueId = leagueId;
-    }
-
-    public int getTotalScore() {
-        return totalScore;
-    }
-
-    public void setTotalScore(int totalScore) {
-        this.totalScore = totalScore;
+    public void setLeague(int league) {
+        this.league = league;
     }
 
     public int getScore() {
@@ -114,5 +123,21 @@ public class QuizTrainingLeaderboard extends DomainObject {
 
     public void setTotalQuestions(long totalQuestions) {
         this.totalQuestions = totalQuestions;
+    }
+
+    public ZonedDateTime getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(ZonedDateTime dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public int getStreak() {
+        return streak;
+    }
+
+    public void setStreak(int streak) {
+        this.streak = streak;
     }
 }

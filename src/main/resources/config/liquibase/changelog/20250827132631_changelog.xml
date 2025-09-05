@@ -14,12 +14,9 @@
                 <constraints nullable="false"/>
             </column>
             <column name="leaderboard_name" type="varchar(50)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="league_id" type="int">
                 <constraints nullable="false"/>
             </column>
-            <column name="total_score" type="int">
+            <column name="league" type="tinyint">
                 <constraints nullable="false"/>
             </column>
             <column name="score" type="int">
@@ -32,6 +29,12 @@
                 <constraints nullable="false"/>
             </column>
             <column name="total_questions" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="due_date" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="streak" type="int">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -57,10 +60,9 @@
                 columnNames="user_id, course_id"
                 constraintName="uc_quiz_training_leaderboard_user_course"/>
 
-        <createIndex indexName="idx_quiz_training_league_course_score" tableName="quiz_training_leaderboard">
-            <column name="league_id"/>
+        <createIndex indexName="idx_quiz_training_league_course" tableName="quiz_training_leaderboard">
+            <column name="league"/>
             <column name="course_id"/>
-            <column name="score" descending="true"/>
         </createIndex>
     </changeSet>
 </databaseChangeLog>
