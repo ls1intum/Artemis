@@ -243,6 +243,11 @@ public class RepositoryService {
     /**
      * Variant that opens the bare repository from a {@link LocalVCRepositoryUri} and applies
      * {@link #getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(Repository, ZonedDateTime)}.
+     *
+     * @param repositoryUri the repository URI to open
+     * @param deadline      the deadline for the last commit
+     * @return a mapping of file paths to their content
+     * @throws IOException if an I/O error occurs
      */
     public Map<String, String> getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(LocalVCRepositoryUri repositoryUri, ZonedDateTime deadline) throws IOException {
         try (var bareRepository = gitService.getBareRepository(repositoryUri, false)) {
