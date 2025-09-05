@@ -164,12 +164,10 @@ public class AthenaModuleService {
     }
 
     private static String getModule(Exercise exercise, AthenaModuleMode athenaModuleMode) {
-        String module = null;
-        switch (athenaModuleMode) {
-            case AthenaModuleMode.FEEDBACK_SUGGESTIONS -> module = exercise.getFeedbackSuggestionModule();
-            case AthenaModuleMode.PRELIMINARY_FEEDBACK -> module = exercise.getPreliminaryFeedbackModule();
-        }
-        return module;
+        return switch (athenaModuleMode) {
+            case FEEDBACK_SUGGESTIONS -> exercise.getFeedbackSuggestionModule();
+            case PRELIMINARY_FEEDBACK -> exercise.getPreliminaryFeedbackModule();
+        };
     }
 
     /**
@@ -190,7 +188,7 @@ public class AthenaModuleService {
 
     private static void checkValidityOfAnAthenaModuleBasedOnDueDate(String originalExerciseModule, String updatedExerciseModule, String entityName, ZonedDateTime dueDate) {
         if (!Objects.equals(originalExerciseModule, updatedExerciseModule) && dueDate != null && dueDate.isBefore(ZonedDateTime.now())) {
-            throw new BadRequestAlertException("Athena module can't be changed after due date has passed", entityName, " ");
+            throw new BadRequestAlertException("Athena module can't be changed after due date has passed", entityName, "athenaModuleChangeAfterDueDate");
         }
     }
 
