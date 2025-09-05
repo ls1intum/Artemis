@@ -219,8 +219,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 JOIN s.participation p
             WHERE r.completionDate IS NOT NULL
                 AND r.assessor IS NOT NULL
-                AND p.testRun = false
-                AND r.rated = true
+                AND p.testRun = FALSE
                 AND p.exercise.id IN :exerciseIds
             """)
     long countAssessmentsForExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
