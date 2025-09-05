@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20250905120000" author="jfr2102">
+        <createIndex indexName="idx_build_job_result_submission_date" tableName="build_job">
+            <column name="build_job_result"/>
+            <column name="build_submission_date"/>
+        </createIndex>
+
+        <createIndex indexName="idx_build_job_participation_submission_date" tableName="build_job">
+            <column name="participation_id"/>
+            <column name="build_submission_date"/>
+        </createIndex>
+
+        <rollback>
+            <dropIndex indexName="idx_build_job_result_submission_date" tableName="build_job"/>
+            <dropIndex indexName="idx_build_job_participation_submission_date" tableName="build_job"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>
+
