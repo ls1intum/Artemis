@@ -14,8 +14,8 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -326,6 +326,10 @@ public class FileUtil {
         return path.normalize().toString().contains(subPath.normalize().toString());
     }
 
+    // ------------------------------------------------------------------------------------
+    // UPDATED: Native-image–safe resource copying (no Resource#getFile(), stream-based)
+    // ------------------------------------------------------------------------------------
+
     /**
      * Copies the given resources to the target directory.
      *
@@ -338,13 +342,19 @@ public class FileUtil {
      * @throws IOException If the copying operation fails.
      */
     public static void copyResources(final Resource[] resources, final Path prefix, final Path targetDirectory, final boolean keepParentDirectories) throws IOException {
+        if (resources == null) {
+            return;
+        }
         for (final Resource resource : resources) {
+            if (resource == null || !resource.exists()) {
+                continue;
+            }
             copyResource(resource, prefix, targetDirectory, keepParentDirectories);
         }
     }
 
     /**
-     * Copies the given resource to the target directory.
+     * Copies the given resource to the target directory using stream-based I/O. This works on JVM and in GraalVM native images.
      *
      * @param resource              The resource that should be copied.
      * @param prefix                Cut everything until the end of the prefix.
@@ -355,72 +365,51 @@ public class FileUtil {
      * @throws IOException If the copying operation fails.
      */
     public static void copyResource(final Resource resource, final Path prefix, final Path targetDirectory, final boolean keepParentDirectories) throws IOException {
-        final Path targetPath = generateTargetPath(resource, prefix, targetDirectory, keepParentDirectories);
+        final String relative = keepParentDirectories ? resolveRelativePath(resource, prefix) : Optional.ofNullable(resource.getFilename()).orElse("resource");
+
+        final Path targetPath = targetDirectory.resolve(relative).normalize();
 
         if (isIgnoredDirectory(targetPath)) {
             return;
         }
 
-        FileUtils.copyInputStreamToFile(resource.getInputStream(), targetPath.toFile());
+        Path parent = targetPath.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
 
-        if (targetPath.endsWith("gradlew")) {
+        try (InputStream in = resource.getInputStream()) {
+            Files.copy(in, targetPath, StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        if (targetPath.getFileName() != null && targetPath.getFileName().toString().equals("gradlew")) {
             targetPath.toFile().setExecutable(true);
         }
     }
 
-    private static Path generateTargetPath(final Resource resource, final Path prefix, final Path targetDirectory, final boolean keepParentDirectory) throws IOException {
-        final Path filePath;
-        if (resource.isFile()) {
-            filePath = resource.getFile().toPath();
-        }
-        else {
-            final String url = URLDecoder.decode(resource.getURL().toString(), UTF_8);
-            filePath = Path.of(url);
-        }
-
-        return generateTargetPath(filePath, prefix, targetDirectory, keepParentDirectory);
-    }
-
     /**
-     * Generates the target file path which a resource should be copied to.
-     * <p>
-     * Searches for {@code prefix} in the {@code source} and removes all path elements including and up to the prefix.
-     * The target file path is then determined by resolving the remaining path against the target directory.
-     *
-     * @param source              The path where the resource is copied from.
-     * @param prefix              The prefix that should be trimmed from the source path.
-     * @param targetDirectory     The base target directory.
-     * @param keepParentDirectory Keep directories in the path between prefix and filename.
-     * @return The target path where the resource should be copied to.
+     * Compute a resource path relative to {@code prefix} without converting the resource to a File.
+     * Works for jar:/resource:/file: URLs; falls back to the resource filename.
      */
-    private static Path generateTargetPath(final Path source, final Path prefix, final Path targetDirectory, final boolean keepParentDirectory) {
-        if (!keepParentDirectory) {
-            return targetDirectory.resolve(source.getFileName());
+    private static String resolveRelativePath(final Resource resource, final Path prefix) throws IOException {
+        String urlPath = URLDecoder.decode(resource.getURL().getPath(), UTF_8);
+
+        // Normalize to forward slashes
+        urlPath = urlPath.replace('\\', '/');
+        String prefixStr = "/" + prefix.toString().replace('\\', '/');
+
+        int idx = urlPath.indexOf(prefixStr);
+        if (idx >= 0) {
+            String after = urlPath.substring(idx + prefixStr.length());
+            if (after.startsWith("/")) {
+                after = after.substring(1);
+            }
+            if (!after.isBlank()) {
+                return after;
+            }
         }
 
-        final List<Path> sourcePathElements = getPathElements(source);
-        final List<Path> prefixPathElements = getPathElements(prefix);
-
-        final int prefixStartIdx = Collections.indexOfSubList(sourcePathElements, prefixPathElements);
-
-        if (prefixStartIdx < 0) {
-            return targetDirectory.resolve(source);
-        }
-
-        final int startIdx = prefixStartIdx + prefixPathElements.size();
-        final Path relativeSource = source.subpath(startIdx, sourcePathElements.size());
-
-        return targetDirectory.resolve(relativeSource);
-    }
-
-    private static List<Path> getPathElements(final Path path) {
-        final List<Path> elements = new ArrayList<>();
-
-        for (final Path value : path) {
-            elements.add(value);
-        }
-
-        return elements;
+        return Optional.ofNullable(resource.getFilename()).orElse("resource");
     }
 
     /**
