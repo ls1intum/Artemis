@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.AndroidFingerprintService;
 import de.tum.cit.aet.artemis.core.service.ArtemisSuccessfulLoginService;
+import de.tum.cit.aet.artemis.core.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.util.AndroidApkKeyHashUtil;
 
 /**
@@ -70,6 +71,8 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final GlobalNotificationSettingRepository globalNotificationSettingRepository;
 
+    private final RateLimitService rateLimitService;
+
     @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
     private boolean passkeyEnabled;
 
@@ -93,7 +96,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService,
             MailSendingService mailSendingService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
-            GlobalNotificationSettingRepository globalNotificationSettingRepository) {
+            GlobalNotificationSettingRepository globalNotificationSettingRepository, RateLimitService rateLimitService) {
         this.auditEventRepository = auditEventRepository;
         this.converter = converter;
         this.jwtCookieService = jwtCookieService;
@@ -106,6 +109,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
         this.mailSendingService = mailSendingService;
         this.artemisSuccessfulLoginService = artemisSuccessfulLoginService;
         this.globalNotificationSettingRepository = globalNotificationSettingRepository;
+        this.rateLimitService = rateLimitService;
     }
 
     /**
@@ -170,7 +174,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
         WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(auditEventRepository, converter, jwtCookieService, userRepository,
                 publicKeyCredentialUserEntityRepository, userCredentialRepository, publicKeyCredentialCreationOptionsRepository, publicKeyCredentialRequestOptionsRepository,
-                mailSendingService, artemisSuccessfulLoginService, globalNotificationSettingRepository);
+                mailSendingService, artemisSuccessfulLoginService, globalNotificationSettingRepository, rateLimitService);
 
         http.with(webAuthnConfigurer, configurer -> {
             configurer.allowedOrigins(allowedOrigins).rpId(relyingPartyId).rpName(relyingPartyName);
