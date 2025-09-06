@@ -87,19 +87,23 @@ public class AtlasAgentService {
 
                 // Make request to Azure OpenAI
                 String url = configuration.getAzureEndpoint() + "?api-version=" + configuration.getAzureApiVersion();
-                ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+                ResponseEntity<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.POST, entity,
+                        new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {
+                        });
 
                 // Extract response text
                 Map<String, Object> responseBody = response.getBody();
                 if (responseBody != null && responseBody.containsKey("choices")) {
-                    List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
-                    if (!choices.isEmpty()) {
-                        Map<String, Object> firstChoice = choices.get(0);
-                        Map<String, Object> messageObj = (Map<String, Object>) firstChoice.get("message");
-                        String content = (String) messageObj.get("content");
-
-                        log.info("Successfully processed chat message for course {}", courseId);
-                        return content != null ? content : "I apologize, but I couldn't generate a response.";
+                    Object choicesObj = responseBody.get("choices");
+                    if (choicesObj instanceof List<?> choicesList) {
+                        if (!choicesList.isEmpty() && choicesList.get(0) instanceof Map<?, ?> firstChoice) {
+                            Object messageObj = firstChoice.get("message");
+                            if (messageObj instanceof Map<?, ?> messageMap) {
+                                String content = (String) messageMap.get("content");
+                                log.info("Successfully processed chat message for course {}", courseId);
+                                return content != null ? content : "I apologize, but I couldn't generate a response.";
+                            }
+                        }
                     }
                 }
 
