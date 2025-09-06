@@ -39,10 +39,6 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
 
     private static final String TEST_PREFIX = "exercisesharingexporttests";
 
-    protected String getTestPrefix() {
-        return TEST_PREFIX;
-    }
-
     public static final String TEST_CALLBACK_URL = "http://testing/xyz1";
 
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
@@ -63,7 +59,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
         sharingPlatformMockProvider.reset();
     }
 
-    ProgrammingExercise programmingExercise1;
+    private ProgrammingExercise programmingExercise1;
 
     @BeforeEach
     void setupExercise() throws Exception {
@@ -92,7 +88,17 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testExportWithRepositories() throws Exception {
+    void testExportWithRepositoriesAsInstructor() throws Exception {
+        testExportWithRepositories();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testExportWithRepositoriesAsEditor() throws Exception {
+        testExportWithRepositories();
+    }
+
+    private void testExportWithRepositories() throws Exception {
 
         MvcResult result = requestUtilService
                 .performMvcRequest(post("/api/programming/sharing/export/" + programmingExercise1.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
@@ -122,6 +128,14 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
         byte[] binaryData = zipResult.getResponse().getContentAsByteArray();
 
         assertThat(binaryData).hasSizeGreaterThan(100); // a very trivial test that a valid zip is transferred
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void testExportWithRepositoriesAsStudentNotAuthorized() throws Exception {
+        requestUtilService
+                .performMvcRequest(post("/api/programming/sharing/export/" + programmingExercise1.getId()).content(TEST_CALLBACK_URL).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON)).andExpect(status().is4xxClientError());
     }
 
     private static MockHttpServletRequestBuilder convertToGetRequestBuilder(String exerciseUrl) throws URISyntaxException {

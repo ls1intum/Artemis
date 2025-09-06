@@ -32,7 +32,6 @@ class SharingSupportResourceTest extends AbstractSpringIntegrationIndependentTes
     @Autowired
     private SharingConnectorService sharingConnectorService;
 
-    // Util Services
     @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
@@ -49,10 +48,6 @@ class SharingSupportResourceTest extends AbstractSpringIntegrationIndependentTes
         sharingPlatformMockProvider.reset();
     }
 
-    /**
-     * this test is redundant to sharingPlatformMockProvider startUp :-)
-     *
-     */
     @Test
     void shouldReturnConfigurationWhenValidApiKeyProvided() throws Exception {
         MvcResult result = requestUtilService

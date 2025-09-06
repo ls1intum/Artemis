@@ -19,7 +19,7 @@
                 "noImportedExercises": "No imported exercises found",
                 "loadingCourses": "Courses could not be loaded",
                 "loadingBasket": "Imports could not be loaded",
-                "instructorNeeded": "You need at least instructor rights! Please login with an appropriate user."
+                "atLeastEditorNeeded": "You need at least editor rights! Please login with an appropriate user."
             }
         }
     },

@@ -43,7 +43,7 @@ Once you receive your API key, you should add it to the configuration file **``a
     sharing:
       # Shared common secret
       apikey: <your API Key>
-      serverurl: https://search.codeability.uibk.ac.at
+      serverurl: https://search.sharing-codeability.uibk.ac.at/
       actionname: Export to Artemis@myUniversity
 
 **Option 2: .env file for Docker initialization**
@@ -51,7 +51,7 @@ Once you receive your API key, you should add it to the configuration file **``a
 
 .. code-block:: bash
 
-  ARTEMIS_SHARING_SERVERURL=https://search.codeability.uibk.ac.at
+  ARTEMIS_SHARING_SERVERURL=https://search.sharing-codeability.uibk.ac.at/
   ARTEMIS_SHARING_APIKEY=<Enter your API Key here>
   ARTEMIS_SHARING_ACTIONNAME=Export to Artemis@<Enter an ID here>
 

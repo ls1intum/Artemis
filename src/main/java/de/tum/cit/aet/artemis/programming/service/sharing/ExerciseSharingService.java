@@ -28,6 +28,7 @@ import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.NotFoundException;
 
 import javax.crypto.Mac;
@@ -166,20 +167,18 @@ public class ExerciseSharingService {
     /**
      * simple loading cache for paths to zip-files with 1-hour timeout.
      */
-    private final LoadingCache<Pair<SharingInfoDTO, Integer>, Path> repositoryCache = CacheBuilder.newBuilder().maximumSize(100).expireAfterAccess(1, TimeUnit.HOURS)
-            .removalListener(notification -> {
+    private final LoadingCache<@NotNull Pair<SharingInfoDTO, Integer>, @NotNull Path> repositoryCache = CacheBuilder.newBuilder().maximumSize(100)
+            .expireAfterAccess(1, TimeUnit.HOURS).removalListener(notification -> {
                 Path outdatedBasketZipfile = (Path) notification.getValue();
-                if (outdatedBasketZipfile != null) {
-                    boolean deleted = false;
-                    try {
-                        deleted = Files.deleteIfExists(outdatedBasketZipfile);
-                    }
-                    catch (IOException e) {
-                        log.info("Cannot delete {}", outdatedBasketZipfile, e);
-                    }
-                    if (!deleted) {
-                        log.info("Cannot delete {}", outdatedBasketZipfile);
-                    }
+                boolean deleted = false;
+                try {
+                    deleted = Files.deleteIfExists(outdatedBasketZipfile);
+                }
+                catch (IOException e) {
+                    log.info("Cannot delete {}", outdatedBasketZipfile, e);
+                }
+                if (!deleted) {
+                    log.info("Cannot delete {}", outdatedBasketZipfile);
                 }
             }).build(new CacheLoader<>() {
 
@@ -214,7 +213,7 @@ public class ExerciseSharingService {
      *
      * @return repository cache
      */
-    LoadingCache<Pair<SharingInfoDTO, Integer>, Path> getRepositoryCache() {
+    LoadingCache<@NotNull Pair<SharingInfoDTO, Integer>, @NotNull Path> getRepositoryCache() {
         return repositoryCache;
     }
 
@@ -251,7 +250,7 @@ public class ExerciseSharingService {
      *
      * @param matchingPattern RegEx matching the entry to return.
      * @param sharingInfo     of the basket to retrieve the entry from
-     * @return The content of the entry, or null if not found.
+     * @return The content of the entry, or Optional.empty() if not found.
      * @throws IOException if a reading error occurs
      */
     public Optional<String> getEntryFromBasket(Pattern matchingPattern, SharingInfoDTO sharingInfo) throws IOException {

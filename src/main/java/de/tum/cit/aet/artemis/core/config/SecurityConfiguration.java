@@ -260,7 +260,7 @@ public class SecurityConfiguration {
                     .requestMatchers("/git/**").permitAll();
 
 
-                // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
+                    // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
                     requests.requestMatchers("/**").authenticated();
                 }
             )

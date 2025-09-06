@@ -18,11 +18,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 
 /**
  * Test utility class that provides infrastructure to mock the sharing platform
@@ -44,13 +45,16 @@ public class SharingPlatformMockProvider {
     public static final String SHARING_BASEURL_PLUGIN = SHARING_BASEURL + "/pluginIF/v0.1";
 
     @Autowired
-    SharingConnectorService sharingConnectorService;
+    private SharingConnectorService sharingConnectorService;
 
     private MockRestServiceServer mockSharingServer;
 
     @Autowired
     @Qualifier("sharingRestTemplate")
     private RestTemplate restTemplate;
+
+    @Autowired
+    private RequestUtilService requestUtilService;
 
     public MockRestServiceServer getMockSharingServer() {
         return mockSharingServer;
@@ -65,9 +69,6 @@ public class SharingPlatformMockProvider {
      */
     private static final String sharingApiKey = "someSecretlySharedKey1234";
 
-    @Autowired
-    private MockMvc restMockMvc;
-
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
@@ -80,8 +81,8 @@ public class SharingPlatformMockProvider {
      */
     public SharingPluginConfig connectRequestFromSharingPlatform() throws Exception {
         sharingConnectorService.setSharingApiKey(sharingApiKey);
-        MvcResult result = restMockMvc
-                .perform(get("/api/core/sharing/config").queryParam("apiBaseUrl", SHARING_BASEURL_PLUGIN).queryParam("installationName", TEST_INSTALLATION_NAME)
+        MvcResult result = requestUtilService
+                .performMvcRequest(get("/api/core/sharing/config").queryParam("apiBaseUrl", SHARING_BASEURL_PLUGIN).queryParam("installationName", TEST_INSTALLATION_NAME)
                         .header("Authorization", "Bearer " + sharingApiKey).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();

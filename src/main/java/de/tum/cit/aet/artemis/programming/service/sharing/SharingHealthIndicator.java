@@ -26,7 +26,7 @@ public class SharingHealthIndicator implements HealthIndicator {
 
     private static final DateTimeFormatter TIME_STAMP_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm:ss");
 
-    protected final SharingConnectorService sharingConnectorService;
+    private final SharingConnectorService sharingConnectorService;
 
     public SharingHealthIndicator(SharingConnectorService sharingConnectorService) {
         this.sharingConnectorService = sharingConnectorService;

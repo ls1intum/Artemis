@@ -87,7 +87,6 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     @Autowired
     private SharingConnectorService sharingConnectorService;
 
-    // Util Services
     @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
@@ -123,7 +122,21 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
                 .performMvcRequest(get("/api/core/sharing/" + SharingSupportResource.SHARINGCONFIG_RESOURCE_IS_ENABLED).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();
-        assertThat(Boolean.parseBoolean(content)).isTrue();
+        Boolean answer = objectMapper.readerFor(Boolean.class).readValue(content);
+
+        assertThat(answer).isTrue();
+    }
+
+    @Test
+    void shouldReturnFalseWhenSharingPlatformIsNotYetConnected() throws Exception {
+        sharingPlatformMockProvider.reset(); // Mocks a disconnect frpm Sharing Plattform
+        MvcResult result = requestUtilService
+                .performMvcRequest(get("/api/core/sharing/" + SharingSupportResource.SHARINGCONFIG_RESOURCE_IS_ENABLED).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+        String content = result.getResponse().getContentAsString();
+        Boolean answer = objectMapper.readerFor(Boolean.class).readValue(content);
+
+        assertThat(answer).isFalse();
     }
 
     /**
@@ -133,6 +146,35 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = INSTRUCTOR_NAME, roles = "INSTRUCTOR")
     void shouldSuccessfullyImportBasketFromSharingPlatform() throws Exception {
         importBasket();
+    }
+
+    /**
+     * Tests the import of a basket from the sharing platform. This test is also reused for priming of other tests
+     */
+    @Test
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "EDITOR")
+    void shouldSuccessfullyImportBasketFromSharingPlatformAsEditor() throws Exception {
+        importBasket();
+    }
+
+    /**
+     * Tests the import of a basket from the sharing platform. This test is also reused for priming of other tests
+     */
+    @Test
+    @WithMockUser(username = INSTRUCTOR_NAME, roles = "USER")
+    void shouldSuccessfullyImportBasketFromSharingPlatformAsStudentNotAuthorized() throws Exception {
+        String sampleBasket = IOUtils.toString(Objects.requireNonNull(this.getClass().getResource("./basket/sampleBasket.json")), StandardCharsets.UTF_8);
+
+        URI basketURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + SAMPLE_BASKET_TOKEN);
+
+        final ResponseActions responseActions = sharingPlatformMockProvider.getMockSharingServer().expect(ExpectedCount.once(), requestTo(basketURI))
+                .andExpect(method(HttpMethod.GET));
+        responseActions.andRespond(MockRestResponseCreators.withSuccess(sampleBasket, MediaType.APPLICATION_JSON));
+
+        MvcResult result = requestUtilService
+                .performMvcRequest(addCorrectChecksum(get("/api/programming/sharing/import/basket").queryParam("basketToken", SAMPLE_BASKET_TOKEN), "returnURL", TEST_RETURN_URL,
+                        "apiBaseURL", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON)).andExpect(status().is4xxClientError()).andReturn();
     }
 
     /**
@@ -217,10 +259,6 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
         SharingSetupInfo setupInfo = new SharingSetupInfo(exercise, course1, sharingInfo);
 
         // last step: do Exercise Import
-        // just deactivate programmingLanguageFeatureService validation
-        // ProgrammingLanguageFeature trivialProgrammingLanguageFeatures = new ProgrammingLanguageFeature(exercise.getProgrammingLanguage(), true, false, false, true, false,
-        // List.of(ProjectType.PLAIN_MAVEN), false);
-        // doReturn(trivialProgrammingLanguageFeatures).when(programmingLanguageFeatureService).getProgrammingLanguageFeatures(any());
         // mock gitService et al.
         doReturn(false).when(versionControlService).checkIfProjectExists(anyString(), anyString());
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(anyString(), anyString()); // remark: null is returned anyway.
@@ -286,7 +324,6 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
 
     /**
      * utility method to make the course returned by `programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases()` serializable.
-     *
      */
     private static void makeCourseJSONSerializable(Course course1) {
         course1.setCompetencies(Set.of());

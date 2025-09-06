@@ -27,9 +27,12 @@ import { finalize } from 'rxjs/operators';
     templateUrl: './sharing.component.html',
     styleUrls: ['./sharing.scss'],
     imports: [RouterLink, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgStyle],
-    standalone: true,
 })
 export class SharingComponent implements OnInit {
+    // Icons
+    protected readonly faPlus = faPlus;
+    protected readonly faSort = faSort;
+
     courses: Course[] = [];
     coursesLoading = true;
 
@@ -46,10 +49,6 @@ export class SharingComponent implements OnInit {
     selectedCourse: Course;
 
     isInstructorOrEditor = false;
-
-    // Icons
-    faPlus = faPlus;
-    faSort = faSort;
 
     private route = inject(ActivatedRoute);
     private router = inject(Router);
@@ -79,7 +78,7 @@ export class SharingComponent implements OnInit {
                     this.courses = res.body!;
                     this.coursesLoading = false;
                 },
-                error: (res: HttpErrorResponse) => {
+                error: (error: HttpErrorResponse) => {
                     this.coursesLoading = false;
                     this.alertService.error('artemisApp.sharing.error.loadingCourses');
                 },
@@ -178,7 +177,7 @@ export class SharingComponent implements OnInit {
 
             this.userRouteAccessService.checkLogin([Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN], this.router.url).then((isLoggedIn) => {
                 if (!isLoggedIn) {
-                    this.alertService.error('artemisApp.sharing.error.instructorNeeded');
+                    this.alertService.error('artemisApp.sharing.error.atLeastEditorNeeded');
                     return;
                 }
                 this.isInstructorOrEditor = true;

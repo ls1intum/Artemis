@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jakarta.annotation.PostConstruct;
+
 import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,14 +19,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 
 /**
  * Service to support Sharing Platform functionality as a plugin.
@@ -226,11 +226,12 @@ public class SharingConnectorService {
     }
 
     /**
-     * At (spring) full application startup, we request a reinitialization: i.e. we query the Sharing Platform to send a
+     * After bean creation, we trigger an reinitialization from the Sharing Platform:
+     * i.e. we query the Sharing Platform to send a
      * new config request immediately, not waiting for the next scheduled request.
      * It starts a background thread via the spring task scheduler in order not to block application startup.
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void triggerSharingReinitAfterApplicationStart() {
         taskScheduler.schedule(this::triggerReinit, Instant.now().plusSeconds(10));
     }

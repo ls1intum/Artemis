@@ -14,7 +14,6 @@ import { Component, signal } from '@angular/core';
 
 @Component({
     template: `<jhi-programming-exercise-instructor-exercise-sharing [exerciseId]="testValue()"></jhi-programming-exercise-instructor-exercise-sharing>`,
-    standalone: true,
     imports: [ProgrammingExerciseInstructorExerciseSharingComponent],
 })
 class TestHostComponent {

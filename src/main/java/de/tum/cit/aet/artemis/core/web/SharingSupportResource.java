@@ -34,6 +34,7 @@ public class SharingSupportResource {
 
     private static final String SHARINGCONFIG_RESOURCE_PATH = "config";
 
+    // public, because also used by ExerciseSharingResourceImportTest in other (test) package.
     public static final String SHARINGCONFIG_RESOURCE_IS_ENABLED = SHARINGCONFIG_RESOURCE_PATH + "/is-enabled";
 
     private final SharingConnectorService sharingConnectorService;

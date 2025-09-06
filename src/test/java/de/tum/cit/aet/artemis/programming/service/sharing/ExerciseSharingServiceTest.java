@@ -58,15 +58,11 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     @Autowired
     private ExerciseSharingService exerciseSharingService;
 
-    // Util Services
     @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
     private ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService;
-
-    // @MockitoSpyBean
-    // ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService;
 
     @BeforeEach
     void startUp() throws Exception {
@@ -78,7 +74,6 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         sharingPlatformMockProvider.reset();
         // reset caches!
         exerciseSharingService.getRepositoryCache().invalidateAll();
-        // Mockito.reset(programmingExerciseImportFromFileService);
         SecurityContextHolder.clearContext();
     }
 
@@ -152,7 +147,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         Optional<ShoppingBasket> basket = exerciseSharingService.getBasketInfo("FalseBasketToken", SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN);
 
         assertThat(basket).isEmpty();
-        // Could be more assertions, however not really helpful here
+        // Could be more assertions, however not really helpful here, The details of the basket are tested in testGetExerciseInfoFromBasket
     }
 
     @Test
@@ -254,13 +249,10 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
                         SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN),
                 0);
 
-        // doReturn(exercise).when(programmingExerciseImportFromFileService).importProgrammingExerciseFromFile(any(), any(), any(), any(), eq(true));
         SharingSetupInfo setupInfo = new SharingSetupInfo(exercise, course1, sharingInfo);
 
         programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(setupInfo);
 
-        // Verify that the import pipeline was triggered once with the expected flag
-        // verify(programmingExerciseImportFromFileService, times(1)).importProgrammingExerciseFromFile(any(), any(), any(), any(), eq(true));
     }
 
     private void mockSampleBasketLoadingForToken(String basketToken) throws URISyntaxException, IOException {

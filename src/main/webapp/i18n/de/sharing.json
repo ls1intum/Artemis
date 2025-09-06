@@ -19,7 +19,7 @@
                 "noImportedExercises": "Keine importierten Aufgaben gefunden",
                 "loadingCourses": "Fehler beim Laden der Kurse",
                 "loadingBasket": "Fehler beim Laden des Imports",
-                "instructorNeeded": "Du musst mindestens Instruktorrechte haben! Bitte melde Dich entsprechend an."
+                "atLeastEditorNeeded": "Du musst mindestens Editorrechte haben! Bitte melde Dich entsprechend an."
             }
         }
     },
