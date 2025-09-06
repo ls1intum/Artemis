@@ -1,638 +1,3454 @@
 [
   {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.BonusRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.GradeStepRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.RatingRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.ResultRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.cleanup.FeedbackCleanupRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.cleanup.LongFeedbackTextCleanupRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.cleanup.ParticipantScoreCleanupRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.cleanup.PlagiarismComparisonCleanupRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.cleanup.RatingCleanupRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.cleanup.ResultCleanupRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.cleanup.StudentScoreCleanupRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.cleanup.SubmissionVersionCleanupRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.cleanup.TeamScoreCleanupRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.assessment.repository.cleanup.TextBlockCleanupRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.CompetencyMetricsRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.SourceRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.ConductAgreementRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.CourseNotificationParameterRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.FaqRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.ForwardedMessageRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.PostRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.ReactionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.SavedPostRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingPresetRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingSpecificationRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationStatusRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.core.repository.AuthorityRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.core.repository.CourseRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.core.repository.DataExportRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.core.repository.FileUploadRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.core.repository.MigrationChangeRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.core.repository.OrganizationRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.core.repository.PersistenceAuditEventRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.core.repository.StatisticsRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.core.repository.UserRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.core.repository.cleanup.CleanupJobExecutionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService","org.springframework.aop.SpringProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.exam.repository.ExamRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.exam.repository.ExamUserRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.exam.repository.StudentExamRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.exercise.repository.TeamRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.iris.repository.IrisExerciseSettingsRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.iris.repository.IrisSubSettingsRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.iris.repository.IrisTextExerciseChatSessionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.iris.repository.IrisTutorSuggestionSessionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.lecture.repository.LectureRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.lecture.repository.LectureUnitMetricsRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.lecture.repository.SlideRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.BuildJobRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.BuildLogEntryRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.settings.IdeRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.programming.repository.settings.UserIdeMappingRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.quiz.repository.DragItemRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.quiz.repository.QuizPointStatisticRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.quiz.repository.QuizQuestionStatisticRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.text.repository.TextExerciseRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository","org.springframework.data.repository.Repository","org.springframework.transaction.interceptor.TransactionalProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["java.lang.reflect.GenericArrayType","org.springframework.core.SerializableTypeWrapper$SerializableTypeProxy","java.io.Serializable"]
-  },
-  {
-    "interfaces":["java.lang.reflect.ParameterizedType","org.springframework.core.SerializableTypeWrapper$SerializableTypeProxy","java.io.Serializable"]
-  },
-  {
-    "interfaces":["java.lang.reflect.TypeVariable","org.springframework.core.SerializableTypeWrapper$SerializableTypeProxy","java.io.Serializable"]
-  },
-  {
-    "interfaces":["java.lang.reflect.WildcardType","org.springframework.core.SerializableTypeWrapper$SerializableTypeProxy","java.io.Serializable"]
-  },
-  {
-    "interfaces":["java.sql.Connection"]
-  },
-  {
-    "interfaces":["net.bytebuddy.description.method.MethodDescription$InDefinedShape$AbstractBase$Executable"]
-  },
-  {
-    "interfaces":["net.bytebuddy.description.method.ParameterDescription$ForLoadedParameter$Parameter"]
-  },
-  {
-    "interfaces":["net.bytebuddy.description.method.ParameterList$ForLoadedExecutable$Executable"]
-  },
-  {
-    "interfaces":["net.bytebuddy.description.type.TypeDefinition$Sort$AnnotatedType"]
-  },
-  {
-    "interfaces":["net.bytebuddy.description.type.TypeDescription"]
-  },
-  {
-    "interfaces":["net.bytebuddy.description.type.TypeDescription$ForLoadedType$Dispatcher"]
-  },
-  {
-    "interfaces":["net.bytebuddy.description.type.TypeDescription$Generic"]
-  },
-  {
-    "interfaces":["net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$Delegator$ForLoadedExecutableExceptionType$Dispatcher"]
-  },
-  {
-    "interfaces":["net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$Delegator$ForLoadedExecutableParameterType$Dispatcher"]
-  },
-  {
-    "interfaces":["net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$Delegator$ForLoadedMethodReturnType$Dispatcher"]
-  },
-  {
-    "interfaces":["net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForComponentType$AnnotatedParameterizedType"]
-  },
-  {
-    "interfaces":["net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForTypeArgument$AnnotatedParameterizedType"]
-  },
-  {
-    "interfaces":["net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForTypeVariableBoundType$AnnotatedTypeVariable"]
-  },
-  {
-    "interfaces":["net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForTypeVariableBoundType$OfFormalTypeVariable$FormalTypeVariable"]
-  },
-  {
-    "interfaces":["net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForWildcardUpperBoundType$AnnotatedWildcardType"]
-  },
-  {
-    "interfaces":["net.bytebuddy.dynamic.loading.ClassInjector$UsingLookup$MethodHandles"]
-  },
-  {
-    "interfaces":["net.bytebuddy.dynamic.loading.ClassInjector$UsingLookup$MethodHandles$Lookup"]
-  },
-  {
-    "interfaces":["net.bytebuddy.utility.JavaModule$Module"]
-  },
-  {
-    "interfaces":["net.bytebuddy.utility.JavaModule$Resolver"]
-  },
-  {
-    "interfaces":["org.hibernate.Session","org.springframework.orm.jpa.EntityManagerProxy"]
-  },
-  {
-    "interfaces":["org.hibernate.SessionFactory","org.springframework.orm.jpa.EntityManagerFactoryInfo"]
-  },
-  {
-    "interfaces":["org.hibernate.query.hql.spi.SqmQueryImplementor","org.hibernate.query.sqm.internal.SqmInterpretationsKey$InterpretationsKeySource","org.hibernate.query.spi.DomainQueryExecutionContext","org.hibernate.query.SelectionQuery","org.hibernate.query.CommonQueryContract"]
-  },
-  {
-    "interfaces":["org.springframework.boot.actuate.endpoint.annotation.Endpoint"]
-  },
-  {
-    "interfaces":["org.springframework.boot.actuate.endpoint.annotation.EndpointExtension"]
-  },
-  {
-    "interfaces":["org.springframework.boot.context.properties.ConfigurationProperties"]
-  },
-  {
-    "interfaces":["org.springframework.cache.annotation.CacheConfig"]
-  },
-  {
-    "interfaces":["org.springframework.cache.annotation.CacheEvict"]
-  },
-  {
-    "interfaces":["org.springframework.cache.annotation.Cacheable"]
-  },
-  {
-    "interfaces":["org.springframework.cache.annotation.Caching"]
-  },
-  {
-    "interfaces":["org.springframework.context.event.EventListener"]
-  },
-  {
-    "interfaces":["org.springframework.data.domain.AuditorAware","org.springframework.aop.SpringProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["org.springframework.data.jpa.repository.support.CrudMethodMetadata","org.springframework.aop.SpringProxy","org.springframework.aop.framework.Advised","org.springframework.core.DecoratingProxy"]
-  },
-  {
-    "interfaces":["org.springframework.jdbc.datasource.ConnectionProxy"]
-  },
-  {
-    "interfaces":["org.springframework.security.access.prepost.PreAuthorize"]
-  },
-  {
-    "interfaces":["org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity"]
-  },
-  {
-    "interfaces":["org.springframework.web.bind.annotation.ControllerAdvice"]
-  },
-  {
-    "interfaces":["org.springframework.web.bind.annotation.ExceptionHandler"]
-  },
-  {
-    "interfaces":["org.springframework.web.bind.annotation.ModelAttribute"]
-  },
-  {
-    "interfaces":["org.springframework.web.bind.annotation.PathVariable"]
-  },
-  {
-    "interfaces":["org.springframework.web.bind.annotation.RequestHeader"]
-  },
-  {
-    "interfaces":["org.springframework.web.bind.annotation.RequestMapping"]
-  },
-  {
-    "interfaces":["org.springframework.web.bind.annotation.RequestParam"]
-  },
-  {
-    "interfaces":["org.springframework.web.bind.annotation.RequestPart"]
-  },
-  {
-    "interfaces":["org.springframework.web.bind.annotation.ResponseStatus"]
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.BonusRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.GradeStepRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.RatingRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.ResultRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.FeedbackCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.LongFeedbackTextCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.ParticipantScoreCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.PlagiarismComparisonCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.RatingCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.ResultCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.StudentScoreCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.SubmissionVersionCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.TeamScoreCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.TextBlockCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CompetencyMetricsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.SourceRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.ConductAgreementRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.CourseNotificationParameterRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.FaqRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.ForwardedMessageRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.PostRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.ReactionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.SavedPostRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingPresetRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingSpecificationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationStatusRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.AuthorityRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.CourseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.DataExportRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.FileUploadRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.MigrationChangeRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.OrganizationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.PersistenceAuditEventRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.StatisticsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.UserRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.cleanup.CleanupJobExecutionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService",
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exam.repository.ExamRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exam.repository.ExamUserRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exam.repository.StudentExamRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exercise.repository.TeamRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisExerciseSettingsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisSubSettingsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisTextExerciseChatSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisTutorSuggestionSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.LectureRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.LectureUnitMetricsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.SlideRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.BuildJobRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.BuildLogEntryRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.settings.IdeRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.settings.UserIdeMappingRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.DragItemRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.QuizPointStatisticRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.QuizQuestionStatisticRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.text.repository.TextExerciseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "java.lang.reflect.GenericArrayType",
+      "org.springframework.core.SerializableTypeWrapper$SerializableTypeProxy",
+      "java.io.Serializable"
+    ]
+  },
+  {
+    "interfaces": [
+      "java.lang.reflect.ParameterizedType",
+      "org.springframework.core.SerializableTypeWrapper$SerializableTypeProxy",
+      "java.io.Serializable"
+    ]
+  },
+  {
+    "interfaces": [
+      "java.lang.reflect.TypeVariable",
+      "org.springframework.core.SerializableTypeWrapper$SerializableTypeProxy",
+      "java.io.Serializable"
+    ]
+  },
+  {
+    "interfaces": [
+      "java.lang.reflect.WildcardType",
+      "org.springframework.core.SerializableTypeWrapper$SerializableTypeProxy",
+      "java.io.Serializable"
+    ]
+  },
+  {
+    "interfaces": [
+      "java.sql.Connection"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.method.MethodDescription$InDefinedShape$AbstractBase$Executable"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.method.ParameterDescription$ForLoadedParameter$Parameter"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.method.ParameterList$ForLoadedExecutable$Executable"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDefinition$Sort$AnnotatedType"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$ForLoadedType$Dispatcher"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$Delegator$ForLoadedExecutableExceptionType$Dispatcher"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$Delegator$ForLoadedExecutableParameterType$Dispatcher"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$Delegator$ForLoadedMethodReturnType$Dispatcher"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForComponentType$AnnotatedParameterizedType"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForTypeArgument$AnnotatedParameterizedType"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForTypeVariableBoundType$AnnotatedTypeVariable"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForTypeVariableBoundType$OfFormalTypeVariable$FormalTypeVariable"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.dynamic.loading.ClassInjector$UsingLookup$MethodHandles"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.dynamic.loading.ClassInjector$UsingLookup$MethodHandles$Lookup"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.utility.JavaModule$Module"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.utility.JavaModule$Resolver"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.hibernate.Session",
+      "org.springframework.orm.jpa.EntityManagerProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.hibernate.SessionFactory",
+      "org.springframework.orm.jpa.EntityManagerFactoryInfo"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.hibernate.query.hql.spi.SqmQueryImplementor",
+      "org.hibernate.query.sqm.internal.SqmInterpretationsKey$InterpretationsKeySource",
+      "org.hibernate.query.spi.DomainQueryExecutionContext",
+      "org.hibernate.query.SelectionQuery",
+      "org.hibernate.query.CommonQueryContract"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.boot.actuate.endpoint.annotation.Endpoint"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.boot.actuate.endpoint.annotation.EndpointExtension"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.boot.context.properties.ConfigurationProperties"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.cache.annotation.CacheConfig"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.cache.annotation.CacheEvict"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.cache.annotation.Cacheable"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.cache.annotation.Caching"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.context.event.EventListener"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.data.domain.AuditorAware",
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.data.jpa.repository.support.CrudMethodMetadata",
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.security.access.prepost.PreAuthorize"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.ControllerAdvice"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.ExceptionHandler"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.ModelAttribute"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.PathVariable"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.RequestHeader"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.RequestMapping"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.RequestParam"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.RequestPart"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.ResponseStatus"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.BonusRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.GradeStepRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.RatingRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.ResultRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.FeedbackCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.LongFeedbackTextCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.ParticipantScoreCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.PlagiarismComparisonCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.RatingCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.ResultCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.StudentScoreCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.SubmissionVersionCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.TeamScoreCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.assessment.repository.cleanup.TextBlockCleanupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CompetencyMetricsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.SourceRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.ConductAgreementRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.CourseNotificationParameterRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.FaqRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.ForwardedMessageRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.PostRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.ReactionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.SavedPostRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingPresetRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSettingSpecificationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationStatusRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.AuthorityRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.CourseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.DataExportRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.FileUploadRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.MigrationChangeRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.OrganizationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.PersistenceAuditEventRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.StatisticsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.UserRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.repository.cleanup.CleanupJobExecutionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService",
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exam.repository.ExamRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exam.repository.ExamUserRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exam.repository.StudentExamRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.exercise.repository.TeamRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisExerciseSettingsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisSubSettingsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisTextExerciseChatSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.iris.repository.IrisTutorSuggestionSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.LectureRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.LectureUnitMetricsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.SlideRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.BuildJobRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.BuildLogEntryRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.settings.IdeRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.programming.repository.settings.UserIdeMappingRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.DragItemRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.QuizPointStatisticRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.QuizQuestionStatisticRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.text.repository.TextExerciseRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository",
+      "org.springframework.data.repository.Repository",
+      "org.springframework.transaction.interceptor.TransactionalProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "java.lang.reflect.GenericArrayType",
+      "org.springframework.core.SerializableTypeWrapper$SerializableTypeProxy",
+      "java.io.Serializable"
+    ]
+  },
+  {
+    "interfaces": [
+      "java.lang.reflect.ParameterizedType",
+      "org.springframework.core.SerializableTypeWrapper$SerializableTypeProxy",
+      "java.io.Serializable"
+    ]
+  },
+  {
+    "interfaces": [
+      "java.lang.reflect.TypeVariable",
+      "org.springframework.core.SerializableTypeWrapper$SerializableTypeProxy",
+      "java.io.Serializable"
+    ]
+  },
+  {
+    "interfaces": [
+      "java.lang.reflect.WildcardType",
+      "org.springframework.core.SerializableTypeWrapper$SerializableTypeProxy",
+      "java.io.Serializable"
+    ]
+  },
+  {
+    "interfaces": [
+      "java.sql.Connection"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.method.MethodDescription$InDefinedShape$AbstractBase$Executable"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.method.ParameterDescription$ForLoadedParameter$Parameter"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.method.ParameterList$ForLoadedExecutable$Executable"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDefinition$Sort$AnnotatedType"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$ForLoadedType$Dispatcher"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$Delegator$ForLoadedExecutableExceptionType$Dispatcher"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$Delegator$ForLoadedExecutableParameterType$Dispatcher"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$Delegator$ForLoadedMethodReturnType$Dispatcher"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForComponentType$AnnotatedParameterizedType"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForTypeArgument$AnnotatedParameterizedType"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForTypeVariableBoundType$AnnotatedTypeVariable"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForTypeVariableBoundType$OfFormalTypeVariable$FormalTypeVariable"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.description.type.TypeDescription$Generic$AnnotationReader$ForWildcardUpperBoundType$AnnotatedWildcardType"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.dynamic.loading.ClassInjector$UsingLookup$MethodHandles"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.dynamic.loading.ClassInjector$UsingLookup$MethodHandles$Lookup"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.utility.JavaModule$Module"
+    ]
+  },
+  {
+    "interfaces": [
+      "net.bytebuddy.utility.JavaModule$Resolver"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.hibernate.Session",
+      "org.springframework.orm.jpa.EntityManagerProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.hibernate.SessionFactory",
+      "org.springframework.orm.jpa.EntityManagerFactoryInfo"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.hibernate.query.hql.spi.SqmQueryImplementor",
+      "org.hibernate.query.sqm.internal.SqmInterpretationsKey$InterpretationsKeySource",
+      "org.hibernate.query.spi.DomainQueryExecutionContext",
+      "org.hibernate.query.SelectionQuery",
+      "org.hibernate.query.CommonQueryContract"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.boot.actuate.endpoint.annotation.Endpoint"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.boot.actuate.endpoint.annotation.EndpointExtension"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.boot.context.properties.ConfigurationProperties"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.cache.annotation.CacheConfig"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.cache.annotation.CacheEvict"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.cache.annotation.Cacheable"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.cache.annotation.Caching"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.context.event.EventListener"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.data.domain.AuditorAware",
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.data.jpa.repository.support.CrudMethodMetadata",
+      "org.springframework.aop.SpringProxy",
+      "org.springframework.aop.framework.Advised",
+      "org.springframework.core.DecoratingProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.jdbc.datasource.ConnectionProxy"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.security.access.prepost.PreAuthorize"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.ControllerAdvice"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.ExceptionHandler"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.ModelAttribute"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.PathVariable"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.RequestHeader"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.RequestMapping"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.RequestParam"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.RequestPart"
+    ]
+  },
+  {
+    "interfaces": [
+      "org.springframework.web.bind.annotation.ResponseStatus"
+    ]
   }
 ]
