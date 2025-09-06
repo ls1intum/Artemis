@@ -23,13 +23,13 @@ export class ArtemisDurationFromNanosPipe implements PipeTransform {
      * Convert nanos to a human-readable duration format:
      * "xx unit yy unit", where the two highest units are shown.
      *
-     * Only positive durations are supported.
-     * Negative ones will be shown as zero nanoseconds.
+     * Negative durations are treated like positive durations:
+     * transform(x) = transform(-x)
      *
      * @param nanos the number of nanoseconds that are turned into a human-readable format
      */
     transform(nanos: number): string {
-        nanos = Math.max(0, nanos ?? 0);
+        nanos = Math.abs(nanos ?? 0);
 
         const duration = this.secondsToDuration(nanos);
         return ArtemisDurationFromNanosPipe.handleShortFormat(duration);
