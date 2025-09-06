@@ -759,11 +759,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         return this.findForCreationByIdElseThrow(exercise.getId());
     }
 
-    @NotNull
-    default ProgrammingExercise findWithEagerStudentParticipationsByIdElseThrow(long programmingExerciseId) {
-        return getValueElseThrow(findWithEagerStudentParticipationsById(programmingExerciseId), programmingExerciseId);
-    }
-
     /**
      * Retrieves the associated ProgrammingExercise for a given ProgrammingExerciseParticipation.
      * If the ProgrammingExercise is not already loaded, it is fetched from the database and linked
