@@ -12,7 +12,7 @@ export class Reaction {
     public answerPost?: AnswerPost;
 }
 
-export interface CreatePayload {
+export interface CreateReactionDTO {
     emojiId?: string;
     relatedPostId?: number;
 }
@@ -20,9 +20,9 @@ export interface CreatePayload {
 /**
  * Converts a Reaction to a minimal API payload.
  */
-export function toReactionDTO(reaction: Reaction): CreatePayload {
+export function createReactionDTO(reaction: Reaction): CreateReactionDTO {
     return {
-        emojiId: reaction.emojiId,
-        relatedPostId: reaction.post?.id ?? reaction.answerPost?.id,
+        emojiId: reaction.emojiId ? reaction.emojiId : undefined,
+        relatedPostId: reaction.post?.id ?? reaction.answerPost?.id ?? undefined,
     };
 }
