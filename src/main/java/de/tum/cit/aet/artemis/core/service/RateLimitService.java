@@ -42,9 +42,9 @@ public class RateLimitService {
         }
     }
 
-    private Bucket getOrCreatePerMinuteBucket(String bucketKey, int rpm) {
+    private Bucket getOrCreatePerMinuteBucket(String clientId, int rpm) {
         BucketConfiguration cfg = perMinuteCfgCache.computeIfAbsent(rpm, RateLimitConfig::perMinute);
-        return proxyManager.getProxy(bucketKey, () -> cfg);
+        return proxyManager.getProxy("rpm=" + rpm + "#" + clientId, () -> cfg);
     }
 
     public String resolveClientId() {
