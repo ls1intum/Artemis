@@ -57,16 +57,20 @@ public class LocalCIEventListenerService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
+    private final LocalCIResultProcessingService localCIResultProcessingService;
+
     private final UserService userService;
 
     private final MailService mailService;
 
     public LocalCIEventListenerService(DistributedDataAccessService distributedDataAccessService, LocalCIQueueWebsocketService localCIQueueWebsocketService,
-            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, UserService userService, MailService mailService) {
+            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, LocalCIResultProcessingService localCIResultProcessingService,
+            UserService userService, MailService mailService) {
         this.distributedDataAccessService = distributedDataAccessService;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
         this.buildJobRepository = buildJobRepository;
         this.programmingMessagingService = programmingMessagingService;
+        this.localCIResultProcessingService = localCIResultProcessingService;
         this.userService = userService;
         this.mailService = mailService;
     }
@@ -126,6 +130,29 @@ public class LocalCIEventListenerService {
             log.error("Build job with id {} is in an unknown state", buildJob.getBuildJobId());
             // If the build job is in an unknown state, set it to missing and update the build start date
             buildJobRepository.updateBuildJobStatus(buildJob.getBuildJobId(), BuildStatus.MISSING);
+        }
+    }
+
+    /**
+     * Processes the queued results from the distributed build result queue every minute.
+     * This is a fallback mechanism to ensure that no results are left unprocessed in the queue e.g. if listener events are lost
+     * under high system load or network hiccups.
+     * Runs every minute so results are not stuck int the queue so long that they appear to be lost.
+     */
+    @Scheduled(fixedRate = 60 * 1000)
+    public void processQueuedResults() {
+        final int initialSize = distributedDataAccessService.getResultQueueSize();
+        log.debug("{} queued results in the distributed build result queue. Processing up to {} results.", initialSize, initialSize);
+        for (int i = 0; i < initialSize; i++) {
+            if (distributedDataAccessService.getDistributedBuildResultQueue().peek() == null) {
+                break;
+            }
+            try {
+                localCIResultProcessingService.processResultAsync();
+            }
+            catch (Exception ex) {
+                log.warn("Processing a queued result failed. Continuing with remaining items", ex);
+            }
         }
     }
 
