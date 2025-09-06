@@ -14,6 +14,7 @@ import org.springframework.util.Assert;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.RateLimitService;
 
 /**
  * <p>
@@ -38,22 +39,26 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
 
     private final UserRepository userRepository;
 
+    private final RateLimitService rateLimitService;
+
     /**
      * Creates a new instance.
      *
      * @param relyingPartyOperations the {@link WebAuthnRelyingPartyOperations} to use. Cannot be null.
      * @param userRepository         the {@link UserRepository} to use. Cannot be null.
      */
-    public ArtemisWebAuthnAuthenticationProvider(WebAuthnRelyingPartyOperations relyingPartyOperations, UserRepository userRepository) {
+    public ArtemisWebAuthnAuthenticationProvider(WebAuthnRelyingPartyOperations relyingPartyOperations, UserRepository userRepository, RateLimitService rateLimitService) {
         Assert.notNull(relyingPartyOperations, "relyingPartyOperations cannot be null");
         Assert.notNull(userRepository, "userRepository cannot be null");
         this.relyingPartyOperations = relyingPartyOperations;
         this.userRepository = userRepository;
+        this.rateLimitService = rateLimitService;
     }
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         WebAuthnAuthenticationRequestToken webAuthnRequest = (WebAuthnAuthenticationRequestToken) authentication;
+        rateLimitService.enforcePerMinute(rateLimitService.resolveClientId(), 30);
         try {
             PublicKeyCredentialUserEntity userEntity = this.relyingPartyOperations.authenticate(webAuthnRequest.getWebAuthnRequest());
             String username = userEntity.getName();

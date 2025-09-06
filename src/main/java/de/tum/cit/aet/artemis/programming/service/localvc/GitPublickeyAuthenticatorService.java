@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.RateLimitService;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
@@ -40,16 +41,19 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
 
     private final UserSshPublicKeyRepository userSshPublicKeyRepository;
 
+    private final RateLimitService rateLimitService;
+
     private static final int AUTHENTICATION_FAILED_CODE = 10;
 
     @Value("${server.url}")
     private String artemisServerUrl;
 
     public GitPublickeyAuthenticatorService(UserRepository userRepository, Optional<DistributedDataAccessService> localCIDistributedDataAccessService,
-            UserSshPublicKeyRepository userSshPublicKeyRepository) {
+            UserSshPublicKeyRepository userSshPublicKeyRepository, RateLimitService rateLimitService) {
         this.userRepository = userRepository;
         this.localCIDistributedDataAccessService = localCIDistributedDataAccessService;
         this.userSshPublicKeyRepository = userSshPublicKeyRepository;
+        this.rateLimitService = rateLimitService;
     }
 
     @Override
@@ -79,6 +83,14 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
      * @return true if the authentication succeeds, and false if it doesn't
      */
     private boolean authenticateUser(UserSshPublicKey storedKey, PublicKey providedKey, ServerSession session) {
+        try {
+            rateLimitService.enforcePerMinute(session.getRemoteAddress().toString(), 30);
+        }
+        catch (RuntimeException e) {
+            log.warn("Rate limit exceeded for SSH authentication from {}", session.getRemoteAddress(), e);
+            return false;
+        }
+
         try {
             var user = userRepository.findById(storedKey.getUserId());
             if (user.isEmpty()) {

@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -114,6 +115,8 @@ public class LocalVCServletService {
 
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
+    private final RateLimitService rateLimitService;
+
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
 
@@ -133,7 +136,7 @@ public class LocalVCServletService {
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
-            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService) {
+            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService, RateLimitService rateLimitService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -147,6 +150,7 @@ public class LocalVCServletService {
         this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
         this.vcsAccessLogService = vcsAccessLogService;
+        this.rateLimitService = rateLimitService;
     }
 
     /**
@@ -227,6 +231,8 @@ public class LocalVCServletService {
         if (!request.getRequestURI().endsWith("/info/refs")) {
             return;
         }
+
+        rateLimitService.enforcePerMinute(request.getRemoteAddr(), 30);
 
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
         log.debug("Parsed repository URI from request: {}", localVCRepositoryUri);
