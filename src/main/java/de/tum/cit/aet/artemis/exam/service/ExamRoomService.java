@@ -122,12 +122,15 @@ public class ExamRoomService {
                     throw new BadRequestAlertException("Invalid room file name: missing room number", ENTITY_NAME, "room.missingRoomNumber");
                 }
 
-                ExamRoomInput examRoomInput = objectMapper.readValue(zis.readAllBytes(), ExamRoomInput.class);
+                try {
+                    ExamRoomInput examRoomInput = objectMapper.readValue(zis.readAllBytes(), ExamRoomInput.class);
 
-                ExamRoom examRoom = convertRoomNumberAndExamRoomInputToExamRoom(roomNumber, examRoomInput);
-                examRooms.add(examRoom);
-
-                zis.closeEntry();
+                    ExamRoom examRoom = convertRoomNumberAndExamRoomInputToExamRoom(roomNumber, examRoomInput);
+                    examRooms.add(examRoom);
+                }
+                finally {
+                    zis.closeEntry();
+                }
             }
 
         }

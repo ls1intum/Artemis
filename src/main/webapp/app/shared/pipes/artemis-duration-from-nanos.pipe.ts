@@ -17,7 +17,7 @@ export class ArtemisDurationFromNanosPipe implements PipeTransform {
     private readonly NANOS_IN_SECOND = 1000 * this.NANOS_IN_MILLI;
     private readonly NANOS_IN_MINUTE = 60 * this.NANOS_IN_SECOND;
     private readonly NANOS_IN_HOUR = 60 * this.NANOS_IN_MINUTE;
-    private readonly NANOS_IN_DAY = 60 * this.NANOS_IN_HOUR;
+    private readonly NANOS_IN_DAY = 24 * this.NANOS_IN_HOUR;
 
     /**
      * Convert nanos to a human-readable duration format:
