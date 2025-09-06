@@ -37,7 +37,7 @@
                             [exerciseIndex]="exerciseIndex"
                             [overviewPageOpen]="activePageIndex === -1"
                             [examSessions]="studentExam.examSessions"
-                            [isTestRun]="testRunId()"
+                            [isTestRun]="!!testRunId()"
                             (onPageChanged)="onPageChange($event)"
                         />
                     </div>
