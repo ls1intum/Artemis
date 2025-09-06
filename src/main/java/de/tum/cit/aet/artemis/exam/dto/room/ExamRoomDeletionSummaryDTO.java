@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamRoomDeletionSummaryDTO(
     @NotNull String deleteDuration,
-    @NotNull Integer numberOfDeletedExamRooms
+    int numberOfDeletedExamRooms
 ) {
 }
 // @formatter:on

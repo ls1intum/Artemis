@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategyType;
 public record ExamRoomLayoutStrategyDTO(
     @NotNull String name,
     @NotNull LayoutStrategyType type,
-    @NotNull Integer capacity
+    int capacity
 ) {
 }
 // @formatter:on

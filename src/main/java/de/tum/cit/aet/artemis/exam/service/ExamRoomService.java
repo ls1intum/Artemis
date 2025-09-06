@@ -28,7 +28,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategy;
@@ -65,22 +64,22 @@ public class ExamRoomService {
     // @formatter:off
     private record ExamRoomInput(
         @JsonProperty("number") String alternativeNumber,
-        @JsonProperty("name") String name,
+        String name,
         @JsonProperty("shortname") String alternativeName,
-        @JsonProperty("building") String building,
-        @JsonProperty("rows") List<RowInput> rows,
-        @JsonProperty("layouts") Map<String, JsonNode> layouts
+        String building,
+        List<RowInput> rows,
+        Map<String, JsonNode> layouts
     ) {}
 
     private record RowInput(
-        @JsonProperty("label") String label,
-        @JsonProperty("seats") List<SeatInput> seats
+        String label,
+        List<SeatInput> seats
     ) {}
 
     private record SeatInput(
-        @JsonProperty("label") String label,
+        String label,
         @JsonProperty("flag") String condition,
-        @JsonProperty("position") PositionInput position
+        PositionInput position
     ) {}
 
     private record PositionInput(
@@ -143,20 +142,10 @@ public class ExamRoomService {
         catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
-        log.info("Parsed rooms in {}", TimeLogUtil.formatDurationFrom(startTime));
 
-        // save exam rooms, exam seats, and exam room layouts in the DB
-        long startTimeDB = System.nanoTime();
         examRoomRepository.saveAll(examRooms);
-        log.info("Saved rooms in {}", TimeLogUtil.formatDurationFrom(startTimeDB));
 
-        // Build ExamRoomUploadInformationDTO
-        log.debug("Constructing exam room upload information");
-        long startTimeDTO = System.nanoTime();
-        ExamRoomUploadInformationDTO result = getExamRoomUploadInformationDTO(zipFile, startTime, examRooms);
-        log.info("Constructed exam room upload information in {}", TimeLogUtil.formatDurationFrom(startTimeDTO));
-
-        return result;
+        return getExamRoomUploadInformationDTO(zipFile, startTime, examRooms);
     }
 
     /**
@@ -176,7 +165,12 @@ public class ExamRoomService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Room name and building are required fields");
         }
 
-        /* Extract simple exam room fields */
+        ExamRoom room = extractSimpleExamRoomFields(roomNumber, examRoomInput);
+
+        return extractSeatsAndLayouts(room, examRoomInput);
+    }
+
+    private static ExamRoom extractSimpleExamRoomFields(final String roomNumber, final ExamRoomInput examRoomInput) {
         ExamRoom room = new ExamRoom();
         room.setRoomNumber(roomNumber);
         final String alternativeRoomNumber = examRoomInput.alternativeNumber;
@@ -191,18 +185,15 @@ public class ExamRoomService {
         }
 
         room.setBuilding(examRoomInput.building);
-        /* Extract simple exam room fields - End */
+        return room;
+    }
 
-        /* Extract the seats */
+    private static ExamRoom extractSeatsAndLayouts(final ExamRoom room, final ExamRoomInput examRoomInput) {
         // It is imperative that the seats are parsed before the layout strategies are parsed, as the size calculation
         // for relative layouts will only be done if the rooms have already been parsed
-        List<ExamSeatDTO> seats = convertRowInputsToExamSeatDTOs(examRoomInput.rows);
-        room.setSeats(seats);
+        room.setSeats(convertRowInputsToExamSeatDTOs(examRoomInput.rows));
 
-        /* Extract the layouts */
-        List<LayoutStrategy> layouts = convertLayoutInputsToLayoutStrategies(examRoomInput.layouts, room);
-        room.setLayoutStrategies(layouts);
-
+        room.setLayoutStrategies(convertLayoutInputsToLayoutStrategies(examRoomInput.layouts, room));
         return room;
     }
 
@@ -337,10 +328,7 @@ public class ExamRoomService {
 
         List<ExamSeatDTO> examSeatsFilteredAndSorted = examRoom.getSeats().stream()
                 // Filter out all exam rooms that are before the "first row". The coords start at 0, the row numbers at 1
-                .filter(examSeatDTO -> examSeatDTO.yCoordinate() >= (firstRow - 1))
-                // Filter out all exam rooms that are not default usable
-                .filter(examSeatDTO -> examSeatDTO.seatCondition() == SeatCondition.USABLE)
-                // Sort by X, then by Y to ensure stable processing later
+                .filter(examSeatDTO -> examSeatDTO.yCoordinate() >= (firstRow - 1)).filter(examSeatDTO -> examSeatDTO.seatCondition() == SeatCondition.USABLE)
                 .sorted(Comparator.comparingDouble(ExamSeatDTO::xCoordinate).thenComparingDouble(ExamSeatDTO::yCoordinate)).toList();
 
         List<ExamSeatDTO> selectedSeats = new ArrayList<>();
@@ -406,11 +394,7 @@ public class ExamRoomService {
      * Purges the DB of all exam room related data.
      */
     public void deleteAllExamRooms() {
-        final long startTime = System.nanoTime();
-
         examRoomRepository.deleteAll();
-
-        log.debug("Deleting all exam rooms took {}", TimeLogUtil.formatDurationFrom(startTime));
     }
 
     /**
@@ -426,8 +410,6 @@ public class ExamRoomService {
 
         Set<Long> outdatedAndUnusedExamRoomIds = examRoomRepository.findAllIdsOfOutdatedAndUnusedExamRooms();
         examRoomRepository.deleteAllById(outdatedAndUnusedExamRoomIds);
-
-        log.debug("Deleting all unused and outdated exam rooms took {}", TimeLogUtil.formatDurationFrom(startTime));
 
         String duration = formatDurationWithMillisPrecisionFromNanos(startTime);
         return new ExamRoomDeletionSummaryDTO(duration, outdatedAndUnusedExamRoomIds.size());

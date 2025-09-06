@@ -30,10 +30,11 @@ import { AlertService } from 'app/shared/service/alert.service';
     imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ExamRoomsComponent {
-    // readonly
     private readonly baseTranslationPath = 'artemisApp.examRooms.adminOverview';
+    // Icons
+    protected readonly faSort = faSort;
 
-    // injected
+    // injected services
     private examRoomsService: ExamRoomsService = inject(ExamRoomsService);
     private sortService: SortService = inject(SortService);
     private deleteDialogService: DeleteDialogService = inject(DeleteDialogService);
@@ -105,9 +106,6 @@ export class ExamRoomsComponent {
         );
     });
 
-    // Icons
-    faSort = faSort;
-
     // Fields for working with SortDirective
     sortAttribute: 'roomNumber' | 'name' | 'building' | 'maxCapacity' = 'roomNumber';
     ascending: boolean = true;
@@ -116,7 +114,6 @@ export class ExamRoomsComponent {
     private dialogErrorSource = new Subject<string>();
     private dialogError = this.dialogErrorSource.asObservable();
 
-    // Basically ngInit / constructor
     initEffect = effect(() => {
         this.loadExamRoomOverview();
     });

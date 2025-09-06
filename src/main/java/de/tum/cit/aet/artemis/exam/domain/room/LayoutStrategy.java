@@ -9,6 +9,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.context.annotation.Conditional;
@@ -22,6 +24,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 @Conditional(ExamEnabled.class)
 @Entity
 @Table(name = "layout_strategy")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LayoutStrategy extends DomainObject {
 

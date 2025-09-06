@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 @Conditional(ExamEnabled.class)
 @Entity
 @Table(name = "exam_room")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExamRoom extends AbstractAuditingEntity {
 

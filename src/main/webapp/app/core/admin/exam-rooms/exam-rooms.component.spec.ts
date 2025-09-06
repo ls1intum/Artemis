@@ -91,7 +91,7 @@ describe('ExamRoomsComponentTest', () => {
         const uploadedRoom: ExamRoomDTO = mockServiceGetAdminOverviewSingleRoom();
 
         // WHEN
-        fixture.detectChanges(); // let the onInit effect run
+        fixture.detectChanges();
 
         // THEN
         expect(component.hasOverview()).toBeTrue();

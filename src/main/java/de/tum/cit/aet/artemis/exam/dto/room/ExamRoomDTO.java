@@ -12,7 +12,7 @@ public record ExamRoomDTO(
     @NotNull String roomNumber,
     @NotNull String name,
     @NotNull String building,
-    @NotNull Integer numberOfSeats,
+    int numberOfSeats,
     @NotNull Set<ExamRoomLayoutStrategyDTO> layoutStrategies
 ) {
 }

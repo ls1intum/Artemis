@@ -34,7 +34,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
      *
      * @return A collection of all outdated and unused exam rooms
      */
-    @Query(value = """
+    @Query("""
             WITH latestRooms AS (
                 SELECT
                     roomNumber AS roomNumber,

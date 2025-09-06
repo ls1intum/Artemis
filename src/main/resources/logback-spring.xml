@@ -94,6 +94,7 @@
     <logger name="sun.rmi.transport" level="WARN"/>
     <logger name="org.glassfish.jersey.client.ClientExecutorProvidersConfigurator" level="INFO"/>
 
+
     <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
         <resetJUL>true</resetJUL>
     </contextListener>
