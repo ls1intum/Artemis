@@ -62,7 +62,6 @@ describe('Course Management Detail Component', () => {
         currentPercentageAverageScore: 90,
         currentAbsoluteAverageScore: 90,
         currentMaxAverageScore: 100,
-        activeStudents: [4, 10, 14, 35],
         // LLM
         currentTotalLlmCostInEur: 82.3,
     };
