@@ -46,10 +46,6 @@ describe('Course Management Detail Component', () => {
         courseArchivePath: 'some-path',
     };
     const dtoMock: CourseManagementDetailViewDto = {
-        numberOfStudentsInCourse: 100,
-        numberOfTeachingAssistantsInCourse: 5,
-        numberOfEditorsInCourse: 5,
-        numberOfInstructorsInCourse: 10,
         // assessments
         currentPercentageAssessments: 50,
         currentAbsoluteAssessments: 10,
