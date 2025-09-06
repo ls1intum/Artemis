@@ -326,7 +326,7 @@ public class ExamRoomService {
         List<ExamSeatDTO> examSeatsFilteredAndSorted = examRoom.getSeats().stream()
                 // Filter out all exam rooms that are before the "first row". The coords start at 0, the row numbers at 1
                 .filter(examSeatDTO -> examSeatDTO.yCoordinate() >= (firstRow - 1)).filter(examSeatDTO -> examSeatDTO.seatCondition() == SeatCondition.USABLE)
-                .sorted(Comparator.comparingDouble(ExamSeatDTO::xCoordinate).thenComparingDouble(ExamSeatDTO::yCoordinate)).toList();
+                .sorted(Comparator.comparingDouble(ExamSeatDTO::yCoordinate).thenComparingDouble(ExamSeatDTO::xCoordinate)).toList();
 
         List<ExamSeatDTO> selectedSeats = new ArrayList<>();
         for (ExamSeatDTO examSeatDTO : examSeatsFilteredAndSorted) {

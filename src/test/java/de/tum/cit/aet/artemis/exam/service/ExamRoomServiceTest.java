@@ -10,8 +10,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategyType;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
@@ -39,7 +39,7 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         // first verify the returned upload information is correct
         assertThat(uploadInformation.uploadedFileName()).isEqualTo(zipFile.getOriginalFilename());
-        assertThat(uploadInformation.uploadDuration()).isNotNull();
+        assertThat(uploadInformation.durationNanos()).isNotNegative();
         assertThat(uploadInformation.numberOfUploadedRooms()).isEqualTo(expectedNumberOfRooms);
         assertThat(uploadInformation.numberOfUploadedSeats()).isEqualTo(expectedNumberOfSeats);
         assertThat(uploadInformation.uploadedRoomNames()).hasSize(expectedNumberOfRooms);
@@ -76,8 +76,7 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testParseAndStoreZipFileIllegalExamRooms() {
         // Illegal exam rooms should throw an exception
-        assertThatExceptionOfType(ResponseStatusException.class).isThrownBy(() -> examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileIllegalExamRooms))
-                .satisfies(ex -> assertThat(ex.getStatusCode().value()).isEqualTo(400));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileIllegalExamRooms));
     }
 
     @Test
@@ -85,7 +84,7 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
         var uploadInformation = examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileRealisticScenario);
 
         assertThat(uploadInformation.uploadedFileName()).isEqualTo(ExamRoomZipFiles.zipFileRealisticScenario.getOriginalFilename());
-        assertThat(uploadInformation.uploadDuration()).isNotNull();
+        assertThat(uploadInformation.durationNanos()).isNotNegative();
         assertThat(uploadInformation.numberOfUploadedRooms()).isEqualTo(64);
         assertThat(uploadInformation.numberOfUploadedSeats()).isEqualTo(16141);
         assertThat(uploadInformation.uploadedRoomNames()).hasSize(64);
@@ -150,7 +149,7 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testDeleteAllOutdatedAndUnusedExamRooms_empty() {
         var deletionSummary = examRoomService.deleteAllOutdatedAndUnusedExamRooms();
         assertThat(deletionSummary).isNotNull();
-        assertThat(deletionSummary.deleteDuration()).matches(".*\\d+ms");
+        assertThat(deletionSummary.durationNanos()).isNotNegative();
         assertThat(deletionSummary.numberOfDeletedExamRooms()).isZero();
     }
 
@@ -160,7 +159,7 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         var deletionSummary = examRoomService.deleteAllOutdatedAndUnusedExamRooms();
         assertThat(deletionSummary).isNotNull();
-        assertThat(deletionSummary.deleteDuration()).endsWith("ms");
+        assertThat(deletionSummary.durationNanos()).isNotNegative();
         assertThat(deletionSummary.numberOfDeletedExamRooms()).isZero();
     }
 
@@ -172,7 +171,7 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         var deletionSummary = examRoomService.deleteAllOutdatedAndUnusedExamRooms();
         assertThat(deletionSummary).isNotNull();
-        assertThat(deletionSummary.deleteDuration()).endsWith("ms");
+        assertThat(deletionSummary.durationNanos()).isNotNegative();
         assertThat(deletionSummary.numberOfDeletedExamRooms()).isOne();
     }
 
@@ -185,7 +184,7 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
         // 16 outdated rooms
         var deletionSummary = examRoomService.deleteAllOutdatedAndUnusedExamRooms();
         assertThat(deletionSummary).isNotNull();
-        assertThat(deletionSummary.deleteDuration()).endsWith("ms");
+        assertThat(deletionSummary.durationNanos()).isNotNegative();
         assertThat(deletionSummary.numberOfDeletedExamRooms()).isEqualTo(16);
     }
 }

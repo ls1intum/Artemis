@@ -265,7 +265,7 @@ describe('ExamRoomsComponentTest', () => {
         // THEN
         expect(component.hasUploadInformation()).toBeTrue();
         expect(component.uploadInformation()!.uploadedFileName).toEqual(uploadData.uploadedFileName);
-        expect(component.uploadInformation()!.uploadDuration).toEqual(uploadData.uploadDuration);
+        expect(component.uploadInformation()!.durationNanos).toEqual(uploadData.durationNanos);
         expect(component.uploadInformation()!.numberOfUploadedRooms).toEqual(uploadData.numberOfUploadedRooms);
         expect(component.uploadInformation()!.numberOfUploadedSeats).toEqual(uploadData.numberOfUploadedSeats);
         expect(component.uploadInformation()!.uploadedRoomNames).toEqual(uploadData.uploadedRoomNames);
@@ -274,7 +274,7 @@ describe('ExamRoomsComponentTest', () => {
     function mockServiceUploadRoomDataZipFile(): ExamRoomUploadInformationDTO {
         const uploadData: ExamRoomUploadInformationDTO = {
             uploadedFileName: 'my_file.zip',
-            uploadDuration: '12ms',
+            durationNanos: 123_000_007,
             numberOfUploadedRooms: 1,
             numberOfUploadedSeats: 50,
             uploadedRoomNames: ['Audimax'],
@@ -353,7 +353,7 @@ describe('ExamRoomsComponentTest', () => {
         jest.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(
             of(
                 convertBodyToHttpResponse({
-                    deleteDuration: '19ms',
+                    durationNanos: 4_123_000,
                     numberOfDeletedExamRooms: 4,
                 } as ExamRoomDeletionSummaryDTO),
             ),
@@ -392,7 +392,7 @@ describe('ExamRoomsComponentTest', () => {
         jest.spyOn(service, 'deleteOutdatedAndUnusedExamRooms').mockReturnValue(
             of(
                 convertBodyToHttpResponse({
-                    deleteDuration: '19ms',
+                    durationNanos: 456_800,
                     numberOfDeletedExamRooms: 4,
                 } as ExamRoomDeletionSummaryDTO),
             ),
@@ -406,7 +406,7 @@ describe('ExamRoomsComponentTest', () => {
         // THEN
         expect(component.hasDeletionInformation()).toBeTrue();
         expect(component.deletionInformation()).toBeDefined();
-        expect(component.deletionInformation()!.deleteDuration).toBe('19ms');
+        expect(component.deletionInformation()!.durationNanos).toBe(456_800);
         expect(component.deletionInformation()!.numberOfDeletedExamRooms).toBe(4);
     });
 });
