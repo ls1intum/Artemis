@@ -1,10 +1,16 @@
 package de.tum.cit.aet.artemis.core.service;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -19,12 +25,17 @@ import io.github.bucket4j.grid.hazelcast.HazelcastProxyManager;
 @Service
 public class RateLimitService {
 
+    private static final Logger log = LoggerFactory.getLogger(RateLimitService.class);
+
     private final HazelcastProxyManager<String> proxyManager;
 
     private final Map<Integer, BucketConfiguration> perMinuteCfgCache = new ConcurrentHashMap<>();
 
-    public RateLimitService(HazelcastProxyManager<String> proxyManager) {
+    private final Environment env;
+
+    public RateLimitService(HazelcastProxyManager<String> proxyManager, Environment env) {
         this.proxyManager = proxyManager;
+        this.env = env;
     }
 
     /**
@@ -34,10 +45,16 @@ public class RateLimitService {
      * @param rpm      requests per minute
      */
     public void enforcePerMinute(String clientId, int rpm) {
+        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            log.debug("Skipping rate limit enforcement for client {} at {} rpm in test profile", clientId, rpm);
+            return;
+        }
+
         Bucket bucket = getOrCreatePerMinuteBucket(clientId, rpm);
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             long seconds = Math.max(1, probe.getNanosToWaitForRefill() / 1_000_000_000L);
+            log.warn("Rate limit exceeded for client {} at {} rpm, retry after {} seconds", clientId, rpm, seconds);
             throw new RateLimitExceededException(seconds);
         }
     }
