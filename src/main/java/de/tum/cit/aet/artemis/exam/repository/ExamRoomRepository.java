@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exam.repository;
 
-import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -25,7 +24,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             FROM ExamRoom er
             LEFT JOIN FETCH er.layoutStrategies
             """)
-    List<ExamRoom> findAllExamRoomsWithEagerLayoutStrategies();
+    Set<ExamRoom> findAllExamRoomsWithEagerLayoutStrategies();
 
     /**
      * Finds and returns all IDs of outdated and unused exam rooms.
@@ -50,7 +49,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
                 ON examRoom.roomNumber = latestRoom.roomNumber
                 AND examRoom.name = latestRoom.name
                 AND examRoom.createdDate < latestRoom.maxCreatedDate
-            WHERE examRoom.id NOT IN ( SELECT DISTINCT examRoom.id FROM ExamRoomExamAssignment )
+            WHERE examRoom.id NOT IN ( SELECT DISTINCT erea.examRoom.id FROM ExamRoomExamAssignment erea )
             """)
     Set<Long> findAllIdsOfOutdatedAndUnusedExamRooms();
 }

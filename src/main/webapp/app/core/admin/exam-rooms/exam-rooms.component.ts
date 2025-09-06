@@ -23,33 +23,31 @@ import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
+import { ArtemisDurationFromNanosPipe } from 'app/shared/pipes/artemis-duration-from-nanos.pipe';
 
 @Component({
     selector: 'jhi-exam-rooms',
     templateUrl: './exam-rooms.component.html',
-    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe, ArtemisDurationFromNanosPipe],
 })
 export class ExamRoomsComponent {
     private readonly baseTranslationPath = 'artemisApp.examRooms.adminOverview';
-    // Icons
+
     protected readonly faSort = faSort;
 
-    // injected services
     private examRoomsService: ExamRoomsService = inject(ExamRoomsService);
     private sortService: SortService = inject(SortService);
     private deleteDialogService: DeleteDialogService = inject(DeleteDialogService);
     private translateService: TranslateService = inject(TranslateService);
     private alertService: AlertService = inject(AlertService);
 
-    // Writeable signals
     private selectedFile: WritableSignal<File | undefined> = signal(undefined);
     private actionStatus: WritableSignal<'uploading' | 'uploadSuccess' | 'deleting' | 'deletionSuccess' | undefined> = signal(undefined);
     private actionInformation: WritableSignal<ExamRoomUploadInformationDTO | ExamRoomDeletionSummaryDTO | undefined> = signal(undefined);
     private overview: WritableSignal<ExamRoomAdminOverviewDTO | undefined> = signal(undefined);
 
-    // Computed signals
     hasSelectedFile: Signal<boolean> = computed(() => !!this.selectedFile());
-    selectedFileName: Signal<string | undefined> = computed(() => this.selectedFile()?.name.trim());
+    selectedFileName: Signal<string | undefined> = computed(() => this.selectedFile()?.name?.trim());
     canUpload: Signal<boolean> = computed(() => this.hasSelectedFile() && !this.isUploading());
     isUploading: Signal<boolean> = computed(() => this.actionStatus() === 'uploading');
     hasUploadInformation: Signal<boolean> = computed(() => this.actionStatus() === 'uploadSuccess' && !!this.uploadInformation());
@@ -68,7 +66,7 @@ export class ExamRoomsComponent {
                 ?.newestUniqueExamRooms?.map((examRoomDTO) => examRoomDTO.numberOfSeats)
                 .reduce((acc, val) => acc + val, 0) ?? 0,
     );
-    private numberOfUniqueLayoutStrategies: Signal<number> = computed(
+    private numberOfLayoutStrategiesOfUniqueRooms: Signal<number> = computed(
         () =>
             this.overview()
                 ?.newestUniqueExamRooms?.map((examRoomDTO) => examRoomDTO.layoutStrategies?.length ?? 0)
@@ -85,7 +83,7 @@ export class ExamRoomsComponent {
             layoutStrategies: this.overview()!.numberOfStoredLayoutStrategies,
             uniqueExamRooms: this.numberOfUniqueExamRooms(),
             uniqueExamSeats: this.numberOfUniqueExamSeats(),
-            uniqueLayoutStrategies: this.numberOfUniqueLayoutStrategies(),
+            uniqueLayoutStrategies: this.numberOfLayoutStrategiesOfUniqueRooms(),
         } as NumberOfStored;
     });
     distinctLayoutStrategyNames: Signal<string> = computed(() =>
@@ -205,7 +203,11 @@ export class ExamRoomsComponent {
                     this.actionStatus.set(undefined);
                 },
                 complete: () => {
-                    this.dialogErrorSource.next(''); // this.showErrorNotification is easier to use
+                    // We need to call this, or else the deleteDialogService can't progress.
+                    // By doing next('') here, we tell the delete dialog service not to call the alert service.
+                    // We don't want the delete dialog service to call the alert service, as we can do that with
+                    // the 'this.showErrorNotification' function ourselves, but in a more readable way
+                    this.dialogErrorSource.next('');
                 },
             });
         });

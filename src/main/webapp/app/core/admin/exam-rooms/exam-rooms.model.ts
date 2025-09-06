@@ -1,6 +1,6 @@
 export interface ExamRoomUploadInformationDTO {
     uploadedFileName: string;
-    uploadDuration: string;
+    durationNanos: number;
     numberOfUploadedRooms: number;
     numberOfUploadedSeats: number;
     uploadedRoomNames: string[];
@@ -42,6 +42,6 @@ export interface ExamRoomAdminOverviewDTO {
 }
 
 export interface ExamRoomDeletionSummaryDTO {
-    deleteDuration: string;
+    durationNanos: number;
     numberOfDeletedExamRooms: number;
 }

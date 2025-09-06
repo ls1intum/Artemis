@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exam.web.admin;
 
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,13 +87,14 @@ public class AdminExamResource {
     public ResponseEntity<ExamRoomUploadInformationDTO> uploadRoomZip(@RequestParam("file") MultipartFile zipFile) {
         log.debug("REST request to parse rooms from a zip file: {}", zipFile.getOriginalFilename());
         if (zipFile.isEmpty()) {
-            throw new BadRequestAlertException("The rooms file is empty", ENTITY_NAME, "roomsFileEmpty");
+            throw new BadRequestAlertException("The rooms file is empty", ENTITY_NAME, "room.fileEmpty");
         }
 
         final DataSize maxSize = multipartProperties.getMaxFileSize();
         final long maxBytes = maxSize.toBytes();
         if (maxBytes > 0 && zipFile.getSize() > maxBytes) {
-            throw new BadRequestAlertException("The rooms file exceeds the %s limit".formatted(maxSize.toString()), ENTITY_NAME, "roomsFileTooLarge");
+            throw new BadRequestAlertException("The rooms file exceeds the %s limit".formatted(maxSize.toString()), ENTITY_NAME, "room.fileTooLarge",
+                    Map.of("maxSize", maxSize.toString()));
         }
 
         var uploadInformationDTO = examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFile);
