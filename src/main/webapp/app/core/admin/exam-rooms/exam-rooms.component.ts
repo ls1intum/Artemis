@@ -206,7 +206,8 @@ export class ExamRoomsComponent {
                     // We need to call this, or else the deleteDialogService can't progress.
                     // By doing next('') here, we tell the delete dialog service not to call the alert service.
                     // We don't want the delete dialog service to call the alert service, as we can do that with
-                    // the 'this.showErrorNotification' function ourselves, but in a more readable way
+                    // the 'this.showErrorNotification' function ourselves, which then also allows us to specify
+                    // just a translation key, rather than a hardcoded string.
                     this.dialogErrorSource.next('');
                 },
             });
