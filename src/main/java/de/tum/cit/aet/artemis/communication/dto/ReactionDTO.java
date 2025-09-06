@@ -30,10 +30,12 @@ public record ReactionDTO(Long id, AuthorDTO user, ZonedDateTime creationDate, @
      * @throws BadRequestAlertException if neither association exists
      */
     private static long relatedPostIdOrThrow(Reaction reaction) {
-        if (reaction.getPost() != null)
+        if (reaction.getPost() != null) {
             return reaction.getPost().getId();
-        if (reaction.getAnswerPost() != null)
+        }
+        if (reaction.getAnswerPost() != null) {
             return reaction.getAnswerPost().getId();
+        }
         throw new BadRequestAlertException("Reaction must be associated with a Post or AnswerPost.", "reaction", "missingAssociation");
     }
 }

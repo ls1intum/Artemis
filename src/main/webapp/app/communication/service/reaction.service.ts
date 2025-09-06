@@ -2,8 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { toReactionDTO } from 'app/communication/shared/entities/reaction-dto.model';
+import { Reaction, toReactionDTO } from 'app/communication/shared/entities/reaction.model';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 type EntityResponseType = HttpResponse<Reaction>;

@@ -11,3 +11,18 @@ export class Reaction {
     public post?: Post;
     public answerPost?: AnswerPost;
 }
+
+export interface CreatePayload {
+    emojiId?: string;
+    relatedPostId?: number;
+}
+
+/**
+ * Converts a Reaction to a minimal API payload.
+ */
+export function toReactionDTO(reaction: Reaction): CreatePayload {
+    return {
+        emojiId: reaction.emojiId,
+        relatedPostId: reaction.post?.id ?? reaction.answerPost?.id,
+    };
+}
