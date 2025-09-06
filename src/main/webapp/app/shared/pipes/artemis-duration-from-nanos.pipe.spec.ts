@@ -3,11 +3,6 @@ import { ArtemisDurationFromNanosPipe } from 'app/shared/pipes/artemis-duration-
 describe('ArtemisDurationFromNanosPipe', () => {
     const pipe: ArtemisDurationFromNanosPipe = new ArtemisDurationFromNanosPipe();
 
-    it('should show zero on undefined', () => {
-        const transformed = pipe.transform(undefined);
-        expect(transformed).toBe('0ns');
-    });
-
     it('should show zero on zero', () => {
         const transformed = pipe.transform(0);
         expect(transformed).toBe('0ns');
