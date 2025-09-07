@@ -29,22 +29,22 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 @Profile(PROFILE_CORE)
 @Lazy
 @Component
-class GitArchiveHelper {
+public class GitArchiveHelper {
 
     private static final Logger log = LoggerFactory.getLogger(GitArchiveHelper.class);
 
     private static final Set<String> IGNORED_ZIP_FILE_NAMES = Set.of("gc.log.lock");
 
-    InputStreamResource exportRepositoryWithFullHistoryToMemory(Repository repository, String filename) throws IOException, GitAPIException {
+    InputStreamResource exportRepositoryWithFullHistoryToMemory(Repository repository, String filename) throws IOException {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
 
             // Add the .git directory (full history)
             Path bareRepoPath = repository.getDirectory().toPath();
-            addDirectoryToZip(zipOutputStream, bareRepoPath, bareRepoPath, ".git");
+            addDirectoryToZip(zipOutputStream, bareRepoPath, bareRepoPath);
 
             // Add the working tree snapshot using ArchiveCommand for HEAD
             try {
-                byte[] archiveData = createJGitArchive(repository, "HEAD");
+                byte[] archiveData = createJGitArchive(repository);
                 if (archiveData.length > 0) {
                     try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(archiveData))) {
                         ZipEntry entry;
@@ -66,12 +66,14 @@ class GitArchiveHelper {
         }
     }
 
-    byte[] createJGitArchive(Repository repository, String treeish) throws GitAPIException, IOException {
-        ObjectId treeId = repository.resolve(treeish);
+    @SuppressWarnings("resource")
+    byte[] createJGitArchive(Repository repository) throws GitAPIException, IOException {
+        ObjectId treeId = repository.resolve("HEAD");
         if (treeId == null) {
-            log.debug("Could not resolve tree for '{}'", treeish);
+            log.debug("Could not resolve tree for HEAD");
             return new byte[0];
         }
+
         ByteArrayOutputStream archiveData = new ByteArrayOutputStream();
         try (Git git = new Git(repository)) {
             git.archive().setFormat("zip").setTree(treeId).setOutputStream(archiveData).call();
@@ -94,12 +96,12 @@ class GitArchiveHelper {
         };
     }
 
-    void addDirectoryToZip(ZipOutputStream zipOutputStream, Path rootPath, Path pathToAdd, String prefix) throws IOException {
+    void addDirectoryToZip(ZipOutputStream zipOutputStream, Path rootPath, Path pathToAdd) throws IOException {
         try (var paths = Files.walk(pathToAdd)) {
             paths.forEach(path -> {
                 try {
                     String relativePath = rootPath.relativize(path).toString().replace("\\", "/");
-                    String zipEntryName = prefix + "/" + relativePath;
+                    String zipEntryName = ".git" + "/" + relativePath;
 
                     // Skip ignored files like ephemeral lock files
                     String fileName = path.getFileName().toString();

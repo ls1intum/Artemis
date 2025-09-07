@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.programming.service;
 
-import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration.isBinaryFile;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.ByteArrayInputStream;
@@ -8,20 +7,13 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Predicate;
 
 import jakarta.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,8 +25,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
-import de.tum.cit.aet.artemis.programming.domain.File;
-import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
@@ -109,49 +99,27 @@ public class GitRepositoryExportService {
     /**
      * Zips the contents of a folder, files are filtered according to the contentFilter.
      * Content filtering is added with the intention of optionally excluding ".git" directory from the result.
+     * <p>
+     * Example
+     * // Exclude .git directory
+     * Predicate<Path> excludeGit = path -> !path.toString().contains(".git");
+     * <p>
+     * // Include everything
+     * Predicate<Path> includeAll = null;
      *
      * @param contentRootPath the root path of the content to zip
      * @param zipFilename     the name of the zipped file
      * @param zipDir          path of folder where the zip should be located on disk
      * @param contentFilter   path filter to exclude some files, can be null to include everything
+     *
      * @return path to the zip file
      * @throws IOException if the zipping process failed.
-     * @example
-     *          // Exclude .git directory
-     *          Predicate<Path> excludeGit = path -> !path.toString().contains(".git");
-     *
-     *          // Include everything
-     *          Predicate<Path> includeAll = null;
      */
     public Path zipFiles(Path contentRootPath, String zipFilename, String zipDir, @Nullable Predicate<Path> contentFilter) throws IOException {
         String sanitized = sanitizeZipFilename(zipFilename);
         Path zipFilePath = Path.of(zipDir, sanitized);
         Files.createDirectories(Path.of(zipDir));
         return zipFileService.createZipFileWithFolderContent(zipFilePath, contentRootPath, contentFilter);
-    }
-
-    /**
-     * Zips the contents of a directory directly to memory without creating temporary files.
-     * Content filtering is added with the intention of optionally excluding ".git" directory from the result.
-     *
-     * @param contentRootPath the root path of the content to zip
-     * @param zipFilename     the name of the zipped file (for metadata)
-     * @param contentFilter   path filter to exclude some files, can be null to include everything
-     * @return InputStreamResource containing the zipped content
-     * @throws IOException if the zipping process failed.
-     * @example
-     *          // Exclude .git directory
-     *          Predicate<Path> excludeGit = path -> !path.toString().contains(".git");
-     *
-     *          // Include everything
-     *          Predicate<Path> includeAll = null;
-     */
-    public InputStreamResource zipDirectoryToMemory(Path contentRootPath, String zipFilename, @Nullable Predicate<Path> contentFilter) throws IOException {
-        String sanitized = sanitizeZipFilename(zipFilename);
-
-        var byteArrayResource = zipFileService.createZipFileWithFolderContentInMemory(contentRootPath, sanitized, contentFilter);
-
-        return createZipInputStreamResource(byteArrayResource.getByteArray(), byteArrayResource.getFilename().replace(".zip", ""));
     }
 
     /**
@@ -180,13 +148,12 @@ public class GitRepositoryExportService {
      * Creates a JGit archive of the repository's working tree for a given treeish.
      *
      * @param repository the repository to archive
-     * @param treeish    the treeish to archive (e.g., "HEAD", "refs/heads/main")
      * @return byte array containing the archive data
      * @throws GitAPIException if the git operation fails
      * @throws IOException     if IO operations fail
      */
-    private byte[] createJGitArchive(Repository repository, String treeish) throws GitAPIException, IOException {
-        return gitArchiveHelper.createJGitArchive(repository, treeish);
+    private byte[] createJGitArchive(Repository repository) throws GitAPIException, IOException {
+        return gitArchiveHelper.createJGitArchive(repository);
     }
 
     /**
@@ -201,7 +168,7 @@ public class GitRepositoryExportService {
      */
     public InputStreamResource exportRepositorySnapshot(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
         Repository repository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false);
-        byte[] zipData = createJGitArchive(repository, "HEAD");
+        byte[] zipData = createJGitArchive(repository);
         return createZipInputStreamResource(zipData, filename);
     }
 
@@ -219,95 +186,6 @@ public class GitRepositoryExportService {
     public InputStreamResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
         Repository repository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false);
         return gitArchiveHelper.exportRepositoryWithFullHistoryToMemory(repository, filename);
-    }
-
-    /**
-     * Returns all files and directories within the working copy of the given repository in a map, excluding symbolic links.
-     * This method performs a file scan and filters out symbolic links.
-     * It only supports checked-out repositories (not bare ones)
-     *
-     * @param repo         The repository to scan for files and directories.
-     * @param omitBinaries do not include binaries to reduce payload size
-     * @return A {@link Map} where each key is a {@link File} object representing a file or directory, and each value is
-     *         the corresponding {@link FileType} (FILE or FOLDER). The map excludes symbolic links.
-     */
-    public Map<File, FileType> listFilesAndFolders(Repository repo, boolean omitBinaries) {
-        FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
-        Iterator<java.io.File> iterator = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
-        Map<File, FileType> files = new HashMap<>();
-
-        while (iterator.hasNext()) {
-            File nextFile = new File(iterator.next(), repo);
-            Path nextPath = nextFile.toPath();
-
-            if (Files.isSymbolicLink(nextPath)) {
-                log.warn("Found a symlink {} in the git repository {}. Do not allow access!", nextPath, repo);
-                continue;
-            }
-
-            if (omitBinaries && nextFile.isFile() && isBinaryFile(nextFile.getName())) {
-                log.debug("Omitting binary file: {}", nextFile);
-                continue;
-            }
-
-            files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
-        }
-        return files;
-    }
-
-    public Map<File, FileType> listFilesAndFolders(Repository repo) {
-        return listFilesAndFolders(repo, false);
-    }
-
-    /**
-     * List all files in the repository. In an empty git repo, this method returns en empty list.
-     *
-     * @param repo Local Repository Object.
-     * @return Collection of File objects
-     */
-    public Collection<File> getFiles(Repository repo) {
-        FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
-        Iterator<java.io.File> iterator = FileUtils.iterateFiles(repo.getLocalPath().toFile(), filter, filter);
-        Collection<File> files = new ArrayList<>();
-
-        while (iterator.hasNext()) {
-            files.add(new File(iterator.next(), repo));
-        }
-
-        return files;
-    }
-
-    /**
-     * Get a specific file by name. Makes sure the file is actually part of the repository.
-     *
-     * @param repo     Local Repository Object.
-     * @param filename String of the filename (including path)
-     * @return The File object
-     */
-    public Optional<File> getFileByName(Repository repo, String filename) {
-        // Prevents directory traversal attacks by only allowing access to scanned files
-
-        for (File file : listFilesAndFolders(repo).keySet()) {
-            if (file.toString().equals(filename)) {
-                return Optional.of(file);
-            }
-        }
-        return Optional.empty();
-    }
-
-    private static class FileAndDirectoryFilter implements IOFileFilter {
-
-        private static final String GIT_DIRECTORY_NAME = ".git";
-
-        @Override
-        public boolean accept(java.io.File file) {
-            return !GIT_DIRECTORY_NAME.equals(file.getName());
-        }
-
-        @Override
-        public boolean accept(java.io.File directory, String fileName) {
-            return !GIT_DIRECTORY_NAME.equals(directory.getName());
-        }
     }
 
     /**
