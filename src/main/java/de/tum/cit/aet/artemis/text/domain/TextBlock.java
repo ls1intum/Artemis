@@ -173,7 +173,7 @@ public class TextBlock implements Serializable {
         if (!(obj instanceof TextBlock textBlock)) {
             return false;
         }
-        return Objects.equals(id, textBlock.id);
+        return id != null && Objects.equals(id, textBlock.id);
     }
 
     @Override

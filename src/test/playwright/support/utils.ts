@@ -37,7 +37,7 @@ dayjs.extend(utc);
  */
 export function generateUUID() {
     const bytes = new Uint8Array(10);
-    window.crypto.getRandomValues(bytes);
+    crypto.getRandomValues(bytes);
     return Array.from(bytes, (byte) => byte.toString(36).padStart(2, '0'))
         .join('')
         .slice(0, 10);
