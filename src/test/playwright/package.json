@@ -16,7 +16,6 @@
         "monocart-reporter": "2.9.21",
         "npm-run-all2": "8.0.4",
         "simple-git": "3.28.0",
-        "uuid": "12.0.0",
         "archiver": "7.0.1"
     },
     "scripts": {

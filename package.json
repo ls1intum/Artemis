@@ -45,7 +45,6 @@
         "bootstrap": "5.3.8",
         "compare-versions": "6.1.1",
         "core-js": "3.45.1",
-        "crypto-js": "4.2.0",
         "dayjs": "1.11.18",
         "diff-match-patch-typescript": "1.1.2",
         "dompurify": "3.2.6",
@@ -77,13 +76,12 @@
         "split.js": "1.6.5",
         "tslib": "2.8.1",
         "turndown": "7.2.1",
-        "uuid": "11.1.0",
         "webstomp-client": "1.2.6",
         "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
         "zone.js": "0.15.1"
     },
     "overrides": {
-        "@babel/runtime": "7.28.3",
+        "@babel/runtime": "7.28.4",
         "braces": "3.0.3",
         "cookie": "1.0.2",
         "critters": "0.0.25",
@@ -97,6 +95,7 @@
         "semver": "7.7.2",
         "tmp": "0.2.5",
         "tough-cookie": "6.0.0",
+        "uuid": "9.0.1",
         "vite": "7.1.4",
         "webpack": "5.101.3",
         "webpack-dev-middleware": "7.4.3",
@@ -120,7 +119,6 @@
         "@angular/language-service": "20.2.4",
         "@sentry/types": "10.10.0",
         "@testing-library/angular": "18.0.0",
-        "@types/crypto-js": "4.2.2",
         "@types/d3-shape": "3.1.7",
         "@types/emoji-js": "3.5.2",
         "@types/jest": "29.5.14",
@@ -131,13 +129,12 @@
         "@types/papaparse": "5.3.16",
         "@types/smoothscroll-polyfill": "0.3.4",
         "@types/turndown": "5.0.5",
-        "@types/uuid": "10.0.0",
         "@typescript-eslint/eslint-plugin": "8.42.0",
         "@typescript-eslint/parser": "8.42.0",
         "@typescript-eslint/utils": "8.42.0",
         "angular-eslint": "20.2.0",
         "cross-env": "10.0.0",
-        "eslint": "9.34.0",
+        "eslint": "9.35.0",
         "eslint-config-prettier": "10.1.8",
         "eslint-plugin-jest": "29.0.1",
         "eslint-plugin-jest-extended": "3.0.0",
@@ -156,7 +153,7 @@
         "patch-package": "8.0.0",
         "prettier": "3.6.2",
         "rimraf": "6.0.1",
-        "sass": "1.92.0",
+        "sass": "1.92.1",
         "ts-jest": "29.4.1",
         "typescript": "5.9.2",
         "typescript-eslint": "8.42.0",
@@ -165,8 +162,8 @@
         "weak-napi": "2.0.2"
     },
     "engines": {
-        "node": ">=24.4.1",
-        "npm": ">=11.4.2"
+        "node": ">=24.7.0",
+        "npm": ">=11.5.1"
     },
     "scripts": {
         "build": "npm run webapp:prod --",

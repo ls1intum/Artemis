@@ -43,7 +43,6 @@ import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulle
 import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { faAngleDown, faGripLines, faQuestionCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { v4 as uuid } from 'uuid';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { TextEditorActionGroup } from 'app/shared/monaco-editor/model/actions/text-editor-action-group.model';
 import { HeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
@@ -169,48 +168,27 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     _markdown?: string;
 
-    @Input()
-    enableFileUpload = true;
-
-    @Input()
-    enableResize = true;
-
-    @Input()
-    showPreviewButton = true;
-
-    @Input()
-    showVisualButton = false;
-
-    @Input()
-    showDefaultPreview = true;
-
-    @Input()
-    useDefaultMarkdownEditorOptions = true;
-
-    @Input()
-    showEditButton = true;
+    @Input() enableFileUpload = true;
+    @Input() enableResize = true;
+    @Input() showPreviewButton = true;
+    @Input() showVisualButton = false;
+    @Input() showDefaultPreview = true;
+    @Input() useDefaultMarkdownEditorOptions = true;
+    @Input() showEditButton = true;
 
     /**
      * If set to true, the editor will grow and shrink to fit its content. However, the height will still be constrained by {@link resizableMinHeight} and {@link resizableMaxHeight}.
      * In particular, an empty editor will have the height of {@link resizableMinHeight} upon initialization, no matter what value {@link initialEditorHeight} has.
      */
-    @Input()
-    linkEditorHeightToContentHeight = false;
+    @Input() linkEditorHeightToContentHeight = false;
 
     /**
      * The initial height the editor should have. If set to 'external', the editor will try to grow to the available space.
      */
-    @Input()
-    initialEditorHeight: MarkdownEditorHeight | 'external' = MarkdownEditorHeight.SMALL;
-
-    @Input()
-    resizableMaxHeight = MarkdownEditorHeight.LARGE;
-
-    @Input()
-    resizableMinHeight = MarkdownEditorHeight.SMALL;
-
-    @Input()
-    defaultActions: TextEditorAction[] = [
+    @Input() initialEditorHeight: MarkdownEditorHeight | 'external' = MarkdownEditorHeight.SMALL;
+    @Input() resizableMaxHeight = MarkdownEditorHeight.LARGE;
+    @Input() resizableMinHeight = MarkdownEditorHeight.SMALL;
+    @Input() defaultActions: TextEditorAction[] = [
         new BoldAction(),
         new ItalicAction(),
         new UnderlineAction(),
@@ -224,27 +202,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         new BulletedListAction(),
     ];
 
-    @Input()
-    headerActions?: TextEditorActionGroup<HeadingAction> = new TextEditorActionGroup<HeadingAction>(
+    @Input() headerActions?: TextEditorActionGroup<HeadingAction> = new TextEditorActionGroup<HeadingAction>(
         'artemisApp.multipleChoiceQuestion.editor.style',
         [1, 2, 3].map((level) => new HeadingAction(level)),
         undefined,
     );
 
-    @Input()
-    lectureReferenceAction?: LectureAttachmentReferenceAction = undefined;
-
-    @Input()
-    colorAction?: ColorAction = new ColorAction();
-
-    @Input()
-    domainActions: TextEditorDomainAction[] = [];
-
-    @Input()
-    artemisIntelligenceActions: TextEditorAction[] = [];
-
-    @Input()
-    metaActions: TextEditorAction[] = [new FullscreenAction()];
+    @Input() lectureReferenceAction?: LectureAttachmentReferenceAction = undefined;
+    @Input() colorAction?: ColorAction = new ColorAction();
+    @Input() domainActions: TextEditorDomainAction[] = [];
+    @Input() artemisIntelligenceActions: TextEditorAction[] = [];
+    @Input() metaActions: TextEditorAction[] = [new FullscreenAction()];
 
     isButtonLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
@@ -337,7 +305,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly EditType = PostingEditType;
 
     constructor() {
-        this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
+        this.uniqueMarkdownEditorId = 'markdown-editor-' + window.crypto.randomUUID().toString();
     }
 
     ngAfterContentInit(): void {

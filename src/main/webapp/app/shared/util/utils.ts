@@ -15,11 +15,11 @@ export function cleanString(str?: string): string {
  * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value
  * Stringify a circular JSON structure by omitting keys that would close a circle
  *
- * @param val The object you want to stringify
+ * @param obj The object you want to stringify
  */
-export const stringifyCircular = (val: any): string => {
-    const seen = new WeakSet();
-    return JSON.stringify(val, (key, value) => {
+export const stringifyCircular = (obj: object): string => {
+    const seen = new WeakSet<object>();
+    return JSON.stringify(obj, (_key, value) => {
         if (typeof value === 'object' && value !== null) {
             if (seen.has(value)) {
                 return;

@@ -60,6 +60,7 @@ export class TextBlock {
         const submissionId = this.submissionId ?? 0;
         const idString = `${submissionId};${this.startIndex}-${this.endIndex};${this.text}`;
         this.id = sha1Hex(idString);
+        // sha1Hex(idString).then((hash) => (this.id = hash));
     }
 
     setTextFromSubmission(submission?: TextSubmission): void {

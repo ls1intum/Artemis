@@ -1,6 +1,5 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
-import { v4 as uuidv4 } from 'uuid';
 import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, TIME_FORMAT } from './constants';
 import * as fs from 'fs';
 import { dirname } from 'path';
@@ -34,11 +33,14 @@ dayjs.extend(utc);
  */
 
 /**
- * Generates a unique identifier.
+ * Generates a unique identifier with 10 characters.
  */
 export function generateUUID() {
-    const uuid = uuidv4().replace(/-/g, '');
-    return uuid.substr(0, 9);
+    const bytes = new Uint8Array(10);
+    window.crypto.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => byte.toString(36).padStart(2, '0'))
+        .join('')
+        .slice(0, 10);
 }
 
 /**
@@ -69,20 +71,6 @@ export function dayjsToString(day: dayjs.Dayjs) {
  */
 export function trimDate(date: string) {
     return date.slice(0, 19);
-}
-
-/**
- * Converts a snake_case word to Title Case (each word's first letter capitalized and spaces in between).
- * @param str - The snake_case word to be converted to Title Case.
- * @returns The word in Title Case.
- */
-export function titleCaseWord(str: string) {
-    str = str.replace('_', ' ');
-    const sentence = str.toLowerCase().split(' ');
-    for (let i = 0; i < sentence.length; i++) {
-        sentence[i] = sentence[i][0].toUpperCase() + sentence[i].slice(1);
-    }
-    return sentence.join(' ');
 }
 
 /**
@@ -138,22 +126,6 @@ export function base64StringToBlob(base64: string, type?: string): Blob {
 export async function clearTextField(textField: Locator) {
     await textField.click({ clickCount: 4, force: true });
     await textField.press('Backspace');
-}
-
-export async function hasAttributeWithValue(page: Page, selector: string, value: string): Promise<boolean> {
-    return page.evaluate(
-        ({ selector, value }) => {
-            const element = document.querySelector(selector);
-            if (!element) return false;
-            for (const attr of element.attributes) {
-                if (attr.value === value) {
-                    return true;
-                }
-            }
-            return false;
-        },
-        { selector, value },
-    );
 }
 
 export function parseNumber(text?: string): number | undefined {

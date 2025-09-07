@@ -82,12 +82,7 @@ public class TextBlock implements Serializable {
     public void computeId() {
         final long submissionId = submission != null ? submission.getId() : 0;
         final String idString = submissionId + ";" + startIndex + "-" + endIndex + ";" + text;
-        id = sha1Hex(idString);
-    }
-
-    public TextBlock id(String id) {
-        setId(id);
-        return this;
+        this.id = sha1Hex(idString);
     }
 
     public int getStartIndex() {
@@ -175,10 +170,10 @@ public class TextBlock implements Serializable {
         if (this == obj) {
             return true;
         }
-        if (!(obj instanceof TextBlock)) {
+        if (!(obj instanceof TextBlock textBlock)) {
             return false;
         }
-        return id != null && id.equals(((TextBlock) obj).id);
+        return Objects.equals(id, textBlock.id);
     }
 
     @Override

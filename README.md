@@ -90,20 +90,16 @@ Additional services are available in the EduTelligence suite for advanced deploy
 
 The Artemis development team prioritizes the following areas in the future. We welcome feature requests from students, tutors, instructors, and administrators. We are happy to discuss any suggestions for improvements.
 
-* **Short term**: Further improve the communication features with mobile apps for iOS and Android
-* **Short term**: Add the possibility to use Iris for questions on all exercise types and lectures (partly done)
-* **Short term**: Provide GenAI based automatic feedback to modeling, text and programming exercise with Athena
-* **Short term**: Improve the LTI integration with Moodle
+* **Short term**: Performance improvements for large courses and exams
+* **Short term**: Require Passkey for privileged access rights
+* **Short term**: Add automatic transcriptions for lecture videos
+* **Medium term**: Add a global search functionality
 * **Medium term**: Improve the REST API of the server application
 * **Medium term**: Integrate an online IDE (e.g. Eclipse Theia) into Artemis for enhanced user experience
 * **Medium term**: Add more learning analytics features while preserving data privacy
 * **Medium term**: Improve the user experience, usability and navigation
-* **Medium term**: Add automatic generation of hints for programming exercises
 * **Medium term**: Add GenAI support for reviewing exercises for instructors
-* **Medium term**: Add GenAI support for learning analytics (partly done)
-* **Long term**: Explore the possibilities of microservices, Kubernetes based deployment, and micro frontends
 * **Long term**: Allow students to take notes on lecture slides and support the automatic updates of lecture slides
-* **Long term**: Develop an exchange platform for exercises
 
 ## Contributing
 
@@ -137,7 +133,7 @@ The following members of the project management team are responsible for specifi
 | Quiz exercises        | Timor Morrien ([@Hialus](https://github.com/Hialus))                               |
 | Modeling exercises    | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
 | Text exercises        | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
-| File upload exercises | Elisabeth Friesinger ([@easy-lisi](https://github.com/easy-lisi))                  |
+| File upload exercises | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
 | Exam mode             | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
 | Assessment            | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
 | Communication         | Stephan Krusche ([@krusche](https://github.com/krusche))                           |

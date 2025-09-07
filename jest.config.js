@@ -54,6 +54,7 @@ const esModules = [
     'primeng',
     'rxjs/operators',
     'trigram-utils',
+    'uuid',
 ].join('|');
 
 const {
