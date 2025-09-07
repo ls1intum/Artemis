@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, booleanAttribute, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { SidebarEventService } from 'app/shared/sidebar/service/sidebar-event.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -50,7 +50,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     @Input() overviewPageOpen: boolean;
     @Input() examSessions?: ExamSession[] = [];
     @Input() examTimeLineView = false;
-    @Input() isTestRun = false;
+    @Input({ transform: booleanAttribute }) isTestRun = false;
     @Output() onPageChanged = new EventEmitter<{
         overViewChange: boolean;
         exercise?: Exercise;
