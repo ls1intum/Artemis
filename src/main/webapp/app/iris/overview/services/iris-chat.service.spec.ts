@@ -233,6 +233,27 @@ describe('IrisChatService', () => {
         tick();
     }));
 
+    it('should update session title from websocket STATUS payload', fakeAsync(() => {
+        const myTitle = 'My new session title';
+        jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([{ id, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1 } as IrisSessionDTO]));
+
+        const wsPayloadWithTitle = {
+            type: 1, // IrisChatWebsocketPayloadType.STATUS
+            stages: [],
+            sessionTitle: myTitle,
+        } as any;
+        const wsSpy = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(wsPayloadWithTitle));
+        service.switchTo(ChatServiceMode.COURSE, id);
+
+        expect(wsSpy).toHaveBeenCalledWith(id);
+        service.availableChatSessions().subscribe((sessions) => {
+            const current = sessions.find((s) => s.id === id);
+            expect(current?.title).toBe(myTitle);
+        });
+        tick();
+    }));
+
     it('should handle websocket message', fakeAsync(() => {
         jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
