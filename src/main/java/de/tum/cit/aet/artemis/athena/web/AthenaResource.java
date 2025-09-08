@@ -267,7 +267,7 @@ public class AthenaResource {
             throws IOException {
         log.debug("REST call to get student repository for exercise {}, submission {}", exerciseId, submissionId);
         checkAthenaSecret(auth);
-        return ResponseEntity.ok(athenaRepositoryExportService.getRepositoryFilesContent(exerciseId, submissionId, null));
+        return ResponseEntity.ok(athenaRepositoryExportService.getStudentRepositoryFilesContent(exerciseId, submissionId));
     }
 
     /**
@@ -277,44 +277,14 @@ public class AthenaResource {
      * @param auth       the auth header value to check
      * @return 200 Ok with the file map as body if successful
      */
-    @GetMapping("public/programming-exercises/{exerciseId}/repository/template")
+    @GetMapping("public/programming-exercises/{exerciseId}/repository/{repositoryType}")
     @EnforceNothing // We check the Athena secret instead
     @ManualConfig
-    public ResponseEntity<Map<String, String>> getTemplateRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth) throws IOException {
+    public ResponseEntity<Map<String, String>> getTemplateRepository(@PathVariable long exerciseId, @PathVariable String repositoryType,
+            @RequestHeader(HttpHeaders.AUTHORIZATION) String auth) throws IOException {
         log.debug("REST call to get template repository for exercise {}", exerciseId);
         checkAthenaSecret(auth);
-        return ResponseEntity.ok(athenaRepositoryExportService.getRepositoryFilesContent(exerciseId, null, RepositoryType.TEMPLATE));
+        return ResponseEntity.ok(athenaRepositoryExportService.getInstructorRepositoryFilesContent(exerciseId, RepositoryType.fromString(repositoryType)));
     }
 
-    /**
-     * GET public/programming-exercises/:exerciseId/repository/solution : Get the solution repository as a file map
-     *
-     * @param exerciseId the id of the exercise
-     * @param auth       the auth header value to check
-     * @return 200 Ok with the file map as body if successful
-     */
-    @GetMapping("public/programming-exercises/{exerciseId}/repository/solution")
-    @EnforceNothing // We check the Athena secret instead
-    @ManualConfig
-    public ResponseEntity<Map<String, String>> getSolutionRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth) throws IOException {
-        log.debug("REST call to get solution repository for exercise {}", exerciseId);
-        checkAthenaSecret(auth);
-        return ResponseEntity.ok(athenaRepositoryExportService.getRepositoryFilesContent(exerciseId, null, RepositoryType.SOLUTION));
-    }
-
-    /**
-     * GET public/programming-exercises/:exerciseId/repository/tests : Get the test repository as a file map
-     *
-     * @param exerciseId the id of the exercise
-     * @param auth       the auth header value to check
-     * @return 200 Ok with the file map as body if successful
-     */
-    @GetMapping("public/programming-exercises/{exerciseId}/repository/tests")
-    @EnforceNothing // We check the Athena secret instead
-    @ManualConfig
-    public ResponseEntity<Map<String, String>> getTestRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth) throws IOException {
-        log.debug("REST call to get test repository for exercise {}", exerciseId);
-        checkAthenaSecret(auth);
-        return ResponseEntity.ok(athenaRepositoryExportService.getRepositoryFilesContent(exerciseId, null, RepositoryType.TESTS));
-    }
 }

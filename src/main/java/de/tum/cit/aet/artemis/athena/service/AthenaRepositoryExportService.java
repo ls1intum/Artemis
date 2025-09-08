@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -62,37 +61,20 @@ public class AthenaRepositoryExportService {
     }
 
     /**
-     * Returns a mapping of file paths to contents for a repository.
+     * Returns a mapping of file paths to contents for a student repository.
      * Binary files are omitted.
      *
-     * @param exerciseId     the id of the exercise to retrieve the repository for
-     * @param submissionId   the id of the submission (only used for student repositories; otherwise pass null)
-     * @param repositoryType the type of repository to retrieve. Pass null to retrieve the student repository
+     * @param exerciseId   the id of the exercise to retrieve the repository for
+     * @param submissionId the id of the submission
      * @return Map of file paths to their textual contents
      * @throws IOException              if reading from the repository fails
      * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
      */
-    public Map<String, String> getRepositoryFilesContent(long exerciseId, Long submissionId, RepositoryType repositoryType) throws IOException {
-        log.debug("Retrieving repository file contents for exercise {}, submission {} (repoType: {})", exerciseId, submissionId, repositoryType);
+    public Map<String, String> getStudentRepositoryFilesContent(long exerciseId, Long submissionId) throws IOException {
+        log.debug("Retrieving student repository file contents for exercise {}, submission {}", exerciseId, submissionId);
 
-        var programmingExercise = (repositoryType != null) ? programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId)
-                : programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise);
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
-        // Athena currently does not support individual due dates
-        var exportOptions = new RepositoryExportOptionsDTO(false, true, false, programmingExercise.getDueDate(), false, false, false, true, false);
-
-        if (repositoryType != null) {
-            // Export instructor repositories
-            var repoUri = programmingExercise.getRepositoryURI(repositoryType);
-            if (repoUri == null) {
-                throw new IOException("Repository URI is null for exercise " + exerciseId + " and repository type " + repositoryType + ". This may indicate that the "
-                        + repositoryType.name().toLowerCase() + " repository has not been set up yet.");
-            }
-            return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repoUri);
-        }
-
-        // Export student repository
         var submission = programmingSubmissionRepository.findById(submissionId).orElseThrow();
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(submission.getParticipation().getId());
         var repoUri = participation.getVcsRepositoryUri();
@@ -100,12 +82,35 @@ public class AthenaRepositoryExportService {
             throw new IOException(
                     "Repository URI is null for student participation " + participation.getId() + ". This may indicate that the student repository has not been set up yet.");
         }
-        ZonedDateTime deadline = exportOptions.filterLateSubmissionsDate();
+        ZonedDateTime deadline = programmingExercise.getDueDate();
         if (deadline != null) {
             return repositoryService.getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(repoUri, deadline);
         }
         else {
             return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repoUri);
         }
+    }
+
+    /**
+     * Retrieves the files content of an instructor repository.
+     *
+     * @param exerciseId     the id of the exercise to retrieve the repository for
+     * @param repositoryType the type of repository to retrieve
+     * @return Map of file paths to their textual contents
+     * @throws IOException              if reading from the repository fails
+     * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
+     */
+    public Map<String, String> getInstructorRepositoryFilesContent(long exerciseId, RepositoryType repositoryType) throws IOException {
+        log.debug("Retrieving instructor repository file contents for exercise {}, repository type {}", exerciseId, repositoryType);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+
+        checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise);
+
+        var repoUri = programmingExercise.getRepositoryURI(repositoryType);
+        if (repoUri == null) {
+            throw new IOException("Repository URI is null for exercise " + exerciseId + " and repository type " + repositoryType + ". This may indicate that the "
+                    + repositoryType.name().toLowerCase() + " repository has not been set up yet.");
+        }
+        return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repoUri);
     }
 }
