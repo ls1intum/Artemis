@@ -1,0 +1,88 @@
+name: Query Over-fetch Detection
+
+on:
+  push:
+    branches: [ develop ]
+    paths:
+      - 'src/main/java/**'
+  #pull_request:
+   # paths:
+    #  - 'src/main/java/**'
+
+jobs:
+  query-quality-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Check for query over-fetching
+        run: |
+          # Run the analysis and capture output
+          output=$(python supporting_scripts/query_overfetch_checker.py)
+
+          echo "$output"
+          echo ""
+
+          # Extract violation counts
+          entitygraph_violations=$(echo "$output" | grep -c "\[EntityGraph\] Potential over-fetch" || echo "0")
+          query_violations=$(echo "$output" | grep -c "\[@Query\] Potential over-fetch" || echo "0")
+          total_violations=$((entitygraph_violations + query_violations))
+
+          # TODO these values should become zero in the future
+          max_violations=0
+
+          echo "=========================================="
+          echo "QUERY QUALITY ANALYSIS SUMMARY"
+          echo "=========================================="
+          echo "EntityGraph violations found: $entitygraph_violations"
+          echo "Query violations found: $query_violations"
+          echo "Total violations found: $total_violations (max allowed: $max_violations)"
+          echo ""
+
+          violation_detected=false
+
+          if [ "$total_violations" -gt "$max_violations" ]; then
+            echo "❌ Too many query quality violations: $total_violations > $max_violations"
+            violation_detected=true
+          else
+            echo "✅ Query quality violations within threshold: $total_violations <= $max_violations"
+          fi
+
+          echo "=========================================="
+
+          if [ $violation_detected = "true" ]; then
+            echo "::error::Query Quality check failed"
+            echo ""
+
+            if [ "$entitygraph_violations" -gt "0" ]; then
+              echo "VIOLATING ENTITY GRAPHS ($entitygraph_violations violations):"
+              echo "-----------------------------------------------------------"
+              echo "$output" | sed -n '/\[EntityGraph\] Potential over-fetch/,/^$/p' | grep -E '(Potential over-fetch|@EntityGraph)'
+              echo ""
+            fi
+
+            if [ "$query_violations" -gt "0" ]; then
+              echo "VIOLATING QUERIES ($query_violations violations):"
+              echo "-------------------------------------------------"
+              echo "$output" | sed -n '/\[@Query\] Potential over-fetch/,/^$/p' | grep -E '(Potential over-fetch|JOIN FETCH)'
+              echo ""
+            fi
+
+            echo "RECOMMENDATIONS:"
+            echo "- Consider using pagination for large result sets"
+            echo "- Split complex queries into smaller, focused queries"
+            echo "- Consider projection queries when full entities aren't needed"
+            echo "- Review if all JOIN FETCHes are actually necessary"
+            echo ""
+            echo "Please refactor the queries listed above to meet performance standards!"
+            exit 1
+          else
+            echo "✅ Query Quality check passed"
+          fi
