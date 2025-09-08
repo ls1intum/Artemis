@@ -80,9 +80,17 @@ public class SharingSupportResource {
 
     /**
      * GET api/core/sharing/config/is-enabled
-     * Return a boolean value representing the current profile state of Sharing
+     * This method returns three different responses:
      *
-     * @return Status 200 if a Sharing ApiBaseUrl is present, in case that sharing is not enabled Http-Status 503 is signalled, because
+     * <ul>
+     * <li>true, if the sharing profile is enabled, and the connection to the sharing platform is established.</li>
+     * <li>false. if the sharing profile is enabled, however the connection to the sharing platform is not (yet) established.</li>
+     * <li>Return a status 503, if the sharing profile is not enabled.</li>
+     * </ul>
+     * The last two cases must be interpreted as sharing is not enabled.
+     *
+     * @return Status 200 and true if a Sharing ApiBaseUrl is present, false, if the Sharing Profile is enabled, however the connection not yet established. In case that sharing is
+     *         not enabled Http-Status 503 is signalled, because
      *         this resource is not available!
      */
     @GetMapping(SHARINGCONFIG_RESOURCE_IS_ENABLED)

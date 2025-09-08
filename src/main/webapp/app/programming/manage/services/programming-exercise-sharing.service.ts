@@ -19,11 +19,11 @@ export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
 /** the programming exercise sharing service */
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseSharingService {
-    baseSharingConfigUrl = 'api/core/sharing/config';
-    resourceUrl = 'api/programming/sharing/import';
-    resourceUrlBasket = 'api/programming/sharing/import/basket/';
-    resourceUrlExport = 'api/programming/sharing/export';
-    resourceUrlSetupImport = 'api/programming/sharing/setup-import';
+    protected readonly baseSharingConfigUrl = 'api/core/sharing/config';
+    protected readonly resourceUrl = 'api/programming/sharing/import';
+    protected readonly resourceUrlBasket = 'api/programming/sharing/import/basket/';
+    protected readonly resourceUrlExport = 'api/programming/sharing/export';
+    protected readonly resourceUrlSetupImport = 'api/programming/sharing/setup-import';
 
     private readonly http = inject(HttpClient);
 

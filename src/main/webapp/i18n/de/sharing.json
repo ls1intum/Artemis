@@ -5,7 +5,7 @@
             "expiresAt": "Verbindung zur Austauschplattform läuft um <strong>{{expirationDate}}</strong> ab",
             "importedExercise": "Importierte Aufgaben",
             "courseToImport": "Kurs in den die Aufgabe importiert werden soll",
-            "noExercisesFound": "Keine importierten Aufgaben gefunden?",
+            "noExercisesFound": "Keine importierten Aufgaben gefunden!",
             "exerciseToImport": "Bitte die zu importierende Aufgabe auswählen",
             "loginAsInstructorOrEditor": "Bitte melden dich als Instruktor oder Editor an!",
             "coursesLoading": "Kurse werden geladen, bitte ein wenig Geduld",

@@ -5,7 +5,7 @@
             "expiresAt": "Connection to Sharing Platform expires at <strong>{{expirationDate}}</strong>",
             "importedExercise": "Imported Exercise",
             "courseToImport": "Course to import Exercise into",
-            "noExercisesFound": "No imported exercises found?",
+            "noExercisesFound": "No imported exercises found!",
             "exerciseToImport": "Please select exercise to import",
             "loginAsInstructorOrEditor": "Please ensure to log in as instructor or editor!",
             "coursesLoading": "Courses are loading, please stand by.",
