@@ -21,8 +21,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final String TEST_PREFIX = "examroomservicetest";
-
     @Autowired
     private ExamRoomService examRoomService;
 
@@ -39,7 +37,6 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         // first verify the returned upload information is correct
         assertThat(uploadInformation.uploadedFileName()).isEqualTo(zipFile.getOriginalFilename());
-        assertThat(uploadInformation.durationNanos()).isNotNegative();
         assertThat(uploadInformation.numberOfUploadedRooms()).isEqualTo(expectedNumberOfRooms);
         assertThat(uploadInformation.numberOfUploadedSeats()).isEqualTo(expectedNumberOfSeats);
         assertThat(uploadInformation.uploadedRoomNames()).hasSize(expectedNumberOfRooms);
@@ -84,7 +81,6 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
         var uploadInformation = examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileRealisticScenario);
 
         assertThat(uploadInformation.uploadedFileName()).isEqualTo(ExamRoomZipFiles.zipFileRealisticScenario.getOriginalFilename());
-        assertThat(uploadInformation.durationNanos()).isNotNegative();
         assertThat(uploadInformation.numberOfUploadedRooms()).isEqualTo(64);
         assertThat(uploadInformation.numberOfUploadedSeats()).isEqualTo(16141);
         assertThat(uploadInformation.uploadedRoomNames()).hasSize(64);
@@ -149,7 +145,6 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testDeleteAllOutdatedAndUnusedExamRooms_empty() {
         var deletionSummary = examRoomService.deleteAllOutdatedAndUnusedExamRooms();
         assertThat(deletionSummary).isNotNull();
-        assertThat(deletionSummary.durationNanos()).isNotNegative();
         assertThat(deletionSummary.numberOfDeletedExamRooms()).isZero();
     }
 
@@ -159,7 +154,6 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         var deletionSummary = examRoomService.deleteAllOutdatedAndUnusedExamRooms();
         assertThat(deletionSummary).isNotNull();
-        assertThat(deletionSummary.durationNanos()).isNotNegative();
         assertThat(deletionSummary.numberOfDeletedExamRooms()).isZero();
     }
 
@@ -171,7 +165,6 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         var deletionSummary = examRoomService.deleteAllOutdatedAndUnusedExamRooms();
         assertThat(deletionSummary).isNotNull();
-        assertThat(deletionSummary.durationNanos()).isNotNegative();
         assertThat(deletionSummary.numberOfDeletedExamRooms()).isOne();
     }
 
@@ -184,7 +177,6 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
         // 16 outdated rooms
         var deletionSummary = examRoomService.deleteAllOutdatedAndUnusedExamRooms();
         assertThat(deletionSummary).isNotNull();
-        assertThat(deletionSummary.durationNanos()).isNotNegative();
         assertThat(deletionSummary.numberOfDeletedExamRooms()).isEqualTo(16);
     }
 }

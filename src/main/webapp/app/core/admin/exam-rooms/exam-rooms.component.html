@@ -27,9 +27,6 @@
             <h3><span jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.title"></span></h3>
             <ul>
                 <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.file"></strong> {{ uploadInformation()!.uploadedFileName }}</li>
-                <li>
-                    <strong jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.duration"></strong> {{ uploadInformation()!.durationNanos | artemisDurationFromNanos }}
-                </li>
                 <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.roomsUploaded"></strong> {{ uploadInformation()!.numberOfUploadedRooms }}</li>
                 <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.seatsUploaded"></strong> {{ uploadInformation()!.numberOfUploadedSeats }}</li>
             </ul>
@@ -42,10 +39,6 @@
         <div class="card">
             <h3><span jhiTranslate="artemisApp.examRooms.adminOverview.deletionSummary.title"></span></h3>
             <ul>
-                <li>
-                    <strong jhiTranslate="artemisApp.examRooms.adminOverview.deletionSummary.duration"></strong>
-                    {{ deletionInformation()!.durationNanos | artemisDurationFromNanos }}
-                </li>
                 <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.deletionSummary.roomsDeleted"></strong> {{ deletionInformation()!.numberOfDeletedExamRooms }}</li>
             </ul>
         </div>

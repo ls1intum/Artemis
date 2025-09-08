@@ -10,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamRoomUploadInformationDTO(
     @NotNull String uploadedFileName,
-    long durationNanos,
     int numberOfUploadedRooms,
     int numberOfUploadedSeats,
     @NotNull List<String> uploadedRoomNames

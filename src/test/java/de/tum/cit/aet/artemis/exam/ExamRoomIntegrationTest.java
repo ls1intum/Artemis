@@ -140,7 +140,6 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             int expectedNumberOfSeats, ExpectedRoom... expectedRooms) {
         // first verify the returned upload information is correct
         assertThat(uploadInformationDTO.uploadedFileName()).isEqualTo(originalFilename);
-        assertThat(uploadInformationDTO.durationNanos()).isNotNegative();
         assertThat(uploadInformationDTO.numberOfUploadedRooms()).isEqualTo(expectedNumberOfRooms);
         assertThat(uploadInformationDTO.numberOfUploadedSeats()).isEqualTo(expectedNumberOfSeats);
         assertThat(uploadInformationDTO.uploadedRoomNames()).hasSize(expectedNumberOfRooms);
@@ -434,7 +433,6 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private void validateDeletionSummary(ExamRoomDeletionSummaryDTO deletionSummary, int expectedNumberOfDeletedRooms) {
         assertThat(deletionSummary).isNotNull();
-        assertThat(deletionSummary.durationNanos()).isNotNegative();
         assertThat(deletionSummary.numberOfDeletedExamRooms()).isEqualTo(expectedNumberOfDeletedRooms);
     }
 

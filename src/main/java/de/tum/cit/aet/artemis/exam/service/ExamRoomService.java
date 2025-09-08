@@ -11,8 +11,6 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -43,8 +41,6 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 @Lazy
 @Service
 public class ExamRoomService {
-
-    private static final Logger log = LoggerFactory.getLogger(ExamRoomService.class);
 
     private static final String ENTITY_NAME = "examroomservice";
 
@@ -80,8 +76,8 @@ public class ExamRoomService {
     ) {}
 
     private record PositionInput(
-        @JsonProperty("x") float x,
-        @JsonProperty("y") float y
+        double x,
+        double y
     ) {}
     // @formatter:on
 
@@ -94,7 +90,6 @@ public class ExamRoomService {
      * @return A small DTO that can be returned to the client, containing some metrics about the parsing process.
      */
     public ExamRoomUploadInformationDTO parseAndStoreExamRoomDataFromZipFile(MultipartFile zipFile) {
-        final long startTime = System.nanoTime();
         // We want to discard any duplicate rooms. Having duplicate rooms is only possible if you also nest the same
         // .json file in one or more subfolders. Doing this is either a (malicious) mistake, or perhaps a backup file,
         // and will thus be ignored. In this equality we only consider the room number, the name, and the building,
@@ -140,8 +135,7 @@ public class ExamRoomService {
 
         examRoomRepository.saveAll(examRooms);
 
-        final long endTime = System.nanoTime();
-        return getExamRoomUploadInformationDTO(zipFile, endTime - startTime, examRooms);
+        return getExamRoomUploadInformationDTO(zipFile, examRooms);
     }
 
     /**
@@ -152,7 +146,7 @@ public class ExamRoomService {
      * @param examRoomInput The Jackson parsed exam room input
      * @return The ExamRoom as stored in the JSON room data.
      */
-    private static ExamRoom convertRoomNumberAndExamRoomInputToExamRoom(final String roomNumber, final ExamRoomInput examRoomInput) {
+    private static ExamRoom convertRoomNumberAndExamRoomInputToExamRoom(String roomNumber, ExamRoomInput examRoomInput) {
         if (examRoomInput == null) {
             throw new BadRequestAlertException("Malformed room JSON", ENTITY_NAME, "room.malformedJson", Map.of("roomNumber", roomNumber));
         }
@@ -166,7 +160,7 @@ public class ExamRoomService {
         return extractSeatsAndLayouts(room, examRoomInput);
     }
 
-    private static ExamRoom extractSimpleExamRoomFields(final String roomNumber, final ExamRoomInput examRoomInput) {
+    private static ExamRoom extractSimpleExamRoomFields(String roomNumber, ExamRoomInput examRoomInput) {
         ExamRoom room = new ExamRoom();
         room.setRoomNumber(roomNumber);
         final String alternativeRoomNumber = examRoomInput.alternativeNumber;
@@ -184,7 +178,7 @@ public class ExamRoomService {
         return room;
     }
 
-    private static ExamRoom extractSeatsAndLayouts(final ExamRoom room, final ExamRoomInput examRoomInput) {
+    private static ExamRoom extractSeatsAndLayouts(ExamRoom room, ExamRoomInput examRoomInput) {
         // It is imperative that the seats are parsed before the layout strategies are parsed, as the size calculation
         // for relative layouts will only be done if the rooms have already been parsed
         room.setSeats(convertRowInputsToExamSeatDTOs(examRoomInput.rows, room.getRoomNumber()));
@@ -199,7 +193,7 @@ public class ExamRoomService {
      * @param rows The list of Jackson parsed row inputs
      * @return The list of all exam seats it could convert from the {@code rows}
      */
-    private static List<ExamSeatDTO> convertRowInputsToExamSeatDTOs(List<RowInput> rows, final String roomNumber) {
+    private static List<ExamSeatDTO> convertRowInputsToExamSeatDTOs(List<RowInput> rows, String roomNumber) {
         if (rows == null) {
             throw new BadRequestAlertException("Seats are missing", ENTITY_NAME, "room.missingSeats", Map.of("roomNumber", roomNumber));
         }
@@ -343,13 +337,13 @@ public class ExamRoomService {
         return selectedSeats.size();
     }
 
-    private static ExamRoomUploadInformationDTO getExamRoomUploadInformationDTO(MultipartFile zipFile, long durationNanos, Set<ExamRoom> examRooms) {
+    private static ExamRoomUploadInformationDTO getExamRoomUploadInformationDTO(MultipartFile zipFile, Set<ExamRoom> examRooms) {
         String uploadedFileName = zipFile.getOriginalFilename();
         int numberOfUploadedRooms = examRooms.size();
         int numberOfUploadedSeats = examRooms.stream().mapToInt(room -> room.getSeats().size()).sum();
         List<String> roomNames = examRooms.stream().map(ExamRoom::getName).toList();
 
-        return new ExamRoomUploadInformationDTO(uploadedFileName, durationNanos, numberOfUploadedRooms, numberOfUploadedSeats, roomNames);
+        return new ExamRoomUploadInformationDTO(uploadedFileName, numberOfUploadedRooms, numberOfUploadedSeats, roomNames);
     }
 
     /**
@@ -388,13 +382,10 @@ public class ExamRoomService {
      * @return A summary containing some information about the deletion process.
      */
     public ExamRoomDeletionSummaryDTO deleteAllOutdatedAndUnusedExamRooms() {
-        final long startTime = System.nanoTime();
-
         Set<Long> outdatedAndUnusedExamRoomIds = examRoomRepository.findAllIdsOfOutdatedAndUnusedExamRooms();
         examRoomRepository.deleteAllById(outdatedAndUnusedExamRoomIds);
 
-        long endTime = System.nanoTime();
-        return new ExamRoomDeletionSummaryDTO(endTime - startTime, outdatedAndUnusedExamRoomIds.size());
+        return new ExamRoomDeletionSummaryDTO(outdatedAndUnusedExamRoomIds.size());
     }
 
 }

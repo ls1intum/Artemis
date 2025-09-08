@@ -23,12 +23,11 @@ import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ArtemisDurationFromNanosPipe } from 'app/shared/pipes/artemis-duration-from-nanos.pipe';
 
 @Component({
     selector: 'jhi-exam-rooms',
     templateUrl: './exam-rooms.component.html',
-    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe, ArtemisDurationFromNanosPipe],
+    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ExamRoomsComponent {
     private readonly baseTranslationPath = 'artemisApp.examRooms.adminOverview';
