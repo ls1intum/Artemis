@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -14,7 +15,11 @@ import java.util.function.Predicate;
 import jakarta.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.ArchiveCommand;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.archive.ZipFormat;
+import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -30,6 +35,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.git.InMemoryRepositoryBuilder;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Profile(PROFILE_CORE)
@@ -43,12 +49,19 @@ public class GitRepositoryExportService {
 
     private final ZipFileService zipFileService;
 
-    private final GitArchiveHelper gitArchiveHelper;
+    private final InMemoryRepositoryBuilder inMemoryRepositoryBuilder;
 
-    public GitRepositoryExportService(GitService gitService, ZipFileService zipFileService, GitArchiveHelper gitArchiveHelper) {
+    public GitRepositoryExportService(GitService gitService, ZipFileService zipFileService, InMemoryRepositoryBuilder inMemoryRepositoryBuilder) {
         this.gitService = gitService;
         this.zipFileService = zipFileService;
-        this.gitArchiveHelper = gitArchiveHelper;
+        this.inMemoryRepositoryBuilder = inMemoryRepositoryBuilder;
+
+        try {
+            ArchiveCommand.registerFormat("zip", new ZipFormat());
+        }
+        catch (Exception e) {
+            log.error("Could not register zip format", e);
+        }
     }
 
     /**
@@ -145,18 +158,6 @@ public class GitRepositoryExportService {
     }
 
     /**
-     * Creates a JGit archive of the repository's working tree for a given treeish.
-     *
-     * @param repository the repository to archive
-     * @return byte array containing the archive data
-     * @throws GitAPIException if the git operation fails
-     * @throws IOException     if IO operations fail
-     */
-    private byte[] createJGitArchive(Repository repository) throws GitAPIException, IOException {
-        return gitArchiveHelper.createJGitArchive(repository);
-    }
-
-    /**
      * Exports a repository snapshot directly to memory without creating temporary files.
      * This method uses JGit's ArchiveCommand to create a zip archive of the repository's HEAD state.
      *
@@ -168,7 +169,7 @@ public class GitRepositoryExportService {
      */
     public InputStreamResource exportRepositorySnapshot(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
         Repository repository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false);
-        byte[] zipData = createJGitArchive(repository);
+        byte[] zipData = createInMemoryZipArchive(repository);
         return createZipInputStreamResource(zipData, filename);
     }
 
@@ -183,9 +184,10 @@ public class GitRepositoryExportService {
      * @throws GitAPIException if the git operation fails
      * @throws IOException     if IO operations fail
      */
-    public InputStreamResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
+    public InputStreamResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws IOException {
         Repository repository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false);
-        return gitArchiveHelper.exportRepositoryWithFullHistoryToMemory(repository, filename);
+        byte[] zipData = inMemoryRepositoryBuilder.buildZip(repository);
+        return createZipInputStreamResource(zipData, filename);
     }
 
     /**
@@ -196,18 +198,10 @@ public class GitRepositoryExportService {
      * @param exportErrors        list of failures that occurred during the export
      * @return an InputStreamResource containing the zipped repository, or null if export failed
      */
-    public InputStreamResource exportInstructorRepositoryForExerciseInMemory(ProgrammingExercise programmingExercise, RepositoryType repositoryType, List<String> exportErrors) {
+    public InputStreamResource exportInstructorRepositoryForExerciseInMemory(ProgrammingExercise programmingExercise, RepositoryType repositoryType, List<String> exportErrors)
+            throws IOException {
         String zippedRepoName = getZippedRepoName(programmingExercise, repositoryType.getName());
-        try {
-            return exportRepositoryWithFullHistoryToMemory(programmingExercise.getRepositoryURI(repositoryType), zippedRepoName);
-        }
-        catch (IOException | GitAPIException ex) {
-            String error = "Failed to export instructor repository " + repositoryType.getName() + " for programming exercise '" + programmingExercise.getTitle() + "' (id: "
-                    + programmingExercise.getId() + ")";
-            log.error("{}: {}", error, ex.getMessage());
-            exportErrors.add(error);
-            return null;
-        }
+        return exportRepositoryWithFullHistoryToMemory(programmingExercise.getRepositoryURI(repositoryType), zippedRepoName);
     }
 
     /**
@@ -219,18 +213,9 @@ public class GitRepositoryExportService {
      * @return an InputStreamResource containing the zipped repository, or null if export failed
      */
     public InputStreamResource exportInstructorAuxiliaryRepositoryForExerciseInMemory(ProgrammingExercise programmingExercise, AuxiliaryRepository auxiliaryRepository,
-            List<String> exportErrors) {
+            List<String> exportErrors) throws IOException {
         String zippedRepoName = getZippedRepoName(programmingExercise, auxiliaryRepository.getRepositoryName());
-        try {
-            return exportRepositoryWithFullHistoryToMemory(auxiliaryRepository.getVcsRepositoryUri(), zippedRepoName);
-        }
-        catch (IOException | GitAPIException ex) {
-            String error = "Failed to export auxiliary repository " + auxiliaryRepository.getName() + " for programming exercise '" + programmingExercise.getTitle() + "' (id: "
-                    + programmingExercise.getId() + ")";
-            log.error("{}: {}", error, ex.getMessage());
-            exportErrors.add(error);
-            return null;
-        }
+        return exportRepositoryWithFullHistoryToMemory(auxiliaryRepository.getVcsRepositoryUri(), zippedRepoName);
     }
 
     /**
@@ -264,7 +249,7 @@ public class GitRepositoryExportService {
         catch (IOException | GitAPIException ex) {
             String error = "Failed to export student repository for participation " + participation.getId() + " in programming exercise '" + programmingExercise.getTitle()
                     + "' (id: " + programmingExercise.getId() + ")";
-            log.error("{}: {}", error, ex.getMessage());
+            log.error(error, ex);
             exportErrors.add(error);
             return null;
         }
@@ -280,5 +265,28 @@ public class GitRepositoryExportService {
     public String getZippedRepoName(ProgrammingExercise exercise, String repositoryName) {
         String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         return FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + repositoryName);
+    }
+
+    /**
+     * Creates a zip archive of the repository's HEAD state in memory.
+     * This method uses JGit's ArchiveCommand to create a zip archive without writing to disk.
+     *
+     * @param repository the repository to archive
+     * @return byte array containing the zip archive data
+     * @throws GitAPIException if the git operation fails
+     * @throws IOException     if IO operations fail
+     */
+    public byte[] createInMemoryZipArchive(Repository repository) throws GitAPIException, IOException {
+        ObjectId treeId = repository.resolve("HEAD");
+        if (treeId == null) {
+            log.debug("Could not resolve tree for HEAD");
+            return new byte[0];
+        }
+
+        ByteArrayOutputStream archiveData = new ByteArrayOutputStream();
+        try (Git git = new Git(repository)) {
+            git.archive().setFormat("zip").setTree(treeId).setOutputStream(archiveData).call();
+        }
+        return archiveData.toByteArray();
     }
 }

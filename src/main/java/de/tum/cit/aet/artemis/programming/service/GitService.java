@@ -37,7 +37,6 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jgit.api.ArchiveCommand;
 import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
@@ -55,7 +54,6 @@ import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.TransportException;
-import org.eclipse.jgit.archive.ZipFormat;
 import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
@@ -87,7 +85,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
-import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.File;
@@ -126,15 +123,12 @@ public class GitService extends AbstractGitService {
 
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
-    private final ZipFileService zipFileService;
-
     private static final String ANONYMIZED_STUDENT_NAME = "student";
 
     private static final String ANONYMIZED_STUDENT_EMAIL = "";
 
-    public GitService(ZipFileService zipFileService) {
+    public GitService() {
         super();
-        this.zipFileService = zipFileService;
     }
 
     /**
@@ -161,12 +155,6 @@ public class GitService extends AbstractGitService {
             CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
         }
 
-        try {
-            ArchiveCommand.registerFormat("zip", new ZipFormat());
-        }
-        catch (Exception e) {
-            log.error("Could not register zip format", e);
-        }
     }
 
     @PreDestroy
