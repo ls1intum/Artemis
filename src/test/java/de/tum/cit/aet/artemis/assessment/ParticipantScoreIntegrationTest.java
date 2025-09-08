@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeInformationDTO;
-import de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
@@ -116,6 +117,10 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     private ModelingExercise modelingExercise;
 
+    private StudentParticipation studentTextParticipation;
+
+    private StudentParticipation teamTextParticipation;
+
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
@@ -148,10 +153,12 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         Long idOfTeam1 = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
 
         // Creating result for student1
-        participationUtilService.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student1, 10.0, 10.0, 50, true);
+        studentTextParticipation = (StudentParticipation) participationUtilService
+                .createParticipationSubmissionAndResult(idOfIndividualTextExercise, student1, 10.0, 10.0, 50, true).getSubmission().getParticipation();
         // Creating result for team1
         Team team = teamRepository.findById(idOfTeam1).orElseThrow();
-        participationUtilService.createParticipationSubmissionAndResult(idOfTeamTextExercise, team, 10.0, 10.0, 50, true);
+        teamTextParticipation = (StudentParticipation) participationUtilService.createParticipationSubmissionAndResult(idOfTeamTextExercise, team, 10.0, 10.0, 50, true)
+                .getSubmission().getParticipation();
 
         // setting up exam
         exam = examUtilService.addExamWithUser(course, student1, true, pastTimestamp, pastTimestamp, pastTimestamp);
@@ -320,21 +327,27 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         quizSubmission.setSubmissionDate(ZonedDateTime.now().minusHours(3));
         quizSubmission = participationUtilService.addSubmission(quizParticipation, quizSubmission);
         Result quizResult = participationUtilService.addResultToSubmission(quizParticipation, quizSubmission);
+        assertThat(quizExercise.getDueDate()).isNotNull();
         quizResult.setCompletionDate(quizExercise.getDueDate().minusMinutes(2));
         resultRepository.save(quizResult);
         CourseGradeInformationDTO courseGradeInformationDTO = request.get("/api/assessment/courses/" + course.getId() + "/grade-scores", HttpStatus.OK,
                 CourseGradeInformationDTO.class);
         assertThat(courseGradeInformationDTO).isNotNull();
-        List<GradeScoreDTO> gradeScoreDTOs = courseGradeInformationDTO.gradeScores();
-        // text,quiz and programming should be included. Modeling should be excluded because it has a due date in the future
-        assertThat(gradeScoreDTOs).hasSize(3);
+        Collection<CourseGradeScoreDTO> courseGradeScoreDTOS = courseGradeInformationDTO.gradeScores();
+        // 3 x text, 1 x quiz and 1 x programming should be included. Modeling should be excluded because it has a due date in the future
+        assertThat(courseGradeScoreDTOS).hasSize(5);
 
         Map<Long, IdsMapValue> expectedValuesMap = new HashMap<>();
         expectedValuesMap.put(programmingParticipation.getId(), new IdsMapValue(programmingExercise.getId(), programmingParticipation.getParticipant().getId(), 100.00));
         expectedValuesMap.put(textParticipation.getId(), new IdsMapValue(textExercise.getId(), textParticipation.getParticipant().getId(), 100.00));
+        Team expectedTeam = teamRepository.findWithStudentsById(teamTextParticipation.getParticipant().getId()).orElseThrow();
+        for (User student : expectedTeam.getStudents()) {
+            expectedValuesMap.put(teamTextParticipation.getId(), new IdsMapValue(teamTextParticipation.getExercise().getId(), student.getId(), 50));
+        }
+        expectedValuesMap.put(studentTextParticipation.getId(), new IdsMapValue(textExercise.getId(), studentTextParticipation.getParticipant().getId(), 50));
         expectedValuesMap.put(quizParticipation.getId(), new IdsMapValue(quizExercise.getId(), quizParticipation.getParticipant().getId(), 100.00));
 
-        gradeScoreDTOs.forEach(gradeScoreDTO -> {
+        courseGradeScoreDTOS.forEach(gradeScoreDTO -> {
             long participationId = gradeScoreDTO.participationId();
             long exerciseId = gradeScoreDTO.exerciseId();
             long userId = gradeScoreDTO.userId();
