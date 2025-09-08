@@ -68,6 +68,7 @@ public class AthenaRepositoryExportService {
      * @param submissionId the id of the submission
      * @return Map of file paths to their textual contents
      * @throws IOException              if reading from the repository fails
+     * @throws IllegalStateException    if the repository URI is null
      * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
      */
     public Map<String, String> getStudentRepositoryFilesContent(long exerciseId, Long submissionId) throws IOException {
@@ -79,7 +80,7 @@ public class AthenaRepositoryExportService {
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(submission.getParticipation().getId());
         var repoUri = participation.getVcsRepositoryUri();
         if (repoUri == null) {
-            throw new IOException(
+            throw new IllegalStateException(
                     "Repository URI is null for student participation " + participation.getId() + ". This may indicate that the student repository has not been set up yet.");
         }
         ZonedDateTime deadline = programmingExercise.getDueDate();
@@ -98,6 +99,7 @@ public class AthenaRepositoryExportService {
      * @param repositoryType the type of repository to retrieve
      * @return Map of file paths to their textual contents
      * @throws IOException              if reading from the repository fails
+     * @throws IllegalStateException    if the repository URI is null
      * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
      */
     public Map<String, String> getInstructorRepositoryFilesContent(long exerciseId, RepositoryType repositoryType) throws IOException {
@@ -108,7 +110,7 @@ public class AthenaRepositoryExportService {
 
         var repoUri = programmingExercise.getRepositoryURI(repositoryType);
         if (repoUri == null) {
-            throw new IOException("Repository URI is null for exercise " + exerciseId + " and repository type " + repositoryType + ". This may indicate that the "
+            throw new IllegalStateException("Repository URI is null for exercise " + exerciseId + " and repository type " + repositoryType + ". This may indicate that the "
                     + repositoryType.name().toLowerCase() + " repository has not been set up yet.");
         }
         return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repoUri);

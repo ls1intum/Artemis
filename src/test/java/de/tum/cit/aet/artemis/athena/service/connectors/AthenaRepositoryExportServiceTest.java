@@ -82,10 +82,9 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
 
         programmingExerciseUtilService.createGitRepository();
 
-        Map<String, String> resultStudentRepo = athenaRepositoryExportService.getRepositoryFilesContent(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(),
-                null);
-        Map<String, String> resultSolutionRepo = athenaRepositoryExportService.getRepositoryFilesContent(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(),
-                RepositoryType.SOLUTION);
+        Map<String, String> resultStudentRepo = athenaRepositoryExportService.getStudentRepositoryFilesContent(programmingExerciseWithId.getId(),
+                programmingSubmissionWithId.getId());
+        Map<String, String> resultSolutionRepo = athenaRepositoryExportService.getInstructorRepositoryFilesContent(programmingExerciseWithId.getId(), RepositoryType.SOLUTION);
 
         assertThat(resultStudentRepo).isNotNull(); // The student repository files are returned
         assertThat(resultSolutionRepo).isNotNull(); // The solution repository files are returned
@@ -98,6 +97,6 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
         assertThatExceptionOfType(ServiceUnavailableException.class)
-                .isThrownBy(() -> athenaRepositoryExportService.getRepositoryFilesContent(programmingExerciseWithId.getId(), null, null));
+                .isThrownBy(() -> athenaRepositoryExportService.getInstructorRepositoryFilesContent(programmingExerciseWithId.getId(), RepositoryType.TEMPLATE));
     }
 }
