@@ -7,6 +7,7 @@ import {
     roundScorePercentSpecifiedByCourseSettings,
     roundToNextMultiple,
     roundValueSpecifiedByCourseSettings,
+    secondsToMilliseconds,
     stringifyIgnoringFields,
 } from 'app/shared/util/utils';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -160,5 +161,14 @@ describe('removeSpecialCharacters', () => {
         expect(removeSpecialCharacters('Hello, World!')).toBe('HelloWorld');
         expect(removeSpecialCharacters('Hello, World! 123')).toBe('HelloWorld123');
         expect(removeSpecialCharacters('Hello, World! 123$%')).toBe('HelloWorld123');
+    });
+});
+
+describe('secondsInMilliseconds', () => {
+    it('should convert seconds to milliseconds', () => {
+        expect(secondsToMilliseconds(1)).toBe(1000);
+        expect(secondsToMilliseconds(1.5)).toBe(1500);
+        expect(secondsToMilliseconds(0)).toBe(0);
+        expect(secondsToMilliseconds(2.5)).toBe(2500);
     });
 });
