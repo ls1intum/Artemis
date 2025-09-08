@@ -1,4 +1,4 @@
-name: Query Over-fetch Detection
+name: Query Quality Check
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Check for query over-fetching
+      - name: Query quality check
         run: |
           # Run the analysis and capture output
           output=$(python supporting_scripts/find_slow_queries.py)
