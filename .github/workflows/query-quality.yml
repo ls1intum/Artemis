@@ -23,7 +23,7 @@ jobs:
       - name: Check for query over-fetching
         run: |
           # Run the analysis and capture output
-          output=$(python supporting_scripts/query_overfetch_checker.py)
+          output=$(python supporting_scripts/find_slow_queries.py)
 
           echo "$output"
           echo ""
