@@ -21,10 +21,10 @@
 }
 
 .bg-selected {
-    background-color: var(--sidebar-selected-bg);
+    background-color: var(--sidebar-card-selected-bg);
 
     &.border-module {
-        border-color: var(--sidebar-selected-bg) !important;
+        border-color: var(--sidebar-card-selected-bg) !important;
     }
 
     &.item-border {
