@@ -34,23 +34,41 @@ jobs:
           total_violations=$((entitygraph_violations + query_violations))
 
           # TODO these values should become zero in the future
-          max_violations=0
+          max_entitygraph_violations=0
+          max_query_violations=0
+          max_total_violations=0
 
           echo "=========================================="
           echo "QUERY QUALITY ANALYSIS SUMMARY"
           echo "=========================================="
-          echo "EntityGraph violations found: $entitygraph_violations"
-          echo "Query violations found: $query_violations"
-          echo "Total violations found: $total_violations (max allowed: $max_violations)"
+          echo "EntityGraph violations found: $entitygraph_violations (max allowed: $max_entitygraph_violations)"
+          echo "Query violations found: $query_violations (max allowed: $max_query_violations)"
+          echo "Total violations found: $total_violations (max allowed: $max_total_violations)"
           echo ""
 
           violation_detected=false
 
-          if [ "$total_violations" -gt "$max_violations" ]; then
-            echo "❌ Too many query quality violations: $total_violations > $max_violations"
+          if [ "$entitygraph_violations" -gt "$max_entitygraph_violations" ]; then
+            echo "❌ Too many EntityGraph violations: $entitygraph_violations > $max_entitygraph_violations"
             violation_detected=true
           else
-            echo "✅ Query quality violations within threshold: $total_violations <= $max_violations"
+            echo "✅ EntityGraph violations within threshold: $entitygraph_violations <= $max_entitygraph_violations"
+          fi
+
+          if [ "$query_violations" -gt "$max_query_violations" ]; then
+            echo "❌ Too many Query violations: $query_violations > $max_query_violations"
+            query_violation=true
+            violation_detected=true
+          else
+            echo "✅ Query violations within threshold: $query_violations <= $max_query_violations"
+          fi
+
+          if [ "$total_violations" -gt "$max_total_violations" ]; then
+            echo "❌ Too many total violations: $total_violations > $max_total_violations"
+            total_violation=true
+            violation_detected=true
+          else
+            echo "✅ Total violations within threshold: $total_violations <= $max_total_violations"
           fi
 
           echo "=========================================="
