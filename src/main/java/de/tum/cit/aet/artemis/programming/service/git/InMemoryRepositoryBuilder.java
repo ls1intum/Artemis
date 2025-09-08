@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.git;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -40,11 +42,15 @@ import org.eclipse.jgit.util.FS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 
+@Profile(PROFILE_CORE)
 @Component
+@Lazy
 public class InMemoryRepositoryBuilder {
 
     private static final Logger log = LoggerFactory.getLogger(InMemoryRepositoryBuilder.class);
