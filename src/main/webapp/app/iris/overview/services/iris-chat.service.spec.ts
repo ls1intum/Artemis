@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
@@ -27,6 +27,7 @@ import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-mess
 import 'app/shared/util/array.extension';
 import { Router } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import { IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 
 describe('IrisChatService', () => {
     let service: IrisChatService;
@@ -239,19 +240,27 @@ describe('IrisChatService', () => {
         jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([{ id, creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1 } as IrisSessionDTO]));
 
         const wsPayloadWithTitle = {
-            type: 1, // IrisChatWebsocketPayloadType.STATUS
+            type: IrisChatWebsocketPayloadType.STATUS,
             stages: [],
             sessionTitle: myTitle,
-        } as any;
-        const wsSpy = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(wsPayloadWithTitle));
+        };
+        const wsSpy = jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(
+            new Observable((subscriber) => {
+                setTimeout(() => {
+                    subscriber.next(wsPayloadWithTitle);
+                    subscriber.complete();
+                }, 0);
+            }),
+        );
         service.switchTo(ChatServiceMode.COURSE, id);
 
         expect(wsSpy).toHaveBeenCalledWith(id);
+        tick();
+
         service.availableChatSessions().subscribe((sessions) => {
             const current = sessions.find((s) => s.id === id);
             expect(current?.title).toBe(myTitle);
         });
-        tick();
     }));
 
     it('should handle websocket message', fakeAsync(() => {
