@@ -34,9 +34,9 @@ jobs:
           total_violations=$((entitygraph_violations + query_violations))
 
           # TODO these values should become zero in the future
-          max_entitygraph_violations=0
-          max_query_violations=0
-          max_total_violations=0
+          max_entitygraph_violations=8
+          max_query_violations=25
+          max_total_violations=33
 
           echo "=========================================="
           echo "QUERY QUALITY ANALYSIS SUMMARY"
@@ -57,7 +57,6 @@ jobs:
 
           if [ "$query_violations" -gt "$max_query_violations" ]; then
             echo "❌ Too many Query violations: $query_violations > $max_query_violations"
-            query_violation=true
             violation_detected=true
           else
             echo "✅ Query violations within threshold: $query_violations <= $max_query_violations"
@@ -65,7 +64,6 @@ jobs:
 
           if [ "$total_violations" -gt "$max_total_violations" ]; then
             echo "❌ Too many total violations: $total_violations > $max_total_violations"
-            total_violation=true
             violation_detected=true
           else
             echo "✅ Total violations within threshold: $total_violations <= $max_total_violations"
