@@ -184,10 +184,10 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
 
         assertThat(irisChatSessions).hasSize(2);
 
-        IrisChatSessionDTO titledDto = irisChatSessions.stream().filter(session -> session.entityId() == titledCourseSession.getId()).findFirst().orElse(null);
+        IrisChatSessionDTO titledDto = irisChatSessions.stream().filter(session -> session.entityId() == course.getId()).findFirst().orElse(null);
         assertThat(titledDto.title()).isEqualTo("New chat");
 
-        IrisChatSessionDTO untitledDto = irisChatSessions.stream().filter(session -> session.entityId() == untitledLectureSession.getId()).findFirst().orElse(null);
+        IrisChatSessionDTO untitledDto = irisChatSessions.stream().filter(session -> session.entityId() == lecture.getId()).findFirst().orElse(null);
         assertThat(untitledDto.title()).isNull();
     }
 }
