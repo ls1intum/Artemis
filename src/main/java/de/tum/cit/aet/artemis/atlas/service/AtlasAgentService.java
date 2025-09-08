@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS_AGENT;
-
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -10,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -28,7 +25,6 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasAgentEnabled;
 @Lazy
 @Service
 @AtlasAgentEnabled
-@Profile(PROFILE_ATLAS_AGENT)
 public class AtlasAgentService {
 
     private static final Logger log = LoggerFactory.getLogger(AtlasAgentService.class);
@@ -85,8 +81,9 @@ public class AtlasAgentService {
 
                 HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
-                // Make request to Azure OpenAI
-                String url = configuration.getAzureEndpoint() + "?api-version=" + configuration.getAzureApiVersion();
+                // Make request to Azure OpenAI - correct URL format for Azure OpenAI
+                String url = configuration.getAzureEndpoint() + "/openai/deployments/" + configuration.getModel() + "/chat/completions?api-version="
+                        + configuration.getAzureApiVersion();
                 ResponseEntity<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.POST, entity,
                         new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {
                         });
