@@ -23,7 +23,6 @@
               "allowedCommonJsDependencies": [
                   "@vscode/markdown-it-katex",
                   "clone-deep",
-                  "crypto-js",
                   "crypto",
                   "dagre",
                   "dayjs/locale/de",
@@ -73,7 +72,10 @@
             "stylePreprocessorOptions": {
               "includePaths": [
                 "."
-              ]
+              ],
+              "sass": {
+                "silenceDeprecations": ["mixed-decls", "color-functions", "global-builtin", "import"]
+              }
             },
             "assets": [
               "src/main/webapp/content",

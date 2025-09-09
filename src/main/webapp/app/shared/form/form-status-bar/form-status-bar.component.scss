@@ -2,7 +2,7 @@
     position: sticky;
     top: -1rem;
     z-index: 7;
-    background-color: var(--bs-card-bg);
+    background-color: var(--module-bg);
 }
 
 .form-status-line {
@@ -18,6 +18,6 @@
     z-index: 8;
     height: 1.5rem;
     width: 1.5rem;
-    background-color: var(--bs-card-bg);
+    background-color: var(--module-bg);
     cursor: pointer;
 }
