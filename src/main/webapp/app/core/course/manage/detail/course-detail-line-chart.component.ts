@@ -31,7 +31,7 @@ export enum SwitchTimeSpanDirection {
     imports: [RouterLink, TranslateDirective, HelpIconComponent, NgbTooltip, FaIconComponent, LineChartModule, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class CourseDetailLineChartComponent extends ActiveStudentsChart implements OnInit, OnChanges {
-    private service = inject(CourseManagementService);
+    private courseManagementService = inject(CourseManagementService);
     private translateService = inject(TranslateService);
 
     protected readonly SwitchTimeSpanDirection = SwitchTimeSpanDirection;

@@ -13,7 +13,7 @@ class MockCourseManagementService {
     getStatisticsForLifetimeOverview = jest.fn().mockReturnValue(of([]));
 }
 
-describe('CourseDetailLineChartComponent (updated)', () => {
+describe('CourseDetailLineChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailLineChartComponent>;
     let component: CourseDetailLineChartComponent;
     let service: MockCourseManagementService;
