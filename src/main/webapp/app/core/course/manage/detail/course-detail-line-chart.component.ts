@@ -1,5 +1,6 @@
-import { Component, Input, OnChanges, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { CurveFactory } from 'd3-shape';
 import dayjs from 'dayjs/esm';
 import { CourseManagementService } from '../services/course-management.service';
 import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
@@ -29,9 +30,11 @@ export enum SwitchTimeSpanDirection {
     styleUrls: ['./course-detail-line-chart.component.scss'],
     imports: [RouterLink, TranslateDirective, HelpIconComponent, NgbTooltip, FaIconComponent, LineChartModule, ArtemisDatePipe, ArtemisTranslatePipe],
 })
-export class CourseDetailLineChartComponent extends ActiveStudentsChart implements OnChanges {
-    private courseManagementService = inject(CourseManagementService);
+export class CourseDetailLineChartComponent extends ActiveStudentsChart implements OnInit, OnChanges {
+    private service = inject(CourseManagementService);
     private translateService = inject(TranslateService);
+
+    protected readonly SwitchTimeSpanDirection = SwitchTimeSpanDirection;
 
     @Input() course: Course;
     @Input() numberOfStudentsInCourse: number;
@@ -41,7 +44,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     showsCurrentWeek = true;
 
     // Chart related
-    chartTime: any;
     amountOfStudents: string;
     showLifetimeOverview = false;
     overviewStats: number[];
@@ -68,7 +70,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     ];
     // Used for storing absolute values to display in tooltip
     absoluteSeries: { absoluteValue?: number; name?: string }[] = [{}];
-    curve: any = shape.curveMonotoneX;
+    curve: CurveFactory = shape.curveMonotoneX;
     average = { name: 'Mean', value: 0 };
     startDateDisplayed = false;
 
@@ -77,8 +79,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
 
-    constructor() {
-        super();
+    ngOnInit() {
         this.translateService.onLangChange.subscribe(() => {
             this.loadTranslations();
         });
@@ -140,29 +141,25 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     private createLabels() {
         this.dataCopy[0].series = [{}];
         this.absoluteSeries = [{}];
-        let startDate: dayjs.Dayjs;
         let endDate: dayjs.Dayjs;
         if (this.showLifetimeOverview) {
-            startDate = this.course.startDate!;
             endDate = dayjs().subtract(this.currentOffsetToEndDate, 'weeks');
             this.currentSpanSize = this.determineDifferenceBetweenIsoWeeks(this.course.startDate!, endDate) + 1;
         } else {
             /*
-        This variable contains the number of weeks between the last displayed week in the chart and the current date.
-        If the end date is already passed, currentOffsetToEndDate represents the number of weeks between the course end date and the current date.
-        displayedNumberOfWeeks determines the normal scope of the chart (usually 17 weeks).
-        currentPeriod indicates how many times the observer shifted the scope in the past (by pressing the arrow)
-         */
+                This variable contains the number of weeks between the last displayed week in the chart and the current date.
+                If the end date is already passed, currentOffsetToEndDate represents the number of weeks between the course end date and the current date.
+                displayedNumberOfWeeks determines the normal scope of the chart (usually 17 weeks).
+                currentPeriod indicates how many times the observer shifted the scope in the past (by pressing the arrow)
+             */
             const diffToLastChartWeek = this.currentOffsetToEndDate - this.displayedNumberOfWeeks * this.currentPeriod;
             endDate = dayjs().subtract(diffToLastChartWeek, 'weeks');
             const remainingWeeksTillStartDate = this.course.startDate ? this.determineDifferenceBetweenIsoWeeks(this.course.startDate, endDate) + 1 : this.displayedNumberOfWeeks;
             this.currentSpanSize = Math.min(remainingWeeksTillStartDate, this.displayedNumberOfWeeks);
             // for the start date, we subtract the currently possible span size - 1 from the end date in addition
-            startDate = dayjs().subtract(diffToLastChartWeek + this.currentSpanSize - 1, 'weeks');
             this.startDateDisplayed = !!this.course.startDate && remainingWeeksTillStartDate <= this.displayedNumberOfWeeks;
         }
         this.assignLabelsToDataObjects();
-        this.chartTime = startDate.isoWeekday(1).format('DD.MM.YYYY') + ' - ' + endDate.isoWeekday(7).format('DD.MM.YYYY');
         this.dataCopy[0].name = this.amountOfStudents;
     }
 
@@ -260,6 +257,4 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         this.xAxisLabel = this.translateService.instant('artemisApp.courseStatistics.calendarWeek');
         this.average.name = this.translateService.instant('artemisApp.courseStatistics.average') + this.average.value.toFixed(2) + '%';
     }
-
-    protected readonly SwitchTimeSpanDirection = SwitchTimeSpanDirection;
 }

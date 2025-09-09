@@ -67,10 +67,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final IrisSessionRepository irisSessionRepository;
 
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
-    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
-
     private final IrisRateLimitService rateLimitService;
 
     private final PyrisPipelineService pyrisPipelineService;
@@ -91,13 +87,12 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository,
             ObjectMapper objectMapper, IrisExerciseChatSessionRepository irisExerciseChatSessionRepository, SubmissionRepository submissionRepository,
             ExerciseRepository exerciseRepository, UserRepository userRepository) {
-        super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
+        super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisChatWebsocketService,
+                llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.rateLimitService = rateLimitService;
         this.pyrisPipelineService = pyrisPipelineService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -276,22 +271,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
                         studentParticipation.getParticipant().getName());
             }
         }
-    }
-
-    private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
-        List<ProgrammingExerciseStudentParticipation> participations;
-        if (exercise.isTeamMode()) {
-            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionByExerciseIdAndStudentLoginInTeam(exercise.getId(), user.getLogin());
-        }
-        else {
-            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
-        }
-
-        if (participations.isEmpty()) {
-            return Optional.empty();
-        }
-        return participations.getLast().getSubmissions().stream().max(Submission::compareTo)
-                .flatMap(sub -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(sub.getId()));
     }
 
     /**
