@@ -245,6 +245,7 @@ public class ExamAccessService {
      * @param courseId The id of the course
      */
     public void checkCourseAccessForInstructorElseThrow(Long courseId) {
+        // TODO: move this check directly into the database for performance reasons
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
             throw new AccessForbiddenException("You are not allowed to manage exams in this course!");
@@ -351,6 +352,7 @@ public class ExamAccessService {
     }
 
     private void checkExamBelongsToCourseElseThrow(Long courseId, Long examId) {
+        // TODO: move this check directly into the database for performance reasons
         Optional<Exam> exam = examRepository.findById(examId);
         if (exam.isEmpty()) {
             throw new EntityNotFoundException(ENTITY_NAME, examId);

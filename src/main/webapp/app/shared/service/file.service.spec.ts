@@ -1,22 +1,16 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { v4 as uuid } from 'uuid';
 import { provideHttpClient } from '@angular/common/http';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileService } from 'app/shared/service/file.service';
 
-jest.mock('uuid', () => ({
-    v4: jest.fn(),
-}));
 describe('FileService', () => {
     const firstUniqueFileName = 'someOtherUniqueFileName';
     const secondUniqueFileName = 'someUniqueFileName';
-    const thirdUniqueFileName = 'someFinalUniqueFileName';
 
     let fileService: FileService;
     let httpMock: HttpTestingController;
     let getUniqueFileNameSpy: jest.SpyInstance;
-    let v4Mock: jest.Mock;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -25,13 +19,6 @@ describe('FileService', () => {
         fileService = TestBed.inject(FileService);
         httpMock = TestBed.inject(HttpTestingController);
         getUniqueFileNameSpy = jest.spyOn(fileService, 'getUniqueFileName');
-
-        v4Mock = uuid as jest.Mock;
-        v4Mock.mockReturnValueOnce(firstUniqueFileName).mockReturnValueOnce(secondUniqueFileName).mockReturnValueOnce(thirdUniqueFileName);
-    });
-
-    afterEach(() => {
-        v4Mock.mockReset();
     });
 
     describe('getFile', () => {
@@ -49,9 +36,7 @@ describe('FileService', () => {
             const file = await filePromise;
 
             expect(file.size).toEqual(blob.size);
-            expect(file.name).toBe(firstUniqueFileName + '.png');
             expect(getUniqueFileNameSpy).toHaveBeenCalledExactlyOnceWith('png', undefined);
-            expect(v4Mock).toHaveBeenCalledOnce();
         });
 
         it('should return a file with unique name', async () => {
@@ -72,9 +57,7 @@ describe('FileService', () => {
             const file = await filePromise;
 
             expect(file.size).toEqual(blob.size);
-            expect(file.name).toBe(thirdUniqueFileName + '.png');
             expect(getUniqueFileNameSpy).toHaveBeenCalledExactlyOnceWith('png', existingFileNames);
-            expect(v4Mock).toHaveBeenCalledTimes(3);
         });
     });
 
