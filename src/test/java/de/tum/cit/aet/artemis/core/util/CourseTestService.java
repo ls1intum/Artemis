@@ -2864,10 +2864,12 @@ public class CourseTestService {
         var dueDate = now.minusDays(2);
         var assessmentDueDate = now.minusDays(1);
         var exercise1 = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course1);
+        exercise1.setAssessmentType(AssessmentType.MANUAL);
         exercise1.setMaxPoints(5.0);
         exercise1 = exerciseRepo.save(exercise1);
 
         var exercise2 = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course2);
+        exercise2.setAssessmentType(AssessmentType.MANUAL);
         exercise2.setMaxPoints(5.0);
         exercise2 = exerciseRepo.save(exercise2);
 
@@ -2987,7 +2989,7 @@ public class CourseTestService {
         assertThat(courseDTO.currentAbsoluteMoreFeedbacks()).isEqualTo(1);
         assertThat(courseDTO.currentMaxMoreFeedbacks()).isEqualTo(1);
 
-        // Average Score - updated to match actual behavior
+        // Average Score
         assertThat(courseDTO.currentPercentageAverageScore()).isEqualTo(60);
         assertThat(courseDTO.currentAbsoluteAverageScore()).isEqualTo(18);
         assertThat(courseDTO.currentMaxAverageScore()).isEqualTo(30);
