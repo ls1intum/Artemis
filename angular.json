@@ -24,7 +24,6 @@
                   "@vscode/markdown-it-katex",
                   "classnames",
                   "clone-deep",
-                  "crypto-js",
                   "crypto",
                   "dagre",
                   "dayjs/locale/de",
