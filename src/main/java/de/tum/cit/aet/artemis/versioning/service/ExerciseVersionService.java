@@ -1,8 +1,7 @@
-package de.tum.cit.aet.artemis.exercise.service;
+package de.tum.cit.aet.artemis.versioning.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -12,11 +11,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseSnapshot;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -26,11 +21,14 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.versioning.domain.ExerciseSnapshot;
+import de.tum.cit.aet.artemis.versioning.domain.ExerciseVersion;
+import de.tum.cit.aet.artemis.versioning.repository.ExerciseVersionRepository;
+import de.tum.cit.aet.artemis.versioning.repository.FileUploadExerciseVersioningRepository;
+import de.tum.cit.aet.artemis.versioning.repository.TextExerciseVersioningRepository;
 
 @Profile(PROFILE_CORE)
 @Service
-@Aspect
 @Lazy
 public class ExerciseVersionService {
 
@@ -44,15 +42,15 @@ public class ExerciseVersionService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final TextExerciseRepository textExerciseRepository;
+    private final TextExerciseVersioningRepository textExerciseRepository;
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
-    private final FileUploadExerciseRepository fileUploadExerciseRepository;
+    private final FileUploadExerciseVersioningRepository fileUploadExerciseRepository;
 
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
-            QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository) {
+            QuizExerciseRepository quizExerciseRepository, TextExerciseVersioningRepository textExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
+            FileUploadExerciseVersioningRepository fileUploadExerciseRepository) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;

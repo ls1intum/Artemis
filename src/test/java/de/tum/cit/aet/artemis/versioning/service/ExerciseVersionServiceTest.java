@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.service;
+package de.tum.cit.aet.artemis.versioning.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -32,13 +32,10 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseSnapshot;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -62,8 +59,11 @@ import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
+import de.tum.cit.aet.artemis.versioning.domain.ExerciseSnapshot;
+import de.tum.cit.aet.artemis.versioning.domain.ExerciseVersion;
+import de.tum.cit.aet.artemis.versioning.repository.FileUploadExerciseVersioningRepository;
+import de.tum.cit.aet.artemis.versioning.repository.TextExerciseVersioningRepository;
 
 class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -102,13 +102,13 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     private QuizExerciseTestRepository quizExerciseRepository;
 
     @Autowired
-    private TextExerciseRepository textExerciseRepository;
+    private TextExerciseVersioningRepository textExerciseRepository;
 
     @Autowired
     private ModelingExerciseRepository modelingExerciseRepository;
 
     @Autowired
-    private FileUploadExerciseRepository fileUploadExerciseRepository;
+    private FileUploadExerciseVersioningRepository fileUploadExerciseRepository;
 
     @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.repository;
+package de.tum.cit.aet.artemis.versioning.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
+import de.tum.cit.aet.artemis.versioning.domain.ExerciseVersion;
 
 /**
  * Spring Data JPA repository for the ExerciseVersion entity.

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.domain;
+package de.tum.cit.aet.artemis.versioning.domain;
 
 import java.io.Serializable;
 import java.time.ZoneOffset;
@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -78,7 +79,8 @@ public record ExerciseSnapshot(
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getIncludedInOverallScore(), exercise.getProblemStatement(),
                 exercise.getGradingInstructions(), exercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkData::of).collect(Collectors.toSet()), exercise.getCategories(),
                 TeamAssignmentConfigData.of(exercise.getTeamAssignmentConfig()), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
-                exercise.getFeedbackSuggestionModule(), exercise.getCourse() != null ? exercise.getCourse().getId() : null,
+                exercise.getFeedbackSuggestionModule(),
+                exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null,
                 exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null,
                 exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet()), exercise.getPlagiarismDetectionConfig(), programmingData, textData,
                 modelingData, quizData, fileUploadData);

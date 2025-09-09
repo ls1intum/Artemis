@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.domain;
+package de.tum.cit.aet.artemis.versioning.domain;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
@@ -15,6 +15,7 @@ import org.hibernate.type.SqlTypes;
 
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
 @Table(name = "exercise_version")

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.config;
+package de.tum.cit.aet.artemis.versioning.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -6,9 +6,10 @@ import org.hibernate.cfg.AvailableSettings;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
-import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionInterceptor;
+import de.tum.cit.aet.artemis.versioning.service.ExerciseVersionInterceptor;
 
 /**
  * Configuration for integrating the ExerciseVersionInterceptor with Hibernate.
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionInterceptor;
  */
 @Profile(PROFILE_CORE)
 @Configuration
+@Lazy
 public class ExerciseVersionHibernateConfiguration {
 
     /**
