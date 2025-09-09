@@ -7,7 +7,7 @@
         }
         dependencies {
             classpath "org.yaml:snakeyaml:${rootProject.property('snakeyaml_version')}"
-            classpath "org.openapitools:openapi-generator-gradle-plugin:7.13.0"
+            classpath "org.openapitools:openapi-generator-gradle-plugin:7.14.0"
         }
     }
 
