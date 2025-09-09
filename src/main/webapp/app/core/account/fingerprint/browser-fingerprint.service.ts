@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { BehaviorSubject } from 'rxjs';
 import FingerprintJS, { GetResult } from '@fingerprintjs/fingerprintjs';
-import { v4 as uuid } from 'uuid';
 
 @Injectable({ providedIn: 'root' })
 export class BrowserFingerprintService {
@@ -35,7 +34,7 @@ export class BrowserFingerprintService {
     private setInstance(): void {
         let instanceIdentifier: string | undefined = this.localStorageService.retrieve<string>(this.BROWSER_INSTANCE_KEY);
         if (!instanceIdentifier) {
-            instanceIdentifier = uuid();
+            instanceIdentifier = window.crypto.randomUUID().toString();
             this.localStorageService.store<string>(this.BROWSER_INSTANCE_KEY, instanceIdentifier);
         }
         this.instanceIdentifier.next(instanceIdentifier);
