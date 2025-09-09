@@ -273,31 +273,19 @@ Quick setup for development
 
 2. Configure Spring AI
 
-   Set up your preferred provider in ``application-local.yml``. Examples:
-
-   Azure OpenAI (recommended)
+   Set up your preferred provider (Azure OpenAI or OpenAI) in ``application-local.yml``. Examples:
 
    .. code-block:: yaml
-
-      spring:
-        ai:
-          azure:
-            openai:
-              api-key: ${AZURE_OPENAI_API_KEY}
-              endpoint: ${AZURE_OPENAI_ENDPOINT}
-              chat:
-                options:
-                  deployment-name: gpt-5-mini
-
-   OpenAI
-
-   .. code-block:: yaml
-
-      spring:
-        ai:
-          openai:
-            api-key: ${OPENAI_API_KEY}
-            base-url: https://api.openai.com
-            chat:
-              options:
-                model: gpt-5-mini
+        spring:
+          ai:
+            # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
+            azure:
+              openai:
+                api-key: <azure_openai_key> # comment out if using OpenAI
+                # open-ai-api-key: <openai_key> # Fallback OpenAI key if needed, sets non-azure endpoint automatically
+                endpoint: <azure_openai_endpoint> # comment out if using OpenAI
+                chat:
+                  options:
+                    deployment-name: <azure_openai_deployment_name or openai_model_name>
+                    # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
+                    temperature: 1.0
