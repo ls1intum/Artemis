@@ -12,7 +12,7 @@ ext {
         "exam"          :          ["INSTRUCTION": 0.918, "CLASS":  2],
         "exercise"      :          ["INSTRUCTION": 0.914, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.953, "CLASS":  0],
-        "iris"          :          ["INSTRUCTION": 0.773, "CLASS": 29],
+        "iris"          :          ["INSTRUCTION": 0.770, "CLASS": 29],
         "lecture"       :          ["INSTRUCTION": 0.896, "CLASS":  1],
         "lti"           :          ["INSTRUCTION": 0.888, "CLASS":  2],
         "modeling"      :          ["INSTRUCTION": 0.938, "CLASS":  0],
