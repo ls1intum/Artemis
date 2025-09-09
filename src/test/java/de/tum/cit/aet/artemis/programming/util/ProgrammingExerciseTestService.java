@@ -168,13 +168,8 @@ public class ProgrammingExerciseTestService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCRepoPath;
 
-    protected URI localVCBaseUri;
-
     @Value("${artemis.version-control.url}")
-    public void setLocalVCBaseUri(URI localVCBaseUri) {
-        this.localVCBaseUri = localVCBaseUri;
-        ProgrammingExerciseFactory.localVCBaseUri = localVCBaseUri; // Set the static field in ProgrammingExerciseFactory for convenience
-    }
+    private URI localVCBaseUri;
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
