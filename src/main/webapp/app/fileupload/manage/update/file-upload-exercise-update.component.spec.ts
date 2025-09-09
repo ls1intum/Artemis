@@ -80,7 +80,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 const calendarService = TestBed.inject(CalendarService);
-                const refreshSpy = jest.spyOn(calendarService, 'refresh');
+                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
                 // WHEN
                 comp.save();
@@ -112,7 +112,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                 comp.ngOnInit();
 
                 const calendarService = TestBed.inject(CalendarService);
-                const refreshSpy = jest.spyOn(calendarService, 'refresh');
+                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
                 // WHEN
                 comp.save();

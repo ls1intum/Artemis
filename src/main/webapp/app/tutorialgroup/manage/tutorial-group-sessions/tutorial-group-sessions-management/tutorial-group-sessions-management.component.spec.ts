@@ -128,7 +128,7 @@ describe('TutorialGroupSessionsManagement', () => {
 
     it('should call calendarService.refresh in loadAll', fakeAsync(() => {
         const calendarService = TestBed.inject(CalendarService);
-        const refreshSpy = jest.spyOn(calendarService, 'refresh').mockImplementation(() => {});
+        const refreshSpy = jest.spyOn(calendarService, 'reloadEvents').mockImplementation(() => {});
 
         component.course = course;
         component.tutorialGroupId = tutorialGroupId;

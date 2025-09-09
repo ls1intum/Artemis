@@ -167,7 +167,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             jest.spyOn(programmingExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             const calendarService = TestBed.inject(CalendarService);
-            const refreshSpy = jest.spyOn(calendarService, 'refresh');
+            const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
@@ -196,7 +196,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 ),
             );
             const calendarService = TestBed.inject(CalendarService);
-            const refreshSpy = jest.spyOn(calendarService, 'refresh');
+            const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;

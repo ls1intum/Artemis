@@ -212,7 +212,7 @@ describe('ExamUpdateComponent', () => {
 
         it('should update', fakeAsync(() => {
             const calendarService = TestBed.inject(CalendarService);
-            const refreshSpy = jest.spyOn(calendarService, 'refresh');
+            const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
             const navigateSpy = jest.spyOn(router, 'navigate');
             fixture.detectChanges();

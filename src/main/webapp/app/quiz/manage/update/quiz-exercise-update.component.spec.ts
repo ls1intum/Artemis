@@ -1046,7 +1046,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 quizExerciseServiceImportStub = jest.spyOn(quizExerciseService, 'import');
                 quizExerciseServiceImportStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
                 const calendarService = TestBed.inject(CalendarService);
-                refreshSpy = jest.spyOn(calendarService, 'refresh');
+                refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
                 exerciseSanitizeSpy = jest.spyOn(Exercise, 'sanitize');
             });
 

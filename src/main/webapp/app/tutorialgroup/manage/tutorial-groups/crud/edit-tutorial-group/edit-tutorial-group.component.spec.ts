@@ -124,7 +124,7 @@ describe('EditTutorialGroupComponent', () => {
         const updatedStub = jest.spyOn(tutorialGroupService, 'update').mockReturnValue(of(updateResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
         const calendarService = TestBed.inject(CalendarService);
-        const refreshSpy = jest.spyOn(calendarService, 'refresh');
+        const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
         const tutorialGroupForm: TutorialGroupFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFormComponent)).componentInstance;
 

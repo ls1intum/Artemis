@@ -130,7 +130,7 @@ describe('LectureUpdateComponent', () => {
             ),
         );
         const calendarService = TestBed.inject(CalendarService);
-        const refreshSpy = jest.spyOn(calendarService, 'refresh');
+        const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
         lectureUpdateComponent.save();
         lectureUpdateComponentFixture.detectChanges();
@@ -161,7 +161,7 @@ describe('LectureUpdateComponent', () => {
             ),
         );
         const calendarService = TestBed.inject(CalendarService);
-        const refreshSpy = jest.spyOn(calendarService, 'refresh');
+        const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
         lectureUpdateComponent.save();
         lectureUpdateComponentFixture.detectChanges();

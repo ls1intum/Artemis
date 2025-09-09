@@ -516,7 +516,7 @@ describe('CourseOverviewComponent', () => {
 
         // check that calendar events are refreshed
         const calendarService = TestBed.inject(CalendarService);
-        const refreshSpy = jest.spyOn(calendarService, 'refresh');
+        const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
         component.loadCourse(true);
 
