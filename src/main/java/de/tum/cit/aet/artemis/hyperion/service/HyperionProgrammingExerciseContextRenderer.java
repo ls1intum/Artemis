@@ -21,6 +21,65 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
+/**
+ * Produces a deterministic textual snapshot of a {@link ProgrammingExercise} combining:
+ * <ul>
+ * <li>Problem statement (as pseudo file problem_statement.md)</li>
+ * <li>Filtered template repository</li>
+ * <li>Filtered solution repository</li>
+ * </ul>
+ * Hidden paths (segments starting with '.') are skipped. Repository access failures degrade gracefully to empty sections.
+ * <p>
+ * <b>Example Output (abridged)</b>
+ *
+ * <pre>
+ * ===== Problem Statement =====
+ * --------------------------------------------------------------------------------
+ * problem_statement.md:
+ * --------------------------------------------------------------------------------
+ * 1 | # Implement a Stack
+ * 2 | Create a LIFO stack supporting push/pop/peek operations.
+ *
+ * ===== Template Repository =====
+ * template_repository
+ * ├── src
+ * │   └── main
+ * │       └── java
+ * │           └── example
+ * │               └── Stack.java
+ * └── README.md
+ *
+ * --------------------------------------------------------------------------------
+ * template_repository/src/main/java/example/Stack.java:
+ * --------------------------------------------------------------------------------
+ *  1 | package example;
+ *  2 | public class Stack { // TODO student implementation }
+ *
+ * --------------------------------------------------------------------------------
+ * template_repository/README.md:
+ * --------------------------------------------------------------------------------
+ *  1 | # Stack Exercise
+ *  2 | Fill in the missing methods.
+ *
+ * ===== Solution Repository =====
+ * solution_repository
+ * └── src
+ *     └── main
+ *         └── java
+ *             └── example
+ *                 └── Stack.java
+ *
+ * --------------------------------------------------------------------------------
+ * solution_repository/src/main/java/example/Stack.java:
+ * --------------------------------------------------------------------------------
+ *  1 | package example;
+ *  2 | import java.util.ArrayDeque;
+ *  3 | public class Stack { // Full reference implementation }
+ * </pre>
+ *
+ * Lines are always numbered and separated per file with a fixed-width horizontal rule; trees appear only for
+ * repositories (not the problem statement pseudo file).
+ */
 @Component
 @Lazy
 @Profile(PROFILE_HYPERION)
@@ -38,29 +97,25 @@ public class HyperionProgrammingExerciseContextRenderer {
     }
 
     /**
-     * Render the textual context for a programming exercise consisting of the problem statement,
-     * the template repository and the solution repository, using the latest commit content.
+     * Render a context snapshot for the exercise. Returns empty string if exercise is null.
      *
-     * @param exercise the programming exercise to render
-     * @return a single string containing all rendered sections
+     * @param exercise exercise reference
+     * @return textual snapshot
      */
     public String renderContext(ProgrammingExercise exercise) {
         if (exercise == null) {
             return "";
         }
         String problemStatement = Objects.requireNonNullElse(exercise.getProblemStatement(), "");
-        ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
+        ProgrammingLanguage language = exercise.getProgrammingLanguage();
         Map<String, String> templateRepository = fetchRepoContents(exercise.getTemplateParticipation() == null ? null : exercise.getTemplateParticipation().getVcsRepositoryUri(),
                 "template", exercise.getId());
         Map<String, String> solutionRepository = fetchRepoContents(exercise.getSolutionParticipation() == null ? null : exercise.getSolutionParticipation().getVcsRepositoryUri(),
                 "solution", exercise.getId());
-        // The test repository will be included in the future
 
-        // Apply language-aware filtering
-        templateRepository = languageFilter.filter(templateRepository, programmingLanguage);
-        solutionRepository = languageFilter.filter(solutionRepository, programmingLanguage);
+        templateRepository = languageFilter.filter(templateRepository, language);
+        solutionRepository = languageFilter.filter(solutionRepository, language);
 
-        // Render headings + tree + dashed headers + line numbers
         List<String> parts = new ArrayList<>(3);
         parts.add(renderRepository(Map.of("problem_statement.md", problemStatement), "Problem Statement"));
         parts.add(renderRepository(templateRepository, "Template Repository"));
@@ -81,20 +136,16 @@ public class HyperionProgrammingExerciseContextRenderer {
         }
     }
 
-    // Render a complete textual snapshot like Python renderer: tree + dashed header + numbered lines
     private static String renderRepository(Map<String, String> files, String repoName) {
         final boolean isProblemStatement = Objects.equals(repoName, "Problem Statement");
         final String root = isProblemStatement ? null : (repoName == null ? "repository" : repoName.replace(" ", "_").toLowerCase());
-
         String treePart = "";
         if (!isProblemStatement) {
             treePart = renderFileStructure(root, files.keySet());
         }
-
         List<String> fileParts = new ArrayList<>(files.size());
         files.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> fileParts.add(renderFileString(root, e.getKey(), e.getValue())));
         String body = String.join("\n\n", fileParts);
-
         String headline = "\n===== " + repoName + " =====\n";
         if (!treePart.isEmpty()) {
             return headline + treePart + "\n\n" + body;
@@ -116,7 +167,6 @@ public class HyperionProgrammingExerciseContextRenderer {
                 continue;
             }
             String[] segments = Arrays.stream(p.split("/")).filter(s -> !s.isBlank()).toArray(String[]::new);
-            // skip hidden files or any path containing hidden segment
             if (Arrays.stream(segments).anyMatch(seg -> seg.startsWith("."))) {
                 continue;
             }
@@ -132,7 +182,6 @@ public class HyperionProgrammingExerciseContextRenderer {
                 }
             }
         }
-
         List<String> lines = new ArrayList<>();
         if (root != null && !root.isBlank()) {
             lines.add(root);
@@ -142,7 +191,6 @@ public class HyperionProgrammingExerciseContextRenderer {
     }
 
     private static void collectTree(List<String> lines, DirNode node, String prefix) {
-        // We need a stable ordered list of all entries: directories first then files
         List<String> dirNames = new ArrayList<>(node.dirs.keySet());
         List<String> fileNames = new ArrayList<>(node.files);
         int total = dirNames.size() + fileNames.size();

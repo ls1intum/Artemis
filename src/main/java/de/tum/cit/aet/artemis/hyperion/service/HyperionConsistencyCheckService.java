@@ -27,6 +27,17 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+/**
+ * Service orchestrating AI-assisted structural and semantic consistency analysis for {@link ProgrammingExercise} instances.
+ * <p>
+ * Flow:
+ * <ol>
+ * <li>Refetch exercise with template & solution participations.</li>
+ * <li>Render textual snapshot (problem statement + repositories) via {@link HyperionProgrammingExerciseContextRenderer}.</li>
+ * <li>Execute structural & semantic prompts concurrently using the Spring AI {@link ChatClient}.</li>
+ * <li>Parse structured JSON into schema classes, normalize, aggregate, and expose as DTOs.</li>
+ * </ol>
+ */
 @Service
 @Lazy
 @Profile(PROFILE_HYPERION)
@@ -51,10 +62,11 @@ public class HyperionConsistencyCheckService {
     }
 
     /**
-     * Runs structural and semantic consistency checks on the given exercise using AI.
+     * Execute structural and semantic consistency checks. Model calls run concurrently on bounded elastic threads.
+     * Any individual failure degrades gracefully to an empty list; the aggregated response is always non-null.
      *
-     * @param user     the requesting user
-     * @param exercise the exercise to check
+     * @param user     invoking user
+     * @param exercise programming exercise reference to check consistency for
      * @return aggregated consistency issues
      */
     public ConsistencyCheckResponseDTO checkConsistency(User user, ProgrammingExercise exercise) {
@@ -66,7 +78,6 @@ public class HyperionConsistencyCheckService {
         var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage);
 
         Mono<List<ConsistencyIssue>> structuralMono = Mono.fromCallable(() -> runStructuralCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
-
         Mono<List<ConsistencyIssue>> semanticMono = Mono.fromCallable(() -> runSemanticCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
 
         List<ConsistencyIssue> combinedIssues = new ArrayList<>();
@@ -85,6 +96,12 @@ public class HyperionConsistencyCheckService {
         return new ConsistencyCheckResponseDTO(issueDTOs);
     }
 
+    /**
+     * Run the structural consistency prompt. Returns empty list on any exception.
+     *
+     * @param input prompt variables (rendered_context, programming_language)
+     * @return structural issues (never null)
+     */
     private List<ConsistencyIssue> runStructuralCheck(Map<String, String> input) {
         var resourcePath = "/prompts/hyperion/consistency_structural.st";
         String renderedPrompt = templates.render(resourcePath, input);
@@ -94,12 +111,17 @@ public class HyperionConsistencyCheckService {
             return toGenericConsistencyIssue(structuralIssues);
         }
         catch (RuntimeException e) {
-            // JSON mapping or unexpected client errors. Do not fail the whole request; return empty issues.
             log.error("Failed to obtain or parse AI response for {}", resourcePath, e);
             return new ArrayList<>();
         }
     }
 
+    /**
+     * Run the semantic consistency prompt. Returns empty list on any exception.
+     *
+     * @param input prompt variables (rendered_context, programming_language)
+     * @return semantic issues
+     */
     private List<ConsistencyIssue> runSemanticCheck(Map<String, String> input) {
         var resourcePath = "/prompts/hyperion/consistency_semantic.st";
         String renderedPrompt = templates.render(resourcePath, input);
@@ -109,12 +131,17 @@ public class HyperionConsistencyCheckService {
             return toGenericConsistencyIssue(semanticIssues);
         }
         catch (RuntimeException e) {
-            // JSON mapping or unexpected client errors. Do not fail the whole request; return empty issues.
             log.error("Failed to obtain or parse AI response for {}", resourcePath, e);
             return new ArrayList<>();
         }
     }
 
+    /**
+     * Convert an internal issue record into an outward-facing DTO.
+     *
+     * @param issue internal unified consistency issue
+     * @return DTO for API responses
+     */
     private ConsistencyIssueDTO mapConsistencyIssueToDto(ConsistencyIssue issue) {
         Severity severity = switch (issue.severity() == null ? "MEDIUM" : issue.severity().toUpperCase()) {
             case "LOW" -> Severity.LOW;
@@ -129,6 +156,12 @@ public class HyperionConsistencyCheckService {
         return new ConsistencyIssueDTO(severity, category, issue.description(), issue.suggestedFix(), locations);
     }
 
+    /**
+     * Normalize structural issue structured output schema to internal issue representations.
+     *
+     * @param structuralIssues parsed structural model output (may be null)
+     * @return immutable list of issues
+     */
     private List<ConsistencyIssue> toGenericConsistencyIssue(StructuredOutputSchema.StructuralConsistencyIssues structuralIssues) {
         if (structuralIssues == null || structuralIssues.issues == null) {
             return List.of();
@@ -137,6 +170,12 @@ public class HyperionConsistencyCheckService {
                 i.description(), i.suggestedFix(), i.relatedLocations())).toList();
     }
 
+    /**
+     * Normalize semantic issue structured output schema to internal issue representations.
+     *
+     * @param semanticIssues parsed semantic model output (may be null)
+     * @return immutable list of issues
+     */
     private List<ConsistencyIssue> toGenericConsistencyIssue(StructuredOutputSchema.SemanticConsistencyIssues semanticIssues) {
         if (semanticIssues == null || semanticIssues.issues == null) {
             return List.of();
