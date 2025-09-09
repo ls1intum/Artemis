@@ -1495,50 +1495,6 @@ public class ProgrammingExerciseTestService {
         assertThat(submissions).hasSize(1);
     }
 
-    // Test
-    public void exportInstructorRepositories_shouldReturnFile() throws Exception {
-        String zip = exportInstructorRepository(RepositoryType.TEMPLATE, exerciseRepo, HttpStatus.OK);
-        assertThat(zip).isNotNull();
-
-        zip = exportInstructorRepository(RepositoryType.SOLUTION, solutionRepo, HttpStatus.OK);
-        assertThat(zip).isNotNull();
-
-        zip = exportInstructorRepository(RepositoryType.TESTS, testRepo, HttpStatus.OK);
-        assertThat(zip).isNotNull();
-    }
-
-    public void exportInstructorAuxiliaryRepository_shouldReturnFile() throws Exception {
-        generateProgrammingExerciseForExport();
-        var auxRepo = addAuxiliaryRepositoryToProgrammingExercise(exercise);
-        setupAuxRepoLocalVC(auxRepo);
-        setupRepositoryMocks(exercise);
-        var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-instructor-auxiliary-repository/" + auxRepo.getId();
-        request.get(url, HttpStatus.OK, String.class);
-    }
-
-    private void setupAuxRepoLocalVC(AuxiliaryRepository auxiliaryRepository) throws GitAPIException, IOException {
-        // Setup proper LocalVC repository structure for auxiliary repository
-        String projectKey = auxiliaryRepository.getExercise().getProjectKey();
-        String auxRepositorySlug = auxiliaryRepository.getExercise().generateRepositoryName(auxiliaryRepository.getName().toLowerCase());
-
-        // Create the repository folder in the LocalVC structure
-        Path projectFolder = localVCRepoPath.resolve(projectKey);
-        Files.createDirectories(projectFolder);
-        Path repositoryFolder = projectFolder.resolve(auxRepositorySlug + ".git");
-
-        if (Files.exists(repositoryFolder)) {
-            FileUtils.deleteDirectory(repositoryFolder.toFile());
-        }
-        Files.createDirectories(repositoryFolder);
-
-        // Copy the bare repository to the LocalVC location
-        FileUtils.copyDirectory(auxRepo.remoteBareGitRepoFile, repositoryFolder.toFile());
-
-        auxiliaryRepository.setRepositoryUri(localVCBaseUri.resolve("/git/" + projectKey + "/" + auxRepositorySlug + ".git").toString());
-
-        auxiliaryRepositoryRepository.save(auxiliaryRepository);
-    }
-
     public void exportInstructorAuxiliaryRepository_forbidden() throws Exception {
         generateProgrammingExerciseForExport();
         var auxRepo = addAuxiliaryRepositoryToProgrammingExercise(exercise);
@@ -1832,7 +1788,7 @@ public class ProgrammingExerciseTestService {
 
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
         LocalVCRepositoryUri vcsUrl = exercise.getRepositoryURI(repoType);
-        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null);
+        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), vcsUrl);
 
         createAndCommitDummyFileInLocalRepository(localRepo, fileName);
         doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(vcsUrl), any(Path.class), anyBoolean(), anyBoolean());

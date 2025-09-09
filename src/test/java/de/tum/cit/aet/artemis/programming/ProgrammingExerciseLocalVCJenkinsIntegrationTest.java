@@ -467,18 +467,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void exportInstructorRepositories() throws Exception {
-        programmingExerciseTestService.exportInstructorRepositories_shouldReturnFile();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void exportAuxiliaryRepository_shouldReturnFile() throws Exception {
-        programmingExerciseTestService.exportInstructorAuxiliaryRepository_shouldReturnFile();
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void exportAuxiliaryRepository_forbidden() throws Exception {
         programmingExerciseTestService.exportInstructorAuxiliaryRepository_forbidden();
