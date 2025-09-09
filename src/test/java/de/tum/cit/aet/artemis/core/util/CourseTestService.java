@@ -943,9 +943,14 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesForDashboardPracticeRepositories() throws Exception {
+        String suffix = "practiceRepo";
+        adjustUserGroupsToCustomGroups(suffix);
+
         User student = userUtilService.getUserByLogin(userPrefix + "student3");
 
-        Course course = courseUtilService.createCourse();
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), new HashSet<>(), userPrefix + "student" + suffix,
+                userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        course = courseRepo.save(course);
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
@@ -972,8 +977,9 @@ public class CourseTestService {
 
         var receivedCoursesForDashboard = request.get("/api/core/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
         CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/core/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
-        CourseForDashboardDTO receivedCourseForDashboardFromGeneralCall = receivedCoursesForDashboard.courses().stream().filter(dto -> dto.course().getId().equals(course.getId()))
-                .findFirst().orElseThrow();
+        Course finalCourse = course;
+        CourseForDashboardDTO receivedCourseForDashboardFromGeneralCall = receivedCoursesForDashboard.courses().stream()
+                .filter(dto -> dto.course().getId().equals(finalCourse.getId())).findFirst().orElseThrow();
 
         assertThat(receivedCourseForDashboardFromGeneralCall.participationResults()).hasSize(1);
         assertThat(receivedCourseForDashboard.participationResults()).hasSize(1);

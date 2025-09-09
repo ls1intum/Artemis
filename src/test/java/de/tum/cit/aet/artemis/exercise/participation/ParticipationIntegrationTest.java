@@ -1196,6 +1196,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         StudentParticipation participation1 = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         participation1 = participationRepo.save(participation1);
+        participationUtilService.createSubmissionAndResult(participation1, 50, true);
 
         // SHOULD ADD FIRST PRESENTATION GRADE
         participation1.setPresentationScore(100.0);
