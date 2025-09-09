@@ -27,7 +27,13 @@ describe('IrisChatbotWidgetComponent', () => {
                 { provide: MatDialog, useValue: { closeAll: jest.fn() } },
                 { provide: Router, useValue: { events: of() } },
                 { provide: MAT_DIALOG_DATA, useValue: { isChatGptWrapper: false } },
-                { provide: BreakpointObserver, useValue: { observe: () => breakpoint$.asObservable() } },
+                {
+                    provide: BreakpointObserver,
+                    useValue: {
+                        observe: () => breakpoint$.asObservable(),
+                        isMatched: (query: string | string[]) => false,
+                    },
+                },
             ],
         }).compileComponents();
 

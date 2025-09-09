@@ -105,7 +105,13 @@ examples.forEach((activeConversation) => {
                     MockPipe(HtmlForMarkdownPipe),
                 ],
                 providers: [
-                    { provide: BreakpointObserver, useValue: { observe: () => breakpoint$.asObservable() } },
+                    {
+                        provide: BreakpointObserver,
+                        useValue: {
+                            observe: () => breakpoint$.asObservable(),
+                            isMatched: (query: string | string[]) => false,
+                        },
+                    },
                     { provide: Router, useValue: router },
                     {
                         provide: ActivatedRoute,
