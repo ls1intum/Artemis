@@ -1,6 +1,4 @@
 import { AfterViewInit, Component, ElementRef, computed, input, signal, viewChild } from '@angular/core';
-import { NgClass, NgStyle } from '@angular/common';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { Dayjs } from 'dayjs/esm';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
@@ -9,7 +7,7 @@ import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/c
 
 @Component({
     selector: 'jhi-calendar-desktop-week-presentation',
-    imports: [CalendarDayBadgeComponent, ArtemisTranslatePipe, NgbPopover, NgStyle, NgClass, CalendarEventsPerDaySectionComponent],
+    imports: [CalendarDayBadgeComponent, ArtemisTranslatePipe, CalendarEventsPerDaySectionComponent],
     templateUrl: './calendar-desktop-week-presentation.component.html',
     styleUrl: './calendar-desktop-week-presentation.component.scss',
 })
