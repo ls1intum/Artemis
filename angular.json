@@ -23,7 +23,6 @@
               "allowedCommonJsDependencies": [
                   "@vscode/markdown-it-katex",
                   "clone-deep",
-                  "crypto-js",
                   "crypto",
                   "dagre",
                   "dayjs/locale/de",
