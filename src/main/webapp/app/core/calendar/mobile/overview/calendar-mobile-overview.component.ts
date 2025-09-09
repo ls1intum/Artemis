@@ -20,7 +20,6 @@ import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/c
         CalendarMobileDayPresentationComponent,
         TranslateDirective,
         FaIconComponent,
-        NgbPopover,
         CalendarEventFilterComponent,
         CalendarSubscriptionPopoverComponent,
     ],
