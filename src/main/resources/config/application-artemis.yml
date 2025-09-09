@@ -104,28 +104,17 @@ artemis:
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
 
 
-# Enable Hyperion features (AI exercise creation assistance) via Spring profile
+# Configure Spring AI for Hyperion profile
 spring:
-  config:
-    activate:
-      on-profile: hyperion
   ai:
-    # Configure one, either azure or openai:
+    # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
     azure:
       openai:
         api-key: <azure_openai_key>
+        # open-ai-api-key: <openai_key> # Fallback OpenAI key if needed, sets endpoint automatically
         endpoint: <azure_openai_endpoint>
-        # deployment-name should match the Azure OpenAI deployment
         chat:
           options:
-            deployment-name: <azure_openai_deployment_name>
+            deployment-name: <azure_openai_deployment_name or openai_model_name>
             # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
             temperature: 1.0
-
-    # openai:
-    #   api-key: <openai_api_key>
-    #   chat:
-    #     options:
-    #       model: <openai_model>
-    #       # Ensure temperature is set to the model-supported default (e.g. 1.0 for reasoning models)
-    #       temperature: 1.0
