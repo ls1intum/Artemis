@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import org.aspectj.lang.annotation.Aspect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 @Profile(PROFILE_CORE)
 @Service
 @Aspect
+@Lazy
 public class ExerciseVersionService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseVersionService.class);

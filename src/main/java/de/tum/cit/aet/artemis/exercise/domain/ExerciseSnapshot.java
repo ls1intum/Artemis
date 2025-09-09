@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.domain;
 import java.io.Serializable;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +55,8 @@ public record ExerciseSnapshot(
         // partially included fields: course, exerciseGroup
         Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests, IncludedInOverallScore includedInOverallScore, String problemStatement,
         String gradingInstructions, Set<CompetencyExerciseLinkData> competencyLinks, Set<String> categories, TeamAssignmentConfigData teamAssignmentConfig,
-        Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, Long courseId, // course id instead of linked course object
+        Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, Long courseId,
+        // course id instead of linked course object
         Long exerciseGroupId, // exercise group id instead of linked exercise group object
         Set<GradingCriterionDTO> gradingCriteria, PlagiarismDetectionConfig plagiarismDetectionConfig, ProgrammingExerciseData programmingData, TextExerciseData textData,
         ModelingExerciseData modelingData, QuizExerciseData quizData, FileUploadExerciseData fileUploadData
@@ -179,7 +181,7 @@ public record ExerciseSnapshot(
                     exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(),
                     exercise.getPackageName(), exercise.getShowTestNamesToStudents(), toUtc(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()), exercise.getProjectKey(),
                     templateParticipation, solutionParticipation, exercise.getTestCases().stream().map(ProgrammingExerciseTestCaseDTO::of).collect(Collectors.toSet()),
-                    exercise.getTasks().stream().map(ProgrammingExerciseTaskData::of).collect(Collectors.toList()),
+                    exercise.getTasks().stream().map(ProgrammingExerciseTaskData::of).collect(Collectors.toCollection(ArrayList::new)),
                     exercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategoryData::of).collect(Collectors.toSet()),
                     SubmissionPolicyData.of(exercise.getSubmissionPolicy()), exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(),
                     ProgrammingExerciseBuildConfigData.of(exercise.getBuildConfig()), testCommitHash, auxiliaryCommitHashes.isEmpty() ? null : auxiliaryCommitHashes
@@ -240,7 +242,7 @@ public record ExerciseSnapshot(
         private static QuizExerciseData of(QuizExercise exercise) {
             return new QuizExerciseData(exercise.isRandomizeQuestionOrder(), exercise.getAllowedNumberOfAttempts(), exercise.isIsOpenForPractice(), exercise.getQuizMode(),
                     exercise.getDuration(),
-                    exercise.getQuizQuestions() != null ? exercise.getQuizQuestions().stream().map(QuizQuestionData::of).collect(Collectors.toList()) : null);
+                    exercise.getQuizQuestions() != null ? exercise.getQuizQuestions().stream().map(QuizQuestionData::of).collect(Collectors.toCollection(ArrayList::new)) : null);
         }
 
     }

@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseSnapshot;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
@@ -58,7 +58,7 @@ import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -78,7 +78,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     private int port;
 
     @Autowired
-    private ExerciseVersionRepository exerciseVersionRepository;
+    private ExerciseVersionTestRepository exerciseVersionRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -99,7 +99,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    private QuizExerciseRepository quizExerciseRepository;
+    private QuizExerciseTestRepository quizExerciseRepository;
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -144,7 +144,8 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         // ExerciseVersionService.createExerciseVerion is marked with @Async,
         // so we need to wait for the async task to finish
-        // "during" is needed because for createProgrammingExercise(), we have some "update" actions that
+        // "during" is needed because for createProgrammingExercise(), we have some
+        // "update" actions that
         await().during(testWaitTime, TimeUnit.SECONDS).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).isPresent());
 
         var version = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElse(null);
@@ -168,7 +169,8 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         Exercise exercise = createExerciseByType(exerciseType);
         // ExerciseVersionService.createExerciseVerion is marked with @Async,
         // so we need to wait for the async task to finish
-        // "during" is needed because for createProgrammingExercise(), we have some "update" actions that
+        // "during" is needed because for createProgrammingExercise(), we have some
+        // "update" actions that
         await().during(testWaitTime, TimeUnit.SECONDS).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).isPresent());
 
         exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElseThrow();
@@ -480,7 +482,8 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
             log.error("Failed to create programming exercise", e);
         }
 
-        // Check that the repository folders were created in the file system for all base repositories.
+        // Check that the repository folders were created in the file system for all
+        // base repositories.
         localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExercise, localVCBasePath);
 
         programmingExercise = programmingExerciseRepository.findWithEagerForVersioningById(programmingExercise.getId()).orElseThrow();

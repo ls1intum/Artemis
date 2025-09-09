@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exercise.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
@@ -29,6 +28,4 @@ public interface ExerciseVersionRepository extends ArtemisJpaRepository<Exercise
      * @return the latest version of the exercise, or empty if no versions exist
      */
     Optional<ExerciseVersion> findTopByExerciseIdOrderByCreatedDateDesc(Long exerciseId);
-
-    List<ExerciseVersion> findAllByExerciseId(Long exerciseId);
 }
