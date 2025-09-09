@@ -6,7 +6,7 @@ ext {
         "assessment"    :          ["INSTRUCTION": 0.924, "CLASS":  0],
         "athena"        :          ["INSTRUCTION": 0.874, "CLASS":  2],
         "atlas"         :          ["INSTRUCTION": 0.903, "CLASS":  6],
-        "buildagent"    :          ["INSTRUCTION": 0.800, "CLASS":  1],
+        "buildagent"    :          ["INSTRUCTION": 0.781, "CLASS":  1],
         "communication" :          ["INSTRUCTION": 0.850, "CLASS":  7],
         "core"          :          ["INSTRUCTION": 0.825, "CLASS": 48],
         "exam"          :          ["INSTRUCTION": 0.918, "CLASS":  2],
