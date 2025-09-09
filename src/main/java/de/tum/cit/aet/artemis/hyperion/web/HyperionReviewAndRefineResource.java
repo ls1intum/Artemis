@@ -29,8 +29,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 
 /**
  * REST controller for Hyperion Review & Refine features (consistency check and problem statement rewrite).
- *
- * Matches the OpenAPI specification under /api/hyperion/...
  */
 @Profile(PROFILE_HYPERION)
 @Lazy
