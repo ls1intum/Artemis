@@ -321,7 +321,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.isSaving = false;
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
-        this.calendarService.refresh();
+        this.calendarService.reloadEvents();
     }
 
     private onSaveError(errorRes: HttpErrorResponse): void {

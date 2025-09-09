@@ -296,7 +296,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     private onSaveSuccess(exercise: Exercise) {
         this.isSaving = false;
 
-        this.calendarService.refresh();
+        this.calendarService.reloadEvents();
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 

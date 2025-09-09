@@ -317,7 +317,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         this.isSaving = false;
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
-        this.calendarService.refresh();
+        this.calendarService.reloadEvents();
     }
 
     private onSaveError(errorRes: HttpErrorResponse) {

@@ -789,7 +789,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
-        this.calendarService.refresh();
+        this.calendarService.reloadEvents();
     }
 
     private onSaveError(error: HttpErrorResponse) {

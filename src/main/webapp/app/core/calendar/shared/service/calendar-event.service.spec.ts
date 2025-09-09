@@ -231,13 +231,11 @@ describe('CalendarService', () => {
         initialTokenRequest.flush(testToken);
         tick();
 
-        service.refresh();
+        service.reloadEvents();
 
         const refreshEventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
         expect(refreshEventRequest.request.method).toBe('GET');
         refreshEventRequest.flush({});
-        const refreshTokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
-        refreshTokenRequest.flush(testToken);
         tick();
     }));
 });

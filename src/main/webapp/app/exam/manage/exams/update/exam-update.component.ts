@@ -287,7 +287,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      */
     private async onSaveSuccess(exam: Exam) {
         this.isSaving = false;
-        this.calendarService.refresh();
+        this.calendarService.reloadEvents();
         await this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
         window.scrollTo(0, 0);
     }

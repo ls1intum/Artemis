@@ -3,6 +3,14 @@
     flex-direction: column;
     gap: 0.5rem;
 
+    &.mobile {
+        width: 15rem;
+    }
+
+    &.desktop {
+        width: 39rem;
+    }
+
     h5 {
         margin: 0;
     }

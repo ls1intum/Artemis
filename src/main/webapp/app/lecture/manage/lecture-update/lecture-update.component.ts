@@ -310,7 +310,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             this.shouldDisplayDismissWarning = true;
         }
 
-        this.calendarService.refresh();
+        this.calendarService.reloadEvents();
     }
 
     /**

@@ -49,17 +49,16 @@ export class CalendarService {
     constructor() {
         effect(() => {
             this.currentLanguage();
-            this.refresh();
+            this.reloadEvents();
         });
     }
 
-    refresh() {
+    reloadEvents() {
         const currentCourseId = this.currentCourseId;
         const firstDayOfCurrentMonth = this.firstDayOfCurrentMonth;
         if (currentCourseId && firstDayOfCurrentMonth) {
             this.loadEventsForCurrentMonth(currentCourseId, firstDayOfCurrentMonth).subscribe();
         }
-        this.loadSubscriptionToken().subscribe();
     }
 
     loadSubscriptionToken(): Observable<void> {

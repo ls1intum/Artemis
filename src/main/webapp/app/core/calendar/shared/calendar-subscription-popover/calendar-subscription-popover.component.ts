@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, viewChild } from '@angular/core';
-import { NgStyle } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { Popover } from 'primeng/popover';
 import { Checkbox } from 'primeng/checkbox';
@@ -13,7 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-calendar-subscription-popover',
-    imports: [NgStyle, Popover, Checkbox, SelectButton, TextFieldModule, FormsModule, FaIconComponent, TranslateDirective],
+    imports: [NgClass, Popover, Checkbox, SelectButton, TextFieldModule, FormsModule, FaIconComponent, TranslateDirective],
     templateUrl: './calendar-subscription-popover.component.html',
     styleUrl: './calendar-subscription-popover.component.scss',
 })

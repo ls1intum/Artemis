@@ -1,5 +1,5 @@
 <p-popover #calendarSubscriptionPopover>
-    <div class="popover-content" [ngStyle]="{ width: isMobile() ? '15rem' : '39rem' }">
+    <div class="popover-content" [ngClass]="isMobile() ? 'mobile' : 'desktop'">
         <h5 jhiTranslate="artemisApp.calendar.subscriptionPopover.title"></h5>
         <span jhiTranslate="artemisApp.calendar.subscriptionPopover.configurationExplanation"></span>
         @if (isMobile()) {

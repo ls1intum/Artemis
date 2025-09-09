@@ -249,7 +249,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.loadCourseSubscription?.unsubscribe();
         if (refresh) {
             this.loadCourseSubscription = observable.subscribe();
-            this.calendarService.refresh();
+            this.calendarService.reloadEvents();
         }
         return observable;
     }

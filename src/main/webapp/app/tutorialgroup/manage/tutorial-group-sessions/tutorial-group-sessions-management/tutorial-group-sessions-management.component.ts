@@ -92,7 +92,7 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
                             this.tutorialGroupSchedule = tutorialGroup.tutorialGroupSchedule;
                         }
                     }
-                    this.calendarService.refresh();
+                    this.calendarService.reloadEvents();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             })

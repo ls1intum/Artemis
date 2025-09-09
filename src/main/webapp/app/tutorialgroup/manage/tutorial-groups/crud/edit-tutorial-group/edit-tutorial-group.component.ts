@@ -118,7 +118,7 @@ export class EditTutorialGroupComponent implements OnInit, OnDestroy {
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
-                    this.calendarService.refresh();
+                    this.calendarService.reloadEvents();
                     this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups']);
                 }),
                 takeUntil(this.ngUnsubscribe),
