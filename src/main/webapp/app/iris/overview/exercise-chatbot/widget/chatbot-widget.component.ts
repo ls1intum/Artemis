@@ -21,7 +21,9 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     private router = inject(Router);
     private dialog = inject(MatDialog);
 
-    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), { initialValue: false });
+    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), {
+        initialValue: this.breakpointObserver.isMatched(Breakpoints.Handset),
+    });
 
     // User preferences
     initialWidth = 400;

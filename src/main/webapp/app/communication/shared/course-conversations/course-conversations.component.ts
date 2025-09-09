@@ -156,7 +156,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);
     private breakpointObserver = inject(BreakpointObserver);
 
-    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), { initialValue: false });
+    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), {
+        initialValue: this.breakpointObserver.isMatched(Breakpoints.Handset),
+    });
 
     private ngUnsubscribe = new Subject<void>();
     private closeSidebarEventSubscription: Subscription;

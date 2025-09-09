@@ -78,7 +78,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     cdr = inject(ChangeDetectorRef);
 
     private ngUnsubscribe = new Subject<void>();
-    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), { initialValue: false });
+    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), {
+        initialValue: this.breakpointObserver.isMatched(Breakpoints.Handset),
+    });
     readonly sessionStorageKey = 'conversationId.scrollPosition.';
 
     readonly PageType = PageType;

@@ -5,7 +5,6 @@ import { MonacoConfig } from 'app/core/config/monaco.config';
 import { ProdConfig } from 'app/core/config/prod.config';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { map } from 'rxjs';
 import { AppComponent } from './app.component';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { registerLocaleData } from '@angular/common';
@@ -38,10 +37,7 @@ bootstrapApplication(AppComponent, appConfig)
         translateService.use(languageKey);
         tooltipConfig.container = 'body';
 
-        const isMobile = breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches));
-        if (isMobile) {
-            tooltipConfig.disableTooltip = true;
-        }
+        tooltipConfig.disableTooltip = breakpointObserver.isMatched(Breakpoints.Handset);
     })
     // eslint-disable-next-line no-undef
     .catch((err) => console.error(err));

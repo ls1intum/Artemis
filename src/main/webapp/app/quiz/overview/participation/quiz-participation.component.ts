@@ -157,8 +157,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }, 2000);
 
     // Icons
-    faSync = faSync;
-    faCircleNotch = faCircleNotch;
+    protected readonly faSync = faSync;
+    protected readonly faCircleNotch = faCircleNotch;
 
     ngOnInit() {
         // set correct mode
