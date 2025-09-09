@@ -4,12 +4,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
-import java.util.regex.Pattern;
+import java.util.TreeSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,108 +48,88 @@ public class HyperionProgrammingExerciseContextRenderer {
         if (exercise == null) {
             return "";
         }
-        String problem = Objects.requireNonNullElse(exercise.getProblemStatement(), "");
-        ProgrammingLanguage language = exercise.getProgrammingLanguage();
-
-        // Fetch latest contents (maps path->content)
-        Map<String, String> template = Map.of();
-        Map<String, String> solution = Map.of();
-        try {
-            if (exercise.getTemplateParticipation() != null) {
-                VcsRepositoryUri uri = exercise.getTemplateParticipation().getVcsRepositoryUri();
-                if (uri != null) {
-                    template = repositoryService.getFilesContentFromBareRepositoryForLastCommit(uri);
-                }
-            }
-        }
-        catch (Exception ex) {
-            log.warn("Could not fetch template repository contents for exercise {}: {}", exercise.getId(), ex.getMessage());
-        }
-        try {
-            if (exercise.getSolutionParticipation() != null) {
-                VcsRepositoryUri uri = exercise.getSolutionParticipation().getVcsRepositoryUri();
-                if (uri != null) {
-                    solution = repositoryService.getFilesContentFromBareRepositoryForLastCommit(uri);
-                }
-            }
-        }
-        catch (Exception ex) {
-            log.warn("Could not fetch solution repository contents for exercise {}: {}", exercise.getId(), ex.getMessage());
-        }
+        String problemStatement = Objects.requireNonNullElse(exercise.getProblemStatement(), "");
+        ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
+        Map<String, String> templateRepository = fetchRepoContents(exercise.getTemplateParticipation() == null ? null : exercise.getTemplateParticipation().getVcsRepositoryUri(),
+                "template", exercise.getId());
+        Map<String, String> solutionRepository = fetchRepoContents(exercise.getSolutionParticipation() == null ? null : exercise.getSolutionParticipation().getVcsRepositoryUri(),
+                "solution", exercise.getId());
+        // The test repository will be included in the future
 
         // Apply language-aware filtering
-        template = languageFilter.filter(template, language);
-        solution = languageFilter.filter(solution, language);
+        templateRepository = languageFilter.filter(templateRepository, programmingLanguage);
+        solutionRepository = languageFilter.filter(solutionRepository, programmingLanguage);
 
-        // Render exactly like Python (headings + tree + dashed headers + line numbers). No tests section here.
+        // Render headings + tree + dashed headers + line numbers
         List<String> parts = new ArrayList<>(3);
-        parts.add(renderRepository(Map.of("problem_statement.md", problem), "Problem Statement"));
-        parts.add(renderRepository(template, "Template Repository"));
-        parts.add(renderRepository(solution, "Solution Repository"));
+        parts.add(renderRepository(Map.of("problem_statement.md", problemStatement), "Problem Statement"));
+        parts.add(renderRepository(templateRepository, "Template Repository"));
+        parts.add(renderRepository(solutionRepository, "Solution Repository"));
         return String.join("\n\n", parts);
+    }
+
+    private Map<String, String> fetchRepoContents(VcsRepositoryUri uri, String label, Long exerciseId) {
+        if (uri == null) {
+            return Map.of();
+        }
+        try {
+            return repositoryService.getFilesContentFromBareRepositoryForLastCommit(uri);
+        }
+        catch (Exception ex) {
+            log.warn("Could not fetch {} repository contents for exercise {}", label, exerciseId, ex);
+            return Map.of();
+        }
     }
 
     // Render a complete textual snapshot like Python renderer: tree + dashed header + numbered lines
     private static String renderRepository(Map<String, String> files, String repoName) {
-        return renderRepository(files, "/", false, repoName, 80);
-    }
-
-    private static String renderRepository(Map<String, String> files, String sep, boolean showHidden, String repoName, int width) {
-        boolean isProblemStatement = Objects.equals(repoName, "Problem Statement");
-        String root = isProblemStatement ? null : (repoName == null ? "repository" : repoName.replace(" ", "_").toLowerCase());
+        final boolean isProblemStatement = Objects.equals(repoName, "Problem Statement");
+        final String root = isProblemStatement ? null : (repoName == null ? "repository" : repoName.replace(" ", "_").toLowerCase());
 
         String treePart = "";
         if (!isProblemStatement) {
-            List<String> paths = new ArrayList<>(files.keySet());
-            treePart = renderFileStructure(root, paths, sep, showHidden);
+            treePart = renderFileStructure(root, files.keySet());
         }
 
-        List<String> fileParts = new ArrayList<>();
-        // Sort by path
-        TreeMap<String, String> sorted = new TreeMap<>(String::compareTo);
-        sorted.putAll(files);
-        for (var e : sorted.entrySet()) {
-            fileParts.add(renderFileString(root, e.getKey(), e.getValue(), true, width));
-        }
+        List<String> fileParts = new ArrayList<>(files.size());
+        files.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(e -> fileParts.add(renderFileString(root, e.getKey(), e.getValue())));
         String body = String.join("\n\n", fileParts);
 
-        if (repoName != null && !repoName.isBlank()) {
-            String headline = "\n===== " + repoName + " =====\n";
-            if (!treePart.isEmpty()) {
-                return headline + treePart + "\n\n" + body;
-            }
-            else {
-                return headline + body;
-            }
-        }
-
+        String headline = "\n===== " + repoName + " =====\n";
         if (!treePart.isEmpty()) {
-            return treePart + "\n\n" + body;
+            return headline + treePart + "\n\n" + body;
         }
-        else {
-            return body;
-        }
+        return headline + body;
     }
 
-    private static String renderFileStructure(String root, List<String> paths, String sep, boolean showHidden) {
-        Map<String, Object> tree = new LinkedHashMap<>();
+    private static final class DirNode {
+
+        final TreeMap<String, DirNode> dirs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+        final TreeSet<String> files = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    }
+
+    private static String renderFileStructure(String root, Iterable<String> paths) {
+        DirNode rootNode = new DirNode();
         for (String p : paths) {
             if (p == null || p.isBlank()) {
                 continue;
             }
-            String[] parts = Arrays.stream(p.split(Pattern.quote(sep))).filter(s -> !s.isBlank()).toArray(String[]::new);
-            if (!showHidden && Arrays.stream(parts).anyMatch(part -> part.startsWith("."))) {
+            String[] segments = Arrays.stream(p.split("/")).filter(s -> !s.isBlank()).toArray(String[]::new);
+            // skip hidden files or any path containing hidden segment
+            if (Arrays.stream(segments).anyMatch(seg -> seg.startsWith("."))) {
                 continue;
             }
-            Map<String, Object> node = tree;
-            for (String part : parts) {
-                Object child = node.get(part);
-                if (!(child instanceof Map)) {
-                    child = new LinkedHashMap<String, Object>();
-                    node.put(part, child);
+            DirNode cursor = rootNode;
+            for (int i = 0; i < segments.length; i++) {
+                String seg = segments[i];
+                boolean last = i == segments.length - 1;
+                if (last) {
+                    cursor.files.add(seg);
                 }
-                // noinspection unchecked
-                node = (Map<String, Object>) child;
+                else {
+                    cursor = cursor.dirs.computeIfAbsent(seg, k -> new DirNode());
+                }
             }
         }
 
@@ -158,61 +137,43 @@ public class HyperionProgrammingExerciseContextRenderer {
         if (root != null && !root.isBlank()) {
             lines.add(root);
         }
-
-        collectTree(lines, tree, "");
+        collectTree(lines, rootNode, "");
         return String.join("\n", lines);
     }
 
-    @SuppressWarnings("unchecked")
-    private static void collectTree(List<String> lines, Map<String, Object> subtree, String prefix) {
-        List<Map.Entry<String, Object>> items = new ArrayList<>(subtree.entrySet());
-        // Directories first (value is a non-empty map), then by case-insensitive name
-        items.sort((a, b) -> {
-            boolean aIsDir = a.getValue() instanceof Map && !((Map<String, Object>) a.getValue()).isEmpty();
-            boolean bIsDir = b.getValue() instanceof Map && !((Map<String, Object>) b.getValue()).isEmpty();
-            if (aIsDir != bIsDir) {
-                return aIsDir ? -1 : 1;
-            }
-            return a.getKey().toLowerCase().compareTo(b.getKey().toLowerCase());
-        });
-
-        for (int i = 0; i < items.size(); i++) {
-            var e = items.get(i);
-            String name = e.getKey();
-            Object children = e.getValue();
-            boolean last = i == items.size() - 1;
-            String connector = last ? "└── " : "├── ";
-            lines.add(prefix + connector + name);
-            if (children instanceof Map<?, ?> childMap && !childMap.isEmpty()) {
-                String extension = last ? "    " : "│   ";
-                collectTree(lines, (Map<String, Object>) childMap, prefix + extension);
-            }
+    private static void collectTree(List<String> lines, DirNode node, String prefix) {
+        // We need a stable ordered list of all entries: directories first then files
+        List<String> dirNames = new ArrayList<>(node.dirs.keySet());
+        List<String> fileNames = new ArrayList<>(node.files);
+        int total = dirNames.size() + fileNames.size();
+        int index = 0;
+        for (String dir : dirNames) {
+            boolean last = ++index == total;
+            lines.add(prefix + (last ? "└── " : "├── ") + dir);
+            collectTree(lines, node.dirs.get(dir), prefix + (last ? "    " : "│   "));
+        }
+        for (String file : fileNames) {
+            boolean last = ++index == total;
+            lines.add(prefix + (last ? "└── " : "├── ") + file);
         }
     }
 
-    private static String renderFileString(String root, String path, String content, boolean lineNumbers, int width) {
-        String hr = "-".repeat(Math.max(0, width));
-        String header = (root != null && !root.isBlank() ? hr + "\n" + root + "/" + path + ":\n" + hr : hr + "\n" + path + ":\n" + hr);
+    private static final int HR_WIDTH = 80;
 
+    private static String renderFileString(String root, String path, String content) {
+        String hr = "-".repeat(HR_WIDTH);
+        String header = (root != null && !root.isBlank() ? hr + "\n" + root + "/" + path + ":\n" + hr : hr + "\n" + path + ":\n" + hr);
         if (content == null) {
             content = "";
         }
-
         List<String> lines = Arrays.asList(content.split("\n", -1));
-        List<String> out = new ArrayList<>(lines.size());
-        if (lineNumbers) {
-            int w = Integer.toString(lines.size()).length();
-            for (int i = 0; i < lines.size(); i++) {
-                String num = String.format("%" + w + "d", i + 1);
-                out.add(num + " | " + lines.get(i));
-            }
+        int w = Integer.toString(lines.size()).length();
+        List<String> out = new ArrayList<>(lines.size() + 1);
+        out.add(header);
+        for (int i = 0; i < lines.size(); i++) {
+            String num = String.format("%" + w + "d", i + 1);
+            out.add(num + " | " + lines.get(i));
         }
-        else {
-            out.addAll(lines);
-        }
-        List<String> all = new ArrayList<>(out.size() + 1);
-        all.add(header);
-        all.addAll(out);
-        return String.join("\n", all);
+        return String.join("\n", out);
     }
 }

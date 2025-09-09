@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
@@ -79,10 +78,6 @@ public class HyperionReviewAndRefineResource {
             var response = consistencyCheckService.checkConsistency(user, exercise);
             return ResponseEntity.ok(response);
         }
-        catch (NetworkingException e) {
-            log.warn("Hyperion service temporary unavailable during consistency check: {}", e.getMessage());
-            return ResponseEntity.status(503).build();
-        }
         catch (Exception e) {
             log.error("Unexpected error during Hyperion consistency check", e);
             return ResponseEntity.internalServerError().build();
@@ -107,10 +102,6 @@ public class HyperionReviewAndRefineResource {
         try {
             var result = problemStatementRewriteService.rewriteProblemStatement(user, course, request.problemStatementText());
             return ResponseEntity.ok(result);
-        }
-        catch (NetworkingException e) {
-            log.warn("Hyperion service temporary unavailable during rewrite: {}", e.getMessage());
-            return ResponseEntity.status(503).build();
         }
         catch (Exception e) {
             log.error("Unexpected error during Hyperion rewrite", e);
