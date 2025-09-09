@@ -3,11 +3,11 @@ package de.tum.cit.aet.artemis.programming.web;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,15 +25,16 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
+import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndependentTest {
+class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "programmingexerciseresource";
 
@@ -63,6 +64,9 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
 
     @Autowired
     private CourseTestRepository courseRepository;
+
+    @Autowired
+    private LocalVCLocalCITestService localVCLocalCITestService;
 
     protected Course course;
 
@@ -176,51 +180,14 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationIndepende
         localRepo.resetLocalRepo();
     }
 
-    @Test
-    void testFileAndDirectoryFilter() throws Exception {
-        // Test the FileAndDirectoryFilter inner class functionality
-        Class<?> filterClass = Class.forName("de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService$FileAndDirectoryFilter");
-        var constructor = filterClass.getDeclaredConstructor();
-        constructor.setAccessible(true);
-        Object filter = constructor.newInstance();
-
-        // Get both accept methods
-        var acceptFileMethod = filterClass.getDeclaredMethod("accept", java.io.File.class);
-        var acceptDirFileMethod = filterClass.getDeclaredMethod("accept", java.io.File.class, String.class);
-        acceptFileMethod.setAccessible(true);
-        acceptDirFileMethod.setAccessible(true);
-
-        // Test that .git files/directories are filtered out
-        var gitFile = new java.io.File(".git");
-        assertThat((Boolean) acceptFileMethod.invoke(filter, gitFile)).isFalse();
-
-        // Test that regular files are accepted
-        var regularFile = new java.io.File("src/main/java/Test.java");
-        assertThat((Boolean) acceptFileMethod.invoke(filter, regularFile)).isTrue();
-
-        // Test the directory/filename variant
-        var someDir = new java.io.File("src");
-        assertThat((Boolean) acceptDirFileMethod.invoke(filter, someDir, "Test.java")).isTrue();
-
-        // Test filtering .git directory with the two-parameter method
-        var gitDir = new java.io.File(".git");
-        assertThat((Boolean) acceptDirFileMethod.invoke(filter, gitDir, "anyfile.txt")).isFalse();
-    }
-
     private void setupLocalVCRepository(LocalRepository localRepo, ProgrammingExercise exercise) throws Exception {
         String projectKey = exercise.getProjectKey();
         String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
 
-        // Create the repository folder in the LocalVC structure
-        Path projectFolder = localVCRepoPath.resolve(projectKey);
-        if (!Files.exists(projectFolder)) {
-            Files.createDirectories(projectFolder);
-        }
-        Path repositoryFolder = projectFolder.resolve(templateRepositorySlug + ".git");
-        Files.createDirectories(repositoryFolder);
+        // Create and configure the repository using LocalVCLocalCITestService
+        LocalRepository localVCRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
 
-        // Copy the bare repository to the LocalVC location
-        org.apache.commons.io.FileUtils.copyDirectory(localRepo.remoteBareGitRepoFile, repositoryFolder.toFile());
+        FileUtils.copyDirectory(localRepo.remoteBareGitRepo.getRepository().getDirectory(), localVCRepo.remoteBareGitRepoFile);
 
         // Set the proper LocalVC URI format
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
