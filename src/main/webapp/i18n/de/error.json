@@ -126,6 +126,11 @@
             "missingLayouts": "Konnte die Layouts von Raum {{ roomNumber }} nicht verarbeiten",
             "malformedLayout": "Layout {{ layoutName }} ist fehlerhaft in Raum {{ roomNumber }}",
             "unknownLayoutType": "Unbekannter Layout-Typ '{{ layoutType }}' in Layout '{{ layoutName }}' in Raum {{ roomNumber }}"
+        },
+        "examUser": {
+            "service": {
+                "multipleExamRooms": "All exam users must belong to the same exam, but right now they share {{ foundExams }} different exams"
+            }
         }
     }
 }

@@ -52,4 +52,13 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             WHERE examRoom.id NOT IN ( SELECT DISTINCT erea.examRoom.id FROM ExamRoomExamAssignment erea )
             """)
     Set<Long> findAllIdsOfOutdatedAndUnusedExamRooms();
+
+    @Query("""
+            SELECT er
+            FROM ExamRoom er
+            JOIN ExamRoomExamAssignment erea
+                ON er.id = erea.examRoom.id
+            WHERE erea.exam.id = :examId
+            """)
+    Set<ExamRoom> findAllByExamId(long examId);
 }
