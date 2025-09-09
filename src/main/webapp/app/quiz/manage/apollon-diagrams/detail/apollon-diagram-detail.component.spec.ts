@@ -79,6 +79,7 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('save', async () => {
+        jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
         fixture.componentInstance.apollonDiagram = diagram;
         // setup
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });

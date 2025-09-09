@@ -49,6 +49,7 @@ describe('ModelingEditorComponent', () => {
     });
 
     it('ngAfterViewInit', async () => {
+        jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
         component.umlModel = classDiagram;
         fixture.detectChanges();
 

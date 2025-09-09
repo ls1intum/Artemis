@@ -209,6 +209,7 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     it('should update element counts', async () => {
+        jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
         function getElementCounts(model: UMLModel): ModelElementCount[] {
             // Not sure whether this is the correct logic to build OtherModelElementCounts.
             return Object.values(model.elements).map((el) => ({
