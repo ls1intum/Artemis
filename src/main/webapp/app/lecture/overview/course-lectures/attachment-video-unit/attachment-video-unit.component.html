@@ -43,10 +43,14 @@
     }
 
     @if (!!videoUrl()) {
-        <div class="video-player-container">
-            <div class="ratio ratio-16x9">
-                <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+        @if (playlistUrl() && hasTranscript()) {
+            <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" />
+        } @else {
+            <div class="video-player-container">
+                <div class="ratio ratio-16x9">
+                    <iframe id="videoFrame" class="rounded" [src]="videoUrl() | safeResourceUrl" allow="fullscreen"></iframe>
+                </div>
             </div>
-        </div>
+        }
     }
 </jhi-lecture-unit-card>
