@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
-import { NgClass, NgStyle } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarMobileMonthPresentationComponent } from 'app/core/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
@@ -10,7 +9,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarMobileDayPresentationComponent } from 'app/core/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
@@ -18,8 +16,6 @@ import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/c
 @Component({
     selector: 'jhi-calendar-mobile-overview',
     imports: [
-        NgStyle,
-        NgClass,
         CalendarMobileMonthPresentationComponent,
         CalendarMobileDayPresentationComponent,
         TranslateDirective,
