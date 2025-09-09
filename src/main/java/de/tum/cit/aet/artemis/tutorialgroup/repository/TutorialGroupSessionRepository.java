@@ -46,7 +46,7 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
 
     @Query("""
                 SELECT new de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO(
-                    CONCAT('tutorialStartAndEndEvent', CAST(session.id AS string)),
+                    CONCAT('tutorialStartAndEndEvent-', CAST(session.id AS string)),
                     de.tum.cit.aet.artemis.core.util.CalendarEventType.TUTORIAL,
                     tutorialGroup.title,
                     session.start,

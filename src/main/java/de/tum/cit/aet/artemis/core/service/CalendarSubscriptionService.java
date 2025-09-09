@@ -34,10 +34,6 @@ import net.fortuna.ical4j.model.property.immutable.ImmutableVersion;
 @Profile(PROFILE_CORE)
 public class CalendarSubscriptionService {
 
-    public enum CalendarEventFilterOption {
-        LECTURES, TUTORIALS, EXAMS, EXERCISES
-    }
-
     private final UserRepository userRepository;
 
     private final String artemisServerUrl;

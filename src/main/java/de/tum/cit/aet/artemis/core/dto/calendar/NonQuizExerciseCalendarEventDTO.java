@@ -18,6 +18,6 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * create {@link CalendarEventDTO}s.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record NonQuizExerciseCalendarEventDTO(@NotNull long originEntityId, @NotNull CalendarEventType type, @NotNull String title, @Nullable ZonedDateTime releaseDate,
+public record NonQuizExerciseCalendarEventDTO(long originEntityId, @NotNull CalendarEventType type, @NotNull String title, @Nullable ZonedDateTime releaseDate,
         @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate) {
 }

@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,7 +41,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CalendarSubscriptionService;
-import de.tum.cit.aet.artemis.core.service.CalendarSubscriptionService.CalendarEventFilterOption;
+import de.tum.cit.aet.artemis.core.util.CalendarSubscriptionFilterOption;
 import de.tum.cit.aet.artemis.core.util.CalendarUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -117,7 +119,7 @@ public class CalendarResource {
      */
     @GetMapping("courses/{courseId}/calendar-events-ics")
     public ResponseEntity<String> getCalendarEventSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
-            @RequestParam("filterOptions") Set<CalendarEventFilterOption> filterOptions, @RequestParam("language") Language language) {
+            @RequestParam("filterOptions") Set<CalendarSubscriptionFilterOption> filterOptions, @RequestParam("language") Language language) {
         User user = userRepository.findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
         Course course = courseRepository.findByIdElseThrow(courseId);
         boolean userIsStudent = authorizationCheckService.isOnlyStudentInCourse(course, user);
@@ -126,22 +128,20 @@ public class CalendarResource {
             throw new AccessForbiddenException("You are not allowed to access this course's resources!");
         }
 
-        boolean includeTutorialEvents = filterOptions.contains(CalendarEventFilterOption.TUTORIALS);
-        boolean includeExamEvents = filterOptions.contains(CalendarEventFilterOption.EXAMS);
-        boolean includeLectureEvents = filterOptions.contains(CalendarEventFilterOption.LECTURES);
-        boolean includeExerciseEvents = filterOptions.contains(CalendarEventFilterOption.EXERCISES);
+        boolean includeTutorialEvents = filterOptions.contains(CalendarSubscriptionFilterOption.TUTORIALS);
+        boolean includeExamEvents = filterOptions.contains(CalendarSubscriptionFilterOption.EXAMS);
+        boolean includeLectureEvents = filterOptions.contains(CalendarSubscriptionFilterOption.LECTURES);
+        boolean includeExerciseEvents = filterOptions.contains(CalendarSubscriptionFilterOption.EXERCISES);
 
-        Set<CalendarEventDTO> tutorialEventDTOs = includeTutorialEvents
-                ? tutorialGroupApi.map(api -> api.getCalendarEventDTOsFromTutorialsGroups(user.getId(), courseId)).orElse(Collections.emptySet())
-                : Collections.emptySet();
-        Set<CalendarEventDTO> examEventDTOs = includeExamEvents
-                ? examApi.map(api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent, language)).orElse(Collections.emptySet())
-                : Collections.emptySet();
-        Set<CalendarEventDTO> lectureEventDTOs = includeLectureEvents ? lectureApi.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language) : Collections.emptySet();
-        Set<CalendarEventDTO> quizExerciseEventDTOs = includeExerciseEvents ? quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent, language)
-                : Collections.emptySet();
-        Set<CalendarEventDTO> otherExerciseEventDTOs = includeExerciseEvents ? exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent, language)
-                : Collections.emptySet();
+        Set<CalendarEventDTO> tutorialEventDTOs = getIfShouldBeIncludedAndApiAvailable(includeTutorialEvents, tutorialGroupApi,
+                api -> api.getCalendarEventDTOsFromTutorialsGroups(user.getId(), courseId));
+        Set<CalendarEventDTO> examEventDTOs = getIfShouldBeIncludedAndApiAvailable(includeExamEvents, examApi,
+                api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent, language));
+        Set<CalendarEventDTO> lectureEventDTOs = getIfShouldBeIncluded(includeLectureEvents, () -> lectureApi.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language));
+        Set<CalendarEventDTO> quizExerciseEventDTOs = getIfShouldBeIncluded(includeExerciseEvents,
+                () -> quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent, language));
+        Set<CalendarEventDTO> otherExerciseEventDTOs = getIfShouldBeIncluded(includeExerciseEvents,
+                () -> exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent, language));
 
         Set<CalendarEventDTO> calendarEventDTOs = Stream.of(tutorialEventDTOs, lectureEventDTOs, examEventDTOs, quizExerciseEventDTOs, otherExerciseEventDTOs).flatMap(Set::stream)
                 .collect(Collectors.toSet());
@@ -149,6 +149,31 @@ public class CalendarResource {
         String icsFileString = calendarSubscriptionService.getICSFileAsString(course.getShortName(), language, calendarEventDTOs);
         return ResponseEntity.ok().contentType(MediaType.parseMediaType("text/calendar; charset=utf-8"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"calendar-events.ics\"; filename*=UTF-8''calendar-events.ics").body(icsFileString);
+    }
+
+    /**
+     * Uses the supplier to retrieve a set of the generic type if include is true.
+     *
+     * @param include  a flag indicating whether the supplier should be used
+     * @param supplier a function that returns a set of the generic type
+     * @return the set retrieved by the supplier if include is true, otherwise and empty set
+     */
+    private <T> Set<T> getIfShouldBeIncluded(boolean include, Supplier<Set<T>> supplier) {
+        return include ? supplier.get() : Collections.emptySet();
+    }
+
+    /**
+     * Uses the supplier to retrieve a set of the generic type if include is true and the api on which the supplier is called is available.
+     *
+     * @param include     a flag indicating whether the supplier should be used
+     * @param apiOptional an optional that encapsulates the api on which the supplier should be called
+     * @param supplier    a function that returns a set of the generic type
+     * @return the set retrieved by the supplier if include is true and the api is available, otherwise and empty set
+     */
+    private <A, T> Set<T> getIfShouldBeIncludedAndApiAvailable(boolean include, Optional<A> apiOptional, Function<A, Set<T>> supplier) {
+        if (!include)
+            return Collections.emptySet();
+        return apiOptional.map(supplier).orElseGet(Collections::emptySet);
     }
 
     /**

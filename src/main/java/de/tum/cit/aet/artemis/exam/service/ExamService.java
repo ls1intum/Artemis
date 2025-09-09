@@ -1388,27 +1388,27 @@ public class ExamService {
         Set<CalendarEventDTO> events = new HashSet<>();
         boolean userIsCourseStaff = !userIsStudent;
         if (userIsCourseStaff || dto.visibleDate().isBefore(now())) {
-            events.add(
-                    new CalendarEventDTO("examStartAndEndEvent" + dto.originEntityId(), CalendarEventType.EXAM, dto.title(), dto.startDate(), dto.endDate(), null, dto.examiner()));
+            events.add(new CalendarEventDTO("examStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.EXAM, dto.title(), dto.startDate(), dto.endDate(), null,
+                    dto.examiner()));
             if (dto.publishResultsDate() != null) {
                 String publishResultsDateTitlePrefix = switch (language) {
                     case ENGLISH -> "Results Release: ";
                     case GERMAN -> "Veröffentlichung Ergebnisse: ";
                 };
-                events.add(new CalendarEventDTO("examPublishResultsEvent" + dto.originEntityId(), CalendarEventType.EXAM, publishResultsDateTitlePrefix + dto.title(),
+                events.add(new CalendarEventDTO("examPublishResultsEvent-" + dto.originEntityId(), CalendarEventType.EXAM, publishResultsDateTitlePrefix + dto.title(),
                         dto.publishResultsDate(), null, null, null));
                 if (dto.studentReviewStart() != null) {
                     String studentReviewStartDateTitlePrefix = switch (language) {
                         case ENGLISH -> "Review Start: ";
                         case GERMAN -> "Einsicht Start: ";
                     };
-                    events.add(new CalendarEventDTO("examReviewStartEvent" + dto.originEntityId(), CalendarEventType.EXAM, studentReviewStartDateTitlePrefix + dto.title(),
+                    events.add(new CalendarEventDTO("examReviewStartEvent-" + dto.originEntityId(), CalendarEventType.EXAM, studentReviewStartDateTitlePrefix + dto.title(),
                             dto.studentReviewStart(), null, null, null));
                     String studentReviewEndDateTitlePrefix = switch (language) {
                         case ENGLISH -> "Review End: ";
                         case GERMAN -> "Einsicht Ende: ";
                     };
-                    events.add(new CalendarEventDTO("examReviewEndEvent" + dto.originEntityId(), CalendarEventType.EXAM, studentReviewEndDateTitlePrefix + dto.title(),
+                    events.add(new CalendarEventDTO("examReviewEndEvent-" + dto.originEntityId(), CalendarEventType.EXAM, studentReviewEndDateTitlePrefix + dto.title(),
                             dto.studentReviewEnd(), null, null, null));
                 }
             }
