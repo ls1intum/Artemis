@@ -12,17 +12,19 @@ export class Reaction {
     public answerPost?: AnswerPost;
 }
 
-export interface CreateReactionDTO {
+export class CreateReactionDTO {
     emojiId?: string;
     relatedPostId?: number;
-}
 
-/**
- * Converts a Reaction to a minimal API payload.
- */
-export function createReactionDTO(reaction: Reaction): CreateReactionDTO {
-    return {
-        emojiId: reaction.emojiId ? reaction.emojiId : undefined,
-        relatedPostId: reaction.post?.id ?? reaction.answerPost?.id ?? undefined,
-    };
+    constructor(emojiId?: string, relatedPostId?: number) {
+        this.emojiId = emojiId;
+        this.relatedPostId = relatedPostId;
+    }
+
+    /**
+     * Converts a Reaction to a minimal API payload.
+     */
+    static fromReaction(reaction: Reaction): CreateReactionDTO {
+        return new CreateReactionDTO(reaction.emojiId, reaction.post?.id ?? reaction.answerPost?.id);
+    }
 }

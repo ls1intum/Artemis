@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
-import { Reaction, createReactionDTO } from 'app/communication/shared/entities/reaction.model';
+import { CreateReactionDTO, Reaction } from 'app/communication/shared/entities/reaction.model';
 
 type EntityResponseType = HttpResponse<Reaction>;
 
@@ -21,7 +21,7 @@ export class ReactionService {
      */
     create(courseId: number, reaction: Reaction): Observable<EntityResponseType> {
         return this.http
-            .post<Reaction>(`${this.resourceUrl}${courseId}/postings/reactions`, createReactionDTO(reaction), { observe: 'response' })
+            .post<Reaction>(`${this.resourceUrl}${courseId}/postings/reactions`, CreateReactionDTO.fromReaction(reaction), { observe: 'response' })
             .pipe(map(this.convertPostingResponseDateFromServer));
     }
 

@@ -60,7 +60,7 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
             .and(getUnresolvedSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnresolved())))
             .and(getPinnedSpecification(Boolean.TRUE.equals(postContextFilter.pinnedOnly())))
             .and(getSortSpecification(true, postContextFilter.postSortCriterion(), postContextFilter.sortingOrder()));
-        // @formatter:on
+            // @formatter:on
     }
 
     /**
