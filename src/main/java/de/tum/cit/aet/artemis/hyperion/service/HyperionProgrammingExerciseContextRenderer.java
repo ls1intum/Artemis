@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 /**
  * Produces a deterministic textual snapshot of a {@link ProgrammingExercise} combining:
@@ -128,7 +129,13 @@ public class HyperionProgrammingExerciseContextRenderer {
             return Map.of();
         }
         try {
-            return repositoryService.getFilesContentFromBareRepositoryForLastCommit(uri);
+            // Only LocalVC repositories are currently supported for direct bare content retrieval.
+            if (uri instanceof LocalVCRepositoryUri localUri) {
+                return repositoryService.getFilesContentFromBareRepositoryForLastCommit(localUri);
+            }
+            // For other VCS types (e.g., remote), we skip to keep Hyperion optional and fail-safe.
+            log.debug("Skipping repository content fetch for unsupported VCS URI type {} on exercise {}", uri.getClass().getSimpleName(), exerciseId);
+            return Map.of();
         }
         catch (Exception ex) {
             log.warn("Could not fetch {} repository contents for exercise {}", label, exerciseId, ex);
