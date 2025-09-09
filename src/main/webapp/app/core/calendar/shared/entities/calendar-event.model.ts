@@ -1,5 +1,4 @@
 import { Dayjs } from 'dayjs/esm';
-import { v4 as uuidv4 } from 'uuid';
 
 export enum CalendarEventType {
     Lecture = 'LECTURE',
@@ -23,7 +22,7 @@ export class CalendarEvent {
         public location?: string,
         public facilitator?: string,
     ) {
-        this.id = uuidv4();
+        this.id = window.crypto.randomUUID().toString();
     }
 
     isOfType(type: CalendarEventType) {

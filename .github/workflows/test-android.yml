@@ -38,18 +38,18 @@ jobs:
 
     steps:
       - name: Checkout Main Artemis Repo (this repo)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: main-repo
 
       - name: Checkout Artemis Android Repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: ls1intum/artemis-android
           path: android-repo
 
       - name: Gradle Wrapper Verification
-        uses: gradle/actions/wrapper-validation@v3
+        uses: gradle/actions/wrapper-validation@v4
 
         # sanity cleanup
       - name: Stop mysql server
@@ -100,7 +100,7 @@ jobs:
         continue-on-error: true
 
       - name: Test Report
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v2
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: Android E2E Test Results
