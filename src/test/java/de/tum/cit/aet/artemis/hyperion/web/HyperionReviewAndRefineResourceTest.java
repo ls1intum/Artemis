@@ -1,11 +1,19 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -31,7 +39,7 @@ class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocal
     private long persistedCourseId;
 
     @BeforeEach
-    void initData() {
+    void setupTestData() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         Course course = new Course();
@@ -63,10 +71,19 @@ class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocal
         persistedExerciseId = exercise.getId();
     }
 
+    private void mockChatReturnsEmptyConsistencyIssues() {
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}")))));
+    }
+
+    private void mockChatReturnsImprovedRewrite() {
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Improved problem statement.")))));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void checkExerciseConsistency_returnsOkWithBody_when_user_is_instructor() throws Exception {
         long exerciseId = persistedExerciseId;
+        mockChatReturnsEmptyConsistencyIssues();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         programmingExerciseRepository.findById(exerciseId).orElseThrow();
         request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isOk());
@@ -76,6 +93,7 @@ class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocal
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
     void checkExerciseConsistency_returnsOkWithBody_when_user_is_editor() throws Exception {
         long exerciseId = persistedExerciseId;
+        mockChatReturnsEmptyConsistencyIssues();
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         programmingExerciseRepository.findById(exerciseId).orElseThrow();
         request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isOk());
@@ -107,6 +125,7 @@ class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void rewriteProblemStatement_returnsOkWithBody_when_user_is_instructor() throws Exception {
         long courseId = persistedCourseId;
+        mockChatReturnsImprovedRewrite();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"problemStatementText\":\"Original\"}";
@@ -118,6 +137,7 @@ class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocal
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
     void rewriteProblemStatement_returnsOkWithBody_when_user_is_editor() throws Exception {
         long courseId = persistedCourseId;
+        mockChatReturnsImprovedRewrite();
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"problemStatementText\":\"Original\"}";

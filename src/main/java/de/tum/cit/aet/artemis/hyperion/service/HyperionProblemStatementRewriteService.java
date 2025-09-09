@@ -55,13 +55,17 @@ public class HyperionProblemStatementRewriteService {
         String resourcePath = "/prompts/hyperion/rewrite_problem_statement.st";
         Map<String, String> input = Map.of("text", problemStatementText.trim());
         String renderedPrompt = templates.render(resourcePath, input);
-
-        String responseContent = chatClient.prompt()
-                .system("You are an expert technical writing assistant for programming exercise problem statements. Return only the rewritten statement, no explanations.")
-                .user(renderedPrompt).call().content();
-
-        String result = responseContent.trim();
-        boolean improved = !result.equals(problemStatementText.trim());
-        return new ProblemStatementRewriteResponseDTO(result, improved);
+        try {
+            String responseContent = chatClient.prompt()
+                    .system("You are an expert technical writing assistant for programming exercise problem statements. Return only the rewritten statement, no explanations.")
+                    .user(renderedPrompt).call().content();
+            String result = responseContent.trim();
+            boolean improved = !result.equals(problemStatementText.trim());
+            return new ProblemStatementRewriteResponseDTO(result, improved);
+        }
+        catch (RuntimeException e) {
+            log.warn("Failed to obtain or parse AI response for {} - returning original text", resourcePath, e);
+            return new ProblemStatementRewriteResponseDTO(problemStatementText.trim(), false);
+        }
     }
 }

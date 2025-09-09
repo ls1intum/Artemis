@@ -110,7 +110,7 @@ public class HyperionConsistencyCheckService {
             return toGenericConsistencyIssue(structuralIssues);
         }
         catch (RuntimeException e) {
-            log.error("Failed to obtain or parse AI response for {}", resourcePath, e);
+            log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
             return new ArrayList<>();
         }
     }
@@ -130,7 +130,7 @@ public class HyperionConsistencyCheckService {
             return toGenericConsistencyIssue(semanticIssues);
         }
         catch (RuntimeException e) {
-            log.error("Failed to obtain or parse AI response for {}", resourcePath, e);
+            log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
             return new ArrayList<>();
         }
     }
