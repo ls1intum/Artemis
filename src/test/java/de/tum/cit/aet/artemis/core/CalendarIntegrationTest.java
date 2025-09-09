@@ -1379,7 +1379,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // a regex that matches each line starting with "UID:"
         private static final String UID_PREFIX_REGEX = "(?m)^UID:";
 
-        // a regex that matches each line starting with "UID:" and captures the value that comes after this prefix within the line
+        // a regex that matches each line starting with "UID:" and capturing the value that comes after this prefix within the line
         private static final String UID_PREFIX_AND_VALUE_REGEX = "(?m)^UID:(.+)$";
 
         private String buildUrl(long courseId, String token, CalendarSubscriptionFilterOption[] filterOptions, Language language) {
