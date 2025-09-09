@@ -71,19 +71,19 @@ class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocal
         persistedExerciseId = exercise.getId();
     }
 
-    private void mockChatReturnsEmptyConsistencyIssues() {
+    private void mockConsistencyNoIssues() {
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}")))));
     }
 
-    private void mockChatReturnsImprovedRewrite() {
+    private void mockRewriteImproved() {
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Improved problem statement.")))));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
-    void checkExerciseConsistency_returnsOkWithBody_when_user_is_instructor() throws Exception {
+    void shouldReturnConsistencyIssuesEmptyForInstructor() throws Exception {
         long exerciseId = persistedExerciseId;
-        mockChatReturnsEmptyConsistencyIssues();
+        mockConsistencyNoIssues();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         programmingExerciseRepository.findById(exerciseId).orElseThrow();
         request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isOk());
@@ -91,9 +91,9 @@ class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
-    void checkExerciseConsistency_returnsOkWithBody_when_user_is_editor() throws Exception {
+    void shouldReturnConsistencyIssuesEmptyForEditor() throws Exception {
         long exerciseId = persistedExerciseId;
-        mockChatReturnsEmptyConsistencyIssues();
+        mockConsistencyNoIssues();
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         programmingExerciseRepository.findById(exerciseId).orElseThrow();
         request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isOk());
@@ -101,7 +101,7 @@ class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
-    void checkExerciseConsistency_forbidden_when_user_is_tutor() throws Exception {
+    void shouldReturnForbiddenForConsistencyCheckTutor() throws Exception {
         long exerciseId = persistedExerciseId;
 
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
@@ -112,7 +112,7 @@ class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
-    void checkExerciseConsistency_forbidden_when_user_is_student() throws Exception {
+    void shouldReturnForbiddenForConsistencyCheckStudent() throws Exception {
         long exerciseId = persistedExerciseId;
 
         userUtilService.changeUser(TEST_PREFIX + "student1");
@@ -123,9 +123,9 @@ class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
-    void rewriteProblemStatement_returnsOkWithBody_when_user_is_instructor() throws Exception {
+    void shouldRewriteProblemStatementForInstructor() throws Exception {
         long courseId = persistedCourseId;
-        mockChatReturnsImprovedRewrite();
+        mockRewriteImproved();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"problemStatementText\":\"Original\"}";
@@ -135,9 +135,9 @@ class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
-    void rewriteProblemStatement_returnsOkWithBody_when_user_is_editor() throws Exception {
+    void shouldRewriteProblemStatementForEditor() throws Exception {
         long courseId = persistedCourseId;
-        mockChatReturnsImprovedRewrite();
+        mockRewriteImproved();
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"problemStatementText\":\"Original\"}";
@@ -147,7 +147,7 @@ class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
-    void rewriteProblemStatement_forbidden_when_user_is_tutor() throws Exception {
+    void shouldReturnForbiddenForRewriteTutor() throws Exception {
         long courseId = persistedCourseId;
 
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
@@ -160,7 +160,7 @@ class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
-    void rewriteProblemStatement_forbidden_when_user_is_student() throws Exception {
+    void shouldReturnForbiddenForRewriteStudent() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "student1");
         courseRepository.findById(courseId).orElseThrow();
