@@ -5,11 +5,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +23,6 @@ import com.hazelcast.map.listener.EntryUpdatedListener;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
@@ -57,24 +57,30 @@ public class LocalCIEventListenerService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
+    private final LocalCIResultProcessingService localCIResultProcessingService;
+
     private final UserService userService;
 
     private final MailService mailService;
 
     public LocalCIEventListenerService(DistributedDataAccessService distributedDataAccessService, LocalCIQueueWebsocketService localCIQueueWebsocketService,
-            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, UserService userService, MailService mailService) {
+            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, LocalCIResultProcessingService localCIResultProcessingService,
+            UserService userService, MailService mailService) {
         this.distributedDataAccessService = distributedDataAccessService;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
         this.buildJobRepository = buildJobRepository;
         this.programmingMessagingService = programmingMessagingService;
+        this.localCIResultProcessingService = localCIResultProcessingService;
         this.userService = userService;
         this.mailService = mailService;
     }
 
     /**
      * Add listeners for build job, build agent changes.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     public void init() {
         distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener(), true);
         distributedDataAccessService.getDistributedProcessingJobs().addEntryListener(new ProcessingBuildJobItemListener(), true);
@@ -124,6 +130,29 @@ public class LocalCIEventListenerService {
             log.error("Build job with id {} is in an unknown state", buildJob.getBuildJobId());
             // If the build job is in an unknown state, set it to missing and update the build start date
             buildJobRepository.updateBuildJobStatus(buildJob.getBuildJobId(), BuildStatus.MISSING);
+        }
+    }
+
+    /**
+     * Processes the queued results from the distributed build result queue every minute.
+     * This is a fallback mechanism to ensure that no results are left unprocessed in the queue e.g. if listener events are lost
+     * under high system load or network hiccups.
+     * Runs every minute so results are not stuck int the queue so long that they appear to be lost.
+     */
+    @Scheduled(fixedRate = 60 * 1000)
+    public void processQueuedResults() {
+        final int initialSize = distributedDataAccessService.getResultQueueSize();
+        log.debug("{} queued results in the distributed build result queue. Processing up to {} results.", initialSize, initialSize);
+        for (int i = 0; i < initialSize; i++) {
+            if (distributedDataAccessService.getDistributedBuildResultQueue().peek() == null) {
+                break;
+            }
+            try {
+                localCIResultProcessingService.processResultAsync();
+            }
+            catch (Exception ex) {
+                log.warn("Processing a queued result failed. Continuing with remaining items", ex);
+            }
         }
     }
 

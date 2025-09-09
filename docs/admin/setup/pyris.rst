@@ -13,13 +13,13 @@ Prerequisites
 -------------
 
 - A server/VM or local machine
-- **Python 3.12**: Ensure that Python 3.12 is installed.
+- **Python 3.13**: Ensure that Python 3.13 is installed.
 
   .. code-block:: bash
 
      python --version
 
-  (Should be 3.12)
+  (Should be 3.13)
 
 - **Docker and Docker Compose**: Required for containerized deployment.
 

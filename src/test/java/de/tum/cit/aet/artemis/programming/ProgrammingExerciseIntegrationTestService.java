@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -96,7 +97,6 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
-import de.tum.cit.aet.artemis.plagiarism.service.ProgrammingPlagiarismDetectionService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -106,7 +106,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
@@ -119,13 +118,13 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.GitUtilService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingUtilTestService;
+import de.tum.cit.aet.artemis.programming.util.TestFileUtil;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 /**
@@ -147,6 +146,9 @@ public class ProgrammingExerciseIntegrationTestService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCRepoPath;
 
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
+
     @Autowired
     // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private FileService fileService;
@@ -154,9 +156,6 @@ public class ProgrammingExerciseIntegrationTestService {
     @Autowired
     // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private UriService uriService;
-
-    @Autowired
-    private GitUtilService gitUtilService;
 
     @Autowired
     private CourseTestRepository courseRepository;
@@ -219,9 +218,6 @@ public class ProgrammingExerciseIntegrationTestService {
     @Autowired
     private ProgrammingUtilTestService programmingUtilTestService;
 
-    @Autowired
-    private ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService;
-
     private Course course;
 
     public ProgrammingExercise programmingExercise;
@@ -281,17 +277,17 @@ public class ProgrammingExerciseIntegrationTestService {
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student2");
 
-        localRepoPath = Files.createTempDirectory("repo");
+        localRepoPath = Files.createTempDirectory(tempPath, "repo");
         localGit = LocalRepository.initialize(localRepoPath, defaultBranch, false);
-        remoteRepoPath = Files.createTempDirectory("repoOrigin");
+        remoteRepoPath = Files.createTempDirectory(tempPath, "repoOrigin");
         remoteGit = LocalRepository.initialize(remoteRepoPath, defaultBranch, true);
         StoredConfig config = localGit.getRepository().getConfig();
         config.setString("remote", "origin", "url", remoteRepoPath.toFile().getAbsolutePath());
         config.save();
 
-        localRepoPath2 = Files.createTempDirectory("repo2");
+        localRepoPath2 = Files.createTempDirectory(tempPath, "repo2");
         localGit2 = LocalRepository.initialize(localRepoPath2, defaultBranch, false);
-        remoteRepoPath2 = Files.createTempDirectory("repoOrigin");
+        remoteRepoPath2 = Files.createTempDirectory(tempPath, "repoOrigin");
         remoteGit2 = LocalRepository.initialize(remoteRepoPath2, defaultBranch, true);
         StoredConfig config2 = localGit2.getRepository().getConfig();
         config2.setString("remote", "origin", "url", remoteRepoPath2.toFile().getAbsolutePath());
@@ -302,12 +298,12 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // the following 2 lines prepare the generation of the structural test oracle
         var testjsonFilePath = localRepoPath.resolve("test").resolve(programmingExercise.getPackageFolderName()).resolve("test.json");
-        gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath);
+        TestFileUtil.writeEmptyJsonFileToPath(testjsonFilePath);
         // create two empty commits
         GitService.commit(localGit).setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
         localGit.push().call();
 
-        this.plagiarismChecksTestReposDir = Files.createTempDirectory("jplag-repos").toFile();
+        this.plagiarismChecksTestReposDir = Files.createTempDirectory(tempPath, "jplag-repos").toFile();
     }
 
     void tearDown() throws IOException {
@@ -807,7 +803,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testGenerateStructureOracle() throws Exception {
         var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(VcsRepositoryUri.class), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(LocalVCRepositoryUri.class), any(Path.class), anyBoolean(), anyBoolean());
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests";
         var result = request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.OK);
         assertThat(result).startsWith("Successfully generated the structure oracle");
@@ -914,8 +910,6 @@ public class ProgrammingExerciseIntegrationTestService {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
         // Create a new course with different id.
-        Long oldCourseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
-        Long newCourseId = oldCourseId + 1;
         Course newCourse = courseUtilService.createCourse();
 
         // Assign new course to the programming exercise.
@@ -1656,13 +1650,13 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(jplagZipArchive).exists();
 
         try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
-            assertThat(zipFile.getEntry("overview.json")).isNotNull();
+            assertThat(zipFile.getEntry("submissionMappings.json")).isNotNull();
             assertThat(zipFile.getEntry("files/1-Submission1.java/1-Submission1.java")).isNotNull();
             assertThat(zipFile.getEntry("files/2-Submission2.java/2-Submission2.java")).isNotNull();
 
             // it is random which of the following two exists, but one of them must be part of the zip file
-            var json1 = zipFile.getEntry("1-Submission1.java-2-Submission2.java.json");
-            var json2 = zipFile.getEntry("2-Submission2.java-1-Submission1.java.json");
+            var json1 = zipFile.getEntry("comparisons/1-Submission1.java-2-Submission2.java.json");
+            var json2 = zipFile.getEntry("comparisons/2-Submission2.java-1-Submission1.java.json");
             assertThat(json1 != null || json2 != null).isTrue();
         }
     }
@@ -1752,7 +1746,7 @@ public class ProgrammingExerciseIntegrationTestService {
                 """;
 
         // Create temporary directories for the mock repositories with proper JPlag structure
-        Path tempDir = Files.createTempDirectory("plagiarism-test-repos");
+        Path tempDir = Files.createTempDirectory(tempPath, "plagiarism-test-repos");
         Path projectDir = tempDir.resolve(projectKey);
         Files.createDirectories(projectDir);
 
@@ -1780,7 +1774,7 @@ public class ProgrammingExerciseIntegrationTestService {
             // Get all student participations for this exercise
             var studentParticipations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).stream()
                     .filter(p -> p.getParticipant() != null && p.getParticipant().getName() != null && !p.getParticipant().getName().contains("instructor"))
-                    .sorted((p1, p2) -> p1.getId().compareTo(p2.getId())).toList();
+                    .sorted(Comparator.comparing(DomainObject::getId)).toList();
 
             if (!studentParticipations.isEmpty() && participation.getId().equals(studentParticipations.get(0).getId())) {
                 return mockRepo1;
@@ -1916,74 +1910,18 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testResetForbidden() throws Exception {
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, false);
-        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
-    }
-
-    void testResetOnlyDeleteBuildPlansForbidden() throws Exception {
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false, false, false);
-        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
-    }
-
-    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesForbidden() throws Exception {
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, true, false, false);
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false);
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
     }
 
     void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsForbidden() throws Exception {
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, true, false);
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false);
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
     }
 
     void testResetExerciseNotFound() throws Exception {
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, false);
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false);
         request.put(defaultResetEndpoint(-1L), resetOptions, HttpStatus.NOT_FOUND);
-    }
-
-    void testResetOnlyDeleteBuildPlansSuccess() throws Exception {
-        final var projectKey = programmingExercise.getProjectKey();
-        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
-        }
-
-        // Two participations exist with build plans before reset
-        var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(participations).hasSize(2);
-        participations.forEach(participation -> assertThat(participation.getBuildPlanId()).isNotNull());
-
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false, false, false);
-        request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
-
-        // Two participations exist with build plans removed after reset
-        participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(participations).hasSize(2);
-        participations.forEach(participation -> assertThat(participation.getBuildPlanId()).isNull());
-    }
-
-    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesSuccess() throws Exception {
-        final var projectKey = programmingExercise.getProjectKey();
-        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
-        }
-
-        // Two participations exist with build plans and repositories before reset
-        var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(participations).hasSize(2);
-        participations.forEach(participation -> {
-            assertThat(participation.getRepositoryUri()).isNotNull();
-            assertThat(participation.getBuildPlanId()).isNotNull();
-        });
-
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, true, false, false);
-        request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
-
-        // Two participations exist with build plans and repositories removed after reset
-        participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(participations).hasSize(2);
-        participations.forEach(participation -> {
-            assertThat(participation.getRepositoryUri()).isNull();
-            assertThat(participation.getBuildPlanId()).isNull();
-        });
     }
 
     void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
@@ -1995,7 +1933,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // Two participations exist before reset
         assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
 
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, true, false);
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false);
         request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
 
         // No participations exist after reset
@@ -2015,7 +1953,7 @@ public class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockGetBuildPlanConfig(programmingExercise.getProjectKey(), solutionBuildPlanName);
         mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false, false, false);
 
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, true);
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, true);
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.OK);
     }
 
@@ -2184,29 +2122,6 @@ public class ProgrammingExerciseIntegrationTestService {
         ProgrammingExercise programmingExerciseToBeConflicted = programmingExerciseTestRepository.findAllWithEagerTemplateAndSolutionParticipations().get(1);
 
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExerciseToBeConflicted, HttpStatus.CONFLICT);
-    }
-
-    void test_redirectGetSolutionRepositoryFilesWithoutContent() throws Exception {
-        test_redirectGetSolutionRepositoryFilesWithoutContent((exercise, files) -> {
-            LocalRepository localRepository = new LocalRepository("main");
-            try {
-                programmingUtilTestService.setupSolution(files, exercise, localRepository);
-            }
-            catch (Exception e) {
-                fail("Setup solution threw unexpected exception: " + e.getMessage());
-            }
-            return localRepository;
-        });
-    }
-
-    private void test_redirectGetSolutionRepositoryFilesWithoutContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
-        setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
-
-        var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-
-        // We expect an URL which is the endpoint, with which the file contents can be retrieved
-        request.getWithForwardedUrl("/api/programming/programming-exercises/" + programmingExercise.getId() + "/file-names", HttpStatus.OK,
-                "/api/programming/repository/" + savedExercise.getSolutionParticipation().getId() + "/file-names");
     }
 
     void test_redirectGetTemplateRepositoryFilesWithContentOmitBinaries() throws Exception {

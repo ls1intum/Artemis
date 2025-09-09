@@ -8,7 +8,7 @@ import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-q
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { DragItemComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-item/drag-item.component';
 import { QuizScoringInfoStudentModalComponent } from 'app/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -34,7 +34,7 @@ describe('DragAndDropQuestionComponent', () => {
             declarations: [
                 DragAndDropQuestionComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(SecuredImageComponent),
+                MockComponent(ImageComponent),
                 MockComponent(DragAndDropQuestionComponent),
                 MockComponent(QuizScoringInfoStudentModalComponent),
                 DragItemComponent,
@@ -61,6 +61,7 @@ describe('DragAndDropQuestionComponent', () => {
         question.hint = 'Test hint';
         question.explanation = 'Test explanation';
         const markdownSpy = jest.spyOn(markdownService, 'safeHtmlForMarkdown').mockImplementation((arg) => `${arg}markdown`);
+        jest.spyOn(comp, 'hideSampleSolution');
         comp.question = question;
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
@@ -69,6 +70,8 @@ describe('DragAndDropQuestionComponent', () => {
         expect(comp.renderedQuestion.text).toBe(`${question.text}markdown`);
         expect(comp.renderedQuestion.hint).toBe(`${question.hint}markdown`);
         expect(comp.renderedQuestion.explanation).toBe(`${question.explanation}markdown`);
+        expect(comp.hideSampleSolution).toHaveBeenCalledOnce();
+        expect(comp.showingSampleSolution).toBeFalsy();
     });
 
     it('should count correct mappings as zero if no correct mappings', () => {

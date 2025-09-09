@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.util;
 import static de.tum.cit.aet.artemis.exercise.util.ExerciseFactory.populateExerciseForExam;
 import static java.time.ZonedDateTime.now;
 
+import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -11,8 +12,6 @@ import java.util.Set;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
-
-import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
@@ -43,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestCaseDT
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestCaseDetailMessageDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestSuiteDTO;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 /**
  * Factory for creating ProgrammingExercises and related objects.
@@ -51,8 +51,8 @@ public class ProgrammingExerciseFactory {
 
     public static final String DEFAULT_BRANCH = "main";
 
-    @Value("${artemis.version-control.url}")
-    protected static String artemisVersionControlUrl;
+    // we use a default value or it must be injected from a test class
+    public static URI localVCBaseUri = URI.create("https://version-control.fake.fake");
 
     /**
      * Generates a programming exercise with the given release and due date. This exercise is added to the provided course.
@@ -165,8 +165,8 @@ public class ProgrammingExerciseFactory {
         String packageName = generatePackageName(programmingLanguage);
         programmingExercise.setPackageName(packageName);
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
-        String testRepoUri = String.format("%s/git/%s/%s.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), repoName);
-        programmingExercise.setTestRepositoryUri(testRepoUri);
+        var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), repoName);
+        programmingExercise.setTestRepositoryUri(localVcRepoUri.toString());
         programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);
     }
 
@@ -176,7 +176,8 @@ public class ProgrammingExerciseFactory {
      * @param programmingLanguage The programming language for which a package name is created.
      * @return The package name or null if the programming language requires no package name.
      */
-    public static @Nullable String generatePackageName(ProgrammingLanguage programmingLanguage) {
+    @Nullable
+    public static String generatePackageName(ProgrammingLanguage programmingLanguage) {
         return switch (programmingLanguage) {
             case JAVA, KOTLIN -> "de.test";
             case SWIFT, GO -> "testPackage";
@@ -257,9 +258,7 @@ public class ProgrammingExerciseFactory {
         instructions.add(toBeImportedInstruction);
         toBeImportedCriterion.setStructuredGradingInstructions(instructions);
         criteria.add(toBeImportedCriterion);
-        criteria.forEach(criterion -> {
-            criterion.setExercise(exercise);
-        });
+        criteria.forEach(criterion -> criterion.setExercise(exercise));
         return criteria;
     }
 
@@ -394,10 +393,9 @@ public class ProgrammingExerciseFactory {
             case SPOTBUGS -> "BAD_PRACTICE";
             case PMD -> "Best Practices";
             case CHECKSTYLE -> "coding";
-            case CLANG_TIDY -> "Lint";
+            case CLANG_TIDY, ESLINT, RUBOCOP, LINTR -> "Lint";
             case CLIPPY -> "Style";
             case DART_ANALYZE -> "LINT";
-            case ESLINT, RUBOCOP, LINTR -> "Lint";
             case PMD_CPD -> "Copy/Paste Detection";
             case SWIFTLINT -> "swiftLint"; // TODO: rene: set better value after categories are better defined
             case GCC -> "Memory";
@@ -506,8 +504,8 @@ public class ProgrammingExerciseFactory {
             programmingExercise.setPackageName("de.test");
         }
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
-        programmingExercise.setTestRepositoryUri(
-                String.format("%s/git/%s/%s.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), programmingExercise.getProjectKey() + "tests"));
+        var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, programmingExercise.getProjectKey(), programmingExercise.getProjectKey() + "tests");
+        programmingExercise.setTestRepositoryUri(localVcRepoUri.toString());
         programmingExercise.setShowTestNamesToStudents(false);
         programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);
     }
