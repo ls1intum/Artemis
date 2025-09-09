@@ -42,8 +42,8 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MetisService } from 'app/communication/service/metis.service';
 import { PageType, SortDirection } from 'app/communication/metis.util';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { EMPTY, Observable, Subject, Subscription, firstValueFrom, from, map, take, takeUntil } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { EMPTY, Observable, Subject, Subscription, firstValueFrom, from } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, take, takeUntil } from 'rxjs/operators';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
