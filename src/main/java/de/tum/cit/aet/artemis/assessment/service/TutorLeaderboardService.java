@@ -55,19 +55,14 @@ public class TutorLeaderboardService {
         var tutors = userRepository.getTutors(course);
 
         List<TutorLeaderboardAssessmentsDTO> tutorLeaderboardAssessmentDTOS = List.of();
-        List<TutorLeaderboardComplaintsDTO> tutorLeaderboardComplaints = List.of();
-        List<TutorLeaderboardComplaintResponsesDTO> tutorLeaderboardComplaintResponses = List.of();
-        List<TutorLeaderboardMoreFeedbackRequestsDTO> tutorLeaderboardMoreFeedbackRequests = List.of();
-        List<TutorLeaderboardAnsweredMoreFeedbackRequestsDTO> tutorLeaderboardAnsweredMoreFeedbackRequests = List.of();
         // only invoke the query for non empty exercise sets to avoid performance issues
         if (!exerciseIdsOfCourse.isEmpty()) {
             tutorLeaderboardAssessmentDTOS = resultRepository.findTutorLeaderboardAssessmentByCourseId(exerciseIdsOfCourse);
-            tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByCourseId(exerciseIdsOfCourse);
-            tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByCourseId(exerciseIdsOfCourse);
-            tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId(exerciseIdsOfCourse);
-            tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(exerciseIdsOfCourse);
         }
-
+        var tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByCourseId(exerciseIdsOfCourse);
+        var tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByCourseId(exerciseIdsOfCourse);
+        var tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId(exerciseIdsOfCourse);
+        var tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(exerciseIdsOfCourse);
         return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessmentDTOS, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
                 tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests, false);
     }

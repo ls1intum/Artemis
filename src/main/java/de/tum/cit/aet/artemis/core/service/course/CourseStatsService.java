@@ -230,7 +230,7 @@ public class CourseStatsService {
         double currentMaxAverageScore = includedExercises.stream().map(Exercise::getMaxPoints).mapToDouble(Double::doubleValue).sum();
 
         // calculate scores taking presentation points into account, if a grading scale is present and set for graded presentations
-        if (gradingScale != null && course.equals(gradingScale.getCourse()) && gradingScale.getPresentationsNumber() != null && gradingScale.getPresentationsWeight() != null) {
+        if (gradingScale != null && gradingScale.getCourse().equals(course) && gradingScale.getPresentationsNumber() != null && gradingScale.getPresentationsWeight() != null) {
             double maxBaseScore = includedExercises.stream().filter(e -> !e.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_AS_BONUS))
                     .map(Exercise::getMaxPoints).mapToDouble(Double::doubleValue).sum();
             start = System.currentTimeMillis();
@@ -246,9 +246,8 @@ public class CourseStatsService {
 
         Set<Long> exerciseIds = courseExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
         start = System.currentTimeMillis();
-        long numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(courseExerciseIdsWithManualAssessments);
-        log.debug("resultRepository.countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns took {} ms for exercises with ids {}", System.currentTimeMillis() - start,
-                courseExerciseIdsWithManualAssessments);
+        long numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(exerciseIds);
+        log.debug("resultRepository.countNumberOfAssessments took {} ms for exercises with ids {}", System.currentTimeMillis() - start, courseExerciseIdsWithManualAssessments);
         start = System.currentTimeMillis();
         long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIds)
                 + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIds);

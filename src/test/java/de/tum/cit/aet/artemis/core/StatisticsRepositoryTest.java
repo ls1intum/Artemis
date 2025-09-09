@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core;
 
-import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.sortDataIntoMonths;
 import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.sortDataIntoWeeks;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -125,7 +124,7 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest 
         ZonedDateTime date = ZonedDateTime.of(2021, 12, 1, 0, 0, 0, 0, startDate.getZone());
         List<Integer> resultYear = Arrays.asList(0, 0, 0, 0, 42, 0, 0, 0, 0, 0, 0, 0);
         List<Integer> expectedResultYear = Arrays.asList(0, 0, 0, 123, 42, 0, 0, 0, 0, 0, 0, 0);
-        sortDataIntoMonths(outcome, resultYear, date);
+        statisticsRepository.sortDataIntoMonths(outcome, resultYear, date);
 
         assertThat(resultYear).as("Bucket 4 now has value for the entry date (123)").isEqualTo(expectedResultYear);
     }

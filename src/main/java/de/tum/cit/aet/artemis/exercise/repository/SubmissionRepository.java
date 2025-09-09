@@ -73,6 +73,8 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
 
     Long countByParticipationId(long participationId);
 
+    Optional<Submission> findByParticipationIdOrderBySubmissionDateDesc(long participationId);
+
     /**
      * Get all submissions of a participation and eagerly load results
      *
@@ -287,7 +289,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             WHERE TYPE(s) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
                 AND e.id IN :exerciseIds
                 AND s.submitted = TRUE
-                AND p.testRun = FALSE
                 AND e.dueDate IS NOT NULL
                 AND s.submissionDate > e.dueDate
             """)
@@ -382,7 +383,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 JOIN p.exercise e
             WHERE e.id IN :exerciseIds
                 AND s.submitted = TRUE
-                AND p.testRun = FALSE
                 AND s.submissionDate > e.dueDate
             GROUP BY e.id
             """)

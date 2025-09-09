@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.sortDataIntoDays;
 import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.sortDataIntoHours;
-import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.sortDataIntoMonths;
 import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.sortDataIntoWeeks;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
@@ -142,7 +141,7 @@ public class StatisticsService {
                 lengthOfMonth = YearMonth.of(now.minusYears(-periodIndex).getYear(), now.minusYears(-periodIndex).getMonth()).lengthOfMonth();
                 endDate = now.minusYears(-periodIndex).withDayOfMonth(lengthOfMonth).withHour(23).withMinute(59).withSecond(59);
                 outcome = statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate, endDate, view, entityId);
-                sortDataIntoMonths(outcome, result, startDate);
+                statisticsRepository.sortDataIntoMonths(outcome, result, startDate);
             }
         }
         return result;

@@ -824,7 +824,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
      * @param result    the list in which the converted outcome should be inserted
      * @param startDate the startDate of the result list
      */
-    static void sortDataIntoMonths(List<StatisticsEntry> outcome, List<Integer> result, ZonedDateTime startDate) {
+    default void sortDataIntoMonths(List<StatisticsEntry> outcome, List<Integer> result, ZonedDateTime startDate) {
         for (StatisticsEntry entry : outcome) {
             ZonedDateTime date = (ZonedDateTime) entry.getDay();
             int amount = (int) entry.getAmount();
