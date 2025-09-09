@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,7 +91,7 @@ public class HyperionConsistencyCheckService {
             return combined;
         }).block();
 
-        List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).collect(Collectors.toList());
+        List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
         return new ConsistencyCheckResponseDTO(issueDTOs);
     }
 
@@ -151,7 +150,7 @@ public class HyperionConsistencyCheckService {
         List<ArtifactLocationDTO> locations = issue.relatedLocations() == null ? List.of()
                 : issue.relatedLocations().stream()
                         .map(loc -> new ArtifactLocationDTO(loc.type() == null ? ArtifactType.PROBLEM_STATEMENT : loc.type(), loc.filePath(), loc.startLine(), loc.endLine()))
-                        .collect(Collectors.toList());
+                        .toList();
         ConsistencyIssueCategory category = issue.category() != null ? issue.category() : ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH;
         return new ConsistencyIssueDTO(severity, category, issue.description(), issue.suggestedFix(), locations);
     }
