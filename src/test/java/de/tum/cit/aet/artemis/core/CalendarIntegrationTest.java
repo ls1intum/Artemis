@@ -1376,6 +1376,12 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         private static final DateTimeFormatter ICS_TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC);
 
+        // a regex that matches each line starting with "UID:"
+        private static final String UID_PREFIX_REGEX = "(?m)^UID:";
+
+        // a regex that matches each line starting with "UID:" and captures the value that comes after this prefix within the line
+        private static final String UID_PREFIX_AND_VALUE_REGEX = "(?m)^UID:(.+)$";
+
         private String buildUrl(long courseId, String token, CalendarSubscriptionFilterOption[] filterOptions, Language language) {
             String tokenParameter = "token=" + token;
             String filterOptionsParameter = "filterOptions=" + Arrays.stream(filterOptions).map(Enum::name).collect(Collectors.joining(","));
@@ -1465,8 +1471,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             String result = request.get(url, HttpStatus.OK, String.class);
 
-            long uidPrefixCount = Pattern.compile("(?m)^UID:").matcher(result).results().count();
-            assertThat(uidPrefixCount).isEqualTo(2);
+            long vEventCount = Pattern.compile(UID_PREFIX_REGEX).matcher(result).results().count();
+            assertThat(vEventCount).isEqualTo(2);
         }
 
         @Test
@@ -1491,8 +1497,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             String result = request.get(url, HttpStatus.OK, String.class);
 
-            long uidPrefixCount = Pattern.compile("(?m)^UID:").matcher(result).results().count();
-            assertThat(uidPrefixCount).isEqualTo(1);
+            long vEventCount = Pattern.compile(UID_PREFIX_REGEX).matcher(result).results().count();
+            assertThat(vEventCount).isEqualTo(1);
             assertThat(result).contains(expectedSummary);
             assertThat(result).contains(expectedStart);
             assertThat(result).contains(expectedEnd);
@@ -1515,8 +1521,8 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             String result = request.get(url, HttpStatus.OK, String.class);
 
-            long uidPrefixCount = Pattern.compile("(?m)^UID:").matcher(result).results().count();
-            assertThat(uidPrefixCount).isEqualTo(1);
+            long vEventCount = Pattern.compile(UID_PREFIX_REGEX).matcher(result).results().count();
+            assertThat(vEventCount).isEqualTo(1);
             assertThat(result).contains(expectedStart);
             assertThat(result).contains(expectedEnd);
         }
@@ -1534,7 +1540,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             String result = request.get(url, HttpStatus.OK, String.class);
 
-            Pattern uidLinePattern = Pattern.compile("(?m)^UID:(.+)$");
+            Pattern uidLinePattern = Pattern.compile(UID_PREFIX_AND_VALUE_REGEX);
             Matcher matcher = uidLinePattern.matcher(result);
             List<String> uids = matcher.results().map(m -> m.group(1)).toList();
             assertThat(uids).hasSize(1);
