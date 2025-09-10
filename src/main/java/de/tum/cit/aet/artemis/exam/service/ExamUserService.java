@@ -189,7 +189,7 @@ public class ExamUserService {
      * @param examUsers                                All exam users for which the transient fields should be set.
      * @param ignoreExamUsersWithoutPlannedRoomAndSeat If true, exam users without a planned room or seat will be ignored.
      *                                                     If false, an exception will be thrown when an exam user without a planned room or seat is encountered.
-     * @throws de.tum.cit.aet.artemis.core.exception.BadRequestAlertException if ignoreExamUsersWithoutPlannedRoomAndSeat is false and the conditions are met as described,
+     * @throws de.tum.cit.aet.artemis.core.exception.BadRequestAlertException If ignoreExamUsersWithoutPlannedRoomAndSeat is false and the conditions are met as described,
      *                                                                            or if the planned room or seat cannot be mapped to actual entities.
      */
     public void setPlannedRoomAndSeatTransientForExamUsers(Collection<ExamUser> examUsers, boolean ignoreExamUsersWithoutPlannedRoomAndSeat) {
@@ -204,20 +204,22 @@ public class ExamUserService {
         for (ExamUser examUser : examUsers) {
             final String plannedRoomName = examUser.getPlannedRoom();
             final String plannedSeatName = examUser.getPlannedSeat();
+
             if (!StringUtils.hasText(plannedRoomName) || !StringUtils.hasText(plannedSeatName)) {
                 if (ignoreExamUsersWithoutPlannedRoomAndSeat) {
                     continue;
                 }
                 else {
                     throw new BadRequestAlertException("Exam user does not have a planned room or seat", ENTITY_NAME, "examUser.service.missingPlannedRoomOrSeat",
-                            Map.of("examUserId", String.valueOf(examUser.getId()), "plannedRoom", String.valueOf(plannedRoomName), "plannedSeat", String.valueOf(plannedSeatName)));
+                            Map.of("examUserId", String.valueOf(examUser.getId()), "plannedRoom", plannedRoomName, "plannedSeat", plannedSeatName));
                 }
             }
+
             Optional<ExamRoom> matchingRoom = examRoomsUsedInExam.stream()
                     .filter(room -> room.getName().equalsIgnoreCase(plannedRoomName) || room.getAlternativeName().equalsIgnoreCase(plannedRoomName)).findFirst();
             if (matchingRoom.isEmpty()) {
                 throw new BadRequestAlertException("Planned room of exam user cannot be mapped to an actual room", ENTITY_NAME, "examUser.service.plannedRoomNotFound",
-                        Map.of("examUserId", String.valueOf(examUser.getId()), "plannedRoom", String.valueOf(plannedRoomName)));
+                        Map.of("examUserId", String.valueOf(examUser.getId()), "plannedRoom", plannedRoomName));
             }
 
             Optional<ExamSeatDTO> matchingSeat = matchingRoom.get().getSeats().stream().filter(seat -> seat.name().equalsIgnoreCase(plannedSeatName)).findFirst();
