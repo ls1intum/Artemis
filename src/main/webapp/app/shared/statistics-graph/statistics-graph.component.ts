@@ -35,7 +35,7 @@ export class StatisticsGraphComponent implements OnChanges {
     SpanType = SpanType;
     // Histogram related properties
     chartName: string;
-    chartTime: any;
+    chartTime: string;
     // Data
     barChartLabels: string[] = [];
     dataForSpanType: number[];
