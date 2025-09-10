@@ -602,6 +602,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         updatedQuiz.reconnectJSONIgnoreAttributes();
 
+        // don't allow changing batches except in synchronized mode as the client doesn't have the full list and saving the exercise could otherwise end up deleting a bunch
         if (updatedQuiz.getQuizMode() != QuizMode.SYNCHRONIZED || updatedQuiz.getQuizBatches() == null || updatedQuiz.getQuizBatches().size() > 1) {
             updatedQuiz.setQuizBatches(batches);
         }

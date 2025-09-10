@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 
-export interface QuizExerciseUpdateModel {
+export interface QuizExerciseUpdateDTO {
     title?: string;
     channelName?: string;
     categories?: ExerciseCategory[];
@@ -22,7 +22,7 @@ export interface QuizExerciseUpdateModel {
     quizQuestions?: QuizQuestion[];
 }
 
-export function toQuizExerciseUpdateModel(quizExercise: QuizExercise): QuizExerciseUpdateModel {
+export function toQuizExerciseUpdateDTO(quizExercise: QuizExercise): QuizExerciseUpdateDTO {
     return {
         title: quizExercise.title,
         channelName: quizExercise.channelName,
