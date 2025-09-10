@@ -86,7 +86,7 @@ export class ExamRoomsComponent {
         } as NumberOfStored;
     });
     distinctLayoutStrategyNames: Signal<string> = computed(() =>
-        [...new Set(this.overview()?.newestUniqueExamRooms?.flatMap((examRoomDTO) => examRoomDTO.layoutStrategies?.map((layoutStrategy) => layoutStrategy.name)) ?? [])]
+        [...new Set(this.overview()?.newestUniqueExamRooms?.flatMap((examRoomDTO) => examRoomDTO.layoutStrategies?.map((layoutStrategy) => layoutStrategy.name) ?? []) ?? [])]
             .slice()
             .sort()
             .join(', '),
@@ -157,6 +157,9 @@ export class ExamRoomsComponent {
         }
 
         this.selectedFile.set(file);
+
+        // fix for Chrome and Safari to allow a re-selection of the same file after upload
+        (event.target as HTMLInputElement).value = '';
     }
 
     /**
