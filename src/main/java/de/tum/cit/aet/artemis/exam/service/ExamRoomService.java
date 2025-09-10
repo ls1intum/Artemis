@@ -54,32 +54,18 @@ public class ExamRoomService {
     }
 
     /* Multiple records that will be used internally for Jackson deserialization */
-    // @formatter:off
-    private record ExamRoomInput(
-        @JsonProperty("number") String alternativeNumber,
-        String name,
-        @JsonProperty("shortname") String alternativeName,
-        String building,
-        List<RowInput> rows,
-        Map<String, JsonNode> layouts
-    ) {}
+    private record ExamRoomInput(@JsonProperty("number") String alternativeNumber, String name, @JsonProperty("shortname") String alternativeName, String building,
+            List<RowInput> rows, Map<String, JsonNode> layouts) {
+    }
 
-    private record RowInput(
-        String label,
-        List<SeatInput> seats
-    ) {}
+    private record RowInput(String label, List<SeatInput> seats) {
+    }
 
-    private record SeatInput(
-        String label,
-        @JsonProperty("flag") String condition,
-        PositionInput position
-    ) {}
+    private record SeatInput(String label, @JsonProperty("flag") String condition, PositionInput position) {
+    }
 
-    private record PositionInput(
-        double x,
-        double y
-    ) {}
-    // @formatter:on
+    private record PositionInput(double x, double y) {
+    }
 
     /**
      * Looks through all JSON files contained in a given zip file (recursive search).

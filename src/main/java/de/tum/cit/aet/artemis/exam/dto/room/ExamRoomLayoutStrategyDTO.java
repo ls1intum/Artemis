@@ -7,11 +7,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategyType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-// @formatter:off
-public record ExamRoomLayoutStrategyDTO(
-    @NotNull String name,
-    @NotNull LayoutStrategyType type,
-    int capacity
-) {
+public record ExamRoomLayoutStrategyDTO(@NotNull String name, @NotNull LayoutStrategyType type, int capacity) {
 }
-// @formatter:on
