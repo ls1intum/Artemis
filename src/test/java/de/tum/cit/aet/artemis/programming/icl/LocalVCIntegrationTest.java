@@ -343,15 +343,15 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         await().until(() -> programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), student1Login).isPresent());
-        await().until(() -> assignmentRepository.originRepoFile.exists());
-        await().until(() -> assignmentRepository.localRepoFile.exists());
+        await().until(() -> assignmentRepository.remoteBareGitRepoFile.exists());
+        await().until(() -> assignmentRepository.workingCopyGitRepoFile.exists());
 
-        assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
-        String repositoryUri = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+        assignmentRepository.workingCopyGitRepo.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
 
         // Push the new branch.
-        PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
-                .iterator().next();
+        PushResult pushResult = assignmentRepository.workingCopyGitRepo.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch"))
+                .call().iterator().next();
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
 
         if (shouldSucceed) {
@@ -362,22 +362,18 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         }
     }
 
-    // TODO: Re-enable all tests in this file, once the port-mismatch bug has been addressed.
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesCustomBranchAllowedMatchesRegex() throws Exception {
         customBranchTestHelper(true, "^new-branch$", true);
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesCustomBranchDisallowedDoesntMatchRegex() throws Exception {
         customBranchTestHelper(true, "^old-branch$", false);
     }
 
-    @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesCustomBranchDisallowedBranchingDisabled() throws Exception {
