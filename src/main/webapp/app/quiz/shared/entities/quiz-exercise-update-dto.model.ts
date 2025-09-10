@@ -27,7 +27,7 @@ export function toQuizExerciseUpdateDTO(quizExercise: QuizExercise): QuizExercis
         title: quizExercise.title,
         channelName: quizExercise.channelName,
         categories: quizExercise.categories,
-        competencyLinks: quizExercise.competencyLinks,
+        competencyLinks: quizExercise.competencyLinks ?? [],
         difficulty: quizExercise.difficulty,
         duration: quizExercise.duration,
         randomizeQuestionOrder: quizExercise.randomizeQuestionOrder,
