@@ -26,7 +26,7 @@
     }
     @if (hasUploadInformation()) {
         <div class="card mt-4">
-            <h3><span jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.title"></span></h3>
+            <h3 class="pt-2 ps-3"><span jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.title"></span></h3>
             <ul>
                 <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.file"></strong> {{ uploadInformation()!.uploadedFileName }}</li>
                 <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.roomsUploaded"></strong> {{ uploadInformation()!.numberOfUploadedRooms }}</li>
@@ -39,7 +39,7 @@
     }
     @if (hasDeletionInformation()) {
         <div class="card mt-4">
-            <h3><span jhiTranslate="artemisApp.examRooms.adminOverview.deletionSummary.title"></span></h3>
+            <h3 class="pt-2 ps-3"><span jhiTranslate="artemisApp.examRooms.adminOverview.deletionSummary.title"></span></h3>
             <ul>
                 <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.deletionSummary.roomsDeleted"></strong> {{ deletionInformation()!.numberOfDeletedExamRooms }}</li>
             </ul>
