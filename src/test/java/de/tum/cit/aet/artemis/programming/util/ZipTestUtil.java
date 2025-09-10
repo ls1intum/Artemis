@@ -71,6 +71,15 @@ public final class ZipTestUtil {
         return result;
     }
 
+    public static void verifyZipDoesNotContainGitDirectory(byte[] zipContent) throws Exception {
+        GitVerificationResult result = processZipEntries(zipContent);
+
+        assertThat(result.foundGitDirectory).isFalse();
+        // Still expect regular files to be present
+        assertThat(result.foundOtherFiles).isTrue();
+        assertThat(result.repositoryFiles).isNotEmpty();
+    }
+
     private static void processZipEntry(ZipEntry entry, ZipInputStream zipInputStream, GitVerificationResult result) throws Exception {
         String entryName = entry.getName();
         if (entryName.contains(".git/")) {

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,6 +27,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
 import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
@@ -67,6 +70,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private LocalVCLocalCITestService localVCLocalCITestService;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationTestRepository;
+
+    @Autowired
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     protected Course course;
 
@@ -178,6 +187,82 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
         // Clean up
         localRepo.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void testExportStudentRequestedSolutionRepository_shouldReturnZipWithoutGit() throws Exception {
+        programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(2));
+        programmingExerciseRepository.save(programmingExercise);
+
+        String projectKey = programmingExercise.getProjectKey();
+        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
+
+        // Create LocalVC repo for solution first
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
+
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+
+        var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+
+        byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-requested-repository?includeTests=false",
+                HttpStatus.OK, byte[].class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.length).isGreaterThan(0);
+
+        ZipTestUtil.verifyZipStructureAndContent(result);
+        ZipTestUtil.verifyZipDoesNotContainGitDirectory(result);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void testExportStudentRequestedTestsRepository_shouldReturnZipWithoutGit() throws Exception {
+        // Example solution published and tests released with example solution
+        programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(2));
+        programmingExercise.setReleaseTestsWithExampleSolution(true);
+        programmingExerciseRepository.save(programmingExercise);
+
+        // Prepare tests repository in LocalVC
+        String projectKey = programmingExercise.getProjectKey();
+        String testsRepositorySlug = projectKey.toLowerCase() + "-tests";
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsRepositorySlug);
+        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + testsRepositorySlug + ".git");
+        programmingExerciseRepository.save(programmingExercise);
+
+        byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-requested-repository?includeTests=true",
+                HttpStatus.OK, byte[].class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.length).isGreaterThan(0);
+        // Verify zip is valid and does NOT contain .git
+        ZipTestUtil.verifyZipStructureAndContent(result);
+        ZipTestUtil.verifyZipDoesNotContainGitDirectory(result);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void testExportOwnStudentRepository_shouldReturnZipWithoutGit() throws Exception {
+        var participations = programmingExerciseStudentParticipationTestRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(participations).isNotEmpty();
+        var studentParticipation = participations.getFirst();
+
+        // Create a LocalVC repository for the student and wire the URI
+        String projectKey = programmingExercise.getProjectKey();
+        String repositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey, TEST_PREFIX + "student1");
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug);
+        studentParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + repositorySlug + ".git");
+        programmingExerciseStudentParticipationTestRepository.save(studentParticipation);
+
+        byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository/" + studentParticipation.getId(),
+                HttpStatus.OK, byte[].class);
+
+        assertThat(result).isNotNull();
+        assertThat(result.length).isGreaterThan(0);
+        ZipTestUtil.verifyZipStructureAndContent(result);
+        ZipTestUtil.verifyZipDoesNotContainGitDirectory(result);
     }
 
     private void setupLocalVCRepository(LocalRepository localRepo, ProgrammingExercise exercise) throws Exception {
