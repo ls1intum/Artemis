@@ -32,11 +32,11 @@ Before installing Artemis, install and configure the following dependencies:
    Please refer to :ref:`this guide <Database Setup>` for setting up a database server.
    Artemis uses Hibernate for database interactions and Liquibase for schema migrations.
 
-3. **Node.js (LTS >=24.4.1 < 25)**
+3. **Node.js (LTS >=24.7.0 < 25)**
    Download from `Node.js <https://nodejs.org/en/download>`__.
    Required for compiling and running the Angular client.
 
-4. **npm (>=11.4.2)**
+4. **npm (>=11.5.1)**
    Installed automatically with Node.js but can be updated separately.
 
 5. **Graphviz (Optional, but Recommended for Production Setups)**
