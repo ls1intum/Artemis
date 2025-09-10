@@ -163,7 +163,7 @@ public class ProgrammingExerciseRepositoryExportResource {
         Role atLeastRole = programmingExercise.isExampleSolutionPublished() ? Role.STUDENT : Role.TEACHING_ASSISTANT;
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(atLeastRole, programmingExercise, null);
         if (includeTests && !programmingExercise.isReleaseTestsWithExampleSolution()) {
-            throw new AccessForbiddenException(RepositoryType.SOLUTION.getName(), programmingExercise.getId());
+            throw new AccessForbiddenException(RepositoryType.TESTS.getName(), programmingExercise.getId());
         }
         long start = System.nanoTime();
 
