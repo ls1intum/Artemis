@@ -29,19 +29,6 @@
     </root>
     -->
 
-    <!-- Configure the Sentry appender, overriding the logging threshold to the ERROR level -->
-    <appender name="Sentry" class="io.sentry.logback.SentryAppender" dns="">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>ERROR</level>
-        </filter>
-    </appender>
-
-    <!-- Enable the Sentry appender which also logs to Console -->
-    <root level="WARN">
-        <appender-ref ref="Sentry" />
-    </root>
-
-
     <logger name="de.tum.cit.aet.artemis" level="INFO"/>
     <logger name="tech.jhipster" level="WARN"/>
 
