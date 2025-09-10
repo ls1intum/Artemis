@@ -1,7 +1,14 @@
 Reviewer Guidelines
 ===================
 
-This document provides best-practice guidelines for reviewers participating in code reviews for the Artemis project. These guidelines are intended to ensure high-quality, constructive, and efficient reviews, and are based on open source best practices as well as the Artemis development process.
+This document provides best-practice guidelines for reviewers participating in code reviews for the Artemis project.
+These guidelines are intended to ensure high-quality, constructive, and efficient reviews, and are based on open source best practices as well as the Artemis development process.
+
+.. attention::
+    **Pull Request (PR) reviews are a crucial part of the development process.**
+    They ensure code quality, knowledge sharing, and collective ownership of the codebase.
+    It is very important that **all** developers actively participate in reviews and take the time to provide thoughtful, constructive feedback.
+    A careful and diligent review process strengthens both the project and the team.
 
 General Principles
 ------------------
@@ -63,9 +70,20 @@ Review Workflow
    - In your approval comment, specify whether you reviewed only the code, only tested the changes, or performed both.
    - As a reviewer, check off the relevant review, test, and performance checklist items in the pull request template once you have completed them (e.g., code review, manual test, exam mode test, performance review).
 
+Hephaestus Integration
+----------------------
+
+To support continuous improvement and engagement in the review process, Artemis uses `Hephaestus <https://hephaestus.aet.cit.tum.de/>`__:
+
+   - Code Review Gamification: Reviews contribute to weekly leaderboards and team competitions.
+   - AI-Powered Mentorship: Personalized feedback, reflective sessions, and goal-setting help reviewers improve their skills.
+   - Motivation and Tracking: Use Hephaestus to monitor your contributions across repositories and to stay engaged with the team’s collective review effort.
+
+
 Additional Resources
 --------------------
 
 - :doc:`../guidelines`
 - :doc:`../development-process/development-process`
 - `GitHub Pull Request Review Documentation <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-request-reviews>`__
+- `Hephaestus <https://hephaestus.aet.cit.tum.de/>`__
