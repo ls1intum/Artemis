@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 8.3.3
+  version: 8.4.0
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -364,7 +364,7 @@ components:
         firstName: {type: string, maxLength: 50, minLength: 0}
         lastName: {type: string, maxLength: 50, minLength: 0}
         registrationNumber: {type: string, maxLength: 10, minLength: 0}
-        email: {type: string, maxLength: 100, minLength: 0}
+        email: {type: string, format: email, maxLength: 100, minLength: 0}
     TutorialGroupUpdate:
       type: object
       properties:
