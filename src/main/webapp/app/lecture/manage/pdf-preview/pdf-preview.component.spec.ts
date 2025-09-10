@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, of, throwError } from 'rxjs';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { PdfPreviewComponent } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { ElementRef, signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';

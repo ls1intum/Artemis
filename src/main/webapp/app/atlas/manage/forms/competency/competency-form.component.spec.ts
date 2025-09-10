@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick
 import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';

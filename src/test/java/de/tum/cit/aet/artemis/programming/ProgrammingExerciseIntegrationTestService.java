@@ -146,6 +146,9 @@ public class ProgrammingExerciseIntegrationTestService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCRepoPath;
 
+    @Value("${artemis.temp-path}")
+    private Path tempPath;
+
     @Autowired
     // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private FileService fileService;
@@ -274,17 +277,17 @@ public class ProgrammingExerciseIntegrationTestService {
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student1");
         participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseInExam, userPrefix + "student2");
 
-        localRepoPath = Files.createTempDirectory("repo");
+        localRepoPath = Files.createTempDirectory(tempPath, "repo");
         localGit = LocalRepository.initialize(localRepoPath, defaultBranch, false);
-        remoteRepoPath = Files.createTempDirectory("repoOrigin");
+        remoteRepoPath = Files.createTempDirectory(tempPath, "repoOrigin");
         remoteGit = LocalRepository.initialize(remoteRepoPath, defaultBranch, true);
         StoredConfig config = localGit.getRepository().getConfig();
         config.setString("remote", "origin", "url", remoteRepoPath.toFile().getAbsolutePath());
         config.save();
 
-        localRepoPath2 = Files.createTempDirectory("repo2");
+        localRepoPath2 = Files.createTempDirectory(tempPath, "repo2");
         localGit2 = LocalRepository.initialize(localRepoPath2, defaultBranch, false);
-        remoteRepoPath2 = Files.createTempDirectory("repoOrigin");
+        remoteRepoPath2 = Files.createTempDirectory(tempPath, "repoOrigin");
         remoteGit2 = LocalRepository.initialize(remoteRepoPath2, defaultBranch, true);
         StoredConfig config2 = localGit2.getRepository().getConfig();
         config2.setString("remote", "origin", "url", remoteRepoPath2.toFile().getAbsolutePath());
@@ -300,7 +303,7 @@ public class ProgrammingExerciseIntegrationTestService {
         GitService.commit(localGit).setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
         localGit.push().call();
 
-        this.plagiarismChecksTestReposDir = Files.createTempDirectory("jplag-repos").toFile();
+        this.plagiarismChecksTestReposDir = Files.createTempDirectory(tempPath, "jplag-repos").toFile();
     }
 
     void tearDown() throws IOException {
@@ -1743,7 +1746,7 @@ public class ProgrammingExerciseIntegrationTestService {
                 """;
 
         // Create temporary directories for the mock repositories with proper JPlag structure
-        Path tempDir = Files.createTempDirectory("plagiarism-test-repos");
+        Path tempDir = Files.createTempDirectory(tempPath, "plagiarism-test-repos");
         Path projectDir = tempDir.resolve(projectKey);
         Files.createDirectories(projectDir);
 
@@ -1907,74 +1910,18 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testResetForbidden() throws Exception {
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, false);
-        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
-    }
-
-    void testResetOnlyDeleteBuildPlansForbidden() throws Exception {
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false, false, false);
-        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
-    }
-
-    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesForbidden() throws Exception {
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, true, false, false);
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false);
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
     }
 
     void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsForbidden() throws Exception {
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, true, false);
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false);
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
     }
 
     void testResetExerciseNotFound() throws Exception {
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, false);
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false);
         request.put(defaultResetEndpoint(-1L), resetOptions, HttpStatus.NOT_FOUND);
-    }
-
-    void testResetOnlyDeleteBuildPlansSuccess() throws Exception {
-        final var projectKey = programmingExercise.getProjectKey();
-        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
-        }
-
-        // Two participations exist with build plans before reset
-        var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(participations).hasSize(2);
-        participations.forEach(participation -> assertThat(participation.getBuildPlanId()).isNotNull());
-
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false, false, false);
-        request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
-
-        // Two participations exist with build plans removed after reset
-        participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(participations).hasSize(2);
-        participations.forEach(participation -> assertThat(participation.getBuildPlanId()).isNull());
-    }
-
-    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesSuccess() throws Exception {
-        final var projectKey = programmingExercise.getProjectKey();
-        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
-            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
-        }
-
-        // Two participations exist with build plans and repositories before reset
-        var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(participations).hasSize(2);
-        participations.forEach(participation -> {
-            assertThat(participation.getRepositoryUri()).isNotNull();
-            assertThat(participation.getBuildPlanId()).isNotNull();
-        });
-
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, true, false, false);
-        request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
-
-        // Two participations exist with build plans and repositories removed after reset
-        participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(participations).hasSize(2);
-        participations.forEach(participation -> {
-            assertThat(participation.getRepositoryUri()).isNull();
-            assertThat(participation.getBuildPlanId()).isNull();
-        });
     }
 
     void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
@@ -1986,7 +1933,7 @@ public class ProgrammingExerciseIntegrationTestService {
         // Two participations exist before reset
         assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
 
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, true, false);
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false);
         request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
 
         // No participations exist after reset
@@ -2006,7 +1953,7 @@ public class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockGetBuildPlanConfig(programmingExercise.getProjectKey(), solutionBuildPlanName);
         mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false, false, false);
 
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, true);
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, true);
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.OK);
     }
 

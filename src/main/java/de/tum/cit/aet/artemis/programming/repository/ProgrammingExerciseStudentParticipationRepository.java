@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -95,6 +96,16 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndTeamStudentsByExerciseId(long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN FETCH participation.submissions s
+            WHERE participation.exercise.id = :exerciseId
+                AND s.id = (SELECT MAX(s2.id)
+                            FROM participation.submissions s2)
+            """)
+    Set<ProgrammingExerciseStudentParticipation> findWithLatestSubmissionByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Will return the participations matching the provided participation ids, but only if they belong to the given exercise.
