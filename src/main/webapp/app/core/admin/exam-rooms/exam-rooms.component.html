@@ -1,29 +1,31 @@
 <div class="upload-container">
     <h2><span jhiTranslate="artemisApp.examRooms.adminOverview.title"></span></h2>
-    <input id="roomDataFileSelect" type="file" style="display: none" (change)="onFileSelectedAcceptZip($event)" accept=".zip" />
-    <label for="roomDataFileSelect" class="btn btn-outline-primary">
-        @if (!hasSelectedFile()) {
-            {{ 'artemisApp.examRooms.adminOverview.uploadRoomData' | artemisTranslate }}
-        } @else {
-            {{ selectedFileName() }}
-        }
-    </label>
-    <button id="roomDataUpload" jhiTranslate="entity.action.save" class="btn btn-primary" (click)="upload()" [disabled]="!canUpload()"></button>
-    <p></p>
-    <p></p>
-    <button id="roomDataDeleteAll" jhiTranslate="artemisApp.examRooms.adminOverview.deleteAllExamRooms" class="btn btn-danger" (click)="clearExamRooms()"></button>
-    <button
-        id="roomDataDeleteOutdatedAndUnused"
-        jhiTranslate="artemisApp.examRooms.adminOverview.deleteExamRoomsSafe"
-        class="btn btn-warning"
-        (click)="deleteOutdatedAndUnusedExamRooms()"
-    ></button>
+    <div class="mt-2">
+        <input id="roomDataFileSelect" type="file" style="display: none" (change)="onFileSelectedAcceptZip($event)" accept=".zip" />
+        <label for="roomDataFileSelect" class="btn btn-outline-primary">
+            @if (!hasSelectedFile()) {
+                {{ 'artemisApp.examRooms.adminOverview.uploadRoomData' | artemisTranslate }}
+            } @else {
+                {{ selectedFileName() }}
+            }
+        </label>
+        <button id="roomDataUpload" jhiTranslate="entity.action.save" class="btn btn-primary" (click)="upload()" [disabled]="!canUpload()"></button>
+    </div>
+    <div class="mt-2">
+        <button id="roomDataDeleteAll" jhiTranslate="artemisApp.examRooms.adminOverview.deleteAllExamRooms" class="btn btn-danger" (click)="clearExamRooms()"></button>
+        <button
+            id="roomDataDeleteOutdatedAndUnused"
+            jhiTranslate="artemisApp.examRooms.adminOverview.deleteExamRoomsSafe"
+            class="btn btn-warning"
+            (click)="deleteOutdatedAndUnusedExamRooms()"
+        ></button>
+    </div>
 
     @if (isUploading()) {
         <div jhiTranslate="entity.action.saving" class="text info"></div>
     }
     @if (hasUploadInformation()) {
-        <div class="card">
+        <div class="card mt-4">
             <h3><span jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.title"></span></h3>
             <ul>
                 <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.uploadSummary.file"></strong> {{ uploadInformation()!.uploadedFileName }}</li>
@@ -36,7 +38,7 @@
         <div jhiTranslate="artemisApp.examRooms.adminOverview.deleting" class="text info"></div>
     }
     @if (hasDeletionInformation()) {
-        <div class="card">
+        <div class="card mt-4">
             <h3><span jhiTranslate="artemisApp.examRooms.adminOverview.deletionSummary.title"></span></h3>
             <ul>
                 <li><strong jhiTranslate="artemisApp.examRooms.adminOverview.deletionSummary.roomsDeleted"></strong> {{ deletionInformation()!.numberOfDeletedExamRooms }}</li>
@@ -44,8 +46,7 @@
         </div>
     }
 </div>
-<p></p>
-<div class="info">
+<div class="info mt-4">
     @if (hasOverview()) {
         <h3>
             <div jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.title"></div>
@@ -60,8 +61,7 @@
             <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.distinctLayoutStrategyNames"></span>
             {{ distinctLayoutStrategyNames() }}
         </div>
-        <p></p>
-        <h4><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.examRoomsTitle"></span></h4>
+        <h4 class="mt-4"><span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.examRoomsTitle"></span></h4>
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
