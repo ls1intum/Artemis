@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -17,17 +18,18 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
-import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
@@ -36,13 +38,17 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class PyrisWebhookService {
@@ -55,32 +61,35 @@ public class PyrisWebhookService {
 
     private final IrisSettingsService irisSettingsService;
 
-    private final IrisSettingsRepository irisSettingsRepository;
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
-    private final LectureUnitRepository lectureUnitRepository;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
-    private final LectureRepository lectureRepository;
+    private final Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi;
+
+    private final InstanceMessageSendService instanceMessageSendService;
 
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
-            IrisSettingsRepository irisSettingsRepository, LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository) {
+            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
+            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, @Lazy InstanceMessageSendService instanceMessageSendService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
-        this.irisSettingsRepository = irisSettingsRepository;
-        this.lectureUnitRepository = lectureUnitRepository;
-        this.lectureRepository = lectureRepository;
+        this.lectureRepositoryApi = lectureRepositoryApi;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
+        this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     private boolean lectureIngestionEnabled(Course course) {
-        return irisSettingsService.getRawIrisSettingsFor(course).getIrisLectureIngestionSettings() != null
-                && irisSettingsService.getRawIrisSettingsFor(course).getIrisLectureIngestionSettings().isEnabled();
+        return irisSettingsService.getCombinedIrisSettingsFor(course, true).irisLectureIngestionSettings().enabled();
     }
 
-    private String attachmentToBase64(AttachmentUnit attachmentUnit) {
-        Path path = FilePathService.actualPathForPublicPathOrThrow(URI.create(attachmentUnit.getAttachment().getLink()));
+    private String attachmentToBase64(AttachmentVideoUnit attachmentVideoUnit) {
+        Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
         try {
             byte[] fileBytes = Files.readAllBytes(path);
             return Base64.getEncoder().encodeToString(fileBytes);
@@ -90,57 +99,100 @@ public class PyrisWebhookService {
         }
     }
 
-    private PyrisLectureUnitWebhookDTO processAttachmentForUpdate(AttachmentUnit attachmentUnit) {
-        Long lectureUnitId = attachmentUnit.getId();
-        String lectureUnitName = attachmentUnit.getName();
-        Long lectureId = attachmentUnit.getLecture().getId();
-        String lectureTitle = attachmentUnit.getLecture().getTitle();
-        Long courseId = attachmentUnit.getLecture().getCourse().getId();
-        String courseTitle = attachmentUnit.getLecture().getCourse().getTitle();
-        String courseDescription = attachmentUnit.getLecture().getCourse().getDescription() == null ? "" : attachmentUnit.getLecture().getCourse().getDescription();
-        String base64EncodedPdf = attachmentToBase64(attachmentUnit);
-        String lectureUnitLink = artemisBaseUrl + attachmentUnit.getAttachment().getLink();
-        lectureUnitRepository.save(attachmentUnit);
-        return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink);
+    private PyrisLectureUnitWebhookDTO processAttachmentVideoUnitForUpdate(AttachmentVideoUnit attachmentVideoUnit) {
+        Lecture lecture = attachmentVideoUnit.getLecture();
+        Course course = attachmentVideoUnit.getLecture().getCourse();
+
+        Long lectureUnitId = attachmentVideoUnit.getId();
+        String lectureUnitName = attachmentVideoUnit.getName();
+
+        Long lectureId = lecture.getId();
+        String lectureTitle = lecture.getTitle();
+        Long courseId = course.getId();
+        String courseTitle = course.getTitle();
+        String courseDescription = course.getDescription() == null ? "" : course.getDescription();
+        String base64EncodedPdf;
+        String lectureUnitLink;
+        if (attachmentVideoUnit.getAttachment() != null) {
+            base64EncodedPdf = attachmentToBase64(attachmentVideoUnit);
+            lectureUnitLink = artemisBaseUrl + "/" + attachmentVideoUnit.getAttachment().getLink();
+        }
+        else {
+            base64EncodedPdf = "";
+            lectureUnitLink = "";
+        }
+
+        LectureTranscriptionsRepositoryApi transcriptionsRepositoryApi = lectureTranscriptionsRepositoryApi
+                .orElseThrow(() -> new LectureApiNotPresentException(LectureTranscriptionsRepositoryApi.class));
+        Optional<LectureTranscription> lectureTranscription = transcriptionsRepositoryApi.findByLectureUnit_Id(attachmentVideoUnit.getId());
+        int version = attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : 1;
+
+        LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
+        api.save(attachmentVideoUnit);
+
+        if (lectureTranscription.isPresent()) {
+            LectureTranscription transcription = lectureTranscription.get();
+
+            return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : -1,
+                    transcription, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink,
+                    attachmentVideoUnit.getVideoSource());
+        }
+
+        return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : null, null,
+                lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, attachmentVideoUnit.getVideoSource());
     }
 
-    private PyrisLectureUnitWebhookDTO processAttachmentForDeletion(AttachmentUnit attachmentUnit) {
-        Long lectureUnitId = attachmentUnit.getId();
-        Long lectureId = attachmentUnit.getLecture().getId();
-        Long courseId = attachmentUnit.getLecture().getCourse().getId();
-        return new PyrisLectureUnitWebhookDTO("", lectureUnitId, "", lectureId, "", courseId, "", "", "");
+    /**
+     * Processes an {@link AttachmentVideoUnit} for deletion by creating a dummy DTO with only the necessary IDs.
+     * This method returns a {@link PyrisLectureUnitWebhookDTO} where most fields are empty or have default values,
+     * as only the IDs are required by Pyris to identify and delete the lecture unit from its database.
+     *
+     * @param attachmentVideoUnit The lecture unit to be processed for deletion.
+     * @return A {@link PyrisLectureUnitWebhookDTO} with IDs for deletion and empty/default values for other fields.
+     */
+    private PyrisLectureUnitWebhookDTO processAttachmentVideoUnitForDeletion(AttachmentVideoUnit attachmentVideoUnit) {
+        Long lectureUnitId = attachmentVideoUnit.getId();
+        Long lectureId = attachmentVideoUnit.getLecture().getId();
+        Long courseId = attachmentVideoUnit.getLecture().getCourse().getId();
+        return new PyrisLectureUnitWebhookDTO("", 0, null, lectureUnitId, "", lectureId, "", courseId, "", "", "", "");
     }
 
     /**
      * send the updated / created attachment to Pyris for ingestion if autoLecturesUpdate is enabled
      *
-     * @param courseId           Id of the course where the attachment is added
-     * @param newAttachmentUnits the new attachment Units to be sent to pyris for ingestion
+     * @param newAttachmentVideoUnits the new attachment Units to be sent to pyris for ingestion
      */
-    public void autoUpdateAttachmentUnitsInPyris(Long courseId, List<AttachmentUnit> newAttachmentUnits) {
-        IrisCourseSettings courseSettings = irisSettingsRepository.findCourseSettings(courseId).isPresent() ? irisSettingsRepository.findCourseSettings(courseId).get() : null;
-        if (courseSettings != null && courseSettings.getIrisLectureIngestionSettings() != null && courseSettings.getIrisLectureIngestionSettings().isEnabled()
-                && courseSettings.getIrisLectureIngestionSettings().getAutoIngestOnLectureAttachmentUpload()) {
-            for (AttachmentUnit attachmentUnit : newAttachmentUnits) {
-                addLectureUnitToPyrisDB(attachmentUnit);
-            }
+    public void autoUpdateAttachmentVideoUnitsInPyris(List<AttachmentVideoUnit> newAttachmentVideoUnits) {
+        var course = newAttachmentVideoUnits.stream().map(AttachmentVideoUnit::getLecture).filter(Objects::nonNull).map(Lecture::getCourse).filter(Objects::nonNull).findFirst();
+
+        if (course.isEmpty()) {
+            return;
+        }
+
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course.get(), false).irisLectureIngestionSettings();
+        if (!settings.enabled() || !settings.autoIngest()) {
+            return;
+        }
+        for (AttachmentVideoUnit attachmentVideoUnit : newAttachmentVideoUnits) {
+            instanceMessageSendService.sendLectureUnitAutoIngestionSchedule(attachmentVideoUnit.getId());
         }
     }
 
     /**
      * delete the lectures from the vector database on pyris
      *
-     * @param attachmentUnits The attachmentUnit that got Updated / erased
+     * @param attachmentVideoUnits The attachmentVideoUnit that got Updated / erased
      * @return jobToken if the job was created
      */
-    public String deleteLectureFromPyrisDB(List<AttachmentUnit> attachmentUnits) {
-        List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits = new ArrayList<>();
-        attachmentUnits.stream().filter(unit -> unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf"))
+    public String deleteLectureFromPyrisDB(List<AttachmentVideoUnit> attachmentVideoUnits) {
+        List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentVideoUnits = new ArrayList<>();
+        attachmentVideoUnits.stream().filter(
+                unit -> (unit.getAttachment().getAttachmentType() == AttachmentType.FILE && unit.getAttachment().getLink().endsWith(".pdf")) || unit.getVideoSource() != null)
                 .forEach(unit -> {
-                    toUpdateAttachmentUnits.add(processAttachmentForDeletion(unit));
+                    toUpdateAttachmentVideoUnits.add(processAttachmentVideoUnitForDeletion(unit));
                 });
-        if (!toUpdateAttachmentUnits.isEmpty()) {
-            return executeLectureDeletionWebhook(toUpdateAttachmentUnits);
+        if (!toUpdateAttachmentVideoUnits.isEmpty()) {
+            return executeLectureDeletionWebhook(toUpdateAttachmentVideoUnits);
         }
         return null;
     }
@@ -148,15 +200,15 @@ public class PyrisWebhookService {
     /**
      * adds the lectures to the vector database in Pyris
      *
-     * @param attachmentUnit The attachmentUnit that got Updated
+     * @param attachmentVideoUnit The attachmentVideoUnit that got Updated
      * @return jobToken if the job was created else null
      */
-    public String addLectureUnitToPyrisDB(AttachmentUnit attachmentUnit) {
-        if (lectureIngestionEnabled(attachmentUnit.getLecture().getCourse())) {
-            if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentUnit.getAttachment().getLink().endsWith(".pdf")) {
-                return executeLectureAdditionWebhook(processAttachmentForUpdate(attachmentUnit));
+    public String addLectureUnitToPyrisDB(AttachmentVideoUnit attachmentVideoUnit) {
+        if (lectureIngestionEnabled(attachmentVideoUnit.getLecture().getCourse())) {
+            if ((attachmentVideoUnit.getVideoSource() != null && !attachmentVideoUnit.getVideoSource().isEmpty()) || (attachmentVideoUnit.getAttachment() != null
+                    && (attachmentVideoUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentVideoUnit.getAttachment().getLink().endsWith(".pdf")))) {
+                return executeLectureAdditionWebhook(processAttachmentVideoUnitForUpdate(attachmentVideoUnit), attachmentVideoUnit.getLecture().getCourse());
             }
-            log.error("Attachment {} is not a file or is not of type pdf thus it will not be sent to Pyris", attachmentUnit.getId());
         }
         return null;
     }
@@ -164,13 +216,13 @@ public class PyrisWebhookService {
     /**
      * executes executeLectureWebhook add or delete lectures from to the vector database on pyris
      *
-     * @param toUpdateAttachmentUnits The attachmentUnit that are goin to be deleted
+     * @param toUpdateAttachmentVideoUnits The attachmentVideoUnit that are goin to be deleted
      * @return jobToken if the job was created
      */
-    private String executeLectureDeletionWebhook(List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentUnits) {
+    private String executeLectureDeletionWebhook(List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentVideoUnits) {
         String jobToken = pyrisJobService.addLectureIngestionWebhookJob(0, 0, 0);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
-        PyrisWebhookLectureDeletionExecutionDTO executionDTO = new PyrisWebhookLectureDeletionExecutionDTO(toUpdateAttachmentUnits, settingsDTO, List.of());
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, "default");
+        PyrisWebhookLectureDeletionExecutionDTO executionDTO = new PyrisWebhookLectureDeletionExecutionDTO(toUpdateAttachmentVideoUnits, settingsDTO, List.of());
         pyrisConnectorService.executeLectureDeletionWebhook(executionDTO);
         return jobToken;
     }
@@ -178,15 +230,18 @@ public class PyrisWebhookService {
     /**
      * executes executeLectureAdditionWebhook add lecture from to the vector database on pyris
      *
-     * @param toUpdateAttachmentUnit The attachmentUnit that are going to be Updated
+     * @param toUpdateAttachmentVideoUnit The attachmentVideoUnit that are going to be updated
+     * @param course                      The course of the attachment video unit
      * @return jobToken if the job was created
      */
-    private String executeLectureAdditionWebhook(PyrisLectureUnitWebhookDTO toUpdateAttachmentUnit) {
-        String jobToken = pyrisJobService.addLectureIngestionWebhookJob(toUpdateAttachmentUnit.courseId(), toUpdateAttachmentUnit.lectureId(),
-                toUpdateAttachmentUnit.lectureUnitId());
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
-        PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentUnit, settingsDTO, List.of());
-        pyrisConnectorService.executeLectureAddtionWebhook("fullIngestion", executionDTO);
+    private String executeLectureAdditionWebhook(PyrisLectureUnitWebhookDTO toUpdateAttachmentVideoUnit, Course course) {
+        String jobToken = pyrisJobService.addLectureIngestionWebhookJob(toUpdateAttachmentVideoUnit.courseId(), toUpdateAttachmentVideoUnit.lectureId(),
+                toUpdateAttachmentVideoUnit.lectureUnitId());
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisLectureIngestionSettings();
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.selectedVariant());
+        PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentVideoUnit,
+                toUpdateAttachmentVideoUnit.lectureUnitId(), settingsDTO, List.of());
+        pyrisConnectorService.executeLectureAdditionWebhook(executionDTO);
         return jobToken;
     }
 
@@ -198,7 +253,8 @@ public class PyrisWebhookService {
      *
      */
     public Map<Long, IngestionState> getLecturesIngestionState(long courseId) {
-        Set<Lecture> lectures = lectureRepository.findAllByCourseId(courseId);
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+        Set<Lecture> lectures = api.findAllByCourseId(courseId);
         return lectures.stream().collect(Collectors.toMap(DomainObject::getId, lecture -> getLectureIngestionState(courseId, lecture.getId())));
 
     }
@@ -241,8 +297,9 @@ public class PyrisWebhookService {
      * @return The ingestion state of the lecture Unit
      */
     public Map<Long, IngestionState> getLectureUnitsIngestionState(long courseId, long lectureId) {
-        List<LectureUnit> lectureunits = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId).getLectureUnits();
-        return lectureunits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+        List<LectureUnit> lectureunits = api.findByIdWithLectureUnitsElseThrow(lectureId).getLectureUnits();
+        return lectureunits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
                 .collect(Collectors.toMap(DomainObject::getId, unit -> pyrisConnectorService.getLectureUnitIngestionState(courseId, lectureId, unit.getId())));
     }
 
@@ -254,18 +311,13 @@ public class PyrisWebhookService {
     /**
      * send the updated / created faqs to Pyris for ingestion if autoLecturesUpdate is enabled.
      *
-     * @param courseId Id of the course where the attachment is added
-     * @param newFaq   the new faqs to be sent to pyris for ingestion
+     * @param newFaq the new faqs to be sent to pyris for ingestion
      */
-    public void autoUpdateFaqInPyris(Long courseId, Faq newFaq) {
-        IrisCourseSettings presentCourseSettings = null;
-        Optional<IrisCourseSettings> courseSettings = irisSettingsRepository.findCourseSettings(courseId);
-        if (courseSettings.isPresent()) {
-            presentCourseSettings = courseSettings.get();
-        }
+    public void autoUpdateFaqInPyris(Faq newFaq) {
+        var course = newFaq.getCourse();
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisFaqIngestionSettings();
 
-        if (presentCourseSettings != null && presentCourseSettings.getIrisFaqIngestionSettings() != null && presentCourseSettings.getIrisFaqIngestionSettings().isEnabled()
-                && presentCourseSettings.getIrisFaqIngestionSettings().getAutoIngestOnFaqCreation()) {
+        if (settings.enabled() && settings.autoIngest()) {
             addFaq(newFaq);
         }
     }
@@ -279,7 +331,7 @@ public class PyrisWebhookService {
     public String addFaq(Faq faq) {
         if (faqIngestionEnabled(faq.getCourse())) {
             return executeFaqAdditionWebhook(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(),
-                    faq.getCourse().getTitle(), faq.getCourse().getDescription()));
+                    faq.getCourse().getTitle(), faq.getCourse().getDescription()), faq.getCourse());
         }
         return null;
     }
@@ -288,12 +340,14 @@ public class PyrisWebhookService {
      * executes the faq addition webhook to add faq to the vector database on pyris
      *
      * @param toUpdateFaq The faq that got Updated as webhook DTO
+     * @param course      The course of the faq
      * @return jobToken if the job was created else null
      */
 
-    private String executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq) {
+    private String executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq, Course course) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(toUpdateFaq.courseId(), toUpdateFaq.faqId());
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisFaqIngestionSettings();
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.selectedVariant());
         PyrisWebhookFaqIngestionExecutionDTO executionDTO = new PyrisWebhookFaqIngestionExecutionDTO(toUpdateFaq, settingsDTO, List.of());
         pyrisConnectorService.executeFaqAdditionWebhook(toUpdateFaq, executionDTO);
         return jobToken;
@@ -320,7 +374,7 @@ public class PyrisWebhookService {
      */
     private String executeFaqDeletionWebhook(PyrisFaqWebhookDTO toUpdateFaqs) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(0, 0);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, List.of(), artemisBaseUrl);
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, "default");
         PyrisWebhookFaqDeletionExecutionDTO executionDTO = new PyrisWebhookFaqDeletionExecutionDTO(toUpdateFaqs, settingsDTO, List.of());
         pyrisConnectorService.executeFaqDeletionWebhook(executionDTO);
         return jobToken;
@@ -329,5 +383,4 @@ public class PyrisWebhookService {
     public IngestionState getFaqIngestionState(long courseId, long faqId) {
         return pyrisConnectorService.getFaqIngestionState(courseId, faqId);
     }
-
 }

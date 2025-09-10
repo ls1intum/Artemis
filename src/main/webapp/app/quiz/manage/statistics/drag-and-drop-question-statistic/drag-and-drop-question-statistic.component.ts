@@ -1,20 +1,21 @@
 import { Component, ViewEncapsulation, inject } from '@angular/core';
-import { DragItemComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-item.component';
-import { QuizStatisticUtil } from 'app/quiz/shared/quiz-statistic-util.service';
-import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { DragAndDropQuestionStatistic } from 'app/entities/quiz/drag-and-drop-question-statistic.model';
-import { DropLocation } from 'app/entities/quiz/drop-location.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { DragItemComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-item/drag-item.component';
+import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
+import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { DragAndDropQuestionStatistic } from 'app/quiz/shared/entities/drag-and-drop-question-statistic.model';
+import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import { NgStyle } from '@angular/common';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
@@ -26,11 +27,13 @@ import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-st
         './drag-and-drop-question-statistic.component.scss',
     ],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, BarChartModule, FaIconComponent, SecuredImageComponent, NgStyle, DragItemComponent, QuizStatisticsFooterComponent],
+    imports: [TranslateDirective, BarChartModule, FaIconComponent, ImageComponent, NgStyle, DragItemComponent, QuizStatisticsFooterComponent],
 })
 export class DragAndDropQuestionStatisticComponent extends QuestionStatisticComponent {
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
     private artemisMarkdown = inject(ArtemisMarkdownService);
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     declare question: DragAndDropQuestion;
 

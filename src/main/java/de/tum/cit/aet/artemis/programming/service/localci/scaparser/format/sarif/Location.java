@@ -19,5 +19,4 @@ public record Location(PhysicalLocation physicalLocation) {
     public Optional<PhysicalLocation> getOptionalPhysicalLocation() {
         return Optional.ofNullable(physicalLocation);
     }
-
 }

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * This class manages the application of notification preferences on a per-user, per-course basis.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class CourseNotificationSettingService {
 
@@ -222,10 +224,8 @@ public class CourseNotificationSettingService {
             var specifications = userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(userId, courseId);
 
             // If custom is specified, we want to overwrite the settings that are present in the database. Note that not all may be present.
-            specifications.forEach(specification -> {
-                notificationTypeChannels.put(specification.getCourseNotificationType(), Map.of(NotificationChannelOption.EMAIL, specification.isEmail(),
-                        NotificationChannelOption.PUSH, specification.isPush(), NotificationChannelOption.WEBAPP, specification.isWebapp()));
-            });
+            specifications.forEach(specification -> notificationTypeChannels.put(specification.getCourseNotificationType(), Map.of(NotificationChannelOption.EMAIL,
+                    specification.isEmail(), NotificationChannelOption.PUSH, specification.isPush(), NotificationChannelOption.WEBAPP, specification.isWebapp())));
         }
 
         return new CourseNotificationSettingInfoDTO(presetId, notificationTypeChannels);
@@ -268,5 +268,18 @@ public class CourseNotificationSettingService {
                 return this.courseNotificationSettingPresetRegistryService.isPresetSettingEnabled(preset.getSettingPreset(), notification.getClass(), filterFor);
             }
         }).toList();
+    }
+
+    /**
+     * Deletes all presets and specifications for a given user id.
+     *
+     * @param userId the user to delete for.
+     */
+    public void deleteAllForUser(long userId) {
+        var presets = userCourseNotificationSettingPresetRepository.findAllByUserId(userId);
+        var specifications = userCourseNotificationSettingSpecificationRepository.findAllByUserId(userId);
+
+        userCourseNotificationSettingPresetRepository.deleteAll(presets);
+        userCourseNotificationSettingSpecificationRepository.deleteAll(specifications);
     }
 }

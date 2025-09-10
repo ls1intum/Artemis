@@ -13,7 +13,7 @@ import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.compo
  */
 export class EmojiAction extends TextEditorAction {
     static readonly ID = 'emoji.action';
-    private overlayRef: OverlayRef | null = null;
+    private overlayRef: OverlayRef | undefined = undefined;
     private position?: { x: number; y: number };
 
     constructor(
@@ -115,7 +115,7 @@ export class EmojiAction extends TextEditorAction {
     private destroyEmojiPicker(): void {
         if (this.overlayRef) {
             this.overlayRef.dispose();
-            this.overlayRef = null;
+            this.overlayRef = undefined;
         }
     }
 }

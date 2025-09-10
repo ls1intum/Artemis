@@ -1,19 +1,15 @@
 package de.tum.cit.aet.artemis.programming.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE;
-import static de.tum.cit.aet.artemis.core.config.Constants.BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
-import static de.tum.cit.aet.artemis.core.config.Constants.NEW_SUBMISSION_TOPIC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_SUBMISSION_TOPIC;
 import static de.tum.cit.aet.artemis.core.config.Constants.SUBMISSION_PROCESSING;
 import static de.tum.cit.aet.artemis.core.config.Constants.SUBMISSION_PROCESSING_TOPIC;
-import static de.tum.cit.aet.artemis.core.config.Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
 
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -21,26 +17,22 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.iris.repository.IrisExerciseSettingsRepository;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
+import de.tum.cit.aet.artemis.iris.api.PyrisEventApi;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
-import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildRunState;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
-import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingMessagingService {
 
@@ -52,32 +44,26 @@ public class ProgrammingMessagingService {
 
     private final ResultWebsocketService resultWebsocketService;
 
-    private final Optional<LtiNewResultService> ltiNewResultService;
+    private final Optional<LtiApi> ltiApi;
 
     private final TeamRepository teamRepository;
 
-    private final Optional<PyrisEventService> pyrisEventService;
-
-    private final Optional<IrisExerciseSettingsRepository> irisExerciseSettingsRepository;
+    private final Optional<PyrisEventApi> pyrisEventApi;
 
     private final ParticipationRepository participationRepository;
 
-    public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
-            ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository,
-            Optional<PyrisEventService> pyrisEventService, Optional<IrisExerciseSettingsRepository> irisExerciseSettingsRepository,
+    // The GroupNotificationService has many dependencies. We cannot refactor it to avoid that. Therefore, we lazily inject it here, so it's only instantiated when needed, or our
+    // DeferredEagerInitialization kicks, but not on startup.
+    public ProgrammingMessagingService(@Lazy GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
+            ResultWebsocketService resultWebsocketService, Optional<LtiApi> ltiApi, TeamRepository teamRepository, Optional<PyrisEventApi> pyrisEventApi,
             ParticipationRepository participationRepository) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
-        this.ltiNewResultService = ltiNewResultService;
+        this.ltiApi = ltiApi;
         this.teamRepository = teamRepository;
-        this.irisExerciseSettingsRepository = irisExerciseSettingsRepository;
+        this.pyrisEventApi = pyrisEventApi;
         this.participationRepository = participationRepository;
-        this.pyrisEventService = pyrisEventService;
-    }
-
-    private static String getExerciseTopicForTAAndAbove(long exerciseId) {
-        return EXERCISE_TOPIC_ROOT + exerciseId + PROGRAMMING_SUBMISSION_TOPIC;
     }
 
     private static String getSubmissionProcessingTopicForTAAndAbove(Long exerciseId) {
@@ -95,88 +81,13 @@ public class ProgrammingMessagingService {
     public void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
         websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.RUNNING);
         // Send a notification to the client to inform the instructor about started builds.
-        groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise, BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE);
+        groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise);
     }
 
     public void notifyInstructorAboutCompletedExerciseBuildRun(ProgrammingExercise programmingExercise) {
         websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.COMPLETED);
         // Send a notification to the client to inform the instructor about the completed builds.
-        groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise, BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE);
-    }
-
-    /**
-     * Notify user on a new programming submission.
-     *
-     * @param submission ProgrammingSubmission
-     * @param exerciseId used to build the correct topic
-     */
-    public void notifyUserAboutSubmission(ProgrammingSubmission submission, Long exerciseId) {
-        var submissionDTO = SubmissionDTO.of(submission, false, null, null);
-        if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
-            if (studentParticipation.getParticipant() instanceof Team team) {
-                // eager load the team with students so their information can be used for the messages below
-                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
-            }
-            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submissionDTO));
-        }
-
-        // send an update to tutors, editors and instructors about submissions for template and solution participations
-        if (!(submission.getParticipation() instanceof StudentParticipation)) {
-            var topicDestination = getExerciseTopicForTAAndAbove(exerciseId);
-            websocketMessagingService.sendMessage(topicDestination, submissionDTO);
-        }
-    }
-
-    public void notifyUserAboutSubmissionError(ProgrammingSubmission submission, BuildTriggerWebsocketError error) {
-        notifyUserAboutSubmissionError(submission.getParticipation(), error);
-    }
-
-    /**
-     * Notifies the user (or all users of the team) about a submission error
-     *
-     * @param participation the participation for which the submission error should be reported
-     * @param error         the submission error wrapped in an object
-     */
-    public void notifyUserAboutSubmissionError(Participation participation, BuildTriggerWebsocketError error) {
-        if (participation instanceof StudentParticipation studentParticipation) {
-            if (studentParticipation.getParticipant() instanceof Team team) {
-                // eager load the team with students so their information can be used for the messages below
-                studentParticipation.setParticipant(teamRepository.findWithStudentsByIdElseThrow(team.getId()));
-            }
-            studentParticipation.getStudents().forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, error));
-        }
-
-        if (participation != null && participation.getExercise() != null) {
-            websocketMessagingService.sendMessage(getExerciseTopicForTAAndAbove(participation.getExercise().getId()), error);
-        }
-    }
-
-    /**
-     * Notifies editors and instructors about test case changes for the updated programming exercise
-     *
-     * @param testCasesChanged           whether tests have been changed or not
-     * @param updatedProgrammingExercise the programming exercise for which tests have been changed
-     */
-    public void notifyUserAboutTestCaseChanged(boolean testCasesChanged, ProgrammingExercise updatedProgrammingExercise) {
-        websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(updatedProgrammingExercise.getId()), testCasesChanged);
-        // Send a notification to the client to inform the instructor about the test case update.
-        if (testCasesChanged) {
-            groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
-        }
-        else {
-            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
-        }
-    }
-
-    /**
-     * Notify instructor groups about illegal submissions. In case a student has submitted after the individual end date or exam end date,
-     * the submission is not valid and therefore marked as illegal. We notify the instructor about this cheating attempt.
-     *
-     * @param exercise         that has been affected
-     * @param notificationText that should be displayed
-     */
-    public void notifyInstructorGroupAboutIllegalSubmissionsForExercise(ProgrammingExercise exercise, String notificationText) {
-        groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(exercise, notificationText);
+        groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise);
     }
 
     /**
@@ -186,46 +97,37 @@ public class ProgrammingMessagingService {
      * @param participation the participation for which the result was created.
      */
     public void notifyUserAboutNewResult(Result result, ProgrammingExerciseParticipation participation) {
-        log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
+        log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getSubmission().getParticipation());
         // notify user via websocket
         resultWebsocketService.broadcastNewResult((Participation) participation, result);
 
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             // do not try to report results for template or solution participations
-            ltiNewResultService.ifPresent(newResultService -> newResultService.onNewResult(studentParticipation));
+            ltiApi.ifPresent(api -> api.onNewResult(studentParticipation));
             // Inform Iris about the submission status (when certain conditions are met)
-            notifyIrisAboutSubmissionStatus(result, studentParticipation);
+            notifyIrisAboutSubmissionStatus(result);
         }
     }
 
     /**
      * Notify Iris about the submission status for the given result and student participation.
-     * Only notifies if the user has accepted Iris, the exercise is not an exam exercise, and the exercise chat is enabled in the exercise settings
-     * NOTE: we check those settings early to prevent unnecessary database queries and exceptions later on in most cases. More sophisticated checks are done in the Iris service.
      * <p>
      * If the submission was successful, Iris will be informed about the successful submission.
      * If the submission failed, Iris will be informed about the submission failure.
      * Iris will only be informed about the submission status if the participant is a user.
      *
-     * @param result               the result for which Iris should be informed about the submission status
-     * @param studentParticipation the student participation for which Iris should be informed about the submission status
+     * @param result the result for which Iris should be informed about the submission status
      */
-    private void notifyIrisAboutSubmissionStatus(Result result, ProgrammingExerciseStudentParticipation studentParticipation) {
-        if (studentParticipation.getParticipant() instanceof User user) {
-            pyrisEventService.ifPresent(eventService -> {
-                final var exercise = studentParticipation.getExercise();
-                if (user.hasAcceptedExternalLLMUsage() && !exercise.isExamExercise() && irisExerciseSettingsRepository.get().isExerciseChatEnabled(exercise.getId())) {
-                    // Inform event service about the new result
-                    try {
-                        // This is done asynchronously to prevent blocking the current thread
-                        eventService.trigger(new NewResultEvent(result));
-                    }
-                    catch (Exception e) {
-                        log.error("Could not trigger service for result {}", result.getId(), e);
-                    }
-                }
-            });
-        }
+    private void notifyIrisAboutSubmissionStatus(Result result) {
+        pyrisEventApi.ifPresent(eventApi -> {
+            // Inform event service about the new result
+            try {
+                eventApi.trigger(new NewResultEvent(result));
+            }
+            catch (Exception e) {
+                log.error("Could not trigger service for result {}", result.getId(), e);
+            }
+        });
     }
 
     /**

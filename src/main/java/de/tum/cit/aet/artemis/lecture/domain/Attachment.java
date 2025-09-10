@@ -59,9 +59,11 @@ public class Attachment extends DomainObject implements Serializable {
 
     @OneToOne
     @JoinColumn(name = "attachment_unit_id")
-    private AttachmentUnit attachmentUnit;
+    private AttachmentVideoUnit attachmentVideoUnit;
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
+    // Student Version holds the version of the file without the pages hidden by the Instructor
+    @Column(name = "student_version")
+    private String studentVersion;
 
     public String getName() {
         return name;
@@ -127,12 +129,20 @@ public class Attachment extends DomainObject implements Serializable {
         this.lecture = lecture;
     }
 
-    public AttachmentUnit getAttachmentUnit() {
-        return attachmentUnit;
+    public AttachmentVideoUnit getAttachmentVideoUnit() {
+        return attachmentVideoUnit;
     }
 
-    public void setAttachmentUnit(AttachmentUnit attachmentUnit) {
-        this.attachmentUnit = attachmentUnit;
+    public void setAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit) {
+        this.attachmentVideoUnit = attachmentVideoUnit;
+    }
+
+    public String getStudentVersion() {
+        return studentVersion;
+    }
+
+    public void setStudentVersion(String studentVersion) {
+        this.studentVersion = studentVersion;
     }
 
     public Boolean isVisibleToStudents() {

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.plagiarism.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService.hasMinimumScore;
 
 import java.io.IOException;
@@ -13,7 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
@@ -23,19 +23,21 @@ import de.jplag.Language;
 import de.jplag.clustering.ClusteringOptions;
 import de.jplag.options.JPlagOptions;
 import de.jplag.text.NaturalLanguage;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCheckState;
-import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.service.cache.PlagiarismCacheService;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionExportApi;
+import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
-@Profile(PROFILE_CORE)
+@Conditional(PlagiarismEnabled.class)
+@Lazy
 @Service
 public class TextPlagiarismDetectionService {
 
@@ -85,7 +87,7 @@ public class TextPlagiarismDetectionService {
      * @param minimumSize         consider only submissions whose size is greater or equal to this value
      * @return a zip file that can be returned to the client
      */
-    public TextPlagiarismResult checkPlagiarism(TextExercise textExercise, float similarityThreshold, int minimumScore, int minimumSize) {
+    public PlagiarismResult checkPlagiarism(TextExercise textExercise, float similarityThreshold, int minimumScore, int minimumSize) {
         // Only one plagiarism check per course allowed
         var courseId = textExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
@@ -128,8 +130,8 @@ public class TextPlagiarismDetectionService {
                 }
 
                 try {
-                    textSubmissionExportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionExportApi.class, PROFILE_CORE)).saveSubmissionToFile(submission,
-                            participantIdentifier, submissionsFolderName);
+                    textSubmissionExportApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionExportApi.class)).saveSubmissionToFile(submission, participantIdentifier,
+                            submissionsFolderName);
                 }
                 catch (IOException e) {
                     log.error(e.getMessage());
@@ -156,7 +158,7 @@ public class TextPlagiarismDetectionService {
                 FileSystemUtils.deleteRecursively(submissionFolderFile);
             }
 
-            TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
+            PlagiarismResult textPlagiarismResult = new PlagiarismResult();
             textPlagiarismResult.convertJPlagResult(jPlagResult, textExercise);
 
             log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));

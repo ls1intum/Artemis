@@ -9,6 +9,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -23,9 +24,8 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.UserScheduleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
-import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseScheduleService;
+import de.tum.cit.aet.artemis.iris.api.IrisLectureUnitAutoIngestionApi;
+import de.tum.cit.aet.artemis.lecture.service.SlideUnhideScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseScheduleService;
@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizScheduleService;
  * This service is only available on a node with the 'scheduling' profile.
  * It receives messages from Hazelcast whenever another node sends a message to a specific topic and processes it on this node.
  */
+@Lazy
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class InstanceMessageReceiveService {
@@ -42,8 +43,6 @@ public class InstanceMessageReceiveService {
     private static final Logger log = LoggerFactory.getLogger(InstanceMessageReceiveService.class);
 
     private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
-
-    private final ModelingExerciseScheduleService modelingExerciseScheduleService;
 
     private final NotificationScheduleService notificationScheduleService;
 
@@ -57,24 +56,24 @@ public class InstanceMessageReceiveService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ModelingExerciseRepository modelingExerciseRepository;
-
     private final UserRepository userRepository;
+
+    private final SlideUnhideScheduleService slideUnhideScheduleService;
 
     private final HazelcastInstance hazelcastInstance;
 
     private final QuizScheduleService quizScheduleService;
 
+    private final Optional<IrisLectureUnitAutoIngestionApi> irisLectureUnitAutoIngestionApi;
+
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
-            ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService, ExerciseRepository exerciseRepository,
-            Optional<AthenaApi> athenaApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, UserRepository userRepository,
-            UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService,
-            QuizScheduleService quizScheduleService) {
+            ExerciseRepository exerciseRepository, Optional<AthenaApi> athenaApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
+            UserRepository userRepository, UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService,
+            ParticipantScoreScheduleService participantScoreScheduleService, QuizScheduleService quizScheduleService, SlideUnhideScheduleService slideUnhideScheduleService,
+            Optional<IrisLectureUnitAutoIngestionApi> irisLectureUnitAutoIngestionApi) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.athenaApi = athenaApi;
-        this.modelingExerciseRepository = modelingExerciseRepository;
-        this.modelingExerciseScheduleService = modelingExerciseScheduleService;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.userScheduleService = userScheduleService;
@@ -82,6 +81,8 @@ public class InstanceMessageReceiveService {
         this.participantScoreScheduleService = participantScoreScheduleService;
         this.hazelcastInstance = hazelcastInstance;
         this.quizScheduleService = quizScheduleService;
+        this.slideUnhideScheduleService = slideUnhideScheduleService;
+        this.irisLectureUnitAutoIngestionApi = irisLectureUnitAutoIngestionApi;
     }
 
     /**
@@ -98,18 +99,6 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processScheduleProgrammingExerciseCancel(message.getMessageObject());
             processPotentialAthenaExerciseScheduleCancel(message.getMessageObject());
-        });
-        hazelcastInstance.<Long>getTopic(MessageTopic.MODELING_EXERCISE_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleModelingExercise((message.getMessageObject()));
-        });
-        hazelcastInstance.<Long>getTopic(MessageTopic.MODELING_EXERCISE_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleModelingExerciseCancel(message.getMessageObject());
-        });
-        hazelcastInstance.<Long>getTopic(MessageTopic.MODELING_EXERCISE_INSTANT_CLUSTERING.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processModelingExerciseInstantClustering((message.getMessageObject()));
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.TEXT_EXERCISE_SCHEDULE.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -147,6 +136,25 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processCancelQuizStart(message.getMessageObject());
         });
+
+        // Add listeners for slide unhide messages
+        hazelcastInstance.<Long>getTopic(MessageTopic.SLIDE_UNHIDE_SCHEDULE.toString()).addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleSlideUnhide(message.getMessageObject());
+        });
+        hazelcastInstance.<Long>getTopic(MessageTopic.SLIDE_UNHIDE_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processCancelSlideUnhide(message.getMessageObject());
+        });
+
+        hazelcastInstance.<Long>getTopic(MessageTopic.LECTURE_UNIT_AUTO_INGESTION_SCHEDULE.toString()).addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processLectureUnitAutoIngestionSchedule(message.getMessageObject());
+        });
+        hazelcastInstance.<Long>getTopic(MessageTopic.LECTURE_UNIT_AUTO_INGESTION_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processLectureUnitAutoIngestionScheduleCancel(message.getMessageObject());
+        });
     }
 
     public void processScheduleProgrammingExercise(Long exerciseId) {
@@ -160,25 +168,6 @@ public class InstanceMessageReceiveService {
         // The exercise might already be deleted, so we can not get it from the database.
         // Use the ID directly instead.
         programmingExerciseScheduleService.cancelAllScheduledTasks(exerciseId);
-    }
-
-    public void processScheduleModelingExercise(Long exerciseId) {
-        log.info("Received schedule update for modeling exercise {}", exerciseId);
-        ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
-        modelingExerciseScheduleService.updateScheduling(modelingExercise);
-    }
-
-    public void processScheduleModelingExerciseCancel(Long exerciseId) {
-        log.info("Received schedule cancel for modeling exercise {}", exerciseId);
-        // The exercise might already be deleted, so we can not get it from the database.
-        // Use the ID directly instead.
-        modelingExerciseScheduleService.cancelAllScheduledTasks(exerciseId);
-    }
-
-    public void processModelingExerciseInstantClustering(Long exerciseId) {
-        log.info("Received schedule instant clustering for modeling exercise {}", exerciseId);
-        ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
-        modelingExerciseScheduleService.scheduleExerciseForInstant(modelingExercise);
     }
 
     public void processSchedulePotentialAthenaExercise(Long exerciseId) {
@@ -229,5 +218,25 @@ public class InstanceMessageReceiveService {
     public void processCancelQuizStart(Long exerciseId) {
         log.info("Received cancel quiz start for quiz exercise {}", exerciseId);
         quizScheduleService.cancelScheduledQuizStart(exerciseId);
+    }
+
+    public void processScheduleSlideUnhide(Long slideId) {
+        log.info("Received schedule update for slide unhiding {}", slideId);
+        slideUnhideScheduleService.scheduleSlideUnhiding(slideId);
+    }
+
+    public void processCancelSlideUnhide(Long slideId) {
+        log.info("Received schedule cancel for slide unhiding {}", slideId);
+        slideUnhideScheduleService.cancelScheduledUnhiding(slideId);
+    }
+
+    public void processLectureUnitAutoIngestionSchedule(Long lectureUnitId) {
+        log.info("Received schedule lecture unit ingestion for lecture unit id {}", lectureUnitId);
+        irisLectureUnitAutoIngestionApi.ifPresent(api -> api.scheduleLectureUnitAutoIngestion(lectureUnitId));
+    }
+
+    public void processLectureUnitAutoIngestionScheduleCancel(Long lectureUnitId) {
+        log.info("Received schedule cancel lecture unit ingestion for lecture unit id {}", lectureUnitId);
+        irisLectureUnitAutoIngestionApi.ifPresent(api -> api.cancelLectureUnitAutoIngestion(lectureUnitId));
     }
 }

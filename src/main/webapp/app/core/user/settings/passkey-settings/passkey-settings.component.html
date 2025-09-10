@@ -1,0 +1,113 @@
+<h1 jhiTranslate="artemisApp.userSettings.passkeys"></h1>
+@if (currentUser()) {
+    <div class="list-group d-block">
+        <div class="list-group-item">
+            <dt class="text-muted">
+                <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></span>
+            </dt>
+        </div>
+
+        <div class="list-group-item">
+            @if (registeredPasskeys().length) {
+                <table class="table table-striped flex">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th class="col-9 fs-5" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.yourPasskeys"></th>
+                            <th class="col-3"></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @for (passkey of registeredPasskeys(); track passkey.credentialId) {
+                            <tr>
+                                <td>
+                                    @if (!passkey.isEditingLabel) {
+                                        <fa-icon [icon]="faKey" class="me-1 fw-bold fs-6" />
+                                        <span class="fw-bold fs-6">{{ passkey.label }}</span>
+                                        <br />
+                                        <div class="text-muted">
+                                            <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.created"></span>
+                                            {{ passkey.created | artemisDate: 'long-date' }}
+                                            |
+                                            <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.lastUsed"></span>
+                                            {{ passkey.lastUsed | artemisDate }}
+                                        </div>
+                                    } @else {
+                                        <input
+                                            type="text"
+                                            required
+                                            [(ngModel)]="passkey.label"
+                                            #labelInput="ngModel"
+                                            class="form-control w-100"
+                                            [customMaxLength]="MAX_PASSKEY_LABEL_LENGTH"
+                                        />
+                                        @if (labelInput.invalid) {
+                                            <span
+                                                class="text-danger"
+                                                jhiTranslate="artemisApp.userSettings.passkeySettingsPage.validation.labelLength"
+                                                [translateValues]="{ maxLabelLength: MAX_PASSKEY_LABEL_LENGTH }"
+                                            ></span>
+                                        }
+                                    }
+                                </td>
+                                <td>
+                                    @if (!passkey.isEditingLabel) {
+                                        <jhi-button
+                                            [btnType]="ButtonType.PRIMARY"
+                                            [btnSize]="ButtonSize.SMALL"
+                                            [icon]="faPencil"
+                                            [title]="'entity.action.edit'"
+                                            (onClick)="editPasskeyLabel(passkey)"
+                                        />
+                                        <button
+                                            jhiDeleteButton
+                                            (delete)="deletePasskey(passkey)"
+                                            [disabled]="isDeletingPasskey"
+                                            [dialogError]="dialogError$"
+                                            deleteQuestion="artemisApp.userSettings.passkeySettingsPage.deletePasskeyQuestion"
+                                            [fetchEntitySummary]="getDeleteSummary(passkey)"
+                                        >
+                                            <fa-icon [icon]="faTrash" />
+                                        </button>
+                                    } @else {
+                                        <jhi-button
+                                            [disabled]="passkey.label.length > MAX_PASSKEY_LABEL_LENGTH"
+                                            [btnType]="ButtonType.PRIMARY"
+                                            [btnSize]="ButtonSize.SMALL"
+                                            [icon]="faSave"
+                                            [title]="'entity.action.save'"
+                                            (onClick)="savePasskeyLabel(passkey)"
+                                        />
+                                        <jhi-button
+                                            [btnType]="ButtonType.ERROR_OUTLINE"
+                                            [btnSize]="ButtonSize.SMALL"
+                                            [icon]="faTimes"
+                                            [title]="'entity.action.cancel'"
+                                            (onClick)="cancelEditPasskeyLabel(passkey)"
+                                        />
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            } @else {
+                <div jhiTranslate="artemisApp.userSettings.passkeySettingsPage.noneRegistered"></div>
+            }
+        </div>
+
+        <div class="list-group-item">
+            <div class="btn-group" role="group" aria-label="Actions">
+                <jhi-button
+                    class="d-flex"
+                    id="add-new-token-button"
+                    [btnType]="ButtonType.PRIMARY"
+                    [btnSize]="ButtonSize.SMALL"
+                    [icon]="faPlus"
+                    [title]="'artemisApp.userSettings.passkeySettingsPage.addNewPasskey'"
+                    (onClick)="addPasskey()"
+                />
+            </div>
+        </div>
+    </div>
+}

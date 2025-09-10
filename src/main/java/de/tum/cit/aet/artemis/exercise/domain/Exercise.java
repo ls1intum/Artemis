@@ -1,17 +1,13 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
@@ -42,9 +38,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -54,7 +50,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
@@ -63,14 +58,12 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -116,13 +109,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     @OneToMany(mappedBy = "exercise", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("exercise")
-    @JsonView(QuizView.Before.class)
     private Set<CompetencyExerciseLink> competencyLinks = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
     @Column(name = "categories")
-    @JsonView(QuizView.Before.class)
     private Set<String> categories = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -147,11 +138,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private String feedbackSuggestionModule;
 
     @ManyToOne
-    @JsonView(QuizView.Before.class)
     private Course course;
 
     @ManyToOne
-    @JsonView(QuizView.Before.class)
     private ExerciseGroup exerciseGroup;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -178,11 +167,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<Attachment> attachments = new HashSet<>();
-
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIncludeProperties({ "id" })
-    private Set<Post> posts = new HashSet<>();
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -342,7 +326,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      *
      * @return the course class member
      */
-    @JsonInclude
+    @JsonProperty
     protected Course getCourse() {
         return course;
     }
@@ -436,14 +420,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.attachments = attachments;
     }
 
-    public Set<Post> getPosts() {
-        return posts;
-    }
-
-    public void setPosts(Set<Post> posts) {
-        this.posts = posts;
-    }
-
     public Set<PlagiarismCase> getPlagiarismCases() {
         return plagiarismCases;
     }
@@ -459,8 +435,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     public void setPlagiarismDetectionConfig(PlagiarismDetectionConfig plagiarismDetectionConfig) {
         this.plagiarismDetectionConfig = plagiarismDetectionConfig;
     }
-
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
     public Set<CompetencyExerciseLink> getCompetencyLinks() {
@@ -504,189 +478,53 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     /**
-     * TODO: this method should be refactored/improved. It is almost static except the almost hidden part "exercise.equals(this)"
-     * In addition, it is implemented in an ambiguous way, because it's completely unclear, what relevant means here, in addition the method name does not fit to the return type
-     * Find a relevant participation for this exercise (relevancy depends on InitializationState)
+     * Filters results in all submissions of a student participation based on assessment status and exercise type.
      *
-     * @param participations the list of available participations
-     * @return the found participation in an unmodifiable list or the empty list, if none exists
-     */
-    public Set<StudentParticipation> findRelevantParticipation(Set<StudentParticipation> participations) {
-        StudentParticipation relevantParticipation = null;
-        for (StudentParticipation participation : participations) {
-            var exercise = participation.getExercise();
-            if (exercise != null && exercise.equals(this)) {
-                if (participation.getInitializationState() == InitializationState.INITIALIZED) {
-                    // InitializationState INITIALIZED is preferred
-                    // => if we find one, we can return immediately
-                    return Set.of(participation);
-                }
-                // InitializationState INACTIVE is also ok
-                // => if we can't find INITIALIZED, we return that one
-                // or
-                // this case handles FINISHED participations which typically happen when manual results are involved
-                else if (participation.getInitializationState() == InitializationState.INACTIVE || exercise instanceof ModelingExercise || exercise instanceof TextExercise
-                        || exercise instanceof FileUploadExercise
-                        || (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
-                    relevantParticipation = participation;
-                }
-            }
-        }
-        return relevantParticipation != null ? Set.of(relevantParticipation) : Collections.emptySet();
-    }
-
-    /**
-     * Get the latest relevant result from the given participation (rated == true or rated == null) (relevancy depends on Exercise type => this should be overridden by subclasses
-     * if necessary)
+     * <p>
+     * This method implements the following filtering logic:
+     * </p>
+     * <ul>
+     * <li>If the assessment is still ongoing:
+     * <ul>
+     * <li>For {@code TextExercise} or {@code ModelingExercise}: keeps only results with {@code AUTOMATIC_ATHENA} assessment type.</li>
+     * <li>For other exercise types: removes all results.</li>
+     * </ul>
+     * </li>
+     * <li>If the assessment is over: keeps only results that have a completion date.</li>
+     * </ul>
      *
-     * @param participation           the participation whose results we are considering
-     * @param ignoreAssessmentDueDate defines if assessment due date is ignored for the selected results
-     * @return the latest relevant result in the given participation, or null, if none exist
-     */
-    @Nullable
-    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, boolean ignoreAssessmentDueDate) {
-        // for most types of exercises => return latest result (all results are relevant)
-        Submission latestSubmission = null;
-        // we get the results over the submissions
-        if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
-            return null;
-        }
-        for (var submission : participation.getSubmissions()) {
-            var result = submission.getLatestResult();
-            // If not the result does not exist or is not assessed yet, we can skip it
-            if (result == null || result.getCompletionDate() == null) {
-                continue;
-            }
-            // NOTE: for the dashboard we only use rated results with completion date
-            boolean isAssessmentOver = ignoreAssessmentDueDate || ExerciseDateService.isAfterAssessmentDueDate(this);
-            boolean isProgrammingExercise = participation.getExercise() instanceof ProgrammingExercise;
-            // Check that submission was submitted in time (rated). For non programming exercises we check if the assessment due date has passed (if set)
-            boolean ratedOrPractice = Boolean.TRUE.equals(result.isRated()) || participation.isPracticeMode();
-            boolean noProgrammingAndAssessmentOver = !isProgrammingExercise && isAssessmentOver;
-            // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
-            boolean programmingAfterAssessmentOrAutomaticOrAthena = isProgrammingExercise
-                    && ((result.isManual() && isAssessmentOver) || result.isAutomatic() || result.isAthenaBased());
-            if (ratedOrPractice && (noProgrammingAndAssessmentOver || programmingAfterAssessmentOrAutomaticOrAthena)) {
-                // take the first found result that fulfills the above requirements
-                // or
-                // take newer results and thus disregard older ones
-                if (latestSubmission == null || latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
-                    latestSubmission = submission;
-                }
-            }
-        }
-        return latestSubmission;
-    }
-
-    /**
-     * Find the latest (rated or unrated result) of the given participation. Returns null, if there are no results. Please beware: In many cases you might only want to show rated
-     * results.
+     * <p>
+     * This filtering happens in-place by modifying the results list of each submission.
+     * </p>
+     * <p>
+     * Override this method in subclasses if different filtering behavior is required for specific exercise types.
+     * </p>
      *
-     * @param participation to find the latest result for.
-     * @return latest result or null
+     * @param participation the participation containing submissions to filter
      */
-    public Result findLatestResultWithCompletionDate(Participation participation) {
-        if (participation.getResults() == null) {
-            return null;
-        }
-        Optional<Result> latestResult = participation.getResults().stream().filter(result -> result.getCompletionDate() != null).max((result1, result2) -> {
-            ZonedDateTime resultDate1 = result1.getCompletionDate();
-            ZonedDateTime resultDate2 = result2.getCompletionDate();
-            if (resultDate1.equals(resultDate2)) {
-                return 0;
-            }
-            else if (resultDate1.isAfter(resultDate2)) {
-                return 1;
-            }
-            else {
-                return -1;
-            }
-        });
-        return latestResult.orElse(null);
-    }
-
-    /**
-     * Returns all results of an exercise for give participation that have a completion date. If the exercise is restricted like {@link QuizExercise} please override this function
-     * with the respective filter. (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
-     *
-     * @param participation the participation whose results we are considering
-     * @return all results of given participation, or null, if none exist
-     */
-    public Set<Result> findResultsFilteredForStudents(Participation participation) {
+    public void filterResultsForStudents(Participation participation) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
-        if (!isAssessmentOver) {
-            // This allows the showing of preliminary feedback in case the assessment due date is set before its over.
-            if (this instanceof TextExercise || this instanceof ModelingExercise) {
-                return participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).collect(Collectors.toSet());
-            }
-            return Set.of();
-        }
-        return participation.getResults().stream().filter(result -> result.getCompletionDate() != null).collect(Collectors.toSet());
-    }
 
-    /**
-     * Filter for appropriate submission. Relevance in the following order:
-     * - submission with rated result
-     * - submission with unrated result (late submission)
-     * - no submission with any result > the latest submission
-     *
-     * @param submissions that need to be filtered
-     * @return filtered submission
-     */
-    public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
-        List<Submission> submissionsWithRatedResult = new ArrayList<>();
-        List<Submission> submissionsWithUnratedResult = new ArrayList<>();
-        List<Submission> submissionsWithoutResult = new ArrayList<>();
-
-        for (Submission submission : submissions) {
-            Result result = submission.getLatestResult();
-            if (result != null) {
-                if (Boolean.TRUE.equals(result.isRated())) {
-                    submissionsWithRatedResult.add(submission);
+        participation.getSubmissions().forEach(submission -> {
+            List<Result> results = submission.getResults();
+            if (results != null && !results.isEmpty()) {
+                if (!isAssessmentOver) {
+                    // For assessment that's not over yet
+                    if (this instanceof TextExercise || this instanceof ModelingExercise) {
+                        // Keep only AUTOMATIC_ATHENA results, set others to null
+                        results.removeIf(result -> result.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA);
+                    }
+                    else {
+                        // Clear all results if not TextExercise or ModelingExercise
+                        results.clear();
+                    }
                 }
                 else {
-                    submissionsWithUnratedResult.add(submission);
+                    // For completed assessments, remove results without completion date
+                    results.removeIf(result -> result.getCompletionDate() == null);
                 }
             }
-            else {
-                submissionsWithoutResult.add(submission);
-            }
-        }
-
-        if (!submissionsWithRatedResult.isEmpty()) {
-            if (submissionsWithRatedResult.size() == 1) {
-                return submissionsWithRatedResult.getFirst();
-            }
-            else {
-                // this means we have more than one submission, we want the one with the last submission date
-                // make sure that submissions without submission date do not lead to null pointer exception in the comparison
-                return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
-            }
-        }
-        else if (!submissionsWithUnratedResult.isEmpty()) {
-            if (this instanceof ProgrammingExercise) {
-                // this is an edge case that is treated differently: the student has not submitted before the due date and the client would otherwise think
-                // that there is no result for the submission and would display a red trigger button.
-                return null;
-            }
-            if (submissionsWithUnratedResult.size() == 1) {
-                return submissionsWithUnratedResult.getFirst();
-            }
-            else { // this means with have more than one submission, we want the one with the last submission date
-                   // make sure that submissions without submission date do not lead to null pointer exception in the comparison
-                return submissionsWithUnratedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
-            }
-        }
-        else if (!submissionsWithoutResult.isEmpty()) {
-            if (submissionsWithoutResult.size() == 1) {
-                return submissionsWithoutResult.getFirst();
-            }
-            else { // this means with have more than one submission, we want the one with the last submission date
-                   // make sure that submissions without submission date do not lead to null pointer exception in the comparison
-                return submissionsWithoutResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
-            }
-        }
-        return null;
+        });
     }
 
     public Set<TutorParticipation> getTutorParticipations() {
@@ -948,18 +786,22 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         Set<GradingInstruction> newGradingInstructions = new HashSet<>();
         for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
-            GradingInstruction newGradingInstruction = new GradingInstruction();
-            newGradingInstruction.setCredits(originalGradingInstruction.getCredits());
-            newGradingInstruction.setFeedback(originalGradingInstruction.getFeedback());
-            newGradingInstruction.setGradingScale(originalGradingInstruction.getGradingScale());
-            newGradingInstruction.setInstructionDescription(originalGradingInstruction.getInstructionDescription());
-            newGradingInstruction.setUsageCount(originalGradingInstruction.getUsageCount());
-            newGradingInstruction.setGradingCriterion(newGradingCriterion);
-
+            final var newGradingInstruction = copyGradingInstruction(newGradingCriterion, originalGradingInstruction);
             newGradingInstructions.add(newGradingInstruction);
             gradingInstructionCopyTracker.put(originalGradingInstruction.getId(), newGradingInstruction);
         }
         return newGradingInstructions;
+    }
+
+    private static GradingInstruction copyGradingInstruction(GradingCriterion newGradingCriterion, GradingInstruction originalGradingInstruction) {
+        GradingInstruction newGradingInstruction = new GradingInstruction();
+        newGradingInstruction.setCredits(originalGradingInstruction.getCredits());
+        newGradingInstruction.setFeedback(originalGradingInstruction.getFeedback());
+        newGradingInstruction.setGradingScale(originalGradingInstruction.getGradingScale());
+        newGradingInstruction.setInstructionDescription(originalGradingInstruction.getInstructionDescription());
+        newGradingInstruction.setUsageCount(originalGradingInstruction.getUsageCount());
+        newGradingInstruction.setGradingCriterion(newGradingCriterion);
+        return newGradingInstruction;
     }
 
     /**
@@ -1051,7 +893,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Just setting the collections to {@code null} breaks the automatic orphan removal and change detection in the database.
      */
     public void disconnectRelatedEntities() {
-        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, posts, plagiarismCases).filter(Objects::nonNull)
+        Stream.of(teams, gradingCriteria, studentParticipations, tutorParticipations, exampleSubmissions, attachments, plagiarismCases).filter(Objects::nonNull)
                 .forEach(Collection::clear);
     }
 }

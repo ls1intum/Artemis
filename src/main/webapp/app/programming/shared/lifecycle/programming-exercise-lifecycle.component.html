@@ -58,7 +58,7 @@
                     tooltipText="artemisApp.programmingExercise.timeline.afterDueDateTooltip"
                 />
             }
-            @if ((isEditFieldDisplayedRecord()?.assessmentDueDate || !isEditFieldDisplayedRecord()) && (isExamMode || exercise.dueDate)) {
+            @if ((isEditFieldDisplayedRecord()?.assessmentDueDate || !isEditFieldDisplayedRecord()) && (isExamMode || isImport || exercise.dueDate)) {
                 <div>
                     <div class="test-schedule-date px-1">
                         <div class="test-schedule-date-title test-schedule-date-title-small-button">
@@ -174,7 +174,7 @@
                     id="allowFeedbackRequests"
                     (change)="toggleFeedbackRequests()"
                 />
-                @if (isAthenaEnabled$ | async) {
+                @if (isAthenaEnabled) {
                     <label
                         [ngStyle]="exercise.assessmentType !== assessmentType.SEMI_AUTOMATIC ? { color: 'grey' } : {}"
                         class="form-control-label"

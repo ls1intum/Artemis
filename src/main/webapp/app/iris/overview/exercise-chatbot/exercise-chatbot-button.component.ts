@@ -6,9 +6,9 @@ import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/w
 import { EMPTY, Subscription, filter, of, switchMap } from 'rxjs';
 import { faAngleDoubleDown, faChevronDown, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/iris-chat.service';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { animate, state, style, transition, trigger } from '@angular/animations';
-import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
+import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -44,39 +44,35 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
     imports: [NgClass, TranslateDirective, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe],
 })
 export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
-    dialog = inject(MatDialog);
-    protected overlay = inject(Overlay);
-    protected readonly chatService = inject(IrisChatService);
-    private route = inject(ActivatedRoute);
+    protected readonly faCircle = faCircle;
+    protected readonly faChevronDown = faChevronDown;
+    protected readonly faAngleDoubleDown = faAngleDoubleDown;
 
-    @Input()
-    mode: ChatServiceMode;
+    private readonly dialog = inject(MatDialog);
+    private readonly overlay = inject(Overlay);
+    private readonly chatService = inject(IrisChatService);
+    private readonly route = inject(ActivatedRoute);
 
-    @Input()
-    isChatGptWrapper: boolean = false; // TODO TW: This "feature" is only temporary for a paper.
+    private readonly CHAT_BUBBLE_TIMEOUT = 10000;
 
-    dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | null = null;
+    protected readonly IrisLogoLookDirection = IrisLogoLookDirection;
+    protected readonly IrisLogoSize = IrisLogoSize;
+    protected readonly IrisTextMessageContent = IrisTextMessageContent;
+
+    @Input() mode: ChatServiceMode;
+
+    dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | undefined = undefined;
     chatOpen = false;
     isOverflowing = false;
     hasNewMessages = false;
     newIrisMessage: string | undefined;
-
-    private readonly CHAT_BUBBLE_TIMEOUT = 10000;
 
     private numNewMessagesSubscription: Subscription;
     private paramsSubscription: Subscription;
     private latestIrisMessageSubscription: Subscription;
     private queryParamsSubscription: Subscription;
 
-    // Icons
-    faCircle = faCircle;
-    faChevronDown = faChevronDown;
-    faAngleDoubleDown = faAngleDoubleDown;
-
     @ViewChild('chatBubble') chatBubble: ElementRef;
-
-    protected readonly IrisLogoLookDirection = IrisLogoLookDirection;
-    protected readonly IrisLogoSize = IrisLogoSize;
 
     ngOnInit() {
         // Subscribes to route params and gets the exerciseId from the route
@@ -165,7 +161,6 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
             scrollStrategy: this.overlay.scrollStrategies.noop(),
             position: { bottom: '0px', right: '0px' },
             disableClose: true,
-            data: { isChatGptWrapper: this.isChatGptWrapper },
         });
         this.dialogRef.afterClosed().subscribe(() => this.handleDialogClose());
     }
@@ -174,6 +169,4 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
         this.chatOpen = false;
         this.newIrisMessage = undefined;
     }
-
-    protected readonly IrisTextMessageContent = IrisTextMessageContent;
 }

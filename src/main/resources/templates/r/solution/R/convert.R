@@ -13,5 +13,5 @@ matrix_to_column_list <- function(mat) {
     column_list[[i]] <- mat[, i]
   }
 
-  return(column_list)
+  column_list
 }

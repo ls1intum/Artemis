@@ -1,7 +1,7 @@
 import type SortStrategy from './sortstrategy';
 
 export default class Context {
-    private _sortAlgorithm: SortStrategy | null = null;
+    private _sortAlgorithm: SortStrategy | undefined = undefined;
 
     private _dates: Array<Date> = [];
 
@@ -12,7 +12,7 @@ export default class Context {
         this._sortAlgorithm?.performSort(this._dates);
     }
 
-    get sortAlgorithm(): SortStrategy | null {
+    get sortAlgorithm(): SortStrategy | undefined {
         return this._sortAlgorithm;
     }
 

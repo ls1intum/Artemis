@@ -75,6 +75,7 @@ class CourseNotificationWebappServiceTest {
     }
 
     private CourseNotificationDTO createTestNotification(Long courseId) {
-        return new CourseNotificationDTO("Test Notification", 1L, courseId, ZonedDateTime.now(), CourseNotificationCategory.GENERAL, Map.of("key1", "value1", "key2", "value2"));
+        return new CourseNotificationDTO("Test Notification", 1L, courseId, ZonedDateTime.now(), CourseNotificationCategory.GENERAL, Map.of("key1", "value1", "key2", "value2"),
+                "/");
     }
 }

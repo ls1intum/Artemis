@@ -3,10 +3,12 @@ package de.tum.cit.aet.artemis.communication.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,12 +18,14 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data repository for the ConversationParticipant entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface ConversationParticipantRepository extends ArtemisJpaRepository<ConversationParticipant, Long> {
 
@@ -82,6 +86,38 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             """)
     List<Long> findConversationIdsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
+    @Query("""
+            SELECT COUNT(DISTINCT conversation.id)
+            FROM Conversation conversation
+                LEFT JOIN conversation.conversationParticipants conversationParticipant
+            WHERE conversation.id IN :conversationIds
+                AND conversation.course.id = :courseId
+                AND (
+                    (conversationParticipant.user.id = :userId)
+                    OR (TYPE(conversation) = Channel AND TREAT(conversation AS Channel).isCourseWide = TRUE)
+                )
+            """)
+    long countAccessibleConversations(@Param("conversationIds") Collection<Long> conversationIds, @Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /**
+     * Verifies that the user has access to all specified conversations.
+     * Throws AccessForbiddenException if one or more conversations are not accessible.
+     *
+     * @param conversationIds collection of conversation IDs
+     * @param userId          ID of the user
+     * @param courseId        ID of the course
+     * @throws AccessForbiddenException if access is denied to one or more conversations
+     */
+    default void userHasAccessToAllConversationsElseThrow(Collection<Long> conversationIds, Long userId, Long courseId) {
+        long accessibleCount = countAccessibleConversations(conversationIds, userId, courseId);
+        if (accessibleCount != conversationIds.size()) {
+            if (conversationIds.size() == 1) {
+                throw new AccessForbiddenException("Conversation", conversationIds.iterator().next());
+            }
+            throw new AccessForbiddenException("Conversation", conversationIds);
+        }
+    }
+
     Optional<ConversationParticipant> findConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
 
     @Query("""
@@ -113,6 +149,7 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             WHERE conversationParticipant.conversation.id = :conversationId
                 AND conversationParticipant.user.id <> :senderId
                 AND conversationParticipant.unreadMessagesCount IS NOT NULL
+                AND conversationParticipant.isMuted = FALSE
             """)
     void incrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId);
 

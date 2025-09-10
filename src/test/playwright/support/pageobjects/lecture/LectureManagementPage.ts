@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
 import dayjs from 'dayjs';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
 import { BASE_API } from '../../constants';
 
@@ -66,6 +66,19 @@ export class LectureManagementPage {
      */
     async openUnitsPage(lectureId: number) {
         await this.getLecture(lectureId).locator('#units').click();
+    }
+
+    /**
+     * Navigates to the attachments page of a specified lecture by its identifier.
+     * @param lectureId - The identifier of the lecture to navigate to its attachments page.
+     */
+    async openAttachmentsPage(lectureId: number) {
+        await this.getLecture(lectureId).locator('#attachments').click();
+    }
+
+    async openAttachmentUnitCreationPage(lectureId: number) {
+        await this.openAttachmentsPage(lectureId);
+        await this.page.locator('#add-attachment').click();
     }
 
     /**

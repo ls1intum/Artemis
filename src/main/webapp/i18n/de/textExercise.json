@@ -2,7 +2,7 @@
     "artemisApp": {
         "textExercise": {
             "home": {
-                "title": "Textaufgaben",
+                "title": "Textaufgabe",
                 "createLabel": "Textaufgabe erstellen",
                 "editLabel": "Textaufgabe bearbeiten",
                 "importLabel": "Textaufgabe importieren"

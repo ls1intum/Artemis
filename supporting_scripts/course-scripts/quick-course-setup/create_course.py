@@ -4,11 +4,12 @@ import configparser
 import json
 import urllib3
 import re
+import uuid
 from logging_config import logging
 from requests import Session
 from utils import login_as_admin
 from add_users_to_course import add_users_to_groups_of_course
-from randomize_results_after import run_cleanup
+from manage_programming_exercise import create_programming_exercise
 
 # Load configuration
 config = configparser.ConfigParser()
@@ -110,6 +111,9 @@ def main() -> None:
     course_id = response_data["id"]
 
     add_users_to_groups_of_course(session, course_id)
+
+    random_slug = str(uuid.uuid4())[:8]
+    create_programming_exercise(session, course_id, SERVER_URL, 1, f"Strategy Pattern-{random_slug}")
 
 if __name__ == "__main__":
     main()

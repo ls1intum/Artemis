@@ -33,7 +33,7 @@ If there are existing keys, you may want to use those: :ref:`Add your key to Art
 
 **2. Back up old SSH keys**
 
-If you have existing SSH keys, but you don't want to use them when connecting to Bitbucket, you should back those up.
+If you have existing SSH keys, but you don't want to use them, you should back those up.
 In a command prompt on your local computer, run:
 
 .. code-block:: bash
@@ -104,7 +104,7 @@ If there are existing keys, you may want to use those: :ref:`Add your key to Art
 
 **2. Back up old SSH keys**
 
-If you have existing SSH keys, but you don't want to use them when connecting to Bitbucket, you should back those up.
+If you have existing SSH keys, but you don't want to use them, you should back those up.
 In a command prompt on your local computer, run:
 
 .. code-block:: bash

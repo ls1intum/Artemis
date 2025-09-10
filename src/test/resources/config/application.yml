@@ -25,7 +25,9 @@ artemis:
         batch-waiting-time: 5   # 5ms (make the tests faster)
     iosAppId: "2J3C6P6X3N.de.tum.cit.artemis"
     androidAppPackage: "de.tum.cit.aet.artemis"
-    androidSha256CertFingerprints: "D2:E1:A6:6F:8C:00:55:97:9F:30:2F:3D:79:A9:5D:78:85:1F:C5:21:5A:7F:81:B3:BF:60:22:71:EF:6F:60:24"
+    androidSha256CertFingerprints:
+        release: "D2:E1:A6:6F:8C:00:55:97:9F:30:2F:3D:79:A9:5D:78:85:1F:C5:21:5A:7F:81:B3:BF:60:22:71:EF:6F:60:24"
+        debug: "7F:CB:99:74:19:30:15:4B:86:4B:8A:73:B0:09:94:52:19:F6:BD:90:6A:7C:16:B1:76:37:AF:74:B1:48:3B:6C"
 
     push-notification-relay: https://hermes-sandbox.artemis.cit.tum.de
 
@@ -159,8 +161,9 @@ spring:
     mail:
         host: localhost
     main:
-        allow-bean-definition-overriding: true # TODO: we should deactivate this in the future
-        allow-circular-references: true # TODO: we should deactivate this in the future
+        allow-bean-definition-overriding: false
+        allow-circular-references: false
+        lazy-initialization: true
     messages:
         basename: i18n/messages
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
@@ -205,7 +208,7 @@ zonky:
             type: H2  # Alternatives: H2 / MYSQL / POSTGRES
             postgres:
                 docker:
-                    image: docker.io/library/postgres:17.3-alpine
+                    image: docker.io/library/postgres:17.5-alpine
                     tmpfs:
                         enabled: true
                 server:
@@ -228,13 +231,13 @@ zonky:
                         max_parallel_maintenance_workers: 4
             mysql:
                 docker:
-                    image: docker.io/library/mysql:9.2.0
+                    image: docker.io/library/mysql:9.4.0
                     tmpfs:
                         enabled: true
 
 server:
     port: 8080
-    url: https://artemislocal.ase.in.tum.de
+    url: http://localhost
     forward-headers-strategy: native
 
 management:
@@ -245,7 +248,7 @@ management:
                 include: ["jhimetrics"]
     endpoint:
         jhimetrics:
-            enabled: true
+            access: read_only
     info:
         env:
             enabled: true
@@ -258,27 +261,12 @@ sentry:
 
 # Properties to be exposed on the /info management endpoint
 info:
-    # Comma separated list of profiles that will trigger the ribbon to show
-    display-ribbon-on-profiles: "dev"
     sentry:
         dsn: https://not-activated@sentry.io/0000000
-    guided-tour:
-        courseShortName: 'artemistutorial'
-        tours:
-            -   cancel_tour: ''
-            -   code_editor_tour: 'test'
-            -   course_overview_tour: ''
-            -   course_exercise_overview_tour: 'test'
-            -   modeling_tour: 'UML Class Diagram'
-            -   programming_exercise_fail_tour: 'test'
-            -   programming_exercise_success_tour: 'test'
-            -   tutor_assessment_tour: 'Patterns in Software Engineering'
-    # Allowed Orion version range. Should only be changed on major version releases
-    allowed-minimum-orion-version: 1.0.0
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to true for tests
-    text-assessment-analytics-enabled: true
-    student-exam-store-session-data: true
+    textAssessmentAnalyticsEnabled: true
+    studentExamStoreSessionData: true
     contact: contactEmail@contact.de
 
 jhipster:

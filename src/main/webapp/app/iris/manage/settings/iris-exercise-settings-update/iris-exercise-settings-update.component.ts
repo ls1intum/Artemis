@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
-import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettingsType } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
 import { ActivatedRoute } from '@angular/router';

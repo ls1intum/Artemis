@@ -1,13 +1,14 @@
 import { Component, Input, inject } from '@angular/core';
 import { faCheckCircle, faCircleDot, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Result } from 'app/entities/result.model';
-import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/service/programming-exercise-instruction.service';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-task-status',
@@ -33,6 +34,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     }
     @Input() exercise: Exercise;
     @Input() latestResult?: Result;
+    @Input() participation: Participation;
 
     testIdsValue: number[];
     testCaseState: TestCaseState;
@@ -87,6 +89,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         const componentInstance = modalRef.componentInstance as FeedbackComponent;
         componentInstance.exercise = this.exercise;
         componentInstance.result = this.latestResult;
+        componentInstance.participation = this.participation;
         componentInstance.feedbackFilter = this.testIds;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;
         componentInstance.taskName = this.taskName;

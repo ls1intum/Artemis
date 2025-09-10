@@ -298,6 +298,10 @@
             "examExercises": "Exam Exercises:",
             "exercisePoints": "Points",
             "exerciseName": "Name",
+            "navigation": {
+                "nextButton": "Next",
+                "previousButton": "Previous"
+            },
             "noStudentExam": "You are not registered for the exam. Please contact your instructor.",
             "noFurtherAttempts": "Currently no further attempts for the Test Exam are possible. To review your submissions, navigate back to the Exam page",
             "atLeastTutorStudentExam": "Since you are not a student, you cannot participate in this exam:",
@@ -327,6 +331,7 @@
             "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?",
             "handInEarly": "Hand in Early",
             "continueAfterHandInEarly": "Back",
+            "continue": "Continue",
             "attendanceCheck": "Attendance check",
             "continueAfterHandInEarlyDescription": "To continue working on the exam, click on the 'Back' button.",
             "handInEarlyNotice": "You are about to hand in your submission before the end of the exam. After finishing the exam you cannot participate any longer.",
@@ -474,6 +479,7 @@
             },
             "numberOfExerciseGroups": "Number of exercise groups:",
             "numberOfExercisesInExam": "Number of exercises in exam",
+            "numberOfExercisesInExamTooltip": "The number of exercises must be equal to the number of exercise groups",
             "numberOfCorrectionRoundsInExam": "Number of correction rounds in exam",
             "randomizeQuestionOrder": "Randomize order of exercise groups",
             "examWithAttendanceCheck": "Exam with attendance check",
@@ -597,7 +603,7 @@
             "quizPool": "Quiz Pool",
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the exam to confirm.",
+                "typeNameToConfirm": "Please type in the name of the exam to confirm:",
                 "summary": {
                     "title": "Exam Summary",
                     "numberExerciseGroups": "Number of Exercise Groups",
@@ -620,7 +626,7 @@
             },
             "reset": {
                 "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All Student Exams will be deleted. Registered students and the exercise configurations will remain. This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the exam to confirm.",
+                "typeNameToConfirm": "Please type in the name of the exam to confirm:",
                 "success": "The exam has been successfully reset."
             },
             "checklist": {
@@ -655,7 +661,7 @@
                     "exportResults": "Export the exam results",
                     "editWorkingTime": "Edit the exam duration",
                     "createAnnouncement": "Create an announcement",
-                    "suspiciousBehavior": "Check for suspicious behaviour"
+                    "suspiciousBehavior": "Check for suspicious behavior"
                 },
                 "descriptionItem": {
                     "register": "You can register students for the exam in three different ways: via a CSV file, manually, or by importing all students registered in the course.",
@@ -672,9 +678,13 @@
                     "exportResults": "Exports the exam results as a CSV file.",
                     "editWorkingTime": "Until one minute before the end of the exam, you can extend its duration.",
                     "createAnnouncement": "To communicate important information to all students working on the exam right now, you can make an announcement. It will be distributed and displayed to all students immediately.",
-                    "suspiciousBehavior": "Check for suspicious behaviour and plagiarism in the suspicious behavior dashboard."
+                    "suspiciousBehavior": "Check for suspicious behavior and plagiarism in the suspicious behavior dashboard."
                 },
                 "textitems": {
+                    "noDeactivatedExerciseTypes": {
+                        "label": "No deactivated exercise types",
+                        "tooltip": "There is at least one exercise with a currently deactivated exercise type. Deleting these exercise types is currently not supported, only the complete exercise group. You should contact the Artemis-hosting system administration."
+                    },
                     "leastoneexercisegroup": "At least one exercise group",
                     "numberofexercisegroupsequal": "Number of exercises in the exam equals the number of exercise groups",
                     "numberofexercisegroupsinbetween": "Number of exercises in the exam is between the number of mandatory exercise groups and the total number of exercise groups",
@@ -716,8 +726,8 @@
                 "title": "Edit Exam Duration",
                 "label": "Change exam duration",
                 "duration": "The new duration of the exam will be <strong>{{ duration }}</strong>.",
-                "question": "This will change the working time for all students. Do you really want to edit the duration of the exam <strong>{{ title }}</strong>?",
-                "typeNameToConfirm": "Please type in the name of the exam to confirm."
+                "question": "This will change the working time for all students. Do you really want to edit the duration of the exam <bold>{{ title }}</bold>?",
+                "typeNameToConfirm": "Please type in the name of the exam to confirm:"
             },
             "announcementCreate": {
                 "button": "Create Announcement",

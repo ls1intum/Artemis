@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,6 +19,9 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 
 import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -27,68 +31,70 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePointsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationStatusRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseScoresDTO;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
+import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismMapping;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService.PlagiarismMapping;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * Service Implementation for calculating course scores.
  * Adapted from the implementation at course-score-calculation.service.ts.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class CourseScoreCalculationService {
 
     private static final double SCORE_NORMALIZATION_VALUE = 0.01;
 
+    private static final Logger log = LoggerFactory.getLogger(CourseScoreCalculationService.class);
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ExerciseRepository exerciseRepository;
 
-    private final PlagiarismCaseRepository plagiarismCaseRepository;
+    private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
+
+    private final Optional<IrisSettingsApi> irisSettingsApi;
 
     private final PresentationPointsCalculationService presentationPointsCalculationService;
 
     private final UserCourseNotificationStatusRepository userCourseNotificationStatusRepository;
 
-    private final FeatureToggleService featureToggleService;
-
     public CourseScoreCalculationService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
-            PlagiarismCaseRepository plagiarismCaseRepository, PresentationPointsCalculationService presentationPointsCalculationService,
-            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository, FeatureToggleService featureToggleService) {
+            Optional<PlagiarismCaseApi> plagiarismCaseApi, PresentationPointsCalculationService presentationPointsCalculationService,
+            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository, Optional<IrisSettingsApi> irisSettingsApi) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
-        this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.plagiarismCaseApi = plagiarismCaseApi;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
         this.userCourseNotificationStatusRepository = userCourseNotificationStatusRepository;
-        this.featureToggleService = featureToggleService;
+        this.irisSettingsApi = irisSettingsApi;
     }
 
     /**
      * Calculates max and reachable max points for the given exercises. Also calculates the reachable presentation points for the course, if a grading scale with course is given.
-     * Max points are the sum of the points for all included (see {@link #includeIntoScoreCalculation(Exercise)}) exercises, whose due date is over or unset or who are
-     * automatically assessed and the buildAndTestStudentSubmissionsAfterDueDate is in the past.
-     * Reachable max points contain only those points where the exercise's assessmentDueDate is in the past. (see {@link #isAssessmentDone(Exercise)}).
+     * Max points are the sum of the points for all included (see {@link #includeIntoScoreCalculation(ExerciseCourseScoreDTO)}) exercises, whose due date is over or unset or who
+     * are automatically assessed and the buildAndTestStudentSubmissionsAfterDueDate is in the past.
+     * Reachable max points contain only those points where the exercise's assessmentDueDate is in the past. (see {@link #isAssessmentDone(ExerciseCourseScoreDTO)}).
      * Example: An exercise that is not automatically assessed (e.g. text exercise), that has the dueDate in the past but the assessmentDueDate set in the future is included in
      * the max points calculation,
      * but not in the reachable max points calculation.
@@ -97,7 +103,7 @@ public class CourseScoreCalculationService {
      * @param exercises    the exercises which are included into max points calculation
      * @return the max and reachable max points for the given exercises
      */
-    private MaxAndReachablePointsDTO calculateMaxAndReachablePoints(GradingScale gradingScale, Set<Exercise> exercises) {
+    private MaxAndReachablePointsDTO calculateMaxAndReachablePoints(@Nullable GradingScale gradingScale, Set<ExerciseCourseScoreDTO> exercises) {
 
         if (exercises.isEmpty()) {
             return new MaxAndReachablePointsDTO(0, 0, 0);
@@ -111,8 +117,8 @@ public class CourseScoreCalculationService {
             if (!includeIntoScoreCalculation(exercise)) {
                 continue;
             }
-            var maxPointsReachableInExercise = exercise.getMaxPoints();
-            if (exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY && maxPointsReachableInExercise != null) {
+            var maxPointsReachableInExercise = exercise.maxPoints();
+            if (exercise.includedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY) {
                 maxPoints += maxPointsReachableInExercise;
                 if (isAssessmentDone(exercise)) {
                     reachableMaxPoints += maxPointsReachableInExercise;
@@ -143,9 +149,8 @@ public class CourseScoreCalculationService {
         if (course == null) {
             return null;
         }
-        Long courseId = course.getId();
-
-        Set<Exercise> courseExercises = exerciseRepository.findAllExercisesByCourseId(courseId);
+        long courseId = course.getId();
+        Set<ExerciseCourseScoreDTO> courseExercises = exerciseRepository.findCourseExerciseScoreInformationByCourseId(courseId);
         if (courseExercises.isEmpty()) {
             return null;
         }
@@ -154,39 +159,37 @@ public class CourseScoreCalculationService {
 
         List<PlagiarismCase> plagiarismCases;
 
-        MultiValueMap<Long, StudentParticipation> studentIdToParticipations = new LinkedMultiValueMap<>();
+        MultiValueMap<Long, CourseGradeScoreDTO> studentIdToGradeScores = new LinkedMultiValueMap<>();
         if (studentIds.size() == 1) {  // Optimize single student case by filtering in the database.
-            Long studentId = studentIds.iterator().next();
-            var participations = studentParticipationRepository.findByCourseIdAndStudentIdWithRelevantResult(courseId, studentId);
-            if (!participations.isEmpty()) {
-                studentIdToParticipations.addAll(studentId, participations);
+            long studentId = studentIds.iterator().next();
+            List<CourseGradeScoreDTO> gradeScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourseAndStudent(courseId, studentId);
+            if (!gradeScores.isEmpty()) {
+                studentIdToGradeScores.addAll(studentId, gradeScores);
             }
-            plagiarismCases = plagiarismCaseRepository.findByCourseIdAndStudentId(courseId, studentId);
+            plagiarismCases = plagiarismCaseApi.map(api -> api.findByCourseIdAndStudentId(courseId, studentId)).orElse(List.of());
         }
         else {
-            // Get all participations for the course.
-            var participations = studentParticipationRepository.findByCourseIdWithRelevantResult(courseId);
-            // These participations also contain participations for students with ids not included in 'studentIds'.
-            // Filter out those participations that belong to the students in 'studentIds'.
+            var courseGradeScoreDtos = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId);
+            // These course grade score DTOs also contain DTOs for students with ids not included in 'studentIds'.
+            // Filter out those DTOs that belong to the students in 'studentIds'.
             // For the single student case, this is done in the db query.
             var studentIdSet = new HashSet<>(studentIds);
-            for (StudentParticipation participation : participations) {
-                for (User student : participation.getStudents()) {
-                    if (studentIdSet.contains(student.getId())) {
-                        studentIdToParticipations.add(student.getId(), participation);
-                    }
+            for (CourseGradeScoreDTO courseGradeScoreDTO : courseGradeScoreDtos) {
+                Long studentId = courseGradeScoreDTO.userId();
+                if (studentIdSet.contains(studentId)) {
+                    studentIdToGradeScores.add(studentId, courseGradeScoreDTO);
                 }
             }
-            plagiarismCases = plagiarismCaseRepository.findByCourseId(courseId);
+            plagiarismCases = plagiarismCaseApi.map(api -> api.findByCourseId(courseId)).orElse(List.of());
         }
 
-        return studentIdToParticipations.entrySet().parallelStream().collect(Collectors.toMap(Map.Entry::getKey,
-                entry -> constructBonusSourceResultDTO(course, gradingScale, entry.getKey(), entry.getValue(), maxAndReachablePoints, plagiarismCases)));
+        return studentIdToGradeScores.entrySet().parallelStream().collect(Collectors.toMap(Map.Entry::getKey,
+                entry -> constructBonusSourceResultDTO(course, gradingScale, entry.getKey(), entry.getValue(), maxAndReachablePoints, plagiarismCases, courseExercises)));
     }
 
-    private BonusSourceResultDTO constructBonusSourceResultDTO(Course course, GradingScale gradingScale, Long studentId, List<StudentParticipation> participations,
-            MaxAndReachablePointsDTO maxAndReachablePoints, List<PlagiarismCase> plagiarismCases) {
-        StudentScoresDTO studentScores = calculateCourseScoreForStudent(course, gradingScale, studentId, participations, maxAndReachablePoints, plagiarismCases);
+    private BonusSourceResultDTO constructBonusSourceResultDTO(Course course, GradingScale gradingScale, Long studentId, List<CourseGradeScoreDTO> participations,
+            MaxAndReachablePointsDTO maxAndReachablePoints, List<PlagiarismCase> plagiarismCases, Set<ExerciseCourseScoreDTO> courseExercises) {
+        StudentScoresDTO studentScores = calculateCourseScoreForStudent(course, gradingScale, studentId, participations, maxAndReachablePoints, plagiarismCases, courseExercises);
 
         boolean presentationScorePassed;
         PlagiarismVerdict mostSeverePlagiarismVerdict = null;
@@ -216,12 +219,13 @@ public class CourseScoreCalculationService {
      * Get all the items needed for the CourseForDashboardDTO.
      * This includes scoresPerExerciseType and participationResults.
      *
-     * @param course       the course to calculate the items for.
-     * @param gradingScale the grading scale with the presentation configuration to use for calculating the presentation points.
-     * @param userId       the id of the students whose scores in the course will be calculated.
+     * @param course                            the course to calculate the items for.
+     * @param gradingScale                      the grading scale with the presentation configuration to use for calculating the presentation points.
+     * @param userId                            the id of the students whose scores in the course will be calculated.
+     * @param includeIrisCourseDashboardEnabled whether the enabled state of the course chat should be included in the CourseForDashboardDTO
      * @return the CourseForDashboardDTO containing all the mentioned items.
      */
-    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, GradingScale gradingScale, long userId) {
+    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, @Nullable GradingScale gradingScale, long userId, boolean includeIrisCourseDashboardEnabled) {
         Set<StudentParticipation> gradedStudentParticipations = new HashSet<>();
         for (Exercise exercise : course.getExercises()) {
             exercise.setCourse(course);
@@ -241,8 +245,9 @@ public class CourseScoreCalculationService {
         }
 
         Set<Exercise> courseExercises = course.getExercises();
+        Set<ExerciseCourseScoreDTO> exerciseCourseScores = courseExercises.stream().map(ExerciseCourseScoreDTO::from).collect(Collectors.toSet());
 
-        MaxAndReachablePointsDTO maxAndReachablePoints = calculateMaxAndReachablePoints(gradingScale, courseExercises);
+        MaxAndReachablePointsDTO maxAndReachablePoints = calculateMaxAndReachablePoints(gradingScale, exerciseCourseScores);
 
         List<PlagiarismCase> plagiarismCases = new ArrayList<>();
         for (Exercise exercise : courseExercises) {
@@ -254,33 +259,30 @@ public class CourseScoreCalculationService {
         }
 
         // Get the total scores for the course.
-        StudentScoresDTO totalStudentScores = calculateCourseScoreForStudent(course, gradingScale, userId, gradedStudentParticipations, maxAndReachablePoints, plagiarismCases);
+        StudentScoresDTO totalStudentScores = calculateCourseScoreForStudentParticipations(course, gradingScale, userId, gradedStudentParticipations, maxAndReachablePoints,
+                plagiarismCases);
         CourseScoresDTO totalScores = new CourseScoresDTO(maxAndReachablePoints.maxPoints(), maxAndReachablePoints.reachablePoints(),
                 maxAndReachablePoints.reachablePresentationPoints(), totalStudentScores);
 
         // Get scores per exercise type for the course (used in course-statistics.component i.a.).
-        Map<ExerciseType, CourseScoresDTO> scoresPerExerciseType = calculateCourseScores(course, gradedStudentParticipations, userId, plagiarismCases);
+        Map<ExerciseType, CourseScoresDTO> scoresPerExerciseType = calculateCourseScoresForStudentParticipations(course, gradedStudentParticipations, userId, plagiarismCases);
 
         // Get participation results (used in course-statistics.component).
         Set<ParticipationResultDTO> participationResults = new HashSet<>();
         for (StudentParticipation studentParticipation : gradedStudentParticipations) {
-            if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
-                Result result = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
-                var participationResult = new ParticipationResultDTO(result.getScore(), result.isRated(), studentParticipation.getId());
-                participationResults.add(participationResult);
-                // this line is an important workaround. It prevents that the whole tree
-                // "result -> participation -> exercise -> course -> exercises -> studentParticipations -> submissions -> results" is sent again to the client which is useless
-                // TODO: in the future, we need a better solution to prevent this
-                studentParticipation.setExercise(null);
-            }
+            Result result = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
+            var participationResult = new ParticipationResultDTO(result.getScore(), result.isRated(), studentParticipation.getId());
+            participationResults.add(participationResult);
+            // this line is an important workaround. It prevents that the whole tree
+            // "result -> participation -> exercise -> course -> exercises -> studentParticipations -> submissions -> results" is sent again to the client which is useless
+            // TODO: in the future, we need a better solution to prevent this
+            studentParticipation.setExercise(null);
         }
 
         return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
                 scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD), scoresPerExerciseType.get(ExerciseType.QUIZ),
-                participationResults,
-                featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)
-                        ? userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId())
-                        : 0);
+                participationResults, userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()),
+                includeIrisCourseDashboardEnabled ? irisSettingsApi.map(api -> api.isCourseChatEnabled(course.getId())).orElse(false) : null);
     }
 
     /**
@@ -293,7 +295,7 @@ public class CourseScoreCalculationService {
      * @return a map of the scores for the different exercise types (total, for programming exercises etc.). For each type, the map contains the max and reachable max points and
      *         the scores of the current user.
      */
-    private Map<ExerciseType, CourseScoresDTO> calculateCourseScores(Course course, Collection<StudentParticipation> studentParticipations, long userId,
+    private Map<ExerciseType, CourseScoresDTO> calculateCourseScoresForStudentParticipations(Course course, Collection<StudentParticipation> studentParticipations, long userId,
             Collection<PlagiarismCase> plagiarismCases) {
 
         Map<ExerciseType, CourseScoresDTO> scoresPerExerciseType = new HashMap<>();
@@ -302,12 +304,14 @@ public class CourseScoreCalculationService {
         for (ExerciseType type : ExerciseType.values()) {
             // Filter out the entities per exercise type.
             var exercisesOfExerciseType = course.getExercises().stream().filter(exercise -> exercise.getExerciseType() == type).collect(Collectors.toSet());
-            var maxAndReachablePoints = calculateMaxAndReachablePoints(null, exercisesOfExerciseType);
+            var exerciseCourseScores = exercisesOfExerciseType.stream().map(ExerciseCourseScoreDTO::from).collect(Collectors.toSet());
+            var maxAndReachablePoints = calculateMaxAndReachablePoints(null, exerciseCourseScores);
             var studentParticipationsOfType = studentParticipations.stream().filter(participation -> participation.getExercise().getExerciseType() == type).toList();
 
             // Hand over all plagiarism cases (not just the ones for the current exercise type) because a student will receive a 0 score for all exercises if there is any
             // PLAGIARISM verdict.
-            var studentScoresOfExerciseType = calculateCourseScoreForStudent(course, null, userId, studentParticipationsOfType, maxAndReachablePoints, plagiarismCases);
+            var studentScoresOfExerciseType = calculateCourseScoreForStudentParticipations(course, null, userId, studentParticipationsOfType, maxAndReachablePoints,
+                    plagiarismCases);
             var scoresOfExerciseType = new CourseScoresDTO(maxAndReachablePoints.maxPoints(), maxAndReachablePoints.reachablePoints(), 0.0, studentScoresOfExerciseType);
             scoresPerExerciseType.put(type, scoresOfExerciseType);
         }
@@ -316,19 +320,87 @@ public class CourseScoreCalculationService {
     }
 
     /**
-     * Calculates the presentation score, relative and absolute points for the given studentId and corresponding participationsOfStudent
+     * Calculates the presentation score, relative and absolute points for the given studentId and corresponding courseGradeScoreDTOsOfStudent
      * and takes the effects of related plagiarism verdicts on the grade into account.
+     *
+     * @param course                        the course the scores are calculated for.
+     * @param gradingScale                  the grading scale of the course.
+     * @param studentId                     the id of the student who has participated in the course exercises.
+     * @param courseGradeScoreDTOsOfStudent should be non-empty. The exercise participations of the given student.
+     * @param maxAndReachablePoints         max points and max reachable points in the given course.
+     * @param plagiarismCases               the plagiarism verdicts for the student.
+     * @param courseExercises               the exercises of the course with their properties relevant for the score calculation.
+     * @return a StudentScoresDTO instance with the presentation score, relative and absolute points achieved by the given student.
+     */
+    public StudentScoresDTO calculateCourseScoreForStudent(Course course, @Nullable GradingScale gradingScale, Long studentId,
+            Collection<CourseGradeScoreDTO> courseGradeScoreDTOsOfStudent, MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases,
+            Set<ExerciseCourseScoreDTO> courseExercises) {
+
+        PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
+
+        if (plagiarismMapping.studentHasVerdict(studentId, PlagiarismVerdict.PLAGIARISM)) {
+            return new StudentScoresDTO(0.0, 0.0, 0.0, 0);
+        }
+
+        Map<Long, CourseGradeScoreDTO> gradeScoreDTOMap = courseGradeScoreDTOsOfStudent.stream()
+                .collect(Collectors.toMap(CourseGradeScoreDTO::exerciseId, courseGradeScoreDTO -> courseGradeScoreDTO));
+
+        double pointsAchievedByStudentInCourse = 0.0;
+        double presentationScore = 0;
+        var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(studentId);
+
+        for (ExerciseCourseScoreDTO exercise : courseExercises) {
+            if (!includeIntoScoreCalculation(exercise)) {
+                continue;
+            }
+
+            CourseGradeScoreDTO courseGradeScoreDTO = gradeScoreDTOMap.get(exercise.id());
+            if (courseGradeScoreDTO != null) {
+                double pointsAchievedFromExercise = calculatePointsAchievedFromExerciseScoreDTO(exercise, courseGradeScoreDTO.score(), plagiarismCasesForStudent.get(exercise.id()),
+                        course);
+                pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
+            }
+        }
+
+        // calculate presentation points for graded presentations
+        if (gradingScale != null && maxAndReachablePoints.reachablePresentationPoints() > 0.0) {
+            presentationScore = presentationPointsCalculationService.calculatePresentationPointsForStudentId(gradingScale, studentId,
+                    maxAndReachablePoints.reachablePresentationPoints());
+            pointsAchievedByStudentInCourse += presentationScore;
+        }
+        // calculate presentation score for basic presentations
+        else if (course.getPresentationScore() != null && course.getPresentationScore() > 0.0) {
+            presentationScore = courseGradeScoreDTOsOfStudent.stream().filter(p -> p.presentationScore() != null && p.presentationScore() > 0.0).count();
+        }
+
+        return getStudentScoresDTO(course, maxAndReachablePoints, pointsAchievedByStudentInCourse, presentationScore);
+    }
+
+    private StudentScoresDTO getStudentScoresDTO(Course course, MaxAndReachablePointsDTO maxAndReachablePoints, double pointsAchievedByStudentInCourse, double presentationScore) {
+        double absolutePoints = roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course);
+        double relativeScore = maxAndReachablePoints.maxPoints() > 0
+                ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxAndReachablePoints.maxPoints() * 100.0, course)
+                : 0.0;
+        double currentRelativeScore = maxAndReachablePoints.reachablePoints() > 0
+                ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxAndReachablePoints.reachablePoints() * 100.0, course)
+                : 0.0;
+
+        return new StudentScoresDTO(absolutePoints, relativeScore, currentRelativeScore, presentationScore);
+    }
+
+    /**
+     * Calculates course scores for a given set of student participations for a particular student.
      *
      * @param course                  the course the scores are calculated for.
      * @param gradingScale            the grading scale of the course.
      * @param studentId               the id of the student who has participated in the course exercises.
-     * @param participationsOfStudent should be non-empty. The exercise participations of the given student.
+     * @param participationsOfStudent the exercise participations of the given student.
      * @param maxAndReachablePoints   max points and max reachable points in the given course.
      * @param plagiarismCases         the plagiarism verdicts for the student.
      * @return a StudentScoresDTO instance with the presentation score, relative and absolute points achieved by the given student.
      */
-    public StudentScoresDTO calculateCourseScoreForStudent(Course course, GradingScale gradingScale, Long studentId, Collection<StudentParticipation> participationsOfStudent,
-            MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases) {
+    public StudentScoresDTO calculateCourseScoreForStudentParticipations(Course course, @Nullable GradingScale gradingScale, Long studentId,
+            Collection<StudentParticipation> participationsOfStudent, MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases) {
 
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
 
@@ -342,13 +414,13 @@ public class CourseScoreCalculationService {
 
         for (StudentParticipation participation : participationsOfStudent) {
             Exercise exercise = participation.getExercise();
-            if (!includeIntoScoreCalculation(exercise)) {
+            if (!includeIntoScoreCalculation(ExerciseCourseScoreDTO.from(exercise))) {
                 continue;
             }
             // getResultForParticipation always sorts the results by completion date, maybe optimize with a flag
             // if input results are already sorted.
             var result = getResultForParticipation(participation, exercise.getDueDate());
-            if (result != null && Boolean.TRUE.equals(result.isRated())) {
+            if (result != null && result.isRated()) {
                 double pointsAchievedFromExercise = calculatePointsAchievedFromExercise(exercise, result, plagiarismCasesForStudent.get(exercise.getId()));
                 pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
             }
@@ -365,15 +437,7 @@ public class CourseScoreCalculationService {
             presentationScore = participationsOfStudent.stream().filter(p -> p.getPresentationScore() != null && p.getPresentationScore() > 0.0).count();
         }
 
-        double absolutePoints = roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course);
-        double relativeScore = maxAndReachablePoints.maxPoints() > 0
-                ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxAndReachablePoints.maxPoints() * 100.0, course)
-                : 0.0;
-        double currentRelativeScore = maxAndReachablePoints.reachablePoints() > 0
-                ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxAndReachablePoints.reachablePoints() * 100.0, course)
-                : 0.0;
-
-        return new StudentScoresDTO(absolutePoints, relativeScore, currentRelativeScore, presentationScore);
+        return getStudentScoresDTO(course, maxAndReachablePoints, pointsAchievedByStudentInCourse, presentationScore);
     }
 
     private double calculatePointsAchievedFromExercise(Exercise exercise, Result result, @Nullable PlagiarismCase plagiarismCaseForExercise) {
@@ -381,14 +445,22 @@ public class CourseScoreCalculationService {
         if (score == null) {
             score = 0.0;
         }
+        return calculatePointsAchievedFromExerciseScore(exercise, score, plagiarismCaseForExercise);
+    }
+
+    private double calculatePointsAchievedFromExerciseScore(Exercise exercise, double score, @Nullable PlagiarismCase plagiarismCaseForExercise) {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        return calculatePointsAchievedFromExerciseScoreDTO(ExerciseCourseScoreDTO.from(exercise), score, plagiarismCaseForExercise, course);
+    }
+
+    private double calculatePointsAchievedFromExerciseScoreDTO(ExerciseCourseScoreDTO exercise, double score, @Nullable PlagiarismCase plagiarismCaseForExercise, Course course) {
         // Note: It is important that we round on the individual exercise level first and then sum up.
         // This is necessary so that the students arrive at the same overall result when doing their own recalculations.
         // Let's assume that a student achieved 1.05 points in each of 5 exercises.
         // In the client, these are now displayed rounded as 1.1 points.
         // If the student adds up the displayed points, the student gets a total of 5.5 points.
         // In order to get the same total result as the student, we have to round before summing.
-        double pointsAchievedFromExercise = roundScoreSpecifiedByCourseSettings(score * SCORE_NORMALIZATION_VALUE * exercise.getMaxPoints(), course);
+        double pointsAchievedFromExercise = roundScoreSpecifiedByCourseSettings(score * SCORE_NORMALIZATION_VALUE * exercise.maxPoints(), course);
         double plagiarismPointDeductionPercentage = plagiarismCaseForExercise != null ? plagiarismCaseForExercise.getVerdictPointDeduction() : 0.0;
         if (plagiarismPointDeductionPercentage > 0.0) {
             pointsAchievedFromExercise = roundScoreSpecifiedByCourseSettings(pointsAchievedFromExercise * (100.0 - plagiarismPointDeductionPercentage) / 100.0, course);
@@ -403,24 +475,24 @@ public class CourseScoreCalculationService {
      * @param dueDate       the due date of the exercise.
      * @return the result that should be used for the score calculation.
      */
-    // TODO: This connection between participations and results will not be used in the future. This should be refactored to take the latest rated result from the submissions.
     public Result getResultForParticipation(Participation participation, ZonedDateTime dueDate) {
         if (participation == null) {
             return null;
         }
-        var resultsSet = participation.getResults();
+        Set<Result> resultsSet = participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull))
+                .collect(Collectors.toSet());
 
         Result emptyResult = new Result();
         // TODO: Check if you can just instantiate Result.score with 0.0.
         emptyResult.setScore(0.0);
 
-        if (resultsSet == null || resultsSet.isEmpty()) {
+        if (resultsSet.isEmpty()) {
             return emptyResult;
         }
 
         var resultsList = new ArrayList<>(resultsSet);
 
-        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> Boolean.TRUE.equals(result.isRated() && result.getCompletionDate() != null)).toList();
+        List<Result> ratedResultsWithCompletionDate = resultsList.stream().filter(result -> result.isRated() && result.getCompletionDate() != null).toList();
 
         if (ratedResultsWithCompletionDate.isEmpty()) {
             return emptyResult;
@@ -458,9 +530,9 @@ public class CourseScoreCalculationService {
      *
      * @param exercise the exercise whose involvement should be determined
      */
-    private boolean includeIntoScoreCalculation(Exercise exercise) {
-        boolean isExerciseIncluded = exercise.getIncludedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED;
-        boolean isExerciseFinished = !isAssessedAutomatically(exercise) && (exercise.getDueDate() == null || exercise.getDueDate().isBefore(ZonedDateTime.now()));
+    private boolean includeIntoScoreCalculation(ExerciseCourseScoreDTO exercise) {
+        boolean isExerciseIncluded = exercise.includedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED;
+        boolean isExerciseFinished = !isAssessedAutomatically(exercise) && (exercise.dueDate() == null || exercise.dueDate().isBefore(ZonedDateTime.now()));
 
         return isExerciseIncluded && (isExerciseFinished || isAutomaticAssessmentDone(exercise));
     }
@@ -476,18 +548,18 @@ public class CourseScoreCalculationService {
      *
      * @param exercise the exercise whose assessment state should be determined
      */
-    private boolean isAssessmentDone(Exercise exercise) {
+    private boolean isAssessmentDone(ExerciseCourseScoreDTO exercise) {
         boolean isNonAutomaticAssessmentDone = !isAssessedAutomatically(exercise) && ExerciseDateService.isAfterAssessmentDueDate(exercise);
         return isNonAutomaticAssessmentDone || isAutomaticAssessmentDone(exercise);
     }
 
-    private boolean isAssessedAutomatically(Exercise exercise) {
-        return exercise.getExerciseType() == ExerciseType.PROGRAMMING && exercise.getAssessmentType() == AssessmentType.AUTOMATIC;
+    private boolean isAssessedAutomatically(ExerciseCourseScoreDTO exercise) {
+        return exercise.exerciseType() == ExerciseType.PROGRAMMING && exercise.assessmentType() == AssessmentType.AUTOMATIC;
     }
 
-    private boolean isAutomaticAssessmentDone(Exercise exercise) {
-        return isAssessedAutomatically(exercise) && (((ProgrammingExercise) exercise).getBuildAndTestStudentSubmissionsAfterDueDate() == null
-                || ZonedDateTime.now().isAfter(((ProgrammingExercise) exercise).getBuildAndTestStudentSubmissionsAfterDueDate()));
+    private boolean isAutomaticAssessmentDone(ExerciseCourseScoreDTO exercise) {
+        return isAssessedAutomatically(exercise)
+                && (exercise.buildAndTestStudentSubmissionsAfterDueDate() == null || ZonedDateTime.now().isAfter(exercise.buildAndTestStudentSubmissionsAfterDueDate()));
     }
 
     /**
@@ -522,7 +594,7 @@ public class CourseScoreCalculationService {
      * @param exercises    the exercises of the course.
      * @return the reachable points for a course excluding bonus and optional points.
      */
-    public double calculateReachablePoints(GradingScale gradingScale, Set<Exercise> exercises) {
+    public double calculateReachablePoints(GradingScale gradingScale, Set<ExerciseCourseScoreDTO> exercises) {
         return calculateMaxAndReachablePoints(gradingScale, exercises).reachablePoints();
     }
 }

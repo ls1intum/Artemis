@@ -14,11 +14,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 /**
  * A QuizBatch.
@@ -31,7 +29,6 @@ public class QuizBatch extends DomainObject {
 
     @Nullable
     @Column(name = "start_date")
-    @JsonView(QuizView.Before.class)
     private ZonedDateTime startTime;
 
     @Nullable
@@ -65,12 +62,12 @@ public class QuizBatch extends DomainObject {
         this.password = password;
     }
 
-    public void setCreator(Long creator) {
-        this.creator = creator;
-    }
-
     public Long getCreator() {
         return creator;
+    }
+
+    public void setCreator(Long creator) {
+        this.creator = creator;
     }
 
     public QuizExercise getQuizExercise() {
@@ -98,7 +95,6 @@ public class QuizBatch extends DomainObject {
      *
      * @return true if batch has started, false otherwise
      */
-    @JsonView(QuizView.Before.class)
     public Boolean isStarted() {
         return getStartTime() != null && ZonedDateTime.now().isAfter(getStartTime());
     }
@@ -118,7 +114,6 @@ public class QuizBatch extends DomainObject {
      *
      * @return true if batch has ended, false otherwise
      */
-    @JsonView(QuizView.Before.class)
     public Boolean isEnded() {
         return isStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS <= 0;
     }
@@ -127,4 +122,5 @@ public class QuizBatch extends DomainObject {
     public String toString() {
         return "QuizBatch{" + "id=" + getId() + ", startTime=" + getStartTime() + "}";
     }
+
 }

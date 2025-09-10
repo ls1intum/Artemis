@@ -7,8 +7,10 @@ import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotAllowedException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -141,6 +143,12 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         return create(exception, problem, request);
     }
 
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleNotAllowedException(NotAllowedException ex, NativeWebRequest request) {
+        Problem problem = Problem.builder().withStatus(Status.METHOD_NOT_ALLOWED).with(MESSAGE_KEY, StringUtils.firstNonBlank(ex.getMessage(), "Method not allowed")).build();
+        return create(ex, problem, request);
+    }
+
     /**
      * @param e       a specific exception
      * @param request the request
@@ -150,7 +158,7 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     // taken from https://mtyurt.net/post/spring-how-to-handle-ioexception-broken-pipe.html
     public Object exceptionHandler(IOException e, HttpServletRequest request) {
-        if (StringUtils.containsIgnoreCase(ExceptionUtils.getRootCauseMessage(e), "Broken pipe")) {
+        if (Strings.CI.contains(ExceptionUtils.getRootCauseMessage(e), "Broken pipe")) {
             log.info("Broken pipe IOException occurred: {}", e.getMessage());
             // socket is closed, cannot return any response
             return null;

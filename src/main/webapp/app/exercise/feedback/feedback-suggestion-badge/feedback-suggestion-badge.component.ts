@@ -1,7 +1,7 @@
 import { Component, Input, inject } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { Feedback, FeedbackSuggestionType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackSuggestionType } from 'app/assessment/shared/entities/feedback.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

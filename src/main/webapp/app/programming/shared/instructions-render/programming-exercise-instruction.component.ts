@@ -15,34 +15,35 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import type { PluginSimple } from 'markdown-it';
 import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, merge, of } from 'rxjs';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { ProgrammingExerciseTaskExtensionWrapper, taskRegex } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ResultService } from 'app/exercise/result/result.service';
-import { problemStatementHasChanged } from 'app/exercise/exercise.utils';
+import { problemStatementHasChanged } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { hasParticipationChanged } from 'app/exercise/participation/participation.utils';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import diff from 'html-diff-ts';
-import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/service/programming-exercise-instruction.service';
+import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ProgrammingExerciseInstructionStepWizardComponent } from './step-wizard/programming-exercise-instruction-step-wizard.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -250,13 +251,13 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * This method is used for initially loading the results so that the instructions can be rendered.
      */
     loadInitialResult(): Observable<Result | undefined> {
-        if (this.participation?.id && this.participation?.results?.length) {
+        const results = getAllResultsOfAllSubmissions(this.participation.submissions);
+        if (this.participation?.id && results.length) {
             // Get the result with the highest id (most recent result)
-            const latestResult = findLatestResult(this.participation.results);
+            const latestResult = findLatestResult(results);
             if (!latestResult) {
                 return of(undefined);
             }
-            latestResult.participation = this.participation;
             return latestResult.feedbacks ? of(latestResult) : this.loadAndAttachResultDetails(latestResult);
         } else if (this.participation && this.participation.id) {
             // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
@@ -271,7 +272,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * If there is no result, return undefined.
      */
     loadLatestResult(): Observable<Result | undefined> {
-        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id!, true).pipe(
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id!).pipe(
             catchError(() => of(undefined)),
             mergeMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
         );
@@ -283,7 +284,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param result - result to which instructions will be attached.
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
-        const currentParticipation = result.participation ? result.participation : this.participation;
+        const currentParticipation = this.participation;
         return this.resultService.getFeedbackDetailsForResult(currentParticipation.id!, result).pipe(
             map((res) => res && res.body),
             map((feedbacks: Feedback[]) => {
@@ -394,6 +395,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             environmentInjector: this.injector,
         });
         componentRef.instance.exercise = this.exercise;
+        componentRef.instance.participation = this.participation;
         componentRef.instance.taskName = taskName;
         componentRef.instance.latestResult = this.latestResult;
         componentRef.instance.testIds = testIds;

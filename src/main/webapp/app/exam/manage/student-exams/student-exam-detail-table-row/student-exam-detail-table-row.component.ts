@@ -1,17 +1,17 @@
 import { Component, OnChanges, input } from '@angular/core';
-import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
-import { Submission } from 'app/entities/submission.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { Course } from 'app/entities/course.model';
-import { Result } from 'app/entities/result.model';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Submission, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 @Component({
     selector: '[jhi-student-exam-detail-table-row]',
@@ -49,9 +49,9 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
             if (this.studentParticipation.submissions?.length! > 0) {
                 this.submission = this.studentParticipation.submissions![0];
             }
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            if (this.studentParticipation.results?.length! > 0) {
-                this.result = this.studentParticipation.results![0];
+            const allResults = getAllResultsOfAllSubmissions(this.studentParticipation.submissions);
+            if (allResults.length > 0) {
+                this.result = allResults[0];
             }
         }
         if (this.course() && this.course().id) {

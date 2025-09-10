@@ -1,15 +1,15 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject } from '@angular/core';
-import { IrisEventType, IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
-import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
+import { IrisEventType, IrisSubSettings, IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
+import { IrisVariant } from 'app/iris/shared/entities/settings/iris-variant';
 import { AccountService } from 'app/core/auth/account.service';
-import { ButtonType } from 'app/shared/components/button.component';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { faCircleExclamation, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettingsType } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';
@@ -76,7 +76,12 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     EXERCISE = IrisSettingsType.EXERCISE;
     COURSE = IrisSettingsType.COURSE;
     TEXT_EXERCISE_CHAT = IrisSubSettingsType.TEXT_EXERCISE_CHAT;
-    CHAT = IrisSubSettingsType.CHAT;
+    PROGRAMMING_EXERCISE_CHAT = IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT;
+    COURSE_CHAT = IrisSubSettingsType.COURSE_CHAT;
+    LECTURE = IrisSubSettingsType.LECTURE;
+    COMPETENCY_GENERATION = IrisSubSettingsType.COMPETENCY_GENERATION;
+    TUTOR_SUGGESTION = IrisSubSettingsType.TUTOR_SUGGESTION;
+
     // Button types
     WARNING = ButtonType.WARNING;
     // Icons
@@ -221,6 +226,13 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         }
     }
 
+    onCustomInstructionsChange(customInstructions: string) {
+        if (!this.subSettings) {
+            return;
+        }
+        this.subSettings.customInstructions = customInstructions;
+    }
+
     get inheritDisabled() {
         if (this.parentSubSettings) {
             return !this.parentSubSettings.enabled;
@@ -229,7 +241,7 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     }
 
     get isSettingsSwitchDisabled() {
-        return this.inheritDisabled || (!this.isAdmin && this.settingsType !== this.EXERCISE);
+        return this.inheritDisabled;
     }
 
     /**

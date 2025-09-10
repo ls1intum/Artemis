@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -57,6 +58,7 @@ import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlConfigBuilde
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
+@Lazy
 @Service
 @Profile(PROFILE_JENKINS)
 public class JenkinsBuildPlanService {
@@ -130,8 +132,7 @@ public class JenkinsBuildPlanService {
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
         final boolean checkoutSolution = exercise.getBuildConfig().getCheckoutSolutionRepository();
-        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUris, checkoutSolution,
-                buildPlanUrl);
+        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, internalRepositoryUris, checkoutSolution, buildPlanUrl);
 
         final String jobFolder = exercise.getProjectKey();
         String job = jobFolder + "-" + planKey;
@@ -154,8 +155,8 @@ public class JenkinsBuildPlanService {
 
     private JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs getInternalRepositoryUris(final ProgrammingExercise exercise, final VcsRepositoryUri assignmentRepositoryUri) {
         final VcsRepositoryUri assignmentUrl = jenkinsInternalUrlService.toInternalVcsUrl(assignmentRepositoryUri);
-        final VcsRepositoryUri testUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.TESTS));
-        final VcsRepositoryUri solutionUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURL(RepositoryType.SOLUTION));
+        final VcsRepositoryUri testUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURI(RepositoryType.TESTS));
+        final VcsRepositoryUri solutionUrl = jenkinsInternalUrlService.toInternalVcsUrl(exercise.getRepositoryURI(RepositoryType.SOLUTION));
 
         return new JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs(assignmentUrl, testUrl, solutionUrl);
     }
@@ -398,11 +399,11 @@ public class JenkinsBuildPlanService {
         try {
             // Retrieve the TAs and instructors that will be given access to the plan of the programming exercise
             Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-            var teachingAssistants = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream()
+            var teachingAssistants = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream()
                     .map(User::getLogin).collect(Collectors.toSet());
-            var editors = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getEditorGroupName()).stream().map(User::getLogin)
+            var editors = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getEditorGroupName()).stream().map(User::getLogin)
                     .collect(Collectors.toSet());
-            var instructors = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()).stream().map(User::getLogin)
+            var instructors = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()).stream().map(User::getLogin)
                     .collect(Collectors.toSet());
 
             // The build plan of the exercise is inside the course folder

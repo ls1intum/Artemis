@@ -1,0 +1,113 @@
+<div class="row border-bottom">
+    <div class="col-6">
+        <h4 class="ps-2">
+            @if (isRepositoryView() && leftCommit()) {
+                @if (diffForTemplateAndEmptyRepository()) {
+                    {{ 'artemisApp.programmingExercise.diffReport.emptyRepository' | artemisTranslate }}
+                } @else {
+                    {{ 'artemisApp.programmingExercise.diffReport.previousCommit' | artemisTranslate }}
+                    <span class="text-primary">
+                        {{ leftCommit() }}
+                    </span>
+                }
+            } @else {
+                {{
+                    (diffForTemplateAndSolution() || !participationId()
+                        ? 'artemisApp.programmingExercise.diffReport.template'
+                        : 'artemisApp.programmingExercise.diffReport.previousSubmission'
+                    ) | artemisTranslate
+                }}
+            }
+        </h4>
+    </div>
+    <div class="col-3">
+        <h4 class="ps-2">
+            @if (isRepositoryView() && rightCommit()) {
+                @if (diffForTemplateAndEmptyRepository()) {
+                    {{ 'artemisApp.programmingExercise.diffReport.template' | artemisTranslate }}
+                } @else {
+                    {{ 'artemisApp.programmingExercise.diffReport.currentCommit' | artemisTranslate }}
+                    <span class="text-primary">
+                        {{ rightCommit() }}
+                    </span>
+                }
+            } @else {
+                {{
+                    (diffForTemplateAndSolution() ? 'artemisApp.programmingExercise.diffReport.solution' : 'artemisApp.programmingExercise.diffReport.currentSubmission')
+                        | artemisTranslate
+                }}
+            }
+        </h4>
+    </div>
+    <div class="col-3">
+        <div class="d-flex flex-row gap-2 justify-content-end">
+            <jhi-button
+                [btnType]="ButtonType.PRIMARY"
+                [btnSize]="ButtonSize.SMALL"
+                [icon]="faTableColumns"
+                tooltip="artemisApp.programmingExercise.diffReport.splitView.tooltip"
+                [tooltipPlacement]="TooltipPlacement.BOTTOM"
+                [title]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"
+                (onClick)="allowSplitView.set(!allowSplitView())"
+            />
+            <jhi-git-diff-line-stat
+                class="mt-1 fw-bold"
+                [hidden]="!allDiffsReady()"
+                [addedLineCount]="repositoryDiffInformation().totalLineChange.addedLineCount"
+                [removedLineCount]="repositoryDiffInformation().totalLineChange.removedLineCount"
+                ngbTooltip="{{
+                    (diffForTemplateAndSolution()
+                        ? 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport'
+                        : 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReportExamTimeline'
+                    ) | artemisTranslate
+                }}"
+            />
+        </div>
+    </div>
+</div>
+<div [hidden]="!allDiffsReady()">
+    @for (diffInformation of repositoryDiffInformation().diffInformations; track diffInformation) {
+        <div class="mt-2">
+            <div ngbAccordion [destroyOnHide]="false" class="git-diff-file-panel">
+                <div ngbAccordionItem #fileDiffPanel="ngbAccordionItem" [collapsed]="false">
+                    <div ngbAccordionHeader class="d-flex align-items-center justify-content-between">
+                        <jhi-git-diff-file-panel-title [diffInformation]="diffInformation" />
+                        <div>
+                            <jhi-git-diff-line-stat
+                                [addedLineCount]="diffInformation.lineChange?.addedLineCount ?? 0"
+                                [removedLineCount]="diffInformation.lineChange?.removedLineCount ?? 0"
+                                ngbTooltip="{{
+                                    (diffForTemplateAndSolution()
+                                        ? 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport'
+                                        : 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReportExamTimeline'
+                                    ) | artemisTranslate
+                                }}"
+                            />
+                            <button ngbAccordionToggle class="btn ms-1">
+                                <fa-icon [icon]="!fileDiffPanel.collapsed ? faAngleUp : faAngleDown" />
+                            </button>
+                        </div>
+                    </div>
+                    <div ngbAccordionCollapse>
+                        <div ngbAccordionBody>
+                            <jhi-git-diff-file
+                                [allowSplitView]="allowSplitView()"
+                                [diffInformation]="diffInformation"
+                                (onDiffReady)="handleDiffReady(diffInformation.title, $event)"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+<div class="d-flex w-100 justify-content-center align-items-center fs-4">
+    @if (nothingToDisplay()) {
+        <div class="text-secondary mt-3" jhiTranslate="artemisApp.repository.commitHistory.commitDetails.empty"></div>
+    } @else if (!allDiffsReady()) {
+        <div>
+            <fa-icon [icon]="faSpinner" animation="spin" />
+        </div>
+    }
+</div>

@@ -11,8 +11,9 @@ import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 
 /**
@@ -40,24 +41,13 @@ public class FileUploadSubmission extends Submission {
     @PostRemove
     public void onDelete() {
         if (filePath != null) {
-            Path actualPath = FilePathService.actualPathForPublicPath(URI.create(filePath));
+            Path actualPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(filePath), FilePathType.FILE_UPLOAD_SUBMISSION);
             fileService.schedulePathForDeletion(actualPath, 0);
         }
     }
 
     public String getFilePath() {
         return filePath;
-    }
-
-    /**
-     * Builds file path for file upload submission.
-     *
-     * @param exerciseId   the id of the exercise
-     * @param submissionId the id of the submission
-     * @return path where submission for file upload exercise is stored
-     */
-    public static Path buildFilePath(Long exerciseId, Long submissionId) {
-        return FilePathService.getFileUploadExercisesFilePath().resolve(exerciseId.toString()).resolve(submissionId.toString());
     }
 
     public void setFilePath(String filePath) {

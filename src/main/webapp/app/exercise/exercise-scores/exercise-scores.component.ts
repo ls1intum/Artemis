@@ -1,51 +1,52 @@
 import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { Participation } from 'app/entities/participation/participation.model';
+import { PROFILE_LOCALCI } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { areManualResultsAllowed } from 'app/exercise/exercise.utils';
+import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
+import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
 import { ResultService } from 'app/exercise/result/result.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { ExerciseService } from 'app/exercise/exercise.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
-import { faCodeBranch, faComment, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faComment, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
-import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
+import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { ExternalSubmissionButtonComponent } from '../external-submission/external-submission-button.component';
-import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
-import { ExerciseScoresExportButtonComponent } from './exercise-scores-export-button.component';
-import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/programming-assessment-repo-export-button.component';
-import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/submission-export-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
+import { ExerciseScoresExportButtonComponent } from './export-button/exercise-scores-export-button.component';
+import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/export-button/programming-assessment-repo-export-button.component';
+import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/button/submission-export-button.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ResultComponent } from '../result/result.component';
-import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
+import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
-import { ManageAssessmentButtonsComponent } from './manage-assessment-buttons.component';
+import { ManageAssessmentButtonsComponent } from './manage-assessment-buttons/manage-assessment-buttons.component';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 /**
  * Filter properties for a result
@@ -94,20 +95,36 @@ export enum FilterProp {
     ],
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
+    protected readonly faDownload = faDownload;
+    protected readonly faSync = faSync;
+    protected readonly faFolderOpen = faFolderOpen;
+    protected readonly faListAlt = faListAlt;
+    protected readonly farFileCode = faFileCode;
+    protected readonly faFilter = faFilter;
+    protected readonly faComment = faComment;
+    protected readonly RepositoryType = RepositoryType;
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly AssessmentType = AssessmentType;
+    protected readonly assessmentNoteSortFieldProperty = 'submissions?.last()?.results?.last()?.assessmentNote?.note';
+    protected readonly durationSortFieldProperty = 'submissions?.last()?.results?.last()?.durationInMinutes';
+    protected readonly submissionCountSortFieldProperty = 'submissionCount';
+    protected readonly testRunSortFieldProperty = 'testRun';
+    protected readonly teamShortNameSortFieldProperty = 'team.shortName';
+    protected readonly studentLoginSortFieldProperty = 'student.login';
+    protected readonly completionDateSortFieldProperty = 'submissions?.last()?.results?.last()?.completionDate';
+    protected readonly resultSortFieldProperty = 'submissions?.last()?.results?.last()?.score';
+    protected readonly assessmentTypeSortFieldProperty = 'submissions?.last()?.results?.last()?.assessmentType';
+    readonly FilterProp = FilterProp;
+
     private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
     private exerciseService = inject(ExerciseService);
     private resultService = inject(ResultService);
-    private profileService = inject(ProfileService);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private participationService = inject(ParticipationService);
-
-    // make constants available to html for comparison
-    readonly FilterProp = FilterProp;
-    readonly ExerciseType = ExerciseType;
-    readonly FeatureToggle = FeatureToggle;
-    readonly AssessmentType = AssessmentType;
-    protected readonly RepositoryType = RepositoryType;
+    private profileService = inject(ProfileService);
+    protected nameSortFieldProperty: string;
 
     // represents all intervals selectable in the score distribution on the exercise statistics
     readonly scoreRanges = [
@@ -140,25 +157,15 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     participationsPerFilter: Map<FilterProp, number> = new Map();
 
     isLoading: boolean;
-
     afterDueDate = false;
 
-    localVCEnabled = true;
-
-    // Icons
-    faDownload = faDownload;
-    faSync = faSync;
-    faFolderOpen = faFolderOpen;
-    faListAlt = faListAlt;
-    faCodeBranch = faCodeBranch;
-    farFileCode = faFileCode;
-    faFilter = faFilter;
-    faComment = faComment;
+    localCIEnabled = true;
 
     /**
      * Fetches the course and exercise from the server
      */
     ngOnInit() {
+        this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
         this.paramSub = this.route.params.subscribe((params) => {
             this.isLoading = true;
             const findCourse = this.courseService.find(params['courseId']);
@@ -171,6 +178,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             forkJoin([findCourse, findExercise]).subscribe(([courseRes, exerciseRes]) => {
                 this.course = courseRes.body!;
                 this.exercise = exerciseRes.body!;
+                this.nameSortFieldProperty = this.exercise.teamMode ? 'team.name' : 'student.name';
                 this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
                 // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
                 this.participationService.findAllParticipationsByExercise(this.exercise.id!, true).subscribe((participationsResponse) => {
@@ -210,33 +218,20 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     private handleNewParticipations(participationsResponse: HttpResponse<Participation[]>) {
         this.participations = participationsResponse.body ?? [];
         this.participations.forEach((participation) => {
-            participation.results?.forEach((result, index) => {
-                participation.results![index].durationInMinutes = dayjs(result.completionDate).diff(participation.initializationDate, 'seconds');
+            const results = getAllResultsOfAllSubmissions(participation.submissions);
+            results?.forEach((result) => {
+                result.durationInMinutes = dayjs(result.completionDate).diff(participation.initializationDate, 'seconds');
             });
             // sort the results from old to new.
             // the result of the first correction round will be at index 0,
             // the result of a complaints or the second correction at index 1.
-            participation.results?.sort((result1, result2) => (result1.id ?? 0) - (result2.id ?? 0));
-            const resultsWithoutAthena = participation.results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
-            if (resultsWithoutAthena?.length != 0) {
-                if (resultsWithoutAthena?.[0].submission) {
-                    participation.submissions = [resultsWithoutAthena?.[0].submission];
-                } else if (participation.results?.[0].submission) {
-                    participation.submissions = [participation.results?.[0].submission];
-                }
-            } else {
-                participation.results = undefined;
+            results?.sort((result1, result2) => (result1.id ?? 0) - (result2.id ?? 0));
+            const resultsWithoutAthena = results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
+            if (resultsWithoutAthena?.length != 0 && participation?.submissions?.[0]) {
+                participation!.submissions[0]!.results = results;
             }
         });
         this.filteredParticipations = this.filterByScoreRange(this.participations);
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const programmingExercise = this.exercise as ProgrammingExercise;
-            if (programmingExercise.projectKey) {
-                this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                    this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                });
-            }
-        }
 
         for (const filter of Object.values(FilterProp)) {
             if (this.isFilterRelevantForConfiguration(filter)) {
@@ -265,7 +260,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param filterProp the filter that should be used to determine if the participation should be included or excluded
      */
     filterParticipationsByProp = (participation: Participation, filterProp = this.resultCriteria.filterProp): boolean => {
-        const latestResult = participation.results?.last();
+        const results = getAllResultsOfAllSubmissions(participation.submissions);
+        const latestResult = results?.last();
         switch (filterProp) {
             case FilterProp.SUCCESSFUL:
                 return !!latestResult?.successful;
@@ -333,12 +329,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 const { participantName } = studentParticipation;
                 if (studentParticipation.team) {
                     if (index === 0) {
-                        rows.push('data:text/csv;charset=utf-8,Team Name,Team Short Name,Students');
+                        rows.push('Team Name,Team Short Name,Students');
                     }
                     const { name, shortName, students } = studentParticipation.team;
                     rows.push(`${name},${shortName},"${students?.map((s) => s.name).join(', ')}"`);
                 } else {
-                    rows.push(index === 0 ? `data:text/csv;charset=utf-8,${participantName}` : participantName!);
+                    rows.push(participantName!);
                 }
             });
             this.resultService.triggerDownloadCSV(rows, 'results-names.csv');
@@ -404,13 +400,15 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         // If the range to filter against is [90%, 100%], a score of 100% also satisfies this range
         if (this.rangeFilter.upperBound === 100) {
             filterFunction = (participation: Participation) => {
-                const result = participation.results?.last();
+                const results = getAllResultsOfAllSubmissions(participation.submissions);
+                const result = results?.last();
                 return !!result?.score && result?.score >= this.rangeFilter!.lowerBound && result.score <= this.rangeFilter!.upperBound;
             };
         } else {
             // For any other range, the score must be strictly below the upper bound
             filterFunction = (participation: Participation) => {
-                const result = participation.results?.last();
+                const results = getAllResultsOfAllSubmissions(participation.submissions);
+                const result = results?.last();
                 return result?.score !== undefined && result.score >= this.rangeFilter!.lowerBound && result.score < this.rangeFilter!.upperBound;
             };
         }

@@ -10,5 +10,4 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
  * arguments.
  */
 public record GlobalMessageStrings(@JsonAnySetter Map<String, MultiformatMessageString> additionalProperties) {
-
 }

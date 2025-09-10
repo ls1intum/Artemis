@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanDeactivateFn } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { LectureUpdateComponent } from 'app/lecture/manage/lecture-update.component';
+import { LectureUpdateComponent } from 'app/lecture/manage/lecture-update/lecture-update.component';
 import { Observable, from, of } from 'rxjs';
 import { CloseEditLectureModalComponent } from 'app/lecture/manage/close-edit-lecture-modal/close-edit-lecture-modal.component';
 

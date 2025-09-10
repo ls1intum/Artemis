@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -44,7 +45,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
-import de.tum.cit.aet.artemis.core.test_repository.NotificationTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
@@ -65,8 +65,9 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
- * 1) Jenkins + LocalVc
+ * 1) Jenkins + LocalVC
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class UserTestService {
@@ -120,13 +121,10 @@ public class UserTestService {
     private SubmissionTestRepository submissionRepository;
 
     @Autowired
-    private LearnerProfileRepository learnerProfileRepository;
+    private Optional<LearnerProfileRepository> learnerProfileRepository;
 
     @Autowired
     private ExerciseTestRepository exerciseTestRepository;
-
-    @Autowired
-    private NotificationTestRepository notificationTestRepository;
 
     private String TEST_PREFIX;
 
@@ -163,9 +161,6 @@ public class UserTestService {
     }
 
     public void tearDown() throws IOException {
-        if (student.getId() != null) {
-            notificationTestRepository.deleteAllInBatch(notificationTestRepository.findAllByRecipientId(student.getId()));
-        }
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
     }
 
@@ -211,7 +206,7 @@ public class UserTestService {
     // Test
     public void deleteUser_isSuccessful() throws Exception {
         student.setRegistrationNumber("123");
-        student.setImageUrl("https://www.somewebsite.com/image.jpg");
+        student.setImageUrl("images/user/profiles-pictures/image.jpg");
         userTestRepository.save(student);
 
         request.delete("/api/core/admin/users/" + student.getLogin(), HttpStatus.OK);
@@ -420,8 +415,6 @@ public class UserTestService {
         assertThat(student).as("New user is equal to request response").isEqualTo(response);
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
 
-        assertThat(learnerProfileRepository.findByUser(student)).isNotEmpty();
-
         return userInDB;
     }
 
@@ -469,7 +462,6 @@ public class UserTestService {
     public void createUser_asAdmin_hasId() throws Exception {
         userTestRepository.findOneByLogin("batman").ifPresent(userTestRepository::delete);
 
-        student.setId((long) 1337);
         student.setLogin("batman");
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
@@ -652,7 +644,7 @@ public class UserTestService {
 
     // Test
     public void getUsers_asAdmin_isSuccessful() throws Exception {
-        var usersDb = userTestRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalse().stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+        var usersDb = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalse().stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
         userTestRepository.saveAll(usersDb);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
@@ -742,13 +734,6 @@ public class UserTestService {
     }
 
     // Test
-    public void updateUserNotificationDate_asStudent_isSuccessful() throws Exception {
-        request.put("/api/core/users/notification-date", null, HttpStatus.OK);
-        User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(1));
-    }
-
-    // Test
     public void updateUserProfilePicture_asStudent_isSuccessful() throws Exception {
         User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getImageUrl()).isNull();
@@ -781,21 +766,6 @@ public class UserTestService {
         request.delete("/api/core/account/profile-picture", HttpStatus.OK);
         userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getImageUrl()).isNull();
-    }
-
-    // Test
-    public void updateUserNotificationVisibilityShowAllAsStudentIsSuccessful() throws Exception {
-        request.put("/api/core/users/notification-visibility", true, HttpStatus.OK);
-        User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(userInDB.getHideNotificationsUntil()).isNull();
-    }
-
-    // Test
-    public void updateUserNotificationVisibilityHideUntilAsStudentIsSuccessful() throws Exception {
-        request.put("/api/core/users/notification-visibility", false, HttpStatus.OK);
-        User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(userInDB.getHideNotificationsUntil()).isNotNull();
-        assertThat(userInDB.getHideNotificationsUntil()).isStrictlyBetween(ZonedDateTime.now().minusSeconds(1), ZonedDateTime.now().plusSeconds(1));
     }
 
     // Test

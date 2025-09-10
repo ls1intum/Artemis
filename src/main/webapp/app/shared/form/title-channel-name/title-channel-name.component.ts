@@ -1,10 +1,10 @@
-import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild, computed, effect, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, input, model, output, signal, viewChild } from '@angular/core';
 import { ControlContainer, FormsModule, NgForm, NgModel } from '@angular/forms';
-import { Subject, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CustomNotIncludedInValidatorDirective } from '../../validators/custom-not-included-in-validator.directive';
-import { HelpIconComponent } from '../../components/help-icon.component';
+import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-title-channel-name',
@@ -13,14 +13,14 @@ import { HelpIconComponent } from '../../components/help-icon.component';
     imports: [TranslateDirective, FormsModule, CustomNotIncludedInValidatorDirective, HelpIconComponent],
 })
 export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnInit {
-    @Input() title?: string;
-    @Input() channelName?: string;
-    @Input() channelNamePrefix: string;
-    @Input() titlePattern: string;
-    @Input() hideTitleLabel: boolean;
-    @Input() emphasizeLabels = false;
-    @Input() minTitleLength: number;
-    @Input() initChannelName = true;
+    title = model<string | undefined>(undefined);
+    channelName = model<string | undefined>(undefined);
+    channelNamePrefix = input<string | undefined>('');
+    titlePattern = input<string>();
+    hideTitleLabel = input<boolean>(false);
+    emphasizeLabels = input<boolean>(false);
+    minTitleLength = input<number>();
+    initChannelName = input<boolean>(true);
     hideChannelName = input<boolean>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     alreadyUsedTitles = input<Set<string>>(new Set());
@@ -33,15 +33,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     titleChange = output<string>();
     channelNameChange = output<string>();
 
-    isFormValidSignal = signal<boolean>(false);
-    /**
-     * @deprecated Use {@link isFormValidSignal} instead.
-     */
-    formValid: boolean;
-    /**
-     * @deprecated Use {@link isFormValidSignal} instead.
-     */
-    formValidChanges = new Subject();
+    isValid = signal<boolean>(false);
 
     fieldTitleSubscription?: Subscription;
     fieldChannelNameSubscription?: Subscription;
@@ -52,7 +44,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
 
     constructor() {
         effect(() => {
-            this.isEditFieldDisplayedRecord(); // triggers effect
+            this.isEditFieldDisplayedRecord(); // triggers effect on change
             this.registerChangeListeners();
         });
 
@@ -70,20 +62,15 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     }
 
     ngOnInit(): void {
-        if (!this.channelNamePrefix) {
-            this.channelNamePrefix = '';
-        }
-
-        if (this.initChannelName) {
+        if (this.initChannelName()) {
             // Defer updating the channel name into the next change detection cycle to avoid the
             // "NG0100: Expression has changed after it was checked" error
             setTimeout(() => {
-                // Remove trailing hyphens if title is not undefined or empty
-                this.formatChannelName(this.channelNamePrefix + (this.title ?? ''), false, !!this.title);
+                this.updateChannelName();
             });
         }
 
-        this.titleOnPageLoad.set(this.title);
+        this.titleOnPageLoad.set(this.title());
     }
 
     private registerChangeListeners() {
@@ -98,22 +85,37 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
 
     calculateFormValid(): void {
         const updatedFormValidValue = Boolean(this.field_title.valid && (!this.isChannelFieldDisplayed() || this.field_channel_name()?.valid));
-        this.isFormValidSignal.set(updatedFormValidValue);
-        this.formValid = updatedFormValidValue;
-        this.formValidChanges.next(this.formValid);
+        this.isValid.set(updatedFormValidValue);
     }
 
     updateTitle(newTitle: string) {
-        this.title = newTitle;
-        this.titleChange.emit(this.title);
-        // Remove trailing hyphens if title is not undefined or empty
-        this.formatChannelName(this.channelNamePrefix + this.title, false, !!this.title);
+        this.title.set(newTitle);
+        this.titleChange.emit(this.title() ?? '');
+        this.updateChannelName();
     }
 
-    formatChannelName(newName: string, allowDuplicateHyphens = true, removeTrailingHyphens = false) {
-        const specialCharacters = allowDuplicateHyphens ? /[^a-z0-9-]+/g : /[^a-z0-9]+/g;
-        const trailingHyphens = removeTrailingHyphens ? /-$/ : new RegExp('[]');
-        this.channelName = newName.toLowerCase().replaceAll(specialCharacters, '-').replace(trailingHyphens, '').slice(0, 30);
-        this.channelNameChange.emit(this.channelName);
+    updateChannelName() {
+        this.formatChannelName((this.channelNamePrefix() ?? '') + (this.title() ?? ''), false, !!this.title());
+    }
+
+    /**
+     * Formats a channel name by applying specific transformations based on the provided options.
+     *
+     * @param {string} newName - The new channel name to be formatted.
+     * @param {boolean} [allowDuplicateHyphens=true] - Flag indicating whether duplicate hyphens should be allowed in the formatted name.
+     * @param {boolean} [removeTrailingHyphens=false] - Flag indicating whether trailing hyphens should be removed from the formatted name.
+     * @return {void} This method does not return a value but emits the formatted channel name.
+     */
+    formatChannelName(newName: string, allowDuplicateHyphens: boolean = true, removeTrailingHyphens: boolean = false): void {
+        const REMOVE_SPECIAL_CHARACTERS_ALLOW_HYPHENS = /[^a-z0-9-]+/g;
+        const REMOVE_SPECIAL_CHARACTERS_NO_HYPHENS = /[^a-z0-9]+/g;
+        const TRAILING_HYPHENS = /-$/;
+        const removeSpecialCharactersRegEx: RegExp = allowDuplicateHyphens ? REMOVE_SPECIAL_CHARACTERS_ALLOW_HYPHENS : REMOVE_SPECIAL_CHARACTERS_NO_HYPHENS;
+
+        const nameWithoutSpecialCharacters = newName.toLowerCase().replaceAll(removeSpecialCharactersRegEx, '-');
+        const formattedName = removeTrailingHyphens ? nameWithoutSpecialCharacters.replace(TRAILING_HYPHENS, '') : nameWithoutSpecialCharacters;
+
+        this.channelName.set(formattedName.slice(0, 30));
+        this.channelNameChange.emit(this.channelName() ?? '');
     }
 }

@@ -126,8 +126,7 @@ public class SarifParser implements ParserStrategy {
         Optional<ReportingDescriptor> ruleByIndex = driver.getOptionalRules().flatMap(rules -> ruleIndex.map(rules::get));
         Optional<ReportingDescriptor> rule = ruleByIndex.or(() -> lookupRuleById(ruleId, ruleOfId));
 
-        // Fallback to the rule identifier for the category
-        String category = rule.map(ruleCategorizer::categorizeRule).orElse(ruleId);
+        String category = ruleCategorizer.categorizeRule(rule.orElseGet(() -> new ReportingDescriptor(ruleId)));
 
         Level level = result.getOptionalLevel().orElseGet(() -> getDefaultLevel(rule));
 

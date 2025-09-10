@@ -1,18 +1,19 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupFormComponent, TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-form.component';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, combineLatest } from 'rxjs';
 import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
+import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import dayjs from 'dayjs/esm';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
     selector: 'jhi-edit-tutorial-group',
@@ -25,6 +26,7 @@ export class EditTutorialGroupComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
+    private calendarEventService = inject(CalendarEventService);
     private cdr = inject(ChangeDetectorRef);
 
     ngUnsubscribe = new Subject<void>();
@@ -116,6 +118,7 @@ export class EditTutorialGroupComponent implements OnInit, OnDestroy {
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
+                    this.calendarEventService.refresh();
                     this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups']);
                 }),
                 takeUntil(this.ngUnsubscribe),

@@ -1,23 +1,22 @@
-import { Result } from 'app/entities/result.model';
-import { cloneDeep } from 'lodash-es';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/programming/shared/utils/programming-exercise.utils';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercise/participation/participation.utils';
-import { getExerciseDueDate } from 'app/exercise/exercise.utils';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Participation, ParticipationType, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
-import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
-import { TestCaseResult } from 'app/entities/programming/test-case-result.model';
+import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
+import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -105,14 +104,15 @@ export const initializedResultWithScore = (result?: Result) => {
  * Prepare a result that contains a participation which is needed in the rating component
  */
 export const addParticipationToResult = (result: Result | undefined, participation: StudentParticipation) => {
-    const ratingResult = cloneDeep(result);
-    if (ratingResult) {
-        const ratingParticipation = cloneDeep(participation);
-        // remove circular dependency
-        ratingParticipation.exercise!.studentParticipations = [];
-        ratingResult.participation = ratingParticipation;
-    }
-    return ratingResult;
+    // TODO should not be needed anymore
+    // const ratingResult = cloneDeep(result);
+    // if (ratingResult) {
+    //     const ratingParticipation = cloneDeep(participation);
+    //     // remove circular dependency
+    //     ratingParticipation.exercise!.studentParticipations = [];
+    //     ratingResult.participation = ratingParticipation;
+    // }
+    // return ratingResult;
 };
 
 /**
@@ -257,13 +257,13 @@ export const evaluateTemplateStatus = (
  * Checks if only compilation was tested. This is the case, when a successful result is present with 0 of 0 passed tests
  * This could be because all test cases are only visible after the due date.
  */
-export const isOnlyCompilationTested = (result: Result | undefined, templateStatus: ResultTemplateStatus): boolean => {
+export const isOnlyCompilationTested = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus): boolean => {
     const zeroTests = !result?.testCaseCount;
-    const isProgrammingExercise: boolean = result?.participation?.exercise?.type === ExerciseType.PROGRAMMING;
+    const isProgrammingExercise: boolean = participation?.exercise?.type === ExerciseType.PROGRAMMING;
     return (
         templateStatus !== ResultTemplateStatus.NO_RESULT &&
         templateStatus !== ResultTemplateStatus.IS_BUILDING &&
-        !isBuildFailed(result?.submission) &&
+        !isBuildFailed(getLatestSubmission(participation)) &&
         zeroTests &&
         isProgrammingExercise
     );
@@ -274,7 +274,7 @@ export const isOnlyCompilationTested = (result: Result | undefined, templateStat
  *
  * @return {string} the css class
  */
-export const getTextColorClass = (result: Result | undefined, templateStatus: ResultTemplateStatus) => {
+export const getTextColorClass = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus) => {
     if (!result) {
         return 'text-secondary';
     }
@@ -293,11 +293,11 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return 'result-late';
     }
 
-    if (isBuildFailedAndResultIsAutomatic(result)) {
+    if (isBuildFailedAndResultIsAutomatic(result, participation)) {
         return 'text-danger';
     }
 
-    if (resultIsPreliminary(result)) {
+    if (resultIsPreliminary(result, participation)) {
         return 'text-secondary';
     }
 
@@ -305,7 +305,7 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return result?.successful ? 'text-success' : 'text-danger';
     }
 
-    if (isOnlyCompilationTested(result, templateStatus)) {
+    if (isOnlyCompilationTested(result, participation, templateStatus)) {
         return 'text-success';
     }
 
@@ -324,7 +324,7 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
  * Get the icon type for the result icon as an array
  *
  */
-export const getResultIconClass = (result: Result | undefined, templateStatus: ResultTemplateStatus): IconProp => {
+export const getResultIconClass = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus): IconProp => {
     if (!result) {
         return faQuestionCircle;
     }
@@ -342,7 +342,7 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
         return faTimesCircle;
     }
 
-    if (isBuildFailedAndResultIsAutomatic(result) || isAIResultAndFailed(result)) {
+    if (isBuildFailedAndResultIsAutomatic(result, participation) || isAIResultAndFailed(result)) {
         return faTimesCircle;
     }
 
@@ -350,11 +350,11 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
         return faCircleNotch;
     }
 
-    if (resultIsPreliminary(result) || isAIResultAndTimedOut(result)) {
+    if (resultIsPreliminary(result, participation) || isAIResultAndTimedOut(result)) {
         return faQuestionCircle;
     }
 
-    if (isOnlyCompilationTested(result, templateStatus)) {
+    if (isOnlyCompilationTested(result, participation, templateStatus)) {
         return faCheckCircle;
     }
 
@@ -369,35 +369,33 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
 
 /**
  * Returns true if the specified result is preliminary.
- * @param result the result. It must include a participation and exercise.
+ * @param result the result.
+ * @param participation the participation
  */
-export const resultIsPreliminary = (result: Result) => {
-    const exerciseType = result.participation?.exercise?.type;
+export const resultIsPreliminary = (result: Result, participation: Participation) => {
+    const exerciseType = participation?.exercise?.type;
     if (exerciseType === ExerciseType.TEXT || exerciseType === ExerciseType.MODELING) {
         return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
-    } else
-        return (
-            result.participation &&
-            isProgrammingExerciseStudentParticipation(result.participation) &&
-            isResultPreliminary(result, result.participation.exercise as ProgrammingExercise)
-        );
+    } else return isProgrammingExerciseStudentParticipation(participation) && isResultPreliminary(result, participation, participation?.exercise as ProgrammingExercise);
 };
 
 /**
  * Returns true if the specified result is a student Participation
- * @param result the result.
+ * @param participation the participation
  */
-export const isStudentParticipation = (result: Result) => {
-    return Boolean(result.participation && result.participation.type !== ParticipationType.TEMPLATE && result.participation.type !== ParticipationType.SOLUTION);
+export const isStudentParticipation = (participation: Participation) => {
+    return Boolean(participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION);
 };
 
 /**
  * Returns true if the submission of the result is of type programming, is automatic, and
  * its build has failed.
  * @param result
+ * @param participation
  */
-export const isBuildFailedAndResultIsAutomatic = (result: Result) => {
-    return isBuildFailed(result.submission) && !isManualResult(result);
+export const isBuildFailedAndResultIsAutomatic = (result: Result, participation: Participation) => {
+    const latestSubmission = result?.submission ?? getLatestSubmission(participation);
+    return isBuildFailed(latestSubmission) && !isManualResult(result);
 };
 
 /**
@@ -487,12 +485,6 @@ export function getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]):
  * @param result Some result.
  */
 export function breakCircularResultBackReferences(result: Result) {
-    if (result.participation?.results) {
-        result.participation.results = [];
-    }
-    if (result.submission?.participation?.results) {
-        result.submission.participation.results = [];
-    }
     if (result.submission?.results) {
         result.submission.results = [];
     }

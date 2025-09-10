@@ -1,0 +1,84 @@
+<div class="mt-n1 me-n1 course-info-bar">
+    <div class="row justify-content-between">
+        <div class="col-md-8">
+            <h2>
+                <span jhiTranslate="artemisApp.ratingList.title"></span>
+            </h2>
+        </div>
+    </div>
+</div>
+<div class="col-12 mt-4">
+    <div class="row table-responsive">
+        <div [hidden]="ratings.length !== 0">
+            <span jhiTranslate="artemisApp.ratingList.noRatingToShow"></span>
+        </div>
+        <table class="table" [hidden]="ratings.length === 0">
+            <thead>
+                <tr jhiSort [(predicate)]="ratingsSortingPredicate" [(ascending)]="ratingsReverseOrder" (sortChange)="sortRows()">
+                    <th jhiSortBy="id">
+                        <a class="th-link">#</a>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th jhiSortBy="result.participation.exercise.title">
+                        <a class="th-link" jhiTranslate="artemisApp.ratingList.exercise"></a>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th jhiSortBy="result.participation.exercise.type">
+                        <a class="th-link" jhiTranslate="artemisApp.ratingList.exerciseType"></a>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th jhiSortBy="result.assessor.login">
+                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.assessorLogin"></a>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th jhiSortBy="result.assessor.name">
+                        <a class="th-link" jhiTranslate="artemisApp.complaint.listOfComplaints.assessorName"></a>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th jhiSortBy="rating.result.assessmentType">
+                        <a class="th-link" jhiTranslate="artemisApp.ratingList.assessmentType"></a>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th jhiSortBy="rating">
+                        <a class="th-link" jhiTranslate="artemisApp.ratingList.rating"></a>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th class="text-center" jhiTranslate="artemisApp.ratingList.actions"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (rating of ratings; track rating) {
+                    <tr>
+                        <td>
+                            {{ rating.id }}
+                        </td>
+                        <td>
+                            <span>{{ rating.result?.submission?.participation?.exercise?.title }}</span>
+                        </td>
+                        <td>
+                            <span>{{ rating.result?.submission?.participation?.exercise?.type }}</span>
+                        </td>
+                        <td>
+                            <span>{{ rating.result?.assessor?.login }}</span>
+                        </td>
+                        <td>
+                            <span>{{ rating.result?.assessor?.name }}</span>
+                        </td>
+                        <td>
+                            <span>{{ rating.result?.assessmentType }}</span>
+                        </td>
+                        <td>
+                            <span><star-rating checkedColor="gold" uncheckedColor="grey" [value]="rating.rating || 0" size="24" [readOnly]="true" [totalStars]="5" /></span>
+                        </td>
+                        <td class="text-center">
+                            <button class="btn btn-primary btn-sm" (click)="openResult(rating)">
+                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                                <span jhiTranslate="artemisApp.ratingList.openSubmission"></span>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

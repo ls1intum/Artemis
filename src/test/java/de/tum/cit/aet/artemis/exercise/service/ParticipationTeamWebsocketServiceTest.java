@@ -53,9 +53,6 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
-    private ExerciseUtilService exerciseUtilService;
-
-    @Autowired
     private ParticipationUtilService participationUtilService;
 
     private StudentParticipation participation;
@@ -72,11 +69,11 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-        ModelingExercise modelingExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
+        ModelingExercise modelingExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
 
         Course textCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        TextExercise textExercise = exerciseUtilService.findTextExerciseWithTitle(textCourse.getExercises(), "Text");
+        TextExercise textExercise = ExerciseUtilService.findTextExerciseWithTitle(textCourse.getExercises(), "Text");
         textParticipation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
 
         closeable = MockitoAnnotations.openMocks(this);
@@ -127,7 +124,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         SubmissionPatch patch = new SubmissionPatch(participation, null);
 
         // when we submit a patch ...
-        participationTeamWebsocketService.patchModelingSubmission(participation.getId(), patch, getPrincipalMock());
+        participationTeamWebsocketService.patchModelingSubmission(participation.getId(), patch, getPrincipalMock("student1"));
         // the patch should be broadcast.
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(websocketTopic(participation), List.of());
     }
@@ -149,7 +146,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         ModelingSubmission submission = new ModelingSubmission();
 
         // when we submit a new modeling submission ...
-        participationTeamWebsocketService.updateModelingSubmission(participation.getId(), submission, getPrincipalMock());
+        participationTeamWebsocketService.updateModelingSubmission(participation.getId(), submission, getPrincipalMock("student1"));
         // the submission should be handled by the service (i.e. saved), ...
         verify(modelingSubmissionService, timeout(2000).times(1)).handleModelingSubmission(any(), any(), any());
         // but it should NOT be broadcast (sync is handled with patches only).
@@ -175,7 +172,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         TextSubmission submission = new TextSubmission();
 
         // when we submit a new text submission ...
-        participationTeamWebsocketService.updateTextSubmission(textParticipation.getId(), submission, getPrincipalMock());
+        participationTeamWebsocketService.updateTextSubmission(textParticipation.getId(), submission, getPrincipalMock("student1"));
         // the submission should be handled by the service (i.e. saved), ...
         verify(textSubmissionService, timeout(2000).times(1)).handleTextSubmission(any(), any(), any());
         // and it should be broadcast (unlike modeling exercises).
@@ -185,7 +182,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStartTyping() {
-        participationTeamWebsocketService.startTyping(participation.getId(), getPrincipalMock());
+        participationTeamWebsocketService.startTyping(participation.getId(), getPrincipalMock("student1"));
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(websocketTopic(participation), List.of());
     }
 
@@ -193,12 +190,6 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         StompHeaderAccessor stompHeaderAccessor = mock(StompHeaderAccessor.class, RETURNS_MOCKS);
         when(stompHeaderAccessor.getSessionId()).thenReturn(fakeSessionId);
         return stompHeaderAccessor;
-    }
-
-    private Principal getPrincipalMock() {
-        Principal principal = mock(Principal.class);
-        when(principal.getName()).thenReturn(TEST_PREFIX + "student1");
-        return principal;
     }
 
     private Principal getPrincipalMock(String username) {

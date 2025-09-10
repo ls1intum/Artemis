@@ -1,0 +1,84 @@
+{
+    "artemisApp": {
+        "learnerProfile": {
+            "courseLearnerProfile": {
+                "title": "Course Learner Profile",
+                "selectCourse": "Select Course...",
+                "description": "Here, you are able to view and update your course specific learner profile. These settings are used to calculate your learning progress and to better personalize your learning experience.",
+                "initialState": "Initial State",
+                "currentState": "Current State",
+                "aimForGradeOrBonus": {
+                    "label": "Aim for grade or additional knowledge",
+                    "description": "Choose the option that best describes your goal for this course."
+                },
+                "timeInvestment": {
+                    "label": "Time investment",
+                    "description": "Choose how much time you are willing to invest in this course."
+                },
+                "repetitionIntensity": {
+                    "label": "Repetition Intensity",
+                    "description": "Choose how much you are willing to repeat the course content."
+                },
+                "profileSaved": "Learner profile saved",
+                "invalidRange": "Values must be between 1 and 5",
+                "level": {
+                    "veryLow": "Very Low",
+                    "low": "Low",
+                    "medium": "Medium",
+                    "high": "High",
+                    "veryHigh": "Very High"
+                }
+            },
+            "feedbackLearnerProfile": {
+                "title": "Feedback Learner Profile",
+                "description": "Here, you are able to view and update your preferences regarding your feedback learner profile. These settings are used to then personalize the automated feedback you get after submitting your exercise.",
+                "feedbackDetail": {
+                    "label": "Level of Detail",
+                    "description": "Choose whether you prefer brief and straight to the point feedback or detailed feedback with explanations and examples.",
+                    "brief": "Brief",
+                    "neutral": "Neutral",
+                    "detailed": "Detailed"
+                },
+                "feedbackFormality": {
+                    "label": "Style of Feedback",
+                    "description": "Choose whether you prefer formal and professional feedback or friendly and approachable feedback.",
+                    "formal": "Formal",
+                    "neutral": "Neutral",
+                    "friendly": "Friendly"
+                },
+                "profileSaved": "Feedback learner profile saved",
+                "invalidRange": "Values must be true or false",
+                "error": "Feedback learner profile could not be saved",
+                "setPreferencesButton": "Set your feedback preferences",
+                "replayOnboardingButton": "Replay onboarding"
+            },
+            "onboardingModal": {
+                "title": "Which feedback feels better?",
+                "subtitle": "Take a look at these two examples and pick the one you'd rather get",
+                "briefFeedback": {
+                    "title": "Brief Feedback",
+                    "subtitle": "Short and straight to the point"
+                },
+                "detailedFeedback": {
+                    "title": "Detailed Feedback",
+                    "subtitle": "Elaborate with explanations and examples"
+                },
+                "formalToneFeedback": {
+                    "title": "Formal-tone Feedback",
+                    "subtitle": "Formal and professional"
+                },
+                "friendlyToneFeedback": {
+                    "title": "Friendly-tone Feedback",
+                    "subtitle": "Friendly and approachable"
+                },
+                "buttons": {
+                    "back": "Back",
+                    "skip": "Skip",
+                    "next": "Next",
+                    "finish": "Finish"
+                }
+            },
+            "loadFailed": "Learner profile could not be loaded"
+        }
+    }
+}

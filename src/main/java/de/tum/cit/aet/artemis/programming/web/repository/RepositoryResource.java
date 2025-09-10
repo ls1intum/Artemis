@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
@@ -46,8 +45,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.web.repository.util.RepositoryExecutor;
 
 /**
@@ -70,21 +69,18 @@ public abstract class RepositoryResource {
 
     protected final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    protected final Optional<VersionControlService> versionControlService;
-
     protected final RepositoryAccessService repositoryAccessService;
 
     private final Optional<LocalVCServletService> localVCServletService;
 
     public RepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
-            RepositoryService repositoryService, Optional<VersionControlService> versionControlService, ProgrammingExerciseRepository programmingExerciseRepository,
-            RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService) {
+            RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            Optional<LocalVCServletService> localVCServletService) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
-        this.versionControlService = versionControlService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
         this.localVCServletService = localVCServletService;
@@ -93,12 +89,14 @@ public abstract class RepositoryResource {
     /**
      * Override this method to define how a repository can be retrieved.
      *
-     * @param domainId that serves as an abstract identifier for retrieving the repository.
+     * @param domainId    that serves as an abstract identifier for retrieving the repository.
+     * @param writeAccess Whether to write to the repository
      * @return the repository if available.
      * @throws IOException     if the repository folder can't be accessed.
      * @throws GitAPIException if the repository can't be checked out.
      */
-    abstract Repository getRepository(Long domainId, RepositoryActionType repositoryAction, boolean pullOnCheckout) throws IOException, IllegalArgumentException, GitAPIException;
+    abstract Repository getRepository(Long domainId, RepositoryActionType repositoryAction, boolean pullOnCheckout, boolean writeAccess)
+            throws IOException, IllegalArgumentException, GitAPIException;
 
     /**
      * Get the url for a repository.
@@ -106,7 +104,7 @@ public abstract class RepositoryResource {
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @return the repositoryUri.
      */
-    abstract VcsRepositoryUri getRepositoryUri(Long domainId);
+    abstract LocalVCRepositoryUri getRepositoryUri(Long domainId);
 
     /**
      * Check if the current user can access the given repository.
@@ -134,7 +132,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to files for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.READ, true);
+            Repository repository = getRepository(domainId, RepositoryActionType.READ, true, false);
             Map<String, FileType> fileList = repositoryService.getFiles(repository);
             return new ResponseEntity<>(fileList, HttpStatus.OK);
         });
@@ -151,7 +149,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to file {} for domainId : {}", filename, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.READ, true);
+            Repository repository = getRepository(domainId, RepositoryActionType.READ, true, false);
             return repositoryService.getFileFromRepository(filename, repository);
         });
     }
@@ -168,7 +166,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to create file {} for domainId : {}", filePath, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
+            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
             try (var inputStream = request.getInputStream()) {
                 repositoryService.createFile(repository, filePath, inputStream);
             }
@@ -188,7 +186,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to create file {} for domainId : {}", folderPath, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
+            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
             try (InputStream inputStream = request.getInputStream()) {
                 repositoryService.createFolder(repository, folderPath, inputStream);
             }
@@ -207,7 +205,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to rename file {} to {} for domainId : {}", fileMove.currentFilePath(), fileMove.newFilename(), domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
+            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
             repositoryService.renameFile(repository, fileMove);
             return new ResponseEntity<>(HttpStatus.OK);
         });
@@ -224,7 +222,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to delete file {} for domainId : {}", filename, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
+            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
             repositoryService.deleteFile(repository, filename);
             return new ResponseEntity<>(HttpStatus.OK);
         });
@@ -240,7 +238,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
-            try (Repository repository = getRepository(domainId, RepositoryActionType.READ, true)) {
+            try (Repository repository = getRepository(domainId, RepositoryActionType.READ, true, false)) {
                 repositoryService.pullChanges(repository);
 
                 return new ResponseEntity<>(HttpStatus.OK);
@@ -280,16 +278,14 @@ public abstract class RepositoryResource {
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
+            Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, true);
             repositoryService.commitChanges(repository, user);
             var vcsAccessLog = repositoryService.savePreliminaryCodeEditorAccessLog(repository, user, domainId);
 
-            // Trigger a build, and process the result. Only implemented for local CI.
+            // Trigger a build, and process the result.
             // For Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
-            if (profileService.isLocalVcsCiActive()) {
-                localVCServletService.orElseThrow().processNewPush(null, repository, Optional.empty(), Optional.empty(), vcsAccessLog);
-            }
+            localVCServletService.orElseThrow().processNewPush(null, repository, user, Optional.empty(), Optional.empty(), vcsAccessLog);
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
@@ -302,7 +298,7 @@ public abstract class RepositoryResource {
      */
     public ResponseEntity<Void> resetToLastCommit(Long domainId) {
         return executeAndCheckForExceptions(() -> {
-            Repository repository = getRepository(domainId, RepositoryActionType.RESET, false);
+            Repository repository = getRepository(domainId, RepositoryActionType.RESET, false, true);
             gitService.resetToOriginHead(repository);
             return new ResponseEntity<>(HttpStatus.OK);
         });
@@ -323,19 +319,11 @@ public abstract class RepositoryResource {
         }
 
         RepositoryStatusDTOType repositoryStatus;
-        VcsRepositoryUri repositoryUri = getRepositoryUri(domainId);
+        LocalVCRepositoryUri repositoryUri = getRepositoryUri(domainId);
 
         try {
-            boolean isClean;
-            // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
-            // Retrieving the default branch is not necessary if the repository is already cached.
-            if (gitService.isRepositoryCached(repositoryUri)) {
-                isClean = repositoryService.isWorkingCopyClean(repositoryUri);
-            }
-            else {
-                String branch = getOrRetrieveBranchOfDomainObject(domainId);
-                isClean = repositoryService.isWorkingCopyClean(repositoryUri, branch);
-            }
+            String branch = getOrRetrieveBranchOfDomainObject(domainId);
+            boolean isClean = repositoryService.isWorkingCopyClean(repositoryUri, branch);
             repositoryStatus = isClean ? CLEAN : UNCOMMITTED_CHANGES;
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {

@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
@@ -37,6 +39,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
+import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
@@ -47,6 +50,7 @@ import de.tum.cit.aet.artemis.core.service.user.UserService;
  * REST controller for public endpoints regarding the current user's account.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/core/public/")
 public class PublicAccountResource {
@@ -56,6 +60,12 @@ public class PublicAccountResource {
     @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}")
     private Optional<Pattern> allowedEmailPattern;
 
+    @Value("${artemis.user-management.passkey.ask-users-to-setup:true}")
+    private boolean askUsersToSetupPasskey;
+
+    @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
+    private boolean passkeyEnabled;
+
     private final AccountService accountService;
 
     private final UserService userService;
@@ -64,11 +74,15 @@ public class PublicAccountResource {
 
     private final UserRepository userRepository;
 
-    public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository) {
+    private final Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository;
+
+    public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
+            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
         this.userRepository = userRepository;
+        this.passkeyCredentialsRepository = passkeyCredentialsRepository;
     }
 
     /**
@@ -153,7 +167,7 @@ public class PublicAccountResource {
 
         Optional<String> loginOptional = SecurityUtils.getCurrentUserLogin();
         if (loginOptional.isPresent()) {
-            userOptional = userRepository.findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndExternalLLMUsageAcceptedTimestampByLogin(loginOptional.get());
+            userOptional = userRepository.findOneWithGroupsAndAuthoritiesAndExternalLLMUsageAcceptedTimestampByLogin(loginOptional.get());
         }
 
         if (userOptional.isEmpty()) {
@@ -161,11 +175,16 @@ public class PublicAccountResource {
         }
 
         User user = userOptional.get();
+        boolean shouldPromptUserToSetupPasskey = false;
+        if (askUsersToSetupPasskey && passkeyEnabled && passkeyCredentialsRepository.isPresent()) {
+            shouldPromptUserToSetupPasskey = !this.passkeyCredentialsRepository.orElseThrow().existsByUserId(user.getId());
+        }
         user.setVisibleRegistrationNumber();
         UserDTO userDTO = new UserDTO(user);
         // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
         userDTO.setVcsAccessToken(user.getVcsAccessToken());
         userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
+        userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);
         log.debug("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
         return ResponseEntity.ok(userDTO);
     }

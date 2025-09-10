@@ -74,17 +74,14 @@
                                     {{ result.submission.submissionDate | artemisTimeAgo }}
                                 </span>
                                 - {{ 'artemisApp.feedback.modal.linkedToCommit' | artemisTranslate }}:
-                                @if (commitUrl) {
-                                    <a href="{{ commitUrl }}" target="_blank" rel="noopener noreferrer">{{ commitHash }}</a>
-                                } @else {
-                                    {{ commitHash }}
-                                }
+                                <!-- TODO Link to repository view -->
+                                {{ commitHash }}
                             </p>
                         }
                     </div>
                 }
 
-                @if (showScoreChart && result.participation?.exercise) {
+                @if (showScoreChart && result.submission?.participation?.exercise) {
                     <div class="result-score-chart">
                         <div id="feedback-chart" #containerRef class="chart-space">
                             <ngx-charts-bar-horizontal-stacked
@@ -114,7 +111,7 @@
                     <hr />
                 }
 
-                @if (!loadingFailed && resultIsPreliminary(result)) {
+                @if (!loadingFailed && resultIsPreliminary(result, participation)) {
                     <div>
                         <div class="d-flex justify-content-end m-1">
                             <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>

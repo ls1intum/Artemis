@@ -2,14 +2,14 @@
 @if (isLoading) {
     <div class="d-flex justify-content-center">
         <div class="spinner-border" role="status">
-            <span class="sr-only" jhiTranslate="loading"></span>
+            <span class="visually-hidden" jhiTranslate="loading"></span>
         </div>
     </div>
 }
 @if (competency) {
     <div class="mt-n3">
         <!-- HEADER INFORMATION START -->
-        <div class="course-info-bar">
+        <div class="mt-2 me-1 course-info-bar">
             <div class="row align-items-center">
                 <div class="general-info col">
                     <h3 class="mb-0">
@@ -58,17 +58,14 @@
                                     @case (LectureUnitType.EXERCISE) {
                                         <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="competency!.course!" />
                                     }
-                                    @case (LectureUnitType.ATTACHMENT) {
-                                        <jhi-attachment-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
-                                    }
-                                    @case (LectureUnitType.VIDEO) {
-                                        <jhi-video-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    @case (LectureUnitType.ATTACHMENT_VIDEO) {
+                                        <jhi-attachment-video-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.TEXT) {
-                                        <jhi-text-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-text-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                     @case (LectureUnitType.ONLINE) {
-                                        <jhi-online-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                        <jhi-online-unit [courseId]="courseId!" [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                     }
                                 }
                             </div>

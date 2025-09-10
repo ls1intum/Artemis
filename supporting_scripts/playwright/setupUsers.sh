@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # We use the supporting scripts to create users
 

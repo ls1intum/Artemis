@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.service.export;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.service.export.DataExportExerciseCreationService.CSV_FILE_EXTENSION;
 
@@ -12,12 +11,13 @@ import java.util.Set;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
+import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 
 /**
  * A Service to create the science event export data for users.
@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
  * All science event data is exported into a single CSV file.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class DataExportScienceEventService {
 
@@ -42,7 +43,7 @@ public class DataExportScienceEventService {
      * @throws IOException if the file cannot be created
      */
     public void createScienceEventExport(String login, Path workingDirectory) throws IOException {
-        var api = scienceEventApi.orElseThrow(() -> new ApiNotPresentException(ScienceEventApi.class, PROFILE_ATLAS));
+        var api = scienceEventApi.orElseThrow(() -> new AtlasNotPresentException(ScienceEventApi.class));
         var scienceEvents = api.findAllByIdentity(login);
         createScienceEventExportFile(workingDirectory, scienceEvents);
     }

@@ -2,7 +2,7 @@ import { Component, Input, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { PagingService } from 'app/exercise/manage/paging.service';
+import { PagingService } from 'app/exercise/services/paging.service';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { SortService } from 'app/shared/service/sort.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
@@ -50,6 +50,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected readonly search = new Subject<void>();
     protected readonly sort = new Subject<void>();
 
+    // eslint-disable-next-line @angular-eslint/prefer-inject
     protected constructor(protected pagingService?: PagingService<T>) {}
 
     get page(): number {

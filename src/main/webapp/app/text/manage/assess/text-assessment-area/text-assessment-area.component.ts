@@ -1,7 +1,7 @@
 import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
-import { StringCountService } from 'app/text/overview/string-count.service';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
+import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { TextBlockAssessmentCardComponent } from '../textblock-assessment-card/text-block-assessment-card.component';
 import { ManualTextblockSelectionComponent } from '../manual-textblock-selection/manual-textblock-selection.component';

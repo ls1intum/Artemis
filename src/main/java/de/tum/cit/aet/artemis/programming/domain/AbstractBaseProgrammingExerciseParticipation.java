@@ -2,25 +2,23 @@ package de.tum.cit.aet.artemis.programming.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @MappedSuperclass
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class AbstractBaseProgrammingExerciseParticipation extends Participation implements ProgrammingExerciseParticipation {
 
     @Column(name = "repository_url")
-    @JsonView(QuizView.Before.class)
     private String repositoryUri;
 
     @Column(name = "build_plan_id")
-    @JsonView(QuizView.Before.class)
     private String buildPlanId;
 
     @Override
@@ -31,6 +29,10 @@ public abstract class AbstractBaseProgrammingExerciseParticipation extends Parti
     @Override
     public void setRepositoryUri(String repositoryUri) {
         this.repositoryUri = repositoryUri;
+    }
+
+    public void setRepositoryUri(@NotNull LocalVCRepositoryUri repositoryUri) {
+        this.repositoryUri = repositoryUri.getURI().toString();
     }
 
     @Override

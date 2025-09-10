@@ -6,7 +6,6 @@ import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedB
 import static java.time.ZonedDateTime.now;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -20,12 +19,13 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -57,33 +57,38 @@ import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatistic
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
+import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
+import de.tum.cit.aet.artemis.exam.api.ExamLiveEventsApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
-import de.tum.cit.aet.artemis.lti.repository.Lti13ResourceLaunchRepository;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Service Implementation for managing Exercise.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ExerciseService {
 
@@ -105,7 +110,7 @@ public class ExerciseService {
 
     private final ResultRepository resultRepository;
 
-    private final Optional<Lti13ResourceLaunchRepository> lti13ResourceLaunchRepository;
+    private final Optional<LtiApi> ltiApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -129,20 +134,22 @@ public class ExerciseService {
 
     private final QuizBatchService quizBatchService;
 
-    private final ExamLiveEventsService examLiveEventsService;
+    private final Optional<ExamLiveEventsApi> examLiveEventsApi;
 
     private final GroupNotificationScheduleService groupNotificationScheduleService;
 
     private final Optional<CompetencyRelationApi> competencyRelationApi;
 
+    private final ParticipationFilterService participationFilterService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
-            TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, Optional<Lti13ResourceLaunchRepository> lti13ResourceLaunchRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            ParticipantScoreRepository participantScoreRepository, UserRepository userRepository, ComplaintRepository complaintRepository,
-            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository,
-            FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository,
-            QuizBatchService quizBatchService, ExamLiveEventsService examLiveEventsService, GroupNotificationScheduleService groupNotificationScheduleService,
-            Optional<CompetencyRelationApi> competencyRelationApi) {
+            TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
+            UserRepository userRepository, ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService,
+            ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
+            RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
+            Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
+            ParticipationFilterService participationFilterService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -150,7 +157,7 @@ public class ExerciseService {
         this.submissionRepository = submissionRepository;
         this.teamRepository = teamRepository;
         this.participantScoreRepository = participantScoreRepository;
-        this.lti13ResourceLaunchRepository = lti13ResourceLaunchRepository;
+        this.ltiApi = ltiApi;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
         this.complaintRepository = complaintRepository;
@@ -163,9 +170,10 @@ public class ExerciseService {
         this.ratingService = ratingService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.quizBatchService = quizBatchService;
-        this.examLiveEventsService = examLiveEventsService;
+        this.examLiveEventsApi = examLiveEventsApi;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyRelationApi = competencyRelationApi;
+        this.participationFilterService = participationFilterService;
     }
 
     /**
@@ -196,9 +204,9 @@ public class ExerciseService {
                     if (!exercise.isVisibleToStudents()) {
                         continue;
                     }
-                    if (lti13ResourceLaunchRepository.isPresent()) {
+                    if (ltiApi.isPresent()) {
                         // students in online courses can only see exercises where the lti resource launch exists, otherwise the result cannot be reported later on
-                        Collection<LtiResourceLaunch> ltiResourceLaunches = lti13ResourceLaunchRepository.get().findByUserAndExercise(user, exercise);
+                        Collection<LtiResourceLaunch> ltiResourceLaunches = ltiApi.get().findByUserAndExercise(user, exercise);
                         if (!ltiResourceLaunches.isEmpty()) {
                             exercisesUserIsAllowedToSee.add(exercise);
                         }
@@ -231,7 +239,7 @@ public class ExerciseService {
         DueDateStat totalNumberOfAssessments;
 
         if (exercise instanceof ProgrammingExercise) {
-            numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countLegalSubmissionsByExerciseIdSubmitted(exerciseId), 0L);
+            numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exerciseId), 0L);
             totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId), 0L);
         }
         else {
@@ -324,7 +332,7 @@ public class ExerciseService {
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         for (Exercise exercise : exercises) {
             // add participation with submission and result to each exercise
-            filterForCourseDashboard(exercise, participationsOfUserInExercises, isStudent);
+            filterExerciseForCourseDashboard(exercise, participationsOfUserInExercises, isStudent);
             // remove sensitive information from the exercise for students
             if (isStudent) {
                 exercise.filterSensitiveInformation();
@@ -338,18 +346,19 @@ public class ExerciseService {
      * Filter all exercises for a given course based on the user role and course settings
      * Assumes that the exercises are already been loaded (i.e. no proxy)
      *
-     * @param course corresponding course: exercises
-     * @param user   the user entity
+     * @param course                      corresponding course: exercises
+     * @param user                        the user entity
+     * @param reloadOnlineCourseExercises this is only necessary when fetching a single course
      * @return a set of all Exercises for the given course
      */
-    public Set<Exercise> filterExercisesForCourse(Course course, User user) {
+    public Set<Exercise> filterExercisesForCourse(Course course, User user, boolean reloadOnlineCourseExercises) {
         Set<Exercise> exercises = course.getExercises();
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             // no need to filter for tutors/editors/instructors/admins because they can see all exercises of the course
             return exercises;
         }
 
-        if (course.isOnlineCourse()) {
+        if (reloadOnlineCourseExercises && course.isOnlineCourse()) {
             // this case happens rarely, so we can reload the relevant exercises from the database
             // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
             exercises = exerciseRepository.findByCourseIdWhereLtiResourceLaunchExists(course.getId(), user.getLogin());
@@ -364,10 +373,11 @@ public class ExerciseService {
      * Loads additional details for team exercises and for active quiz exercises
      * Assumes that the exercises are already been loaded (i.e. no proxy)
      *
-     * @param course corresponding course: exercises
-     * @param user   the user entity
+     * @param course          corresponding course: exercises
+     * @param user            the user entity
+     * @param loadQuizBatches only necessary when loading one course
      */
-    public void loadExerciseDetailsIfNecessary(Course course, User user) {
+    public void loadExerciseDetailsIfNecessary(Course course, User user, boolean loadQuizBatches) {
         for (Exercise exercise : course.getExercises()) {
             // only necessary for team exercises
             setAssignedTeamIdForExerciseAndUser(exercise, user);
@@ -377,7 +387,7 @@ public class ExerciseService {
                 quizExercise.filterSensitiveInformation();
 
                 // if the quiz is not active the batches do not matter and there is no point in loading them
-                if (quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
+                if (loadQuizBatches && quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
                     // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
                     quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
                 }
@@ -460,65 +470,28 @@ public class ExerciseService {
      * Find the participation in participations that belongs to the given exercise that includes the exercise data, plus the found participation with its most recent relevant
      * result. Filter everything else that is not relevant
      *
-     * @param exercise       the exercise that should be filtered (this deletes many field values of the passed exercise object)
-     * @param participations the set of participations, wherein to search for the relevant participation
-     * @param isStudent      defines if the current user is a student
+     * @param exercise                         the exercise that should be filtered (this deletes many field values of the passed exercise object)
+     * @param participationsAcrossAllExercises the set of participations in all exercises, wherein to search for the participations in this exercise
+     * @param isStudent                        defines if the current user is a student
      */
-    public void filterForCourseDashboard(Exercise exercise, Set<StudentParticipation> participations, boolean isStudent) {
-        // remove the unnecessary inner course attribute
+    public void filterExerciseForCourseDashboard(Exercise exercise, Set<StudentParticipation> participationsAcrossAllExercises, boolean isStudent) {
+        // remove attributes that are not necessary for the dashboard
         exercise.setCourse(null);
-
-        // remove the problem statement, which is loaded in the exercise details call
         exercise.setProblemStatement(null);
-
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             programmingExercise.setTestRepositoryUri(null);
         }
 
-        // get user's participation for the exercise
-        Set<StudentParticipation> relevantParticipations = participations != null ? exercise.findRelevantParticipation(participations) : Set.of();
+        // no participations yet, therefore nothing to filter from here on -> return
+        if (participationsAcrossAllExercises == null) {
+            exercise.setStudentParticipations(Set.of());
+            return;
+        }
+        Set<StudentParticipation> studentParticipationsInExercise = participationFilterService.findStudentParticipationsInExercise(participationsAcrossAllExercises, exercise);
 
-        // add relevant submission (relevancy depends on InitializationState) with its result to participation
-        relevantParticipations.forEach(participation -> {
-            // find the latest submission with a rated result, otherwise the latest submission with
-            // an unrated result or alternatively the latest submission without a result
-            Set<Submission> submissions = participation.getSubmissions();
+        studentParticipationsInExercise.forEach(participation -> participationFilterService.filterParticipationForCourseDashboard(participation, isStudent));
 
-            // only transmit the relevant result
-            // TODO: we should sync the following two and make sure that we return the correct submission and/or result in all scenarios
-            Submission submission = (submissions == null || submissions.isEmpty()) ? null : exercise.findAppropriateSubmissionByResults(submissions);
-            Submission latestSubmissionWithRatedResult = participation.getExercise().findLatestSubmissionWithRatedResultWithCompletionDate(participation, false);
-
-            Set<Result> results = Set.of();
-
-            if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getLatestResult() != null) {
-                results = Set.of(latestSubmissionWithRatedResult.getLatestResult());
-                // remove inner participation from result
-                latestSubmissionWithRatedResult.getLatestResult().setParticipation(null);
-                // filter sensitive information about the assessor if the current user is a student
-                if (isStudent) {
-                    latestSubmissionWithRatedResult.getLatestResult().filterSensitiveInformation();
-                }
-            }
-
-            // filter sensitive information in submission's result
-            if (isStudent && submission != null && submission.getLatestResult() != null) {
-                submission.getLatestResult().filterSensitiveInformation();
-            }
-
-            // add submission to participation or set it to null
-            participation.setSubmissions(submission != null ? Set.of(submission) : null);
-
-            participation.setResults(results);
-            if (submission != null) {
-                submission.setResults(new ArrayList<>(results));
-            }
-
-            // remove inner exercise from participation
-            participation.setExercise(null);
-        });
-
-        exercise.setStudentParticipations(relevantParticipations);
+        exercise.setStudentParticipations(studentParticipationsInExercise);
     }
 
     /**
@@ -568,9 +541,9 @@ public class ExerciseService {
         Map<Long, Double> averageScoreById = new HashMap<>();
         if (!lastFivePastExercises.isEmpty()) {
             // Calculate the average score for all five exercises at once
-            var averageScore = participantScoreRepository.findAverageScoreForExercises(lastFivePastExercises);
-            for (var element : averageScore) {
-                averageScoreById.put((Long) element.get("exerciseId"), (Double) element.get("averageScore"));
+            var averageScoreForExercises = participantScoreRepository.findAverageScoreForExercises(lastFivePastExercises);
+            for (var averageScoreForExercise : averageScoreForExercises) {
+                averageScoreById.put(averageScoreForExercise.exerciseId(), averageScoreForExercise.averageScore());
             }
         }
 
@@ -711,7 +684,7 @@ public class ExerciseService {
         // update the grading criteria to re-calculate the results considering the updated usage limits
         gradingCriterionRepository.saveAll(exercise.getGradingCriteria());
 
-        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackByParticipationExerciseId(exercise.getId());
+        List<Result> results = resultRepository.findWithEagerSubmissionAndFeedbackBySubmissionParticipationExerciseId(exercise.getId());
 
         // add example submission results that belong exercise
         if (!exercise.getExampleSubmissions().isEmpty()) {
@@ -794,8 +767,9 @@ public class ExerciseService {
         }
         // start sending problem statement updates within the last 5 minutes before the exam starts
         else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(originalExercise.getExam().getStartDate()) && originalExercise.isExamExercise()
-                && !StringUtils.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
-            this.examLiveEventsService.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
+                && !Strings.CS.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
+            ExamLiveEventsApi api = examLiveEventsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamLiveEventsApi.class));
+            api.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
         }
     }
 
@@ -833,15 +807,55 @@ public class ExerciseService {
     }
 
     /**
-     * Returns a map from exercise type to count of exercise given a course id.
+     * Retrieves a {@link NonQuizExerciseCalendarEventDTO} for each {@link FileUploadExercise}, {@link TextExercise}, {@link ModelingExercise}
+     * and {@link ProgrammingExercise} associated to the given courseId. Each DTO encapsulates the releaseDate, startDate, dueDate and assessmentDueDate
+     * of the respective exercise.
+     * <p>
+     * The method then derives a set of {@link CalendarEventDTO}s from the DTOs. Whether events are included in the result depends on the
+     * releaseDate of a given exercise and whether the logged-in user is course staff member (either tutor, editor ot student of the {@link Course})
      *
-     * @param courseId the course id
-     * @return the mapping from exercise type to course type. If a course has no exercises for a specific type, the map contains an entry for that type with value 0.
+     * @param courseId      the ID of the course
+     * @param userIsStudent indicates whether the logged-in user is a student
+     * @return the set of results
      */
-    public Map<ExerciseType, Long> countByCourseIdGroupByType(Long courseId) {
-        Map<ExerciseType, Long> exerciseTypeCountMap = exerciseRepository.countByCourseIdGroupedByType(courseId).stream()
-                .collect(Collectors.toMap(ExerciseTypeCountDTO::exerciseType, ExerciseTypeCountDTO::count));
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromNonQuizExercises(long courseId, boolean userIsStudent) {
+        Set<NonQuizExerciseCalendarEventDTO> daos = exerciseRepository.getNonQuizExerciseCalendarEventsDAOsForCourseId(courseId);
+        return daos.stream().flatMap(dao -> deriveCalendarEventDTOs(dao, userIsStudent).stream()).collect(Collectors.toSet());
+    }
 
-        return Arrays.stream(ExerciseType.values()).collect(Collectors.toMap(type -> type, type -> exerciseTypeCountMap.getOrDefault(type, 0L)));
+    /**
+     * Derives the following events for a given {@link NonQuizExerciseCalendarEventDTO}:
+     * <ul>
+     * <li>One event representing the release date if not null</li>
+     * <li>One event representing the start date if not null</li>
+     * <li>One event representing the due date if not null</li>
+     * <li>One event representing the assessment due date if not null</li>
+     * </ul>
+     *
+     * The events are only derived given that either the exercise represented by a dao is visible to students or the logged-in user is a course
+     * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
+     *
+     * @param dao           the exam for which to derive the events
+     * @param userIsStudent indicates whether the logged-in user is a student of the course associated to the exercise represented by the dao
+     * @return the derived events
+     */
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(NonQuizExerciseCalendarEventDTO dao, boolean userIsStudent) {
+        Set<CalendarEventDTO> events = new HashSet<>();
+        boolean userIsCourseStaff = !userIsStudent;
+        if (userIsCourseStaff || dao.releaseDate() == null || dao.releaseDate().isBefore(now())) {
+            if (dao.releaseDate() != null) {
+                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.RELEASE_DATE, dao.title(), dao.releaseDate(), null, null, null));
+            }
+            if (dao.startDate() != null) {
+                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.START_DATE, dao.title(), dao.startDate(), null, null, null));
+            }
+            if (dao.dueDate() != null) {
+                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.DUE_DATE, dao.title(), dao.dueDate(), null, null, null));
+            }
+            if (dao.assessmentDueDate() != null) {
+                events.add(new CalendarEventDTO(dao.type(), CalendarEventSemantics.ASSESSMENT_DUE_DATE, dao.title(), dao.assessmentDueDate(), null, null, null));
+            }
+        }
+        return events;
     }
 }

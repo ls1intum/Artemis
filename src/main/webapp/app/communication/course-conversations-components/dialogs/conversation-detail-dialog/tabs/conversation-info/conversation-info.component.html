@@ -1,0 +1,140 @@
+@if (activeConversation() && course()) {
+    <div class="container-fluid conversation-info">
+        <div class="row info-container">
+            <!-- Name (Only for Channels and Group Chats)-->
+            @if (getAsChannelOrGroupChat(activeConversation()); as channelOrGroupChat) {
+                <div id="name-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
+                    <div class="form-floating">
+                        <textarea
+                            class="form-control"
+                            readonly
+                            disabled
+                            placeholder="dummyPlaceholder"
+                            id="name"
+                            value="{{ channelOrGroupChat.name ?? ('artemisApp.dialogs.conversationDetail.infoTab.noName' | artemisTranslate) }}"
+                        >
+                        </textarea>
+                        <label for="name" jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.name"></label>
+                        @if (
+                            (isChannel(channelOrGroupChat) && canChangeChannelProperties(channelOrGroupChat)) ||
+                            (isGroupChat(channelOrGroupChat) && canChangeGroupChatProperties(channelOrGroupChat))
+                        ) {
+                            <button
+                                class="action-button right btn btn-link btn-sm"
+                                (click)="openEditNameModal($event)"
+                                jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.editName"
+                            ></button>
+                        }
+                    </div>
+                </div>
+            }
+            <!-- Topic (Only for Channels)-->
+            @if (getAsChannel(activeConversation()); as channel) {
+                <div id="topic-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
+                    <div class="form-floating">
+                        <textarea
+                            class="form-control large"
+                            readonly
+                            disabled
+                            placeholder="dummyPlaceholder"
+                            id="topic"
+                            value="{{ channel.topic ?? ('artemisApp.dialogs.conversationDetail.infoTab.noTopic' | artemisTranslate) }}"
+                        >
+                        </textarea>
+                        <label for="topic" jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.topic"></label>
+                        @if (canChangeChannelProperties(channel)) {
+                            <button
+                                class="action-button right btn btn-link btn-sm"
+                                (click)="openEditTopicModal($event)"
+                                jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.editTopic"
+                            ></button>
+                        }
+                    </div>
+                </div>
+            }
+            <!-- Description (Only for Channels)-->
+            @if (getAsChannel(activeConversation()); as channel) {
+                <div id="description-section" class="col-12 info-section" [class.interactive]="!readOnlyMode">
+                    <div class="form-floating">
+                        <textarea
+                            class="form-control large"
+                            readonly
+                            disabled
+                            placeholder="dummyPlaceholder"
+                            id="description"
+                            value="{{ channel.description ?? ('artemisApp.dialogs.conversationDetail.infoTab.noDescription' | artemisTranslate) }}"
+                        >
+                        </textarea>
+                        <label for="description" jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.description"></label>
+                        @if (canChangeChannelProperties(channel)) {
+                            <button
+                                class="action-button right btn btn-link btn-sm"
+                                (click)="openDescriptionTopicModal($event)"
+                                jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.editDescription"
+                            ></button>
+                        }
+                    </div>
+                </div>
+            }
+            <!-- Notification -->
+            <div id="notification-section" class="col-12 info-section">
+                <div>
+                    <h6 jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notification"></h6>
+                </div>
+
+                <p class="text-muted small mb-2">
+                    @if (!isNotificationsEnabled) {
+                        <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notificationsDisabled"></span>
+                    } @else if (activeConversation()?.isMuted) {
+                        <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notificationsMutedDescription"></span>
+                    } @else {
+                        <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.notificationsEnabledDescription"></span>
+                    }
+                    <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.seeSettingsPrefix"></span>
+                    <a [routerLink]="['/courses', course()?.id, 'settings']" class="ms-1" target="_blank">
+                        <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.seeSettingsLink"></span>
+                    </a>
+                </p>
+
+                <ul>
+                    <li>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <fa-icon [icon]="faVolumeXmark" class="me-1" />
+                                <span jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.muteChannel"></span>
+                            </div>
+                            <div class="form-check form-switch d-flex flex-column align-items-center">
+                                <input
+                                    id="muteSwitch"
+                                    class="form-check-input m-0"
+                                    type="checkbox"
+                                    role="switch"
+                                    [checked]="activeConversation()?.isMuted"
+                                    (change)="onMuteToggle()"
+                                />
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <!-- More Info -->
+            <div id="moreinfo-section" class="col-12 info-section">
+                <div>
+                    <h6 jhiTranslate="artemisApp.dialogs.conversationDetail.infoTab.moreInfo"></h6>
+                </div>
+                <ul>
+                    @if (activeConversation()?.creator) {
+                        <li>
+                            {{ 'artemisApp.dialogs.conversationDetail.infoTab.createdBy' | artemisTranslate }}:
+                            {{ getCreator() ? getUserLabel(getCreator()!) : '' }}
+                        </li>
+                    }
+                    <li>
+                        {{ 'artemisApp.dialogs.conversationDetail.infoTab.createdOn' | artemisTranslate }}:
+                        {{ activeConversation()!.creationDate ? (activeConversation()!.creationDate | artemisDate) : '' }}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+}

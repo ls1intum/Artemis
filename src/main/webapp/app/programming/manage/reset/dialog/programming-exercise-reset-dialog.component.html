@@ -1,0 +1,76 @@
+@if (!isLoading) {
+    <form name="resetForm" role="form" (ngSubmit)="resetProgrammingExercise()" #resetForm="ngForm">
+        <div class="modal-header">
+            <h4 class="modal-title" jhiTranslate="entity.resetProgrammingExercise.title"></h4>
+            <button type="button" class="btn-close" data-dismiss="modal" (click)="clear()"></button>
+        </div>
+        <div class="modal-body">
+            <p [jhiTranslate]="'artemisApp.programmingExercise.reset.pleaseSelectOperations'" [translateValues]="{ title: programmingExercise.title }">
+                Please select the operations you want to perform on <strong>{{ programmingExercise.title }}</strong
+                >:
+            </p>
+            <ul class="list-unstyled">
+                @if (programmingExercise.isAtLeastInstructor) {
+                    <li>
+                        <div class="checkbox">
+                            <label class="control-label">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    name="deleteParticipationsSubmissionsAndResults"
+                                    [(ngModel)]="this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults"
+                                />
+                                <span jhiTranslate="artemisApp.programmingExercise.reset.deleteParticipationsSubmissionsAndResults"></span>
+                            </label>
+                        </div>
+                    </li>
+                }
+                @if (programmingExercise.isAtLeastEditor) {
+                    <li>
+                        <div class="checkbox">
+                            <label class="control-label">
+                                <input class="form-check-input" type="checkbox" name="recreateBuildPlans" [(ngModel)]="this.programmingExerciseResetOptions.recreateBuildPlans" />
+                                <span
+                                    [jhiTranslate]="
+                                        hasCustomizedBuildPlans
+                                            ? 'artemisApp.programmingExercise.reset.recreateCustomizedBuildPlans'
+                                            : 'artemisApp.programmingExercise.reset.recreateBuildPlans'
+                                    "
+                                ></span>
+                            </label>
+                        </div>
+                    </li>
+                }
+            </ul>
+            <div class="form-group">
+                <label
+                    for="confirm-exercise-name"
+                    class="text-danger"
+                    [jhiTranslate]="'artemisApp.programmingExercise.reset.question'"
+                    [translateValues]="{ title: programmingExercise.title }"
+                >
+                    Please type in the name to confirm
+                </label>
+                <input id="confirm-exercise-name" type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmText" />
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="resetInProgress">
+                <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+            </button>
+            <div [style.cursor]="resetForm.form.invalid || !this.canSubmit ? 'not-allowed' : 'pointer'">
+                <button type="submit" class="btn btn-danger" [disabled]="resetForm.form.invalid || !this.canSubmit">
+                    @if (resetInProgress) {
+                        <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
+                    }
+                    <fa-icon [icon]="faUndo" />&nbsp;
+                    <span jhiTranslate="entity.action.reset"></span>
+                </button>
+            </div>
+        </div>
+    </form>
+} @else {
+    <div class="d-flex justify-content-center mt-4 mb-4">
+        <fa-icon [icon]="faCircleNotch" animation="spin" />
+    </div>
+}

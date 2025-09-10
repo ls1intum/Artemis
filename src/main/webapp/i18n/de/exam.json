@@ -298,6 +298,10 @@
             "examExercises": "Klausuraufgaben:",
             "exercisePoints": "Punkte",
             "exerciseName": "Name",
+            "navigation": {
+                "nextButton": "Weiter",
+                "previousButton": "Zurück"
+            },
             "noStudentExam": "Du bist nicht für die Klausur angemeldet. Bitte wende dich an die entsprechende Lehrkraft.",
             "noFurtherAttempts": "Derzeit sind keine weiteren Versuche für die Testklausur möglich. Um deine Abgaben zu betrachten, navigiere zur Klausurseite ",
             "atLeastTutorStudentExam": "Da du nicht Studierende:r bist, kannst du nicht an der Klausur teilnehmen:",
@@ -327,6 +331,7 @@
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",
             "handInEarly": "Vorzeitig Abgeben",
             "continueAfterHandInEarly": "Zurück",
+            "continue": "Fortsetzen",
             "attendanceCheck": "Anwesenheitskontrolle",
             "continueAfterHandInEarlyDescription": "Um mit der Klausur fortzufahren, klicke auf den Button 'Zurück'.",
             "handInEarlyNotice": "Du bist dabei die Klausur vorzeitig abzugeben. Du kannst danach nicht mehr an der Klausur teilnehmen.",
@@ -474,6 +479,7 @@
             },
             "numberOfExerciseGroups": "Anzahl Aufgabengruppen:",
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
+            "numberOfExercisesInExamTooltip": "Die Anzahl der Aufgaben muss mit der Anzahl der Aufgabengruppen übereinstimmen",
             "numberOfCorrectionRoundsInExam": "Anzahl der Korrekturrunden der Klausur",
             "randomizeQuestionOrder": "Zufällige Reihenfolge der Aufgabengruppen",
             "examWithAttendanceCheck": "Klausur mit Anwesenheitskontrolle",
@@ -515,7 +521,7 @@
                 "assessTestRunDisabled": "Keiner deiner Testläufe ist beendet",
                 "delete": {
                     "question": "Soll der <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Elemente werden ebenfalls gelöscht, falls sie von keinem anderen Testlauf referenziert werden.",
-                    "typeNameToConfirm": "Bitte gebe: Testlauf zur Bestätigung ein."
+                    "typeNameToConfirm": "Bitte gebe: Testlauf zur Bestätigung ein:"
                 }
             },
             "examStudents": {
@@ -554,7 +560,7 @@
                 "removeFromExam": {
                     "modalQuestion": "Soll die Person mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Ihre individuelle Klausur wird dabei gelöscht.",
                     "deleteParticipationsAndSubmission": "Zusätzlich die Teilnahme und Abgaben in der zugehörigen Klausur löschen? Diese Aktion kann NICHT rückgängig gemacht werden!",
-                    "typeNameToConfirm": "Bitte gib den Login der Person zur Bestätigung ein."
+                    "typeNameToConfirm": "Bitte gib den Login der Person zur Bestätigung ein:"
                 }
             },
             "exerciseGroups": "Aufgabengruppen",
@@ -575,7 +581,7 @@
                 "delete": {
                     "question": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden ebenfalls gelöscht.",
                     "questionLocalVC": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden gelöscht.<br>Alle Studierenden- Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden ebenfalls gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern! ",
-                    "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein."
+                    "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein:"
                 },
                 "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden.",
                 "importModal": {
@@ -675,6 +681,10 @@
                     "suspiciousBehavior": "Verdächtiges Verhalten und Plagiatsfälle können in diesem Dashboard eingesehen werden."
                 },
                 "textitems": {
+                    "noDeactivatedExerciseTypes": {
+                        "label": "Keine deaktivierten Aufgabentypen",
+                        "tooltip": "Es existiert mindestens eine Aufgabe mit einem derzeit deaktivierten Aufgabentyp. Löschen von diesen Aufgabentypen wird derzeit nicht unterstützt, lediglich der kompletten Aufgabengruppe. Du solltest die Artemis-betreibende Systemadministration kontaktieren."
+                    },
                     "leastoneexercisegroup": "Mindestens eine Aufgabengruppe",
                     "numberofexercisegroupsequal": "Anzahl der Aufgaben der Klausur entspricht Anzahl der Aufgabengruppen",
                     "numberofexercisegroupsinbetween": "Anzahl der Aufgaben der Klausur liegt zwischen der Anzahl der verpflichtenden Aufgabengruppen und der Gesamtanzahl der Aufgabengruppen",

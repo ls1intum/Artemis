@@ -13,10 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.AcceptExternalLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
@@ -25,6 +27,7 @@ import de.tum.cit.aet.artemis.core.service.AccountService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.util.ConfigUtil;
+import de.tum.cit.aet.artemis.core.util.PasskeyCredentialUtilService;
 import de.tum.cit.aet.artemis.core.web.AccountResource;
 import de.tum.cit.aet.artemis.core.web.open.PublicAccountResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -45,6 +48,9 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private PasskeyCredentialUtilService passkeyCredentialUtilService;
 
     private void testWithRegistrationDisabled(Executable test) throws Throwable {
         ConfigUtil.testWithChangedConfig(accountService, "registrationEnabled", Optional.of(Boolean.FALSE), test);
@@ -223,10 +229,48 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(AUTHENTICATEDUSER)
     void getAccount() throws Exception {
-        // create user in repo
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
         assertThat(account).isNotNull();
+        assertThat(account.getAskToSetupPasskey()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void getAccountWithRegisteredPasskey() throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+
+        UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
+
+        assertThat(account).isNotNull();
+        assertThat(account.getAskToSetupPasskey()).isFalse();
+    }
+
+    /**
+     * <p>
+     * Reflects the case when the configuration property
+     * <code>artemis.user-management.passkey.ask-users-to-setup</code> is set to <strong>false</strong>.
+     * </p>
+     *
+     * <p>
+     * If it were set to <strong>true</strong>, the value of <code>askUserToSetupPasskey</code>
+     * would be <strong>true</strong>. However, since the configuration does not display the modal,
+     * the value is always returned as <strong>false</strong>.
+     * </p>
+     */
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void testGetAccountWhenAskUsersToSetupPasskeyIsFalse() throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+
+        ReflectionTestUtils.setField(publicAccountResource, "askUsersToSetupPasskey", false);
+
+        UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
+
+        assertThat(account).isNotNull();
+        assertThat(account.getAskToSetupPasskey()).isFalse();
     }
 
     @Test
@@ -240,13 +284,9 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = AUTHENTICATEDUSER)
     void saveAccount() throws Exception {
         String updatedFirstName = "UpdatedFirstName";
-        // create user in repo
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-
-        // update FirstName
         user.setFirstName(updatedFirstName);
 
-        // make request
         request.put("/api/core/account", new UserDTO(user), HttpStatus.OK);
 
         // check if update successful
@@ -259,13 +299,10 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = AUTHENTICATEDUSER)
     void saveAccountRegistrationDisabled() throws Throwable {
         testWithRegistrationDisabled(() -> {
-            // create user in repo
             User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-            // update FirstName
             String updatedFirstName = "UpdatedFirstName";
             user.setFirstName(updatedFirstName);
 
-            // make request
             request.put("/api/core/account", new UserDTO(user), HttpStatus.FORBIDDEN);
         });
     }
@@ -273,26 +310,21 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
     void saveAccountEmailInUse() throws Exception {
-        // create user in repo
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         User userSameEmail = userUtilService.createAndSaveUser("sameemail");
         // update Email to one already used
         user.setEmail(userSameEmail.getEmail());
 
-        // make request
         request.put("/api/core/account", new UserDTO(user), HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
     void changePassword() throws Exception {
-        // Password Data
         String updatedPassword = "12345678";
-        // create user in repo
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
-        // make request
         request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.OK, null);
 
         // check if update successful
@@ -304,17 +336,13 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
     void changePasswordExternalUser() throws Throwable {
-        String newPassword = getValidPassword();
-        // create user in repo
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         user.setInternal(false);
         userTestRepository.save(user);
 
-        // Password Data
         String updatedPassword = "12345678";
-
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
-        // make request
+
         request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.FORBIDDEN, null);
     }
 
@@ -324,7 +352,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         String updatedPassword = "";
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
-        // make request
+
         request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
     }
 
@@ -333,20 +361,18 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     void changePasswordSamePassword() throws Exception {
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, UserFactory.USER_PASSWORD);
-        // make request
+
         request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
     void changeLanguageKey() throws Exception {
-        // create user in repo
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         user.setLangKey("en");
         User storedUser = userTestRepository.save(user);
         assertThat(storedUser.getLangKey()).isEqualTo("en");
 
-        // make request
         request.postStringWithoutLocation("/api/core/public/account/change-language", "de", HttpStatus.OK, null);
 
         // check result
@@ -358,20 +384,16 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
     void changeLanguageKeyNotSupported() throws Exception {
-        // create user in repo
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         user.setLangKey("en");
         User storedUser = userTestRepository.save(user);
         assertThat(storedUser.getLangKey()).isEqualTo("en");
 
-        // make request
         request.postStringWithoutLocation("/api/core/public/account/change-language", "loremIpsum", HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
     void passwordResetByEmail() throws Exception {
-        String newPassword = getValidPassword();
-        // create user in repo
         User createdUser = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
 
         Optional<User> userBefore = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
@@ -385,8 +407,6 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     void passwordResetByUsername() throws Exception {
-        String newPassword = getValidPassword();
-        // create user in repo
         User createdUser = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
 
         Optional<User> userBefore = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
@@ -423,7 +443,6 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     void passwordResetInvalidEmail() throws Exception {
-        // create user in repo
         User createdUser = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
 
         Optional<User> userBefore = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
@@ -474,17 +493,31 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
     void acceptExternalLLMUsageSuccessful() throws Exception {
-        // Create user in repo with null timestamp
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         user.setExternalLLMUsageAcceptedTimestamp(null);
         userTestRepository.save(user);
 
-        request.put("/api/core/users/accept-external-llm-usage", null, HttpStatus.OK);
+        AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO = new AcceptExternalLLMUsageDTO(true);
+        request.put("/api/core/users/accept-external-llm-usage", acceptExternalLLMUsageDTO, HttpStatus.OK);
 
-        // Verify timestamp was set
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get().getExternalLLMUsageAcceptedTimestamp()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void declineExternalLLMUsageSuccessful() throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        user.setExternalLLMUsageAcceptedTimestamp(null);
+        userTestRepository.save(user);
+
+        AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO = new AcceptExternalLLMUsageDTO(false);
+        request.put("/api/core/users/accept-external-llm-usage", acceptExternalLLMUsageDTO, HttpStatus.OK);
+
+        Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
+        assertThat(updatedUser).isPresent();
+        assertThat(updatedUser.get().getExternalLLMUsageAcceptedTimestamp()).isNull();
     }
 
     @Test

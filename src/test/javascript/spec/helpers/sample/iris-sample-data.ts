@@ -1,12 +1,13 @@
 import dayjs from 'dayjs/esm';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/entities/iris/iris-message.model';
-import { IrisMessageContentType, IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
-import { IrisSession } from 'app/entities/iris/iris-session.model';
-import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/entities/iris/iris-chat-websocket-dto.model';
-import { IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
+import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
+import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
+import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 
 const map = new Map<string, any>();
 map.set('model', 'gpt-4');
@@ -64,12 +65,18 @@ export const mockConversation = {
     id: 1,
     exercise: irisExercise,
     messages: [mockClientMessage, mockServerMessage],
+    chatMode: ChatServiceMode.COURSE,
+    entityId: 1,
+    creationDate: new Date(),
 } as IrisSession;
 
 export const mockConversationWithNoMessages = {
     id: 1,
     exercise: irisExercise,
     messages: [],
+    chatMode: ChatServiceMode.COURSE,
+    entityId: 1,
+    creationDate: new Date(),
 } as IrisSession;
 
 export const mockServerSessionHttpResponse = {

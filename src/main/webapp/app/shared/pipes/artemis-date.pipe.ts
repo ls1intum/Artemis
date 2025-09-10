@@ -2,30 +2,38 @@ import { OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { dayOfWeekZeroSundayToZeroMonday } from 'app/utils/date.utils';
-import { getDayTranslationKey } from 'app/tutorialgroup/shared/weekdays';
+import { dayOfWeekZeroSundayToZeroMonday } from 'app/shared/util/date.utils';
+import { getDayTranslationKey } from 'app/tutorialgroup/shared/util/weekdays';
 
 export type DateType = Date | dayjs.Dayjs | string | number | null | undefined;
 export type DateFormat = 'short' | 'long' | 'short-date' | 'long-date' | 'time';
 
 /**
- * Format a given date time that must be convertible to a dayjs object to a localized date time
- * string based on the current language setting. Always returns the short format on mobile devices.
- * This pipe is stateful (pure = false) so that it can adapt to changes of the current locale.
- * Usage:
- *   dateTime | artemisDate:format:seconds
- * Examples (for locale == 'en'):
- *   {{ course.startDate | artemisDate }}
- *   formats to: Dec 17, 2019 12:43 AM
- *   {{ course.startDate | artemisDate: 'short-date' }}
- *   formats to: 17/12/19
+ * Formats a given date-time value into a localized string based on the current language setting.
+ * This pipe adapts dynamically to changes in the current locale and always returns the short format
+ * on mobile devices.
+ *
+ * **Usage:**
+ *   `dateTime | artemisDate:format:seconds`
+ *
+ * **Examples (for locale == 'en'):**
+ * - `{{ course.startDate | artemisDate }}`
+ *   Outputs: `Dec 17, 2019 12:43 AM`
+ * - `{{ course.startDate | artemisDate: 'long-date' }}`
+ *   Outputs: `Dec 17, 2019`
+ * - `{{ course.startDate | artemisDate: 'short-date' }}`
+ *   Outputs: `17/12/19`
+ *
+ * **Notes:**
+ * - The input date-time must be convertible to a `dayjs` object.
+ * - This pipe is stateful (`pure = false`) to adapt to locale changes.
  */
 @Pipe({
     name: 'artemisDate',
     pure: false,
 })
 export class ArtemisDatePipe implements PipeTransform, OnDestroy {
-    private translateService = inject(TranslateService);
+    private readonly translateService = inject(TranslateService);
 
     private dateTime: dayjs.Dayjs;
     private locale: string;

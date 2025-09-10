@@ -2,13 +2,15 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,9 @@ import com.hazelcast.map.listener.EntryUpdatedListener;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
@@ -37,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
  * feedback to users.
  * New event listeners should be added here to ensure consistent handling of CI-related events.
  */
+@Lazy
 @Service
 @Profile("localci & scheduling")
 public class LocalCIEventListenerService {
@@ -51,20 +57,32 @@ public class LocalCIEventListenerService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
+    private final LocalCIResultProcessingService localCIResultProcessingService;
+
+    private final UserService userService;
+
+    private final MailService mailService;
+
     public LocalCIEventListenerService(DistributedDataAccessService distributedDataAccessService, LocalCIQueueWebsocketService localCIQueueWebsocketService,
-            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService) {
+            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, LocalCIResultProcessingService localCIResultProcessingService,
+            UserService userService, MailService mailService) {
         this.distributedDataAccessService = distributedDataAccessService;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
         this.buildJobRepository = buildJobRepository;
         this.programmingMessagingService = programmingMessagingService;
+        this.localCIResultProcessingService = localCIResultProcessingService;
+        this.userService = userService;
+        this.mailService = mailService;
     }
 
     /**
      * Add listeners for build job, build agent changes.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @PostConstruct
     public void init() {
-        distributedDataAccessService.getDistributedQueuedJobs().addItemListener(new QueuedBuildJobItemListener(), true);
+        distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener(), true);
         distributedDataAccessService.getDistributedProcessingJobs().addEntryListener(new ProcessingBuildJobItemListener(), true);
         distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), true);
     }
@@ -88,7 +106,7 @@ public class LocalCIEventListenerService {
      */
     @Scheduled(fixedRateString = "${artemis.continuous-integration.check-job-status-interval-seconds:300}", initialDelayString = "${artemis.continuous-integration.check-job-status-delay-seconds:60}", timeUnit = TimeUnit.SECONDS)
     public void checkPendingBuildJobsStatus() {
-        log.info("Checking pending build jobs status");
+        log.debug("Checking pending build jobs status");
         List<BuildJob> pendingBuildJobs = buildJobRepository.findAllByBuildStatusIn(List.of(BuildStatus.QUEUED, BuildStatus.BUILDING));
         ZonedDateTime now = ZonedDateTime.now();
         final int buildJobExpirationInMinutes = 5; // If a build job is older than 5 minutes, and it's status can't be determined, set it to missing
@@ -112,6 +130,29 @@ public class LocalCIEventListenerService {
             log.error("Build job with id {} is in an unknown state", buildJob.getBuildJobId());
             // If the build job is in an unknown state, set it to missing and update the build start date
             buildJobRepository.updateBuildJobStatus(buildJob.getBuildJobId(), BuildStatus.MISSING);
+        }
+    }
+
+    /**
+     * Processes the queued results from the distributed build result queue every minute.
+     * This is a fallback mechanism to ensure that no results are left unprocessed in the queue e.g. if listener events are lost
+     * under high system load or network hiccups.
+     * Runs every minute so results are not stuck int the queue so long that they appear to be lost.
+     */
+    @Scheduled(fixedRate = 60 * 1000)
+    public void processQueuedResults() {
+        final int initialSize = distributedDataAccessService.getResultQueueSize();
+        log.debug("{} queued results in the distributed build result queue. Processing up to {} results.", initialSize, initialSize);
+        for (int i = 0; i < initialSize; i++) {
+            if (distributedDataAccessService.getDistributedBuildResultQueue().peek() == null) {
+                break;
+            }
+            try {
+                localCIResultProcessingService.processResultAsync();
+            }
+            catch (Exception ex) {
+                log.warn("Processing a queued result failed. Continuing with remaining items", ex);
+            }
         }
     }
 
@@ -172,9 +213,27 @@ public class LocalCIEventListenerService {
 
         @Override
         public void entryUpdated(com.hazelcast.core.EntryEvent<String, BuildAgentInformation> event) {
-            log.debug("Build agent updated: {}", event.getValue());
-            localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(event.getValue().buildAgent().name());
+            BuildAgentInformation oldValue = event.getOldValue();
+            BuildAgentInformation newValue = event.getValue();
+
+            log.debug("Build agent updated: {}", newValue);
+            localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(newValue.buildAgent().name());
+            if (oldValue != null && oldValue.status() != BuildAgentInformation.BuildAgentStatus.SELF_PAUSED
+                    && newValue.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED) {
+                notifyAdminAboutAgentPausing(newValue);
+            }
         }
+    }
+
+    private void notifyAdminAboutAgentPausing(BuildAgentInformation buildAgentInformation) {
+        Optional<User> admin = userService.findInternalAdminUser();
+        if (admin.isEmpty()) {
+            log.warn("No internal admin user found. Cannot notify admin about self pausing build agent.");
+            return;
+        }
+        int failures = buildAgentInformation.buildAgentDetails() != null ? buildAgentInformation.buildAgentDetails().consecutiveBuildFailures()
+                : buildAgentInformation.pauseAfterConsecutiveBuildFailures();
+        mailService.sendBuildAgentSelfPausedEmailToAdmin(admin.get(), buildAgentInformation.buildAgent().name(), failures);
     }
 
     private void notifyUserAboutBuildProcessing(long exerciseId, long participationId, String commitHash, ZonedDateTime submissionDate, ZonedDateTime buildStartDate,

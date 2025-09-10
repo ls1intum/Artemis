@@ -11,7 +11,7 @@
                 "exercise": "Exercise",
                 "video": "Video",
                 "online": "Online",
-                "attachment": "File"
+                "attachmentVideo": "File/Video"
             },
             "releaseDate": "Release Date",
             "details": {
@@ -28,6 +28,7 @@
             "updated": "Text unit updated",
             "tooltip": "This is a text unit",
             "isolated": "View Isolated",
+            "originalVersion": "Original Version",
             "notReleasedTooltip": "Text only visible to teaching assistants and instructors. Release date:",
             "markdownHelp": "You can enter Markdown here. More information: ",
             "cachedMarkdown": "Artemis found some unsaved markdown in the local storage. Do you want to load it? Save Date:",
@@ -45,38 +46,6 @@
             "delete": {
                 "question": "Do you really want to delete the text unit <strong>{{ title }}</strong>? You can not undo this action!",
                 "typeNameToConfirm": "Please enter the name of the text unit for confirmation.",
-                "buttonText": "Delete"
-            }
-        },
-        "videoUnit": {
-            "created": "New video unit created",
-            "updated": "Video unit updated",
-            "tooltip": "This is a video unit",
-            "description": "Description",
-            "notReleasedTooltip": "Video only visible to teaching assistants and instructors. Release date:",
-            "createVideoUnit": {
-                "title": "Create Video Unit",
-                "name": "Name",
-                "namePlaceHolder": "Give the video unit a name",
-                "description": "Description",
-                "descriptionPlaceHolder": "Give the video a description",
-                "nameRequiredValidationError": "Name is required.",
-                "nameMaxLengthValidationError": "Name can be max 255 characters long.",
-                "descriptionMaxLengthValidationError": "Description can be max 1000 characters long.",
-                "source": "Embeddable Video URL",
-                "sourcePlaceHolder": "Enter an URL to an embeddable video",
-                "sourceRequiredValidationError": "Video URL is required",
-                "sourceURLValidationError": "Not a valid URL",
-                "urlVideoHelper": "Transform into embeddable format ",
-                "urlHelperPlaceholder": "You can enter a Video URL here and use the arrow to create the correct embeddable URL from it",
-                "urlHelperValidationError": "Automatic embed link generation is not possible for this URL"
-            },
-            "editVideoUnit": {
-                "title": "Edit Video Unit"
-            },
-            "delete": {
-                "question": "Do you really want to delete the video unit <strong>{{ title }}</strong>? You can not undo this action!",
-                "typeNameToConfirm": "Please enter the name of the video unit for confirmation.",
                 "buttonText": "Delete"
             }
         },
@@ -111,11 +80,12 @@
                 "buttonText": "Delete"
             }
         },
-        "attachmentUnit": {
+        "attachmentVideoUnit": {
             "created": "New attachment unit created",
             "updated": "Attachment unit updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
-            "createAttachmentUnits": {
+            "transcriptionInvalidJson": "The transcription JSON is invalid and was ignored.",
+            "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis searches for the Outline (slide with title 'Outline' and bullet points with unit headings) to split the PDF into units.",
                     "secondLine": "Artemis expects a repetition of the Outline slide at the start of every unit.",
@@ -158,15 +128,15 @@
                 },
                 "processTimeInfo": "The processing of the lecture units can take a few seconds. Please be patient."
             },
-            "createAttachmentUnit": {
+            "createAttachmentVideoUnit": {
                 "title": "Create Attachment Unit",
                 "name": "Name",
-                "namePlaceHolder": "Give the attachment a name",
+                "namePlaceHolder": "Give the unit a name",
                 "description": "Description",
                 "updateNotificationText": "Update Notification Text",
                 "updateNotificationTextPlaceholder": "Optional notification text for students about changes.",
                 "updateNotificationTextMaxLengthValidationError": "The notification text can be max 1000 characters long.",
-                "descriptionPlaceHolder": "Give the attachment a description",
+                "descriptionPlaceHolder": "Give the unit a description",
                 "nameRequiredValidationError": "Name is required.",
                 "nameMaxLengthValidationError": "Name can be max 255 characters long.",
                 "descriptionMaxLengthValidationError": "Description can be max 1000 characters long.",
@@ -176,9 +146,18 @@
                 "chooseFile": "Choose File",
                 "fileTooBig": "File is too big! The maximum file size is 20 MB.",
                 "fileLimitation": "(max. size 20 MB)",
-                "fileLimitationTooltip": "Supported types: {{ extensions }}"
+                "fileLimitationTooltip": "Supported types: {{ extensions }}",
+                "source": "Embeddable Video URL",
+                "sourcePlaceHolder": "Enter an URL to an embeddable video",
+                "sourceRequiredValidationError": "Video URL is required",
+                "sourceURLValidationError": "Not a valid URL",
+                "urlVideoHelper": "Transform into embeddable format ",
+                "urlHelperPlaceholder": "You can enter a Video URL here and use the arrow to create the correct embeddable URL from it",
+                "urlHelperValidationError": "Automatic embed link generation is not possible for this URL",
+                "videoTranscription": "Video Transcription",
+                "videoTranscriptionPlaceholder": "Insert the transcription of the video here."
             },
-            "editAttachmentUnit": {
+            "editAttachmentVideoUnit": {
                 "title": "Edit Attachment Unit"
             },
             "tooltip": "This is a lecture attachment",
@@ -186,10 +165,10 @@
             "version": "Version",
             "FileName": "Filename",
             "description": "Description",
-            "download": "Download",
+            "download": "Download attachment",
             "delete": {
                 "question": "Do you really want to delete the attachment unit <strong>{{ title }}</strong>? The attachment will also be removed! You can not undo this action!",
-                "typeNameToConfirm": "Please enter the name of the attachment for confirmation.",
+                "typeNameToConfirm": "Please enter the name of the attachment/video unit for confirmation.",
                 "buttonText": "Delete"
             }
         },

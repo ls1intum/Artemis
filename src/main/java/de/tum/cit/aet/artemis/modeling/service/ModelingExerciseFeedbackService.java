@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +23,7 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ModelingExerciseFeedbackService {
 
@@ -129,7 +131,6 @@ public class ModelingExerciseFeedbackService {
             log.error("Could not generate feedback for exercise ID: {} and participation ID: {}", modelingExercise.getId(), participation.getId(), e);
             automaticResult.setSuccessful(false);
             automaticResult.setCompletionDate(null);
-            participation.addResult(automaticResult);
             this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
             throw new InternalServerErrorException("Something went wrong... AI Feedback could not be generated");
         }
@@ -149,7 +150,6 @@ public class ModelingExerciseFeedbackService {
         result.setScore(0.0);
         result.setSuccessful(null);
         result.setSubmission(submission);
-        result.setParticipation(participation);
         return result;
     }
 
@@ -162,7 +162,7 @@ public class ModelingExerciseFeedbackService {
      * @throws NetworkingException if there's a problem communicating with Athena
      */
     private List<Feedback> getAthenaFeedback(ModelingExercise modelingExercise, ModelingSubmission submission) throws NetworkingException {
-        AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
+        AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
         return api.getModelingFeedbackSuggestions(modelingExercise, submission, false).stream().filter(feedbackItem -> feedbackItem.description() != null)
                 .map(this::convertToFeedback).toList();
     }

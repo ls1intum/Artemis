@@ -13,7 +13,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
@@ -81,10 +80,6 @@ public abstract class CourseCompetency extends BaseCompetency {
     @JsonIgnoreProperties({ "user", "competency" })
     private Set<CompetencyProgress> userProgress = new HashSet<>();
 
-    @ManyToMany(mappedBy = "competencies")
-    @JsonIgnoreProperties({ "competencies", "course" })
-    private Set<LearningPath> learningPaths = new HashSet<>();
-
     @ManyToOne
     @JoinColumn(name = "course_id")
     @JsonIgnoreProperties({ "competencies", "prerequisites" })
@@ -96,7 +91,7 @@ public abstract class CourseCompetency extends BaseCompetency {
     private CourseCompetency linkedCourseCompetency;
 
     @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<CompetencyJol> competencyJols = new HashSet<>();
+    private final Set<CompetencyJol> competencyJols = new HashSet<>();
 
     public abstract String getType();
 
@@ -181,14 +176,6 @@ public abstract class CourseCompetency extends BaseCompetency {
 
     public void setUserProgress(Set<CompetencyProgress> userProgress) {
         this.userProgress = userProgress;
-    }
-
-    public Set<LearningPath> getLearningPaths() {
-        return learningPaths;
-    }
-
-    public void setLearningPaths(Set<LearningPath> learningPaths) {
-        this.learningPaths = learningPaths;
     }
 
     /**

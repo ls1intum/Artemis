@@ -28,19 +28,20 @@
                     }
                 },
                 "subSettings": {
-                    "chatSettings": "Chat Einstellungen",
+                    "exerciseChatSettings": "Programmieraufgaben Chat Einstellungen",
                     "textExerciseChatSettings": "Textaufgaben Chat Einstellungen",
                     "lectureChatSettings": "Vorlesungschat Einstellungen",
                     "courseChatSettings": "Kurs Chat Einstellungen",
                     "lectureIngestionSettings": {
-                        "title": "Vorlesungen Erfassung Einstellungen",
-                        "autoIngestOnAttachmentUpload": "Vorlesungen automatisch an Pyris senden"
+                        "title": "Einstellungen zur Vorlesungsverarbeitung",
+                        "autoIngestOnAttachmentUpload": "Vorlesungen automatisch senden"
                     },
                     "faqIngestionSettings": {
-                        "title": "FAQ Ingestion Settings",
-                        "autoIngest": "FAQs automatisch an Pyris senden"
+                        "title": "Einstellungen zur FAQ-Verarbeitung",
+                        "autoIngest": "FAQs automatisch an Iris senden"
                     },
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
+                    "tutorSuggestionSettings": "Tutor Vorschlag Einstellungen",
                     "proactivityBuildFailedEventEnabled": {
                         "label": "Build-Fehler überwachen",
                         "tooltip": "Wenn aktiviert, wird Iris proaktiv Hilfe-Nachrichten senden, wenn der Build einer Abbgabe fehlschlägt."
@@ -78,11 +79,17 @@
                     "enabled": {
                         "on": "Aktiviert",
                         "off": "Deaktiviert",
+                        "custom": "Benutzerdefiniert",
                         "chat": "Iris Chat"
                     },
                     "disabled": {
                         "course": "IRIS ist in den Kurs-IRIS-Einstellungen deaktiviert",
                         "global": "IRIS ist in den globalen IRIS-Einstellungen deaktiviert"
+                    },
+                    "customInstructions": {
+                        "title": "Benutzerdefinierte Anweisungen",
+                        "description": "Benutzerdefinierte Anweisungen, die der KI beim Generieren von Antworten zur Verfügung gestellt werden.",
+                        "placeholder": "Gib benutzerdefinierte Anweisungen für die KI ein (maximal 2048 Zeichen)"
                     }
                 },
                 "title": {
@@ -103,6 +110,10 @@
             "chat": {
                 "helpOffer": "Wie kann ich Dir helfen?"
             },
+            "tutorSuggestion": {
+                "loading": "Lade Vorschläge...",
+                "noIris": "Iris ist derzeit nicht verfügbar."
+            },
             "chatBubble": {
                 "seeFull": "Vollständige Nachricht sehen"
             },
@@ -112,20 +123,36 @@
                 "inProgress": "In Bearbeitung",
                 "done": "Abgeschlossen",
                 "error": "Fehler",
-                "partiallyIngested": "Teilweise abgeschlossen"
+                "partiallyIngested": "Teilweise verarbeitet"
             },
             "ingestionAlert": {
-                "lectureUnitSuccess": "Vorlesungseinheit Ingestion in Pyris erfolgreich gestartet",
-                "lectureUnitError": "Fehler beim Senden der Vorlesungseinheit an Pyris",
-                "lectureSuccess": "Vorlesung Ingestion in Pyris erfolgreich gestartet",
-                "lectureError": "Fehler beim Senden der Vorlesung an Pyris",
-                "allLecturesSuccess": "Alle Vorlesungen Ingestion in Pyris erfolgreich gestartet",
-                "allFaqsSuccess": "Alle Faqs Ingestion in Pyris erfolgreich gestartet",
-                "allLecturesError": "Fehler beim Senden aller Vorlesungen an Pyris",
-                "allFaqsError": "Fehler beim Senden aller FAQs an Pyris",
-                "lectureNotFound": "Vorlesung kann nicht an Pyris gesendet werden, keine Vorlesung mit der angegebenen ID gefunden.",
-                "pyrisUnavailable": "Pyris ist derzeit nicht verfügbar.",
-                "pyrisError": "Ein Fehler ist bei der Kommunikation mit Pyris aufgetreten."
+                "lectureUnitSuccess": "Vorlesungseinheit wird in Iris verarbeitet",
+                "lectureUnitError": "Fehler beim Senden der Vorlesungseinheit an Iris",
+                "lectureSuccess": "Vorlesung wird in Iris verarbeitet",
+                "lectureError": "Fehler beim Senden der Vorlesung an Iris",
+                "allLecturesSuccess": "Alle Vorlesungen werden nun verarbeitet",
+                "allFaqsSuccess": "Alle Faqs werden in Iris verarbeitet",
+                "allLecturesError": "Fehler beim Senden aller Vorlesungen an Iris",
+                "allFaqsError": "Fehler beim Senden aller FAQs an Iris",
+                "lectureNotFound": "Vorlesung kann nicht an Iris gesendet werden, keine Vorlesung mit der angegebenen ID gefunden.",
+                "pyrisUnavailable": "Iris ist derzeit nicht verfügbar.",
+                "pyrisError": "Ein Fehler ist bei der Kommunikation mit Iris aufgetreten.",
+                "transcriptionIngestionError": "Fehler beim Senden einer Vorlesungstranskription"
+            },
+            "controlCenter": {
+                "tooltip": "Durch das Umschalten aktivierst oder deaktivierst du ALLE Iris Features für diesen Kurs. Für eine gezieltere Kontrolle nutze bitte die Iris Einstellungen, indem du auf Benutzerdefinierst klickst."
+            },
+            "chatHistory": {
+                "title": "Chats",
+                "today": "Heute",
+                "yesterday": "Gestern",
+                "last7Days": "Letzten 7 Tage",
+                "last30Days": "Letzten 30 Tage",
+                "older": "Älter",
+                "relatedEntityTooltip": {
+                    "programmingExercise": "Diese Konversation bezieht sich auf eine Programmieraufgabe.",
+                    "lecture": "Diese Konversation bezieht sich auf eine Vorlesung."
+                }
             }
         }
     }

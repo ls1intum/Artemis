@@ -47,7 +47,7 @@ public class GradingInstruction extends DomainObject {
     @Column(name = "usage_count")
     private int usageCount;
 
-    // TODO: we should think about making this eager, because it is inconsistent
+    // Note: this is intended to be lazy because the other side is eager
     @ManyToOne(fetch = FetchType.LAZY)
     private GradingCriterion gradingCriterion;
 

@@ -1,10 +1,7 @@
 package de.tum.cit.aet.artemis.iris.domain.session;
 
-import java.util.Optional;
-
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,28 +18,32 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisCourseChatSession extends IrisChatSession {
 
-    @ManyToOne
     @JsonIgnore
-    private Course course;
+    private long courseId;
 
     public IrisCourseChatSession() {
     }
 
     public IrisCourseChatSession(Course course, User user) {
         super(user);
-        this.course = course;
+        this.courseId = course.getId();
     }
 
-    public Course getCourse() {
-        return course;
+    public long getCourseId() {
+        return courseId;
     }
 
-    public void setCourse(Course course) {
-        this.course = course;
+    public void setCourseId(long courseId) {
+        this.courseId = courseId;
     }
 
     @Override
-    public String toString() {
-        return "IrisCourseChatSession{" + "user=" + Optional.ofNullable(getUser()).map(User::getLogin).orElse("null") + "," + "course=" + course + '}';
+    public boolean shouldAcceptExternalLLMUsage() {
+        return true;
+    }
+
+    @Override
+    public IrisChatMode getMode() {
+        return IrisChatMode.COURSE_CHAT;
     }
 }

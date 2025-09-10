@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class BonusService {
 
@@ -60,7 +62,7 @@ public class BonusService {
     public BonusExampleDTO calculateGradeWithBonus(IBonusStrategy bonusStrategy, GradingScale bonusToGradingScale, Double bonusToAchievedPoints, GradingScale sourceGradingScale,
             Double sourceAchievedPoints, Double sourceReachablePoints, double calculationSign) {
         double bonusToReachablePoints = bonusToGradingScale.getMaxPoints();
-        GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * bonusToAchievedPoints / bonusToReachablePoints, bonusToGradingScale.getId());
+        GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * bonusToAchievedPoints / bonusToReachablePoints, bonusToGradingScale);
 
         if (!bonusToRawGradeStep.getIsPassingGrade() || sourceGradingScale == null) {
             return new BonusExampleDTO(bonusToAchievedPoints, sourceAchievedPoints, bonusToRawGradeStep.getGradeName(), 0.0, bonusToAchievedPoints,

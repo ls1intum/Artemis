@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.web.SubmissionPolicyResource;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class SubmissionPolicyService {
 
@@ -296,7 +298,7 @@ public class SubmissionPolicyService {
         // repository in rapid succession.
         // When the user submits while the result for the previous submission is not yet available, the previous submission will not be counted.
         // This means that the user is able to submit more often than the allowed number of submissions, if a lock repository policy is configured.
-        // As these submissions have to happen in quick succession, this does not constitute an advantage for the student and the behaviour is acceptable.
+        // As these submissions have to happen in quick succession, this does not constitute an advantage for the student and the behavior is acceptable.
         return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId).stream()
                 .filter(submission -> submission.getType() == SubmissionType.MANUAL && !submission.getResults().isEmpty()).map(ProgrammingSubmission::getCommitHash).distinct()
                 .count() + submissionCompensation;
@@ -328,7 +330,7 @@ public class SubmissionPolicyService {
      */
     public void createFeedbackForPenaltyPolicy(Result result, SubmissionPenaltyPolicy penaltyPolicy) {
         if (penaltyPolicy != null && penaltyPolicy.isActive()) {
-            int presentSubmissions = getParticipationSubmissionCount(result.getParticipation());
+            int presentSubmissions = getParticipationSubmissionCount(result.getSubmission().getParticipation());
             int illegalSubmissionCount = presentSubmissions - penaltyPolicy.getSubmissionLimit();
             if (illegalSubmissionCount > 0) {
                 double deduction = illegalSubmissionCount * penaltyPolicy.getExceedingPenalty();

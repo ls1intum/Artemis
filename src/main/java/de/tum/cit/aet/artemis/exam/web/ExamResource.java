@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exam.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
@@ -27,7 +26,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -76,12 +76,14 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -90,6 +92,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
@@ -117,7 +120,8 @@ import tech.jhipster.web.util.PaginationUtil;
 /**
  * REST controller for managing Exam.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ExamEnabled.class)
+@Lazy
 @RestController
 @RequestMapping("api/exam/")
 public class ExamResource {
@@ -582,7 +586,6 @@ public class ExamResource {
             if (channel != null) {
                 exam.setChannelName(channel.getName());
             }
-            examService.setQuizExamProperties(exam);
             return ResponseEntity.ok(exam);
         }
 
@@ -595,14 +598,12 @@ public class ExamResource {
                 exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, true);
             }
             examService.setExamProperties(exam);
-            examService.setQuizExamProperties(exam);
             return ResponseEntity.ok(exam);
         }
 
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         exam.getExamUsers().forEach(examUser -> examUser.getUser().setVisibleRegistrationNumber(examUser.getUser().getRegistrationNumber()));
 
-        examService.setQuizExamProperties(exam);
         return ResponseEntity.ok(exam);
     }
 
@@ -796,7 +797,7 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         // Forbid cleaning the course if no archive has been created
         if (!exam.hasExamArchive()) {
-            throw new BadRequestAlertException("Failed to clean up exam " + examId + " because it needs to be archived first.", ENTITY_NAME, "archivenonexistant");
+            throw new BadRequestAlertException("Failed to clean up exam " + examId + " because it needs to be archived first.", ENTITY_NAME, "archivenonexistent");
         }
         examService.cleanupExam(examId, principal);
         return ResponseEntity.ok().build();
@@ -1054,7 +1055,7 @@ public class ExamResource {
 
         Optional<User> optionalStudent = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
         if (optionalStudent.isEmpty()) {
-            throw new EntityNotFoundException("user", studentLogin);
+            throw new EntityNotFoundException("User with login " + studentLogin + " does not exist");
         }
 
         var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
@@ -1112,6 +1113,22 @@ public class ExamResource {
         StudentExam exam = examAccessService.getOrCreateStudentExamElseThrow(courseId, examId);
         exam.getUser().setVisibleRegistrationNumber();
         return ResponseEntity.ok(exam);
+    }
+
+    /**
+     * GET /courses/{courseId}/real-exams-sidebar-data : Get sidebar data for real exams in a course.
+     * For the content see {@link ExamSidebarDataDTO}
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and with the found sidebar data as body
+     */
+    @GetMapping("courses/{courseId}/real-exams-sidebar-data")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<ExamSidebarDataDTO>> getSidebarDataForRealExams(@PathVariable long courseId) {
+        log.debug("REST request to get sidebar data for exams in course {}", courseId);
+        User user = userRepository.getUser();
+        Set<ExamSidebarDataDTO> sidebarData = examRepository.findSidebarDataForRealStudentExamsByCourseId(courseId, ZonedDateTime.now(), user.getId());
+        return ResponseEntity.ok(sidebarData);
     }
 
     /**

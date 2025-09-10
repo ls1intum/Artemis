@@ -1,25 +1,24 @@
 import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
-import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
-import { SubmissionPolicy } from 'app/entities/submission-policy.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { getExerciseDueDate } from 'app/exercise/exercise.utils';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { Course } from 'app/entities/course.model';
-import { SubmissionType } from 'app/entities/submission.model';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { countSubmissions, getExerciseDueDate } from 'app/exercise/util/exercise.utils';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
-import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { isDateLessThanAWeekInTheFuture } from 'app/utils/date.utils';
-import { DifficultyLevelComponent } from 'app/shared/difficulty-level/difficulty-level.component';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
+import { isDateLessThanAWeekInTheFuture } from 'app/shared/util/date.utils';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { CommonModule } from '@angular/common';
-import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
-import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
+import { DifficultyLevelComponent } from 'app/exercise/difficulty-level/difficulty-level.component';
+import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 
 @Component({
     selector: 'jhi-exercise-headers-information',
@@ -58,7 +57,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
                 this.exercise,
                 this.course.maxComplaintTimeDays,
-                this.studentParticipation?.results?.last(),
+                getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).last(),
                 this.studentParticipation,
             );
         }
@@ -71,11 +70,12 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         if (this.submissionPolicy?.active && this.submissionPolicy?.submissionLimit) {
             this.updateSubmissionPolicyItem();
         }
-        if (this.studentParticipation?.results?.length) {
+        const results = getAllResultsOfAllSubmissions(this.studentParticipation?.submissions);
+        if (results.length) {
             // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
-            this.sortService.sortByProperty(this.studentParticipation.results, 'id', false);
+            this.sortService.sortByProperty(results, 'id', false);
 
-            const latestRatedResult = this.studentParticipation.results.filter((result) => result.rated).first();
+            const latestRatedResult = results.filter((result) => result.rated).first();
             if (latestRatedResult) {
                 this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course) ?? 0;
                 this.updatePointsItem();
@@ -295,14 +295,6 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     countSubmissions() {
-        const commitHashSet = new Set<string>();
-
-        this.studentParticipation?.results
-            ?.map((result) => result.submission)
-            .filter((submission) => submission?.type === SubmissionType.MANUAL)
-            .map((submission) => (submission as ProgrammingSubmission).commitHash)
-            .forEach((commitHash: string) => commitHashSet.add(commitHash));
-
-        this.numberOfSubmissions = commitHashSet.size;
+        this.numberOfSubmissions = countSubmissions(this.studentParticipation);
     }
 }

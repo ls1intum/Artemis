@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
-import { Participation } from 'app/entities/participation/participation.model';
-import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { RepositoryType } from '../../../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';
 
 export class MockProgrammingExerciseService {
@@ -15,12 +15,13 @@ export class MockProgrammingExerciseService {
     exportInstructorRepository = (exerciseId: number, repositoryType: RepositoryType) => of({ body: undefined });
     exportStudentRepository = (exerciseId: number, participationId: number) => of({ body: undefined });
     exportStudentRequestedRepository = (exerciseId: number, includeTests: boolean) => of({ body: undefined });
-    getDiffReport = (exerciseId: number) => of({});
-    getBuildLogStatistics = (exerciseId: number) => of({});
+    getTheiaConfig = (exerciseId: number) => of({});
+    createStructuralSolutionEntries = (exerciseId: number) => of({});
+    createBehavioralSolutionEntries = (exerciseId: number) => of({});
     getLatestResult = (participation: Participation) => of({});
-    combineTemplateRepositoryCommits = (exerciseId: number) => of({});
     delete = (programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean) => of({});
     generateStructureOracle = (exerciseId: number) => of({});
-    getDiffReportForCommits = (exerciseId: number, participationId: number, olderCommitHash: string, newerCommitHash: string, repositoryType: string) => of({});
     getCheckoutDirectoriesForProgrammingLanguage = (programmingLanguage: ProgrammingLanguage, checkoutSolution: boolean) => of();
+    getTemplateRepositoryTestFilesWithContent = (exerciseId: number) => of(new Map<string, string>());
+    getSolutionRepositoryTestFilesWithContent = (exerciseId: number) => of(new Map<string, string>());
 }

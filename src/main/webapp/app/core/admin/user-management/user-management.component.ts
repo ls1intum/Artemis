@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { Subject, Subscription, combineLatest } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { User } from 'app/core/user/user.model';
@@ -12,25 +13,24 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/shared/constants/pagination.constants';
 import { faEye, faFilter, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { LocalStorageService } from 'ngx-webstorage';
 import { NgbHighlight, NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
+import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-import-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteUsersButtonComponent } from './delete-users-button.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteUsersButtonComponent } from './delete-users-button/delete-users-button.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { NgClass } from '@angular/common';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { addPublicFilePrefix } from 'app/app.constants';
+import { PROFILE_LDAP, addPublicFilePrefix } from 'app/app.constants';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -128,7 +128,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
     private eventManager = inject(EventManager);
-    private localStorage = inject(LocalStorageService);
+    private localStorageService = inject(LocalStorageService);
     private modalService = inject(NgbModal);
     private profileService = inject(ProfileService);
 
@@ -212,9 +212,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.userListSubscription = this.eventManager.subscribe('userListModification', () => this.loadAll());
             this.handleNavigation();
         });
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.isLdapProfileActive = profileInfo.activeProfiles && (profileInfo.activeProfiles?.includes('ldap') || profileInfo.activeProfiles?.includes('ldap-only'));
-        });
+        this.isLdapProfileActive = this.profileService.isProfileActive(PROFILE_LDAP);
     }
 
     /**
@@ -235,7 +233,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.filters.originFilter = this.initFilter<OriginFilter>(UserStorageKey.ORIGIN, OriginFilter);
         this.filters.registrationNumberFilter = this.initFilter<RegistrationNumberFilter>(UserStorageKey.REGISTRATION_NUMBER, RegistrationNumberFilter);
         this.filters.statusFilter = this.initFilter<StatusFilter>(UserStorageKey.STATUS, StatusFilter);
-        this.filters.noAuthority = !!this.localStorage.retrieve(UserStorageKey.NO_AUTHORITY);
+        this.filters.noAuthority = this.localStorageService.retrieve<boolean>(UserStorageKey.NO_AUTHORITY) ?? false;
     }
 
     /**
@@ -244,14 +242,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param type of filter
      */
     initFilter<E>(key: UserStorageKey, type: Filter): Set<E> {
-        const temp = this.localStorage.retrieve(key);
+        const temp = this.localStorageService.retrieve<string>(key);
         const tempInStorage = temp
             ? temp
                   .split(',')
-                  .map((filter: keyof Filter) => type[filter])
+                  .map((filter: keyof Filter) => type[filter] as E) // type assertion
                   .filter(Boolean)
-            : new Set();
-        return new Set(tempInStorage);
+            : [];
+        return new Set<E>(tempInStorage);
     }
 
     /**
@@ -264,7 +262,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             filter.add(value);
         }
         if (key) {
-            this.localStorage.store(key, Array.from(filter).join(','));
+            this.localStorageService.store<string>(key, Array.from(filter).join(','));
         }
     }
 
@@ -351,7 +349,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param value new value
      */
     updateNoAuthority(value: boolean) {
-        this.localStorage.store(UserStorageKey.NO_AUTHORITY, value);
+        this.localStorageService.store<boolean>(UserStorageKey.NO_AUTHORITY, value);
         this.filters.noAuthority = value;
     }
 
@@ -360,7 +358,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     deselectAllRoles() {
         this.filters.authorityFilter.clear();
-        this.localStorage.clear(UserStorageKey.AUTHORITY);
+        this.localStorageService.remove(UserStorageKey.AUTHORITY);
         this.updateNoAuthority(false);
     }
 
@@ -402,7 +400,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     setActive(user: User, isActivated: boolean) {
         user.activated = isActivated;
-        this.adminUserService.update(user).subscribe(() => {
+        const action = isActivated ? this.adminUserService.activate : this.adminUserService.deactivate;
+        action.call(this.adminUserService, user.id!).subscribe(() => {
             this.loadAll();
         });
     }

@@ -3,17 +3,16 @@ import {
     ChangeDetectorRef,
     Component,
     ContentChild,
-    EventEmitter,
-    Input,
     OnChanges,
-    Output,
     SimpleChanges,
     TemplateRef,
     ViewEncapsulation,
     inject,
+    input,
+    output,
 } from '@angular/core';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -35,24 +34,19 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
 
     @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
 
-    @Input()
-    tutorialGroup: TutorialGroup;
+    readonly tutorialGroup = input.required<TutorialGroup>();
 
-    @Input()
-    sessions: TutorialGroupSession[] = [];
+    readonly sessions = input<TutorialGroupSession[]>([]);
 
-    @Input()
-    timeZone?: string = undefined;
+    readonly timeZone = input<string>();
 
     timeZoneUsedForDisplay = dayjs.tz.guess();
 
-    @Input()
-    showIdColumn = false;
+    readonly showIdColumn = input(false);
 
-    @Input()
-    isReadOnly = false;
+    readonly isReadOnly = input(false);
 
-    @Output() attendanceUpdated = new EventEmitter<void>();
+    readonly attendanceUpdated = output<void>();
 
     upcomingSessions: TutorialGroupSession[] = [];
     pastSessions: TutorialGroupSession[] = [];
@@ -61,11 +55,11 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
 
     isCollapsed = true;
     get numberOfColumns(): number {
-        let numberOfColumns = this.tutorialGroup.tutorialGroupSchedule ? 4 : 3;
+        let numberOfColumns = this.tutorialGroup().tutorialGroupSchedule ? 4 : 3;
         if (this.extraColumn) {
             numberOfColumns++;
         }
-        if (this.showIdColumn) {
+        if (this.showIdColumn()) {
             numberOfColumns++;
         }
         return numberOfColumns;

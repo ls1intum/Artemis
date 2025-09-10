@@ -14,7 +14,7 @@
         <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary" />
     </fa-stack>
 }
-<div class="d-flex">
+<div class="d-flex position-relative">
     <input
         #dateInput="ngModel"
         class="form-control position-relative ps-5"
@@ -62,6 +62,6 @@
 @if (warning()) {
     <div class="invalid-feedback">
         <fa-icon class="text-warning" [icon]="faTriangleExclamation" />
-        <span class="visible-date-warning" jhiTranslate="entity.warningError" ngbTooltip="{{ 'entity.warningToolTip' | artemisTranslate }}"></span>
+        <span class="visible-date-warning" jhiTranslate="entity.visibleDateWarningError" ngbTooltip="{{ 'entity.visibleDateWarningToolTip' | artemisTranslate }}"></span>
     </div>
 }

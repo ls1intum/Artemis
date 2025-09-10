@@ -1,26 +1,29 @@
-import { Component, OnDestroy, OnInit, inject, input, model, output, signal } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { Component, OnDestroy, OnInit, computed, inject, input, model, output, signal } from '@angular/core';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonSize } from 'app/shared/components/button.component';
-import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal.component';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
-import { Observable, Subject, Subscription, debounceTime, take } from 'rxjs';
+import { Observable, Subject, Subscription, debounceTime, forkJoin, of } from 'rxjs';
 import { CachedRepositoryFilesService } from 'app/programming/manage/services/cached-repository-files.service';
-import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Submission } from 'app/entities/submission.model';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
+import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programming/shared/utils/diff.utils';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Component({
     selector: 'jhi-programming-exam-diff',
@@ -29,24 +32,31 @@ import { SubmissionVersion } from 'app/entities/submission-version.model';
     imports: [IncludedInScoreBadgeComponent, CommitsInfoComponent, TranslateDirective, GitDiffLineStatComponent, NgbTooltip, ButtonComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponent implements OnInit, OnDestroy {
+    private alertService = inject(AlertService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private modalService = inject(NgbModal);
     private cachedRepositoryFilesService = inject(CachedRepositoryFilesService);
-
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     exercise = model.required<ProgrammingExercise>();
     previousSubmission = model<ProgrammingSubmission>();
     currentSubmission = model<ProgrammingSubmission>();
     studentParticipation = model<ProgrammingExerciseStudentParticipation>();
     submissions = model<ProgrammingSubmission[]>();
-    cachedDiffReports = input<Map<string, ProgrammingExerciseGitDiffReport>>(new Map<string, ProgrammingExerciseGitDiffReport>());
-    cachedDiffReportsChange = output<Map<string, ProgrammingExerciseGitDiffReport>>();
     exerciseIdSubject = model<Subject<number>>(new Subject<number>());
+    cachedDiffInformation = input<Map<string, RepositoryDiffInformation>>(new Map<string, RepositoryDiffInformation>());
+    cachedDiffInformationChange = output<Map<string, RepositoryDiffInformation>>();
+    cachedDiffReportsChange = output<Map<string, RepositoryDiffInformation>>();
 
     isLoadingDiffReport: boolean;
-    addedLineCount: number;
-    removedLineCount: number;
+    isLeftTemplate: boolean;
+    leftKey: string;
+    rightKey: string;
+    addedLineCount = computed(() => this.diffInformation()?.totalLineChange.addedLineCount ?? 0);
+    removedLineCount = computed(() => this.diffInformation()?.totalLineChange.removedLineCount ?? 0);
     cachedRepositoryFiles: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
     exerciseType = ExerciseType.PROGRAMMING;
+    diffInformation = signal<RepositoryDiffInformation | undefined>(undefined);
+    diffReady = signal<boolean>(false);
 
     private exerciseIdSubscription: Subscription;
 
@@ -57,16 +67,19 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
 
     ngOnInit() {
         // we subscribe to the exercise id because this allows us to avoid reloading the diff report every time the user switches between submission timestamps
+        this.cachedRepositoryFilesService.getCachedRepositoryFilesObservable().subscribe((cachedRepositoryFiles) => {
+            this.cachedRepositoryFiles = cachedRepositoryFiles;
+        });
+
         this.exerciseIdSubscription = this.exerciseIdSubject()
             .pipe(debounceTime(200))
             .subscribe(() => {
-                // we cannot use a tuple of the ids as key because they are only compared by reference, so we have to use this workaround with a string
                 const key = this.calculateMapKey();
-                if (this.cachedDiffReports().has(key)) {
-                    const diffReport = this.cachedDiffReports().get(key)!;
-                    this.assignPropertiesToReportAndCalculateLineCount(diffReport);
+                if (this.cachedDiffInformation().has(key)) {
+                    this.diffInformation.set(this.cachedDiffInformation().get(key)!);
+                    this.diffReady.set(true);
                 } else {
-                    this.loadGitDiffReport();
+                    this.fetchRepositoriesAndProcessDiff();
                 }
             });
     }
@@ -75,72 +88,115 @@ export class ProgrammingExerciseExamDiffComponent extends ExamSubmissionComponen
         this.exerciseIdSubscription?.unsubscribe();
     }
 
-    loadGitDiffReport() {
-        this.isLoadingDiffReport = true;
-        let subscription: Observable<ProgrammingExerciseGitDiffReport | undefined>;
-        const previousSubmission = this.previousSubmission();
-        if (previousSubmission) {
-            subscription = this.programmingExerciseService.getDiffReportForSubmissions(this.exercise().id!, previousSubmission.id!, this.currentSubmission()!.id!);
+    fetchRepositoriesAndProcessDiff(): void {
+        if (this.previousSubmission()) {
+            this.isLeftTemplate = false;
+            this.leftKey = this.previousSubmission()?.commitHash ?? '';
         } else {
-            // if there is no previous submission, we want to see the diff between the current submission and the template
-            subscription = this.programmingExerciseService.getDiffReportForSubmissionWithTemplate(this.exercise().id!, this.currentSubmission()!.id!);
+            this.isLeftTemplate = true;
+            this.leftKey = this.generateRepositoryKeyForTemplate();
         }
-        const key = this.calculateMapKey();
-        subscription.pipe(take(1)).subscribe((gitDiffReport: ProgrammingExerciseGitDiffReport | undefined) => {
-            if (gitDiffReport) {
-                this.assignPropertiesToReportAndCalculateLineCount(gitDiffReport);
-                this.cachedDiffReports().set(key, gitDiffReport);
-                this.cachedDiffReportsChange.emit(this.cachedDiffReports());
+        this.rightKey = this.currentSubmission()?.commitHash ?? '';
+
+        let leftSubscription: Observable<Map<string, string> | undefined>;
+        if (this.cachedRepositoryFiles.has(this.leftKey)) {
+            leftSubscription = of(this.cachedRepositoryFiles.get(this.leftKey));
+        } else {
+            leftSubscription = this.fetchRepositoryFilesAtLeftCommit();
+        }
+
+        let rightSubscription: Observable<Map<string, string> | undefined>;
+        if (this.cachedRepositoryFiles.has(this.rightKey)) {
+            rightSubscription = of(this.cachedRepositoryFiles.get(this.rightKey));
+        } else {
+            rightSubscription = this.fetchRepositoryFilesAtRightCommit();
+        }
+
+        forkJoin([leftSubscription, rightSubscription]).subscribe(([left, right]) => {
+            if (left && right) {
+                this.cachedRepositoryFiles.set(this.leftKey, left);
+                this.cachedRepositoryFiles.set(this.rightKey, right);
+                this.processRepositoryDiff(left, right);
+            } else {
+                this.alertService.error('artemisApp.programmingExercise.repositoryFilesError');
             }
-            this.isLoadingDiffReport = false;
         });
     }
 
-    private assignPropertiesToReportAndCalculateLineCount(gitDiffReport: ProgrammingExerciseGitDiffReport) {
-        this.exercise().gitDiffReport = gitDiffReport;
-        gitDiffReport.programmingExercise = this.exercise();
-        gitDiffReport.participationIdForLeftCommit = this.previousSubmission()?.participation?.id;
-        gitDiffReport.participationIdForRightCommit = this.currentSubmission()?.participation?.id;
-        gitDiffReport.leftCommitHash = this.previousSubmission()?.commitHash;
-        gitDiffReport.rightCommitHash = this.currentSubmission()?.commitHash;
-        this.calculateLineCount(gitDiffReport);
+    fetchRepositoryFilesAtRightCommit(): Observable<Map<string, string> | undefined> {
+        const exerciseId = this.exercise()?.id;
+        const participationId = this.currentSubmission()?.participation?.id;
+        const commitHash = this.currentSubmission()?.commitHash;
+
+        if (!exerciseId || !participationId || !commitHash) {
+            return of(undefined);
+        }
+
+        return this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
+            exerciseId,
+            participationId,
+            commitHash,
+            RepositoryType.USER,
+        );
     }
 
-    /**
-     * Calculates the added and removed line count for the given git-diff report.
-     * In case the report doesn't contain any entries, the line count is set to 0.
-     * @param gitDiffReport the report containing the git diff
-     */
-    private calculateLineCount(gitDiffReport: ProgrammingExerciseGitDiffReport) {
-        this.addedLineCount =
-            gitDiffReport?.entries
-                ?.map((entry) => entry.lineCount)
-                .filter((lineCount) => lineCount)
-                .map((lineCount) => lineCount!)
-                .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
-        this.removedLineCount =
-            gitDiffReport?.entries
-                ?.map((entry) => entry.previousLineCount)
-                .filter((lineCount) => lineCount)
-                .map((lineCount) => lineCount!)
-                .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
+    fetchRepositoryFilesAtLeftCommit(): Observable<Map<string, string> | undefined> {
+        const exerciseId = this.exercise()?.id;
+
+        if (!exerciseId) {
+            return of(undefined);
+        }
+
+        if (this.isLeftTemplate) {
+            return this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(exerciseId);
+        } else {
+            const participationId = this.previousSubmission()?.participation?.id;
+            const commitHash = this.previousSubmission()?.commitHash;
+
+            if (!participationId || !commitHash) {
+                return of(undefined);
+            }
+
+            return this.programmingExerciseParticipationService.getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView(
+                exerciseId,
+                participationId,
+                commitHash,
+                RepositoryType.USER,
+            );
+        }
+    }
+
+    async processRepositoryDiff(left: Map<string, string>, right: Map<string, string>) {
+        // Set ready state to false when starting diff processing
+        this.diffReady.set(false);
+
+        this.diffInformation.set(await processRepositoryDiff(left, right));
+        this.cachedDiffInformation().set(this.calculateMapKey(), this.diffInformation()!);
+        this.cachedDiffInformationChange.emit(this.cachedDiffInformation());
+        this.isLoadingDiffReport = false;
+
+        // Set ready state to true when diff processing is complete
+        this.diffReady.set(true);
     }
 
     /**
      * Shows the git-diff in a modal.
      */
     showGitDiff(): void {
+        if (!this.cachedDiffInformation().has(this.calculateMapKey())) {
+            return;
+        }
         const modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
-        modalRef.componentInstance.report = signal(this.exercise().gitDiffReport);
+        modalRef.componentInstance.repositoryDiffInformation = signal(this.cachedDiffInformation().get(this.calculateMapKey())!);
         modalRef.componentInstance.diffForTemplateAndSolution = signal(false);
-        modalRef.componentInstance.cachedRepositoryFiles = signal(this.cachedRepositoryFiles);
-        this.cachedRepositoryFilesService.getCachedRepositoryFilesObservable().subscribe((cachedRepositoryFiles) => {
-            this.cachedRepositoryFiles = cachedRepositoryFiles;
-        });
     }
 
     private calculateMapKey() {
         return JSON.stringify([this.previousSubmission()?.id, this.currentSubmission()?.id]);
+    }
+
+    private generateRepositoryKeyForTemplate() {
+        return this.exercise().id + '-template';
     }
 
     getExercise(): Exercise {

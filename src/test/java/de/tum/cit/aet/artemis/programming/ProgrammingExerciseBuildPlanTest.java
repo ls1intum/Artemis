@@ -7,9 +7,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
-class ProgrammingExerciseBuildPlanTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class ProgrammingExerciseBuildPlanTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String BUILD_PLAN = """
             image: ubuntu:20.04
@@ -27,7 +28,7 @@ class ProgrammingExerciseBuildPlanTest extends AbstractProgrammingIntegrationJen
     void init() {
         // no users needed for this test
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExerciseId = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
+        programmingExerciseId = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }
 
     @Test

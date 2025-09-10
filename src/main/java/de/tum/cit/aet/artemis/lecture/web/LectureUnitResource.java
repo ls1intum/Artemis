@@ -5,12 +5,14 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,9 +33,10 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -43,6 +46,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/lecture/")
 public class LectureUnitResource {
@@ -66,14 +70,18 @@ public class LectureUnitResource {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public LectureUnitResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, LectureRepository lectureRepository,
-            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi) {
+            LectureUnitRepository lectureUnitRepository, LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi,
+            InstanceMessageSendService instanceMessageSendService) {
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitService = lectureUnitService;
         this.competencyProgressApi = competencyProgressApi;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -103,7 +111,7 @@ public class LectureUnitResource {
         }
 
         // Ensure that all received lecture unit ids are already part of the lecture
-        if (!lectureUnits.stream().map(LectureUnit::getId).toList().containsAll(orderedLectureUnitIds)) {
+        if (!lectureUnits.stream().map(LectureUnit::getId).collect(Collectors.toSet()).containsAll(orderedLectureUnitIds)) {
             throw new BadRequestAlertException("Received lecture unit is not part of the lecture", ENTITY_NAME, "lectureMismatch");
         }
 
@@ -122,7 +130,7 @@ public class LectureUnitResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/completion")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<Void> completeLectureUnit(@PathVariable Long lectureUnitId, @PathVariable Long lectureId, @RequestParam("completed") boolean completed) {
         log.info("REST request to mark lecture unit as completed: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME));
@@ -140,7 +148,6 @@ public class LectureUnitResource {
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), user);
 
         lectureUnitService.setLectureUnitCompletion(lectureUnit, user, completed);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectForParticipantAsync(lectureUnit, user));
@@ -156,7 +163,7 @@ public class LectureUnitResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInLectureUnit
     public ResponseEntity<Void> deleteLectureUnit(@PathVariable long lectureUnitId, @PathVariable Long lectureId) {
         log.info("REST request to delete lecture unit: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findByIdWithCompetenciesBidirectionalElseThrow(lectureUnitId);
@@ -166,8 +173,6 @@ public class LectureUnitResource {
         if (!lectureUnit.getLecture().getId().equals(lectureId)) {
             throw new BadRequestAlertException("Requested lecture unit is not part of the specified lecture", ENTITY_NAME, "lectureIdMismatch");
         }
-
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, lectureUnit.getLecture().getCourse(), null);
 
         String lectureUnitName = lectureUnit.getName();
         if (lectureUnitName == null) {
@@ -185,11 +190,10 @@ public class LectureUnitResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @GetMapping("lecture-units/{lectureUnitId}/for-learning-path-node-details")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<LectureUnitForLearningPathNodeDetailsDTO> getLectureUnitForLearningPathNodeDetails(@PathVariable long lectureUnitId) {
         log.info("REST request to get lecture unit for learning path node details with id: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findById(lectureUnitId).orElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok(LectureUnitForLearningPathNodeDetailsDTO.of(lectureUnit));
     }
 
@@ -200,11 +204,10 @@ public class LectureUnitResource {
      * @return the ResponseEntity with status 200 (OK) and the lecture unit in the body, or with status 404 (Not Found) if the lecture unit could not be found
      */
     @GetMapping("lecture-units/{lectureUnitId}")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<LectureUnit> getLectureUnitById(@PathVariable @Valid long lectureUnitId) {
         log.debug("REST request to get lecture unit with id: {}", lectureUnitId);
         var lectureUnit = lectureUnitRepository.findByIdWithCompletedUsersElseThrow(lectureUnitId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), null);
         lectureUnit.setCompleted(lectureUnit.isCompletedFor(userRepository.getUser()));
         return ResponseEntity.ok(lectureUnit);
     }
@@ -221,7 +224,7 @@ public class LectureUnitResource {
      *         ingestion fails for another reason.
      */
     @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/ingest")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInLectureUnit
     public ResponseEntity<Void> ingestLectureUnit(@PathVariable long lectureId, @PathVariable long lectureUnitId) {
         Lecture lecture = this.lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         Optional<LectureUnit> lectureUnitOptional = lecture.getLectureUnits().stream().filter(lu -> lu.getId() == lectureUnitId).findFirst();
@@ -230,6 +233,7 @@ public class LectureUnitResource {
         }
         LectureUnit lectureUnit = lectureUnitOptional.get();
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.INSTRUCTOR, lectureUnit.getLecture(), null);
+        this.instanceMessageSendService.sendLectureUnitAutoIngestionScheduleCancel(lectureUnitId);
         return lectureUnitService.ingestLectureUnitInPyris(lectureUnit);
     }
 }

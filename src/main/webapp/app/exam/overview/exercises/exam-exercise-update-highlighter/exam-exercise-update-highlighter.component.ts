@@ -1,8 +1,10 @@
 import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { SafeHtml } from '@angular/platform-browser';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import diff from 'html-diff-ts';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
@@ -14,18 +16,19 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 })
 export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy {
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
 
     subscriptionToLiveExamExerciseUpdates: Subscription;
     themeSubscription: Subscription;
-    updatedProblemStatementHTML: string;
-    updatedProblemStatementWithHighlightedDifferencesHTML: string;
+    updatedProblemStatementHTML: SafeHtml;
+    updatedProblemStatementWithHighlightedDifferencesHTML: SafeHtml;
     outdatedProblemStatement: string;
     updatedProblemStatement: string;
     showHighlightedDifferences = true;
     isHidden = true;
     exercise = input.required<Exercise>();
 
-    problemStatementUpdateEvent = output<string>();
+    problemStatementUpdateEvent = output<SafeHtml>();
 
     ngOnInit(): void {
         this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {
@@ -47,7 +50,7 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
     toggleHighlightedProblemStatement(event: MouseEvent): void {
         // prevents the jhi-resizeable-container from collapsing the right panel on a button click
         event.stopPropagation();
-        let problemStatementToEmit;
+        let problemStatementToEmit: SafeHtml;
         if (this.showHighlightedDifferences) {
             problemStatementToEmit = this.updatedProblemStatementHTML;
         } else {
@@ -85,7 +88,7 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
     highlightProblemStatementDifferences() {
         const outdatedProblemStatementHTML = htmlForMarkdown(this.outdatedProblemStatement);
         const updatedProblemStatementHTML = htmlForMarkdown(this.updatedProblemStatement);
-        this.updatedProblemStatementHTML = updatedProblemStatementHTML;
-        this.updatedProblemStatementWithHighlightedDifferencesHTML = diff(outdatedProblemStatementHTML, updatedProblemStatementHTML);
+        this.updatedProblemStatementHTML = this.artemisMarkdown.safeHtmlForMarkdown(this.updatedProblemStatement);
+        this.updatedProblemStatementWithHighlightedDifferencesHTML = this.artemisMarkdown.safeHtmlForMarkdown(diff(outdatedProblemStatementHTML, updatedProblemStatementHTML));
     }
 }

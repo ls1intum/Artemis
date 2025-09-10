@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
-import { StarRatingComponent } from 'app/exercise/rating/star-rating/star-rating.component';
+import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 
 import { AlertService } from 'app/shared/service/alert.service';
 
-import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
@@ -34,14 +34,14 @@ export class JudgementOfLearningRatingComponent {
 
         const newRating = event.newValue;
 
-        this.courseCompetencyService.setJudgementOfLearning(this.courseId, this.competencyId, newRating).subscribe(
-            () => {
+        this.courseCompetencyService.setJudgementOfLearning(this.courseId, this.competencyId, newRating).subscribe({
+            next: () => {
                 this.rating = newRating;
                 this.ratingChange.emit(newRating);
             },
-            () => {
+            error: () => {
                 this.alertService.error('artemisApp.courseStudentDashboard.judgementOfLearning.error');
             },
-        );
+        });
     }
 }

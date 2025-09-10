@@ -2,12 +2,16 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
+import java.nio.file.Path;
+
 import org.eclipse.jgit.http.server.GitServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 /**
@@ -15,11 +19,15 @@ import org.springframework.context.annotation.Profile;
  */
 @Configuration
 @Profile(PROFILE_LOCALVC)
+@Lazy
 public class JGitServletConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(JGitServletConfiguration.class);
 
     private final ArtemisGitServletService artemisGitServlet;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCBasePath;
 
     public JGitServletConfiguration(ArtemisGitServletService artemisGitServlet) {
         this.artemisGitServlet = artemisGitServlet;
@@ -30,8 +38,14 @@ public class JGitServletConfiguration {
      */
     @Bean
     public ServletRegistrationBean<GitServlet> jgitServlet() {
-        log.info("Registering ArtemisGitServlet for handling fetch and push requests to [Artemis URL]/git/[Project Key]/[Repository Slug].git");
-        return new ServletRegistrationBean<>(artemisGitServlet, "/git/*");
+        log.debug("Registering ArtemisGitServlet for handling fetch and push requests to [Artemis URL]/git/[Project Key]/[Repository Slug].git");
+        ServletRegistrationBean<GitServlet> registration = new ServletRegistrationBean<>(artemisGitServlet, "/git/*");
+        // REQUIRED: set base-path to the root folder of bare repositories
+        registration.addInitParameter("base-path", localVCBasePath.toAbsolutePath().toString());
+
+        // OPTIONAL: allow access to all repos, otherwise must whitelist
+        registration.addInitParameter("export-all", "true");
+        return registration;
     }
 
 }

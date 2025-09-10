@@ -3,9 +3,12 @@ package de.tum.cit.aet.artemis.exercise.domain;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,7 +39,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -44,7 +46,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
@@ -72,12 +73,10 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 public abstract class Submission extends DomainObject implements Comparable<Submission> {
 
     @Column(name = "submitted")
-    @JsonView(QuizView.Before.class)
     private Boolean submitted;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "jhi_type")
-    @JsonView(QuizView.Before.class)
     private SubmissionType type;
 
     @Column(name = "example_submission")
@@ -104,7 +103,6 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
 
-    @JsonView(QuizView.Before.class)
     public ZonedDateTime getSubmissionDate() {
         return submissionDate;
     }
@@ -134,10 +132,33 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestResult() {
-        if (results != null && !results.isEmpty()) {
-            return results.getLast();
+        Result latestResult = Optional.ofNullable(results).orElse(Collections.emptyList()).stream().filter(Objects::nonNull).max(Comparator.comparing(Result::getId)).orElse(null);
+
+        if (latestResult != null) {
+            latestResult.setSubmission(this);
         }
-        return null;
+
+        return latestResult;
+    }
+
+    /**
+     * Returns the most recent result that has been completed, i.e. has a non-null completion date.
+     * This ignores draft results that might exist when an assessment lock was created but not
+     * finished.
+     *
+     * @return the latest completed {@link Result} or {@code null} if none exists
+     */
+    @Nullable
+    @JsonIgnore
+    public Result getLatestCompletedResult() {
+        Result latestResult = Optional.ofNullable(results).orElse(Collections.emptyList()).stream().filter(result -> result != null && result.getCompletionDate() != null)
+                .max(Comparator.comparing(Result::getCompletionDate)).orElse(null);
+
+        if (latestResult != null) {
+            latestResult.setSubmission(this);
+        }
+
+        return latestResult;
     }
 
     /**

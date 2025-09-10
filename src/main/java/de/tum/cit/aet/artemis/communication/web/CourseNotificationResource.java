@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
@@ -21,12 +22,10 @@ import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingPre
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
-@FeatureToggle(Feature.CourseSpecificNotifications)
 @RequestMapping("api/communication/")
 public class CourseNotificationResource {
 
@@ -54,6 +53,7 @@ public class CourseNotificationResource {
      * @param pageable the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of course notifications in body
      */
+    // TODO: not a good REST URL design, consider changing courseId to a QueryParam or put it into the front of the URL: courses/{courseId}/notifications
     @EnforceAtLeastStudentInCourse
     @GetMapping("notification/{courseId}")
     public ResponseEntity<CourseNotificationPageableDTO<CourseNotificationDTO>> getCourseNotifications(@PathVariable Long courseId, Pageable pageable) {

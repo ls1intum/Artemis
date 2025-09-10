@@ -26,5 +26,4 @@ public record Message(String text, String id) {
     public Optional<String> getOptionalId() {
         return Optional.ofNullable(id);
     }
-
 }

@@ -5,11 +5,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -26,13 +29,43 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LearnerProfile extends DomainObject {
 
+    public static final String ENTITY_NAME = "learnerProfile";
+
+    /**
+     * Minimum value allowed for profile fields.
+     */
+    public static final int MIN_PROFILE_VALUE = 1;
+
+    /**
+     * Default value for profile fields representing values representing neutral.
+     */
+    public static final int DEFAULT_PROFILE_VALUE = 2;
+
+    /**
+     * Maximum value allowed for profile fields.
+     */
+    public static final int MAX_PROFILE_VALUE = 3;
+
     @JsonIgnoreProperties("learnerProfile")
-    @OneToOne(mappedBy = "learnerProfile", cascade = CascadeType.PERSIST)
+    @OneToOne(mappedBy = "learnerProfile")
     private User user;
 
     @OneToMany(mappedBy = "learnerProfile", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("learnerProfile")
     private Set<CourseLearnerProfile> courseLearnerProfiles = new HashSet<>();
+
+    @Column(name = "feedback_detail")
+    @Min(MIN_PROFILE_VALUE)
+    @Max(MAX_PROFILE_VALUE)
+    private int feedbackDetail = DEFAULT_PROFILE_VALUE;
+
+    @Column(name = "feedback_formality")
+    @Min(MIN_PROFILE_VALUE)
+    @Max(MAX_PROFILE_VALUE)
+    private int feedbackFormality = DEFAULT_PROFILE_VALUE;
+
+    @Column(name = "has_setup_feedback_preferences")
+    private boolean hasSetupFeedbackPreferences = false;
 
     public void setUser(User user) {
         this.user = user;
@@ -60,5 +93,29 @@ public class LearnerProfile extends DomainObject {
 
     public boolean removeCourseLearnerProfile(CourseLearnerProfile courseLearnerProfile) {
         return this.courseLearnerProfiles.remove(courseLearnerProfile);
+    }
+
+    public int getFeedbackDetail() {
+        return feedbackDetail;
+    }
+
+    public void setFeedbackDetail(int feedbackDetail) {
+        this.feedbackDetail = feedbackDetail;
+    }
+
+    public int getFeedbackFormality() {
+        return feedbackFormality;
+    }
+
+    public void setFeedbackFormality(int feedbackFormality) {
+        this.feedbackFormality = feedbackFormality;
+    }
+
+    public boolean hasSetupFeedbackPreferences() {
+        return hasSetupFeedbackPreferences;
+    }
+
+    public void setHasSetupFeedbackPreferences(boolean hasSetupFeedbackPreferences) {
+        this.hasSetupFeedbackPreferences = hasSetupFeedbackPreferences;
     }
 }

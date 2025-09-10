@@ -1,13 +1,15 @@
 {
     "artemisApp": {
         "userSettings": {
-            "settings": "Settings",
             "saveChanges": "Save Changes",
             "saveSettingsSuccessAlert": "Your Settings have been successfully saved.",
             "userSettings": "User Settings",
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
+            "passkeys": "Passkeys",
+            "externalLLMUsage": "External LLM Usage",
             "accountInformation": "Account Information",
+            "learnerProfile": "Learner Profile",
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
             "scienceSettings": "Science",
@@ -17,6 +19,10 @@
                 "description": "Choose the IDEs you want to use for opening programming exercises.",
                 "default": "Default",
                 "jetbrainsHelp": "To use JetBrains IDEs, please install the JetBrains Toolbox."
+            },
+            "externalLLMUsageSettingsPage": {
+                "accepted": "You have accepted the usage of external LLMs on {{acceptedDate}}.",
+                "declined": "You have not accepted the usage of external LLMs."
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Here you can set a public SSH key to clone git repositories via SSH. For more details see the documentation.",
@@ -84,6 +90,42 @@
                 "expiryDate": "Expiry Date",
                 "actions": "Actions"
             },
+            "passkeySettingsPage": {
+                "infoText": "Passkeys offer a modern, secure, and convenient alternative to passwords. They protect your account from phishing, credential theft, and password reuse.",
+                "learnMore": "Learn more about passkeys.",
+                "noneRegistered": "You have not registered any passkeys with Artemis yet.",
+                "deletePasskeyQuestion": "Do you really want to delete your passkey for passwordless authentication with Artemis?",
+                "noPasskeyRegistered": "You have not registered any passkeys with Artemis yet.",
+                "addNewPasskey": "Add a passkey",
+                "yourPasskeys": "Your passkeys",
+                "created": "Created on",
+                "lastUsed": "Last used on",
+                "label": "label",
+                "validation": {
+                    "labelLength": "The label must not exceed {{maxLabelLength}} characters."
+                },
+                "success": {
+                    "registration": "Your passkey has been successfully registered. You can manage your passkeys in the user settings."
+                },
+                "error": {
+                    "invalidCredential": "An invalid passkey was provided. Please try again with a different authenticator (e.g. Apple Keychain, Windows Hello, Google Password Manager, etc.).",
+                    "login": "Login with Passkey failed. Please check you registered a passkey with Artemis.",
+                    "passkeyAlreadyRegistered": "You have already registered a passkey with the selected authenticator, choose a different authenticator if you want to register another passkey.",
+                    "registration": "The passkey could not be registered. Please try again.",
+                    "save": "The passkey could not be saved. Please try again.",
+                    "delete": "The passkey could not be deleted. Please try again."
+                }
+            },
+            "setupPasskeyModal": {
+                "title": "Stay Secure with Passkeys",
+                "description": {
+                    "howItWorks": "Your passkey is stored on your device and secured with biometrics or a PIN, making login fast and safe — without the need to remember a password.",
+                    "recommendation": "We recommend setting up a passkey now to enhance your account's security and enjoy a seamless, passwordless login experience."
+                },
+                "setupLater": "Set Up Later",
+                "setupPasskey": "Set Up Passkey",
+                "remindMeIn30Days": "Remind Me in 30 Days"
+            },
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",
                 "fullName": "Full Name",
@@ -95,11 +137,14 @@
                 "sshKey": "Public SSH Key"
             },
             "categories": {
+                "externalLLMUsage": "External LLM Usage Settings",
                 "NOTIFICATION_SETTINGS": "Notification Settings",
                 "SCIENCE_SETTINGS": "Science Settings",
                 "SSH_SETTINGS": "SSH Settings",
                 "VCS_TOKEN_SETTINGS": "VCS Token Settings",
-                "IDE_PREFERENCES": "IDE Preferences"
+                "PASSKEYS": "Passkey Settings",
+                "IDE_PREFERENCES": "IDE Preferences",
+                "GLOBAL_NOTIFICATIONS": "Notifications"
             },
             "settingGroupNames": {
                 "weeklySummary": "Weekly Summary",
@@ -167,6 +212,20 @@
                 "tutorialGroupUpdateDeleteDescription": "Get notified when a tutorial group for which you are registered or a tutor was updated or deleted",
                 "assignUnassignTutorialGroupDescription": "Get notified when you were assigned or unassigned to lead a tutorial group",
                 "activityDescription": "Share which features of Artemis you utilize and how you interact with them. The information is only accessible for administrators."
+            },
+            "globalNotificationSettings": {
+                "title": "Notifications",
+                "description": "You'll receive email notifications for the following security-related activities. Manage your preferences below.",
+                "options": {
+                    "NEW_LOGIN": "New Login",
+                    "NEW_PASSKEY_ADDED": "New Passkey Added",
+                    "VCS_TOKEN_EXPIRED": "VCS Token Expired",
+                    "SSH_KEY_EXPIRED": "SSH Key Expired"
+                },
+                "viewPasskeySettings": "View Passkey Settings",
+                "viewVcsTokenSettings": "View VCS Token Settings",
+                "viewSshKeySettings": "View SSH Key Settings",
+                "updateSuccess": "Notification setting updated successfully."
             }
         }
     }

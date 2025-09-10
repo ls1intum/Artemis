@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { faFlag } from '@fortawesome/free-solid-svg-icons';
-import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
+import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
@@ -14,12 +14,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [TranslateDirective, RouterLink, NgbPopover, FaIconComponent],
 })
 export class CompetenciesPopoverComponent implements OnInit {
-    @Input()
-    courseId: number;
-    @Input()
-    competencyLinks: CompetencyLectureUnitLink[] = [];
-    @Input()
-    navigateTo: 'competencyManagement' | 'courseCompetencies' = 'courseCompetencies';
+    @Input() courseId: number;
+    @Input() competencyLinks: CompetencyLectureUnitLink[] = [];
+    @Input() navigateTo: 'competencyManagement' | 'courseCompetencies' = 'courseCompetencies';
 
     navigationArray: string[] = [];
 

@@ -2,7 +2,7 @@
 
 $draggable-width: 15px;
 $discussion-section-card-min-width-sm: 230px;
-$discussion-section-card-min-width: 360px;
+$discussion-section-card-min-width: 370px;
 
 .postings-container {
     display: flex;
@@ -28,14 +28,16 @@ $discussion-section-card-min-width: 360px;
     .card {
         width: inherit;
         min-width: $discussion-section-card-min-width;
+        border: 2px solid var(--bs-border-color);
 
         .card-header {
             display: inline-flex;
             justify-content: space-between;
             align-items: center;
-            background-color: var(--artemis-dark);
             cursor: pointer;
             border-radius: 0.25em 0.25em 0 0;
+            background-color: transparent;
+            border-bottom: 2px solid var(--bs-border-color);
 
             .card-title {
                 display: flex;
@@ -59,9 +61,10 @@ $discussion-section-card-min-width: 360px;
 
 .collapsed-discussion {
     width: 38px;
-    justify-content: space-between;
+    justify-content: start;
     flex-flow: column nowrap;
-    background-color: var(--artemis-dark);
+    border: 2px solid $border-color;
+    border-radius: 0.25em 0 0 0.25em;
     margin-left: auto;
     cursor: pointer;
 
@@ -74,6 +77,11 @@ $discussion-section-card-min-width: 360px;
         padding-top: 0.5rem;
         padding-bottom: 0.5rem;
         place-self: center;
+    }
+
+    .spacer {
+        flex: 1;
+        width: 100%;
     }
 }
 

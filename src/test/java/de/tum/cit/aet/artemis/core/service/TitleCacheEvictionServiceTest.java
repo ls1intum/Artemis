@@ -5,9 +5,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 import java.util.function.Supplier;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.ApplicationContext;
 
 import de.tum.cit.aet.artemis.core.organization.util.OrganizationUtilService;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
@@ -15,7 +17,7 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.Pair;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository;
@@ -36,7 +38,7 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
     private CacheManager cacheManager;
 
     @Autowired
-    private LectureRepository lectureRepository;
+    private LectureTestRepository lectureRepository;
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -61,6 +63,17 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @BeforeEach
+    void setup() {
+        // trigger lazy bean initialization, so the PostConstruct method of TitleCacheEvictionService is called
+        // in production, the DeferredEagerBeanInitializer would take care of this
+        applicationContext.getBean(TitleCacheEvictionService.class);
+
+    }
 
     @Test
     void testEvictsTitleOnUpdateTitleOrDeleteCourse() {

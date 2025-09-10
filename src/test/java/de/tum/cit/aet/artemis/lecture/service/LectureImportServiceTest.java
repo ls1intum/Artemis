@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -29,7 +29,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
     private LectureImportService lectureImportService;
 
     @Autowired
-    private LectureRepository lectureRepository;
+    private LectureTestRepository lectureRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -47,14 +47,14 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, true, 0);
-        Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
+        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, true, 0);
+        Course course1 = courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         long lecture1Id = course1.getLectures().stream().findFirst().orElseThrow().getId();
-        this.lecture1 = this.lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture1Id);
-        this.course2 = courseUtilService.createCourse();
+        lecture1 = lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(lecture1Id);
+        course2 = courseUtilService.createCourse();
 
-        assertThat(this.lecture1.getLectureUnits()).isNotEmpty();
-        assertThat(this.lecture1.getAttachments()).isNotEmpty();
+        assertThat(lecture1.getLectureUnits()).isNotEmpty();
+        assertThat(lecture1.getAttachments()).isNotEmpty();
     }
 
     @AfterEach
@@ -76,7 +76,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
 
         // Find the imported lecture and fetch it with lecture units
         Long lecture2Id = this.course2.getLectures().stream().skip(lectureCount).findFirst().orElseThrow().getId();
-        Lecture lecture2 = this.lectureRepository.findByIdWithAttachmentsAndPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lecture2Id);
+        Lecture lecture2 = this.lectureRepository.findByIdWithAttachmentsAndLectureUnitsAndCompletionsElseThrow(lecture2Id);
 
         assertThat(lecture2.getTitle()).isEqualTo(this.lecture1.getTitle());
         assertThat(lecture2.getDescription()).isNotNull().isEqualTo(this.lecture1.getDescription());

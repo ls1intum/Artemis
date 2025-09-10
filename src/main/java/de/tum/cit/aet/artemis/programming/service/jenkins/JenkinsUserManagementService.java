@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.service.jenkins.dto.JenkinsUserDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermission;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 
+@Lazy
 @Service
 @Profile(PROFILE_JENKINS)
 public class JenkinsUserManagementService implements CIUserManagementService {
@@ -333,11 +335,11 @@ public class JenkinsUserManagementService implements CIUserManagementService {
      * @param programmingExercises list of programmingExercises for which the permissions should be changed
      */
     private void assignPermissionsToInstructorAndEditorAndTAsForCourse(Course course, List<ProgrammingExercise> programmingExercises) {
-        var instructors = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()).stream().map(User::getLogin)
+        var instructors = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()).stream().map(User::getLogin)
                 .collect(Collectors.toSet());
-        var editors = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getEditorGroupName()).stream().map(User::getLogin)
+        var editors = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getEditorGroupName()).stream().map(User::getLogin)
                 .collect(Collectors.toSet());
-        var teachingAssistants = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream()
+        var teachingAssistants = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream()
                 .map(User::getLogin).collect(Collectors.toSet());
 
         // Courses can have the same groups. We do not want to add/remove users from exercises of other courses belonging to the same group
@@ -367,9 +369,9 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     private void removePermissionsFromInstructorsAndEditorsAndTAsForCourse(String instructorGroup, String editorGroup, String teachingAssistantGroup,
             List<ProgrammingExercise> programmingExercises) {
         // Fetch all instructors and editors and teaching assistants belonging to the group that was removed from the course.
-        var oldInstructors = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(instructorGroup);
-        var oldEditors = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(editorGroup);
-        var oldTeachingAssistants = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(teachingAssistantGroup);
+        var oldInstructors = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(instructorGroup);
+        var oldEditors = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(editorGroup);
+        var oldTeachingAssistants = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(teachingAssistantGroup);
         var usersFromOldGroup = Stream.concat(oldInstructors.stream(), Stream.concat(oldEditors.stream(), oldTeachingAssistants.stream())).map(User::getLogin)
                 .collect(Collectors.toSet());
 

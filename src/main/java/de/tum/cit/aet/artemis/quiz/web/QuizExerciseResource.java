@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -63,15 +65,17 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.CourseService;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
-import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
@@ -93,6 +97,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
  * REST controller for managing QuizExercise.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseResource {
@@ -122,7 +127,7 @@ public class QuizExerciseResource {
 
     private final ExerciseDeletionService exerciseDeletionService;
 
-    private final ExamDateService examDateService;
+    private final Optional<ExamDateApi> examDateApi;
 
     private final InstanceMessageSendService instanceMessageSendService;
 
@@ -142,21 +147,21 @@ public class QuizExerciseResource {
 
     private final QuizBatchRepository quizBatchRepository;
 
-    private final FileService fileService;
-
     private final ChannelService channelService;
 
     private final ChannelRepository channelRepository;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
+    private final Optional<SlideApi> slideApi;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
-            ExamDateService examDateService, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
+            Optional<ExamDateApi> examDateApi, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, FileService fileService, ChannelService channelService, ChannelRepository channelRepository,
-            QuizSubmissionService quizSubmissionService, QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi) {
+            QuizBatchRepository quizBatchRepository, ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService,
+            QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -164,7 +169,7 @@ public class QuizExerciseResource {
         this.courseService = courseService;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
-        this.examDateService = examDateService;
+        this.examDateApi = examDateApi;
         this.instanceMessageSendService = instanceMessageSendService;
         this.quizStatisticService = quizStatisticService;
         this.quizExerciseImportService = quizExerciseImportService;
@@ -174,12 +179,12 @@ public class QuizExerciseResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.quizBatchService = quizBatchService;
         this.quizBatchRepository = quizBatchRepository;
-        this.fileService = fileService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.quizResultService = quizResultService;
         this.competencyProgressApi = competencyProgressApi;
+        this.slideApi = slideApi;
     }
 
     /**
@@ -310,6 +315,7 @@ public class QuizExerciseResource {
         }
         QuizExercise finalQuizExercise = quizExercise;
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalQuiz, Optional.of(finalQuizExercise)));
+        slideApi.ifPresent(api -> api.handleDueDateChange(originalQuiz, finalQuizExercise));
 
         return ResponseEntity.ok(quizExercise);
     }
@@ -669,28 +675,29 @@ public class QuizExerciseResource {
                 .map(question -> ((DragAndDropQuestion) question)).toList();
         List<String> backgroundImagePaths = dragAndDropQuestions.stream().map(DragAndDropQuestion::getBackgroundFilePath).toList();
         List<String> dragItemImagePaths = dragAndDropQuestions.stream().flatMap(question -> question.getDragItems().stream().map(DragItem::getPictureFilePath)).toList();
-        List<Path> imagesToDelete = Stream.concat(backgroundImagePaths.stream(), dragItemImagePaths.stream()).map(path -> {
-            if (path == null) {
-                return null;
-            }
-            try {
-                return FilePathService.actualPathForPublicPathOrThrow(URI.create(path));
-            }
-            catch (FilePathParsingException e) {
-                // if the path is invalid, we can't delete it, but we don't want to fail the whole deletion
-                log.warn("Could not find file {} for deletion", path);
-                return null;
-            }
-        }).filter(Objects::nonNull).toList();
+        List<Path> imagesToDelete = Stream
+                .concat(backgroundImagePaths.stream().filter(Objects::nonNull).map(path -> convertToActualPath(path, FilePathType.DRAG_AND_DROP_BACKGROUND)),
+                        dragItemImagePaths.stream().filter(Objects::nonNull).map(path -> convertToActualPath(path, FilePathType.DRAG_ITEM)))
+                .filter(Objects::nonNull).toList();
 
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseDeletionService.delete(quizExerciseId, false, false);
+        exerciseDeletionService.delete(quizExerciseId, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
 
-        fileService.deleteFiles(imagesToDelete);
+        FileUtil.deleteFiles(imagesToDelete);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.getTitle())).build();
+    }
+
+    private Path convertToActualPath(String pathString, FilePathType filePathType) {
+        try {
+            return FilePathConverter.fileSystemPathForExternalUri(URI.create(pathString), filePathType);
+        }
+        catch (FilePathParsingException e) {
+            log.warn("Could not find file {} for deletion", pathString);
+            return null;
+        }
     }
 
     /**
@@ -714,8 +721,9 @@ public class QuizExerciseResource {
         QuizExercise originalQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
 
         if (originalQuizExercise.isExamExercise()) {
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
             // Re-evaluation of an exam quiz is only possible if all students finished their exam
-            ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(originalQuizExercise.getExerciseGroup().getExam());
+            ZonedDateTime latestIndividualExamEndDate = api.getLatestIndividualExamEndDate(originalQuizExercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                 throw new BadRequestAlertException("The exam of the quiz exercise has not ended yet. Re-evaluation is only allowed after an exam has ended.", ENTITY_NAME,
                         "examOfQuizExerciseNotEnded");

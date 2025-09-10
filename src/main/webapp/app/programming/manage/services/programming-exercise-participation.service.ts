@@ -1,14 +1,14 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { Participation } from 'app/entities/participation/participation.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { CommitInfo } from 'app/entities/programming/programming-submission.model';
-import { Result } from 'app/entities/result.model';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Observable, map, tap } from 'rxjs';
-import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
+import { VcsAccessLogDTO } from 'app/programming/shared/entities/vcs-access-log-entry.model';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 export interface IProgrammingExerciseParticipationService {
     getLatestResultWithFeedback: (participationId: number, withSubmission: boolean) => Observable<Result | undefined>;
@@ -25,13 +25,13 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     public resourceUrlParticipations = 'api/programming/programming-exercise-participations/';
     public resourceUrl = 'api/programming/programming-exercise/';
 
-    getLatestResultWithFeedback(participationId: number, withSubmission = false): Observable<Result | undefined> {
+    getLatestResultWithFeedback(participationId: number, withSubmission = true): Observable<Result | undefined> {
         const options = createRequestOption({ withSubmission });
         return this.http.get<Result | undefined>(this.resourceUrlParticipations + participationId + '/latest-result-with-feedbacks', { params: options }).pipe(
             tap((res) => {
-                if (res?.participation?.exercise) {
-                    this.sendTitlesToEntityTitleService(res?.participation);
-                    this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.participation.exercise);
+                if (res?.submission?.participation?.exercise) {
+                    this.sendTitlesToEntityTitleService(res?.submission.participation);
+                    this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.submission.participation.exercise);
                 }
             }),
         );

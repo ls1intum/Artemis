@@ -69,6 +69,11 @@ class StaticCodeAnalysisParserUnitTest {
     }
 
     @Test
+    void testLintrParser() throws IOException {
+        testParserWithFile("lintr_results.sarif", "lintr_results.json");
+    }
+
+    @Test
     void testPMDCPDParser() throws IOException {
         testParserWithFile("cpd.xml", "pmd_cpd.txt");
     }
@@ -91,6 +96,11 @@ class StaticCodeAnalysisParserUnitTest {
     @Test
     void testRubocopParser() throws IOException {
         testParserWithFile("rubocop.sarif", "rubocop.json");
+    }
+
+    @Test
+    void testClangTidyParser() throws IOException {
+        testParserWithFile("clang-tidy.sarif", "clang-tidy.json");
     }
 
     @Test

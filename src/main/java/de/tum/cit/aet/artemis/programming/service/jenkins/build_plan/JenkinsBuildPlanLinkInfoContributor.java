@@ -7,12 +7,14 @@ import java.net.URI;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 
 @Component
+@Lazy
 @Profile(PROFILE_JENKINS)
 public class JenkinsBuildPlanLinkInfoContributor implements InfoContributor {
 

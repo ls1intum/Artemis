@@ -12,7 +12,9 @@ export default [
             "/auth/",
             "/health/",
             "/public/",
-            "/.well-known/"
+            "/.well-known/",
+            "/webauthn/",
+            "/login/webauthn"
         ],
         target: `http://localhost:8080`,
         secure: false

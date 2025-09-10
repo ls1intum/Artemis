@@ -19,9 +19,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyShortAnswerAllOrNothing;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyShortAnswerProportionalWithPenalty;
@@ -41,7 +39,6 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @JoinColumn(name = "question_id")
     @OrderColumn
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     private List<ShortAnswerSpot> spots = new ArrayList<>();
 
     // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
@@ -50,7 +47,6 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @JoinColumn(name = "question_id")
     @OrderColumn
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     private List<ShortAnswerSolution> solutions = new ArrayList<>();
 
     // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
@@ -59,15 +55,12 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @JoinColumn(name = "question_id")
     @OrderColumn
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.After.class)
     private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
 
     @Column(name = "similarity_value")
-    @JsonView(QuizView.Before.class)
     private Integer similarityValue = 85;
 
     @Column(name = "match_letter_case")
-    @JsonView(QuizView.Before.class)
     private Boolean matchLetterCase = false;
 
     public List<ShortAnswerSpot> getSpots() {
@@ -82,6 +75,10 @@ public class ShortAnswerQuestion extends QuizQuestion {
         return solutions;
     }
 
+    public void setSolutions(List<ShortAnswerSolution> shortAnswerSolutions) {
+        this.solutions = shortAnswerSolutions;
+    }
+
     public ShortAnswerQuestion addSolution(ShortAnswerSolution shortAnswerSolution) {
         this.solutions.add(shortAnswerSolution);
         shortAnswerSolution.setQuestion(this);
@@ -94,12 +91,12 @@ public class ShortAnswerQuestion extends QuizQuestion {
         return this;
     }
 
-    public void setSolutions(List<ShortAnswerSolution> shortAnswerSolutions) {
-        this.solutions = shortAnswerSolutions;
-    }
-
     public List<ShortAnswerMapping> getCorrectMappings() {
         return correctMappings;
+    }
+
+    public void setCorrectMappings(List<ShortAnswerMapping> shortAnswerMappings) {
+        this.correctMappings = shortAnswerMappings;
     }
 
     public ShortAnswerQuestion addCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
@@ -114,10 +111,6 @@ public class ShortAnswerQuestion extends QuizQuestion {
         return this;
     }
 
-    public void setCorrectMappings(List<ShortAnswerMapping> shortAnswerMappings) {
-        this.correctMappings = shortAnswerMappings;
-    }
-
     public Integer getSimilarityValue() {
         return this.similarityValue;
     }
@@ -126,14 +119,14 @@ public class ShortAnswerQuestion extends QuizQuestion {
         this.similarityValue = similarityValue;
     }
 
-    public Boolean matchLetterCase() {
+    @JsonInclude
+    public Boolean getMatchLetterCase() {
         return this.matchLetterCase;
     }
 
     public void setMatchLetterCase(Boolean matchLetterCase) {
         this.matchLetterCase = matchLetterCase;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
     public Boolean isValid() {
@@ -384,4 +377,5 @@ public class ShortAnswerQuestion extends QuizQuestion {
         question.setId(getId());
         return question;
     }
+
 }

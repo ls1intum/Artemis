@@ -1,4 +1,4 @@
-import { Rating } from 'app/entities/rating.model';
+import { Rating } from 'app/assessment/shared/entities/rating.model';
 import { Observable, of } from 'rxjs';
 
 export class MockRatingService {

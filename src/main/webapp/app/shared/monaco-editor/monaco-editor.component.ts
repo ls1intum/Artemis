@@ -7,7 +7,7 @@ import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'ap
 import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
-import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
+import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
 import { getOS } from 'app/shared/util/os-detector.util';
 import Graphemer from 'graphemer';
 
@@ -110,6 +110,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Replaces emoticon-like text (e.g., ":)", ":D") with their corresponding emoji characters.
+     * Only words that start with ":" are processed for conversion.
+     *
+     * @param text The raw input text to be scanned for emoji patterns.
+     * @returns The transformed string with applicable emoticons replaced by emojis.
+     */
     convertTextToEmoji(text: string): string {
         const words = text.split(' ');
         const convertedWords = words.map((word) => {

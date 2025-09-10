@@ -1,14 +1,13 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbTimeAdapter, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { validTimeRange } from 'app/tutorialgroup/shared/timeRangeValidator';
-import { NgbTimeStringAdapter } from 'app/tutorialgroup/shared/ngbTimeStringAdapter';
+import { validTimeRange } from 'app/tutorialgroup/shared/util/timeRangeValidator';
+import { NgbTimeStringAdapter } from 'app/tutorialgroup/shared/util/ngbTimeStringAdapter';
+import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 
 export interface TutorialGroupSessionFormData {
     date?: Date;
@@ -22,38 +21,25 @@ export interface TutorialGroupSessionFormData {
     templateUrl: './tutorial-group-session-form.component.html',
     providers: [{ provide: NgbTimeAdapter, useClass: NgbTimeStringAdapter }],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, OwlDateTimeModule, FaIconComponent, NgbTimepicker, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, OwlDateTimeModule, NgbTimepicker, ArtemisTranslatePipe, FormDateTimePickerComponent],
 })
 export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
     private fb = inject(FormBuilder);
+    protected readonly DateTimePickerType = DateTimePickerType;
 
-    @Input()
-    formData: TutorialGroupSessionFormData = {
+    readonly formData = input<TutorialGroupSessionFormData>({
         date: undefined,
         startTime: undefined,
         endTime: undefined,
         location: undefined,
-    };
+    });
 
-    @Input() timeZone: string;
-    @Input() isEditMode = false;
-    @Output() formSubmitted: EventEmitter<TutorialGroupSessionFormData> = new EventEmitter<TutorialGroupSessionFormData>();
+    readonly timeZone = input<string>();
+    readonly isEditMode = input(false);
+    readonly formSubmitted = output<TutorialGroupSessionFormData>();
     faCalendarAlt = faCalendarAlt;
 
     form: FormGroup;
-    get isDateInvalid() {
-        if (this.dateControl) {
-            return this.dateControl.invalid && (this.dateControl.touched || this.dateControl.dirty);
-        } else {
-            return false;
-        }
-    }
-
-    markDateAsTouched() {
-        if (this.dateControl) {
-            this.dateControl.markAsTouched();
-        }
-    }
 
     get dateControl() {
         return this.form.get('date');
@@ -72,7 +58,7 @@ export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        return !this.form.invalid;
+        return !this.form.invalid && this.form.get('date')?.value !== null;
     }
 
     ngOnInit(): void {
@@ -81,13 +67,21 @@ export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
 
     ngOnChanges() {
         this.initializeForm();
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+        const formData = this.formData();
+        if (this.isEditMode() && formData) {
+            this.setFormValues(formData);
         }
     }
 
     submitForm() {
-        const tutorialGroupSessionFormData: TutorialGroupSessionFormData = { ...this.form.value };
+        const formValue = this.form.value;
+        // Creating a TutorialGroupSessionFormData is currently neccessary till component gets rewritten to modern angular
+        const tutorialGroupSessionFormData: TutorialGroupSessionFormData = {
+            date: formValue.date ? new Date(formValue.date) : undefined,
+            startTime: formValue.startTime,
+            endTime: formValue.endTime,
+            location: formValue.location,
+        };
         this.formSubmitted.emit(tutorialGroupSessionFormData);
     }
 
@@ -103,7 +97,7 @@ export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
             {
                 startTime: ['13:00:00', [Validators.required]],
                 endTime: ['14:00:00', [Validators.required]],
-                date: [undefined, [Validators.required]],
+                date: [undefined],
                 location: [undefined, [Validators.required]],
             },
             { validators: validTimeRange },

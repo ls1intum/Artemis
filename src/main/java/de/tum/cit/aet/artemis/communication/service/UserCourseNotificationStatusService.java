@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * Service for managing user course notification statuses.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class UserCourseNotificationStatusService {
 
@@ -82,5 +84,16 @@ public class UserCourseNotificationStatusService {
         userCourseNotificationStatusRepository.updateUserCourseNotificationStatusForUserIdCourseId(userId, courseId, UserCourseNotificationStatusType.ARCHIVED);
 
         courseNotificationCacheService.invalidateCourseNotificationCacheForUsers(Set.of(new User(userId)), courseId);
+    }
+
+    /**
+     * Deletes all user notification status for a given user id.
+     *
+     * @param userId the user to delete for.
+     */
+    public void deleteAllForUser(long userId) {
+        var status = userCourseNotificationStatusRepository.findAllByUserId(userId);
+
+        userCourseNotificationStatusRepository.deleteAll(status);
     }
 }

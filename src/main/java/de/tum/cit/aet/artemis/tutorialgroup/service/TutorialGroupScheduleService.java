@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.tutorialgroup.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.DateUtil.getFirstDateOfWeekDay;
 
 import java.time.LocalDate;
@@ -15,11 +14,13 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.DateUtil;
+import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
@@ -27,10 +28,12 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.exception.ScheduleOverlapsWithSessionException;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(TutorialGroupEnabled.class)
+@Lazy
 @Service
 public class TutorialGroupScheduleService {
 
@@ -40,11 +43,14 @@ public class TutorialGroupScheduleService {
 
     private final TutorialGroupFreePeriodService tutorialGroupFreePeriodService;
 
+    private final TutorialGroupRepository tutorialGroupRepository;
+
     public TutorialGroupScheduleService(TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupScheduleRepository tutorialGroupScheduleRepository,
-            TutorialGroupFreePeriodService tutorialGroupFreePeriodService) {
+            TutorialGroupFreePeriodService tutorialGroupFreePeriodService, TutorialGroupRepository tutorialGroupRepository) {
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupScheduleRepository = tutorialGroupScheduleRepository;
         this.tutorialGroupFreePeriodService = tutorialGroupFreePeriodService;
+        this.tutorialGroupRepository = tutorialGroupRepository;
     }
 
     /**
@@ -186,9 +192,11 @@ public class TutorialGroupScheduleService {
                 }
             }
         }
-        else // new schedule present but not old schedule -> create new schedule
-        if (oldSchedule.isPresent()) { // old schedule present but not new schedule -> delete old schedule
-            tutorialGroupScheduleRepository.delete(oldSchedule.get());
+        else if (oldSchedule.isPresent()) {
+            // disassociate tutorial group from old schedule and make the persistence context aware of it to avoid Hibernate exception
+            tutorialGroup.setTutorialGroupSchedule(null);
+            tutorialGroupRepository.save(tutorialGroup);
+            tutorialGroupScheduleRepository.delete(oldSchedule.get()); // old schedule present but not new schedule -> delete old schedule
         }
         else {
             newSchedule.ifPresent(tutorialGroupSchedule -> saveScheduleAndGenerateScheduledSessions(tutorialGroupsConfiguration, tutorialGroup, tutorialGroupSchedule));

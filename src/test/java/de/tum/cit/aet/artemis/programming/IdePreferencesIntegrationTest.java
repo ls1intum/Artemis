@@ -27,6 +27,8 @@ class IdePreferencesIntegrationTest extends AbstractProgrammingIntegrationIndepe
 
     private Ide IntelliJ;
 
+    private Ide Cursor;
+
     private User student1;
 
     @BeforeEach
@@ -36,6 +38,7 @@ class IdePreferencesIntegrationTest extends AbstractProgrammingIntegrationIndepe
 
         VsCode = new Ide("VS Code", "vscode://vscode.git/clone?url={cloneUrl}");
         IntelliJ = new Ide("IntelliJ", "jetbrains://idea/checkout/git?idea.required.plugins.id=Git4Idea&checkout.repo={cloneUrl}");
+        Cursor = new Ide("Cursor", "cursor://vscode.git/clone?url={cloneUrl}");
     }
 
     @AfterEach
@@ -49,9 +52,11 @@ class IdePreferencesIntegrationTest extends AbstractProgrammingIntegrationIndepe
     void testGetIdePreferencesForCurrentUser() throws Exception {
         ideRepository.save(IntelliJ);
         ideRepository.save(VsCode);
+        ideRepository.save(Cursor);
         userIdeMappingRepository.save(new UserIdeMapping(student1, ProgrammingLanguage.EMPTY, IntelliJ));
         userIdeMappingRepository.save(new UserIdeMapping(student1, ProgrammingLanguage.SWIFT, VsCode));
         userIdeMappingRepository.save(new UserIdeMapping(student1, ProgrammingLanguage.JAVA, IntelliJ));
+        userIdeMappingRepository.save(new UserIdeMapping(student1, ProgrammingLanguage.OCAML, Cursor));
 
         List<IdeMappingDTO> idePreferences = request.getList("/api/programming/ide-settings", HttpStatus.OK, IdeMappingDTO.class);
 
@@ -60,6 +65,9 @@ class IdePreferencesIntegrationTest extends AbstractProgrammingIntegrationIndepe
 
         assertThat(idePreferences).as("deeplink for Swift is vscode")
                 .anyMatch(ideMappingDTO -> ideMappingDTO.programmingLanguage().equals(ProgrammingLanguage.SWIFT) && ideMappingDTO.ide().deepLink().equals(VsCode.getDeepLink()));
+
+        assertThat(idePreferences).as("deeplink for Ocaml is cursor")
+                .anyMatch(ideMappingDTO -> ideMappingDTO.programmingLanguage().equals(ProgrammingLanguage.OCAML) && ideMappingDTO.ide().deepLink().equals(Cursor.getDeepLink()));
 
         assertThat(idePreferences).as("deeplink for Java is intellij")
                 .anyMatch(ideMappingDTO -> ideMappingDTO.programmingLanguage().equals(ProgrammingLanguage.JAVA) && ideMappingDTO.ide().deepLink().equals(IntelliJ.getDeepLink()));
@@ -100,6 +108,32 @@ class IdePreferencesIntegrationTest extends AbstractProgrammingIntegrationIndepe
         params.add("programmingLanguage", ProgrammingLanguage.SWIFT.toString());
         request.delete("/api/programming/ide-settings", HttpStatus.OK, params);
         assertThat(userIdeMappingRepository.findAllByUserId(student1.getId())).as("ide preference got deleted").isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSetIdePreferenceForUnsupportedLanguage() throws Exception {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("programmingLanguage", "UNSUPPORTED_LANGUAGE");
+        request.putWithResponseBodyAndParams("/api/programming/ide-settings", new IdeDTO(IntelliJ), IdeMappingDTO.class, HttpStatus.BAD_REQUEST, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSetPreferenceWithNonExistentIde() throws Exception {
+        Ide nonExistentIde = new Ide("NonExistent", "nonexistent://url");
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("programmingLanguage", ProgrammingLanguage.JAVA.toString());
+        request.putWithResponseBodyAndParams("/api/programming/ide-settings", new IdeDTO(nonExistentIde), IdeMappingDTO.class, HttpStatus.BAD_REQUEST, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetPredefinedIdes() throws Exception {
+        List<IdeDTO> predefinedIdes = request.getList("/api/programming/ide-settings/predefined", HttpStatus.OK, IdeDTO.class);
+        assertThat(predefinedIdes).isNotEmpty();
+        assertThat(predefinedIdes).extracting("name").contains("VS Code", "IntelliJ");
+        assertThat(predefinedIdes).allMatch(ideDTO -> ideDTO.deepLink() != null && !ideDTO.deepLink().isEmpty() && ideDTO.deepLink().contains("{cloneUrl}"));
     }
 
 }

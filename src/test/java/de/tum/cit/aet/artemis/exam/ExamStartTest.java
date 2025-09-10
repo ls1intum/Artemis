@@ -1,10 +1,6 @@
 package de.tum.cit.aet.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -21,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.support.ParameterDeclarations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -47,8 +44,8 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -84,7 +81,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     private ExamUtilService examUtilService;
 
     @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+    private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -107,8 +104,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         exam = examUtilService.addExamWithExerciseGroup(course1, true);
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
-
-        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
         // registering users
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -188,7 +183,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     void testStartExerciseWithProgrammingExercise() throws Exception {
         ProgrammingExercise programmingExercise = createProgrammingExercise();
 
-        participationUtilService.mockCreationOfExerciseParticipation(programmingExercise, versionControlService, continuousIntegrationService);
+        participationUtilService.mockCreationOfExerciseParticipation(versionControlService, continuousIntegrationService);
 
         createStudentExams(programmingExercise);
 
@@ -206,7 +201,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     private static class ExamStartDateSource implements ArgumentsProvider {
 
         @Override
-        public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+        public Stream<? extends Arguments> provideArguments(ParameterDeclarations parameters, ExtensionContext context) {
             return Stream.of(Arguments.of(ZonedDateTime.now().minusHours(1)), // after exam start
                     Arguments.arguments(ZonedDateTime.now().plusMinutes(3)) // before exam start but after pe unlock date
             );
@@ -223,7 +218,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         ProgrammingExercise programmingExercise = createProgrammingExercise();
 
-        participationUtilService.mockCreationOfExerciseParticipation(programmingExercise, versionControlService, continuousIntegrationService);
+        participationUtilService.mockCreationOfExerciseParticipation(versionControlService, continuousIntegrationService);
 
         createStudentExams(programmingExercise);
 
@@ -255,7 +250,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exam.getExerciseGroups().getFirst());
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         exam.getExerciseGroups().getFirst().addExercise(programmingExercise);
         exerciseGroupRepository.save(exam.getExerciseGroups().getFirst());
         return programmingExercise;
@@ -264,7 +259,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     private List<Participation> invokePrepareExerciseStart() throws Exception {
         // invoke start exercises
         int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         assertThat(noGeneratedParticipations).isEqualTo(exam.getStudentExams().size());
         return participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
     }

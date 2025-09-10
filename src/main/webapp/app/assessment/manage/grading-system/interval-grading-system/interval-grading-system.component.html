@@ -90,11 +90,11 @@
                             @if (gradeEditMode === GradeEditMode.POINTS) {
                                 <td>
                                     <input
-                                        [ngModel]="getPointsInterval(gradeStep)"
+                                        [value]="getPointsInterval(gradeStep)"
                                         type="number"
                                         step="0.5"
                                         min="0.5"
-                                        (ngModelChange)="setPointsInterval(i, $event)"
+                                        (change)="setPointsInterval(i, $any($event.target).valueAsNumber)"
                                         [required]="maxPoints !== undefined && maxPoints > 0"
                                         [disabled]="maxPoints === undefined || maxPoints <= 0"
                                     />

@@ -1,0 +1,92 @@
+$management-header-height: 230px;
+
+.update-footer {
+    margin-top: 1rem;
+    padding: 0.5rem 0 0.75rem 0;
+    width: 100%;
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    z-index: 30; // connection status bar should be above the quiz question sidebar
+    background: var(--update-footer-background);
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    border-top: 1px solid var(--border-color);
+
+    &.disconnected {
+        background-color: var(--exam-participation-footer-disconnected-background);
+    }
+}
+
+.exam-footer-content {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+
+    .connection-status-exam-participation {
+        @media (max-width: 767.98px) {
+            font-size: 11px;
+        }
+    }
+}
+
+.submissionSuccessfulHint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+
+    .check {
+        color: var(--success);
+        font-size: 50px;
+    }
+}
+
+.exam-background-wrapper {
+    background-color: var(--bs-body-bg);
+}
+
+.content-exam-height {
+    height: calc(100vh - var(--exam-height-offset));
+    overflow-y: auto;
+
+    &.content-exam-height-testRun {
+        height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height);
+
+        &.content-exam-height-testRun-dev {
+            height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height);
+
+            @media (max-width: 1349px) {
+                height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 40px) !important;
+            }
+
+            @media (max-width: 768px) {
+                height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 20px) !important;
+            }
+        }
+
+        @media (max-width: 1349px) {
+            height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 40px) !important;
+        }
+
+        @media (max-width: 768px) {
+            height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 20px) !important;
+        }
+    }
+}
+
+.end-view {
+    max-width: 900px;
+    margin: 0 auto;
+
+    @media (max-width: 900px) {
+        max-width: 600px;
+    }
+
+    @media (max-width: 600px) {
+        max-width: 500px;
+    }
+}

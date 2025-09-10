@@ -10,6 +10,7 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
  * Spring Data JPA repository for the ModelingExercise entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface ModelingExerciseRepository extends ArtemisJpaRepository<ModelingExercise, Long>, JpaSpecificationExecutor<ModelingExercise> {
 
@@ -40,10 +42,6 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
             "exampleSubmissions.submission.results" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencyLinks.competency", "exampleSubmissions.submission.results",
-            "plagiarismDetectionConfig" })
-    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(Long exerciseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks.competency" })
     Optional<ModelingExercise> findWithEagerCompetenciesById(Long exerciseId);
 
@@ -56,11 +54,10 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
                 LEFT JOIN FETCH results.feedbacks
                 LEFT JOIN FETCH results.assessor
                 LEFT JOIN FETCH modelingExercise.teamAssignmentConfig
-                LEFT JOIN FETCH modelingExercise.plagiarismDetectionConfig
                 LEFT JOIN FETCH modelingExercise.gradingCriteria
             WHERE modelingExercise.id = :exerciseId
             """)
-    Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigAndGradingCriteria(@Param("exerciseId") Long exerciseId);
+    Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(@Param("exerciseId") Long exerciseId);
 
     /**
      * Get all modeling exercises that need to be scheduled: Those must satisfy one of the following requirements:
@@ -130,13 +127,8 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     }
 
     @NotNull
-    default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigByIdElseThrow(long exerciseId) {
-        return getValueElseThrow(findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId), exerciseId);
-    }
-
-    @NotNull
-    default ModelingExercise findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow(long exerciseId) {
-        return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigAndGradingCriteria(exerciseId), exerciseId);
+    default ModelingExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
+        return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(exerciseId), exerciseId);
     }
 
     @NotNull

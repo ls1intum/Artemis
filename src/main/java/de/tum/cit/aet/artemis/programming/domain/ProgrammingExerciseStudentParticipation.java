@@ -3,15 +3,14 @@ package de.tum.cit.aet.artemis.programming.domain;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.programming.service.vcs.AbstractVersionControlService;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Entity
 @DiscriminatorValue(value = "PESP")
@@ -19,18 +18,13 @@ import de.tum.cit.aet.artemis.quiz.config.QuizView;
 public class ProgrammingExerciseStudentParticipation extends StudentParticipation implements ProgrammingExerciseParticipation {
 
     @Column(name = "repository_url")
-    @JsonView(QuizView.Before.class)
     private String repositoryUri;
 
     @Column(name = "build_plan_id")
-    @JsonView(QuizView.Before.class)
     private String buildPlanId;
 
     @Column(name = "branch")
-    @JsonView(QuizView.Before.class)
     private String branch;
-
-    // TODO: remove isLocked column from the database
 
     public ProgrammingExerciseStudentParticipation() {
         // Default constructor
@@ -50,6 +44,10 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         this.repositoryUri = repositoryUri;
     }
 
+    public void setRepositoryUri(@NotNull LocalVCRepositoryUri repositoryUri) {
+        this.repositoryUri = repositoryUri.getURI().toString();
+    }
+
     @Override
     public String getBuildPlanId() {
         return buildPlanId;
@@ -62,8 +60,6 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     /**
      * Getter for the stored default branch of the participation.
-     * Use {@link AbstractVersionControlService#getOrRetrieveBranchOfParticipation(ProgrammingExerciseParticipation)} if you are not sure that the value was already
-     * set in the Artemis database
      *
      * @return the name of the default branch or null if not yet stored in Artemis
      */

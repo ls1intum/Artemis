@@ -1,0 +1,23 @@
+<div class="d-flex justify-content-between">
+    @if (course) {
+        <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
+            <jhi-sidebar
+                [itemSelected]="lectureSelected"
+                [courseId]="courseId"
+                [sidebarData]="sidebarData"
+                [collapseState]="DEFAULT_COLLAPSE_STATE"
+                [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
+            />
+        </div>
+
+        @if (lectureSelected) {
+            <div [ngClass]="{ 'content-sidebar-width': !isCollapsed }" class="content-width module-bg rounded-3">
+                <router-outlet (deactivate)="onSubRouteDeactivate()" />
+            </div>
+        } @else {
+            <div class="vw-100 module-bg rounded-3 p-3 d-flex justify-content-between">
+                <div class="col-12 text-center my-auto" jhiTranslate="artemisApp.courseOverview.lectureDetails.selectLecture"></div>
+            </div>
+        }
+    }
+</div>

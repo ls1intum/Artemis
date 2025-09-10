@@ -3,31 +3,28 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ExerciseAssessmentDashboardComponent } from 'app/exercise/dashboards/tutor/exercise-assessment-dashboard.component';
 import { ParticipationSubmissionComponent } from 'app/exercise/participation-submission/participation-submission.component';
 
 import { ParticipationComponent } from 'app/exercise/participation/participation.component';
 import { ExerciseScoresComponent } from 'app/exercise/exercise-scores/exercise-scores.component';
 
-import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container.component';
-import { exerciseTypes } from 'app/entities/exercise.model';
+import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
+import { exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 import { ExerciseStatisticsComponent } from 'app/exercise/statistics/exercise-statistics.component';
 
-import { OrionExerciseAssessmentDashboardComponent } from 'app/orion/manage/assessment/orion-exercise-assessment-dashboard.component';
-import { OrionTutorAssessmentComponent } from 'app/orion/manage/assessment/orion-tutor-assessment.component';
-import { isOrion } from 'app/shared/orion/orion';
-import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/file-upload-exercise-management-resolve.service';
-import { ModelingExerciseResolver } from 'app/modeling/manage/modeling-exercise-resolver.service';
-import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
-import { ProgrammingExerciseResolve } from 'app/programming/manage/programming-exercise-resolve.service';
-import { TextExerciseResolver } from 'app/text/manage/text-exercise/text-exercise-resolver.service';
+import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/services/file-upload-exercise-management-resolve.service';
+import { ModelingExerciseResolver } from 'app/modeling/manage/services/modeling-exercise-resolver.service';
+import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/services/exam-management-resolve.service';
+import { ProgrammingExerciseResolve } from 'app/programming/manage/services/programming-exercise-resolve.service';
+import { TextExerciseResolver } from 'app/text/manage/text-exercise/service/text-exercise-resolver.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
+import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 
 export const examManagementRoute: Routes = [
     {
         path: '',
-        loadComponent: () => import('app/exam/manage/exam-management.component').then((m) => m.ExamManagementComponent),
+        loadComponent: () => import('app/exam/manage/exam-management/exam-management.component').then((m) => m.ExamManagementComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
@@ -36,7 +33,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: 'new',
-        loadComponent: () => import('app/exam/manage/exams/exam-update.component').then((m) => m.ExamUpdateComponent),
+        loadComponent: () => import('app/exam/manage/exams/update/exam-update.component').then((m) => m.ExamUpdateComponent),
         resolve: {
             exam: ExamResolve,
             course: CourseResolve,
@@ -49,7 +46,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/edit',
-        loadComponent: () => import('app/exam/manage/exams/exam-update.component').then((m) => m.ExamUpdateComponent),
+        loadComponent: () => import('app/exam/manage/exams/update/exam-update.component').then((m) => m.ExamUpdateComponent),
         resolve: {
             exam: ExamResolve,
             course: CourseResolve,
@@ -71,7 +68,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId',
-        loadComponent: () => import('app/exam/manage/exams/exam-detail.component').then((m) => m.ExamDetailComponent),
+        loadComponent: () => import('app/exam/manage/exams/detail/exam-detail.component').then((m) => m.ExamDetailComponent),
         resolve: {
             exam: ExamResolve,
         },
@@ -87,7 +84,7 @@ export const examManagementRoute: Routes = [
     // Exam Import
     {
         path: 'import/:examId',
-        loadComponent: () => import('app/exam/manage/exams/exam-update.component').then((m) => m.ExamUpdateComponent),
+        loadComponent: () => import('app/exam/manage/exams/update/exam-update.component').then((m) => m.ExamUpdateComponent),
         resolve: {
             exam: ExamResolve,
             course: CourseResolve,
@@ -112,7 +109,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/new',
-        loadComponent: () => import('app/exam/manage/exercise-groups/exercise-group-update.component').then((m) => m.ExerciseGroupUpdateComponent),
+        loadComponent: () => import('app/exam/manage/exercise-groups/update/exercise-group-update.component').then((m) => m.ExerciseGroupUpdateComponent),
         resolve: {
             exam: ExamResolve,
             exerciseGroup: ExerciseGroupResolve,
@@ -125,7 +122,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/edit',
-        loadComponent: () => import('app/exam/manage/exercise-groups/exercise-group-update.component').then((m) => m.ExerciseGroupUpdateComponent),
+        loadComponent: () => import('app/exam/manage/exercise-groups/update/exercise-group-update.component').then((m) => m.ExerciseGroupUpdateComponent),
         resolve: {
             exam: ExamResolve,
             exerciseGroup: ExerciseGroupResolve,
@@ -217,7 +214,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-runs',
-        loadComponent: () => import('app/exam/manage/test-runs/test-run-management.component').then((m) => m.TestRunManagementComponent),
+        loadComponent: () => import('app/exam/manage/test-runs/test-run-management/test-run-management.component').then((m) => m.TestRunManagementComponent),
         resolve: {
             exam: ExamResolve,
         },
@@ -238,7 +235,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-runs/:studentExamId',
-        loadComponent: () => import('app/exam/manage/student-exams/student-exam-detail.component').then((m) => m.StudentExamDetailComponent),
+        loadComponent: () => import('app/exam/manage/student-exams/student-exam-detail/student-exam-detail.component').then((m) => m.StudentExamDetailComponent),
         resolve: {
             studentExam: StudentExamResolve,
         },
@@ -250,7 +247,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/student-exams/:studentExamId',
-        loadComponent: () => import('app/exam/manage/student-exams/student-exam-detail.component').then((m) => m.StudentExamDetailComponent),
+        loadComponent: () => import('app/exam/manage/student-exams/student-exam-detail/student-exam-detail.component').then((m) => m.StudentExamDetailComponent),
         resolve: {
             studentExam: StudentExamResolve,
         },
@@ -262,7 +259,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/student-exams/:studentExamId/summary',
-        loadComponent: () => import('app/exam/manage/student-exams/student-exam-summary.component').then((m) => m.StudentExamSummaryComponent),
+        loadComponent: () => import('app/exam/manage/student-exams/student-exam-summary/student-exam-summary.component').then((m) => m.StudentExamSummaryComponent),
         resolve: {
             studentExam: StudentExamResolve,
         },
@@ -313,7 +310,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-runs/:testRunId/conduction',
-        loadComponent: () => import('app/exam/overview/exam-participation.component').then((m) => m.ExamParticipationComponent),
+        loadComponent: () => import('app/exam/overview/exam-participation/exam-participation.component').then((m) => m.ExamParticipationComponent),
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.exam.title',
@@ -323,7 +320,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-runs/:studentExamId/summary',
-        loadComponent: () => import('app/exam/manage/student-exams/student-exam-summary.component').then((m) => m.StudentExamSummaryComponent),
+        loadComponent: () => import('app/exam/manage/student-exams/student-exam-summary/student-exam-summary.component').then((m) => m.StudentExamSummaryComponent),
         resolve: {
             studentExam: StudentExamResolve,
         },
@@ -336,7 +333,7 @@ export const examManagementRoute: Routes = [
     // Create Modeling Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/new',
-        loadComponent: () => import('app/modeling/manage/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
+        loadComponent: () => import('app/modeling/manage/update/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
         resolve: {
             modelingExercise: ModelingExerciseResolver,
         },
@@ -349,7 +346,7 @@ export const examManagementRoute: Routes = [
     // Import Modeling Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/import/:exerciseId',
-        loadComponent: () => import('app/modeling/manage/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
+        loadComponent: () => import('app/modeling/manage/update/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
         resolve: {
             modelingExercise: ModelingExerciseResolver,
         },
@@ -362,7 +359,7 @@ export const examManagementRoute: Routes = [
     // Edit Modeling Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/edit',
-        loadComponent: () => import('app/modeling/manage/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
+        loadComponent: () => import('app/modeling/manage/update/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
         resolve: {
             modelingExercise: ModelingExerciseResolver,
         },
@@ -375,7 +372,7 @@ export const examManagementRoute: Routes = [
     // Create Text Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/new',
-        loadComponent: () => import('app/text/manage/text-exercise/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
+        loadComponent: () => import('app/text/manage/text-exercise/update/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
         resolve: {
             textExercise: TextExerciseResolver,
         },
@@ -388,7 +385,7 @@ export const examManagementRoute: Routes = [
     // Import Text Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/import/:exerciseId',
-        loadComponent: () => import('app/text/manage/text-exercise/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
+        loadComponent: () => import('app/text/manage/text-exercise/update/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
         resolve: {
             textExercise: TextExerciseResolver,
         },
@@ -401,7 +398,7 @@ export const examManagementRoute: Routes = [
     // Edit Text Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/edit',
-        loadComponent: () => import('app/text/manage/text-exercise/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
+        loadComponent: () => import('app/text/manage/text-exercise/update/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
         resolve: {
             textExercise: TextExerciseResolver,
         },
@@ -414,7 +411,7 @@ export const examManagementRoute: Routes = [
     // Create File Upload Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/new',
-        loadComponent: () => import('app/fileupload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
+        loadComponent: () => import('app/fileupload/manage/update/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
@@ -427,7 +424,7 @@ export const examManagementRoute: Routes = [
     // Edit File Upload Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/edit',
-        loadComponent: () => import('app/fileupload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
+        loadComponent: () => import('app/fileupload/manage/update/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
@@ -437,20 +434,10 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    // Quiz Pool Configuration
-    {
-        path: ':examId/quiz-pool',
-        loadComponent: () => import('app/quiz/manage/quiz-pool.component').then((m) => m.QuizPoolComponent),
-        data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.quizExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
     // Import File Upload Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/import/:exerciseId',
-        loadComponent: () => import('app/fileupload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
+        loadComponent: () => import('app/fileupload/manage/update/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
@@ -463,7 +450,7 @@ export const examManagementRoute: Routes = [
     // Create Quiz Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/new',
-        loadComponent: () => import('app/quiz/manage/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
+        loadComponent: () => import('app/quiz/manage/update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -473,7 +460,7 @@ export const examManagementRoute: Routes = [
     // Import Quiz Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/import/:exerciseId',
-        loadComponent: () => import('app/quiz/manage/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
+        loadComponent: () => import('app/quiz/manage/update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -483,7 +470,7 @@ export const examManagementRoute: Routes = [
     // Edit Quiz Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/edit',
-        loadComponent: () => import('app/quiz/manage/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
+        loadComponent: () => import('app/quiz/manage/update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -544,7 +531,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId',
-        loadComponent: () => import('app/text/manage/text-exercise/text-exercise-detail.component').then((m) => m.TextExerciseDetailComponent),
+        loadComponent: () => import('app/text/manage/detail/text-exercise-detail.component').then((m) => m.TextExerciseDetailComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
@@ -553,7 +540,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId',
-        loadComponent: () => import('app/fileupload/manage/file-upload-exercise-detail.component').then((m) => m.FileUploadExerciseDetailComponent),
+        loadComponent: () => import('app/fileupload/manage/exercise-details/file-upload-exercise-detail.component').then((m) => m.FileUploadExerciseDetailComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
@@ -562,7 +549,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId',
-        loadComponent: () => import('app/modeling/manage/modeling-exercise-detail.component').then((m) => m.ModelingExerciseDetailComponent),
+        loadComponent: () => import('app/modeling/manage/detail/modeling-exercise-detail.component').then((m) => m.ModelingExerciseDetailComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.modelingExercise.home.title',
@@ -571,7 +558,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId',
-        loadComponent: () => import('app/programming/manage/programming-exercise-detail.component').then((m) => m.ProgrammingExerciseDetailComponent),
+        loadComponent: () => import('app/programming/manage/detail/programming-exercise-detail.component').then((m) => m.ProgrammingExerciseDetailComponent),
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
         },
@@ -591,22 +578,10 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId',
-        loadComponent: () => import('app/quiz/manage/quiz-exercise-detail.component').then((m) => m.QuizExerciseDetailComponent),
+        loadComponent: () => import('app/quiz/manage/detail/quiz-exercise-detail.component').then((m) => m.QuizExerciseDetailComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/plagiarism',
-        loadComponent: () => import('app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.component').then((m) => m.PlagiarismInspectorComponent),
-        resolve: {
-            exercise: ModelingExerciseResolver,
-        },
-        data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.plagiarism.plagiarismDetection',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -636,7 +611,8 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/grading/:tab',
-        loadComponent: () => import('app/programming/manage/grading/programming-exercise-configure-grading.component').then((m) => m.ProgrammingExerciseConfigureGradingComponent),
+        loadComponent: () =>
+            import('app/programming/manage/grading/configure/programming-exercise-configure-grading.component').then((m) => m.ProgrammingExerciseConfigureGradingComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
@@ -645,7 +621,10 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/edit-build-plan',
-        loadComponent: () => import('app/programming/manage/build-plan-editor.component').then((m) => m.BuildPlanEditorComponent),
+        loadComponent: () => import('app/programming/manage/build-plan-editor/build-plan-editor.component').then((m) => m.BuildPlanEditorComponent),
+        resolve: {
+            exercise: ProgrammingExerciseResolve,
+        },
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.buildPlanEditor',
@@ -654,7 +633,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/preview',
-        loadComponent: () => import('app/quiz/overview/quiz-participation.component').then((m) => m.QuizParticipationComponent),
+        loadComponent: () => import('app/quiz/overview/participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -664,7 +643,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/solution',
-        loadComponent: () => import('app/quiz/overview/quiz-participation.component').then((m) => m.QuizParticipationComponent),
+        loadComponent: () => import('app/quiz/overview/participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -742,7 +721,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/assessment-dashboard/:exerciseId',
-        component: !isOrion ? ExerciseAssessmentDashboardComponent : OrionExerciseAssessmentDashboardComponent,
+        component: ExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',
@@ -751,7 +730,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-assessment-dashboard/:exerciseId',
-        component: !isOrion ? ExerciseAssessmentDashboardComponent : OrionExerciseAssessmentDashboardComponent,
+        component: ExerciseAssessmentDashboardComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader',
@@ -858,7 +837,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessment',
-        component: !isOrion ? CodeEditorTutorAssessmentContainerComponent : OrionTutorAssessmentComponent,
+        component: CodeEditorTutorAssessmentContainerComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',
@@ -867,7 +846,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions/:submissionId/assessments/:resultId',
-        component: !isOrion ? CodeEditorTutorAssessmentContainerComponent : OrionTutorAssessmentComponent,
+        component: CodeEditorTutorAssessmentContainerComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.programmingExercise.home.title',

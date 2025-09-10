@@ -5,12 +5,11 @@ import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonal
 import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService.VCS_ACCESS_TOKEN_LENGTH;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,12 +29,16 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
+
+import com.google.errorprone.annotations.MustBeClosed;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -49,6 +52,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.Commit;
@@ -63,9 +67,9 @@ import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessToken
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
@@ -75,6 +79,7 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
  * This service is responsible for authenticating and authorizing git requests as well as for retrieving the requested Git repositories from disk.
  * It is used by the ArtemisGitServletService, the LocalVCFetchFilter, and the LocalVCPushFilter.
  */
+@Lazy
 @Service
 @Profile(PROFILE_LOCALVC)
 // TODO: we should rename this because its used in the context of https and ssh git operations
@@ -100,24 +105,20 @@ public class LocalVCServletService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final ProgrammingMessagingService programmingMessagingService;
+    private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
 
-    private final ProgrammingTriggerService programmingTriggerService;
+    private final ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService;
 
     // TODO As soon as only LocalVC is supported, this Optional can be removed
     private final Optional<VcsAccessLogService> vcsAccessLogService;
 
-    private static URL localVCBaseUrl;
-
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     @Value("${artemis.version-control.url}")
-    public void setLocalVCBaseUrl(URL localVCBaseUrl) {
-        LocalVCServletService.localVCBaseUrl = localVCBaseUrl;
-    }
+    private URI localVCBaseUri;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCBasePath;
+    private Path localVCBasePath;
 
     @Value("${artemis.version-control.build-agent-git-username}")
     private String buildAgentGitUsername;
@@ -125,23 +126,13 @@ public class LocalVCServletService {
     @Value("${artemis.version-control.build-agent-git-password}")
     private String buildAgentGitPassword;
 
-    /**
-     * Name of the header containing the authorization information.
-     */
-    public static final String AUTHORIZATION_HEADER = "Authorization";
-
     public static final String BUILD_USER_NAME = "buildjob_user";
-
-    // Cache the retrieved repositories for quicker access.
-    // The resolveRepository method is called multiple times per request.
-    // Key: repositoryPath --> Value: Repository
-    private final Map<String, Repository> repositories = new HashMap<>();
 
     public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -152,25 +143,30 @@ public class LocalVCServletService {
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.ciTriggerService = ciTriggerService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.programmingMessagingService = programmingMessagingService;
-        this.programmingTriggerService = programmingTriggerService;
+        this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
+        this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
         this.vcsAccessLogService = vcsAccessLogService;
     }
 
     /**
-     * Resolves the repository for the given path by first trying to use a cached one.
-     * If the cache does not hit, it creates a JGit repository and opens the local repository.
+     * Resolves the repository for the given path by creating a JGit repository and opening the local repository.
+     * <p>
+     * The returned {@link Repository} remains open after this method returns.
+     * It is the caller's responsibility to close it when no longer needed.
+     * <strong>Do not</strong> use try-with-resources inside this method, as that would close the repository
+     * before the caller can use it.
      *
      * @param repositoryPath the path of the repository, as parsed out of the URL (everything after /git).
      * @return the opened repository instance.
      * @throws RepositoryNotFoundException if the repository could not be found.
      */
+    @MustBeClosed
     public Repository resolveRepository(String repositoryPath) throws RepositoryNotFoundException {
 
         long timeNanoStart = System.nanoTime();
         // Find the local repository depending on the name.
-        Path repositoryDir = Path.of(localVCBasePath, repositoryPath);
+        Path repositoryDir = localVCBasePath.resolve(repositoryPath);
 
         log.debug("Path to resolve repository from: {}", repositoryDir);
         if (!Files.exists(repositoryDir)) {
@@ -178,28 +174,18 @@ public class LocalVCServletService {
             throw new RepositoryNotFoundException(repositoryPath);
         }
 
-        if (repositories.containsKey(repositoryPath)) {
-            log.debug("Retrieving cached local repository {}", repositoryPath);
-            Repository repository = repositories.get(repositoryPath);
-            repository.incrementOpen();
+        log.debug("Opening local repository {}", repositoryPath);
+        try {
+            Repository repository = FileRepositoryBuilder.create(repositoryDir.toFile());
+            // Enable pushing without credentials, authentication is handled by the LocalVCPushFilter.
+            repository.getConfig().setBoolean("http", null, "receivepack", true);
+
             log.debug("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
             return repository;
         }
-        else {
-            log.debug("Opening local repository {}", repositoryPath);
-            try (Repository repository = FileRepositoryBuilder.create(repositoryDir.toFile())) {
-                // Enable pushing without credentials, authentication is handled by the LocalVCPushFilter.
-                repository.getConfig().setBoolean("http", null, "receivepack", true);
-
-                this.repositories.put(repositoryPath, repository);
-                repository.incrementOpen();
-                log.debug("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
-                return repository;
-            }
-            catch (IOException e) {
-                log.error("Unable to open local repository {}", repositoryPath);
-                throw new RepositoryNotFoundException(repositoryPath, e);
-            }
+        catch (IOException e) {
+            log.error("Unable to open local repository {}", repositoryPath);
+            throw new RepositoryNotFoundException(repositoryPath, e);
         }
     }
 
@@ -217,7 +203,7 @@ public class LocalVCServletService {
 
         long timeNanoStart = System.nanoTime();
 
-        String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         // The first request does not contain an authorizationHeader, the client expects this response
         if (authorizationHeader == null) {
@@ -243,6 +229,7 @@ public class LocalVCServletService {
         }
 
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
+        log.debug("Parsed repository URI from request: {}", localVCRepositoryUri);
         String projectKey = localVCRepositoryUri.getProjectKey();
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
 
@@ -255,8 +242,15 @@ public class LocalVCServletService {
             throw new LocalVCForbiddenException();
         }
 
-        var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false);
-        savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation);
+        try {
+            var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false);
+            savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation);
+        }
+        catch (LocalVCForbiddenException e) {
+            log.error("User {} does not have access to the repository {}", user.getLogin(), localVCRepositoryUri);
+            saveFailedAccessVcsAccessLog(new AuthenticationContext.Request(request), repositoryTypeOrUserName, exercise, localVCRepositoryUri, user, repositoryAction);
+            throw e;
+        }
 
         log.debug("Authorizing user {} for repository {} took {}", user.getLogin(), localVCRepositoryUri, TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
@@ -276,20 +270,85 @@ public class LocalVCServletService {
         if (optionalParticipation.isPresent()) {
             ProgrammingExerciseParticipation participation = optionalParticipation.get();
             var ipAddress = request.getRemoteAddr();
-            var authenticationMechanism = resolveHTTPSAuthenticationMechanism(request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER), user);
+            var authenticationMechanism = resolveHTTPSAuthenticationMechanism(request.getHeader(HttpHeaders.AUTHORIZATION), user);
 
-            String commitHash = null;
-            try {
-                commitHash = getLatestCommitHash(repositories.get(localVCRepositoryUri.getRelativeRepositoryPath().toString()));
-            }
-            catch (GitAPIException e) {
-                log.warn("Failed to obtain commit hash for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(), e.getMessage());
-            }
-
-            String finalCommitHash = commitHash;
+            String finalCommitHash = getCommitHash(localVCRepositoryUri);
             RepositoryActionType finalRepositoryAction = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH : RepositoryActionType.PULL;
             vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, finalRepositoryAction, authenticationMechanism, finalCommitHash, ipAddress));
         }
+    }
+
+    /**
+     * Logs a failed attempt to access a repository.
+     *
+     * @param context                  the Authentication context
+     * @param repositoryTypeOrUserName A string representing either the repository type or the username associated with the repository.
+     * @param exercise                 The {@link Exercise} associated with the repository.
+     * @param localVCRepositoryUri     The {@link LocalVCRepositoryUri} representing the repository location.
+     * @param user                     The {@link User} attempting the access.
+     * @param repositoryAction         The {@link RepositoryActionType} action that was attempted.
+     */
+    public void saveFailedAccessVcsAccessLog(AuthenticationContext context, String repositoryTypeOrUserName, Exercise exercise, LocalVCRepositoryUri localVCRepositoryUri,
+            User user, RepositoryActionType repositoryAction) {
+        var participation = tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, (ProgrammingExercise) exercise);
+        var commitHash = getCommitHash(localVCRepositoryUri);
+        var authenticationMechanism = resolveAuthenticationMechanismFromSessionOrRequest(context, user);
+        var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
+        var ipAddress = context.getIpAddress();
+        vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, action, authenticationMechanism, commitHash, ipAddress));
+    }
+
+    /**
+     * Determines the authentication mechanism based on the provided session or request.
+     *
+     * <p>
+     * If a {@link ServerSession} is present, the authentication mechanism is assumed to be SSH.
+     * </p>
+     * <p>
+     * If an {@link HttpServletRequest} is present, the method attempts to resolve the authentication
+     * mechanism using the authorization header. If an exception occurs, HTTPS authentication is assumed by default.
+     * </p>
+     * <p>
+     * If neither a session nor a request is available, the authentication mechanism defaults to OTHER.
+     * </p>
+     *
+     * @param context the Authentication context
+     * @param user    the user for whom authentication is being determined
+     * @return the resolved {@link AuthenticationMechanism}
+     */
+    private AuthenticationMechanism resolveAuthenticationMechanismFromSessionOrRequest(AuthenticationContext context, User user) {
+        switch (context) {
+            case AuthenticationContext.Session ignored -> {
+                return AuthenticationMechanism.SSH;
+            }
+            case AuthenticationContext.Request request -> {
+                try {
+                    return resolveHTTPSAuthenticationMechanism(request.request().getHeader(HttpHeaders.AUTHORIZATION), user);
+                }
+                catch (LocalVCAuthException ignored) {
+                    return AuthenticationMechanism.AUTH_HEADER_MISSING;
+                }
+            }
+        }
+    }
+
+    /**
+     * Retrieves the latest commit hash from the given repository.
+     *
+     * @param localVCRepositoryUri The {@link LocalVCRepositoryUri} representing the repository location.
+     * @return The latest commit hash as a string, or an empty string if retrieval fails.
+     */
+    private String getCommitHash(LocalVCRepositoryUri localVCRepositoryUri) {
+        try {
+            String repositoryPath = localVCRepositoryUri.getRelativeRepositoryPath().toString();
+            try (Repository repository = resolveRepository(repositoryPath)) {
+                return getLatestCommitHash(repository);
+            }
+        }
+        catch (GitAPIException | RepositoryNotFoundException e) {
+            log.warn("Failed to obtain commit hash for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(), e.getMessage());
+        }
+        return "";
     }
 
     /**
@@ -425,12 +484,13 @@ public class LocalVCServletService {
     }
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
-        var urlString = request.getRequestURL().toString().replace("/info/refs", "");
-        return new LocalVCRepositoryUri(Path.of(urlString), localVCBaseUrl);
+        String path = request.getRequestURI();
+        String normalizedPath = path.replaceFirst("/(info/refs|git-(upload|receive)-pack)$", "");
+        return new LocalVCRepositoryUri(localVCBaseUri, Path.of(normalizedPath));
     }
 
     private LocalVCRepositoryUri parseRepositoryUri(Path repositoryPath) {
-        return new LocalVCRepositoryUri(repositoryPath, localVCBaseUrl);
+        return new LocalVCRepositoryUri(localVCBaseUri, repositoryPath);
     }
 
     private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
@@ -482,7 +542,7 @@ public class LocalVCServletService {
      * @param repositoryActionType     The type of the action the user wants to perform.
      * @param localVCRepositoryUri     The URI of the local repository.
      * @param usingSSH                 The flag specifying whether the method is called from the SSH or HTTPs context
-     * @return the ProgrammingParticipation Optional, containing the participation fetched during authorization
+     * @return the ProgrammingParticipation Optional, containing the fetched participation
      * @throws LocalVCForbiddenException If the user is not allowed to access the repository.
      */
     public Optional<ProgrammingExerciseParticipation> authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise,
@@ -499,6 +559,29 @@ public class LocalVCServletService {
         return Optional.of(participation);
     }
 
+    /**
+     * Retrieves a user based on the provided authorization header.
+     *
+     * @param authorizationHeader the authorization header containing Basic credentials
+     * @return the {@link User}
+     * @throws LocalVCAuthException if the user could not be found or if the authorization header is invalid
+     */
+    public User getUserByAuthHeader(String authorizationHeader) throws LocalVCAuthException {
+        UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
+        String username = usernameAndPassword.username();
+        return userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
+    }
+
+    /**
+     * Attempts to load a programming exercise participation based on the provided parameters.
+     *
+     * @param usingSSH                 {@code true} if the user's session is over SSH, {@code false} if over HTTP
+     * @param repositoryTypeOrUserName A string representing either the repository type or the username associated with the repository.
+     * @param localVCRepositoryUri     The local version control repository URI.
+     * @param exercise                 The programming exercise for which participation is being fetched.
+     * @return The fetched {@link ProgrammingExerciseParticipation} instance.
+     * @throws LocalVCInternalException If no participation is found and it is not an auxiliary repository.
+     */
     private ProgrammingExerciseParticipation tryToLoadParticipation(boolean usingSSH, String repositoryTypeOrUserName, LocalVCRepositoryUri localVCRepositoryUri,
             ProgrammingExercise exercise) throws LocalVCInternalException {
         ProgrammingExerciseParticipation participation;
@@ -635,29 +718,18 @@ public class LocalVCServletService {
 
     /**
      * Create a submission, trigger the respective build, and process the results.
-     *
-     * @param commitHash the hash of the last commit.
-     * @param repository the remote repository which was pushed to.
-     * @throws ContinuousIntegrationException if something goes wrong with the CI configuration.
-     * @throws VersionControlException        if the commit belongs to the wrong branch (i.e. not the default branch of the participation).
-     */
-    public void processNewPush(String commitHash, Repository repository) {
-        processNewPush(commitHash, repository, Optional.empty(), Optional.empty(), Optional.empty());
-    }
-
-    /**
-     * Create a submission, trigger the respective build, and process the results.
      * This method can be called with some values, to avoid loading them again from the database
      *
      * @param commitHash          the hash of the last commit.
      * @param repository          the remote repository which was pushed to.
+     * @param user                the user who pushed the commit, used for logging and access control.
      * @param cachedExercise      the exercise which is potentially already loaded
      * @param cachedParticipation the participation which is potentially already loaded
      * @param vcsAccessLog        the vcsAccessLog which is potentially already loaded
      * @throws ContinuousIntegrationException if something goes wrong with the CI configuration.
      * @throws VersionControlException        if the commit belongs to the wrong branch (i.e. not the default branch of the participation).
      */
-    public void processNewPush(String commitHash, Repository repository, Optional<ProgrammingExercise> cachedExercise,
+    public void processNewPush(String commitHash, Repository repository, User user, Optional<ProgrammingExercise> cachedExercise,
             Optional<ProgrammingExerciseParticipation> cachedParticipation, Optional<VcsAccessLog> vcsAccessLog) {
         long timeNanoStart = System.nanoTime();
 
@@ -669,7 +741,7 @@ public class LocalVCServletService {
         String projectKey = localVCRepositoryUri.getProjectKey();
         ProgrammingExercise exercise = cachedExercise.orElseGet(() -> getProgrammingExercise(projectKey));
         ProgrammingExerciseParticipation participation;
-        RepositoryType repositoryType = getRepositoryTypeWithoutAuxiliary(repositoryTypeOrUserName, exercise);
+        RepositoryType repositoryType = getRepositoryTypeWithoutAuxiliary(repositoryTypeOrUserName);
 
         try {
             participation = cachedParticipation.orElseGet(() -> programmingExerciseParticipationService
@@ -704,7 +776,7 @@ public class LocalVCServletService {
             Commit commit = extractCommitInfo(commitHash, repository);
 
             // Process push to any repository other than the test repository.
-            processNewPushToRepository(participation, commit);
+            processNewPushToRepository(participation, commit, user);
 
             // For push the correct commitHash is only available here, therefore the preliminary value is overwritten
             String finalCommitHash = commitHash;
@@ -743,9 +815,9 @@ public class LocalVCServletService {
         return exercise;
     }
 
-    private static LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
+    private LocalVCRepositoryUri getLocalVCRepositoryUri(Path repositoryFolderPath) {
         try {
-            return new LocalVCRepositoryUri(repositoryFolderPath, localVCBaseUrl);
+            return new LocalVCRepositoryUri(localVCBaseUri, repositoryFolderPath);
         }
         catch (LocalVCInternalException e) {
             // This means something is misconfigured.
@@ -774,12 +846,12 @@ public class LocalVCServletService {
         // Create a new submission for the solution repository.
         ProgrammingSubmission submission = getProgrammingSubmission(exercise, commitHash);
 
-        programmingMessagingService.notifyUserAboutSubmission(submission, exercise.getId());
+        programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, exercise.getId());
 
         if (repositoryType.equals(RepositoryType.TESTS)) {
             try {
                 // Set a flag to inform the instructor that the student results are now outdated.
-                programmingTriggerService.setTestCasesChanged(exercise.getId(), true);
+                programmingExerciseTestCaseChangedService.setTestCasesChanged(exercise.getId(), true);
             }
             catch (EntityNotFoundException e) {
                 throw new VersionControlException("Could not set test cases changed flag", e);
@@ -820,19 +892,13 @@ public class LocalVCServletService {
         }
     }
 
-    private RepositoryType getRepositoryTypeWithoutAuxiliary(String repositoryTypeOrUserName, ProgrammingExercise exercise) {
-        if (repositoryTypeOrUserName.equals("exercise")) {
-            return RepositoryType.TEMPLATE;
-        }
-        else if (repositoryTypeOrUserName.equals("solution")) {
-            return RepositoryType.SOLUTION;
-        }
-        else if (repositoryTypeOrUserName.equals("tests")) {
-            return RepositoryType.TESTS;
-        }
-        else {
-            return RepositoryType.USER;
-        }
+    private RepositoryType getRepositoryTypeWithoutAuxiliary(String repositoryTypeOrUserName) {
+        return switch (repositoryTypeOrUserName) {
+            case "exercise" -> RepositoryType.TEMPLATE;
+            case "solution" -> RepositoryType.SOLUTION;
+            case "tests" -> RepositoryType.TESTS;
+            default -> RepositoryType.USER;
+        };
     }
 
     /**
@@ -841,15 +907,16 @@ public class LocalVCServletService {
      *
      * @param participation the participation for which the push was made
      * @param commit        the commit that was pushed
+     * @param user          the user who pushed the commit, used for logging and access control
      * @throws VersionControlException if the commit belongs to the wrong branch (i.e. not the default branch of the participation)
      */
-    private void processNewPushToRepository(ProgrammingExerciseParticipation participation, Commit commit) {
+    private void processNewPushToRepository(ProgrammingExerciseParticipation participation, Commit commit, User user) {
         // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
         // Therefore, a mock auth object has to be created.
         SecurityUtils.setAuthorizationObject();
         ProgrammingSubmission submission;
         try {
-            submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit);
+            submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit, user);
         }
         catch (EntityNotFoundException | IllegalStateException | IllegalArgumentException e) {
             throw new VersionControlException("Could not process submission for participation: " + e.getMessage(), e);
@@ -857,7 +924,7 @@ public class LocalVCServletService {
 
         // Remove unnecessary information from the new submission.
         submission.getParticipation().setSubmissions(null);
-        programmingMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
+        programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
     }
 
     private Commit extractCommitInfo(String commitHash, Repository repository) throws IOException, GitAPIException, VersionControlException {
@@ -873,14 +940,14 @@ public class LocalVCServletService {
         revCommit = repository.parseCommit(objectId);
 
         // Get the branch name.
-        Git git = new Git(repository);
-        // Look in the 'refs/heads' namespace for a ref that points to the commit.
-        // The returned map contains at most one entry where the key is the commit id and the value denotes the branch which points to it.
-        Map<ObjectId, String> objectIdBranchNameMap = git.nameRev().addPrefix("refs/heads").add(objectId).call();
-        if (!objectIdBranchNameMap.isEmpty()) {
-            branch = objectIdBranchNameMap.get(objectId);
+        try (Git git = new Git(repository)) {
+            // Look in the 'refs/heads' namespace for a ref that points to the commit.
+            // The returned map contains at most one entry where the key is the commit id and the value denotes the branch which points to it.
+            Map<ObjectId, String> objectIdBranchNameMap = git.nameRev().addPrefix("refs/heads").add(objectId).call();
+            if (!objectIdBranchNameMap.isEmpty()) {
+                branch = objectIdBranchNameMap.get(objectId);
+            }
         }
-        git.close();
 
         if (revCommit == null || branch == null) {
             throw new VersionControlException("Something went wrong retrieving the revCommit or the branch.");
@@ -956,7 +1023,7 @@ public class LocalVCServletService {
      */
     public void createVCSAccessLogForFailedAuthenticationAttempt(HttpServletRequest servletRequest) {
         try {
-            String authorizationHeader = servletRequest.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+            String authorizationHeader = servletRequest.getHeader(HttpHeaders.AUTHORIZATION);
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
             AuthenticationMechanism mechanism = usernameAndPassword.password().startsWith("vcpat-") ? AuthenticationMechanism.VCS_ACCESS_TOKEN : AuthenticationMechanism.PASSWORD;

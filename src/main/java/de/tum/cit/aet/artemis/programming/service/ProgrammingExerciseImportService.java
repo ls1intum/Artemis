@@ -5,38 +5,35 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingExerciseImportService {
 
@@ -48,15 +45,15 @@ public class ProgrammingExerciseImportService {
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
+
+    private final ProgrammingExerciseValidationService programmingExerciseValidationService;
+
+    private final ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService;
+
+    private final ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService;
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
-
-    private final GitService gitService;
-
-    private final FileService fileService;
-
-    private final UserRepository userRepository;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
@@ -68,24 +65,29 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, GitService gitService, FileService fileService, UserRepository userRepository,
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
+            ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService,
+            ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProgrammingExerciseTaskService programmingExerciseTaskService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UriService uriService, TemplateUpgradePolicyService templateUpgradePolicyService,
-            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository) {
+            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
+        this.programmingExerciseValidationService = programmingExerciseValidationService;
+        this.programmingExerciseBuildPlanService = programmingExerciseBuildPlanService;
+        this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
-        this.gitService = gitService;
-        this.fileService = fileService;
-        this.userRepository = userRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.uriService = uriService;
         this.templateUpgradePolicyService = templateUpgradePolicyService;
         this.programmingExerciseImportBasicService = programmingExerciseImportBasicService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -107,17 +109,18 @@ public class ProgrammingExerciseImportService {
         String testRepoName = uriService.getRepositorySlugFromRepositoryUriString(templateExercise.getTestRepositoryUri());
         String solutionRepoName = uriService.getRepositorySlugFromRepositoryUriString(templateExercise.getSolutionRepositoryUri());
 
-        String sourceBranch = versionControl.getOrRetrieveBranchOfExercise(templateExercise);
+        String sourceBranch = programmingExerciseRepository.findBranchByExerciseId(templateExercise.getId());
 
         // TODO: in case one of those operations fail, we should do error handling and revert all previous operations
-        versionControl.copyRepository(sourceProjectKey, templateRepoName, sourceBranch, targetProjectKey, RepositoryType.TEMPLATE.getName(), null);
-        versionControl.copyRepository(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName(), null);
-        versionControl.copyRepository(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName(), null);
+        versionControl.copyRepositoryWithHistory(sourceProjectKey, templateRepoName, sourceBranch, targetProjectKey, RepositoryType.TEMPLATE.getName(), null);
+        versionControl.copyRepositoryWithHistory(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName(), null);
+        versionControl.copyRepositoryWithHistory(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName(), null);
 
         List<AuxiliaryRepository> auxRepos = templateExercise.getAuxiliaryRepositories();
         for (int i = 0; i < auxRepos.size(); i++) {
             AuxiliaryRepository auxRepo = auxRepos.get(i);
-            var repoUri = versionControl.copyRepository(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName(), null).toString();
+            var repoUri = versionControl.copyRepositoryWithHistory(sourceProjectKey, auxRepo.getRepositoryName(), sourceBranch, targetProjectKey, auxRepo.getName(), null)
+                    .toString();
             AuxiliaryRepository newAuxRepo = newExercise.getAuxiliaryRepositories().get(i);
             newAuxRepo.setRepositoryUri(repoUri);
             auxiliaryRepositoryRepository.save(newAuxRepo);
@@ -125,7 +128,7 @@ public class ProgrammingExerciseImportService {
 
         try {
             // Adjust placeholders that were replaced during creation of template exercise
-            adjustProjectNames(templateExercise, newExercise);
+            programmingExerciseRepositoryService.adjustProjectNames(templateExercise.getTitle(), newExercise);
         }
         catch (GitAPIException | IOException e) {
             log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newExercise.getTitle(), e);
@@ -158,7 +161,7 @@ public class ProgrammingExerciseImportService {
 
     private void updatePlanRepositoriesInBuildPlans(ProgrammingExercise newExercise, String targetExerciseProjectKey, String oldExerciseRepoUri, String oldSolutionRepoUri,
             String oldTestRepoUri, List<AuxiliaryRepository> oldBuildPlanAuxiliaryRepositories) {
-        String newExerciseBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(newExercise);
+        String newExerciseBranch = programmingExerciseRepository.findBranchByExerciseId(newExercise.getId());
 
         // update 2 repositories for the BASE build plan --> adapt the triggers so that only the assignment repo (and not the tests' repo) will trigger the BASE build plan
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
@@ -186,7 +189,7 @@ public class ProgrammingExerciseImportService {
         for (int i = 0; i < newRepositories.size(); i++) {
             AuxiliaryRepository newAuxiliaryRepository = newRepositories.get(i);
             AuxiliaryRepository oldAuxiliaryRepository = oldRepositories.get(i);
-            String auxiliaryBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(newExercise);
+            String auxiliaryBranch = programmingExerciseRepository.findBranchByExerciseId(newExercise.getId());
             continuousIntegrationService.orElseThrow().updatePlanRepository(targetExerciseProjectKey, newExercise.generateBuildPlanId(buildPlanType),
                     newAuxiliaryRepository.getName(), targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUri(), oldAuxiliaryRepository.getRepositoryUri(),
                     auxiliaryBranch);
@@ -211,58 +214,6 @@ public class ProgrammingExerciseImportService {
     }
 
     /**
-     * Adjust project names in imported exercise for TEST, BASE and SOLUTION repositories.
-     * Replace values inserted in {@link ProgrammingExerciseRepositoryService#replacePlaceholders(ProgrammingExercise, Repository)}.
-     *
-     * @param templateExercise the exercise from which the values that should be replaced are extracted
-     * @param newExercise      the exercise from which the values that should be inserted are extracted
-     * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws IOException     If the values in the files could not be replaced
-     */
-    private void adjustProjectNames(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, IOException {
-        final var projectKey = newExercise.getProjectKey();
-
-        Map<String, String> replacements = new HashMap<>();
-
-        // Used in pom.xml
-        replacements.put("<artifactId>" + templateExercise.getTitle().replaceAll(" ", "-"), "<artifactId>" + newExercise.getTitle().replaceAll(" ", "-"));
-
-        // Used in settings.gradle
-        replacements.put("rootProject.name = '" + templateExercise.getTitle().replaceAll(" ", "-"), "rootProject.name = '" + newExercise.getTitle().replaceAll(" ", "-"));
-
-        // Used in readme.md (Gradle)
-        replacements.put("testImplementation(':" + templateExercise.getTitle().replaceAll(" ", "-"), "testImplementation(':" + newExercise.getTitle().replaceAll(" ", "-"));
-
-        // Used in .project
-        replacements.put("<name>" + templateExercise.getTitle(), "<name>" + newExercise.getTitle());
-
-        final var user = userRepository.getUser();
-
-        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TEMPLATE), user);
-        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TESTS), user);
-        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.SOLUTION), user);
-    }
-
-    /**
-     * Adjust project names in imported exercise for specific repository.
-     * Replace values inserted in {@link ProgrammingExerciseRepositoryService#replacePlaceholders(ProgrammingExercise, Repository)}.
-     *
-     * @param replacements   the replacements that should be applied
-     * @param projectKey     the project key of the new exercise
-     * @param repositoryName the name of the repository that should be adjusted
-     * @param user           the user which performed the action (used as Git author)
-     * @throws GitAPIException If the checkout/push of one repository fails
-     */
-    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException {
-        final var repositoryUri = versionControlService.orElseThrow().getCloneRepositoryUri(projectKey, repositoryName);
-        Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true);
-        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
-        gitService.stageAllChanges(repository);
-        gitService.commitAndPush(repository, "Template adjusted by Artemis", true, user);
-        repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
-    }
-
-    /**
      * Method to import a programming exercise, including all base build plans (template, solution) and repositories (template, solution, test).
      * Referenced entities, s.a. the test cases or the hints will get cloned and assigned a new id.
      *
@@ -278,7 +229,7 @@ public class ProgrammingExerciseImportService {
         // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
         newProgrammingExercise.setShortName(newProgrammingExercise.getShortName().replaceAll("[^a-zA-Z0-9]", ""));
         newProgrammingExercise.generateAndSetProjectKey();
-        programmingExerciseService.checkIfProjectExists(newProgrammingExercise);
+        programmingExerciseValidationService.checkIfProjectExists(newProgrammingExercise);
 
         if (newProgrammingExercise.isExamExercise()) {
             // Disable feedback suggestions on exam exercises (currently not supported)
@@ -305,7 +256,7 @@ public class ProgrammingExerciseImportService {
 
         if (recreateBuildPlans) {
             // Create completely new build plans for the exercise
-            programmingExerciseService.setupBuildPlansForNewExercise(newProgrammingExercise);
+            programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(newProgrammingExercise);
         }
         else {
             // We have removed the automatic build trigger from test to base for new programming exercises.
@@ -314,7 +265,7 @@ public class ProgrammingExerciseImportService {
             importBuildPlans(originalProgrammingExercise, newProgrammingExercise);
         }
 
-        programmingExerciseService.scheduleOperations(newProgrammingExercise.getId());
+        programmingExerciseCreationScheduleService.scheduleOperations(newProgrammingExercise.getId());
 
         programmingExerciseTaskService.replaceTestIdsWithNames(newProgrammingExercise);
         return newProgrammingExercise;

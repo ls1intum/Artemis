@@ -6,7 +6,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 export const teamRoute: Routes = [
     {
         path: '',
-        loadComponent: () => import('./teams.component').then((m) => m.TeamsComponent),
+        loadComponent: () => import('./teams/teams.component').then((m) => m.TeamsComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.team.home.title',

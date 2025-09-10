@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
@@ -13,6 +13,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -27,13 +28,14 @@ import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 @Profile(PROFILE_LOCALVC)
+@Lazy
 @Service
 public class SshGitLocationResolverService implements GitLocationResolver {
 
     private static final Logger log = LoggerFactory.getLogger(SshGitLocationResolverService.class);
 
     @Value("${artemis.version-control.url}")
-    private URL localVCBaseUrl;
+    private URI localVCBaseUri;
 
     private final LocalVCServletService localVCServletService;
 
@@ -55,7 +57,7 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         }
 
         final var gitCommand = args[0];
-        final var localVCRepositoryUri = new LocalVCRepositoryUri(Path.of(repositoryPath), localVCBaseUrl);
+        final var localVCRepositoryUri = new LocalVCRepositoryUri(localVCBaseUri, Path.of(repositoryPath));
         final var projectKey = localVCRepositoryUri.getProjectKey();
         final var repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
         ProgrammingExercise exercise;
@@ -83,6 +85,8 @@ public class SshGitLocationResolverService implements GitLocationResolver {
             }
             catch (LocalVCForbiddenException e) {
                 log.error("User {} does not have access to the repository {}", user.getLogin(), repositoryPath);
+                localVCServletService.saveFailedAccessVcsAccessLog(new AuthenticationContext.Session(session), repositoryTypeOrUserName, exercise, localVCRepositoryUri, user,
+                        repositoryAction);
                 throw new AccessDeniedException("User does not have access to this repository", e);
             }
         }

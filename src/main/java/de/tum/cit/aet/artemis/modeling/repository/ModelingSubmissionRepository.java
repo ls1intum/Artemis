@@ -6,6 +6,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
  * Spring Data JPA repository for the ModelingSubmission entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface ModelingSubmissionRepository extends ArtemisJpaRepository<ModelingSubmission, Long> {
 
@@ -39,7 +41,7 @@ public interface ModelingSubmissionRepository extends ArtemisJpaRepository<Model
      * @param submissionId the id of the modeling submission that should be loaded from the database
      * @return the modeling submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
-    @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks", "results.assessor", "results.assessmentNote", "participation.results" })
+    @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks", "results.assessor", "results.assessmentNote", "participation.submissions.results" })
     Optional<ModelingSubmission> findWithResultsFeedbacksAssessorAssessmentNoteAndParticipationResultsById(Long submissionId);
 
     @Query("""

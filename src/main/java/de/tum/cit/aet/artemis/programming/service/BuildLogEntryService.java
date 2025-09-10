@@ -2,15 +2,12 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +18,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -33,6 +31,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -40,6 +39,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class BuildLogEntryService {
 
@@ -473,15 +473,12 @@ public class BuildLogEntryService {
      * and the build job ID. The file is expected to be located at:
      * {@code buildLogsPath/<courseShortName>/<exerciseShortName>/<buildJobId>.log}.
      *
-     * @param buildJobId          The unique identifier of the build job whose log file is being checked.
-     * @param programmingExercise The programming exercise associated with the build job, used to
-     *                                retrieve the course and exercise short names.
+     * @param buildJobId The unique identifier of the build job whose log file is being checked.
+     * @param names      A DTO containing the course and exercise short names.
      * @return {@code true} if the log file exists, otherwise {@code false}.
      */
-    public boolean buildJobHasLogFile(String buildJobId, ProgrammingExercise programmingExercise) {
-        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        String exerciseShortName = programmingExercise.getShortName();
-        Path logPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName).resolve(buildJobId + ".log");
+    public boolean buildJobHasLogFile(String buildJobId, ProgrammingExerciseNamesDTO names) {
+        Path logPath = buildLogsPath.resolve(names.courseShortName()).resolve(names.exerciseShortName()).resolve(buildJobId + ".log");
         boolean existsInExerciseFolder = Files.exists(logPath);
         if (existsInExerciseFolder) {
             return true;
@@ -491,54 +488,4 @@ public class BuildLogEntryService {
         logPath = buildLogsPath.resolve(buildJobId + ".log");
         return Files.exists(logPath);
     }
-
-    /**
-     * Parses the build log entries from a given file and returns them as a list of {@link BuildLogDTO} objects.
-     *
-     * <p>
-     * The method reads the file line by line and splits each line into a timestamp and a log message.
-     * The timestamp is expected to be separated from the log message by a tab character.
-     * If the timestamp cannot be parsed, the log message is appended to the previous entry.
-     * </p>
-     *
-     * @param buildLog The {@link FileSystemResource} representing the build log file.
-     * @return A list of {@link BuildLogDTO} objects containing the parsed build log entries.
-     */
-    public List<BuildLogDTO> parseBuildLogEntries(FileSystemResource buildLog) {
-        try {
-            List<BuildLogDTO> buildLogEntries = new ArrayList<>();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(buildLog.getInputStream()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    // split into timestamp and log message
-                    int logMessageParts = 2;
-                    String[] parts = line.split("\t", logMessageParts);
-                    if (parts.length == logMessageParts) {
-                        try {
-                            ZonedDateTime time = ZonedDateTime.parse(parts[0]);
-                            buildLogEntries.add(new BuildLogDTO(time, parts[1]));
-                        }
-                        catch (DateTimeParseException e) {
-                            // If the time cannot be parsed, append the line to the last entry
-                            if (!buildLogEntries.isEmpty()) {
-                                BuildLogDTO lastEntry = buildLogEntries.getLast();
-                                buildLogEntries.set(buildLogEntries.size() - 1, new BuildLogDTO(lastEntry.time(), lastEntry.log() + "\n\t" + line));
-                            }
-                        }
-                    }
-                    else {
-                        // If the line does not contain a tab, add it to in a new entry
-                        BuildLogDTO lastEntry = buildLogEntries.getLast();
-                        buildLogEntries.add(new BuildLogDTO(lastEntry.time(), line));
-                    }
-                }
-            }
-            return buildLogEntries;
-        }
-        catch (IOException e) {
-            log.error("Error occurred while trying to parse build log entries", e);
-            return new ArrayList<>();
-        }
-    }
-
 }

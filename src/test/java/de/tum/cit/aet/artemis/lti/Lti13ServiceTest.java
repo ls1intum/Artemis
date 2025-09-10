@@ -33,6 +33,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.client.RestTemplate;
@@ -46,6 +47,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -55,8 +57,8 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
@@ -83,7 +85,7 @@ class Lti13ServiceTest {
     private ExerciseTestRepository exerciseRepository;
 
     @Mock
-    private LectureRepository lectureRepository;
+    private LectureRepositoryApi lectureRepositoryApi;
 
     @Mock
     private CourseTestRepository courseRepository;
@@ -125,8 +127,8 @@ class Lti13ServiceTest {
     @BeforeEach
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
-        lti13Service = new Lti13Service(userRepository, exerciseRepository, lectureRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
-                onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider, ltiPlatformConfigurationRepository);
+        lti13Service = new Lti13Service(userRepository, exerciseRepository, Optional.of(lectureRepositoryApi), courseRepository, launchRepository, ltiService, resultRepository,
+                tokenRetriever, onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider, ltiPlatformConfigurationRepository);
         clientRegistrationId = "clientId";
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setUserPrefix("prefix");
@@ -494,9 +496,9 @@ class Lti13ServiceTest {
 
         HttpEntity<String> httpEntity = new HttpEntity<>((String) capturedHttpEntity.getBody(), capturedHttpEntity.getHeaders());
 
-        List<String> authHeaders = httpEntity.getHeaders().get("Authorization");
+        List<String> authHeaders = httpEntity.getHeaders().get(HttpHeaders.AUTHORIZATION);
         assertThat(authHeaders).as("Score publish request must contain an Authorization header").isNotNull();
-        assertThat(authHeaders).as("Score publish request must contain the corresponding Authorization Bearer token").contains("Bearer " + accessToken);
+        assertThat(authHeaders).as("Score publish request must contain the corresponding Authorization Bearer token").contains(Constants.BEARER_PREFIX + accessToken);
 
         JsonNode body = new ObjectMapper().readTree(Objects.requireNonNull(httpEntity.getBody()));
         assertThat(body.get("userId").asText()).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
@@ -631,13 +633,13 @@ class Lti13ServiceTest {
         Lecture mockLecture = new Lecture();
         mockLecture.setId(456L);
 
-        when(lectureRepository.findById(456L)).thenReturn(Optional.of(mockLecture));
+        when(lectureRepositoryApi.findById(456L)).thenReturn(Optional.of(mockLecture));
 
         Optional<Lecture> lecture = lti13Service.getLectureFromTargetLink(targetLinkUrl);
 
         assertThat(lecture).isPresent();
         assertThat(lecture.get().getId()).isEqualTo(456L);
-        verify(lectureRepository).findById(456L);
+        verify(lectureRepositoryApi).findById(456L);
     }
 
     @Test

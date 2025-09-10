@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,7 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 
 /**
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseSer
  * PUT or DELETE.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseTestCaseResource {
@@ -45,7 +47,7 @@ public class ProgrammingExerciseTestCaseResource {
 
     private final ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -54,11 +56,11 @@ public class ProgrammingExerciseTestCaseResource {
     private final UserRepository userRepository;
 
     public ProgrammingExerciseTestCaseResource(ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseService programmingExerciseService,
+            ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository) {
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.programmingExerciseTestCaseService = programmingExerciseTestCaseService;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
@@ -101,7 +103,7 @@ public class ProgrammingExerciseTestCaseResource {
         Set<ProgrammingExerciseTestCase> updatedTests = programmingExerciseTestCaseService.update(exerciseId, testCaseProgrammingExerciseTestCaseDTOS);
         // A test case is now marked as AFTER_DUE_DATE: a scheduled score update might be needed.
         if (updatedTests.stream().anyMatch(ProgrammingExerciseTestCase::isAfterDueDate)) {
-            programmingExerciseService.scheduleOperations(programmingExercise.getId());
+            programmingExerciseCreationScheduleService.scheduleOperations(programmingExercise.getId());
         }
 
         // We don't need the linked exercise here.

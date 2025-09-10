@@ -2,24 +2,23 @@ import { Component, OnChanges, OnInit, computed, inject, input, output } from '@
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { faCheckSquare, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { CachingStrategy } from 'app/shared/image/secured-image.component';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { User } from 'app/core/user/user.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { DisplayPriority, UserRole } from 'app/communication/metis.util';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { Post } from 'app/entities/metis/post.model';
-import { ProfilePictureComponent } from '../../shared/profile-picture/profile-picture.component';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
@@ -99,14 +98,23 @@ export class PostingHeaderComponent implements OnInit, OnChanges {
         this.setUserAuthorityIconAndTooltip();
     }
 
+    /**
+     * Indicates if the posting was created after the last time the current user read the conversation
+     */
     get isAfter(): boolean | undefined {
         return this.posting()?.creationDate?.isAfter(this.lastReadDate());
     }
 
+    /**
+     * Returns the author of the current posting
+     */
     get authorOfPosting(): User | undefined {
         return this.posting()?.author;
     }
 
+    /**
+     * Returns the creation date of the posting
+     */
     get creationDate(): dayjs.Dayjs | undefined {
         return this.posting()?.creationDate;
     }
@@ -162,6 +170,10 @@ export class PostingHeaderComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Emits the event to open a user profile or direct chat when the author's name is clicked,
+     * unless the user is the author himself or role is missing
+     */
     protected userNameClicked() {
         if (this.isAuthorOfPosting || !this.posting()?.authorRole) {
             return;
@@ -170,6 +182,5 @@ export class PostingHeaderComponent implements OnInit, OnChanges {
         this.onUserNameClicked.emit();
     }
 
-    protected readonly CachingStrategy = CachingStrategy;
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

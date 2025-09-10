@@ -3,10 +3,11 @@ package de.tum.cit.aet.artemis.programming.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Comparator;
+import java.util.Objects;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +34,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingAssessmentService;
  * REST controller for managing ProgrammingAssessment.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingAssessmentResource extends AssessmentResource {
@@ -62,7 +63,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     private final StudentParticipationRepository studentParticipationRepository;
 
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.programmingAssessmentService = programmingAssessmentService;
@@ -93,12 +94,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getLatestResult(), programmingExercise, assessmentUpdate);
         // make sure the submission is reconnected with the result to prevent problems when the object is used for other calls in the client
         result.setSubmission(programmingSubmission);
-        // remove circular dependencies if the results of the participation are there
-        if (result.getParticipation() != null && Hibernate.isInitialized(result.getParticipation().getResults()) && result.getParticipation().getResults() != null) {
-            result.getParticipation().setResults(null);
-        }
 
-        if (result.getParticipation() != null && result.getParticipation() instanceof StudentParticipation studentParticipation
+        if (result.getSubmission().getParticipation() != null && result.getSubmission().getParticipation() instanceof StudentParticipation studentParticipation
                 && !authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
             studentParticipation.filterSensitiveInformation();
         }
@@ -138,7 +135,8 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // based on the locking mechanism we take the most recent manual result
-        Result existingManualResult = participation.getResults().stream().filter(Result::isManual).max(Comparator.comparing(Result::getId))
+        Result existingManualResult = participation.getSubmissions().stream()
+                .flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull).filter(Result::isManual)).max(Comparator.comparing(Result::getId))
                 .orElseThrow(() -> new EntityNotFoundException("Manual result for participation with id " + participationId + " does not exist"));
 
         // prevent that tutors create multiple manual results
@@ -146,8 +144,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         // load assessor
         existingManualResult = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(existingManualResult.getId());
 
-        // make sure that the participation and submission cannot be manipulated on the client side
-        newManualResult.setParticipation(participation);
         newManualResult.setSubmission(existingManualResult.getSubmission());
 
         var programmingExercise = (ProgrammingExercise) participation.getExercise();
@@ -162,7 +158,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
-        if (Boolean.FALSE.equals(newManualResult.isRated())) {
+        if (!newManualResult.isRated()) {
             throw new BadRequestAlertException("Result is not rated", ENTITY_NAME, "resultNotRated");
         }
         if (newManualResult.getScore() == null) {
@@ -184,7 +180,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         newManualResult = programmingAssessmentService.saveAndSubmitManualAssessment(participation, newManualResult, existingManualResult, user, submit);
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
-            newManualResult.getParticipation().filterSensitiveInformation();
+            newManualResult.getSubmission().getParticipation().filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(newManualResult);

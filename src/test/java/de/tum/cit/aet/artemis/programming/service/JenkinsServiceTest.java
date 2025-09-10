@@ -25,7 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.StreamUtils;
 
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
-import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
-class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "jenkinsservicetest";
 
@@ -110,8 +110,8 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVcTes
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testCreateBuildPlanForExerciseThrowsExceptionOnTemplateError() {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
@@ -136,8 +136,8 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVcTes
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
@@ -155,8 +155,8 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVcTes
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testDeleteBuildPlan() {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         final String projectKey = programmingExercise.getProjectKey();
@@ -173,8 +173,8 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVcTes
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testRecreateBuildPlanDeletedFolder() throws Exception {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         final String projectKey = programmingExercise.getProjectKey();
@@ -225,8 +225,8 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVcTes
 
     private void testFailToUpdatePlanRepositoryRestClientException(HttpStatus expectedStatus) throws IOException {
         var programmingExercise = continuousIntegrationTestService.programmingExercise;
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
@@ -250,8 +250,8 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVcTes
             mockedUtils.when(() -> JenkinsBuildPlanUtils.replaceScriptParameters(any(), toBeReplacedCaptor.capture(), replacementCaptor.capture())).thenCallRealMethod();
 
             var programmingExercise = continuousIntegrationTestService.programmingExercise;
-            programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-            programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+            programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+            programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
             programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
             var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 

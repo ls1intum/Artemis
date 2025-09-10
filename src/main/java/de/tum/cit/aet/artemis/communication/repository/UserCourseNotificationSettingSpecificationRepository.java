@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Repository for the {@link UserCourseNotificationSettingSpecification} entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 @CacheConfig(cacheNames = "userCourseNotificationSettingSpecification")
 public interface UserCourseNotificationSettingSpecificationRepository extends ArtemisJpaRepository<UserCourseNotificationSettingSpecification, Long> {
@@ -65,4 +67,12 @@ public interface UserCourseNotificationSettingSpecificationRepository extends Ar
     @Transactional // Deleting Query
     @Override
     void delete(UserCourseNotificationSettingSpecification userCourseNotificationSettingSpecification);
+
+    /**
+     * Find all course notification setting specifications by user id.
+     *
+     * @param userId id to query for
+     * @return list of course notification setting specifications for the user
+     */
+    List<UserCourseNotificationSettingSpecification> findAllByUserId(long userId);
 }

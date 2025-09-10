@@ -4,10 +4,16 @@
     padding-bottom: 0.3rem;
     position: relative;
 
+    .forwarded-message-missing-container,
     .forwarded-message-content {
         display: flex;
         flex-direction: column;
         width: 100%;
+    }
+
+    .forwarded-message-missing-label {
+        padding-top: 0.3rem;
+        color: var(--metis-gray);
     }
 
     .forwarded-message-header {

@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 @Pipe({ name: 'exerciseTypeLabel' })
 export class ExerciseTypePipe implements PipeTransform {

@@ -4,7 +4,7 @@
 
     .lecture-unit-header {
         background: var(--overview-light-background-color);
-        height: 50px;
+        min-height: 50px;
 
         &:hover {
             background: var(--hover-slightly-darker-body-bg);

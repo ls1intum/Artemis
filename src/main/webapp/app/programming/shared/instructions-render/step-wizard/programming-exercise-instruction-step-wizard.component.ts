@@ -1,13 +1,14 @@
 import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/service/programming-exercise-instruction.service';
+import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Result } from 'app/entities/result.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions-step-wizard',
@@ -22,6 +23,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     TestCaseState = TestCaseState;
 
     @Input() exercise: Exercise;
+    @Input() participation: Participation;
     @Input() latestResult?: Result;
     @Input() tasks: TaskArray;
 
@@ -62,6 +64,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
         const componentInstance = modalRef.componentInstance as FeedbackComponent;
         componentInstance.exercise = this.exercise;
         componentInstance.result = this.latestResult;
+        componentInstance.participation = this.participation;
         componentInstance.feedbackFilter = tests;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;
         componentInstance.taskName = taskName;

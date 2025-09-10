@@ -7,7 +7,7 @@ import {
     ExamWideAnnouncementEvent,
     ProblemStatementUpdateEvent,
     WorkingTimeUpdateEvent,
-} from 'app/exam/overview/exam-participation-live-events.service';
+} from 'app/exam/overview/services/exam-participation-live-events.service';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

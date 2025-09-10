@@ -4,8 +4,6 @@ public class StartupDelayConfig {
 
     public static final long PROGRAMMING_EXERCISE_SCHEDULE_DELAY_SEC = 20;
 
-    public static final long MODELING_EXERCISE_SCHEDULE_DELAY_SEC = 25;
-
     public static final long QUIZ_EXERCISE_SCHEDULE_DELAY_SEC = 25;
 
     public static final long NOTIFICATION_SCHEDULE_DELAY_SEC = 30;

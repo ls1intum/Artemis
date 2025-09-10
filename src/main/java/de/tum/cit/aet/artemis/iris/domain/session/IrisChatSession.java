@@ -1,28 +1,28 @@
 package de.tum.cit.aet.artemis.iris.domain.session;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 
 @Entity
 public abstract class IrisChatSession extends IrisSession {
 
-    @ManyToOne
-    private User user;
+    private long userId;
 
     public IrisChatSession(User user) {
-        this.user = user;
+        this.userId = user.getId();
     }
 
     public IrisChatSession() {
     }
 
-    public User getUser() {
-        return user;
+    public long getUserId() {
+        return userId;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public void setUserId(long userId) {
+        this.userId = userId;
     }
+
+    public abstract IrisChatMode getMode();
 }

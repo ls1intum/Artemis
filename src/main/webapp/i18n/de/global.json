@@ -23,7 +23,6 @@
             "overview": "Kursübersicht",
             "courses": "Kurse",
             "course": "Kursverwaltung",
-            "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
             "entities": {
                 "main": "Entitäten",
                 "course": "Kurse",
@@ -52,7 +51,6 @@
                 "quizSubmission": "Quiz Submission",
                 "dragAndDropSubmittedAnswer": "Drag-and-Drop eingereichte Antwort",
                 "dragAndDropAssignment": "Drag-and-Drop Assignment",
-                "quizStatistic": "Statistiken",
                 "quizPointStatistic": "Quiz Punktestatistiken",
                 "quizQuestionStatistic": "Fragestatistiken",
                 "multipleChoiceQuestionStatistic": "Multiple-Choice Fragestatistiken",
@@ -76,7 +74,13 @@
                 "shortAnswerMapping": "Kurzantwort-Zuordnung",
                 "programmingExerciseTestCase": "Programmingaufgabentestfall",
                 "exerciseHint": "Aufgabenhinweis",
-                "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)",
+                "exerciseTypes": {
+                    "programming": "Programmierung",
+                    "modeling": "Modellierung",
+                    "text": "Text",
+                    "fileUpload": "Datei-Upload",
+                    "quiz": "Quiz"
+                },
                 "metis": {
                     "post": "Beitrag",
                     "answerPost": "Antwort"
@@ -93,6 +97,7 @@
                 "password": "Passwort",
                 "sessions": "Sitzungen",
                 "login": "Anmelden",
+                "loginWithPasskey": "Mit einem Passkey anmelden",
                 "logout": "Abmelden",
                 "register": "Registrierung"
             },
@@ -114,17 +119,13 @@
                 "apidocs": "API",
                 "database": "Datenbank",
                 "iris": "Iris Einstellungen",
-                "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
                 "lti": "LTI Konfiguration",
                 "standardizedCompetencies": "Standardisierte Kompetenzen",
-                "cleanupService": "Aufräumdienst"
+                "cleanupService": "Aufräumdienst",
+                "lectureTranscription": "Vorlesungstranskription"
             },
             "language": "Sprache",
-            "settings": "Einstellungen",
-            "guidedTutorial": "Guided Tutorial",
-            "startTutorial": "Tutorial starten",
-            "restartTutorial": "Tutorial wiederholen",
-            "continueTutorial": "Tutorial fortsetzen"
+            "settings": "Einstellungen"
         },
         "form": {
             "username": "Login oder E-Mail",
@@ -197,6 +198,9 @@
         "item-count": "Ergebnis {{first}} - {{second}} von {{total}} Elemente."
     },
     "entity": {
+        "actions": "Aktionen",
+        "quickActions": "Schnellzugriff",
+        "controlCenter": "Kontrollzentrum",
         "action": {
             "add": "Hinzufügen",
             "addblob": "Blob hinzufügen",
@@ -204,6 +208,7 @@
             "back": "Zurück",
             "cancel": "Abbrechen",
             "delete": "Löschen",
+            "deleteQuestion": "Bist du sicher dass du das Löschen ausführen willst?",
             "noButtonTextDelete": "",
             "unlink": "Trennen",
             "confirm": "Bestätigen",
@@ -216,7 +221,6 @@
             "editSelected": "Ausgewählte bearbeiten",
             "editInEditor": "In Editor bearbeiten",
             "editBuildPlan": "Build-Plan bearbeiten",
-            "editInOrion": "In deiner IDE bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
             "exampleSubmissions": "Beispielabgaben",
             "generate": "Generieren",
@@ -252,7 +256,7 @@
             "lecture": "Vorlesung",
             "attachments": "Anhänge",
             "saveAttachment": "Anhang speichern",
-            "addAttachment": "Anhang hinzufügen",
+            "addAttachment": "Anhang als Vorlesungseinheit hinzufügen",
             "assessmentDashboard": "Bewertung",
             "instructorDashboard": "Dashboard für Lehrende",
             "exerciseDashboard": "Aufgaben-Dashboard",
@@ -276,7 +280,16 @@
             "search": "Suchen",
             "select": "Auswählen",
             "sendToIris": "An Iris schicken",
-            "faq": "FAQ"
+            "faq": "FAQ",
+            "show": "Anzeigen",
+            "addExercise": "Aufgabe hinzufügen",
+            "addLecture": "Vorlesung hinzufügen",
+            "addFaq": "FAQ hinzufügen",
+            "addExam": "Klausur hinzufügen",
+            "addStudent": "Studierenden hinzufügen",
+            "addTutor": "Tutor:in hinzufügen",
+            "addEditor": "Editor:in hinzufügen",
+            "addInstructor": "Lehrenden hinzufügen"
         },
         "detail": {
             "field": "Feld",
@@ -330,8 +343,8 @@
         "dateMissingOrNotValid": "'{{labelName}}' fehlt/ungültig",
         "startDateError": "'Bearbeitungszeit ab' sollte zwischen 'Sichtbar ab' und 'Bearbeitungszeit bis' liegen",
         "endDateError": "'Bearbeitungszeit bis' sollte nach 'Bearbeitungszeit ab' liegen",
-        "warningError": "'Sichtbar ab' ist zu früh eingestellt. Wir empfehlen, es innerhalb von 4 Stunden vor dem 'Bearbeitungszeit ab' festzulegen.",
-        "warningToolTip": "Das Datum zu früh festzulegen kann Verwirrung stiften und zu einem vorzeitigen Zugriff auf die Klausurunterlagen führen. Es wird empfohlen, die Klausur erst wenige Stunden vor dem Beginn sichtbar zu machen."
+        "visibleDateWarningError": "'Sichtbar ab' ist zu früh eingestellt. Wir empfehlen, es innerhalb von 4 Stunden vor dem 'Bearbeitungszeit ab' festzulegen.",
+        "visibleDateWarningToolTip": "Das Datum zu früh festzulegen kann Verwirrung stiften und zu einem vorzeitigen Zugriff auf die Klausurunterlagen führen. Es wird empfohlen, die Klausur erst wenige Stunden vor dem Beginn sichtbar zu machen."
     },
     "aboutUs": "Über",
     "contact": "Kontaktiere uns",
@@ -343,6 +356,7 @@
     "justNow": "gerade eben",
     "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurückzugehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen.",
     "overview": {
+        "training": "Quiz Training",
         "title": "Kursübersicht",
         "aboutUs": "Über",
         "course": "Kursdetails",
@@ -358,7 +372,9 @@
         "communication": "Kommunikation",
         "archive": "Kursarchiv",
         "faq": "FAQ",
-        "plagiarismCases": "Plagiatsfälle"
+        "plagiarismCases": "Plagiatsfälle",
+        "settings": "Einstellungen",
+        "calendar": "Kalender"
     },
     "connectionStatus": {
         "connected": "Verbunden",

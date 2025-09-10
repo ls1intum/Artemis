@@ -4,22 +4,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 
 import javax.crypto.SecretKey;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.core.authentication.AuthenticationFactory;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
-import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -31,6 +28,8 @@ class TokenProviderTest {
     private static final long ONE_MINUTE = 60000;
 
     private static final long TEN_MINUTES = 600000;
+
+    private static final String USER_NAME = "anonymous";
 
     private SecretKey key;
 
@@ -50,7 +49,6 @@ class TokenProviderTest {
         ReflectionTestUtils.setField(tokenProvider, "key", key);
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", ONE_MINUTE);
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMillisecondsForRememberMe", TEN_MINUTES);
-
     }
 
     @Test
@@ -62,7 +60,7 @@ class TokenProviderTest {
 
     @Test
     void testReturnFalseWhenJWTisMalformed() {
-        Authentication authentication = createAuthentication();
+        Authentication authentication = AuthenticationFactory.createUsernamePasswordAuthentication(USER_NAME);
         String token = tokenProvider.createToken(authentication, false);
         String invalidToken = token.substring(1);
         boolean isTokenValid = tokenProvider.validateTokenForAuthority(invalidToken, null);
@@ -74,7 +72,7 @@ class TokenProviderTest {
     void testReturnFalseWhenJWTisExpired() {
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", -ONE_MINUTE);
 
-        Authentication authentication = createAuthentication();
+        Authentication authentication = AuthenticationFactory.createUsernamePasswordAuthentication(USER_NAME);
         String token = tokenProvider.createToken(authentication, false);
 
         boolean isTokenValid = tokenProvider.validateTokenForAuthority(token, null);
@@ -142,10 +140,98 @@ class TokenProviderTest {
         assertThat(validity).isEqualTo(ONE_MINUTE);
     }
 
-    private Authentication createAuthentication() {
-        Collection<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
-        return new UsernamePasswordAuthenticationToken("anonymous", "anonymous", authorities);
+    @Test
+    void testGetIssuedAtDate() {
+        Date issuedAt = new Date();
+        String token = Jwts.builder().issuedAt(issuedAt).signWith(key, Jwts.SIG.HS512).compact();
+
+        Date result = tokenProvider.getIssuedAtDate(token);
+
+        assertThat(result).isNotNull().isCloseTo(issuedAt, 1000);
+    }
+
+    @Nested
+    class GetToolsTests {
+
+        @Test
+        void shouldBeRetrievedSuccessfully() {
+            ToolTokenType expectedTool = ToolTokenType.SCORPIO;
+            String token = Jwts.builder().claim("tools", expectedTool.toString()).signWith(key, Jwts.SIG.HS512).compact();
+
+            ToolTokenType actualTool = tokenProvider.getTools(token);
+
+            assertThat(actualTool).isNotNull().isEqualTo(expectedTool);
+        }
+
+        @Test
+        void shouldNotFailIfNull() {
+            String token = Jwts.builder().claim("someDummyClaim", true).signWith(key, Jwts.SIG.HS512).compact();
+
+            ToolTokenType actualTool = tokenProvider.getTools(token);
+
+            assertThat(actualTool).isNull();
+        }
+
+    }
+
+    @Nested
+    class GetAuthenticationMethodTests {
+
+        @Test
+        void shouldBeRetrievedSuccessfully() {
+            AuthenticationMethod expectedMethod = AuthenticationMethod.PASSKEY;
+            String token = Jwts.builder().claim("auth-method", expectedMethod.toString()).signWith(key, Jwts.SIG.HS512).compact();
+
+            AuthenticationMethod actualMethod = tokenProvider.getAuthenticationMethod(token);
+
+            assertThat(actualMethod).isNotNull().isEqualTo(expectedMethod);
+        }
+
+        @Test
+        void shouldNotFailIfNull() {
+            AuthenticationMethod expectedMethod = null;
+            String token = Jwts.builder().claim("auth-method", null).signWith(key, Jwts.SIG.HS512).compact();
+
+            AuthenticationMethod actualMethod = tokenProvider.getAuthenticationMethod(token);
+
+            assertThat(actualMethod).isNull();
+        }
+
+    }
+
+    @Nested
+    class AuthenticationMethodTests {
+
+        @Test
+        void shouldSetPasswordMethod() {
+            Authentication authentication = AuthenticationFactory.createUsernamePasswordAuthentication(USER_NAME);
+            String token = tokenProvider.createToken(authentication, false);
+
+            AuthenticationMethod authenticationMethod = tokenProvider.getAuthenticationMethod(token);
+
+            assertThat(authenticationMethod).isEqualTo(AuthenticationMethod.PASSWORD);
+        }
+
+        @Test
+        void shouldSetPasskeyMethod() {
+            Authentication authentication = AuthenticationFactory.createWebAuthnAuthentication(USER_NAME);
+            String token = tokenProvider.createToken(authentication, false);
+
+            AuthenticationMethod authenticationMethod = tokenProvider.getAuthenticationMethod(token);
+
+            assertThat(authenticationMethod).isEqualTo(AuthenticationMethod.PASSKEY);
+        }
+
+        @Test
+        void shouldSetSaml2Method() {
+            Authentication authentication = AuthenticationFactory.createSaml2Authentication(USER_NAME);
+            String token = tokenProvider.createToken(authentication, false);
+
+            AuthenticationMethod authenticationMethod = tokenProvider.getAuthenticationMethod(token);
+
+            assertThat(authenticationMethod).isEqualTo(AuthenticationMethod.SAML2);
+        }
+
     }
 
     private String createUnsupportedToken() {
@@ -155,6 +241,6 @@ class TokenProviderTest {
     private String createTokenWithDifferentSignature() {
         SecretKey otherKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode("Xfd54a45s65fds737b9aafcb3412e07ed99b267f33413274720ddbb7f6c5e64e9f14075f2d7ed041592f0b7657baf8"));
 
-        return Jwts.builder().subject("anonymous").signWith(otherKey, Jwts.SIG.HS512).expiration(new Date(new Date().getTime() + ONE_MINUTE)).compact();
+        return Jwts.builder().subject(USER_NAME).signWith(otherKey, Jwts.SIG.HS512).expiration(new Date(new Date().getTime() + ONE_MINUTE)).compact();
     }
 }

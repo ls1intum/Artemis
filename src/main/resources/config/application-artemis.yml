@@ -9,6 +9,7 @@ artemis:
   repo-download-clone-path: ./repos-download      # a temporary folder, in which git repos are downloaded that are immediately deleted afterwards (e.g. exports, plagiarism checks), should NOT be in a shared file system area
   data-export-path: ./data-exports                # a folder in which data exports are stored
   build-logs-path: ./build-logs                   # a folder in which build logs are stored
+  temp-path: ${java.io.tmpdir}                    # a folder in which temporary files are stored, e.g. for the programming exercise import from file
   bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
   # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
   user-management:
@@ -48,7 +49,7 @@ artemis:
     login:
       account-name: TUM                   # optional: customization for the welcome page "please sign in with your <account-name> account"
   version-control:
-    url: https://bitbucket.ase.in.tum.de
+    url: https://artemis.tum.de
     user: <username>                # e.g. ga12abc
     password: <password>
     # token: <token>                # VCS API token giving Artemis full Admin access.
@@ -91,6 +92,7 @@ artemis:
   scheduling: # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
     programming-exercises-cleanup-time: 0 0 3 * * * # every day at 3am
     data-export-creation-time: 0 0 4 * * * # every day at 4am
+    programming-exercises-retrigger-submission-without-result-time: 0 0 2 * * * # every day at 2am
     continuous-plagiarism-control-trigger-time: 0 0 5 * * * # every day at 5am
 
   data-export:

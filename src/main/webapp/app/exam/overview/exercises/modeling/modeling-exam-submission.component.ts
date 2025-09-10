@@ -1,23 +1,24 @@
-import { ChangeDetectionStrategy, Component, OnInit, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, input, output, viewChild } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
-import { Submission } from 'app/entities/submission.model';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
+import { SafeHtml } from '@angular/platform-browser';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -41,11 +42,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class ModelingExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     exerciseType = ExerciseType.MODELING;
 
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+
     modelingEditor = viewChild.required(ModelingEditorComponent);
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     studentSubmission = input.required<ModelingSubmission>();
-    problemStatementHtml: string;
+    problemStatementHtml: SafeHtml;
 
     exercise = input.required<ModelingExercise>();
     umlModel: UMLModel; // input model for Apollon+
@@ -64,7 +67,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     ngOnInit(): void {
         // show submission answers in UI
-        this.problemStatementHtml = htmlForMarkdown(this.exercise()?.problemStatement);
+        this.problemStatementHtml = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement);
         this.updateViewFromSubmission();
     }
 
@@ -72,7 +75,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
      * Updates the problem statement html of the currently loaded modeling exercise which is part of the user's student exam.
      * @param newProblemStatementHtml is the updated problem statement html that should be displayed to the user.
      */
-    updateProblemStatement(newProblemStatementHtml: string): void {
+    updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
         this.problemStatementHtml = newProblemStatementHtml;
         this.changeDetectorReference.detectChanges();
     }

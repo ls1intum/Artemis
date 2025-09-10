@@ -134,5 +134,10 @@ class CourseNotificationSettingPresetRegistryServiceTest {
         public List<NotificationChannelOption> getSupportedChannels() {
             return List.of(NotificationChannelOption.EMAIL, NotificationChannelOption.WEBAPP, NotificationChannelOption.PUSH);
         }
+
+        @Override
+        public String getRelativeWebAppUrl() {
+            return "/";
+        }
     }
 }

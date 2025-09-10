@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     // science is disabled by default
-    private static final int FEATURES_DISABLED_DEFAULT = 1;
+    private static final int FEATURES_DISABLED_DEFAULT = 2;
 
     @Autowired
     private FeatureToggleService featureToggleService;
@@ -28,11 +28,11 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.PlagiarismChecks)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.Exports)).isTrue();
-        assertThat(featureToggleService.isFeatureEnabled(Feature.TutorialGroups)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.LearningPaths)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.StandardizedCompetencies)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.StudentCourseAnalyticsDashboard)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.Science)).isFalse();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.TutorSuggestions)).isFalse();
     }
 
     @Test

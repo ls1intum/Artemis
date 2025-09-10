@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificati
 import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationSettingSpecificationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -55,8 +54,6 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
         cacheManager.getCache("userCourseNotificationSettingPreset").clear();
         cacheManager.getCache("userCourseNotificationSettingSpecification").clear();
 
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
@@ -79,18 +76,6 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
         assertThat(savedPreset.getSettingPreset()).isEqualTo(presetId);
         assertThat(savedPreset.getUser().getId()).isEqualTo(user.getId());
         assertThat(savedPreset.getCourse().getId()).isEqualTo(course.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotApplyPresetWhenFeatureIsDisabled() throws Exception {
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
-        Short presetId = 2;
-
-        var result = request.performMvcRequest(MockMvcRequestBuilders.put("/api/communication/notification/{courseId}/setting-preset", course.getId())
-                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(presetId)));
-
-        result.andExpect(status().isForbidden());
     }
 
     @Test
@@ -126,27 +111,6 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
         assertThat(spec.get().isEmail()).isTrue();
         assertThat(spec.get().isWebapp()).isTrue();
         assertThat(spec.get().isPush()).isFalse();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotApplySpecificationWhenFeatureIsDisabled() throws Exception {
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
-
-        Map<Short, Map<NotificationChannelOption, Boolean>> notificationTypeChannels = new HashMap<>();
-        Map<NotificationChannelOption, Boolean> channelSettings = new HashMap<>();
-        channelSettings.put(NotificationChannelOption.EMAIL, true);
-        channelSettings.put(NotificationChannelOption.WEBAPP, true);
-        channelSettings.put(NotificationChannelOption.PUSH, false);
-
-        notificationTypeChannels.put((short) 1, channelSettings);
-
-        CourseNotificationSettingSpecificationRequestDTO requestDTO = new CourseNotificationSettingSpecificationRequestDTO(notificationTypeChannels);
-
-        var result = request.performMvcRequest(MockMvcRequestBuilders.put("/api/communication/notification/{courseId}/setting-specification", course.getId())
-                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)));
-
-        result.andExpect(status().isForbidden());
     }
 
     @Test
@@ -221,14 +185,5 @@ class UserCourseNotificationSettingResourceIntegrationTest extends AbstractSprin
         assertThat(responseDTO).isNotNull();
         assertThat(responseDTO.notificationTypeChannels()).isNotNull();
         assertThat(responseDTO.selectedPreset()).isEqualTo((short) 1);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotReturnSettingInfoWhenFeatureIsDisabled() throws Exception {
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
-
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/communication/notification/{courseId}/settings", course.getId()).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
     }
 }

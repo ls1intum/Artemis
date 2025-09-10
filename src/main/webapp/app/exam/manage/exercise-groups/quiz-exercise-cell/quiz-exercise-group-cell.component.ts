@@ -1,6 +1,6 @@
 import { Component, input } from '@angular/core';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-group-cell',

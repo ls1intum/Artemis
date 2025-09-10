@@ -5,9 +5,11 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -23,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 /**
  * Repository interface for managing {@link IrisCourseChatSession} entities.
  */
+@Lazy
 @Repository
 @Profile(PROFILE_IRIS)
 public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<IrisCourseChatSession, Long> {
@@ -37,8 +40,8 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
     @Query("""
             SELECT s
                 FROM IrisCourseChatSession s
-                WHERE s.course.id = :courseId
-                    AND s.user.id = :userId
+                WHERE s.courseId = :courseId
+                    AND s.userId = :userId
                 ORDER BY s.creationDate DESC
             """)
     List<IrisCourseChatSession> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
@@ -46,11 +49,14 @@ public interface IrisCourseChatSessionRepository extends ArtemisJpaRepository<Ir
     @Query("""
             SELECT s
             FROM IrisCourseChatSession s
-            WHERE s.course.id = :courseId
-                AND s.user.id = :userId
+            WHERE s.courseId = :courseId
+                AND s.userId = :userId
             ORDER BY s.creationDate DESC
             """)
     List<IrisCourseChatSession> findSessionsByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId, Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = "messages")
+    Optional<IrisCourseChatSession> findSessionWithMessagesByIdAndUserId(Long id, Long userId);
 
     @EntityGraph(type = LOAD, attributePaths = "messages")
     List<IrisCourseChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);

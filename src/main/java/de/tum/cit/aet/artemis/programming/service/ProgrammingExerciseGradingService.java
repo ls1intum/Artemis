@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission.createFallbackSubmission;
 
 import java.time.ZonedDateTime;
@@ -26,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -70,17 +69,15 @@ import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExercise
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationResultService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingExerciseGradingService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingService.class);
 
     private final Optional<ContinuousIntegrationResultService> continuousIntegrationResultService;
-
-    private final Optional<VersionControlService> versionControlService;
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
@@ -115,17 +112,15 @@ public class ProgrammingExerciseGradingService {
     private final FeedbackService feedbackService;
 
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseTestCaseRepository testCaseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, ProgrammingExerciseTestCaseRepository testCaseRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, FeedbackService feedbackService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
-            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
-            FeedbackService feedbackService) {
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
-        this.versionControlService = versionControlService;
         this.testCaseRepository = testCaseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -179,15 +174,10 @@ public class ProgrammingExerciseGradingService {
             // Artemis considers a build as failed if no tests have been executed (e.g. due to a compile failure in the student code)
             final var buildFailed = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
             latestSubmission.setBuildFailed(buildFailed);
-            // Add artifacts to submission
-            latestSubmission.setBuildArtifact(buildResult.hasArtifact());
 
             if (buildResult.hasLogs()) {
                 var programmingLanguage = exercise.getProgrammingLanguage();
-                var projectType = exercise.getProjectType();
                 var buildLogs = buildResult.extractBuildLogs();
-
-                ciResultService.extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
 
                 if (latestSubmission.isBuildFailed()) {
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
@@ -224,10 +214,10 @@ public class ProgrammingExerciseGradingService {
         if (!ObjectUtils.isEmpty(branchName)) {
             String participationDefaultBranch = null;
             if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-                participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(studentParticipation);
+                participationDefaultBranch = studentParticipation.getBranch();
             }
             if (StringUtils.isEmpty(participationDefaultBranch)) {
-                participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
+                participationDefaultBranch = programmingExerciseRepository.findBranchByExerciseId(participation.getExercise().getId());
             }
 
             if (!Objects.equals(branchName, participationDefaultBranch)) {
@@ -275,20 +265,8 @@ public class ProgrammingExerciseGradingService {
         }
         log.warn("Could not find pending ProgrammingSubmission for Commit Hash {} (Participation {}, Build Plan {}). Will create a new one subsequently...", commitHash,
                 participation.getId(), participation.getBuildPlanId());
-        // We always take the build run date as the fallback solution
+        // We always take the build run date as the fallback solution, even though it might not be 100% accurate
         ZonedDateTime submissionDate = buildResult.buildRunDate();
-        if (!ObjectUtils.isEmpty(commitHash)) {
-            try {
-                // Try to get the actual date, the push might be 10s - 3min earlier, depending on how long the build takes.
-                // Note: the whole method is a fallback in case creating the submission initially (when the user pushed the code) was not successful for whatever reason
-                // This is also the case when a new programming exercise is created and the local CI system builds and tests the template and solution repositories for the first
-                // time.
-                submissionDate = versionControlService.orElseThrow().getPushDate(participation, commitHash, null);
-            }
-            catch (VersionControlException e) {
-                log.error("Could not retrieve push date for participation {} and build plan {}", participation.getId(), participation.getBuildPlanId(), e);
-            }
-        }
         var submission = createFallbackSubmission(participation, submissionDate, commitHash);
         // Save to avoid TransientPropertyValueException.
         return programmingSubmissionRepository.save(submission);
@@ -338,15 +316,10 @@ public class ProgrammingExerciseGradingService {
         }
 
         // Finally, save the new result once and make sure the order column between submission and result is maintained
-
-        // workaround to avoid org.hibernate.HibernateException: null index column for collection: de.tum.cit.aet.artemis.domain.Submission.results
+        // workaround to avoid scheduling the participant score update twice. The update will only run when a submission is present.
         processedResult.setSubmission(null);
-        // workaround to avoid scheduling the participant score update twice. The update will only run when a participation is present.
-        processedResult.setParticipation(null);
-
         processedResult = resultRepository.save(processedResult);
         processedResult.setSubmission(programmingSubmission);
-        processedResult.setParticipation((Participation) participation);
         programmingSubmission.addResult(processedResult);
         programmingSubmissionRepository.save(programmingSubmission);
 
@@ -380,7 +353,7 @@ public class ProgrammingExerciseGradingService {
         latestSemiAutomaticResult.setPassedTestCaseCount(newAutomaticResult.getPassedTestCaseCount());
         latestSemiAutomaticResult.setCodeIssueCount(newAutomaticResult.getCodeIssueCount());
 
-        Exercise exercise = latestSemiAutomaticResult.getParticipation().getExercise();
+        Exercise exercise = latestSemiAutomaticResult.getSubmission().getParticipation().getExercise();
         latestSemiAutomaticResult.setScore(latestSemiAutomaticResult.calculateTotalPointsForProgrammingExercises(), exercise.getMaxPoints(),
                 exercise.getCourseViaExerciseGroupOrCourseMember());
 
@@ -540,7 +513,7 @@ public class ProgrammingExerciseGradingService {
      */
     private Optional<Result> updateLatestResult(ProgrammingExercise exercise, Participation participation, Set<ProgrammingExerciseTestCase> allTestCases,
             Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate, Set<ProgrammingExerciseTestCase> testCasesAfterDueDate, boolean applySubmissionPolicy) {
-        final Result result = participation.findLatestLegalResult();
+        final Result result = participation.findLatestResult();
         if (result == null) {
             return Optional.empty();
         }
@@ -575,7 +548,7 @@ public class ProgrammingExerciseGradingService {
      * @return testCases, but the ones based on the described visibility criterion removed.
      */
     private Set<ProgrammingExerciseTestCase> filterRelevantTestCasesForStudent(Set<ProgrammingExerciseTestCase> testCases, Result result) {
-        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(result.getParticipation());
+        boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(result.getSubmission().getParticipation());
 
         return filterTestCasesForStudents(testCases, isBeforeDueDate);
     }
@@ -612,7 +585,7 @@ public class ProgrammingExerciseGradingService {
         }
 
         public Participation participation() {
-            return result.getParticipation();
+            return result.getSubmission().getParticipation();
         }
     }
 
@@ -765,9 +738,7 @@ public class ProgrammingExerciseGradingService {
                     .text(testCase.getTestName() + " - Duplicate Test Case!").detailText(duplicateDetailText).positive(false)).toList();
             result.addFeedbacks(feedbacksForDuplicateTestCases);
 
-            String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION
-                    + duplicateTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().collect(Collectors.joining(", "));
-            groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
+            groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise);
 
             return true;
         }

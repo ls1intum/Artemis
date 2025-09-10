@@ -16,9 +16,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
 
 /**
@@ -33,12 +31,15 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "submitted_answer_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     @Valid
     private Set<ShortAnswerSubmittedText> submittedTexts = new HashSet<>();
 
     public Set<ShortAnswerSubmittedText> getSubmittedTexts() {
         return submittedTexts;
+    }
+
+    public void setSubmittedTexts(Set<ShortAnswerSubmittedText> shortAnswerSubmittedTexts) {
+        this.submittedTexts = shortAnswerSubmittedTexts;
     }
 
     public ShortAnswerSubmittedAnswer addSubmittedTexts(ShortAnswerSubmittedText shortAnswerSubmittedText) {
@@ -51,10 +52,6 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
         this.submittedTexts.remove(shortAnswerSubmittedText);
         shortAnswerSubmittedText.setSubmittedAnswer(null);
         return this;
-    }
-
-    public void setSubmittedTexts(Set<ShortAnswerSubmittedText> shortAnswerSubmittedTexts) {
-        this.submittedTexts = shortAnswerSubmittedTexts;
     }
 
     /**
@@ -128,4 +125,5 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
     public Set<SAMapping> toSAMappings() {
         return getSubmittedTexts().stream().map(submittedText -> new SAMapping(submittedText.getSpot().getId(), submittedText.getText())).collect(Collectors.toSet());
     }
+
 }

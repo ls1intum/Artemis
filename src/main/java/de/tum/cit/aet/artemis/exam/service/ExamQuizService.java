@@ -1,13 +1,12 @@
 package de.tum.cit.aet.artemis.exam.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -15,6 +14,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -25,7 +25,8 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
 
-@Profile(PROFILE_CORE)
+@Conditional(ExamEnabled.class)
+@Lazy
 @Service
 public class ExamQuizService {
 
@@ -79,7 +80,6 @@ public class ExamQuizService {
                 Result result;
                 if (quizSubmission.getLatestResult() == null) {
                     result = new Result();
-                    result.setParticipation(participation);
                     result.setAssessmentType(AssessmentType.AUTOMATIC);
                     // set submission to calculate scores
                     result.setSubmission(quizSubmission);
@@ -92,7 +92,6 @@ public class ExamQuizService {
                         result.rated(true);
                     }
                     result = resultRepository.save(result);
-                    participation.setResults(Set.of(result));
                     studentParticipationRepository.save(participation);
                     result.setSubmission(quizSubmission);
                     quizSubmission.addResult(result);
@@ -103,8 +102,6 @@ public class ExamQuizService {
                     result.setSubmission(quizSubmission);
                     // calculate scores and update result and submission accordingly
                     quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
-                    // prevent a lazy exception in the evaluateQuizSubmission method
-                    result.setParticipation(participation);
                     result.evaluateQuizSubmission(quizExercise);
                     if (studentExam.isTestExam()) {
                         result.rated(true);

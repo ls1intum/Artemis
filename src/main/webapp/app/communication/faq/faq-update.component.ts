@@ -1,34 +1,35 @@
-import { Component, OnInit, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { Faq, FaqState } from 'app/entities/faq.model';
+import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
 import { FaqService } from 'app/communication/faq/faq.service';
-import { FaqCategory } from 'app/entities/faq-category.model';
+import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FaqConsistencyComponent } from 'app/communication/faq/faq-consistency.component';
+import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 
 @Component({
     selector: 'jhi-faq-update',
     templateUrl: './faq-update.component.html',
     styleUrls: ['./faq-update.component.scss'],
-    imports: [CategorySelectorComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule],
+    imports: [CategorySelectorComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule, FaqConsistencyComponent],
 })
 export class FaqUpdateComponent implements OnInit {
     private alertService = inject(AlertService);
@@ -49,9 +50,19 @@ export class FaqUpdateComponent implements OnInit {
     isAtLeastInstructor = false;
     domainActionsDescription = [new FormulaAction()];
 
-    irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo.activeProfiles.includes(PROFILE_IRIS))), { initialValue: false });
-    artemisIntelligenceActions = computed(() => (this.irisEnabled() ? [new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId)] : []));
+    renderedConsistencyCheckResultMarkdown = signal<RewriteResult>({
+        result: undefined,
+        inconsistencies: undefined,
+        suggestions: undefined,
+        improvement: undefined,
+    });
 
+    showConsistencyCheck = computed(() => !!this.renderedConsistencyCheckResultMarkdown().result);
+
+    irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+    artemisIntelligenceActions = computed(() =>
+        this.irisEnabled ? [new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId, this.renderedConsistencyCheckResultMarkdown)] : [],
+    );
     // Icons
     readonly faQuestionCircle = faQuestionCircle;
     readonly faSave = faSave;
@@ -176,5 +187,14 @@ export class FaqUpdateComponent implements OnInit {
     handleMarkdownChange(markdown: string): void {
         this.faq.questionAnswer = markdown;
         this.validate();
+    }
+
+    dismissConsistencyCheck() {
+        this.renderedConsistencyCheckResultMarkdown.set({
+            result: '',
+            inconsistencies: [],
+            suggestions: [],
+            improvement: '',
+        });
     }
 }

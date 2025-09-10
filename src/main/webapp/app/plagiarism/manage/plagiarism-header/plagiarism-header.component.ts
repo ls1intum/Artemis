@@ -1,30 +1,32 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { Subject } from 'rxjs';
-import { PlagiarismStatus } from 'app/plagiarism/shared/types/PlagiarismStatus';
-import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';
-import { ModelingSubmissionElement } from 'app/plagiarism/shared/types/modeling/ModelingSubmissionElement';
-import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
+import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Exercise, getCourseId } from 'app/entities/exercise.model';
+import { Exercise, getCourseId } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { AlertService } from 'app/shared/service/alert.service';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 
 @Component({
     selector: 'jhi-plagiarism-header',
     styleUrls: ['./plagiarism-header.component.scss'],
     templateUrl: './plagiarism-header.component.html',
-    imports: [TranslateDirective, ArtemisTranslatePipe, RouterModule],
+    imports: [TranslateDirective, ArtemisTranslatePipe, RouterModule, FaIconComponent],
 })
 export class PlagiarismHeaderComponent {
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private modalService = inject(NgbModal);
+    private alertService = inject(AlertService);
 
-    @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
-    @Input() exercise: Exercise;
-    @Input() splitControlSubject: Subject<string>;
+    readonly comparison = input<PlagiarismComparison>();
+    readonly exercise = input.required<Exercise>();
+    readonly splitControlSubject = input.required<Subject<string>>();
 
     readonly plagiarismStatus = PlagiarismStatus;
     isLoading = false;
@@ -40,7 +42,7 @@ export class PlagiarismHeaderComponent {
      * Set the status of the currently selected comparison to DENIED.
      */
     denyPlagiarism() {
-        if (this.comparison.status === PlagiarismStatus.CONFIRMED) {
+        if (this.comparison()?.status === PlagiarismStatus.CONFIRMED) {
             this.askForConfirmationOfDenying(() => this.updatePlagiarismStatus(PlagiarismStatus.DENIED));
         } else {
             this.updatePlagiarismStatus(PlagiarismStatus.DENIED);
@@ -64,18 +66,28 @@ export class PlagiarismHeaderComponent {
     updatePlagiarismStatus(status: PlagiarismStatus) {
         this.isLoading = true;
         // store comparison in variable in case comparison changes while request is made
-        const comparison = this.comparison;
-        this.plagiarismCasesService.updatePlagiarismComparisonStatus(getCourseId(this.exercise)!, comparison.id, status).subscribe(() => {
-            comparison.status = status;
-            this.isLoading = false;
-        });
+        const comparison = this.comparison();
+        if (comparison && comparison.id) {
+            const courseId = getCourseId(this.exercise());
+            if (courseId === undefined) {
+                this.alertService.error('error.courseIdUndefined');
+                this.isLoading = false;
+                return;
+            }
+            this.plagiarismCasesService.updatePlagiarismComparisonStatus(courseId, comparison.id, status).subscribe(() => {
+                comparison.status = status;
+                this.isLoading = false;
+            });
+        }
     }
 
     expandSplitPane(pane: 'left' | 'right') {
-        this.splitControlSubject.next(pane);
+        this.splitControlSubject()?.next(pane);
     }
 
     resetSplitPanes() {
-        this.splitControlSubject.next('even');
+        this.splitControlSubject()?.next('even');
     }
+
+    protected readonly faCircleInfo = faCircleInfo;
 }

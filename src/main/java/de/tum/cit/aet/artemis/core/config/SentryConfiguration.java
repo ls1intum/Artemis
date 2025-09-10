@@ -8,12 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import io.sentry.Sentry;
 import tech.jhipster.config.JHipsterConstants;
 
 @Configuration
+@Lazy
 @Profile({ JHipsterConstants.SPRING_PROFILE_PRODUCTION })
 public class SentryConfiguration {
 
@@ -25,11 +27,13 @@ public class SentryConfiguration {
     @Value("${info.sentry.dsn}")
     private Optional<String> sentryDsn;
 
-    @Value("${info.test-server}")
+    @Value("${info.testServer}")
     private Optional<Boolean> isTestServer;
 
     /**
      * init sentry with the correct package name and Artemis version
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
     @PostConstruct
     public void init() {

@@ -44,17 +44,17 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     void testExceptionV2(int httpStatus, Class<?> exceptionClass) {
         irisRequestMockProvider.mockRunError(httpStatus);
 
-        assertThatThrownBy(() -> pyrisConnectorService.executePipeline("tutor-chat", "default", null, Optional.empty())).isInstanceOf(exceptionClass);
+        assertThatThrownBy(() -> pyrisConnectorService.executePipeline("programming-exercise-chat", null, Optional.empty())).isInstanceOf(exceptionClass);
     }
 
     @ParameterizedTest
     @MethodSource("irisExceptions")
     void testExceptionIngestionV2(int httpStatus, Class<?> exceptionClass) {
         irisRequestMockProvider.mockIngestionWebhookRunError(httpStatus);
-        PyrisLectureUnitWebhookDTO pyrisLectureUnitWebhookDTO = new PyrisLectureUnitWebhookDTO("example.pdf", 123L, "Lecture Unit Name", 456L, "Lecture Name", 789L, "Course Name",
-                "Course Description", "/example/test.pdf");
-        PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(pyrisLectureUnitWebhookDTO, null, List.of());
-        assertThatThrownBy(() -> pyrisConnectorService.executeLectureAddtionWebhook("fullIngestion", executionDTO)).isInstanceOf(exceptionClass);
+        PyrisLectureUnitWebhookDTO pyrisLectureUnitWebhookDTO = new PyrisLectureUnitWebhookDTO("example.pdf", 1, null, 123L, "Lecture Unit Name", 456L, "Lecture Name", 789L,
+                "Course Name", "Course Description", "/example/test.pdf", "");
+        PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(pyrisLectureUnitWebhookDTO, 123L, null, List.of());
+        assertThatThrownBy(() -> pyrisConnectorService.executeLectureAdditionWebhook(executionDTO)).isInstanceOf(exceptionClass);
     }
 
     @ParameterizedTest
@@ -66,20 +66,20 @@ class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 
     @ParameterizedTest
     @EnumSource(IrisSubSettingsType.class)
-    void testOfferedModels(IrisSubSettingsType feature) throws Exception {
+    void testAvailableVariants(IrisSubSettingsType feature) throws Exception {
         irisRequestMockProvider.mockVariantsResponse(feature);
 
-        var offeredModels = pyrisConnectorService.getOfferedVariants(feature);
-        assertThat(offeredModels).hasSize(1);
-        assertThat(offeredModels.getFirst().id()).isEqualTo("TEST_MODEL");
+        var availableVariants = pyrisConnectorService.getAvailableVariants(feature);
+        assertThat(availableVariants).hasSize(1);
+        assertThat(availableVariants.getFirst().id()).isEqualTo("TEST_MODEL");
     }
 
     @ParameterizedTest
     @EnumSource(IrisSubSettingsType.class)
-    void testOfferedModelsError(IrisSubSettingsType feature) {
+    void testAvailableVariantsError(IrisSubSettingsType feature) {
         irisRequestMockProvider.mockVariantsError(feature);
 
-        assertThatThrownBy(() -> pyrisConnectorService.getOfferedVariants(feature)).isInstanceOf(PyrisConnectorException.class);
+        assertThatThrownBy(() -> pyrisConnectorService.getAvailableVariants(feature)).isInstanceOf(PyrisConnectorException.class);
     }
 
 }

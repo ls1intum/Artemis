@@ -11,10 +11,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 /**
  * A ShortAnswerMapping.
@@ -26,23 +24,18 @@ import de.tum.cit.aet.artemis.quiz.config.QuizView;
 public class ShortAnswerMapping extends DomainObject implements QuizQuestionComponent<ShortAnswerQuestion> {
 
     @Column(name = "short_answer_spot_index")
-    @JsonView(QuizView.Before.class)
     private Integer shortAnswerSpotIndex;
 
     @Column(name = "short_answer_solution_index")
-    @JsonView(QuizView.Before.class)
     private Integer shortAnswerSolutionIndex;
 
     @Column(name = "invalid")
-    @JsonView(QuizView.Before.class)
     private Boolean invalid;
 
     @ManyToOne
-    @JsonView(QuizView.Before.class)
     private ShortAnswerSolution solution;
 
     @ManyToOne
-    @JsonView(QuizView.Before.class)
     private ShortAnswerSpot spot;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -77,26 +70,26 @@ public class ShortAnswerMapping extends DomainObject implements QuizQuestionComp
         return solution;
     }
 
+    public void setSolution(ShortAnswerSolution shortAnswerSolution) {
+        this.solution = shortAnswerSolution;
+    }
+
     public ShortAnswerMapping solution(ShortAnswerSolution shortAnswerSolution) {
         this.solution = shortAnswerSolution;
         return this;
-    }
-
-    public void setSolution(ShortAnswerSolution shortAnswerSolution) {
-        this.solution = shortAnswerSolution;
     }
 
     public ShortAnswerSpot getSpot() {
         return spot;
     }
 
+    public void setSpot(ShortAnswerSpot shortAnswerSpot) {
+        this.spot = shortAnswerSpot;
+    }
+
     public ShortAnswerMapping spot(ShortAnswerSpot shortAnswerSpot) {
         this.spot = shortAnswerSpot;
         return this;
-    }
-
-    public void setSpot(ShortAnswerSpot shortAnswerSpot) {
-        this.spot = shortAnswerSpot;
     }
 
     public ShortAnswerQuestion getQuestion() {
@@ -113,4 +106,5 @@ public class ShortAnswerMapping extends DomainObject implements QuizQuestionComp
         return "ShortAnswerMapping{" + "id=" + getId() + ", shortAnswerSpotIndex=" + getShortAnswerSpotIndex() + ", shortAnswerSolutionIndex=" + getShortAnswerSolutionIndex()
                 + ", invalid='" + isInvalid() + "'" + "}";
     }
+
 }

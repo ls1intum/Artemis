@@ -1,0 +1,14 @@
+@if (copyText().length > 0) {
+    <button
+        id="copyButton"
+        type="button"
+        class="btn btn-sm ms-1"
+        [class.btn-success]="wasCopied()"
+        [class]="class()"
+        [cdkCopyToClipboard]="copyText()"
+        (cdkCopyToClipboardCopied)="onCopyFinished()"
+        ngbTooltip="{{ 'global.generic.copy' | artemisTranslate }}"
+    >
+        <fa-icon [icon]="wasCopied() ? faCheck : faCopy" />
+    </button>
+}

@@ -1,4 +1,4 @@
-import { test as base } from '@playwright/test';
+import { test as base } from './baseFixtures';
 import { LoginPage } from './pageobjects/LoginPage';
 import { UserCredentials } from './users';
 import { NavigationBar } from './pageobjects/NavigationBar';
@@ -68,6 +68,7 @@ import { QuizExerciseParticipationPage } from './pageobjects/exercises/quiz/Quiz
 import { ModalDialogBox } from './pageobjects/exam/ModalDialogBox';
 import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationActions';
 import { AccountManagementAPIRequests } from './requests/AccountManagementAPIRequests';
+import { ProgrammingExerciseSubmissionsPage } from './pageobjects/exercises/programming/ProgrammingExercisesSubmissionsPage';
 
 /*
  * Define custom types for fixtures
@@ -75,6 +76,7 @@ import { AccountManagementAPIRequests } from './requests/AccountManagementAPIReq
 export type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
     waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number) => Promise<void>;
+    toggleSidebar: () => Promise<void>;
 };
 
 export type ArtemisPageObjects = {
@@ -126,6 +128,7 @@ export type ArtemisPageObjects = {
     programmingExerciseRepository: RepositoryPage;
     programmingExercisesScaConfig: CodeAnalysisGradingPage;
     programmingExerciseScaFeedback: ScaFeedbackModal;
+    programmingExerciseSubmissions: ProgrammingExerciseSubmissionsPage;
     quizExerciseCreation: QuizExerciseCreationPage;
     quizExerciseDragAndDropQuiz: DragAndDropQuiz;
     quizExerciseMultipleChoice: MultipleChoiceQuiz;
@@ -160,6 +163,11 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     login: async ({ page }, use) => {
         await use(async (credentials: UserCredentials, url?: string) => {
             await Commands.login(page, credentials, url);
+        });
+    },
+    toggleSidebar: async ({ page }, use) => {
+        await use(async () => {
+            await Commands.toggleSidebar(page);
         });
     },
     waitForExerciseBuildToFinish: async ({ page, exerciseAPIRequests }, use) => {
@@ -323,6 +331,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     programmingExerciseScaFeedback: async ({ page }, use) => {
         await use(new ScaFeedbackModal(page));
+    },
+    programmingExerciseSubmissions: async ({ page }, use) => {
+        await use(new ProgrammingExerciseSubmissionsPage(page));
     },
     quizExerciseCreation: async ({ page }, use) => {
         await use(new QuizExerciseCreationPage(page));

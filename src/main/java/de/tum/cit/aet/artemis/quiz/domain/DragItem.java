@@ -22,13 +22,12 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 
 /**
  * A DragItem.
@@ -45,15 +44,12 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
     private final transient FileService fileService = new FileService();
 
     @Column(name = "picture_file_path")
-    @JsonView(QuizView.Before.class)
     private String pictureFilePath;
 
     @Column(name = "text")
-    @JsonView(QuizView.Before.class)
     private String text;
 
     @Column(name = "invalid")
-    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -70,17 +66,21 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
         return pictureFilePath;
     }
 
+    public void setPictureFilePath(String pictureFilePath) {
+        this.pictureFilePath = pictureFilePath;
+    }
+
     public DragItem pictureFilePath(String pictureFilePath) {
         this.pictureFilePath = pictureFilePath;
         return this;
     }
 
-    public void setPictureFilePath(String pictureFilePath) {
-        this.pictureFilePath = pictureFilePath;
-    }
-
     public String getText() {
         return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 
     public DragItem text(String text) {
@@ -88,21 +88,17 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
         return this;
     }
 
-    public void setText(String text) {
-        this.text = text;
-    }
-
     public DragAndDropQuestion getQuestion() {
         return question;
-    }
-
-    public Boolean isInvalid() {
-        return invalid != null && invalid;
     }
 
     @Override
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
+    }
+
+    public Boolean isInvalid() {
+        return invalid != null && invalid;
     }
 
     public void setInvalid(Boolean invalid) {
@@ -133,7 +129,7 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
         // delete old file if necessary
         try {
             if (pictureFilePath != null) {
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(pictureFilePath)), 0);
+                fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(pictureFilePath), FilePathType.DRAG_ITEM), 0);
             }
         }
         catch (FilePathParsingException e) {
@@ -146,4 +142,5 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
     public String toString() {
         return "DragItem{" + "id=" + getId() + ", pictureFilePath='" + getPictureFilePath() + "'" + ", text='" + getText() + "'" + ", invalid='" + isInvalid() + "'" + "}";
     }
+
 }

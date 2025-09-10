@@ -1,21 +1,21 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
-import { NavigationEnd } from '@angular/router';
-import { Subscription, interval, lastValueFrom } from 'rxjs';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Subscription, combineLatest, filter, interval, lastValueFrom } from 'rxjs';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { cloneDeep } from 'lodash-es';
 import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseOverviewService } from 'app/course/overview/course-overview.service';
+import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },
@@ -47,16 +47,18 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private serverDateService = inject(ArtemisServerDateService);
     private examParticipationService = inject(ExamParticipationService);
     private courseOverviewService = inject(CourseOverviewService);
+    private sessionStorageService = inject(SessionStorageService);
     private router = inject(Router);
 
     courseId: number;
     public course?: Course;
     private parentParamSubscription?: Subscription;
     private courseUpdatesSubscription?: Subscription;
+    private studentExamTestExamInitialFetchSubscription?: Subscription;
     private studentExamTestExamUpdateSubscription?: Subscription;
     private examStartedSubscription?: Subscription;
     private studentExams: StudentExam[];
-    private studentExamsForRealExams = new Map<number, StudentExam>();
+    studentExamsForRealExams = new Map<number, StudentExam>();
     public expandAttemptsMap = new Map<number, boolean>();
     public realExamsOfCourse: Exam[] = [];
     public testExamsOfCourse: Exam[] = [];
@@ -96,34 +98,34 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
         this.course = this.courseStorageService.getCourse(this.courseId);
         this.prepareSidebarData();
-
-        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.course = course;
-            this.updateExams();
-            this.prepareSidebarData();
-        });
-
-        this.studentExamTestExamUpdateSubscription = this.examParticipationService
+        this.studentExamTestExamInitialFetchSubscription = this.examParticipationService
             .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId)
             .subscribe((response: StudentExam[]) => {
                 this.studentExams = response!;
                 this.prepareSidebarData();
             });
 
-        this.router.events.subscribe((event) => {
-            if (event instanceof NavigationEnd) {
-                this.examParticipationService.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId).subscribe((response: StudentExam[]) => {
-                    this.studentExams = response!;
-                    this.prepareSidebarData();
-                });
-            }
-        });
+        this.studentExamTestExamUpdateSubscription = combineLatest([
+            this.examParticipationService.shouldUpdateTestExamsObservable,
+            this.examParticipationService.currentlyLoadedStudentExam,
+        ])
+            .pipe(filter(([shouldUpdate, studentExam]) => shouldUpdate === true && !!studentExam && studentExam.exam?.course?.id === this.courseId))
+            .subscribe(([_, latestExam]) => {
+                const index = this.studentExams?.findIndex((se) => se?.id === latestExam?.id);
+                if (index !== -1 && this.studentExams) {
+                    this.studentExams[index] = latestExam;
+                } else {
+                    this.studentExams = [...(this.studentExams || []), latestExam];
+                }
+                this.prepareSidebarData();
+
+                this.examParticipationService.setShouldUpdateTestExams(false);
+            });
 
         if (this.course?.exams) {
             // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
             this.expandAttemptsMap = new Map(this.course.exams.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
             this.updateExams();
-            this.prepareSidebarData();
         }
 
         // If no exam is selected navigate to the last selected or upcoming Exam
@@ -153,13 +155,11 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.realExamsOfCourse = exams.filter((exam) => !exam.testExam);
             this.testExamsOfCourse = exams.filter((exam) => exam.testExam);
             // get student exams for real exams
-            const studentExamPromisesForRealExams = this.realExamsOfCourse.map((realExam) =>
-                lastValueFrom(this.examParticipationService.getOwnStudentExam(this.courseId, realExam.id!)).then((studentExam) => {
-                    this.studentExamsForRealExams.set(realExam.id!, studentExam);
-                }),
-            );
-            // Ensure that we prepare sidebardata after all studentexams are loaded
-            Promise.all(studentExamPromisesForRealExams).then(() => {
+            lastValueFrom(this.examParticipationService.getRealExamSidebarData(this.courseId)).then((studentExams) => {
+                studentExams.forEach((exam) => {
+                    const studentExam = cloneDeep(exam) as StudentExam;
+                    this.studentExamsForRealExams.set(studentExam.id!, studentExam);
+                });
                 this.prepareSidebarData();
             });
         }
@@ -175,6 +175,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         if (this.courseUpdatesSubscription) {
             this.courseUpdatesSubscription.unsubscribe();
         }
+        this.studentExamTestExamInitialFetchSubscription?.unsubscribe();
         this.studentExamTestExamUpdateSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.unsubscribeFromExamStateSubscription();
@@ -255,8 +256,8 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         return groupedExamGroups;
     }
 
-    getLastSelectedExam(): string | null {
-        let lastSelectedExam = sessionStorage.getItem('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId);
+    getLastSelectedExam(): string | undefined {
+        let lastSelectedExam = this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId);
         if (lastSelectedExam && lastSelectedExam.startsWith('"') && lastSelectedExam.endsWith('"')) {
             lastSelectedExam = lastSelectedExam.slice(1, -1);
         }

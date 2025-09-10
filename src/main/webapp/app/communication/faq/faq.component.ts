@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Faq, FaqState } from 'app/entities/faq.model';
-import { faCancel, faCheck, faEdit, faFileExport, faFilter, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
+import { faCancel, faCheck, faEdit, faFileExport, faFilter, faPencilAlt, faPlus, faQuestion, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -8,24 +8,26 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { FaqCategory } from 'app/entities/faq-category.model';
+import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { SortService } from 'app/shared/service/sort.service';
-import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { CommonModule } from '@angular/common';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
+import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
 
 @Component({
     selector: 'jhi-faq',
@@ -43,6 +45,8 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
         SortByDirective,
         SortDirective,
         CommonModule,
+        CourseTitleBarActionsDirective,
+        FeatureActivationComponent,
     ],
 })
 export class FaqComponent implements OnInit, OnDestroy {
@@ -76,6 +80,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     protected readonly faCancel = faCancel;
     protected readonly faCheck = faCheck;
     protected readonly faFileExport = faFileExport;
+    protected readonly faQuestion = faQuestion;
 
     private faqService = inject(FaqService);
     private route = inject(ActivatedRoute);
@@ -106,14 +111,12 @@ export class FaqComponent implements OnInit, OnDestroy {
                 this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
             }
         });
-        this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
-            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-            if (this.irisEnabled) {
-                this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                    this.faqIngestionEnabled = settings?.irisFaqIngestionSettings?.enabled || false;
-                });
-            }
-        });
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+        if (this.irisEnabled) {
+            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                this.faqIngestionEnabled = settings?.irisFaqIngestionSettings?.enabled || false;
+            });
+        }
     }
 
     ngOnDestroy(): void {
@@ -225,5 +228,13 @@ export class FaqComponent implements OnInit, OnDestroy {
                 },
             });
         }
+    }
+    enableFaq() {
+        this.faqService.enable(this.courseId).subscribe({
+            next: () => {
+                this.course.faqEnabled = true;
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 }

@@ -26,8 +26,8 @@ All these exercises are supposed to be run either live in the lecture with insta
    user/exercises
    user/lectures
    user/exam_mode
-   user/orion
    user/communication
+   user/faqs
    user/tutorialgroups
    user/plagiarism-check
    user/learning-analytics
@@ -54,7 +54,6 @@ All these exercises are supposed to be run either live in the lecture with insta
    dev/system-design
    dev/migration
    dev/use-local-user-management
-   Guided Tour <dev/guided-tour>
    dev/testservers
    dev/docker
    dev/playwright

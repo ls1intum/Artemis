@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { VERSION } from 'app/app.constants';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
@@ -35,7 +35,7 @@ export class AboutUsComponent implements OnInit {
         ['exercises.programming', { programmingUrl: 'https://docs.artemis.cit.tum.de/user/exercises/programming/' }],
         ['exercises.quiz', { quizUrl: 'https://docs.artemis.cit.tum.de/user/exercises/quiz/' }],
         ['exercises.modeling', { modelingUrl: 'https://docs.artemis.cit.tum.de/user/exercises/modeling/', apollonUrl: 'https://apollon.ase.in.tum.de/' }],
-        ['exercises.text', { textUrl: 'https://docs.artemis.cit.tum.de/user/exercises/textual/', athenaUrl: 'https://github.com/ls1intum/Athena' }],
+        ['exercises.text', { textUrl: 'https://docs.artemis.cit.tum.de/user/exercises/textual/', athenaUrl: 'https://github.com/ls1intum/edutelligence/tree/main/athena' }],
         ['exercises.fileUpload', { fileUploadUrl: 'https://docs.artemis.cit.tum.de/user/exercises/file-upload/' }],
         ['exam', { examModeUrl: 'https://docs.artemis.cit.tum.de/user/exam_mode/', studentFeatureUrl: '/features/students', instructorFeatureUrl: '/features/instructors' }],
         ['grading', { gradingUrl: 'https://docs.artemis.cit.tum.de/user/grading/' }],
@@ -73,16 +73,15 @@ export class AboutUsComponent implements OnInit {
             this.data?.contributors?.sort((a, b) => a.getSortIndex().localeCompare(b.getSortIndex()));
         });
 
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.contact = profileInfo.contact;
-            if (profileInfo.git) {
-                this.gitCommitId = profileInfo.git.commit.id.abbrev;
-                this.gitBranchName = profileInfo.git.branch;
-            }
-            this.operatorName = profileInfo.operatorName;
-            this.operatorAdminName = profileInfo.operatorAdminName;
-            this.operatorContactEmail = profileInfo.contact;
-        });
+        const profileInfo = this.profileService.getProfileInfo();
+        this.contact = profileInfo.contact;
+        if (profileInfo.git) {
+            this.gitCommitId = profileInfo.git.commit.id.abbrev;
+            this.gitBranchName = profileInfo.git.branch;
+        }
+        this.operatorName = profileInfo.operatorName;
+        this.operatorAdminName = profileInfo.operatorAdminName;
+        this.operatorContactEmail = profileInfo.contact;
     }
     /**
      * Create the mail reference for the contact

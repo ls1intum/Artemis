@@ -1,27 +1,30 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/entities/course.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
 import javaPartiallySuccessfulSubmission from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
+import shortAnswerQuizTemplate from '../../fixtures/exercise/quiz/short_answer/template.json';
 import { admin, instructor, studentOne } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import { test } from '../../support/fixtures';
 import { expect } from '@playwright/test';
 import { Fixtures } from '../../fixtures/fixtures';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { QuizMode } from '../../support/constants';
 
 test.describe('Import exercises', () => {
     let course: Course;
     let secondCourse: Course;
     let textExercise: TextExercise;
-    let quizExercise: QuizExercise;
+    let multipleChoiceQuizExercise: QuizExercise;
+    let shortAnswerQuizExercise: QuizExercise;
     let modelingExercise: ModelingExercise;
     let programmingExercise: ProgrammingExercise;
 
@@ -30,7 +33,8 @@ test.describe('Import exercises', () => {
         course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
         await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
         textExercise = await exerciseAPIRequests.createTextExercise({ course });
-        quizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate] });
+        multipleChoiceQuizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate] });
+        shortAnswerQuizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [shortAnswerQuizTemplate], quizMode: QuizMode.INDIVIDUAL });
         modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
         programmingExercise = await exerciseAPIRequests.createProgrammingExercise({ course });
         secondCourse = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
@@ -70,29 +74,86 @@ test.describe('Import exercises', () => {
             expect(submissionResponse.status()).toBe(200);
         });
 
-        test('Imports quiz exercise', { tag: '@fast' }, async ({ login, page, courseManagementExercises, quizExerciseCreation, courseOverview, quizExerciseMultipleChoice }) => {
-            await login(instructor, `/course-management/${secondCourse.id}/exercises`);
-            await courseManagementExercises.importQuizExercise();
-            await courseManagementExercises.clickImportExercise(quizExercise.id!);
+        test(
+            'Imports multiple choice quiz exercise',
+            { tag: '@fast' },
+            async ({ login, page, courseManagementExercises, quizExerciseCreation, courseOverview, quizExerciseMultipleChoice }) => {
+                await login(instructor, `/course-management/${secondCourse.id}/exercises`);
+                await courseManagementExercises.importQuizExercise();
+                await courseManagementExercises.clickImportExercise(multipleChoiceQuizExercise.id!);
 
-            await quizExerciseCreation.waitForFormToLoad();
-            await expect(page.locator('#field_title')).toHaveValue(quizExercise.title!);
-            await expect(page.locator('#quiz-duration-minutes')).toHaveValue(`${quizExercise.duration! / 60}`);
+                await quizExerciseCreation.waitForFormToLoad();
+                await expect(page.locator('#field_title')).toHaveValue(multipleChoiceQuizExercise.title!);
+                await expect(page.locator('#quiz-duration-minutes')).toHaveValue(`${multipleChoiceQuizExercise.duration! / 60}`);
 
-            await quizExerciseCreation.setReleaseDate(dayjs());
+                await quizExerciseCreation.setReleaseDate(dayjs());
 
-            const importResponse = await quizExerciseCreation.import();
-            const exercise: QuizExercise = await importResponse.json();
-            await courseManagementExercises.startQuiz(exercise.id!);
-            await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
-            await courseOverview.startExercise(exercise.id!);
-            await quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 0);
-            await quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 2);
-            const submitResponse = await quizExerciseMultipleChoice.submit();
-            const submission: QuizSubmission = await submitResponse.json();
-            expect(submission.submitted).toBe(true);
-            expect(submitResponse.status()).toBe(200);
-        });
+                const importResponse = await quizExerciseCreation.import();
+                const exercise: QuizExercise = await importResponse.json();
+                await courseManagementExercises.startQuiz(exercise.id!);
+                await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
+                await courseOverview.startExercise(exercise.id!);
+                await quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 0);
+                await quizExerciseMultipleChoice.tickAnswerOption(exercise.id!, 2);
+                const submitResponse = await quizExerciseMultipleChoice.submit();
+                const submission: QuizSubmission = await submitResponse.json();
+                expect(submission.submitted).toBe(true);
+                expect(submitResponse.status()).toBe(200);
+            },
+        );
+
+        test(
+            'Imports short answer quiz exercise',
+            { tag: '@fast' },
+            async ({
+                login,
+                page,
+                courseManagementExercises,
+                quizExerciseCreation,
+                courseOverview,
+                quizExerciseShortAnswerQuiz,
+                exerciseResult,
+                navigationBar,
+                courseManagement,
+                quizExerciseParticipation,
+            }) => {
+                await login(instructor, `/course-management/${secondCourse.id}/exercises`);
+                await courseManagementExercises.importQuizExercise();
+                await courseManagementExercises.clickImportExercise(shortAnswerQuizExercise.id!);
+
+                await quizExerciseCreation.waitForFormToLoad();
+                await expect(page.locator('#field_title')).toHaveValue(shortAnswerQuizExercise.title!);
+                await expect(page.locator('#quiz-duration-minutes')).toHaveValue(`${shortAnswerQuizExercise.duration! / 60}`);
+
+                await quizExerciseCreation.setReleaseDate(dayjs());
+
+                const importResponse = await quizExerciseCreation.import();
+                const exercise: QuizExercise = await importResponse.json();
+                const questionId = exercise.quizQuestions![0].id!;
+                await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
+                await courseOverview.openRunningExercise(exercise.id!);
+                await quizExerciseParticipation.startIndividualQuizBatch();
+                await page.waitForSelector('.quiz-waiting-for-start-overlay', { state: 'hidden' });
+                await quizExerciseShortAnswerQuiz.typeAnswer(0, 1, questionId, 'give');
+                await quizExerciseShortAnswerQuiz.typeAnswer(1, 1, questionId, 'let');
+                await quizExerciseShortAnswerQuiz.typeAnswer(2, 1, questionId, 'run');
+                await quizExerciseShortAnswerQuiz.typeAnswer(2, 3, questionId, 'desert');
+                await quizExerciseShortAnswerQuiz.typeAnswer(3, 1, questionId, 'cry');
+                await quizExerciseShortAnswerQuiz.typeAnswer(4, 1, questionId, 'goodbye');
+                const submitResponse = await quizExerciseShortAnswerQuiz.submit();
+                const submission: QuizSubmission = await submitResponse.json();
+                expect(submission.submitted).toBe(true);
+                expect(submitResponse.status()).toBe(200);
+
+                await login(instructor, '/');
+                await navigationBar.openCourseManagement();
+                await courseManagement.openExercisesOfCourse(secondCourse.id!);
+                await courseManagementExercises.endQuiz(exercise);
+
+                await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
+                await exerciseResult.shouldShowScore(100);
+            },
+        );
 
         test(
             'Imports modeling exercise',

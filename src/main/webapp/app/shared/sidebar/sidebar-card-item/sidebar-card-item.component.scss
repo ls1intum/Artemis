@@ -20,3 +20,9 @@
     overflow: hidden;
     white-space: nowrap;
 }
+
+.sidebar-divider {
+    all: unset;
+    display: block;
+    border-top: 1px solid var(--bs-border-color) !important;
+}

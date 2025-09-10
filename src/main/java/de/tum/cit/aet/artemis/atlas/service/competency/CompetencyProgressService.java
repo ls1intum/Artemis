@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service.competency;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MIN_SCORE_GREEN;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.util.TimeUtil.toRelativeTime;
 
 import java.time.Instant;
@@ -15,12 +14,14 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreService;
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.CompetencyProgressConfidenceReason;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -40,13 +41,15 @@ import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 
 /**
  * Service for calculating the progress of a student in a competency.
  */
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
+@Lazy
 @Service
 public class CompetencyProgressService {
 
@@ -58,7 +61,7 @@ public class CompetencyProgressService {
 
     private final ParticipantScoreService participantScoreService;
 
-    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
@@ -75,12 +78,11 @@ public class CompetencyProgressService {
     private static final double CONFIDENCE_REASON_DEADZONE = 0.05;
 
     public CompetencyProgressService(CompetencyProgressRepository competencyProgressRepository, LearningPathService learningPathService,
-            ParticipantScoreService participantScoreService, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            CourseCompetencyRepository courseCompetencyRepository) {
+            ParticipantScoreService participantScoreService, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, CourseCompetencyRepository courseCompetencyRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.learningPathService = learningPathService;
         this.participantScoreService = participantScoreService;
-        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
@@ -162,12 +164,13 @@ public class CompetencyProgressService {
     }
 
     private void updateProgressByCompetencyIdsAndLearningObject(Set<Long> competencyIds, LearningObject learningObject) {
+        LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
         for (long competencyId : competencyIds) {
             Set<User> existingCompetencyUsers = competencyProgressRepository.findAllByCompetencyId(competencyId).stream().map(CompetencyProgress::getUser)
                     .collect(Collectors.toSet());
             Set<User> existingLearningObjectUsers = switch (learningObject) {
                 case Exercise exercise -> participantScoreService.getAllParticipatedUsersInExercise(exercise);
-                case LectureUnit lectureUnit -> lectureUnitCompletionRepository.findCompletedUsersForLectureUnit(lectureUnit);
+                case LectureUnit lectureUnit -> api.findCompletedUsersForLectureUnit(lectureUnit);
                 default -> throw new IllegalStateException("Unexpected value: " + learningObject);
             };
             existingCompetencyUsers.addAll(existingLearningObjectUsers);
@@ -259,6 +262,7 @@ public class CompetencyProgressService {
         if (numberOfLearningObjects == 0) {
             // If nothing is linked to the competency, the competency is considered completed
             competencyProgress.setProgress(100.0);
+            return;
         }
 
         double achievedPoints = exerciseInfos.stream().mapToDouble(info -> info.lastPoints() != null ? info.lastPoints() : 0).sum();
@@ -266,10 +270,10 @@ public class CompetencyProgressService {
         double exerciseProgress = maxPoints > 0 ? achievedPoints / maxPoints * 100 : 0;
 
         long numberOfCompletedLectureUnits = lectureUnitInfos.stream().filter(CompetencyLectureUnitMasteryCalculationDTO::completed).count();
-        double lectureProgress = 100.0 * numberOfCompletedLectureUnits / lectureUnitInfos.size();
+        double lectureProgress = !lectureUnitInfos.isEmpty() ? 100.0 * numberOfCompletedLectureUnits / lectureUnitInfos.size() : 0.0;
 
-        double weightedExerciseProgress = exerciseInfos.size() / numberOfLearningObjects * exerciseProgress;
-        double weightedLectureProgress = lectureUnitInfos.size() / numberOfLearningObjects * lectureProgress;
+        double weightedExerciseProgress = ((double) exerciseInfos.size()) / numberOfLearningObjects * exerciseProgress;
+        double weightedLectureProgress = ((double) lectureUnitInfos.size()) / numberOfLearningObjects * lectureProgress;
 
         double progress = weightedExerciseProgress + weightedLectureProgress;
         // Bonus points can lead to a progress > 100%

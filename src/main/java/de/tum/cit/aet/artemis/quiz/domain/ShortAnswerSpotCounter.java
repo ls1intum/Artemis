@@ -26,8 +26,6 @@ public class ShortAnswerSpotCounter extends QuizStatisticCounter implements Quiz
     @JoinColumn(unique = true)
     private ShortAnswerSpot spot;
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-
     public ShortAnswerSpot getSpot() {
         return spot;
     }

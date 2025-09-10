@@ -1,12 +1,7 @@
 package de.tum.cit.aet.artemis.lecture;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
-import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,14 +12,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -38,7 +33,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     private AttachmentRepository attachmentRepository;
 
     @Autowired
-    private LectureRepository lectureRepository;
+    private LectureTestRepository lectureRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -54,38 +49,17 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         userUtilService.addUsers(TEST_PREFIX, 0, 1, 0, 1);
 
         attachment = LectureFactory.generateAttachment(null);
-        attachment.setLink("temp/example.txt");
-
+        attachment = attachmentRepository.save(attachment);
         var course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
-        textExercise = exerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
+        textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         lecture = new Lecture();
         lecture.setTitle("test");
         lecture.setDescription("test");
         lecture.setCourse(course);
         lecture = lectureRepository.save(lecture);
         attachment.setLecture(lecture);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createAttachment() throws Exception {
-        Attachment actualAttachment = request.postWithMultipartFile("/api/lecture/attachments", attachment, "attachment",
-                new MockMultipartFile("file", "test.txt", MediaType.TEXT_PLAIN_VALUE, "testContent".getBytes()), Attachment.class, HttpStatus.CREATED);
-        String actualLink = actualAttachment.getLink();
-        assertThat(actualLink).isNotNull();
-        // getLectureAttachment uses the provided file name to fetch the attachment which has that attachment name (not filename)
-        String linkWithCorrectFileName = actualLink.substring(0, actualLink.lastIndexOf('/') + 1) + attachment.getName() + "." + getExtension(actualAttachment.getLink());
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, linkWithCorrectFileName);
-        MvcResult file = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.TEXT_PLAIN_VALUE)).andReturn();
-        assertThat(file.getResponse().getContentAsByteArray()).isNotEmpty();
-        var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).orElseThrow();
-        assertThat(actualAttachment).isEqualTo(expectedAttachment);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createAttachment_noFile() throws Exception {
-        request.postWithMultipartFile("/api/lecture/attachments", attachment, "attachment", null, Attachment.class, HttpStatus.BAD_REQUEST);
+        attachment.setLink("attachments/lecture/" + lecture.getId() + "/example.txt");
+        attachment = attachmentRepository.save(attachment);
     }
 
     @ParameterizedTest
@@ -105,9 +79,9 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
 
         assertThat(actualAttachment.getName()).isEqualTo("new name");
         var ignoringFields = new String[] { "name", "fileService", "filePathService", "entityFileService", "prevLink", "lecture.lectureUnits", "lecture.posts", "lecture.course",
-                "lecture.attachments" };
+                "lecture.attachments", "lecture.lectureTranscriptions" };
         assertThat(actualAttachment).usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(expectedAttachment);
-        verify(groupNotificationService).notifyStudentGroupAboutAttachmentChange(actualAttachment, notificationText);
+        verify(groupNotificationService).notifyStudentGroupAboutAttachmentChange(actualAttachment);
     }
 
     @Test

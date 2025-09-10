@@ -1,23 +1,24 @@
 import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, inject } from '@angular/core';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { ExerciseService } from 'app/exercise/exercise.service';
-import { GradeType } from 'app/entities/grading-scale.model';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { BonusStrategy } from 'app/entities/bonus.model';
+import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CollapsibleCardComponent } from '../collapsible-card.component';
+import { CollapsibleCardComponent } from '../collapsible-card/collapsible-card.component';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NoDataComponent } from 'app/shared/no-data-component';
+import { NoDataComponent } from 'app/shared/components/no-data/no-data-component';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading-system/grading-key/grading-key-table.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 type ExerciseInfo = {
     icon: IconProp;
@@ -217,10 +218,8 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
 
     private hasAtLeastOneResult(): boolean {
         const exercises = this.studentExamWithGrade?.studentExam?.exercises;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        if (exercises?.length! > 0) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            return exercises!.some((exercise) => exercise.studentParticipations?.[0]?.results?.length! > 0);
+        if (exercises?.length && exercises.length > 0) {
+            return exercises!.some((exercise) => getAllResultsOfAllSubmissions(exercise.studentParticipations?.[0]?.submissions).length! > 0);
         }
         return false;
     }

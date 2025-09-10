@@ -47,7 +47,8 @@ class ShortAnswerSubmittedTextTest {
     }
 
     /**
-     * @func testSubmissionWithoutMatchingLetterCaseAndExactMatching
+     * testSubmissionWithoutMatchingLetterCaseAndExactMatching
+     *
      * @desc tests {@link ShortAnswerSubmittedText#isSubmittedTextCorrect(String, String)} with similarity value 100 and without letter case matching
      */
     @Test
@@ -66,7 +67,8 @@ class ShortAnswerSubmittedTextTest {
     }
 
     /**
-     * @func testSubmissionWithNonExactMatching
+     * testSubmissionWithNonExactMatching
+     *
      * @desc tests {@link ShortAnswerSubmittedText#isSubmittedTextCorrect(String, String)} with similarity value 70 and without letter case matching
      */
     @Test

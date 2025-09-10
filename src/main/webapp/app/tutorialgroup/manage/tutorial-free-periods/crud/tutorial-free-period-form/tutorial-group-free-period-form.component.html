@@ -1,174 +1,119 @@
 <div class="row">
     <div class="col-12 mb-2">
-        <div class="alert alert-info" jhiTranslate="artemisApp.generic.timeZone" [translateValues]="{ timeZone }"></div>
+        <div class="alert alert-info" jhiTranslate="artemisApp.generic.timeZone" [translateValues]="{ timeZone: timeZone() }"></div>
     </div>
     <div class="col-12">
-        @if (form) {
-            <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
-                <div class="btn-group" role="group">
-                    <input
-                        type="radio"
-                        class="btn-check"
-                        name="timeFrame"
-                        id="FreePeriod"
-                        autocomplete="off"
-                        [checked]="timeFrame === TimeFrame.Period"
-                        (click)="setTimeFrame(TimeFrame.Period)"
-                    />
-                    <label class="btn btn-outline-primary" for="FreePeriod" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.timeFrame.period"></label>
+        <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
+            <div class="btn-group" role="group">
+                <input
+                    type="radio"
+                    class="btn-check"
+                    name="timeFrame"
+                    id="FreePeriod"
+                    autocomplete="off"
+                    [checked]="timeFrame === TimeFrame.Period"
+                    (click)="setTimeFrame(TimeFrame.Period)"
+                />
+                <label class="btn btn-outline-primary" for="FreePeriod" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.timeFrame.period"></label>
 
-                    <input
-                        type="radio"
-                        class="btn-check"
-                        name="timeFrame"
-                        id="FreeDay"
-                        autocomplete="off"
-                        [checked]="timeFrame === TimeFrame.Day"
-                        (click)="setTimeFrame(TimeFrame.Day)"
-                    />
-                    <label class="btn btn-outline-primary" for="FreeDay" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.timeFrame.day"></label>
+                <input
+                    type="radio"
+                    class="btn-check"
+                    name="timeFrame"
+                    id="FreeDay"
+                    autocomplete="off"
+                    [checked]="timeFrame === TimeFrame.Day"
+                    (click)="setTimeFrame(TimeFrame.Day)"
+                />
+                <label class="btn btn-outline-primary" for="FreeDay" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.timeFrame.day"></label>
 
-                    <input
-                        type="radio"
-                        class="btn-check"
-                        name="timeFrame"
-                        id="FreePeriodWithinDay"
-                        autocomplete="off"
-                        [checked]="timeFrame === TimeFrame.PeriodWithinDay"
-                        (click)="setTimeFrame(TimeFrame.PeriodWithinDay)"
-                    />
-                    <label class="btn btn-outline-primary" for="FreePeriodWithinDay" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay"></label>
-                </div>
+                <input
+                    type="radio"
+                    class="btn-check"
+                    name="timeFrame"
+                    id="FreePeriodWithinDay"
+                    autocomplete="off"
+                    [checked]="timeFrame === TimeFrame.PeriodWithinDay"
+                    (click)="setTimeFrame(TimeFrame.PeriodWithinDay)"
+                />
+                <label class="btn btn-outline-primary" for="FreePeriodWithinDay" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay"></label>
+            </div>
 
-                <!-- Date -->
-                <div>
-                    <label
-                        class="form-label"
-                        for="startDate"
-                        [jhiTranslate]="
-                            timeFrame !== TimeFrame.Period
-                                ? 'artemisApp.forms.tutorialFreePeriodForm.dateInput.label'
-                                : 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStart'
-                        "
-                    ></label>
-                    <div class="input-group">
-                        <input
-                            name="startDate"
-                            id="startDate"
-                            required
-                            [ngClass]="{ isInvalid: form.controls.startDate?.invalid && (form.controls.startDate?.dirty || form.controls.startDate?.touched) }"
-                            [owlDateTimeTrigger]="startDatePicker"
-                            formControlName="startDate"
-                            [owlDateTime]="startDatePicker"
-                            readonly
-                            class="form-control"
-                            jhiOwlDateTimeFormat
-                        />
-                        <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="startDatePicker"><fa-icon [icon]="faCalendarAlt" /></button>
-                        <owl-date-time [firstDayOfWeek]="1" datePickerInput [pickerType]="'calendar'" #startDatePicker [pickerMode]="'dialog'" />
-                    </div>
-                    @if (form.controls.startDate?.invalid && (form.controls.startDate?.dirty || form.controls.startDate?.touched) && form.controls.startDate?.errors?.required) {
-                        <div class="alert alert-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredDateError"></div>
-                    }
-                </div>
+            <!-- Date -->
+            <jhi-date-time-picker
+                id="startDate"
+                formControlName="startDate"
+                [pickerType]="DateTimePickerType.CALENDAR"
+                [requiredField]="true"
+                [labelName]="
+                    timeFrame !== TimeFrame.Period
+                        ? ('artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate)
+                        : ('artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStart' | artemisTranslate)
+                "
+            />
 
-                @if (timeFrame === TimeFrame.Period) {
-                    <label class="form-label" for="endDate" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd"></label>
-                    <div class="input-group">
-                        <input
-                            name="endDate"
-                            id="endDate"
-                            required
-                            [ngClass]="{ isInvalid: form.controls.endDate?.invalid && (form.controls.endDate?.dirty || form.controls.endDate?.touched) }"
-                            [owlDateTimeTrigger]="endDatePicker"
-                            formControlName="endDate"
-                            [owlDateTime]="endDatePicker"
-                            readonly
-                            class="form-control"
-                            jhiOwlDateTimeFormat
-                        />
-                        <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="endDatePicker"><fa-icon [icon]="faCalendarAlt" /></button>
-                        <owl-date-time [firstDayOfWeek]="1" datePickerInput [pickerType]="'calendar'" #endDatePicker [pickerMode]="'dialog'" />
-                    </div>
-                    @if (form.controls.endDate?.invalid && (form.controls.endDate?.dirty || form.controls.endDate?.touched) && form.controls.endDate?.errors?.required) {
-                        <div class="alert alert-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredEndDateError"></div>
-                    } @else if (
-                        form.controls.endDate?.touched &&
-                        form.controls.startDate?.touched &&
-                        (form.controls.endDate?.value | artemisDate: 'short-date' : false : timeZone) <=
-                            (form.controls.startDate?.value | artemisDate: 'short-date' : false : timeZone)
-                    ) {
-                        <div class="alert alert-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError"></div>
-                    }
-                } @else if (timeFrame === TimeFrame.PeriodWithinDay) {
-                    <label class="form-label" for="startTime" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime"></label>
-                    <div class="input-group">
-                        <input
-                            name="startTime"
-                            id="startTime"
-                            required
-                            [ngClass]="{ isInvalid: form.controls.startTime?.invalid && (form.controls.startTime?.dirty || form.controls.startTime?.touched) }"
-                            [owlDateTimeTrigger]="startTimePicker"
-                            formControlName="startTime"
-                            [owlDateTime]="startTimePicker"
-                            readonly
-                            class="form-control"
-                            jhiOwlDateTimeFormat
-                        />
-                        <owl-date-time timePickerInput [pickerType]="'timer'" #startTimePicker [pickerMode]="'dialog'" />
-                    </div>
+            @if (timeFrame === TimeFrame.Period) {
+                <jhi-date-time-picker
+                    id="endDate"
+                    formControlName="endDate"
+                    [pickerType]="DateTimePickerType.CALENDAR"
+                    [requiredField]="true"
+                    [labelName]="'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd' | artemisTranslate"
+                />
 
-                    <label class="form-label" for="endTime" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime"></label>
-                    <div class="input-group">
-                        <input
-                            name="endTime"
-                            id="endTime"
-                            required
-                            [ngClass]="{ isInvalid: form.controls.endTime?.invalid && (form.controls.endTime?.dirty || form.controls.endTime?.touched) }"
-                            [owlDateTimeTrigger]="endTimePicker"
-                            formControlName="endTime"
-                            [owlDateTime]="endTimePicker"
-                            readonly
-                            class="form-control"
-                            jhiOwlDateTimeFormat
-                        />
-                        <owl-date-time [pickerType]="'timer'" #endTimePicker [pickerMode]="'dialog'" />
-                    </div>
-                    @if (
-                        form.controls.endTime?.touched &&
-                        form.controls.startTime?.touched &&
-                        form.controls.startTime &&
-                        (form.controls.endTime?.value | artemisDate: 'time' : false : timeZone) <= (form.controls.startTime?.value | artemisDate: 'time' : false : timeZone)
-                    ) {
-                        <div class="alert alert-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError"></div>
-                    }
+                @if (!isStartBeforeEnd) {
+                    <span class="text-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError"></span>
                 }
-                <!-- Reason -->
-                <div class="form-group">
-                    <label for="reason" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.reasonInput.label"></label>
-                    <textarea
-                        class="form-control"
-                        id="reason"
-                        rows="6"
-                        formControlName="reason"
-                        [placeholder]="'artemisApp.forms.tutorialFreePeriodForm.reasonInput.placeholder' | artemisTranslate"
-                    ></textarea>
-                    @if (form.controls.reason?.invalid && (form.controls.reason?.dirty || (form.controls.reason?.touched && form.controls.reason?.errors?.maxlength))) {
-                        <div
-                            class="alert alert-danger"
-                            jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.reasonInput.maxLengthValidationError"
-                            [translateValues]="{ max: '256' }"
-                        ></div>
-                    }
+            } @else if (timeFrame === TimeFrame.PeriodWithinDay) {
+                <jhi-date-time-picker
+                    id="startTime"
+                    formControlName="startTime"
+                    [pickerType]="DateTimePickerType.TIMER"
+                    [requiredField]="true"
+                    [labelName]="'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate"
+                />
+
+                <jhi-date-time-picker
+                    id="endTime"
+                    formControlName="endTime"
+                    [pickerType]="DateTimePickerType.TIMER"
+                    [requiredField]="true"
+                    [labelName]="'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate"
+                />
+                @if (
+                    form.controls.endTime?.value &&
+                    form.controls.startTime?.value &&
+                    form.controls.startTime &&
+                    (form.controls.endTime?.value | artemisDate: 'time' : false : timeZone()) <= (form.controls.startTime?.value | artemisDate: 'time' : false : timeZone())
+                ) {
+                    <span class="text-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError"></span>
+                }
+            }
+            <!-- Reason -->
+            <div class="form-group">
+                <label for="reason" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.reasonInput.label"></label>
+                <textarea
+                    class="form-control"
+                    id="reason"
+                    rows="6"
+                    formControlName="reason"
+                    [placeholder]="'artemisApp.forms.tutorialFreePeriodForm.reasonInput.placeholder' | artemisTranslate"
+                ></textarea>
+                @if (form.controls.reason?.invalid && (form.controls.reason?.dirty || (form.controls.reason?.touched && form.controls.reason?.errors?.maxlength))) {
+                    <div
+                        class="alert alert-danger"
+                        jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.reasonInput.maxLengthValidationError"
+                        [translateValues]="{ max: '256' }"
+                    ></div>
+                }
+            </div>
+            <div class="row mt-2">
+                <div class="col-12">
+                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                        <span jhiTranslate="{{ isEditMode() ? 'entity.action.save' : 'global.generic.create' }}"></span>
+                    </button>
                 </div>
-                <div class="row mt-2">
-                    <div class="col-12">
-                        <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                            <span jhiTranslate="{{ isEditMode ? 'global.generic.edit' : 'global.generic.create' }}"></span>
-                        </button>
-                    </div>
-                </div>
-            </form>
-        }
+            </div>
+        </form>
     </div>
 </div>

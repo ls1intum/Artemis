@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -24,9 +23,9 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
-class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "authorizationservice";
 
@@ -39,17 +38,22 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
     @Autowired
     private AuthorizationCheckService authCheckService;
 
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private CourseTestRepository courseRepository;
+
+    @Autowired
+    private UserTestRepository userRepository;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
     }
 
     @Nested
-    @Component
     class IsUserAllowedToGetResultTest {
-
-        @Autowired
-        private ParticipationUtilService participationUtilService;
 
         private ModelingExercise modelingExercise;
 
@@ -101,16 +105,8 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
     }
 
     @Nested
-    @Component
     // Only the login name of the student2 user is NOT allowed to enrol for courses.
     class IsUserAllowedToEnrollForCourseTest {
-
-        // We need our own courseService here that overshadows the one from the CourseServiceTest, so that the new property is applied to it.
-        @Autowired
-        private CourseTestRepository courseRepository;
-
-        @Autowired
-        private UserTestRepository userRepository;
 
         private User student1;
 
@@ -201,16 +197,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
     }
 
     @Nested
-    @Component
     class IsUserAllowedToUnenrollFromCourseTest {
-
-        @Autowired
-        private AuthorizationCheckService authCheckService;
-
-        @Autowired
-        private CourseTestRepository courseRepository;
-
-        private User student;
 
         private Course getCourseForUnenrollmentAllowedTest() {
             var course = courseUtilService.createCourse();
@@ -221,11 +208,6 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
             course.setEndDate(ZonedDateTime.now().plusDays(6));
             course.setStudentGroupName("test-students");
             return course;
-        }
-
-        @BeforeEach
-        void setUp() {
-            this.student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         }
 
         @Test

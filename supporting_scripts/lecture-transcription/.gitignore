@@ -1,0 +1,7 @@
+__pycache__/
+.env
+venv
+.venv
+.idea/
+videos/
+.tmp/

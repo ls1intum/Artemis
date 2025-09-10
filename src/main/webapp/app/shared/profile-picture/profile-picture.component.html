@@ -1,4 +1,4 @@
-<div class="profile-picture-wrap rounded-3" [ngStyle]="{ width: imageSize, height: imageSize }">
+<div [ngClass]="isBoxShadow() ? 'is-box-shadow' : ''" class="profile-picture-wrap rounded-3" [ngStyle]="{ width: imageSize, height: imageSize }">
     @if (imageUrl() === undefined) {
         <strong
             [id]="defaultPictureId()"

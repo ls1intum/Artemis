@@ -1,13 +1,15 @@
 {
     "artemisApp": {
         "userSettings": {
-            "settings": "Benachrichtigungseinstellungen",
             "saveChanges": "Änderungen speichern",
             "saveSettingsSuccessAlert": "Die Einstellungen wurden erfolgreich gespeichert.",
             "userSettings": "Benutzereinstellungen",
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
+            "passkeys": "Passkeys",
             "accountInformation": "Account Informationen",
+            "externalLLMUsage": "Externe LLM-Nutzung",
+            "learnerProfile": "Lernprofil",
             "notificationSettings": "Benachrichtigungen",
             "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
             "scienceSettings": "Forschung",
@@ -17,6 +19,10 @@
                 "description": "Wähle die IDEs, die du für das Öffnen von Programmieraufgaben verwenden möchtest.",
                 "default": "Standard",
                 "jetbrainsHelp": "Um JetBrains IDEs zu verwenden, installiere bitte die JetBrains Toolbox."
+            },
+            "externalLLMUsageSettingsPage": {
+                "accepted": "Du hast die Nutzung von externen LLMs am {{acceptedDate}} akzeptiert.",
+                "declined": "Du hast die Nutzung von externen LLMs nicht akzeptiert."
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Hier kannst du einen öffentlichen SSH-Schlüssel festlegen, um Git-Repositories über SSH zu klonen. Weitere Einzelheiten findest du in der Dokumentation.",
@@ -84,6 +90,42 @@
                 "expiryDate": "Ablaufdatum",
                 "actions": "Aktionen"
             },
+            "passkeySettingsPage": {
+                "infoText": "Passkeys bieten eine moderne, sichere und bequeme Alternative zu Passwörtern. Sie schützen dein Konto vor Phishing, Diebstahl von Zugangsdaten und der Wiederverwendung von Passwörtern.",
+                "learnMore": "Erfahre mehr über Passkeys.",
+                "noneRegistered": "Du hast bisher keine Passkeys bei Artemis registriert.",
+                "deletePasskeyQuestion": "Möchtest du deinen Passkey für passwortlose Authentifikation mit Artemis wirklich löschen?",
+                "noPasskeyRegistered": "Du hast bisher keine Passkeys bei Artemis registriert.",
+                "addNewPasskey": "Neuen Passkey hinzufügen",
+                "yourPasskeys": "Deine Passkeys",
+                "created": "Erstellt am",
+                "lastUsed": "Zuletzt verwendet am",
+                "label": "Bezeichnung",
+                "validation": {
+                    "labelLength": "Die Passkey-Bezeichnung darf maximal {{maxLabelLength}} Zeichen lang sein."
+                },
+                "success": {
+                    "registration": "Dein Passkey wurde erfolgreich registriert. Du kannst deine Passkeys in den Benutzereinstellungen verwalten."
+                },
+                "error": {
+                    "invalidCredential": "Es wurde ein ungültiger Passkey bereitgestellt. Bitte versuche es erneut mit einem anderen Authentifikator (z. B. Apple Keychain, Windows Hello, Google Password Manager, etc.).",
+                    "login": "Login mit Passkey fehlgeschlagen. Bitte überprüfe, ob du einen Passkey bei Artemis registriert hast.",
+                    "passkeyAlreadyRegistered": "Du hast bereits einen Passkey mit dem ausgewählten Authentifikator registriert. Wähle einen anderen Authentifikator, wenn du einen weiteren Passkey registrieren möchtest.",
+                    "registration": "Der Passkey konnte nicht registriert werden. Bitte versuche es erneut.",
+                    "save": "Der Passkey konnte nicht gespeichert werden. Bitte versuche es erneut.",
+                    "delete": "Der Passkey konnte nicht gelöscht werden. Bitte versuche es erneut."
+                }
+            },
+            "setupPasskeyModal": {
+                "title": "Bleib sicher mit Passkeys",
+                "description": {
+                    "howItWorks": "Dein Passkey wird auf deinem Gerät gespeichert und ist durch biometrische Daten oder eine PIN gesichert, was das Einloggen schnell und sicher macht – ohne dass du dir ein Passwort merken musst.",
+                    "recommendation": "Wir empfehlen, jetzt einen Passkey einzurichten, um die Sicherheit deines Kontos zu erhöhen und von einer nahtlosen und passwortfreien Anmeldung zu profitieren."
+                },
+                "setupLater": "Später einrichten",
+                "setupPasskey": "Passkey einrichten",
+                "remindMeIn30Days": "Erinnere mich in 30 Tagen"
+            },
             "accountInformationPage": {
                 "registrationNumber": "Matrikelnummer",
                 "fullName": "Vollständiger Name",
@@ -95,11 +137,14 @@
                 "sshKey": "Öffentlicher SSH-Schlüssel"
             },
             "categories": {
+                "externalLLMUsage": "Externe LLM-Nutzungseinstellungen",
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen",
                 "SCIENCE_SETTINGS": "Forschungseinstellungen",
                 "SSH_SETTINGS": "SSH Einstellungen",
                 "VCS_TOKEN_SETTINGS": "VCS Tokeneinstellungen",
-                "IDE_PREFERENCES": "IDE Präferenzen"
+                "PASSKEYS": "Passkey-Einstellungen",
+                "IDE_PREFERENCES": "IDE Präferenzen",
+                "GLOBAL_NOTIFICATIONS": "Benachrichtigungen"
             },
             "settingGroupNames": {
                 "weeklySummary": "Wöchentliche Zusammenfassung",
@@ -167,6 +212,20 @@
                 "conversationNewReplyMessageDescription": "Erhalte eine Mitteilung, wenn du eine neue Antwort in einer Unterhaltung erhältst",
                 "assignUnassignTutorialGroupDescription": "Erhalte eine Mitteilung, wenn du als Tutor:in der Leitung einer Übungsgruppe zugewiesen oder entzogen wurdest",
                 "activityDescription": "Teile welche Features von Artemis du nutzt und wie du mit ihnen interagierst. Die Informationen sind für Administratoren zugänglich."
+            },
+            "globalNotificationSettings": {
+                "title": "Benachrichtigungen",
+                "description": "Du erhältst E-Mail-Benachrichtigungen für die folgenden sicherheitsbezogenen Aktivitäten. Verwalte deine Einstellungen unten.",
+                "options": {
+                    "NEW_LOGIN": "Neuer Login",
+                    "NEW_PASSKEY_ADDED": "Neuer Passkey hinzugefügt",
+                    "VCS_TOKEN_EXPIRED": "VCS-Token abgelaufen",
+                    "SSH_KEY_EXPIRED": "SSH-Schlüssel abgelaufen"
+                },
+                "viewPasskeySettings": "Passkey-Einstellungen anzeigen",
+                "viewVcsTokenSettings": "VCS-Token-Einstellungen anzeigen",
+                "viewSshKeySettings": "SSH-Schlüssel-Einstellungen anzeigen",
+                "updateSuccess": "Benachrichtigungseinstellung erfolgreich aktualisiert."
             }
         }
     }

@@ -23,13 +23,14 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  * Service for upgrading of Java template files
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
@@ -62,16 +64,13 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
 
     private final RepositoryService repositoryService;
 
-    private final FileService fileService;
-
     public JavaTemplateUpgradeService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, GitService gitService, ResourceLoaderService resourceLoaderService,
-            UserRepository userRepository, RepositoryService repositoryService, FileService fileService) {
+            UserRepository userRepository, RepositoryService repositoryService) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.gitService = gitService;
         this.userRepository = userRepository;
         this.resourceLoaderService = resourceLoaderService;
         this.repositoryService = repositoryService;
-        this.fileService = fileService;
     }
 
     @Override
@@ -101,7 +100,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         try {
             String templatePomDir = repositoryType == RepositoryType.TESTS ? "test/maven/projectTemplate" : repositoryType.getName();
             Resource[] templatePoms = getTemplateResources(exercise, templatePomDir + "/**/" + POM_FILE);
-            Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURL(repositoryType), true);
+            Repository repository = gitService.getOrCheckoutRepository(exercise.getRepositoryURI(repositoryType), true, true);
             List<File> repositoryPoms = gitService.getFiles(repository).stream().filter(file -> Objects.equals(file.getName(), POM_FILE)).toList();
 
             // Validate that template and repository have the same number of pom.xml files, otherwise no upgrade will take place
@@ -122,7 +121,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
                 // Add the latest static code analysis tool configurations or remove configurations
                 if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled())) {
                     Resource[] staticCodeAnalysisResources = getTemplateResources(exercise, "test/" + SCA_CONFIG_FOLDER + "/**/*.*");
-                    fileService.copyResources(staticCodeAnalysisResources, Path.of("java", "test"), repository.getLocalPath().toAbsolutePath(), true);
+                    FileUtil.copyResources(staticCodeAnalysisResources, Path.of("java", "test"), repository.getLocalPath().toAbsolutePath(), true);
                 }
                 else {
                     deleteFileIfPresent(repository, SCA_CONFIG_FOLDER);
@@ -134,7 +133,7 @@ public class JavaTemplateUpgradeService implements TemplateUpgradeService {
         catch (IOException | GitAPIException | XmlPullParserException exception) {
             log.error("Updating of template files of repository {} for exercise {} failed with error: {}", repositoryType.name(), exercise.getId(), exception.getMessage());
             // Rollback by deleting the local repository
-            gitService.deleteLocalRepository(exercise.getRepositoryURL(repositoryType));
+            gitService.deleteLocalRepository(exercise.getRepositoryURI(repositoryType));
         }
     }
 

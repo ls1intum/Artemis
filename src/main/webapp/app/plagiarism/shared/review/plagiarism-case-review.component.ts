@@ -1,5 +1,5 @@
-import { Component, Input } from '@angular/core';
-import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
+import { Component, input } from '@angular/core';
+import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { Subject } from 'rxjs';
 import { NgbNav, NgbNavContent, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { PlagiarismSplitViewComponent } from 'app/plagiarism/manage/plagiarism-split-view/plagiarism-split-view.component';
@@ -11,8 +11,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [NgbNav, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavContent, PlagiarismSplitViewComponent, NgbNavOutlet, ArtemisTranslatePipe],
 })
 export class PlagiarismCaseReviewComponent {
-    @Input() plagiarismCase: PlagiarismCase;
-    @Input() forStudent = true;
+    plagiarismCase = input.required<PlagiarismCase>();
+    forStudent = input<boolean>(true);
 
     /**
      * Subject to be passed into PlagiarismSplitViewComponent to control the split view.

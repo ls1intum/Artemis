@@ -26,6 +26,8 @@
         [editType]="editType()"
         [isInCommunication]="true"
         [course]="course()"
+        [showCloseButton]="showCloseButton()"
+        (closeEditor)="closeEditor.emit()"
     >
         <ng-container id="previewMonaco">
             @if (previewMode) {

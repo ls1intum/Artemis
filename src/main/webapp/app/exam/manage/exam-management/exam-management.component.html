@@ -1,0 +1,161 @@
+@if (course) {
+    <div>
+        <div *titleBarTitle class="d-flex align-items-center">
+            <jhi-course-title-bar-title id="course-page-heading" title="artemisApp.exam.overview.realExamsHeading" />
+            <jhi-documentation-button [type]="documentationType" />
+        </div>
+        @if (course.isAtLeastInstructor) {
+            <div *titleBarActions class="ms-auto text-truncate justify-content-end">
+                <a class="btn btn-sm btn-primary me-1" (click)="openImportModal()">
+                    <fa-icon [icon]="faFileImport" />
+                    <span jhiTranslate="artemisApp.examManagement.importExam"></span>
+                </a>
+                <a class="btn btn-primary btn-sm jh-create-entity create-exam" id="create-exam" [routerLink]="['new']">
+                    <fa-icon [icon]="faPlus" />
+                    <span jhiTranslate="artemisApp.examManagement.createExam"></span>
+                </a>
+            </div>
+        }
+        <div class="row"></div>
+        <br />
+        @if (exams) {
+            <div class="table-responsive" id="exams-table">
+                <table class="table table-striped">
+                    <thead>
+                        <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
+                            <th class="d-md-table-cell" jhiSortBy="id">
+                                <span jhiTranslate="global.field.id"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                            <th jhiSortBy="title">
+                                <span jhiTranslate="artemisApp.exam.title"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                            <th class="d-md-table-cell">
+                                <span jhiTranslate="artemisApp.examStatus.columnTitle"></span>
+                            </th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (exam of exams; track trackId($index, exam)) {
+                            <tr>
+                                <td class="d-md-table-cell">
+                                    @if (course.isAtLeastInstructor) {
+                                        <span>
+                                            <a [routerLink]="[exam.id]">{{ exam.id }}</a>
+                                        </span>
+                                    } @else {
+                                        {{ exam.id }}
+                                    }
+                                </td>
+                                <td class="d-md-table-cell">
+                                    <ng-container>
+                                        @if (course.isAtLeastInstructor) {
+                                            <div class="bold">
+                                                <a id="exam-{{ exam.id }}-title" [routerLink]="[exam.id]">{{ exam.title }}</a>
+                                            </div>
+                                        } @else {
+                                            <span>
+                                                {{ exam.title }}
+                                            </span>
+                                        }
+                                        @if (!exam.testExam) {
+                                            <div class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></div>
+                                        }
+                                        @if (exam.testExam) {
+                                            <div class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></div>
+                                        }
+                                    </ng-container>
+                                </td>
+                                <td class="d-md-table-cell">
+                                    <jhi-exam-status [exam]="exam" [course]="course" class="d-flex justify-content-center" />
+                                </td>
+                                <td class="d-md-table-cell">
+                                    <div class="btn-group flex-btn-group-container">
+                                        <div class="btn-group-vertical me-1 mb-1 exam-management-button-section">
+                                            @if (course.isAtLeastEditor) {
+                                                <a
+                                                    [routerLink]="[exam.id, 'exercise-groups']"
+                                                    class="btn btn-primary btn-sm me-1 mb-1 exercise-button d-flex align-items-center justify-content-center"
+                                                    id="exercises-button-{{ exam.id }}-groups"
+                                                >
+                                                    <div>
+                                                        <fa-icon [icon]="faListAlt" />
+                                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.exerciseGroups"></span>
+                                                    </div>
+                                                </a>
+                                            }
+                                            @if (course.isAtLeastInstructor) {
+                                                <a
+                                                    [routerLink]="[exam.id, 'student-exams']"
+                                                    class="btn btn-primary btn-sm me-1 mb-1 d-flex align-items-center justify-content-center"
+                                                    id="student-exams-{{ exam.id }}"
+                                                >
+                                                    <div>
+                                                        <fa-icon [icon]="faEye" />
+                                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
+                                                    </div>
+                                                </a>
+                                            }
+                                            @if (!exam.testExam && ((course.isAtLeastTutor && examHasFinished(exam)) || course.isAtLeastInstructor)) {
+                                                <a
+                                                    [routerLink]="[exam.id, 'assessment-dashboard']"
+                                                    class="btn btn-primary btn-sm me-1 mb-1 exercise-button d-flex align-items-center justify-content-center"
+                                                    id="exercises-button-{{ exam.id }}"
+                                                >
+                                                    <div>
+                                                        <fa-icon [icon]="faThList" />
+                                                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
+                                                    </div>
+                                                </a>
+                                            }
+                                            @if (course.isAtLeastInstructor) {
+                                                <a [routerLink]="[exam.id, 'edit']" class="btn btn-warning btn-sm me-1 mb-1 d-flex align-items-center justify-content-center">
+                                                    <div>
+                                                        <fa-icon [icon]="faWrench" />
+                                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                                                    </div>
+                                                </a>
+                                            }
+                                        </div>
+                                        <div class="btn-group-vertical me-1 mb-1 exam-management-button-section">
+                                            @if (course.isAtLeastInstructor) {
+                                                <a [routerLink]="[exam.id, 'test-runs']" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">
+                                                    <fa-icon [icon]="faUser" />
+                                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
+                                                </a>
+                                            }
+                                            @if (!exam.testExam && course.isAtLeastInstructor) {
+                                                <a
+                                                    [routerLink]="[exam.id, 'students']"
+                                                    class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard"
+                                                    id="student-button-{{ exam.id }}"
+                                                >
+                                                    <fa-icon [icon]="faUser" />
+                                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.students"></span>
+                                                </a>
+                                            }
+                                            @if (course.isAtLeastInstructor) {
+                                                <a [routerLink]="['/course-management', course.id, 'exams', exam.id, 'scores']" class="btn btn-info btn-sm me-1 mb-1">
+                                                    <fa-icon [icon]="faEye" />
+                                                    <span class="d-none d-md-inline" jhiTranslate="entity.action.scores"></span>
+                                                </a>
+                                            }
+                                            @if (course.isAtLeastInstructor) {
+                                                <a [routerLink]="[exam.id]" class="btn btn-info btn-sm me-1 mb-1" id="checklist-button-{{ exam.id }}">
+                                                    <fa-icon [icon]="faThList" />
+                                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.examChecklist"></span>
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+}

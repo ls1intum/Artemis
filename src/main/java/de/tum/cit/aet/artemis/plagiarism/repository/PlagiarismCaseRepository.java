@@ -1,23 +1,25 @@
 package de.tum.cit.aet.artemis.plagiarism.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDTO;
 
 /**
  * Spring Data JPA repository for the PlagiarismCase entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(PlagiarismEnabled.class)
+@Lazy
 @Repository
 public interface PlagiarismCaseRepository extends ArtemisJpaRepository<PlagiarismCase, Long> {
 
@@ -88,12 +90,25 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
             """)
     List<PlagiarismCase> findByExamIdAndStudentId(@Param("examId") Long examId, @Param("studentId") Long studentId);
 
+    // The left join fetches are done on ManyToOne relationships to avoid that Hibernate fetches
     @Query("""
-            SELECT plagiarismCase
-            FROM PlagiarismCase plagiarismCase
-            WHERE plagiarismCase.exercise.course.id = :courseId
+            SELECT DISTINCT p
+            FROM PlagiarismCase p
+                LEFT JOIN FETCH p.student
+                LEFT JOIN FETCH p.exercise
+                LEFT JOIN FETCH p.team
+                LEFT JOIN FETCH p.post
+            WHERE p.exercise.course.id = :courseId
             """)
     List<PlagiarismCase> findByCourseId(@Param("courseId") Long courseId);
+
+    // The left join fetches are done on ManyToOne relationships to avoid that Hibernate fetches
+    @Query("""
+            SELECT DISTINCT new de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDTO(p.id, p.verdict, p.student.id)
+            FROM PlagiarismCase p
+            WHERE p.exercise.course.id = :courseId
+            """)
+    List<PlagiarismCaseDTO> findPlagiarismCaseDtoByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT plagiarismCase
@@ -166,7 +181,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
     @Query("""
             SELECT COUNT(plagiarismCase)
             FROM PlagiarismCase plagiarismCase
-            WHERE plagiarismCase.student.isDeleted = FALSE
+            WHERE plagiarismCase.student.deleted = FALSE
                 AND plagiarismCase.exercise.id = :exerciseId
             """)
     long countByExerciseId(@Param("exerciseId") long exerciseId);

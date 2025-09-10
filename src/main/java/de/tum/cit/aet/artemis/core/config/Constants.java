@@ -2,12 +2,6 @@ package de.tum.cit.aet.artemis.core.config;
 
 import java.util.regex.Pattern;
 
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.lti.web.LtiResource;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
-
 /**
  * Application constants.
  */
@@ -23,10 +17,6 @@ public final class Constants {
     public static final int PASSWORD_MAX_LENGTH = 100;
 
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
-
-    public static final int SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS = 15;
-
-    public static final int SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS = 5;
 
     // Regex for acceptable logins
     public static final String LOGIN_REGEX = "^[_'.@A-Za-z0-9-]*$";
@@ -52,16 +42,15 @@ public final class Constants {
 
     /**
      * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
-     * Submissions after the grace period exceeded will be flagged as illegal.
+     * Submissions after the grace period exceeded will be unrated.
      * <p>
-     * This is needed because locking programming exercise repositories might take up to 60 seconds,
-     * especially for exercises with many participants.
      * If the student was able to successfully push their solution, this solution should still be graded, even if
-     * the push was a few seconds late.
-     *
-     * @see ProgrammingSubmissionService#isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User, ProgrammingSubmission)
+     * the processing of the push was up to 1s late.
+     * <p>
+     * Have a look at setRatedIfNotAfterDueDate(Participation participation, ZonedDateTime submissionDate) in
+     * de.tum.cit.aet.artemis.assessment.domain.Result.
      */
-    public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 60;
+    public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 1;
 
     public static final String FILEPATH_ID_PLACEHOLDER = "PLACEHOLDER_FOR_ID";
 
@@ -69,7 +58,7 @@ public final class Constants {
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/assessment/public/programming-exercises/new-result";
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/programming/public/programming-exercises/new-result";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
@@ -108,8 +97,6 @@ public final class Constants {
     // Used to cut off CI specific path segments when receiving static code analysis reports
     public static final String ASSIGNMENT_DIRECTORY = "/" + ASSIGNMENT_REPO_NAME + "/";
 
-    public static final String TEST_WORKING_DIRECTORY = "test";
-
     // Used as a value for <sourceDirectory> for the Java template pom.xml
     public static final String STUDENT_WORKING_DIRECTORY = ASSIGNMENT_DIRECTORY + "src";
 
@@ -135,18 +122,6 @@ public final class Constants {
     public static final int MAX_SUBMISSION_MODEL_LENGTH = 100_000; // 100.000 characters
 
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
-
-    public static final String TEST_CASES_DUPLICATE_NOTIFICATION = "There are duplicated test cases in this programming exercise. All test cases have to be unique and cannot have the same name. The following test cases are duplicated: ";
-
-    public static final String TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION = "Build and Test run complete. New results were created for the programming exercise's student submissions with the updated test case settings.";
-
-    public static final String BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE = "Build run triggered for programming exercise";
-
-    public static final String BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE = "All builds triggered for programming exercise";
-
-    public static final String PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION = "When stashing the changes for the student repositories, not all operations were successful. Number of failed operations: ";
-
-    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION = "The unsubmitted changes in the student repositories for this programming exercise were stashed successfully.";
 
     /**
      * Maximum length in the database for the feedback detail text.
@@ -179,6 +154,9 @@ public final class Constants {
     // Also, the value on the client side must match this value.
     public static final int COMPLAINT_TEXT_LIMIT = 65535;
 
+    // This value limits the amount of characters allowed for custom instructions in Iris sub-settings.
+    public static final int IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
+
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
     public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";
@@ -210,8 +188,6 @@ public final class Constants {
     // same constant as in the client
     public static final int EXAM_START_WAIT_TIME_MINUTES = 5;
 
-    public static final int EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES = 1;
-
     public static final String TOGGLE_STUDENT_EXAM_SUBMITTED = "TOGGLE_STUDENT_EXAM_SUBMITTED";
 
     public static final String TOGGLE_STUDENT_EXAM_UNSUBMITTED = "TOGGLE_STUDENT_EXAM_UNSUBMITTED";
@@ -238,11 +214,7 @@ public final class Constants {
 
     public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";
 
-    public static final String INFO_COMMIT_HASH_URL_DETAIL = "commitHashURLTemplate";
-
     public static final String INFO_SSH_CLONE_URL_DETAIL = "sshCloneURLTemplate";
-
-    public static final String INFO_SSH_KEYS_URL_DETAIL = "sshKeysURL";
 
     public static final String INFO_CODE_BUTTON_REPOSITORY_AUTHENTICATION_MECHANISMS = "repositoryAuthenticationMechanisms";
 
@@ -261,14 +233,6 @@ public final class Constants {
     public static final String ALLOWED_COURSE_REGISTRATION_USERNAME_PATTERN = "allowedCourseRegistrationUsernamePattern";
 
     public static final String ARTEMIS_GROUP_DEFAULT_PREFIX = "artemis-";
-
-    public static final String HAZELCAST_QUIZ_SCHEDULER = "quizScheduleServiceExecutor";
-
-    public static final String HAZELCAST_QUIZ_PREFIX = "quiz-";
-
-    public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
-
-    public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
 
     public static final int HAZELCAST_PATH_SERIALIZER_ID = 2;
 
@@ -351,22 +315,23 @@ public final class Constants {
     public static final String PROFILE_ATHENA = "athena";
 
     /**
-     * The name of the Spring profile used for Atlas functionality.
-     */
-    public static final String PROFILE_ATLAS = "atlas";
-
-    /**
      * The name of the Spring profile used for Athena functionality.
      */
     public static final String PROFILE_APOLLON = "apollon";
 
     /**
-     * The name of the Spring profile used for the Aeolus external system.
+     * The name of the Spring profile used for the external Aeolus system.
      */
     public static final String PROFILE_AEOLUS = "aeolus";
 
     /**
-     * The name of the Spring profile used for activating LTI in Artemis, see {@link LtiResource}.
+     * The name of the Spring profile used for the external LDAP system.
+     * Use this profile if you want to synchronize users with an external LDAP system, but you want to route the authentication through another system
+     */
+    public static final String PROFILE_LDAP = "ldap";
+
+    /**
+     * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.cit.aet.artemis.lti.web.LtiResource}.
      */
     public static final String PROFILE_LTI = "lti";
 
@@ -375,9 +340,32 @@ public final class Constants {
      */
     public static final String PROFILE_SAML2 = "saml2";
 
+    /**
+     * The name of the Spring profile used for activating the scheduling functionality.
+     * NOTE: please only use this profile if the service is not used in non-scheduling services or resources, otherwise the multi node configuration does not work.
+     * If you need to communicate scheduling changes (e.g. based on exercise / lecture / slides changes) to node1 with scheduling active,
+     * please use {@link de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService} and
+     * {@link de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageReceiveService}
+     */
     public static final String PROFILE_SCHEDULING = "scheduling";
 
+    /**
+     * Profile combination for one primary node (in multi node setups, we typically call this node1), where scheduling AND core is active
+     * The distinction is necessary, because otherwise most scheduled operations (regarding database and file system) should only be executed ONCE on the primary node and NOT
+     * on secondary nodes.
+     * NOTE: secondary nodes should only use PROFILE_CORE
+     */
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
+
+    /**
+     * Profile combination for one primary node (in multi node setups, we typically call this node1), where scheduling, core AND iris is active
+     */
+    public static final String PROFILE_CORE_AND_SCHEDULING_AND_IRIS = PROFILE_CORE + " & " + PROFILE_SCHEDULING + " & " + PROFILE_IRIS;
+
+    /**
+     * Profile combination for one primary node, where LTI AND scheduling is active
+     */
+    public static final String PROFILE_LTI_AND_SCHEDULING = PROFILE_LTI + " & " + PROFILE_SCHEDULING;
 
     /**
      * The name of the Spring profile used for Theia as an external online IDE.
@@ -395,6 +383,81 @@ public final class Constants {
     public static final String THEIA_PORTAL_URL = "theiaPortalURL";
 
     /**
+     * The InfoContributor's detail key for the active module features.
+     */
+    public static final String ACTIVE_MODULE_FEATURES = "activeModuleFeatures";
+
+    /**
+     * The name of the module feature used for Passkey functionality.
+     */
+    public static final String FEATURE_PASSKEY = "passkey";
+
+    /**
+     * The name of the module feature used for Atlas functionality.
+     */
+    public static final String MODULE_FEATURE_ATLAS = "atlas";
+
+    /**
+     * The name of the module feature used for Exam functionality.
+     */
+    public static final String MODULE_FEATURE_EXAM = "exam";
+
+    /**
+     * The name of the module feature used for plagiarism functionality.
+     */
+    public static final String MODULE_FEATURE_PLAGIARISM = "plagiarism";
+
+    /**
+     * The name of the module feature used for Text Exercise functionality.
+     */
+    public static final String MODULE_FEATURE_TEXT = "text";
+
+    /**
+     * The name of the module feature used for Atlas functionality.
+     */
+    public static final String MODULE_FEATURE_TUTORIALGROUP = "tutorialgroup";
+
+    /**
+     * The name of the property used to enable or disable Atlas functionality.
+     */
+    public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
+
+    /**
+     * The name of the property used to enable or disable exam functionality.
+     */
+    public static final String EXAM_ENABLED_PROPERTY_NAME = "artemis.exam.enabled";
+
+    /**
+     * The name of the property used to enable or disable plagiarism functionality.
+     */
+    public static final String PLAGIARISM_ENABLED_PROPERTY_NAME = "artemis.plagiarism.enabled";
+
+    /**
+     * The name of the property used to enable or disable text exercise functionality.
+     */
+    public static final String TEXT_ENABLED_PROPERTY_NAME = "artemis.text.enabled";
+
+    /**
+     * The name of the property used to enable or disable tutorial group functionality.
+     */
+    public static final String TUTORIAL_GROUP_ENABLED_PROPERTY_NAME = "artemis.tutorialgroup.enabled";
+
+    /**
+     * The name of the property used to enable or disable the passkey authentication functionality.
+     */
+    public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";
+
+    /**
+     * The name of the property used to define the directories for file uploads.
+     */
+    public static final String UPLOADS_FILE_PATH_PROPERTY_NAME = "artemis.file-upload-path";
+
+    /**
+     * The fallback value when no value for the uploads file path is defined.
+     */
+    public static final String UPLOADS_FILE_PATH_DEFAULT = "uploads";
+
+    /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
@@ -410,34 +473,19 @@ public final class Constants {
     public static final int PUSH_NOTIFICATION_VERSION = 1;
 
     /**
-     * The value of the version field we send with each push notification to the native clients (Android & iOS).
+     * The directory in the docker container in which the results can be found
      */
-    public static final int PUSH_NOTIFICATION_MINOR_VERSION = 2;
+    public static final String LOCAL_CI_RESULTS_DIRECTORY = "/results";
 
     /**
      * The directory in the docker container in which the build script is executed
      */
-    public static final String LOCALCI_WORKING_DIRECTORY = "/var/tmp";
-
-    /**
-     * The directory in the docker container in which the results can be found
-     */
-    public static final String LOCALCI_RESULTS_DIRECTORY = "/results";
-
-    /**
-     * The directory to which repositories temporarely get cloned for the build job execution
-     */
-    public static final String CHECKED_OUT_REPOS_TEMP_DIR = "checked-out-repos";
+    public static final String LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY = "/var/tmp";
 
     /**
      * Minimum score for a result to be considered successful and shown in green
      */
     public static final int MIN_SCORE_GREEN = 80;
-
-    /**
-     * Minimum score for a result to be considered partially successful and shown in orange
-     */
-    public static final int MIN_SCORE_ORANGE = 40;
 
     public static final String ASSIGNMENT_REPO_PLACEHOLDER = "${studentWorkingDirectory}";
 
@@ -451,8 +499,9 @@ public final class Constants {
 
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
 
-    // TODO TW: This "feature" is only temporary for a paper.
-    public static final String ICER_PAPER_FLAG = "ICER 2025 Paper a5157934-9092-4a72-addc-3aaf489debdc";
+    public static final String JWT_COOKIE_NAME = "jwt";
+
+    public static final String BEARER_PREFIX = "Bearer ";
 
     private Constants() {
     }

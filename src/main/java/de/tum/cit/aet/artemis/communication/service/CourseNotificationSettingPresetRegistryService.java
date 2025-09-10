@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.communication.dto.UserCourseNotificationSettingPre
  * Registry service that provides options from the setting presets.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class CourseNotificationSettingPresetRegistryService {
 
@@ -80,10 +82,8 @@ public class CourseNotificationSettingPresetRegistryService {
     public List<UserCourseNotificationSettingPresetDTO> getSettingPresetDTOs() {
         List<UserCourseNotificationSettingPresetDTO> presetDTOList = new ArrayList<>();
 
-        presets.forEach((key, value) -> {
-            presetDTOList.add(new UserCourseNotificationSettingPresetDTO(value.getReadablePresetIdentifier(), getPresetId(value.getClass()).shortValue(),
-                    value.getPresetMapWithStringKeys()));
-        });
+        presets.forEach((key, value) -> presetDTOList.add(
+                new UserCourseNotificationSettingPresetDTO(value.getReadablePresetIdentifier(), getPresetId(value.getClass()).shortValue(), value.getPresetMapWithStringKeys())));
 
         return presetDTOList;
     }

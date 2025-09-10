@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Repository for the {@link UserCourseNotificationStatus} entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface UserCourseNotificationStatusRepository extends ArtemisJpaRepository<UserCourseNotificationStatus, Long> {
 
@@ -86,4 +88,12 @@ public interface UserCourseNotificationStatusRepository extends ArtemisJpaReposi
             """)
     @Cacheable(cacheNames = CourseNotificationCacheService.USER_COURSE_NOTIFICATION_CACHE, key = "'user_course_notification_count_' + #userId + '_' + #courseId")
     Long countUnseenCourseNotificationsForUserInCourse(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /**
+     * Find all course notification status by user id.
+     *
+     * @param userId id to query for
+     * @return list of course notification status for the user
+     */
+    List<UserCourseNotificationStatus> findAllByUserId(long userId);
 }

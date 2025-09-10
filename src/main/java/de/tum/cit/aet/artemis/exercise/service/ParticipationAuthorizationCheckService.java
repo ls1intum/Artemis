@@ -2,10 +2,13 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Optional;
+
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -14,11 +17,12 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -29,6 +33,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ParticipationAuthorizationCheckService {
 
@@ -46,26 +51,38 @@ public class ParticipationAuthorizationCheckService {
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
-    private final ParticipationRepository participationRepository;
-
     private final SubmissionRepository submissionRepository;
 
-    private final StudentExamRepository studentExamRepository;
+    private final Optional<StudentExamApi> studentExamApi;
+
+    private final StudentParticipationRepository studentParticipationRepository;
 
     public ParticipationAuthorizationCheckService(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             AuthorizationCheckService authCheckService, TeamRepository teamRepository, ExerciseDateService exerciseDateService,
-            SubmissionPolicyRepository submissionPolicyRepository, ParticipationRepository participationRepository, SubmissionRepository submissionRepository,
-            StudentExamRepository studentExamRepository) {
+            SubmissionPolicyRepository submissionPolicyRepository, SubmissionRepository submissionRepository, Optional<StudentExamApi> studentExamApi,
+            StudentParticipationRepository studentParticipationRepository) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-
         this.authCheckService = authCheckService;
         this.teamRepository = teamRepository;
         this.exerciseDateService = exerciseDateService;
         this.submissionPolicyRepository = submissionPolicyRepository;
-        this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
-        this.studentExamRepository = studentExamRepository;
+        this.studentExamApi = studentExamApi;
+        this.studentParticipationRepository = studentParticipationRepository;
+    }
+
+    /**
+     * Checks if the current user is allowed to access the given participation.
+     * <p>
+     * Throws an {@link AccessForbiddenException} if not.
+     *
+     * @param participationId the id of the participation to check access for.
+     */
+    public void checkCanAccessParticipationElseThrow(long participationId) {
+        if (!canAccessParticipation(participationId)) {
+            throw new AccessForbiddenException("participation", participationId);
+        }
     }
 
     /**
@@ -82,6 +99,26 @@ public class ParticipationAuthorizationCheckService {
         else if (!canAccessParticipation(participation)) {
             throw new AccessForbiddenException("participation", participation.getId());
         }
+    }
+
+    /**
+     * Checks if the current user is allowed to access the participation
+     * 1. Either the user owns the participations or 2. is at least a teaching assistant in the course of the participation.
+     *
+     * @param participationId The id of the participation to check access for.
+     * @return True, if the current user is allowed to access the participation; false otherwise.
+     */
+    public boolean canAccessParticipation(long participationId) {
+        String userLogin = userRepository.getCurrentUserLogin();
+        // 1. Check if the user owns the participation
+        // 1a. StudentParticipation: the user is the owner of the participation
+        // 1b. TeamParticipation: the user is a member of the team
+        boolean isOwner = studentParticipationRepository.isOwnerOfStudentParticipation(userLogin, participationId);
+        if (isOwner) {
+            return true;
+        }
+        // 2. Check if the user is at least a teaching assistant of the course
+        return userRepository.isAtLeastTeachingAssistantInParticipation(userLogin, participationId);
     }
 
     /**
@@ -163,7 +200,8 @@ public class ParticipationAuthorizationCheckService {
 
     /**
      * Determines whether a given programming exercise participation is locked.
-     * A participation is considered locked if:
+     * A practice mode participation is never locked.
+     * Otherwise, a participation is considered locked if:
      * <ul>
      * <li>The due date of the exercise has passed.</li>
      * <li>The exercise is an exam exercise, and:
@@ -181,12 +219,23 @@ public class ParticipationAuthorizationCheckService {
      * @return {@code true} if the participation is locked based on the conditions above; {@code false} otherwise.
      */
     public boolean isLocked(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise exercise) {
+        if (participation.isPracticeMode()) {
+            return false;
+        }
+
         if (exerciseDateService.isAfterDueDate(participation, exercise)) {
             return true;
         }
 
         if (exercise.isExamExercise()) {
-            var studentExamSubmitted = studentExamRepository.isSubmitted(exercise.getExam().getId(), participation.getParticipant().getId());
+            var api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+            Optional<Boolean> studentExamSubmitted;
+            if (exercise.isTestExamExercise()) {
+                studentExamSubmitted = api.isSubmitted(participation.getId());
+            }
+            else {
+                studentExamSubmitted = api.isSubmitted(exercise.getExam().getId(), participation.getParticipant().getId());
+            }
             // if the corresponding student exam was already submitted, the participation is locked
             // if the student exam does not exist yet, the participation should not exist either
             return studentExamSubmitted.orElse(true);

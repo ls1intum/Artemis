@@ -1,0 +1,29 @@
+:host {
+    display: block;
+    position: fixed;
+    height: var(--footer-height-prod);
+    left: 0;
+    bottom: 0;
+    background-color: var(--footer-bg);
+    padding: 0.25rem 1rem;
+    width: 100%;
+    z-index: 20;
+
+    .footer-text {
+        font-weight: normal;
+        font-size: small;
+    }
+    .footer-git {
+        font-size: 10px;
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+
+    .footer-git-responsive {
+        display: none;
+
+        @media (min-width: 740px) {
+            display: inline;
+        }
+    }
+}

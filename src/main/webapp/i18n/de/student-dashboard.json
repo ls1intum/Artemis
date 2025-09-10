@@ -85,12 +85,13 @@
                 "createChannel": "Kanal erstellen",
                 "browseChannels": "Kanäle durchsuchen",
                 "createGroupChat": "Gruppenchat erstellen",
-                "createDirectChat": "Direkt-Chat erstellen",
+                "createDirectChat": "Direktnachricht erstellen",
                 "groupChats": "Gruppenchats",
                 "directMessages": "Direktnachrichten",
                 "filterConversationPlaceholder": "Konversationen filtern",
                 "setChannelAsRead": "Alle Kanäle als gelesen markieren",
-                "recents": "Kürzliches"
+                "recents": "Kürzliches",
+                "weekRange": "{{ start }} - {{ end }}"
             },
             "menu": {
                 "exercises": "Aufgaben",
@@ -112,7 +113,9 @@
                 "communication": "Kommunikation",
                 "plagiarismCases": "Plagiatsfälle",
                 "gradingSystem": "Notenschlüssel",
-                "faq": "FAQ"
+                "faq": "FAQ",
+                "settings": "Einstellungen",
+                "calendar": "Kalender"
             },
             "exerciseFilter": {
                 "filter": "Filter",
@@ -274,7 +277,8 @@
                 "lectureUnits": "Vorlesungseinheiten",
                 "attachments": "Anhänge",
                 "noAttachments": "Für diese Vorlesung sind keine Anhänge verfügbar.",
-                "date": "Datum",
+                "startDate": "Start",
+                "endDate": "Ende",
                 "notReleased": "Nicht freigegeben",
                 "version": "Version",
                 "isDownloading": "Wird heruntergeladen...",

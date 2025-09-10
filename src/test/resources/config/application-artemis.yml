@@ -3,11 +3,16 @@
 # ===================================================================
 
 artemis:
-    course-archives-path: ./exports/server-integration-test/courses # a folder in which archived courses and exams are stored.
-    legal-path: ./legal/server-integration-test                     # a folder in which legal files (privacy statement, imprint) are stored.
-    repo-clone-path: ./repos/server-integration-test
-    repo-download-clone-path: ./repos-download/server-integration-test
-    data-export-path: ./data-exports/server-integration-test
+    course-archives-path: ./local/server-integration-test/exports/courses
+    legal-path: ./local/server-integration-test/legal
+    repo-clone-path: ./local/server-integration-test/repos
+    repo-download-clone-path: ./local/server-integration-test/repos-download
+    data-export-path: ./local/server-integration-test/data-exports
+    build-logs-path: ./local/server-integration-test/build-logs
+    file-upload-path: ./local/server-integration-test/uploads
+    submission-export-path: ./local/server-integration-test/exports
+    checked-out-repos-path: ./local/server-integration-test/checked-out-repos
+    temp-path: ./local/server-integration-test/temp
     bcrypt-salt-rounds: 4  # We don't need secure passwords for testing. Lower rounds will speed up tests. 4 ist the lowest allowed round count.
     user-management:
         use-external: true
@@ -31,6 +36,11 @@ artemis:
             cleanup-time-minutes: 1
         course-registration:
             allowed-username-pattern: .*
+        password-reset:
+            credential-provider: <provider>
+            links:
+                en: '<link>'
+                de: '<link>'
     version-control:
         user: fake-username-vc # The git user. This is required for build agents
         password: fake-password # The git password. This is required for build agents
@@ -41,7 +51,7 @@ artemis:
         health-api-token: fake-token
         ssh-template-clone-url: ssh://git@version-control.fake.fake:1111/
         default-branch: main
-        local-vcs-repo-path: ./test-local-vcs-repos
+        local-vcs-repo-path: ./local/server-integration-test/local-vcs-repos
     continuous-integration:
         user: fake-username-ci
         password: fake-password

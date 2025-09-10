@@ -9,19 +9,19 @@ import {
     OnInit,
     Output,
     SimpleChanges,
-    ViewChild,
     ViewEncapsulation,
     inject,
+    viewChild,
 } from '@angular/core';
-import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
+import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
-import { QuizQuestionEdit } from 'app/quiz/manage/quiz-question-edit.interface';
-import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
-import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
+import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
+import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
+import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
+import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
+import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { cloneDeep } from 'lodash-es';
-import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { markdownForHtml } from 'app/shared/util/markdown.conversion.util';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
@@ -51,7 +51,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-short-answer-question-edit',
     templateUrl: './short-answer-question-edit.component.html',
-    styleUrls: ['./short-answer-question-edit.component.scss', '../quiz-exercise.scss', '../../../../quiz/shared/quiz.scss'],
+    styleUrls: ['./short-answer-question-edit.component.scss', '../exercise/quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         FaIconComponent,
@@ -76,8 +76,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
 
-    @ViewChild('questionEditor', { static: false }) private questionEditor: MarkdownEditorMonacoComponent;
-    @ViewChild('question', { static: false }) questionElement: ElementRef;
+    private readonly questionEditor = viewChild.required<MarkdownEditorMonacoComponent>('questionEditor');
+    readonly questionElement = viewChild.required<ElementRef>('question');
 
     markdownActions: TextEditorAction[];
     insertShortAnswerOptionAction = new InsertShortAnswerOptionAction();
@@ -90,20 +90,14 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.shortAnswerQuestion = quizQuestion as ShortAnswerQuestion;
     }
 
-    @Input()
-    questionIndex: number;
-    @Input()
-    reEvaluationInProgress: boolean;
+    @Input() questionIndex: number;
+    @Input() reEvaluationInProgress: boolean;
 
-    @Output()
-    questionUpdated = new EventEmitter();
-    @Output()
-    questionDeleted = new EventEmitter();
+    @Output() questionUpdated = new EventEmitter();
+    @Output() questionDeleted = new EventEmitter();
     /** Question move up and down are used for re-evaluate **/
-    @Output()
-    questionMoveUp = new EventEmitter();
-    @Output()
-    questionMoveDown = new EventEmitter();
+    @Output() questionMoveUp = new EventEmitter();
+    @Output() questionMoveDown = new EventEmitter();
 
     readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
@@ -226,7 +220,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     setupQuestionEditor(): void {
         // Sets the counter to the highest spotNr and generates solution options with their mapping (each spotNr)
         this.numberOfSpot = this.shortAnswerQuestion.spots!.length + 1;
-        this.questionEditor.applyOptionPreset(SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS);
+        this.questionEditor().applyOptionPreset(SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS);
         // Generate markdown from question and show result in editor
         this.questionEditorText = this.generateMarkdown();
         this.changeDetector.detectChanges();
@@ -328,6 +322,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             // Assign existing ID if available
             if (this.shortAnswerQuestion.spots.length < existingSpotIDs.length) {
                 spot.id = existingSpotIDs[this.shortAnswerQuestion.spots.length];
+                delete spot.tempID;
             }
             spot.spotNr = +spotID.trim();
             this.shortAnswerQuestion.spots.push(spot);
@@ -342,6 +337,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             // Assign existing ID if available
             if (this.shortAnswerQuestion.solutions.length < existingSolutionIDs.length) {
                 solution.id = existingSolutionIDs[this.shortAnswerQuestion.solutions.length];
+                delete solution.tempID;
             }
             this.shortAnswerQuestion.solutions.push(solution);
 
@@ -408,7 +404,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     addSpotAtCursorVisualMode(): void {
         // check if selection is on the correct div
-        const wrapperDiv = this.questionElement.nativeElement;
+        const wrapperDiv = this.questionElement().nativeElement;
         const selection = window.getSelection()!;
         const child = selection.anchorNode;
 
@@ -447,8 +443,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const currentSpotNumber = this.numberOfSpot;
 
         // split text before first option tag
-        const questionText = this.questionEditor.monacoEditor
-            .getText()
+        const questionText = this.questionEditor()
+            .monacoEditor.getText()
             .split(/\[-option /g)[0]
             .trim();
         this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(questionText);
@@ -461,7 +457,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
         this.setQuestionEditorValue(this.generateMarkdown());
         this.addOptionToSpot(currentSpotNumber, markedText);
-        this.parseMarkdown(this.questionEditor.monacoEditor.getText());
+        this.parseMarkdown(this.questionEditor().monacoEditor.getText());
 
         this.questionUpdated.emit();
     }
@@ -477,8 +473,15 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         }
         const solution = new ShortAnswerSolution();
         solution.text = InsertShortAnswerOptionAction.DEFAULT_TEXT_SHORT;
-        this.insertShortAnswerOptionAction.executeInCurrentEditor({ optionText: solution.text });
-        this.questionUpdated.emit();
+        // Add solution directly to the question if re-evaluation is in progress
+        if (this.reEvaluationInProgress) {
+            this.shortAnswerQuestion.solutions.push(solution);
+            this.questionUpdated.emit();
+            // Use the editor to add the solution
+        } else {
+            this.insertShortAnswerOptionAction.executeInCurrentEditor({ optionText: solution.text });
+            this.questionUpdated.emit();
+        }
     }
 
     /**
@@ -772,6 +775,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     setQuestionEditorValue(text: string): void {
-        this.questionEditor.markdown = text;
+        this.questionEditor().markdown = text;
     }
 }

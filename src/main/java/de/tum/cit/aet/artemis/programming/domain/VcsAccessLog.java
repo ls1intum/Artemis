@@ -108,4 +108,8 @@ public class VcsAccessLog extends DomainObject {
     public RepositoryActionType getRepositoryActionType() {
         return repositoryActionType;
     }
+
+    public Participation getParticipation() {
+        return participation;
+    }
 }

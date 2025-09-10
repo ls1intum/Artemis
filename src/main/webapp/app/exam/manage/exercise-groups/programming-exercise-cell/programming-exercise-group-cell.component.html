@@ -4,64 +4,11 @@
             {{ exercise().shortName || '' }}
         </div>
     }
-    @if (displayRepositoryUri()) {
-        <div>
-            <div>
-                @if (exercise().templateParticipation?.repositoryUri) {
-                    <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
-                                            the links/clone-buttons are disabled--->
-                    @if (!localVCEnabled) {
-                        <span>
-                            <a href="{{ exercise().templateParticipation?.repositoryUri || '' }}" target="_blank">Template</a>
-                        </span>
-                    } @else {
-                        <a [routerLink]="" (click)="downloadRepository(RepositoryType.TEMPLATE)"> <fa-icon [icon]="faDownload" /> Template </a>
-                    }
-                }
-                @if (exercise().templateParticipation?.results?.length) {
-                    <jhi-programming-exercise-instructor-status
-                        [participationType]="participationType.TEMPLATE"
-                        [participation]="exercise().templateParticipation!"
-                        [exercise]="exercise()"
-                    />
-                }
-            </div>
-            <div>
-                @if (exercise().solutionParticipation?.repositoryUri) {
-                    @if (!localVCEnabled) {
-                        <span>
-                            <a href="{{ exercise().solutionParticipation?.repositoryUri || '' }}" target="_blank">Solution</a>
-                        </span>
-                    } @else {
-                        <a [routerLink]="" (click)="downloadRepository(RepositoryType.SOLUTION)"> <fa-icon [icon]="faDownload" /> Solution </a>
-                    }
-                }
-                @if (exercise().solutionParticipation?.results?.length) {
-                    <jhi-programming-exercise-instructor-status
-                        [participationType]="participationType.SOLUTION"
-                        [participation]="exercise().solutionParticipation!"
-                        [exercise]="exercise()"
-                    />
-                }
-            </div>
-            <div>
-                @if (exercise().testRepositoryUri) {
-                    @if (!localVCEnabled) {
-                        <span>
-                            <a href="{{ exercise().testRepositoryUri }}" target="_blank">Test</a>
-                        </span>
-                    } @else {
-                        <a [routerLink]="" (click)="downloadRepository(RepositoryType.TESTS)"> <fa-icon [icon]="faDownload" /> Test </a>
-                    }
-                }
-            </div>
-        </div>
-    }
     @if (displayTemplateUrls()) {
         <div>
             @if (exercise().templateParticipation?.buildPlanId) {
                 <span>
-                    @if (!localVCEnabled) {
+                    @if (!localCIEnabled) {
                         <a target="_blank" rel="noreferrer" href="{{ exercise().templateParticipation!.buildPlanUrl }}">Template</a>
                     } @else {
                         {{ exercise().templateParticipation!.buildPlanId }}
@@ -71,7 +18,7 @@
             <br />
             @if (exercise().solutionParticipation?.buildPlanId) {
                 <span>
-                    @if (!localVCEnabled) {
+                    @if (!localCIEnabled) {
                         <a target="_blank" rel="noreferrer" href="{{ exercise().solutionParticipation!.buildPlanUrl }}">Solution</a>
                     } @else {
                         {{ exercise().solutionParticipation!.buildPlanId }}
@@ -81,7 +28,7 @@
             <br />
         </div>
     }
-    @if (displayEditorModus()) {
+    @if (displayEditorMode()) {
         <div>
             <div class="d-flex justify-content-between">
                 <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.offlineIde'"></span>

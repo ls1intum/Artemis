@@ -15,18 +15,20 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
-class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "repoprogexpartjenk";
 
     @BeforeEach
     void setup() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 
     @AfterEach
@@ -37,7 +39,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestBuildLogsFails() throws Exception {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        var programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        var programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
         var programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
@@ -61,7 +63,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
         jenkinsRequestMockProvider.mockGetJob(programmingExercise.getProjectKey(), buildPlanId, jobWithDetails, false);
         jenkinsRequestMockProvider.mockGetBuildStatus(programmingExercise.getProjectKey(), buildPlanId, true, true, false, true);
 
-        var url = "/api/programming/repository/" + programmingExerciseParticipation.getId() + "/buildlogs";
+        var url = "/api/programming/participations/" + programmingExerciseParticipation.getId() + "/buildlogs";
         var buildLogs = request.getList(url, HttpStatus.OK, BuildLogEntry.class);
         assertThat(buildLogs).hasSize(3);
     }

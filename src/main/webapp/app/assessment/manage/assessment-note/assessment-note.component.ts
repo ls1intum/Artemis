@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { AssessmentNote } from 'app/entities/assessment-note.model';
+import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({

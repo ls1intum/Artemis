@@ -1,6 +1,6 @@
 import { AfterContentChecked, ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { Observable, Subscription, map, startWith } from 'rxjs';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.service.messaging;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
  * As this node can handle all the processing without interaction with another node, everything is handled locally (without Hazelcast).
  * Important: There is no need to go through the broker, as this class is only active on the main instance!
  */
+@Lazy
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class MainInstanceMessageSendService implements InstanceMessageSendService {
@@ -30,21 +32,6 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     public void sendProgrammingExerciseScheduleCancel(Long exerciseId) {
         instanceMessageReceiveService.processScheduleProgrammingExerciseCancel(exerciseId);
         instanceMessageReceiveService.processPotentialAthenaExerciseScheduleCancel(exerciseId);
-    }
-
-    @Override
-    public void sendModelingExerciseSchedule(Long exerciseId) {
-        instanceMessageReceiveService.processScheduleModelingExercise(exerciseId);
-    }
-
-    @Override
-    public void sendModelingExerciseScheduleCancel(Long exerciseId) {
-        instanceMessageReceiveService.processScheduleModelingExerciseCancel(exerciseId);
-    }
-
-    @Override
-    public void sendModelingExerciseInstantClustering(Long exerciseId) {
-        instanceMessageReceiveService.processModelingExerciseInstantClustering(exerciseId);
     }
 
     @Override
@@ -90,5 +77,25 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     @Override
     public void sendQuizExerciseStartCancel(Long exerciseId) {
         instanceMessageReceiveService.processCancelQuizStart(exerciseId);
+    }
+
+    @Override
+    public void sendSlideUnhideSchedule(Long slideId) {
+        instanceMessageReceiveService.processScheduleSlideUnhide(slideId);
+    }
+
+    @Override
+    public void sendSlideUnhideScheduleCancel(Long slideId) {
+        instanceMessageReceiveService.processCancelSlideUnhide(slideId);
+    }
+
+    @Override
+    public void sendLectureUnitAutoIngestionSchedule(Long lectureUnitId) {
+        instanceMessageReceiveService.processLectureUnitAutoIngestionSchedule(lectureUnitId);
+    }
+
+    @Override
+    public void sendLectureUnitAutoIngestionScheduleCancel(Long lectureUnitId) {
+        instanceMessageReceiveService.processLectureUnitAutoIngestionScheduleCancel(lectureUnitId);
     }
 }

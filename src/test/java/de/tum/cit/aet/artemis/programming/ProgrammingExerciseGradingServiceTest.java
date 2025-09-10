@@ -1,9 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
@@ -12,11 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import jakarta.mail.internet.MimeMessage;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +33,7 @@ import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -100,7 +95,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             createStudentExam(programmingExercise, student1);
         }
         result = new Result();
-        result.setParticipation(participation);
+        Submission submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        result.setSubmission(submission);
     }
 
     /**
@@ -170,8 +166,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             programmingExercise.setMaxStaticCodeAnalysisPenalty(40);
             programmingExercise.setBuildConfig(super.programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
             programmingExercise = super.programmingExerciseRepository.save(programmingExercise);
-            programmingExercise = super.programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-            programmingExercise = super.programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+            programmingExercise = super.programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+            programmingExercise = super.programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
             return programmingExercise;
         }
 
@@ -231,9 +227,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         assertThat(duplicateFeedbackEntries).hasSize(2);
         int countOfNewFeedbacks = originalFeedbackSize + duplicateFeedbackEntries.size();
         assertThat(result.getFeedbacks()).hasSize(countOfNewFeedbacks);
-        String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + "test1, test3";
-        verify(groupNotificationService).notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
-        verify(javaMailSender, timeout(4000)).send(any(MimeMessage.class));
+        verify(groupNotificationService).notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise);
     }
 
     @Test
@@ -300,7 +294,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         testCases.get("test3").active(false).weight(0.);
         testCaseRepository.saveAll(testCases.values());
 
-        Result result = new Result();
+        var submission = participationUtilService.addSubmission(programmingExercise, new ProgrammingSubmission(), student1);
+        var result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
         result.addFeedback(new Feedback().result(result).testCase(testCases.get("test1")).positive(false).type(FeedbackType.AUTOMATIC));
         result.addFeedback(new Feedback().result(result).testCase(testCases.get("test2")).positive(true).type(FeedbackType.AUTOMATIC));
 
@@ -325,40 +320,48 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
         testCaseRepository.saveAll(testCases.values());
 
-        Participation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
+        Submission submission1 = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
         var result1 = new Result();
-        result1.setParticipation(participation);
+        result1.setSubmission(submission1);
         result1 = updateAndSaveAutomaticResult(result1, false, false, true);
 
+        Submission submission2 = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
         var result2 = new Result();
-        result2.setParticipation(participation);
+        result2.setSubmission(submission2);
         result2 = updateAndSaveAutomaticResult(result2, true, false, false);
 
+        Submission submission3 = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
         var result3 = new Result();
-        result3.setParticipation(participation);
+        result3.setSubmission(submission3);
         result3 = updateAndSaveAutomaticResult(result3, false, true, false);
 
+        Submission submission4 = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
         var result4 = new Result();
-        result4.setParticipation(participation);
+        result4.setSubmission(submission4);
         result4 = updateAndSaveAutomaticResult(result4, false, true, true);
 
+        Submission submission5 = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
         var result5 = new Result();
-        result5.setParticipation(participation);
+        result5.setSubmission(submission5);
         result5 = updateAndSaveAutomaticResult(result5, true, true, true);
 
+        Submission submission6 = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
         var result6 = new Result();
-        result6.setParticipation(participation);
+        result6.setSubmission(submission6);
         result6 = updateAndSaveAutomaticResult(result6, false, false, false);
 
         // Build failure
+        Submission submissionBF = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
         var resultBF = new Result().feedbacks(List.of()).rated(true).score(0D).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
-        resultBF.setParticipation(participation);
+        resultBF.setSubmission(submissionBF);
         gradingService.calculateScoreForResult(resultBF, programmingExercise, true);
 
         // Missing feedback
         var resultMF = new Result();
-        resultMF.setParticipation(participation);
+        Submission submissionMF = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        resultMF.setSubmission(submissionMF);
         var feedbackMF = new Feedback().result(result).testCase(testCases.get("test3")).positive(true).type(FeedbackType.AUTOMATIC).result(resultMF);
         resultMF.feedbacks(new ArrayList<>(List.of(feedbackMF))) // List must be mutable
                 .rated(true).score(0D).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
@@ -420,22 +423,22 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         programmingExercise.setBonusPoints(programmingExercise.getMaxPoints());
         programmingExerciseRepository.save(programmingExercise);
 
-        Participation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
-        var result1 = new Result();
-        result1.setParticipation(participation);
+        var submission1 = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        var result1 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission1);
         result1 = updateAndSaveAutomaticResult(result1, false, false, true);
 
-        var result2 = new Result();
-        result2.setParticipation(participation);
+        var submission2 = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        var result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
         result2 = updateAndSaveAutomaticResult(result2, true, false, true);
 
-        var result3 = new Result();
-        result3.setParticipation(participation);
+        var submission3 = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        var result3 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission3);
         result3 = updateAndSaveAutomaticResult(result3, true, true, false);
 
-        var result4 = new Result();
-        result4.setParticipation(participation);
+        var submission4 = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        var result4 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission4);
         result4 = updateAndSaveAutomaticResult(result4, false, true, true);
 
         // Assertions result1 - calculated
@@ -521,7 +524,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     void shouldKeepTestsWithAfterDueDateFlagIfDueDateHasPassed() {
         // Set programming exercise due date in the past.
         programmingExercise = changeRelevantExerciseEndDate(programmingExercise, ZonedDateTime.now().minusHours(10));
-        result.getParticipation().setExercise(programmingExercise);
+        result.getSubmission().getParticipation().setExercise(programmingExercise);
 
         var tests = getTestCases(programmingExercise);
         List<Feedback> feedbacks = new ArrayList<>();
@@ -549,9 +552,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReEvaluateScoreOfTheCorrectResults() throws Exception {
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
-        programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         var testCases = createTestCases(false);
@@ -567,27 +570,27 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         // Tests
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         // template 0 %
         {
             var participation = programmingExercise.getTemplateParticipation();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
         // solution 100 %
         {
             var participation = programmingExercise.getSolutionParticipation();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 100D, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
         verifyStudentScoreCalculations(testParticipations);
@@ -610,9 +613,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         testCaseRepository.save(invisibleTestCase);
 
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
-        programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         final var testCases = createTestCases(true);
@@ -628,7 +631,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         // Tests
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         // the invisible test case should however be visible for the template and solution repos
@@ -636,21 +639,21 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         // template 0 %
         {
             var participation = programmingExercise.getTemplateParticipation();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, 4, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
         // solution 100 %
         {
             var participation = programmingExercise.getSolutionParticipation();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 100D, 4, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
         verifyStudentScoreCalculations(testParticipations);
@@ -660,9 +663,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldUpdateTheLatestResultOfASingleParticipation() {
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
-        programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         final var testCases = createTestCases(false);
@@ -682,9 +685,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldUpdateOnlyResultsForParticipationsWithoutIndividualDueDate() {
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
-        programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         final var testCases = createTestCases(false);
@@ -696,14 +699,14 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         participationWithIndividualDueDate = studentParticipationRepository.save((StudentParticipation) participationWithIndividualDueDate);
         final Long participationWithIndividualDueDateId = participationWithIndividualDueDate.getId();
 
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         final var updated = programmingExerciseGradingService.updateResultsOnlyRegularDueDateParticipations(programmingExercise);
         // four student results + template + solution
         assertThat(updated).hasSize(6);
 
-        final var updatedParticipationIds = updated.stream().map(result -> result.getParticipation().getId()).collect(Collectors.toSet());
+        final var updatedParticipationIds = updated.stream().map(result -> result.getSubmission().getParticipation().getId()).collect(Collectors.toSet());
         assertThat(updatedParticipationIds).hasSize(5).allMatch(participationId -> !Objects.equals(participationId, participationWithIndividualDueDateId));
     }
 
@@ -711,9 +714,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testWeightSumZero() {
         programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
-        programmingExercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseService
                 .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         final var testCases = createTestCases(false);
@@ -730,11 +733,11 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
         // even though the test case weights are all zero, the solution should receive a score
         // => every test case is weighted with 1.0 in that case
-        final var updatedSolution = updatedResults.stream().filter(result -> result.getParticipation() instanceof SolutionProgrammingExerciseParticipation).findFirst()
-                .orElseThrow();
+        final var updatedSolution = updatedResults.stream().filter(result -> result.getSubmission().getParticipation() instanceof SolutionProgrammingExerciseParticipation)
+                .findFirst().orElseThrow();
         assertThat(updatedSolution.getScore()).isCloseTo(66.7, Offset.offset(offsetByTenThousandth));
 
-        final var updatedStudentResults = updatedResults.stream().filter(result -> result.getParticipation() instanceof StudentParticipation).toList();
+        final var updatedStudentResults = updatedResults.stream().filter(result -> result.getSubmission().getParticipation() instanceof StudentParticipation).toList();
         assertThat(updatedStudentResults).hasSize(5);
 
         for (final var result : updatedStudentResults) {
@@ -754,8 +757,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         Result result;
 
         if (templateParticipation) {
-            programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-            result = programmingExerciseUtilService.addTemplateSubmissionWithResult(programmingExercise.getId());
+            programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+            result = programmingExerciseUtilService.addTemplateSubmissionWithResult(programmingExercise);
         }
         else {
             result = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, new ProgrammingSubmission(), student1);
@@ -821,14 +824,14 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
     private void verifyStudentScoreCalculation(final Participation[] testParticipations, int student) {
         var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[student - 1].getId()).orElseThrow();
-        var results = participation.getResults();
+        var results = participationUtilService.getResultsForParticipation(participation);
 
         if (student == 1) {
             // student1 25 %
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 25D, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
         else if (student == 2) {
             // student2 61% % / 75 %
@@ -837,7 +840,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findAny();
             assertThat(manualResultOptional).isPresent();
             testParticipationResult(manualResultOptional.get(), 86D, 6, AssessmentType.SEMI_AUTOMATIC);
-            assertThat(manualResultOptional).contains(participation.findLatestLegalResult());
+            assertThat(manualResultOptional).contains(participation.findLatestResult());
 
             var automaticResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC).findAny();
             assertThat(automaticResultOptional).isPresent();
@@ -846,21 +849,21 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         else if (student == 3) {
             // student3 no result
             assertThat(results).isNullOrEmpty();
-            assertThat(participation.findLatestLegalResult()).isNull();
+            assertThat(participation.findLatestResult()).isNull();
         }
         else if (student == 4) {
             // student4 100%
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 100D, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
         else if (student == 5) {
             // student5 Build failed
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, 0, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
     }
 
@@ -884,8 +887,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         var participationTemplate = programmingExercise.getTemplateParticipation();
         {
             // score 0 %
-            var resultTemplate = new Result().participation(participationTemplate).successful(false).rated(true).score(100D);
-            participationTemplate.setResults(Set.of(resultTemplate));
+            var submissionTemplate = participationUtilService.addSubmission(participationTemplate, new ProgrammingSubmission());
+            var resultTemplate = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submissionTemplate);
+            resultTemplate = resultTemplate.successful(false).rated(true).score(100D);
             updateAndSaveAutomaticResult(resultTemplate, false, false, false);
         }
 
@@ -893,8 +897,10 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         var participationSolution = programmingExercise.getSolutionParticipation();
         {
             // score 75 %
-            var resultSolution = new Result().participation(participationSolution).successful(false).rated(true).score(100D);
-            participationSolution.setResults(Set.of(resultSolution));
+            var submission = participationUtilService.addSubmission(participationSolution, new ProgrammingSubmission());
+            var resultSolution = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+            resultSolution = resultSolution.successful(false).rated(true).score(100D);
+            // participationSolution.setResults(Set.of(resultSolution));
             updateAndSaveAutomaticResult(resultSolution, false, true, true);
         }
 
@@ -905,8 +911,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student1);
             }
             // score 50 %
-            var result1 = new Result().participation(participation1).successful(false).rated(true).score(100D);
-            participation1.setResults(Set.of(result1));
+            var submission1 = participationUtilService.addSubmission(participation1, new ProgrammingSubmission());
+            var result1 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission1);
+            result1 = result1.successful(false).rated(true).score(100D);
             updateAndSaveAutomaticResult(result1, true, true, false);
         }
         testParticipations[0] = participation1;
@@ -918,13 +925,16 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExercise, student2);
             }
             // score 75 %
-            var result2a = new Result().participation(participation2).successful(false).rated(true).score(100D);
+            var submission2a = participationUtilService.addSubmission(participation2, new ProgrammingSubmission());
+            var result2a = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2a);
+            result2a = result2a.successful(false).rated(true).score(100D);
             result2a = updateAndSaveAutomaticResult(result2a, true, false, true);
 
             // score 61 %
+            var submission2b = participationUtilService.addSubmission(participation2, new ProgrammingSubmission());
+            var result2b = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2b);
             var tests = getTestCases(programmingExercise);
-            var result2b = new Result().participation(participation2).score(61D).successful(false).rated(true).completionDate(ZonedDateTime.now())
-                    .assessmentType(AssessmentType.SEMI_AUTOMATIC);
+            result2b = result2b.score(61D).successful(false).rated(true).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.SEMI_AUTOMATIC);
             result2b.addFeedback(new Feedback().result(result2b).testCase(tests.get("test1")).positive(false).type(FeedbackType.AUTOMATIC).credits(0.00));
             result2b.addFeedback(new Feedback().result(result2b).testCase(tests.get("test2")).positive(false).type(FeedbackType.AUTOMATIC).credits(0.00));
             result2b.addFeedback(new Feedback().result(result2b).testCase(tests.get("test3")).positive(true).type(FeedbackType.AUTOMATIC).credits(50.00));
@@ -935,7 +945,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             gradingService.calculateScoreForResult(result2b, programmingExercise, true);
             assertThat(result2b.getScore()).isEqualTo(61);
             result2b = resultRepository.save(result2b);
-            participation2.setResults(Set.of(result2a, result2b));
         }
         testParticipations[1] = participation2;
 
@@ -953,9 +962,10 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExercise, student4);
             }
             // score 100 %
-            var result4 = new Result().participation(participation4).successful(false).rated(true).score(100D);
+            var submission4 = participationUtilService.addSubmission(participation4, new ProgrammingSubmission());
+            var result4 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission4);
+            result4 = result4.successful(false).rated(true).score(100D);
             result4 = updateAndSaveAutomaticResult(result4, true, true, true);
-            participation4.setResults(Set.of(result4));
         }
         testParticipations[3] = participation4;
 
@@ -967,7 +977,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             }
             // Build Failed
             // @formatter:off
-            var result5 = new Result().participation(participation5)
+            var submission5 = participationUtilService.addSubmission(participation5, new ProgrammingSubmission());
+            var result5 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission5);
+            result5
                     .feedbacks(List.of())
                     .score(0D)
                     .rated(true)
@@ -977,7 +989,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             // @formatter:on
             gradingService.calculateScoreForResult(result5, programmingExercise, true);
             result5 = resultRepository.save(result5);
-            participation5.setResults(Set.of(result5));
         }
         testParticipations[4] = participation5;
 
@@ -991,7 +1002,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         if (programmingExerciseSCAEnabled.isExamExercise()) {
             createStudentExam(programmingExerciseSCAEnabled, student1);
         }
-        var result1 = new Result().participation(participation1).successful(false).rated(true).score(100D);
+        var submission1 = participationUtilService.addSubmission(participation1, new ProgrammingSubmission());
+        var result1 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission1);
+        result1 = result.successful(false).rated(true).score(100D);
         // Add some positive test case feedback otherwise the service method won't execute
         result1.addFeedback(new Feedback().result(result1).text("test1").positive(true).type(FeedbackType.AUTOMATIC));
         // Add feedback which belongs to INACTIVE category
@@ -1029,8 +1042,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student1);
             }
             // Capped by limit for exercise -> Score 60
-            var result1 = new Result().participation(participation1);
-            participation1.setResults(Set.of(result1));
+            var submission1 = participationUtilService.addSubmission(participation1, new ProgrammingSubmission());
+            var result1 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission1);
             updateAndSaveAutomaticResult(result1, true, true, true, 10, 10);
         }
         var participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student2);
@@ -1039,26 +1052,26 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student2);
             }
             // Testcase points: 42; Penalty: 4*3 = 12; Score: 71
-            var result2 = new Result().participation(participation2);
-            participation1.setResults(Set.of(result2));
+            var submission2 = participationUtilService.addSubmission(participation2, new ProgrammingSubmission());
+            var result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
             updateAndSaveAutomaticResult(result2, true, true, true, 4, 0);
         }
         // check results without category penalty limits
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation1.getId()).orElseThrow();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 60D, 24, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).orElseThrow();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 71.4, 8, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
         // Also remove max penalty from exercise
@@ -1072,8 +1085,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student3);
             }
             // Penalty will be higher than points -> score 0
-            var result3 = new Result().participation(participation3);
-            participation3.setResults(Set.of(result3));
+            var submission3 = participationUtilService.addSubmission(participation3, new ProgrammingSubmission());
+            var result3 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission3);
             updateAndSaveAutomaticResult(result3, true, true, true, 10, 10);
         }
         var participation4 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student4);
@@ -1082,26 +1095,26 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student4);
             }
             // Testcase points: 35; Penalty: 5*3 + 3*5 = 30; Score: 11
-            var result4 = new Result().participation(participation4);
-            participation4.setResults(Set.of(result4));
+            var submission4 = participationUtilService.addSubmission(participation4, new ProgrammingSubmission());
+            var result4 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission4);
             updateAndSaveAutomaticResult(result4, false, true, true, 5, 3);
         }
         // check results without any limits
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation3.getId()).orElseThrow();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, 24, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation4.getId()).orElseThrow();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 11.9, 12, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
     }
 
@@ -1121,19 +1134,19 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student1);
             }
             // Test case points are capped at 50 first, then the penalty of 19 is calculated but capped at at 40 percent of the maxScore -> score = (50-16.8)/42
-            var result1 = new Result().participation(participation1);
-            participation1.setResults(Set.of(result1));
+            var submission1 = participationUtilService.addSubmission(participation1, new ProgrammingSubmission());
+            var result1 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission1);
             updateAndSaveAutomaticResult(result1, true, true, true, 3, 2);
         }
 
         // check results
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation1.getId()).orElseThrow();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 79.0, 9, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
 
         // Remove max penalty from exercise
@@ -1153,19 +1166,19 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
             }
             // Test case points are capped at 50 first, then the penalty of 55 is calculated but capped at at 100 percent of the maxScore, which means only the achieved bonus
             // points remain
-            var result2 = new Result().participation(participation2);
-            participation2.setResults(Set.of(result2));
+            var submission2 = participationUtilService.addSubmission(participation2, new ProgrammingSubmission());
+            var result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
             updateAndSaveAutomaticResult(result2, true, true, true, 10, 5);
         }
 
         // check result without limits
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).orElseThrow();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 19.0, 19, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
     }
 
@@ -1211,11 +1224,11 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     private void testResultScores(List<Participation> participations, double[] expectedScores, int[] expectedFeedbackSize, AssessmentType assessmentType) {
         for (int i = 0; i < participations.size(); i++) {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(i).getId()).orElseThrow();
-            var results = participation.getResults();
+            var results = participationUtilService.getResultsForParticipation(participation);
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, expectedScores[i], expectedFeedbackSize[i], assessmentType);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(participation.findLatestResult());
         }
     }
 
@@ -1269,7 +1282,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         createTestParticipationsWithMultipleResults();
         // this method is tested. It should probably be improved as there is an inner query
         var results = resultRepository.findLatestAutomaticResultsWithEagerFeedbacksTestCasesForExercise(programmingExerciseSCAEnabled.getId());
-        var allResults = resultRepository.findAllByParticipationExerciseId(programmingExerciseSCAEnabled.getId());
+        var allResults = resultRepository.findAllBySubmissionParticipationExerciseId(programmingExerciseSCAEnabled.getId());
         assertThat(results).hasSize(5);
         assertThat(allResults).hasSize(6);
     }
@@ -1293,8 +1306,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student1);
             }
             // Testcases: 1/6 * 42 = 7; Penalty: min(5, 0.2 * 42) = 5; Score: (int) ((7-5) / 42) = 4
-            var result1 = new Result().participation(participation1);
-            participation1.setResults(Set.of(result1));
+            var submission1 = participationUtilService.addSubmission(participation1, new ProgrammingSubmission());
+            var result1 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission1);
             updateAndSaveAutomaticResult(result1, true, false, false, 0, 1);
         }
         var participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student2);
@@ -1303,8 +1316,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student2);
             }
             // Testcases: 4/6 * 42 = 28; Penalty: 11; Score: (int) ((28-11) / 42)) = 40
-            var result2 = new Result().participation(participation2);
-            participation2.setResults(Set.of(result2));
+            var submission2 = participationUtilService.addSubmission(participation2, new ProgrammingSubmission());
+            var result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
             updateAndSaveAutomaticResult(result2, true, false, true, 2, 1);
         }
         var participation3 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student3);
@@ -1313,8 +1326,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student3);
             }
             // Points capped at zero, score can't be negative
-            var result3 = new Result().participation(participation3);
-            participation3.setResults(Set.of(result3));
+            var submission3 = participationUtilService.addSubmission(participation3, new ProgrammingSubmission());
+            var result3 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission3);
             updateAndSaveAutomaticResult(result3, true, false, false, 5, 1);
         }
         var participation4 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student4);
@@ -1323,8 +1336,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student4);
             }
             // Run into category cap of 10: -> Testcases: 3/6 * 42 = 21; Penalty: 10; Score: (int) ((21-10) / 42)) = 26
-            var result4 = new Result().participation(participation4);
-            participation4.setResults(Set.of(result4));
+            var submission4 = participationUtilService.addSubmission(participation4, new ProgrammingSubmission());
+            var result4 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission4);
             updateAndSaveAutomaticResult(result4, true, true, false, 5, 0);
         }
         var participation5 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student5);
@@ -1333,8 +1346,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student5);
             }
             // Run into max exercise penalty cap of 40 percent and all test cases pass -> score 60 percent
-            var result5 = new Result().participation(participation5);
-            participation5.setResults(Set.of(result5));
+            var submission5 = participationUtilService.addSubmission(participation5, new ProgrammingSubmission());
+            var result5 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission5);
             updateAndSaveAutomaticResult(result5, true, true, true, 5, 5);
         }
 
@@ -1350,9 +1363,11 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student1);
             }
             // Testcases: 1/6 * 42 = 7; Penalty: min(5, 0.2 * 42) = 5; Score: (int) ((7-5) / 42) = 4
-            var result11 = new Result().participation(participation1);
-            var result1 = new Result().participation(participation1);
-            participation1.setResults(Set.of(result11, result1));
+            var submission1 = participationUtilService.addSubmission(participation1, new ProgrammingSubmission());
+            var result1 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission1);
+            var submission11 = participationUtilService.addSubmission(participation1, new ProgrammingSubmission());
+            var result11 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission11);
+
             updateAndSaveAutomaticResult(result11, false, false, false, 0, 1, ZonedDateTime.now().minusMinutes(1));
             updateAndSaveAutomaticResult(result1, true, false, false, 0, 1);
         }
@@ -1362,8 +1377,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student2);
             }
             // Testcases: 4/6 * 42 = 28; Penalty: 11; Score: (int) ((28-11) / 42)) = 40
-            var result2 = new Result().participation(participation2);
-            participation2.setResults(Set.of(result2));
+            var submission2 = participationUtilService.addSubmission(participation2, new ProgrammingSubmission());
+            var result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
             updateAndSaveAutomaticResult(result2, true, false, true, 2, 1);
         }
         var participation3 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student3);
@@ -1372,8 +1387,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student3);
             }
             // Points capped at zero, score can't be negative
-            var result3 = new Result().participation(participation3);
-            participation3.setResults(Set.of(result3));
+            var submission3 = participationUtilService.addSubmission(participation3, new ProgrammingSubmission());
+            var result3 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission3);
             updateAndSaveAutomaticResult(result3, true, false, false, 5, 1);
         }
         var participation4 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student4);
@@ -1382,8 +1397,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student4);
             }
             // Run into category cap of 10: -> Testcases: 3/6 * 42 = 21; Penalty: 10; Score: (int) ((21-10) / 42)) = 26
-            var result4 = new Result().participation(participation4);
-            participation4.setResults(Set.of(result4));
+            var submission4 = participationUtilService.addSubmission(participation4, new ProgrammingSubmission());
+            var result4 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission4);
             updateAndSaveAutomaticResult(result4, true, true, false, 5, 0);
         }
         var participation5 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student5);
@@ -1392,8 +1407,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
                 createStudentExam(programmingExerciseSCAEnabled, student5);
             }
             // Run into max exercise penalty cap of 40 percent and all test cases pass -> score 60 percent
-            var result5 = new Result().participation(participation5);
-            participation5.setResults(Set.of(result5));
+            var submission5 = participationUtilService.addSubmission(participation5, new ProgrammingSubmission());
+            var result5 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission5);
             updateAndSaveAutomaticResult(result5, true, true, true, 5, 5);
         }
 
@@ -1404,7 +1419,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         assertThat(result.getFeedbacks()).hasSize(feedbackSize);
         assertThat(result.getAssessmentType()).isEqualTo(assessmentType);
 
-        Exercise exercise = result.getParticipation().getExercise();
+        Exercise exercise = result.getSubmission().getParticipation().getExercise();
         double calculatedScore = result.calculateTotalPointsForProgrammingExercises() / exercise.getMaxPoints() * 100.;
         calculatedScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(calculatedScore, exercise.getCourseViaExerciseGroupOrCourseMember());
         assertThat(calculatedScore).isEqualTo(score);

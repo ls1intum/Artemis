@@ -1,15 +1,16 @@
 import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
-import { Participation } from 'app/entities/participation/participation.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { hasSolutionParticipationChanged, hasTemplateParticipationChanged } from 'app/exercise/participation/participation.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 /**
  * Describes programming exercise issues
@@ -54,7 +55,7 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
                 .subscribeForLatestResultOfParticipation(this.templateParticipation.id!, false, this.exercise.id)
                 .pipe(
                     filter((result) => !!result),
-                    tap((result) => (this.templateParticipation.results = [result!])),
+                    tap((result) => (this.templateParticipation.submissions!.last()!.results = [result!])),
                     tap(() => this.findIssues()),
                 )
                 .subscribe();
@@ -68,7 +69,7 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
                 .subscribeForLatestResultOfParticipation(this.solutionParticipation.id!, false, this.exercise.id)
                 .pipe(
                     filter((result) => !!result),
-                    tap((result) => (this.solutionParticipation.results = [result!])),
+                    tap((result) => (this.solutionParticipation.submissions!.last()!.results = [result!])),
                     tap(() => this.findIssues()),
                 )
                 .subscribe();
@@ -81,8 +82,8 @@ export class ProgrammingExerciseInstructorExerciseStatusComponent implements OnC
      * Finds issues of the template and the solution participation result
      */
     findIssues() {
-        const newestTemplateParticipationResult = findLatestResult(this.templateParticipation.results);
-        const newestSolutionParticipationResult = findLatestResult(this.solutionParticipation.results);
+        const newestTemplateParticipationResult = findLatestResult(getAllResultsOfAllSubmissions(this.templateParticipation.submissions));
+        const newestSolutionParticipationResult = findLatestResult(getAllResultsOfAllSubmissions(this.solutionParticipation.submissions));
 
         this.issues = [
             newestTemplateParticipationResult && newestTemplateParticipationResult.score! > 0 ? ProgrammingExerciseIssues.TEMPLATE_PASSING : undefined,

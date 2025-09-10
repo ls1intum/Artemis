@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
  * REST controller for Reaction on Postings.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/communication/")
 public class ReactionResource {
@@ -71,8 +73,9 @@ public class ReactionResource {
      */
     @DeleteMapping("courses/{courseId}/postings/reactions/{reactionId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> deleteReaction(@PathVariable Long courseId, @PathVariable Long reactionId) throws URISyntaxException {
-        reactionService.deleteReactionById(reactionId, courseId);
+    public ResponseEntity<Void> deleteReaction(@PathVariable long courseId, @PathVariable long reactionId) {
+        // NOTE: the service method handles authorization checks and throws an exception if the user is not allowed to delete the reaction
+        reactionService.deleteReactionByIdIfAllowedElseThrow(reactionId, courseId);
         return ResponseEntity.ok().build();
     }
 }

@@ -1,6 +1,6 @@
-import { Component, Input } from '@angular/core';
-import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
-import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
+import { Component, input } from '@angular/core';
+import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -11,13 +11,12 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [NgbTooltip, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class PlagiarismCaseVerdictComponent {
-    @Input() plagiarismCase: PlagiarismCase;
-    @Input() hideDetails = false;
-
+    plagiarismCase = input.required<PlagiarismCase>();
+    hideDetails = input<boolean>(false);
     readonly plagiarismVerdict = PlagiarismVerdict;
 
     get verdictTranslationString(): string {
-        switch (this.plagiarismCase.verdict) {
+        switch (this.plagiarismCase().verdict) {
             case PlagiarismVerdict.PLAGIARISM: {
                 return 'artemisApp.plagiarism.plagiarismCases.verdict.plagiarism';
             }

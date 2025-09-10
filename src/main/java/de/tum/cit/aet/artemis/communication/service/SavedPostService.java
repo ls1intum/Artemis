@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class SavedPostService {
 
@@ -39,7 +41,7 @@ public class SavedPostService {
     public void savePostForCurrentUser(Posting post) {
         var existingSavedPost = this.getSavedPostForCurrentUser(post);
 
-        if (existingSavedPost != null) {
+        if (!existingSavedPost.isEmpty()) {
             return;
         }
 
@@ -56,33 +58,39 @@ public class SavedPostService {
      * @return false if the saved post was not found, true if post was found and deleted
      */
     public boolean removeSavedPostForCurrentUser(Posting post) {
-        var existingSavedPost = this.getSavedPostForCurrentUser(post);
+        var existingSavedPosts = getSavedPostForCurrentUser(post);
 
-        if (existingSavedPost == null) {
+        if (existingSavedPosts.isEmpty()) {
             return false;
         }
 
-        savedPostRepository.delete(existingSavedPost);
+        // Deleting one by one will clear cache keys
+        for (var existingSavedPost : existingSavedPosts) {
+            savedPostRepository.delete(existingSavedPost);
+        }
 
         return true;
     }
 
     /**
-     * Updates the status of a bookmark, will return if no bookmark is present
+     * Updates the status of a bookmark, will return if no bookmark is present for the given user
      *
      * @param post   post to change status
      * @param status status to change towards
      */
     public void updateStatusOfSavedPostForCurrentUser(Posting post, SavedPostStatus status) {
-        var existingSavedPost = this.getSavedPostForCurrentUser(post);
+        var existingSavedPosts = getSavedPostForCurrentUser(post);
 
-        if (existingSavedPost == null) {
+        if (existingSavedPosts.isEmpty()) {
             return;
         }
 
-        existingSavedPost.setStatus(status);
-        existingSavedPost.setCompletedAt(status == SavedPostStatus.IN_PROGRESS ? null : ZonedDateTime.now());
-        savedPostRepository.save(existingSavedPost);
+        // Updating one by one will clear cache keys
+        for (var existingSavedPost : existingSavedPosts) {
+            existingSavedPost.setStatus(status);
+            existingSavedPost.setCompletedAt(status == SavedPostStatus.IN_PROGRESS ? null : ZonedDateTime.now());
+            savedPostRepository.save(existingSavedPost);
+        }
     }
 
     /**
@@ -109,15 +117,16 @@ public class SavedPostService {
     }
 
     /**
-     * Helper method to retrieve a bookmark for the current user
+     * Helper method to retrieve a bookmark for the current user. May be multiple rows for same posting in some edge
+     * cases.
      *
-     * @param post post to search bookmark for
-     * @return The saved post for the given posting if present
+     * @param posting posting to search bookmark for
+     * @return The saved posting for the given posting if present
      */
-    private SavedPost getSavedPostForCurrentUser(Posting post) {
-        PostingType type = post instanceof Post ? PostingType.POST : PostingType.ANSWER;
+    private List<SavedPost> getSavedPostForCurrentUser(Posting posting) {
+        PostingType type = posting instanceof Post ? PostingType.POST : PostingType.ANSWER;
         var author = userRepository.getUser();
 
-        return savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(author.getId(), post.getId(), type);
+        return savedPostRepository.findSavedPostsByUserIdAndPostIdAndPostType(author.getId(), posting.getId(), type);
     }
 }

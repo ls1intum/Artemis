@@ -1,14 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
-import { Competency } from 'app/entities/competency.model';
-import { CompetencyService } from 'app/atlas/manage/competency.service';
+import { Competency } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';
 
 import { CreateCourseCompetencyComponent } from 'app/atlas/manage/create/create-course-competency.component';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({

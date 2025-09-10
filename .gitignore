@@ -7,6 +7,7 @@
 /src/test/javascript/coverage/
 /src/test/javascript/PhantomJS*/
 /uploads
+/local
 /test-results.xml
 
 ######################
@@ -160,6 +161,7 @@ local-vcs-repos
 /exports
 /legal/server-integration-test
 data-exports/
+/src/main/webapp/content/scripts/pdf.worker.min.mjs
 
 ######################
 # Gradle Wrapper
@@ -221,3 +223,7 @@ data-exports/
 ##############################
 /supporting_scripts/**/*.ini
 /legal
+/src/test/resources/config/application-local.yml
+startupBeans.dot
+deferredEagerBeanInstantiationViolations.dot
+/junit.xml

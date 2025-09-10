@@ -13,6 +13,7 @@ import org.apache.sshd.common.keyprovider.KeyPairProvider;
 import org.apache.sshd.server.SshServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
  * Service responsible for providing SSH fingerprints of the SSH server running in Artemis.
  */
 @Profile(PROFILE_LOCALVC)
+@Lazy
 @Service
 public class SshFingerprintsProviderService {
 
@@ -34,8 +36,7 @@ public class SshFingerprintsProviderService {
     /**
      * Retrieves the SSH key fingerprints from the stored SSH keys
      *
-     * @return a map containing the SSH key fingerprints, where the key is the algorithm
-     *         of the public key and the value is its SHA-256 fingerprint.
+     * @return a map containing the SSH key fingerprints, where the key is the algorithm of the public key and the value is its SHA-256 fingerprint.
      * @throws BadRequestException if there is an error loading keys from the SSH server.
      */
     public Map<String, String> getSshFingerPrints() {

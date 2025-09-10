@@ -20,7 +20,7 @@ export const userManagementRoute: Route[] = [
         children: [
             {
                 path: 'new',
-                loadComponent: () => import('app/core/admin/user-management/user-management-update.component').then((m) => m.UserManagementUpdateComponent),
+                loadComponent: () => import('app/core/admin/user-management/update/user-management-update.component').then((m) => m.UserManagementUpdateComponent),
                 resolve: {
                     user: UserManagementResolve,
                 },
@@ -30,7 +30,7 @@ export const userManagementRoute: Route[] = [
             },
             {
                 path: ':login',
-                loadComponent: () => import('app/core/admin/user-management/user-management-detail.component').then((m) => m.UserManagementDetailComponent),
+                loadComponent: () => import('app/core/admin/user-management/detail/user-management-detail.component').then((m) => m.UserManagementDetailComponent),
                 resolve: {
                     user: UserManagementResolve,
                 },
@@ -47,7 +47,7 @@ export const userManagementRoute: Route[] = [
                 children: [
                     {
                         path: 'edit',
-                        loadComponent: () => import('app/core/admin/user-management/user-management-update.component').then((m) => m.UserManagementUpdateComponent),
+                        loadComponent: () => import('app/core/admin/user-management/update/user-management-update.component').then((m) => m.UserManagementUpdateComponent),
                         data: {
                             pageTitle: 'artemisApp.userManagement.home.editLabel',
                         },

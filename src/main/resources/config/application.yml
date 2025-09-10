@@ -37,9 +37,11 @@ artemis:
     external-system-request:
         batch-size: 50  # wait the time below after 50 requests
         batch-waiting-time: 30000   # in ms = 30s
-    iosAppId: "2J3C6P6X3N.de.tum.cit.artemis"
+    iosAppId: "T7PP2KY2B6.de.tum.cit.ase.artemis"
     androidAppPackage: "de.tum.cit.aet.artemis"
-    androidSha256CertFingerprints: "D2:E1:A6:6F:8C:00:55:97:9F:30:2F:3D:79:A9:5D:78:85:1F:C5:21:5A:7F:81:B3:BF:60:22:71:EF:6F:60:24"
+    androidSha256CertFingerprints:
+      release: "D2:E1:A6:6F:8C:00:55:97:9F:30:2F:3D:79:A9:5D:78:85:1F:C5:21:5A:7F:81:B3:BF:60:22:71:EF:6F:60:24"
+      debug: "7F:CB:99:74:19:30:15:4B:86:4B:8A:73:B0:09:94:52:19:F6:BD:90:6A:7C:16:B1:76:37:AF:74:B1:48:3B:6C"
 
     # activate the following line if you want to support push notifications for the mobile clients.
     # More information about the TUM hosted hermes service can be found here: https://github.com/ls1intum/Hermes
@@ -94,13 +96,13 @@ artemis:
                 javascript:
                     default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.1.0"
                 r:
-                    default: "ghcr.io/ls1intum/artemis-r-docker:v1.0.0"
+                    default: "ghcr.io/ls1intum/artemis-r-docker:v1.2.0"
                 bash:
                     default: "ghcr.io/ls1intum/artemis-bash-docker:v1.0.0"
                 c_plus_plus:
-                    default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.0.0"
+                    default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.1.2"
                 c_sharp:
-                    default: "ghcr.io/ls1intum/artemis-csharp-docker:v1.0.0"
+                    default: "ghcr.io/ls1intum/artemis-csharp-docker:v1.0.1"
                 typescript:
                     default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.1.0"
                 go:
@@ -121,11 +123,11 @@ artemis:
 
     compatible-versions:
       android:
-        min: "1.2.0"
-        recommended: "1.2.0"
+        min: "2.1.2"
+        recommended: "2.1.2"
       ios:
-        min: "1.6.1"
-        recommended: "1.6.1"
+        min: "2.0.0"
+        recommended: "2.2.0"
 
 
 
@@ -164,11 +166,10 @@ management:
             export:
                 enabled: true
                 step: 60
+    metrics:
         distribution:
             percentiles-histogram:
                 all: true
-            percentiles:
-                all: 0, 0.5, 0.75, 0.95, 0.99, 1.0
         tags:
             application: ${spring.application.name}
     observations:
@@ -218,6 +219,7 @@ spring:
             hibernate.jdbc.lob.non_contextual_creation: true
             # limit fetch depth to prevent queries from getting too large because of eager fetching
             hibernate.max_fetch_depth: 2
+            jakarta.persistence.validation.mode: none # disable validation for faster startup
     liquibase:
         contexts: prod
     messages:
@@ -225,7 +227,7 @@ spring:
     main:
         allow-bean-definition-overriding: false
         allow-circular-references: false
-        lazy-initialization: false # cannot set this because of static inject in FilePathService
+        lazy-initialization: true
     task:
         execution:
             thread-name-prefix: artemis-task-
@@ -276,11 +278,15 @@ hazelcast:
             enabled: false
 
 springdoc:
-    api-docs:
-        path: /api-docs
-    swagger-ui:
-        path: /api.html
-        operationsSorter: method
+  api-docs: # Having these endpoints publicly available is a security risk, so we disable them by default
+    path: /api-docs
+    enabled: false
+  swagger-ui:
+    path: api.html
+    operationsSorter: method
+    enabled: false
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
 
 server:
     servlet:
@@ -300,16 +306,12 @@ sentry:
 
 # Properties to be exposed on the /info management endpoint
 info:
-    # Comma separated list of profiles that will trigger the ribbon to show
-    display-ribbon-on-profiles: "dev"
     sentry:
         dsn: https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2 # Leave empty to disable Sentry, must be a valid URI
-    # Allowed Orion version range. Should only be changed on major version releases
-    allowed-minimum-orion-version: 1.0.0
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false
-    text-assessment-analytics-enabled: false
-    student-exam-store-session-data: true
+    textAssessmentAnalyticsEnabled: false
+    studentExamStoreSessionData: true
 
 # ===================================================================
 # JHipster specific properties
@@ -367,3 +369,10 @@ eureka:
             git-version: ${git.commit.id.describe:}
             git-commit: ${git.commit.id.abbrev:}
             git-branch: ${git.branch:}
+
+# Helios configuration
+# It is enabled and all the values are set by the ansible
+# Refer to the ansible repository https://github.com/ls1intum/artemis-ansible
+helios:
+  status:
+    enabled: false

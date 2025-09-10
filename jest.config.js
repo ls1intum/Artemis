@@ -1,7 +1,6 @@
 const esModules = [
     '@angular/animations',
     '@angular/cdk',
-    '@angular/cdk',
     '@angular/common',
     '@angular/compiler',
     '@angular/core',
@@ -14,13 +13,14 @@ const esModules = [
     '@angular/service-worker',
     '@ctrl/ngx-emoji-mart',
     '@danielmoncada/angular-datetime-picker',
-    '@siemens/ngx-datatable',
     '@fortawesome/angular-fontawesome',
     '@ls1intum/apollon',
     '@ng-bootstrap/ng-bootstrap',
     '@ngx-translate/core',
     '@ngx-translate/http-loader',
+    '@primeuix',
     '@sentry/angular',
+    '@siemens/ngx-datatable',
     '@swimlane/ngx-charts',
     '@swimlane/ngx-graph',
     'collapse-white-space',
@@ -46,11 +46,12 @@ const esModules = [
     'franc-min',
     'internmap',
     'lodash-es',
+    'markdown-it-github-alerts',
     'monaco-editor',
     'n-gram',
     'ngx-device-detector',
     'ngx-infinite-scroll',
-    'ngx-webstorage',
+    'primeng',
     'rxjs/operators',
     'trigram-utils',
 ].join('|');
@@ -79,25 +80,28 @@ module.exports = {
         ],
     ],
     collectCoverageFrom: [
-        'src/main/webapp/**/*.ts',
-        '!src/main/webapp/**/*.module.ts',  // ignore modules files because they cannot be properly tested
-        '!src/main/webapp/**/*.routes.ts',   // ignore routes files because they cannot be properly tested
-        '!src/main/webapp/**/*.route.ts',   // ignore route files because they cannot be properly tested
-        '!**/node_modules/**',
+        '<rootDir>/src/main/webapp/**/*.ts',
+        '!<rootDir>/src/main/webapp/**/*.module.ts',  // ignore modules files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.routes.ts',   // ignore routes files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.route.ts',   // ignore route files because they cannot be properly tested
+        '!<rootDir>/**/node_modules/**',
+        '!<rootDir>/src/main/webapp/app/openapi/**', // ignore openapi files because they are generated
     ],
     coveragePathIgnorePatterns: [
-        'src/main/webapp/app/core/config/prod.config.ts',
+        '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
+        '<rootDir>/src/main/webapp/app/openapi/',
     ],
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 88.71,
-            branches: 74.39,
-            functions: 82.86,
-            lines: 88.77,
+            statements: 89.74,
+            branches: 76.07,
+            functions: 83.75,
+            lines: 89.81,
         },
     },
-    coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
+    // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
+    coverageReporters: ['clover', 'json', 'lcov', 'text-summary','json-summary'],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
@@ -107,7 +111,6 @@ module.exports = {
             {
                 tsconfig: '<rootDir>/tsconfig.spec.json',
                 stringifyContentPathRegex: '\\.html$',
-                isolatedModules: true,
                 diagnostics: {
                     ignoreCodes: [151001],
                 },
@@ -116,28 +119,20 @@ module.exports = {
     },
     modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
     testTimeout: 3000,
-    testMatch: [
-        '<rootDir>/src/test/javascript/spec/component/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/directive/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/entities/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/integration/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/pipe/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/service/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/util/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/interceptor/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/config/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/core/**/*.spec.ts',
+    testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'
     ],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',
-        'test/(.*)': '<rootDir>/src/test/javascript/spec/$1',
+        '^test/(.*)': '<rootDir>/src/test/javascript/spec/$1',
         '@assets/(.*)': '<rootDir>/src/main/webapp/assets/$1',
         '@core/(.*)': '<rootDir>/src/main/webapp/app/core/$1',
         '@env': '<rootDir>/src/main/webapp/environments/environment',
         '@src/(.*)': '<rootDir>/src/src/$1',
         '@state/(.*)': '<rootDir>/src/app/state/$1',
         '^lodash-es$': 'lodash',
-        '\\.css$': '<rootDir>/stub.js',
+        '\\.css$': '<rootDir>/src/test/javascript/spec/stub.js',
         '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
+        '^@ls1intum/apollon$': '<rootDir>/node_modules/@ls1intum/apollon/lib/es6/index.js', // adjust if the package.json "exports" points elsewhere
     },
 };

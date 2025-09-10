@@ -1,8 +1,8 @@
 import { Page } from 'playwright';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MODELING_EXERCISE_BASE, PROGRAMMING_EXERCISE_BASE, QUIZ_EXERCISE_BASE, TEXT_EXERCISE_BASE, UPLOAD_EXERCISE_BASE } from '../../constants';
 import { expect } from '@playwright/test';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the course management exercises page.
@@ -89,7 +89,7 @@ export class CourseManagementExercisesPage {
     }
 
     async createQuizExercise() {
-        await this.page.locator('#create-quiz-button').click();
+        await this.page.locator('#create-quiz-exercise').click();
     }
 
     async createFileUploadExercise() {
@@ -112,20 +112,21 @@ export class CourseManagementExercisesPage {
         await this.page.locator('#import-quiz-exercise').click();
     }
 
-    async exportQuizExercise(exerciseID: number) {
-        await this.getExercise(exerciseID).locator('button', { hasText: 'Export' }).click();
-    }
-
     async clickImportExercise(exerciseID: number) {
         await this.page.locator(`.exercise-${exerciseID}`).locator('.import').click();
     }
 
     async startQuiz(quizID: number) {
-        await this.page.locator(`#instructor-quiz-start-${quizID}`).click();
+        const startButton = this.page.locator(`#instructor-quiz-start-${quizID}`);
+        await startButton.waitFor({ state: 'visible', timeout: 10000 });
+        await startButton.click();
     }
 
     async endQuiz(quizExercise: QuizExercise) {
-        await this.page.locator(`#quiz-set-end-${quizExercise.id}`).click();
+        const endButton = this.page.locator(`#quiz-set-end-${quizExercise.id}`);
+        await endButton.waitFor({ state: 'visible', timeout: 10000 });
+        await endButton.scrollIntoViewIfNeeded();
+        await endButton.click();
         await this.page.locator('#confirm-entity-name').fill(quizExercise.title!);
         await this.page.locator('#delete').click();
     }
@@ -138,6 +139,10 @@ export class CourseManagementExercisesPage {
 
     async openExerciseParticipations(exerciseId: number) {
         await this.getExercise(exerciseId).locator('.btn', { hasText: 'Participations' }).click();
+    }
+
+    async openQuizExerciseDetailsPage(exerciseId: number) {
+        await Promise.all([this.page.waitForURL(`/course-management/*/quiz-exercises/${exerciseId}`), this.page.locator(`#exercise-id-${exerciseId} a`).click()]);
     }
 
     getModelingExerciseTitle(exerciseID: number) {

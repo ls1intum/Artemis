@@ -1,6 +1,6 @@
 import { UserCredentials } from './users';
 import { Locator, Page, expect } from '@playwright/test';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
 
 /**
@@ -77,13 +77,21 @@ export class Commands {
         let exerciseParticipation: StudentParticipation;
         const startTime = Date.now();
 
-        const numberOfBuildResults = (await exerciseAPIRequests.getExerciseParticipation(exerciseId)).results?.length;
-        console.log('Waiting for build of an exercise to finish...');
+        exerciseParticipation = await exerciseAPIRequests.getExerciseParticipation(exerciseId);
 
+        const numberOfBuildResults = exerciseParticipation.submissions
+            ? exerciseParticipation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0)
+            : 0;
+
+        console.log('Waiting for build of an exercise to finish...');
         while (Date.now() - startTime < timeout) {
             exerciseParticipation = await exerciseAPIRequests.getExerciseParticipation(exerciseId);
 
-            if (exerciseParticipation.results && exerciseParticipation.results.length > (numberOfBuildResults ?? 0)) {
+            const currentBuildResultsCount = exerciseParticipation.submissions
+                ? exerciseParticipation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0)
+                : 0;
+
+            if (currentBuildResultsCount > numberOfBuildResults) {
                 return exerciseParticipation;
             }
 
@@ -91,5 +99,9 @@ export class Commands {
         }
 
         throw new Error('Timed out while waiting for build to finish.');
+    };
+
+    static toggleSidebar = async (page: Page) => {
+        await page.keyboard.press('Control+m');
     };
 }

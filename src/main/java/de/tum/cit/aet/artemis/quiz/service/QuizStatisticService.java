@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +18,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionStatisticRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class QuizStatisticService {
 
@@ -44,18 +46,18 @@ public class QuizStatisticService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final Optional<LtiNewResultService> ltiNewResultService;
+    private final Optional<LtiApi> ltiApi;
 
     public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             WebsocketMessagingService websocketMessagingService, QuizPointStatisticRepository quizPointStatisticRepository,
-            QuizQuestionStatisticRepository quizQuestionStatisticRepository, QuizSubmissionRepository quizSubmissionRepository, Optional<LtiNewResultService> ltiNewResultService) {
+            QuizQuestionStatisticRepository quizQuestionStatisticRepository, QuizSubmissionRepository quizSubmissionRepository, Optional<LtiApi> ltiApi) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.quizSubmissionRepository = quizSubmissionRepository;
-        this.ltiNewResultService = ltiNewResultService;
+        this.ltiApi = ltiApi;
     }
 
     /**
@@ -86,15 +88,15 @@ public class QuizStatisticService {
             Result latestRatedResult = null;
             Result latestUnratedResult = null;
 
-            var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
+            var results = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId());
             // update all Results of a participation
             for (Result result : results) {
                 // find the latest rated Result
-                if (Boolean.TRUE.equals(result.isRated()) && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                if (result.isRated() && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
                     latestRatedResult = result;
                 }
                 // find latest unrated Result
-                if (Boolean.FALSE.equals(result.isRated()) && (latestUnratedResult == null || latestUnratedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                if (!result.isRated() && (latestUnratedResult == null || latestUnratedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
                     latestUnratedResult = result;
                 }
             }
@@ -108,7 +110,7 @@ public class QuizStatisticService {
                 quizExercise.addResultToAllStatistics(latestUnratedResult, latestUnratedSubmission);
             }
 
-            ltiNewResultService.ifPresent(newResultService -> newResultService.onNewResult(participation));
+            ltiApi.ifPresent(api -> api.onNewResult(participation));
         }
 
         // save changed Statistics
@@ -137,7 +139,7 @@ public class QuizStatisticService {
             for (Result result : results) {
                 // check if the result is rated
                 // NOTE: there is never an old Result if the new result is rated
-                if (Boolean.FALSE.equals(result.isRated())) {
+                if (!result.isRated()) {
                     quiz.removeResultFromAllStatistics(getPreviousResult(result));
                 }
                 var quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());
@@ -168,7 +170,8 @@ public class QuizStatisticService {
     private Result getPreviousResult(Result newResult) {
         Result oldResult = null;
 
-        List<Result> allResultsForParticipation = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId());
+        List<Result> allResultsForParticipation = resultRepository
+                .findAllBySubmissionParticipationIdOrderByCompletionDateDesc(newResult.getSubmission().getParticipation().getId());
         for (Result result : allResultsForParticipation) {
             // find the latest Result, which is presented in the Statistics
             if (result.isRated() == newResult.isRated() && result.getCompletionDate().isBefore(newResult.getCompletionDate()) && !result.equals(newResult)

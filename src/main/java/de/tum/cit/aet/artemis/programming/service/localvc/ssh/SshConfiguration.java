@@ -15,14 +15,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import de.tum.cit.aet.artemis.programming.service.localvc.GitPublickeyAuthenticatorService;
 import de.tum.cit.aet.artemis.programming.service.localvc.SshGitCommandFactoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.SshGitLocationResolverService;
 
+/**
+ * Configuration of the SSH server for Local Version Control (LocalVC).
+ * This server handles SSH requests for Git operations.
+ * It is only active when the 'localvc' profile is enabled.
+ * We have to use @Lazy(false) here, as the SSH server needs to be started at application startup otherwise ssh operations get a connection refused.
+ */
 @Profile(PROFILE_LOCALVC)
 @Configuration
+@Lazy(value = false)
 public class SshConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(SshConfiguration.class);
@@ -66,7 +74,8 @@ public class SshConfiguration {
         }
         else {
             // this is a simple solution for development, the host key will be generated during the first ssh operation in case it does not exist
-            sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(Path.of("tmp", "hostkey.ser")));
+
+            sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(Path.of("local", "tmp", "hostkey.ser")));
         }
         sshd.setCommandFactory(
                 sshGitCommandFactoryService.withGitLocationResolver(sshGitLocationResolverService).withExecutorServiceProvider(() -> ThreadUtils.newFixedThreadPool("git-ssh", 8)));

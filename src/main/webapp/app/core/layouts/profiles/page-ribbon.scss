@@ -1,0 +1,53 @@
+/* ==========================================================================
+Developement Ribbon
+========================================================================== */
+.box {
+    position: relative;
+    max-width: 0;
+    width: 90%;
+    height: 0;
+    background: #fff;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+/* common */
+.ribbon {
+    z-index: 9999;
+    width: 200px;
+    height: 200px;
+    overflow: hidden;
+    white-space: nowrap;
+    pointer-events: none;
+    position: fixed;
+    opacity: 0.75;
+
+    span {
+        position: absolute;
+        display: block;
+        width: 300px;
+        padding: 10px 0;
+        background-color: rgba(170, 0, 0, 0.5);
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        color: #fff;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+        text-align: center;
+    }
+}
+
+/* top left */
+.ribbon-top-left {
+    top: 0;
+    left: 0;
+}
+
+.ribbon-top-left::before,
+.ribbon-top-left::after {
+    border-top-color: transparent;
+    border-left-color: transparent;
+}
+
+.ribbon-rotate span {
+    right: -25px;
+    top: 45px;
+    transform: rotate(-45deg);
+}

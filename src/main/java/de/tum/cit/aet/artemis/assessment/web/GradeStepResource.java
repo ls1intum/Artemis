@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,16 +31,18 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 
 /**
  * REST controller for managing grade steps of a grading scale
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/assessment/")
 public class GradeStepResource {
@@ -54,24 +57,24 @@ public class GradeStepResource {
 
     private final CourseRepository courseRepository;
 
-    private final ExamRepository examRepository;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final UserRepository userRepository;
 
-    private final PlagiarismCaseRepository plagiarismCaseRepository;
+    private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
     public GradeStepResource(GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository, AuthorizationCheckService authCheckService,
-            CourseRepository courseRepository, ExamRepository examRepository, UserRepository userRepository, PlagiarismCaseRepository plagiarismCaseRepository,
+            CourseRepository courseRepository, Optional<ExamRepositoryApi> examRepositoryApi, UserRepository userRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi,
             StudentParticipationRepository studentParticipationRepository) {
         this.gradingScaleRepository = gradingScaleRepository;
         this.gradeStepRepository = gradeStepRepository;
         this.authCheckService = authCheckService;
         this.courseRepository = courseRepository;
-        this.examRepository = examRepository;
+        this.examRepositoryApi = examRepositoryApi;
         this.userRepository = userRepository;
-        this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.plagiarismCaseApi = plagiarismCaseApi;
         this.studentParticipationRepository = studentParticipationRepository;
     }
 
@@ -106,9 +109,11 @@ public class GradeStepResource {
     @EnforceAtLeastStudent
     public ResponseEntity<GradeStepsDTO> getAllGradeStepsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all grade steps for exam: {}", examId);
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
-        Exam exam = examRepository.findByIdElseThrow(examId);
+        Exam exam = api.findByIdElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
@@ -193,13 +198,13 @@ public class GradeStepResource {
             gradeStep = new GradeStep();
             gradeStep.setGradeName(gradingScale.getNoParticipationGradeOrDefault());
         }
-        else if (plagiarismCaseRepository.findByCourseIdAndStudentId(courseId, user.getId()).stream()
+        else if (plagiarismCaseApi.isPresent() && plagiarismCaseApi.get().findByCourseIdAndStudentId(courseId, user.getId()).stream()
                 .anyMatch(plagiarismCase -> PlagiarismVerdict.PLAGIARISM.equals(plagiarismCase.getVerdict()))) {
             gradeStep = new GradeStep();
             gradeStep.setGradeName(gradingScale.getPlagiarismGradeOrDefault());
         }
         else {
-            gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.getId());
+            gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale);
         }
         GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradingScale.getGradeType());
         return ResponseEntity.ok(gradeDTO);
@@ -217,10 +222,12 @@ public class GradeStepResource {
     @EnforceAtLeastStudent
     public ResponseEntity<GradeDTO> getGradeStepByPercentageForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam Double gradePercentage) {
         log.debug("REST request to get grade step for grade percentage {} for exam: {}", gradePercentage, examId);
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        Exam exam = examRepository.findByIdElseThrow(examId);
+        Exam exam = api.findByIdElseThrow(examId);
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
         boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
         if (gradingScale.isEmpty()) {
@@ -229,7 +236,7 @@ public class GradeStepResource {
         else if (!isInstructor && !exam.resultsPublished()) {
             throw new AccessForbiddenException();
         }
-        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.get().getId());
+        GradeStep gradeStep = gradingScaleRepository.matchPercentageToGradeStep(gradePercentage, gradingScale.get());
         GradeDTO gradeDTO = new GradeDTO(gradeStep.getGradeName(), gradeStep.getIsPassingGrade(), gradeStep.getGradingScale().getGradeType());
         return ResponseEntity.ok(gradeDTO);
     }

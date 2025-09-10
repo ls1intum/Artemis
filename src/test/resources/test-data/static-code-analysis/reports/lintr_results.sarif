@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "lintr",
+          "informationUri": "https://lintr.r-lib.org/",
+          "version": "3.2.0",
+          "rules": [
+            {
+              "id": "object_name_linter",
+              "fullDescription": {
+                "text": "Variable and function name style should match snake_case or symbols."
+              },
+              "defaultConfiguration": {
+                "level": "note"
+              }
+            }
+          ]
+        }
+      },
+      "columnKind": "utf16CodeUnits",
+      "originalUriBaseIds": {
+        "ROOTPATH": {
+          "uri": "file:///var/tmp/testing-dir/assignment/"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "object_name_linter",
+          "ruleIndex": 0,
+          "message": {
+            "text": "Variable and function name style should match snake_case or symbols."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "R/hello.R",
+                  "uriBaseId": "ROOTPATH"
+                },
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 1,
+                  "snippet": {
+                    "text": "helloWorld <- function() {"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

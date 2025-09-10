@@ -2,9 +2,7 @@ package de.tum.cit.aet.artemis.modeling.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -15,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,13 +26,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -43,7 +41,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
+import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
+import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -56,12 +56,12 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
 
 /**
  * REST controller for managing ModelingSubmission.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/modeling/")
 public class ModelingSubmissionResource extends AbstractSubmissionResource {
@@ -69,8 +69,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     private static final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);
 
     private static final String ENTITY_NAME = "modelingSubmission";
-
-    private final ResultRepository resultRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -83,25 +81,21 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ExamSubmissionService examSubmissionService;
+    private final Optional<ExamAccessApi> examAccessApi;
 
-    private final PlagiarismService plagiarismService;
-
-    private final ResultService resultService;
+    private final Optional<ExamSubmissionApi> examSubmissionApi;
 
     public ModelingSubmissionResource(SubmissionRepository submissionRepository, ModelingSubmissionService modelingSubmissionService,
             ModelingExerciseRepository modelingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
-            GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService, StudentParticipationRepository studentParticipationRepository,
-            ModelingSubmissionRepository modelingSubmissionRepository, PlagiarismService plagiarismService, ResultService resultService, ResultRepository resultRepository) {
+            GradingCriterionRepository gradingCriterionRepository, Optional<ExamSubmissionApi> examSubmissionApi, StudentParticipationRepository studentParticipationRepository,
+            ModelingSubmissionRepository modelingSubmissionRepository, Optional<ExamAccessApi> examAccessApi) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, modelingSubmissionService, studentParticipationRepository);
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.examSubmissionService = examSubmissionService;
+        this.examSubmissionApi = examSubmissionApi;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
-        this.plagiarismService = plagiarismService;
-        this.resultService = resultService;
-        this.resultRepository = resultRepository;
+        this.examAccessApi = examAccessApi;
     }
 
     /**
@@ -147,11 +141,15 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var exercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
-        // Apply further checks if it is an exam submission
-        examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user);
+        if (exercise.isExamExercise()) {
+            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
+            // Apply further checks if it is an exam submission
+            api.checkSubmissionAllowanceElseThrow(exercise, user);
 
-        // Prevent multiple submissions (currently only for exam submissions)
-        modelingSubmission = (ModelingSubmission) examSubmissionService.preventMultipleSubmissions(exercise, modelingSubmission, user);
+            // Prevent multiple submissions (currently only for exam submissions)
+            modelingSubmission = (ModelingSubmission) api.preventMultipleSubmissions(exercise, modelingSubmission, user);
+        }
+
         // Check if the user is allowed to submit
         modelingSubmissionService.checkSubmissionAllowanceElseThrow(exercise, modelingSubmission, user);
 
@@ -184,15 +182,15 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * GET /modeling-submissions/{submissionId} : Gets an existing modelingSubmission with result. If no result exists for this submission a new Result object is created and
-     * assigned to the submission.
+     * GET /modeling-submissions/{submissionId} : Gets an existing modelingSubmission with result. If no result exists for this submission a new empty result object
+     * might be created and assigned to the submission (when the user is at least a tutor).
      * In case an instructors calls, the resultId is used first. In case the resultId is not set, the correctionRound is used.
      * In case neither resultId nor correctionRound is set, the first correctionRound is used.
      *
      * @param submissionId    the id of the modelingSubmission to retrieve
      * @param correctionRound correction round for which we prepare the submission
      * @param resultId        the resultId for which we want to get the submission
-     * @param withoutResults  No result will be created or loaded and the exercise won't be locked when this is set so plagiarism detection doesn't lock results
+     * @param withoutResults  No result will be created or loaded and the exercise won't be locked when this is set
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id, or with status 404 (Not Found) if the modelingSubmission could not be
      *         found
      */
@@ -202,20 +200,33 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId,
             @RequestParam(value = "withoutResults", defaultValue = "false") boolean withoutResults) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
-        // TODO CZ: include exerciseId in path to get exercise for auth check more easily?
+
         var modelingSubmission = modelingSubmissionRepository.findByIdElseThrow(submissionId);
         var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
-        var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
-        modelingExercise.setGradingCriteria(gradingCriteria);
 
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
+        if (!authCheckService.isAtLeastStudentForExercise(modelingExercise, user)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to access this modeling submission.");
+        }
+
         if (!authCheckService.isAllowedToAssessExercise(modelingExercise, user, resultId)) {
-            // anonymize and throw exception if not authorized to view submission
-            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(modelingSubmission, userRepository.getUser().getLogin(), studentParticipation);
+            // only the owner of the participation can see the submission
+            if (!authCheckService.isOwnerOfParticipation(studentParticipation, user)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to access this modeling submission.");
+            }
+
+            // anonymize the submission
+            modelingSubmission.setParticipation(null);
+            modelingSubmission.setResults(null);
+            modelingSubmission.setSubmissionDate(null);
             return ResponseEntity.ok(modelingSubmission);
         }
+
+        // now we can assume the user is at least a tutor for the underlying exercise
+        var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
+        modelingExercise.setGradingCriteria(gradingCriteria);
 
         if (!withoutResults) {
             // load submission with results either by resultId or by correctionRound
@@ -239,7 +250,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // Make sure the exercise is connected to the participation in the json response
         studentParticipation.setExercise(modelingExercise);
         modelingSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
-        modelingSubmissionService.setNumberOfAffectedSubmissionsPerElement(modelingSubmission);
         // prepare modelingSubmission for response
         modelingSubmissionService.hideDetails(modelingSubmission, user);
         // Don't remove results when they were not requested in the first place
@@ -296,6 +306,68 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
+     * Encapsulates the result of participation validation.
+     * <p>
+     * This record holds:
+     * <ul>
+     * <li>The validated {@link StudentParticipation} instance.</li>
+     * <li>The associated {@link ModelingExercise} instance (validated to be non-null and correct type).</li>
+     * <li>A flag indicating if the current user has at least teaching assistant permissions for the exercise.</li>
+     * </ul>
+     *
+     * @param studentParticipation the validated student participation
+     * @param modelingExercise     the validated modeling exercise
+     * @param isAtLeastTutor       true if the user has at least teaching assistant rights for the exercise, false otherwise
+     */
+    private record ValidationResult(StudentParticipation studentParticipation, ModelingExercise modelingExercise, boolean isAtLeastTutor) {
+    }
+
+    /**
+     * Validates a student's participation in a modeling exercise and checks if the current user has the necessary permissions to access it.
+     * <p>
+     * This method performs the following validations:
+     * <ul>
+     * <li>Ensures the participation exists and has a non-null exercise.</li>
+     * <li>Ensures the exercise is of type {@link ModelingExercise}; otherwise, throws an exception.</li>
+     * <li>Checks if the current user is the owner of the participation or has at least teaching assistant permissions.</li>
+     * <li>If the exercise is an exam exercise, checks if the user is allowed to access the result based on exam timing.</li>
+     * </ul>
+     * Upon successful validation, it returns a {@link ValidationResult} containing the participation, the modeling exercise, and the permission flag.
+     *
+     * @param participationId the ID of the student participation to validate
+     * @return a {@link ValidationResult} containing the validated participation, modeling exercise, and permission flag
+     * @throws BadRequestAlertException   if the participation has a null exercise or if the exercise is not a {@link ModelingExercise}
+     * @throws AccessForbiddenException   if the user does not have the required access rights to view the participation
+     * @throws ExamApiNotPresentException if the exam access API is required but not present
+     */
+    private ValidationResult validateParticipation(long participationId) {
+        var studentParticipation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var exercise = studentParticipation.getExercise();
+
+        if (exercise == null) {
+            throw new BadRequestAlertException("The exercise belonging to the student participation is null", ENTITY_NAME, "exerciseEmpty");
+        }
+
+        if (!(exercise instanceof ModelingExercise modelingExercise)) {
+            throw new BadRequestAlertException("The exercise of the student participation is not a modeling exercise", ENTITY_NAME, "wrongExerciseType");
+        }
+
+        // Students can only see their own models (to prevent cheating). TAs, instructors and admins can see all models.
+        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user);
+        if (!(authCheckService.isOwnerOfParticipation(studentParticipation) || isAtLeastTutor)) {
+            throw new AccessForbiddenException("You are not allowed to access this modeling submission.");
+        }
+
+        // Exam exercises cannot be seen by students between the endDate and the publishResultDate
+        if (modelingExercise.isExamExercise()) {
+            ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
+            api.checkIfAllowedToGetExamResult(modelingExercise, studentParticipation, user);
+        }
+        return new ValidationResult(studentParticipation, modelingExercise, isAtLeastTutor);
+    }
+
+    /**
      * Returns the submission with data needed for the modeling editor, which includes the participation, the model and the result (if the assessment was already submitted).
      *
      * @param participationId the participationId for which to find the submission and data for the modeling editor
@@ -303,75 +375,45 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping("participations/{participationId}/latest-modeling-submission")
     @EnforceAtLeastStudent
-    public ResponseEntity<ModelingSubmission> getLatestSubmissionForModelingEditor(@PathVariable long participationId) {
-        StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+    public ResponseEntity<ModelingSubmission> getLatestModelingSubmission(@PathVariable long participationId) {
+        log.debug("REST request to get latest modeling submission for participation: {}", participationId);
+        var validationResult = validateParticipation(participationId);
+        var studentParticipation = validationResult.studentParticipation;
+        var exercise = validationResult.modelingExercise;
 
-        if (participation.getExercise() == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
-                    .body(null);
-        }
-
-        if (!(participation.getExercise() instanceof ModelingExercise modelingExercise)) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise."))
-                    .body(null);
-        }
-
-        // Students can only see their own models (to prevent cheating). TAs, instructors and admins can see all models.
-        if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise))) {
-            throw new AccessForbiddenException();
-        }
-
-        // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        if (!authCheckService.isAllowedToGetExamResult(modelingExercise, participation, user)) {
-            throw new AccessForbiddenException();
-        }
-
-        Optional<Submission> optionalSubmission = participation.findLatestSubmission();
+        Optional<Submission> optionalLatestSubmission = studentParticipation.getSubmissions().stream().findFirst();
         ModelingSubmission modelingSubmission;
-        if (optionalSubmission.isEmpty()) {
+        if (optionalLatestSubmission.isEmpty()) {
             // this should never happen as the submission is initialized along with the participation when the exercise is started
             modelingSubmission = new ModelingSubmission();
-            modelingSubmission.setParticipation(participation);
+            modelingSubmission.setParticipation(studentParticipation);
         }
         else {
             // only try to get and set the model if the modelingSubmission existed before
-            modelingSubmission = (ModelingSubmission) optionalSubmission.get();
-        }
-
-        // make sure only the latest submission and latest result is sent to the client
-        participation.setSubmissions(null);
-        if (ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
-            participation.setResults(null);
+            modelingSubmission = (ModelingSubmission) optionalLatestSubmission.get();
         }
 
         // do not send the result to the client if the assessment is not finished
-        if (modelingSubmission.getLatestResult() != null
-                && (modelingSubmission.getLatestResult().getCompletionDate() == null || modelingSubmission.getLatestResult().getAssessor() == null)) {
-            modelingSubmission.setResults(new ArrayList<>());
+        Result latestResult = modelingSubmission.getLatestResult();
+        if (latestResult != null && (latestResult.getCompletionDate() == null || latestResult.getAssessor() == null)) {
+            modelingSubmission.setResults(List.of());
         }
 
-        if (!ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
+        if (!ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             // We want to have the preliminary feedback before the assessment due date too
-            Set<Result> participationResults = participation.getResults();
-            if (participationResults != null) {
-                List<Result> athenaResults = participationResults.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
-                modelingSubmission.setResults(athenaResults);
-                Set<Result> athenaResultsSet = new HashSet<>(athenaResults);
-                participation.setResults(athenaResultsSet);
-            }
+            List<Result> athenaResults = modelingSubmission.getResults().stream().filter(result -> result != null && result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
+                    .toList();
+            modelingSubmission.setResults(athenaResults);
         }
 
-        if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
+        if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             modelingSubmission.getLatestResult().filterSensitiveInformation();
         }
 
         // make sure sensitive information are not sent to the client
-        modelingExercise.filterSensitiveInformation();
-        if (modelingExercise.isExamExercise()) {
-            modelingExercise.getExerciseGroup().setExam(null);
+        exercise.filterSensitiveInformation();
+        if (exercise.isExamExercise()) {
+            exercise.getExerciseGroup().setExam(null);
         }
 
         return ResponseEntity.ok(modelingSubmission);
@@ -391,47 +433,21 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<List<Submission>> getSubmissionsWithResultsForParticipation(@PathVariable long participationId) {
         log.debug("REST request to get submissions with results for participation: {}", participationId);
 
-        // Retrieve and check the participation
-        StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        if (participation.getExercise() == null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
-                    .body(null);
-        }
-
-        if (!(participation.getExercise() instanceof ModelingExercise modelingExercise)) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createFailureAlert(applicationName, true, "modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise."))
-                    .body(null);
-        }
-
-        // Students can only see their own models (to prevent cheating). TAs, instructors and admins can see all models.
-        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise, user);
-        if (!(authCheckService.isOwnerOfParticipation(participation) || isAtLeastTutor)) {
-            throw new AccessForbiddenException();
-        }
-
-        // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        if (!authCheckService.isAllowedToGetExamResult(modelingExercise, participation, user)) {
-            throw new AccessForbiddenException();
-        }
-
-        boolean isStudent = !isAtLeastTutor;
+        var validationResult = validateParticipation(participationId);
+        var studentParticipation = validationResult.studentParticipation;
 
         // Get the submissions associated with the participation
-        Set<Submission> submissions = participation.getSubmissions();
+        Set<Submission> submissions = studentParticipation.getSubmissions();
 
         // Filter submissions to only include those with relevant results
         List<Submission> submissionsWithResults = submissions.stream().filter(submission -> {
 
-            submission.setParticipation(participation);
+            submission.setParticipation(studentParticipation);
 
             // Filter results within each submission based on assessment type and period
             List<Result> filteredResults = submission.getResults().stream().filter(result -> {
-                if (isStudent) {
-                    if (ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
+                if (!validationResult.isAtLeastTutor) {
+                    if (ExerciseDateService.isAfterAssessmentDueDate(validationResult.modelingExercise)) {
                         return true; // Include all results if the assessment period is over
                     }
                     else {

@@ -2,7 +2,7 @@
     "artemisApp": {
         "textExercise": {
             "home": {
-                "title": "Text Exercises",
+                "title": "Text Exercise",
                 "createLabel": "Create Text Exercise",
                 "editLabel": "Edit Text Exercise",
                 "importLabel": "Import Text Exercise"

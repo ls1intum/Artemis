@@ -8,10 +8,14 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.support.ParameterDeclarations;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Source;
@@ -21,8 +25,10 @@ import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompe
 import de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
+@Conditional(AtlasEnabled.class)
 public class StandardizedCompetencyUtilService {
 
     public static final long ID_NOT_EXISTS = -1000L;
@@ -96,7 +102,7 @@ public class StandardizedCompetencyUtilService {
     public static class CheckStandardizedCompetencyValidationProvider implements ArgumentsProvider {
 
         @Override
-        public Stream<Arguments> provideArguments(ExtensionContext extensionContext) {
+        public Stream<Arguments> provideArguments(ParameterDeclarations parameters, ExtensionContext extensionContext) {
             var competencies = new ArrayList<StandardizedCompetencyRequestDTO>();
             // invalid title
             competencies.add(new StandardizedCompetencyRequestDTO("", "valid description", null, ID_NOT_EXISTS, null));
@@ -114,7 +120,7 @@ public class StandardizedCompetencyUtilService {
     public static class CheckKnowledgeAreaValidationProvider implements ArgumentsProvider {
 
         @Override
-        public Stream<Arguments> provideArguments(ExtensionContext extensionContext) {
+        public Stream<Arguments> provideArguments(ParameterDeclarations parameters, ExtensionContext extensionContext) {
             var knowledgeAreas = new ArrayList<KnowledgeAreaRequestDTO>();
             // invalid title
             knowledgeAreas.add(new KnowledgeAreaRequestDTO("", "shortTitle", "", null));

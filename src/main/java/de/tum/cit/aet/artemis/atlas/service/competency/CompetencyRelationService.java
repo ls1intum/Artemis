@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.service.competency;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -9,9 +7,11 @@ import java.util.Set;
 
 import jakarta.ws.rs.BadRequestException;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
@@ -23,7 +23,8 @@ import de.tum.cit.aet.artemis.core.domain.Course;
  * Service for managing CompetencyRelations.
  */
 
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
+@Lazy
 @Service
 public class CompetencyRelationService {
 

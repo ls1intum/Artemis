@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 
 /**
  * FeatureToggles
+ * Must be the same as in de.tum.cit.aet.artemis.core.service.feature.Feature on the server side
  * @readonly
  * @enum {string}
  */
@@ -13,12 +14,11 @@ export enum FeatureToggle {
     ProgrammingExercises = 'ProgrammingExercises',
     PlagiarismChecks = 'PlagiarismChecks',
     Exports = 'Exports',
-    TutorialGroups = 'TutorialGroups',
     LearningPaths = 'LearningPaths',
     Science = 'Science',
     StandardizedCompetencies = 'StandardizedCompetencies',
     StudentCourseAnalyticsDashboard = 'StudentCourseAnalyticsDashboard',
-    CourseSpecificNotifications = 'CourseSpecificNotifications',
+    TutorSuggestions = 'TutorSuggestions',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 

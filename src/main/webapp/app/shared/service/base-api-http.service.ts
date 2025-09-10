@@ -7,7 +7,7 @@ import { SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 export abstract class BaseApiHttpService {
     private readonly httpClient: HttpClient = inject(HttpClient);
 
-    private readonly baseUrl = 'api';
+    protected baseUrl: string = 'api';
 
     /**
      * Debounce a function call to prevent it from being called multiple times in a short period.

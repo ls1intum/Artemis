@@ -1,7 +1,8 @@
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import dayjs from 'dayjs';
 
 export class MockMetisConversationService {
     get course(): Course | undefined {
@@ -48,6 +49,8 @@ export class MockMetisConversationService {
         return EMPTY;
     };
 
+    handleNewMessage = (conversationId: number | undefined, lastMessageDate: dayjs.Dayjs | undefined): void => {};
+
     forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
         return EMPTY;
     }
@@ -55,4 +58,6 @@ export class MockMetisConversationService {
     markAsRead(): void {}
 
     acceptCodeOfConduct(course: Course) {}
+
+    checkForUnreadMessages = (course: Course) => {};
 }

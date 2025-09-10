@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
@@ -28,6 +29,7 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.LTIAuthorizationGrantTy
 /**
  * Service Implementation for OnlineCourseConfiguration.
  */
+@Lazy
 @Service
 @Profile(PROFILE_LTI)
 public class OnlineCourseConfigurationService implements ClientRegistrationRepository {
@@ -102,7 +104,7 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
                     .authorizationUri(ltiPlatformConfiguration.getAuthorizationUri()) //
                     .jwkSetUri(ltiPlatformConfiguration.getJwkSetUri()) //
                     .tokenUri(ltiPlatformConfiguration.getTokenUri()) //
-                    .redirectUri(artemisServerUrl + "/" + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH) //
+                    .redirectUri(artemisServerUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH) //
                     .scope("openid") //
                     .authorizationGrantType(LTIAuthorizationGrantType.IMPLICIT) //
                     .build();

@@ -597,6 +597,15 @@
                                 <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.examReview"></span>
                                 <hr />
                                 <ul class="list-unstyled">
+                                    @if (disabledExercises.length > 0) {
+                                        <li class="list-group-item border-1">
+                                            <span>
+                                                <jhi-checklist-check [checkAttribute]="disabledExercises.length === 0" />
+                                                <span jhiTranslate="artemisApp.examManagement.checklist.textitems.noDeactivatedExerciseTypes.label"></span>
+                                            </span>
+                                            <jhi-help-icon text="artemisApp.examManagement.checklist.textitems.noDeactivatedExerciseTypes.tooltip" />
+                                        </li>
+                                    }
                                     <li class="list-group-item border-1">
                                         <span>
                                             <jhi-checklist-check [checkAttribute]="!!exam().examStudentReviewStart" data-testid="check-start-date-review-set" />

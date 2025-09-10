@@ -1,20 +1,20 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, OnDestroy, Output, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output } from '@angular/core';
 import { EMPTY, Subject, from } from 'rxjs';
 import { faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CancellationModalComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Course } from 'app/entities/course.model';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { EditTutorialGroupSessionComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
 import { catchError, takeUntil } from 'rxjs/operators';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/services/tutorial-group-session.service';
+import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 
 @Component({
     selector: 'jhi-tutorial-group-session-row-buttons',
@@ -32,9 +32,9 @@ export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
     tutorialGroup = input.required<TutorialGroup>();
     tutorialGroupSession = input.required<TutorialGroupSession>();
 
-    @Output() tutorialGroupSessionDeleted = new EventEmitter<void>();
-    @Output() tutorialGroupEdited = new EventEmitter<void>();
-    @Output() cancelOrActivatePressed = new EventEmitter<void>();
+    readonly tutorialGroupSessionDeleted = output<void>();
+    readonly tutorialGroupEdited = output<void>();
+    readonly cancelOrActivatePressed = output<void>();
 
     tutorialGroupSessionStatus = TutorialGroupSessionStatus;
     private dialogErrorSource = new Subject<string>();
@@ -78,9 +78,9 @@ export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
     openEditSessionDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(EditTutorialGroupSessionComponent, { size: 'lg', scrollable: false, backdrop: 'static', animation: false });
-        modalRef.componentInstance.course = this.course();
-        modalRef.componentInstance.tutorialGroup = this.tutorialGroup();
-        modalRef.componentInstance.tutorialGroupSession = this.tutorialGroupSession();
+        modalRef.componentInstance.course = this.course;
+        modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
+        modalRef.componentInstance.tutorialGroupSession = this.tutorialGroupSession;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(

@@ -47,7 +47,7 @@ These messages can also be created on the detail page of the lecture they belong
 
 Exemplary lecture detail page with messages:
 
-|lecture-messages|
+|lecture-view|
 
 Exercise Messages
 ^^^^^^^^^^^^^^^^^
@@ -58,7 +58,7 @@ These messages can also be created on the detail page of the exercise they belon
 
 Exemplary exercise detail page with messages:
 
-|exercise-messages|
+|exercise-view|
 
 Private Communication
 ----------------------
@@ -93,12 +93,7 @@ If the message content contains links, a preview of the link will be shown under
 of what that link is about. If they prefer not to have a preview, they can hover over the preview and click the appearing `X` button.
 The preview will be removed.
 
-|link-preview|
-
-If the message contains more than one link, the preview will not have a preview image of the link to have more compact previews
-for multiple links.
-
-|link-preview-multiple|
+|link-preview-view|
 
 
 .. _communication features availability list:
@@ -127,7 +122,7 @@ Communication Features Availability
     <span style="background-color: #6c757d; padding: 3px 6px; border-radius: 8px; color: white; font-weight: bold; display: inline-block; width: 150px; text-align: center;">NOT PLANNED</span>
 
 
-The following table represents the currently available communication features of Artemis on the different platforms. Note that not all 
+The following table represents the currently available communication features of Artemis on the different platforms. Note that not all
 features are available to every user, which is why **Actor restrictions** have been added. The following sections will explore this in more
 detail.
 
@@ -183,23 +178,25 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Edit Message                                         | Authors only                         | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Save Message for later                               |                                      | |AVAILABLE|        | |PLANNED|           | |AVAILABLE|         |
+| Save Message for later                               |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Forward Messages                                     |                                      | |AVAILABLE|        | |PLANNED|           | |WIP|               |
+| Forward Messages                                     |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Resolve Messages                                     | At least tutor and authors           | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Post action bar (thread view)                        |                                      ||NOT PLANNED|       | |AVAILABLE|         | |AVAILABLE|         |
+| Post action bar (thread view)                        |                                      | |NOT PLANNED|      | |AVAILABLE|         | |AVAILABLE|         |
++------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
+| Get tutor suggestion (thread view)                   | At least tutor                       | |AVAILABLE|        | |UNAVAILABLE|       | |UNAVAILABLE|       |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 |                                                                                                                                                              |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| **Markdown Textfield Options**                                                                                                                               |
+| **Markdown Text field Options**                                                                                                                              |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Tag other users                                      |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Reference channels, lectures and exercises           |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Tag FAQ                                              |                                      | |AVAILABLE|        | |AVAILABLE|         | |PLANNED|           |
+| Tag FAQ                                              |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Basic formatting (underline, bold, italic)           |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -225,25 +222,31 @@ Available features on each platform
 | | lecture-units, slides, lecture-attachment with     |                                      |                    |                     |                     |
 | | correct icon                                       |                                      |                    |                     |                     |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Render FAQ links                                     |                                      | |AVAILABLE|        | |AVAILABLE|         | |PLANNED|           |
+| Render FAQ links                                     |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Mark unread messages                                 |                                      | |UNAVAILABLE|      | |UNAVAILABLE|       | |UNAVAILABLE|       |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Render images                                        |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
+| Show link previews                                   |                                      | |AVAILABLE|        | |UNAVAILABLE|       | |AVAILABLE|         |
++------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Render links to uploaded files                       |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Filter messages (unresolved, own, reacted)           |                                      | |AVAILABLE|        | |AVAILABLE|         | |PLANNED|           |
+| Filter messages (unresolved, own, reacted)           |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Sort messages (ascending, descending)                |                                      | |AVAILABLE|        | |NOT PLANNED|       | |NOT PLANNED|       |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Search for messages in chat                          |                                      | |AVAILABLE|        | |UNAVAILABLE|       | |AVAILABLE|         |
+| Search for messages in a specific chat               |                                      | |AVAILABLE|        | |UNAVAILABLE|       | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Search for messages across all chats                 |                                      | |AVAILABLE|        | |UNAVAILABLE|       | |UNAVAILABLE|       |
+| Search for messages across all chats                 |                                      | |AVAILABLE|        | |PLANNED|           | |UNAVAILABLE|       |
++------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
+| Apply filters while searching across all chats       |                                      | |AVAILABLE|        | |PLANNED|           | |UNAVAILABLE|       |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Open Profile info by clicking profile picture        |                                      | |PLANNED|          | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Start a conversation from Profile                    |                                      | |WIP|              | |AVAILABLE|         | |AVAILABLE|         |
+| Start a conversation from Profile                    |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
++------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
+| Draft messages                                       |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 |                                                                                                                                                              |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -264,7 +267,7 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Search for chats                                     |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Filter chats (all, unread, favorites)                |                                      | |UNAVAILABLE|      | |AVAILABLE|         | |PLANNED|           |
+| Filter chats (all, unread, favorites)                |                                      | |UNAVAILABLE|      | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Mark unread chats                                    |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -274,7 +277,7 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Archive Chat                                         |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Delete Chat                                          |                                      | |AVAILABLE|        | |UNAVAILABLE|       | |PLANNED|           |
+| Delete Chat                                          |                                      | |AVAILABLE|        | |AVAILABLE|         | |PLANNED|           |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | View Members                                         |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -316,7 +319,7 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Leave chat                                           | For groups only                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Delete channel                                       | | Creators with moderation           | |AVAILABLE|        | |UNAVAILABLE|       | |UNAVAILABLE|       |
+| Delete channel                                       | | Creators with moderation           | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 |                                                      | | rights and instructors             |                    |                     |                     |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Archive channel                                      | Moderators                           | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
@@ -325,15 +328,17 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | **Notifications**                                                                                                                                            |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Notification overview for past notifications         |                                      | |AVAILABLE|        | |AVAILABLE|         | |PLANNED|           |
+| | Notification overview for past                     |                                      | |AVAILABLE|        | |AVAILABLE|         | |UNAVAILABLE|       |
+| | course specific notifications                      |                                      |                    |                     |                     |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | | Notification settings (unsubscribe/subscribe       |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
-| | to various notification types)                     |                                      |                    |                     |                     |
+| | to various course specific notification types)     |                                      |                    |                     |                     |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 
-.. note:: 
+.. note::
     - Leave chat option is available on the web app for groups only, on iOS for groups and non course-wide channels, and on Android for channels, groups, and DMs.
     - Creating a group chat on iOS and Android can be achieved via the 'Create Chat' option. It becomes a group when more than one user is added.
+    - Starting a conversation on the web app from a profile is available when clicking on the user's name in the chat.
     - Downloading sent images in the chat is only available through the browser option on the web app.
     - Seeing who reacted to a post is available when hovering over a reaction on the web app.
 
@@ -345,13 +350,22 @@ This section captures the most important features that are offered to any Artemi
 Search, Filter, and Sort Messages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Global Search
+
+In the course communication, users can search for messages across all channels and conversations. The global search can be accessed anytime.
+To only receive results from a a specific conversation or a specific author, filters can be applied by using the keywords *in:* or *from:*
+or by selecting the respective filters from the dropdown menu. When accessing the global search from a conversation by clicking on the
+search icon in the top right corner, this conversation is automatically selected as filter.
+
+|global-search|
+
 On the course communication overview, a user can query *all* existing messages according to the following criteria and their
 possible combinations:
 
-* Text-based search
+* Text-based Search using the Global Search
     * Contents of Announcement-Message Title
     * Contents of Message Context
-* Message characteristics
+* Message Characteristics
     * Unresolved Messages
     * Own (messages current user has authored)
     * Reacted (messages current user has reacted or replied to)
@@ -360,28 +374,39 @@ possible combinations:
 
 A simplified version of this feature is available on the exercise and lecture details page as well.
 
-To search within a specific channel in the communications module, users can navigate to the desired channel and utilize the search bar located in that channel.
+Filter Pinned Messages within a Conversation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If there are any pinned messages in a conversation, a button labeled "*x* pinned messages", where *x* is the number of pinned messages,
+appears at the top right of the conversation view. By clicking this button, users can filter and view only the pinned messages
+within that conversation. Clicking the button again returns the view to the regular conversation.
+
+Pinned Messages Button
+
+|pinned-messages-button|
+
+Applied Pinned Messages Filtering
+
+|applied-pinned filter|
 
 Verify User Authority
 ^^^^^^^^^^^^^^^^^^^^^
 
-To build trust between users utilizing the system's communication features, we prepend a role badge to the author’s name in the
-headers of messages and their replies. The badge we introduce differs according to the role of the author within the course
-and reveals their highest authoritative role. Via tooltips that are shown as users hover over these badges (see images below),
-the system displays a brief explanation of that specific role. This way, the system builds trust in the author, and readers
+To build trust between users utilizing the system's communication features, we display the user's role below their name in the headers of messages and their replies.
+When hovering over the displayed role, a tooltip appears showing a brief explanation of that specific role. This way, the system builds trust in the author, and readers
 can tangibly confirm the origin of the shared information.
 
 Instructor Authority
 
-|instructor-user|
+|instructor-role|
 
 Tutor Authority
 
-|tutor-user|
+|tutor-role|
 
 Student Authority
 
-|student-user|
+|student-role|
 
 React on Messages
 ^^^^^^^^^^^^^^^^^
@@ -398,7 +423,7 @@ and attachments of these lectures. All references are then prepended with icons 
 to help users distinguish them conveniently. In the image below, we see all possible types of references that can be created
 in an Artemis message.
 
-|message-with-references|
+|message-references|
 
 Reference Course Exercises
 """"""""""""""""""""""""""
@@ -442,14 +467,14 @@ Reference Lecture Unit Slides
 Users can refer to lecture unit slides of the current course, via the dropdown menu ``Lecture``. Here, slides can be found when users
 hover over a specific unit, see image below.
 
-|slide-reference-menu|
+|slide-menu|
 
 After the user references a single slide they can see it as an image included in the message. Additionally, they can preview the slide
 in order to easily read the content by clicking the image.
 
-|slide-reference|
+|slide-preview|
 
-|referenced-slide-preview|
+|slide-view|
 
 Reference other course members
 """"""""""""""""""""""""""""""
@@ -472,6 +497,121 @@ It also highlights the correct answer for other students that have a similar pro
 
 |resolved-post|
 
+Forward Messages
+^^^^^^^^^^^^^^^^
+
+Users can forward any message to another conversation within the same course. In the forward message dialog, they can add
+additional content using the input field. At the top of the dialog, users can search for channels or users by typing into
+the input bar and selecting from the auto-suggestions. They can select multiple conversations at once to forward the message
+to several destinations simultaneously. On the forwarded message view, users can navigate to the exact location of the original
+message by clicking the *View Conversation* button.
+
+Forward Message Dialog
+
+|forward-message-dialog|
+
+Forwarded Message View
+
+|forwarded-message|
+
+Save Messages
+^^^^^^^^^^^^^
+
+Users can save messages and access them later from the Saved Messages section in the sidebar. Saved messages are
+organized into three categories: *In Progress*, *Completed*, and *Archived*. Messages initially appear in the *In Progress*
+section and can be marked as done to move them to *Completed*, or archived to move them to the *Archived* section.
+Clicking on a saved message navigates the user directly to its exact location within the conversation.
+
+|save-messages|
+
+Expand Thread to Full-Screen
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Users can expand a thread to cover the entire conversation view by clicking the expand button located at the top right
+corner of the answer thread. Clicking the same button again returns the thread to its original size.
+
+|expanded-thread|
+
+Profile Pictures
+^^^^^^^^^^^^^^^^
+
+Users can upload a profile picture in their account settings to enhance personal recognition. Once set, the profile picture will appear alongside any messages they post. The following video provides a step-by-step guide on how to upload a profile picture:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/61336?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
+Draft Messages
+^^^^^^^^^^^^^^^
+
+When composing a message or replying in a thread on the WebApp, Artemis automatically saves your input as a **draft**. This ensures that unfinished messages are not lost when navigating between conversations or accidentally closing the tab.
+
+Draft messages are:
+
+* Stored locally (not synced across devices)
+* Associated with the user and the corresponding conversation or thread
+* Automatically restored when reopening the same context
+* Removed once the message is sent
+* Automatically deleted after 7 days if not submitted
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/61870?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+            Watch this video on TUM-Live.
+        </iframe>
+
+Features for Tutors
+-----------------------
+
+The following features are only available for tutors, not for students.
+
+Tutor Suggestions
+^^^^^^^^^^^^^^^^^
+
+*Suggestions provided by Iris to support tutors in formulating context-aware replies.*
+
+Tutor Suggestions appear in the thread view whenever a tutor opens a discussion post. These suggestions are short, bullet-point messages generated by Iris based on the context of the current discussion, the course content, and linked lecture or exercise materials. Their purpose is to guide tutors toward pedagogically meaningful answers without providing direct solutions. Once Iris completes the analysis, the suggestions appear beneath the message input field. A status bar shows the loading state while the Tutor Suggestions are generated.
+
+Exemplary thread view with tutor suggestions:
+
+|tutor-suggestions-view|
+
+If tutors require more detailed clarification or want to refine the Tutor Suggestions, they can initiate a direct conversation with Iris in the integrated chat window. This chat appears directly below the suggestions in the thread view.
+Tutors can ask questions such as:
+
+* What part of the example solution relates to this question?
+* What misconception might the student have based on their message?
+
+Iris will respond based on available context, such as exercise content, example solutions, and previous messages. The tutor can use these answers to formulate more informed replies.
+
+Example tutor–Iris conversation:
+
+|iris-chat-view|
+
+If the tutor's question leads to a refined understanding of the discussion, Iris may automatically regenerate and update the Tutor Suggestions. Additionally, tutors can trigger an automated regeneration.
+A “View history” button lets them inspect previously generated suggestions.
+Viewing previous suggestions:
+
+|tutor-suggestions-history|
+
+Tutor Suggestions are only available to users with the tutor role. The feature is disabled by default and must be explicitly enabled by the administrators. Students' messages are processed and stored locally within Artemis to generate suggestions. No external services are contacted, and no content is sent to GPT models.
+
+.. important::
+   **Privacy and activation at a glance**
+
+   - **Local processing**: Students' messages are processed locally inside Artemis to create Tutor Suggestions. There is no transfer of personal data to third parties.
+   - **Opt‑in**: The feature is not active by default and must be explicitly enabled by the administrators.
+   - **No external AI**: No content is sent to GPT models or other external AI services.
+   - **GDPR**: Processing is purpose‑limited to assisting tutors (purpose limitation, data minimisation). If your institution requires consent as the legal basis, activation must be preceded by explicit **consent** (Art. 6(1)(a) GDPR).
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/61869?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Features for Moderators
 -----------------------
 
@@ -480,8 +620,16 @@ The following features are only available for moderators, not for students.
 Pin Messages
 ^^^^^^^^^^^^
 
-By clicking the pushpin icon next to the reaction button of a message, a moderator can *pin* the message.
-As a consequence, the message is highlighted to receive higher attention.
+By using the "Pin message" button, either from the right-click dropdown menu or from the action bar that appears at the top right corner
+of a message when hovering over it, a moderator can *pin* the message. As a consequence, the message is highlighted to receive higher attention.
+
+Toggle Channel Privacy
+^^^^^^^^^^^^^^^^^^^^^^
+
+Moderators have the ability to seamlessly toggle a channel’s privacy between private and public using
+the toggle button in the channel settings.
+
+|channel-settings|
 
 Features for Instructors
 ------------------------
@@ -501,6 +649,13 @@ The video below provides a demonstration for the creation of a course-wide chann
         Watch this video on TUM-Live.
     </iframe>
 
+Besides automatic creation during lecture, exercise, or exam setup, moderators can also manually create new channels later
+if needed. When creating a channel, they must choose between a *selective* channel (default option) and a *course-wide* channel.
+In a *selective* channel, users are added manually after the channel is created. In a *course-wide* channel, all users
+enrolled in the course are automatically added as members.
+
+|channel-creation|
+
 Message Announcements
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -511,31 +666,55 @@ As soon as the announcement is created, all participants who did not actively re
 
 .. |communication-toggle| image:: communication/communication-checkbox.png
     :width: 500
-.. |messaging-page| image:: communication/messaging-page.png
+.. |messaging-page| image:: communication/message-page.png
     :width: 1000
-.. |lecture-messages| image:: communication/lecture-messages.png
+.. |lecture-view| image:: communication/lecture-page.png
     :width: 1000
-.. |exercise-messages| image:: communication/exercise-messages.png
+.. |exercise-view| image:: communication/exercise-page.png
     :width: 1000
-.. |message-with-references| image:: communication/message-with-all-references.png
+.. |message-references| image:: communication/references.png
     :width: 750
-.. |resolved-post| image:: communication/resolved-post.png
-    :width: 400
-.. |instructor-user| image:: communication/user-authorities/instructor.png
-    :width: 500
-.. |tutor-user| image:: communication/user-authorities/tutor.png
-    :width: 500
-.. |student-user| image:: communication/user-authorities/student.png
-    :width: 500
-.. |messages| image:: communication/messages.png
-    :width: 1000
-.. |slide-reference| image:: communication/slide-reference.png
+.. |resolved-post| image:: communication/mark-resolved.png
     :width: 600
-.. |slide-reference-menu| image:: communication/slide-reference-menu.png
+.. |instructor-role| image:: communication/user-authorities/instructor-role.png
+    :width: 500
+.. |tutor-role| image:: communication/user-authorities/tutor-role.png
+    :width: 500
+.. |student-role| image:: communication/user-authorities/student-role.png
+    :width: 500
+.. |messages| image:: communication/direct-message-page.png
     :width: 1000
-.. |referenced-slide-preview| image:: communication/referenced-slide-preview.png
+.. |slide-preview| image:: communication/slide-preview-message.png
     :width: 600
-.. |link-preview| image:: communication/link-preview.png
+.. |slide-menu| image:: communication/slide-menu-view.png
+    :width: 1000
+.. |slide-view| image:: communication/slide-open.png
+    :width: 600
+.. |link-preview-view| image:: communication/link-preview-single.png
     :width: 600
 .. |link-preview-multiple| image:: communication/link-preview-multiple.png
     :width: 600
+.. |channel-creation| image:: communication/channel-creation.png
+    :width: 600
+.. |forwarded-message| image:: communication/forward-view.png
+    :width: 800
+.. |forward-message-dialog| image:: communication/forward-dialog.png
+    :width: 800
+.. |expanded-thread| image:: communication/expanded.png
+    :width: 1000
+.. |channel-settings| image:: communication/channel-settings.png
+    :width: 800
+.. |pinned-messages-button| image:: communication/pinned-button.png
+    :width: 1000
+.. |applied-pinned filter| image:: communication/applied-pinned-filtering.png
+    :width: 1000
+.. |save-messages| image:: communication/save-message.png
+    :width: 1000
+.. |global-search| image:: communication/global-search.png
+    :width: 1000
+.. |tutor-suggestions-view| image:: communication/tutor-suggestions-view.png
+    :width: 500
+.. |iris-chat-view| image:: communication/iris-chat-view.png
+    :width: 500
+.. |tutor-suggestions-history| image:: communication/tutor-suggestions-history.png
+    :width: 1000

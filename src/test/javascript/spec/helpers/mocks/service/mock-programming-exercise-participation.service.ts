@@ -1,12 +1,12 @@
 import { of } from 'rxjs';
 import { IProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Result } from 'app/entities/result.model';
-import { CommitInfo } from 'app/entities/programming/programming-submission.model';
-import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
+import { VcsAccessLogDTO } from 'app/programming/shared/entities/vcs-access-log-entry.model';
 
 export class MockProgrammingExerciseParticipationService implements IProgrammingExerciseParticipationService {
-    getLatestResultWithFeedback = (participationId: number, withSubmission: boolean) => of({} as Result);
+    getLatestResultWithFeedback = (participationId: number) => of({} as Result);
     getStudentParticipationWithLatestResult = (participationId: number) => of({} as ProgrammingExerciseStudentParticipation);
     getStudentParticipationWithAllResults = (participationId: number) => of({} as ProgrammingExerciseStudentParticipation);
     retrieveCommitHistoryForParticipation = (participationId: number) => of([] as CommitInfo[]);

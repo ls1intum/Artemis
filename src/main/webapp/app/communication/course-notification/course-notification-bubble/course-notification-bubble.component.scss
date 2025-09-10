@@ -1,0 +1,16 @@
+.course-notification-bubble-indicator {
+    color: var(--white);
+    background-color: var(--primary);
+    border-radius: 50%;
+    width: 1.5rem;
+    height: 1.5rem;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+}
+
+.small .course-notification-bubble-indicator {
+    width: 1.2rem;
+    height: 1.2rem;
+    font-size: 0.7rem;
+}

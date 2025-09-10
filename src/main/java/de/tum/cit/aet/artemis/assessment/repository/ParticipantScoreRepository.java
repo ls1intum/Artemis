@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
+import de.tum.cit.aet.artemis.assessment.dto.ExerciseAverageScoreDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ScoreDistributionDTO;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatisticsDTO;
@@ -28,6 +30,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresAggregatedInformation;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface ParticipantScoreRepository extends ArtemisJpaRepository<ParticipantScore, Long> {
 
@@ -47,26 +50,32 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     List<ParticipantScore> findAllByExercise(Exercise exercise);
 
+    /**
+     * Gets average rated score for a set of exercise
+     *
+     * @param exercises The set of exercises to get the average rated score for
+     * @return The average rated score as double
+     */
     @Query("""
-            SELECT AVG(p.lastScore)
+            SELECT AVG(p.lastRatedScore)
             FROM ParticipantScore p
             WHERE p.exercise IN :exercises
             """)
-    Double findAvgScore(@Param("exercises") Set<Exercise> exercises);
+    Double findAvgRatedScore(@Param("exercises") Set<Exercise> exercises);
 
     /**
      * Gets average score for each exercise
      *
      * @param exercises exercises to get the average score for
-     * @return List<Map < String, Object>> with a map for every exercise containing exerciseId and the average score
+     * @return list of exerciseId and corresponding average score
      */
     @Query("""
-            SELECT p.exercise.id AS exerciseId, AVG(p.lastScore) AS averageScore
-            FROM ParticipantScore p
-            WHERE p.exercise IN :exercises
-            GROUP BY p.exercise.id
+                SELECT new de.tum.cit.aet.artemis.assessment.dto.ExerciseAverageScoreDTO(p.exercise.id, AVG(p.lastScore))
+                FROM ParticipantScore p
+                WHERE p.exercise IN :exercises
+                GROUP BY p.exercise.id
             """)
-    List<Map<String, Object>> findAverageScoreForExercises(@Param("exercises") Collection<Exercise> exercises);
+    List<ExerciseAverageScoreDTO> findAverageScoreForExercises(@Param("exercises") Collection<Exercise> exercises);
 
     /**
      * Gets average score for a single exercise

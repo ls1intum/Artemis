@@ -1,0 +1,116 @@
+<form name="deleteForm" (ngSubmit)="confirmDelete()" #deleteForm="ngForm">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            @switch (actionType) {
+                @case (actionTypes.Delete) {
+                    <span jhiTranslate="entity.delete.title"></span>
+                }
+                @case (actionTypes.Reset) {
+                    <span jhiTranslate="entity.reset.title"></span>
+                }
+                @case (actionTypes.Cleanup) {
+                    <span jhiTranslate="entity.cleanup.title"></span>
+                }
+                @case (actionTypes.Remove) {
+                    <span jhiTranslate="entity.remove.title"></span>
+                }
+                @case (actionTypes.Unlink) {
+                    <span jhiTranslate="entity.unlink.title"></span>
+                }
+                @case (actionTypes.NoButtonTextDelete) {
+                    <span jhiTranslate="entity.noButtonTextDelete.title"></span>
+                }
+                @case (actionTypes.EndNow) {
+                    <span jhiTranslate="entity.endNow.title"></span>
+                }
+            }
+        </h4>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <p [jhiTranslate]="deleteQuestion" [translateValues]="translateValues">
+            <span jhiTranslate="entity.action.deleteQuestion"></span>
+        </p>
+
+        @if (entitySummaryTitle) {
+            <b [jhiTranslate]="entitySummaryTitle"></b>
+        }
+        @if (entitySummary) {
+            <ul>
+                @for (summaryKey of objectKeys(entitySummary); track summaryKey; let i = $index) {
+                    @if (entitySummary[summaryKey] !== undefined) {
+                        <li>
+                            <span [jhiTranslate]="summaryKey"></span>: <span>{{ entitySummary[summaryKey] }}</span>
+                        </li>
+                    }
+                }
+            </ul>
+        }
+
+        @if (additionalChecks) {
+            <div>
+                @for (checkKey of objectKeys(additionalChecks); track checkKey; let i = $index) {
+                    <div>
+                        @if (additionalChecks[checkKey]) {
+                            <div class="checkbox">
+                                <div class="control-label text-danger form-check">
+                                    <input id="additional-check-{{ i }}" type="checkbox" name="checkbox" class="form-check-input" [(ngModel)]="additionalChecksValues[checkKey]" />
+                                    <label for="additional-check-{{ i }}" class="form-check-label">{{ additionalChecks[checkKey] | artemisTranslate }}</label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        @if (deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)) {
+            <jhi-confirm-entity-name [confirmationText]="deleteConfirmationText" [entityName]="entityTitle" [(ngModel)]="confirmEntityName" name="confirmEntityName" />
+        }
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="submitDisabled">
+            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+        </button>
+        <button
+            id="delete"
+            type="submit"
+            [ngClass]="['btn', buttonType]"
+            [style.cursor]="deleteForm.invalid || submitDisabled ? 'not-allowed' : 'pointer'"
+            [disabled]="deleteForm.invalid || submitDisabled"
+        >
+            @if (submitDisabled) {
+                <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
+            }
+            @switch (actionType) {
+                @case (actionTypes.Delete) {
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash" />
+                    <span jhiTranslate="entity.action.delete"></span>
+                }
+                @case (actionTypes.Reset) {
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faUndo" />
+                    <span jhiTranslate="entity.action.reset"></span>
+                }
+                @case (actionTypes.Cleanup) {
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes" />
+                    <span jhiTranslate="entity.action.cleanup"></span>
+                }
+                @case (actionTypes.Remove) {
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash" />
+                    <span jhiTranslate="entity.action.remove"></span>
+                }
+                @case (actionTypes.Unlink) {
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes" />
+                    <span jhiTranslate="entity.action.unlink"></span>
+                }
+                @case (actionTypes.NoButtonTextDelete) {
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash" />
+                    <span jhiTranslate="entity.action.delete"></span>
+                }
+                @case (actionTypes.EndNow) {
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes" />
+                    <span jhiTranslate="entity.action.endNow"></span>
+                }
+            }
+        </button>
+    </div>
+</form>

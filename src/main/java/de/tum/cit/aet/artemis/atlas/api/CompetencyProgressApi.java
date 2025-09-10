@@ -1,14 +1,13 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
-
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -19,7 +18,8 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 
 @Controller
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
+@Lazy
 public class CompetencyProgressApi extends AbstractAtlasApi {
 
     private final CompetencyProgressService competencyProgressService;
@@ -57,18 +57,5 @@ public class CompetencyProgressApi extends AbstractAtlasApi {
 
     public void deleteAll(Set<Competency> competencies) {
         competencyRepository.deleteAll(competencies);
-    }
-
-    /**
-     * Updates the progress for all competencies of the given courses.
-     *
-     * @param activeCourses the active courses
-     */
-    public void updateProgressForCoursesAsync(List<Course> activeCourses) {
-        activeCourses.forEach(course -> {
-            List<Competency> competencies = competencyRepository.findByCourseIdOrderById(course.getId());
-            // Asynchronously update the progress for each competency
-            competencies.forEach(competencyProgressService::updateProgressByCompetencyAsync);
-        });
     }
 }

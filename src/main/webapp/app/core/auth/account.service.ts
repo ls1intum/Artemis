@@ -1,18 +1,18 @@
 import { Injectable, inject } from '@angular/core';
-import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { setUser } from '@sentry/angular';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { EntityResponseType } from 'app/assessment/shared/complaint.service';
+import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import dayjs from 'dayjs/esm';
 import { addPublicFilePrefix } from 'app/app.constants';
 
@@ -36,11 +36,11 @@ export interface IAccountService {
 
 @Injectable({ providedIn: 'root' })
 export class AccountService implements IAccountService {
-    private translateService = inject(TranslateService);
-    private sessionStorage = inject(SessionStorageService);
-    private http = inject(HttpClient);
-    private websocketService = inject(WebsocketService);
-    private featureToggleService = inject(FeatureToggleService);
+    private readonly translateService = inject(TranslateService);
+    private readonly sessionStorageService = inject(SessionStorageService);
+    private readonly http = inject(HttpClient);
+    private readonly websocketService = inject(WebsocketService);
+    private readonly featureToggleService = inject(FeatureToggleService);
 
     // cached value of the user to avoid unnecessary requests to the server
     private userIdentityValue?: User;
@@ -48,6 +48,7 @@ export class AccountService implements IAccountService {
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
     private prefilledUsernameValue?: string;
 
+    // TODO get and set userIdentity should be converted to a signal instead
     get userIdentity() {
         return this.userIdentityValue;
     }
@@ -154,8 +155,10 @@ export class AccountService implements IAccountService {
 
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting
-                        const langKey = this.userIdentity.langKey || this.sessionStorage.retrieve('locale');
-                        this.translateService.use(langKey);
+                        const langKey = this.userIdentity.langKey || this.sessionStorageService.retrieve<string>('locale');
+                        if (langKey) {
+                            this.translateService.use(langKey);
+                        }
                     } else {
                         this.userIdentity = undefined;
                     }
@@ -366,12 +369,22 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Sets externalLLMUsageAccepted to current timestamp locally, to omit accepting external LLM usage
-     * popup appearing multiple time before user refreshes the page.
+     * Sets externalLLMUsageAccepted to current timestamp locally if the users accepted the conditions,
+     * to omit accepting external LLM usage popup appearing multiple time before user refreshes the page.
      */
-    setUserAcceptedExternalLLMUsage(): void {
-        if (this.userIdentity) {
-            this.userIdentity.externalLLMUsageAccepted = dayjs();
+    setUserAcceptedExternalLLMUsage(accepted: boolean = true): void {
+        if (!this.userIdentity) {
+            return;
         }
+
+        this.userIdentity.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
+    }
+
+    /**
+     * Trades the current cookie for a new Tool-specific bearer token which is able to authenticate the user.
+     * The Cookie stays valid, a new bearer token is generated on every call with a validity of max 1d.
+     */
+    getToolToken(tool: string): Observable<string> {
+        return this.http.post<string>('api/core/tool-token', null, { params: { tool: tool }, responseType: 'text' as 'json' });
     }
 }

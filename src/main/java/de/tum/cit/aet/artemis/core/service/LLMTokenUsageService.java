@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
  * Service for managing the LLMTokenUsage by all LLMs in Artemis
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class LLMTokenUsageService {
 

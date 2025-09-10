@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import com.hazelcast.core.HazelcastInstance;
  * This service is only active on a node that does not run with the 'scheduling' profile.
  * All requests are forwarded to a Hazelcast topic and a node with the 'scheduling' profile will then process it.
  */
+@Lazy
 @Service
 @Profile("!" + PROFILE_SCHEDULING + " & " + PROFILE_CORE)
 public class DistributedInstanceMessageSendService implements InstanceMessageSendService {
@@ -43,24 +45,6 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     public void sendProgrammingExerciseScheduleCancel(Long exerciseId) {
         log.info("Sending schedule cancel for programming exercise {} to broker.", exerciseId);
         sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE_CANCEL, exerciseId);
-    }
-
-    @Override
-    public void sendModelingExerciseSchedule(Long exerciseId) {
-        log.info("Sending schedule for modeling exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.MODELING_EXERCISE_SCHEDULE, exerciseId);
-    }
-
-    @Override
-    public void sendModelingExerciseScheduleCancel(Long exerciseId) {
-        log.info("Sending schedule cancel for modeling exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.MODELING_EXERCISE_SCHEDULE_CANCEL, exerciseId);
-    }
-
-    @Override
-    public void sendModelingExerciseInstantClustering(Long exerciseId) {
-        log.info("Sending schedule instant clustering for modeling exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.MODELING_EXERCISE_INSTANT_CLUSTERING, exerciseId);
     }
 
     @Override
@@ -124,5 +108,29 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
 
     private void sendMessageDelayed(MessageTopic topic, Long... payload) {
         exec.schedule(() -> hazelcastInstance.getTopic(topic.toString()).publish(payload), 1, TimeUnit.SECONDS);
+    }
+
+    @Override
+    public void sendSlideUnhideSchedule(Long slideId) {
+        log.info("Sending schedule for slide unhiding {} to broker.", slideId);
+        sendMessageDelayed(MessageTopic.SLIDE_UNHIDE_SCHEDULE, slideId);
+    }
+
+    @Override
+    public void sendSlideUnhideScheduleCancel(Long slideId) {
+        log.info("Sending schedule cancel for slide unhiding {} to broker.", slideId);
+        sendMessageDelayed(MessageTopic.SLIDE_UNHIDE_SCHEDULE_CANCEL, slideId);
+    }
+
+    @Override
+    public void sendLectureUnitAutoIngestionSchedule(Long lectureUnitId) {
+        log.info("Lecture unit ingestion schedule for lecture unit {}.", lectureUnitId);
+        sendMessageDelayed(MessageTopic.LECTURE_UNIT_AUTO_INGESTION_SCHEDULE, lectureUnitId);
+    }
+
+    @Override
+    public void sendLectureUnitAutoIngestionScheduleCancel(Long lectureUnitId) {
+        log.info("Lecture unit ingestion cancel for lecture unit {}.", lectureUnitId);
+        sendMessageDelayed(MessageTopic.LECTURE_UNIT_AUTO_INGESTION_SCHEDULE_CANCEL, lectureUnitId);
     }
 }

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from 'app/core/user/user.model';
+import { UpdateExternalLLMUsageDto } from 'app/core/user/shared/dto/updateExternalLLMUsage.dto';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -19,22 +20,6 @@ export class UserService {
     }
 
     /**
-     * Update the user notification date.
-     */
-    updateLastNotificationRead(): Observable<HttpResponse<void>> {
-        return this.http.put<void>(`${this.resourceUrl}/notification-date`, null, { observe: 'response' });
-    }
-
-    /**
-     * Updates the property that decides what notifications should be displayed or hidden in the notification sidebar based on notification date.
-     * If the value is set to null -> show all notifications
-     * (Not to be confused with the notification settings. This filter is only based on the date a notification was created)
-     */
-    updateNotificationVisibility(showAllNotifications: boolean): Observable<HttpResponse<void>> {
-        return this.http.put<void>(`${this.resourceUrl}/notification-visibility`, showAllNotifications, { observe: 'response' });
-    }
-
-    /**
      * Initializes an LTI user and returns the newly generated password.
      */
     initializeLTIUser(): Observable<HttpResponse<{ password: string }>> {
@@ -42,9 +27,10 @@ export class UserService {
     }
 
     /**
-     * Accept external LLM usage policy.
+     * Updates consent to external LLM usage policy.
      */
-    acceptExternalLLMUsage(): Observable<HttpResponse<void>> {
-        return this.http.put<HttpResponse<void>>(`${this.resourceUrl}/accept-external-llm-usage`, { observe: 'response' });
+    updateExternalLLMUsageConsent(accepted: boolean): Observable<HttpResponse<void>> {
+        const updateExternalLLMUsageDto: UpdateExternalLLMUsageDto = { accepted };
+        return this.http.put<void>(`${this.resourceUrl}/accept-external-llm-usage`, updateExternalLLMUsageDto, { observe: 'response' });
     }
 }

@@ -26,84 +26,116 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPostPushHook;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPrePushHook;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 
+/**
+ * Custom Git command handler that integrates Artemis-specific
+ * hooks into SSH-based Git operations for UploadPack and ReceivePack.
+ */
 public class SshGitCommand extends GitPackCommand {
 
     private final LocalVCServletService localVCServletService;
 
     /**
+     * Constructs a new {@link SshGitCommand}.
+     *
      * @param rootDirResolver       Resolver for GIT root directory
-     * @param command               Command to execute
-     * @param executorService       An {@link CloseableExecutorService} to be used when
-     *                                  {@code start(ChannelSession, Environment)}-ing execution. If {@code null} an ad-hoc
-     *                                  single-threaded service is created and used.
-     * @param localVCServletService the service to be passed for pre and post hooks
+     * @param command               Git command string to execute
+     * @param executorService       Optional executor service for command execution
+     * @param localVCServletService LocalVC service providing pre/post push/fetch hooks
      */
     public SshGitCommand(GitLocationResolver rootDirResolver, String command, CloseableExecutorService executorService, LocalVCServletService localVCServletService) {
         super(rootDirResolver, command, executorService);
         this.localVCServletService = localVCServletService;
     }
 
+    /**
+     * Resolves the root directory of the Git repository.
+     * This bypasses default API behavior to directly obtain the repo path.
+     */
     @Override
     protected Path resolveRootDirectory(String command, String[] args) throws IOException {
-        GitLocationResolver resolver = getGitLocationResolver();
-        // we deviate a bit from the API here and resolve the repo directly and avoid dealing with the root directory
-        return resolver.resolveRootDirectory(command, args, getServerSession(), getFileSystem());
+        return getGitLocationResolver().resolveRootDirectory(command, args, getServerSession(), getFileSystem());
     }
 
+    /**
+     * Executes the Git command by dispatching either upload-pack or receive-pack logic,
+     * and integrates Artemis-specific hooks for fetch and push operations.
+     */
     @Override
     public void run() {
         String command = getCommand();
-        try {
-            List<String> argsList = parseDelimitedString(command, " ", true);
-            String[] args = argsList.toArray(String[]::new);
-            for (int i = 0; i < args.length; i++) {
-                String argVal = args[i];
-                if (argVal.startsWith("'") && argVal.endsWith("'")) {
-                    args[i] = argVal.substring(1, argVal.length() - 1);
-                    argVal = args[i];
-                }
-                if (argVal.startsWith("\"") && argVal.endsWith("\"")) {
-                    args[i] = argVal.substring(1, argVal.length() - 1);
-                }
-            }
 
+        try {
+            // Split command string into argument list, handling space and quotes
+            List<String> argsList = parseDelimitedString(command, " ", true);
+
+            // Sanitize arguments by removing surrounding quotes
+            argsList.replaceAll(arg -> {
+                if ((arg.startsWith("'") && arg.endsWith("'")) || (arg.startsWith("\"") && arg.endsWith("\""))) {
+                    return arg.substring(1, arg.length() - 1);
+                }
+                return arg;
+            });
+
+            // Convert to array for downstream compatibility
+            String[] args = argsList.toArray(String[]::new);
+
+            // Basic validity check
             if (args.length != 2) {
                 throw new IllegalArgumentException("Invalid git command line (no arguments): " + command);
             }
 
+            // Locate the Git repository root
             Path rootDir = resolveRootDirectory(command, args);
             RepositoryCache.FileKey key = RepositoryCache.FileKey.lenient(rootDir.toFile(), FS.DETECTED);
-            try (Repository repository = key.open(true /* must exist */)) {
-                User user = getServerSession().getAttribute(SshConstants.USER_KEY);
 
+            // Open the Git repository
+            try (Repository repository = key.open(true)) {
+                // Retrieve the authenticated user from the SSH session
+                User user = getServerSession().getAttribute(SshConstants.USER_KEY);
                 String subCommand = args[0];
-                if (RemoteConfig.DEFAULT_UPLOAD_PACK.equals(subCommand)) {
-                    UploadPack uploadPack = new UploadPack(repository);
-                    Environment environment = getEnvironment();
-                    Map<String, String> envVars = environment.getEnv();
-                    String protocol = MapEntryUtils.isEmpty(envVars) ? null : envVars.get(GitProtocolConstants.PROTOCOL_ENVIRONMENT_VARIABLE);
-                    if (GenericUtils.isNotBlank(protocol)) {
-                        uploadPack.setExtraParameters(Collections.singleton(protocol));
+
+                // Dispatch based on subcommand: upload-pack or receive-pack
+                switch (subCommand) {
+                    case RemoteConfig.DEFAULT_UPLOAD_PACK -> {
+                        // Prepare UploadPack handler
+                        UploadPack uploadPack = new UploadPack(repository);
+
+                        // Extract protocol version from environment variables (if present)
+                        Environment environment = getEnvironment();
+                        Map<String, String> envVars = environment.getEnv();
+                        String protocol = MapEntryUtils.isEmpty(envVars) ? null : envVars.get(GitProtocolConstants.PROTOCOL_ENVIRONMENT_VARIABLE);
+
+                        if (GenericUtils.isNotBlank(protocol)) {
+                            uploadPack.setExtraParameters(Collections.singleton(protocol));
+                        }
+
+                        // Register pre-upload hook for Artemis-specific logic
+                        uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHookSSH(localVCServletService, getServerSession()));
+
+                        // Begin upload-pack operation
+                        uploadPack.upload(getInputStream(), getOutputStream(), getErrorStream());
                     }
-                    uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHookSSH(localVCServletService, getServerSession()));
-                    uploadPack.upload(getInputStream(), getOutputStream(), getErrorStream());
-                }
-                else if (RemoteConfig.DEFAULT_RECEIVE_PACK.equals(subCommand)) {
-                    var receivePack = new ReceivePack(repository);
-                    receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
-                    receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, getServerSession()));
-                    receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
-                }
-                else {
-                    throw new IllegalArgumentException("Unknown git command: " + command);
+                    case RemoteConfig.DEFAULT_RECEIVE_PACK -> {
+                        // Prepare ReceivePack handler
+                        ReceivePack receivePack = new ReceivePack(repository);
+
+                        // Register pre- and post-receive hooks for Artemis push handling
+                        receivePack.setPreReceiveHook(new LocalVCPrePushHook(localVCServletService, user));
+                        receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService, getServerSession(), user));
+
+                        // Begin receive-pack operation
+                        receivePack.receive(getInputStream(), getOutputStream(), getErrorStream());
+                    }
+                    default -> throw new IllegalArgumentException("Unknown git command: " + command);
                 }
             }
 
+            // Notify SSH server of success
             onExit(0);
         }
         catch (Throwable t) {
+            // Notify SSH server of failure with the exception type
             onExit(-1, t.getClass().getSimpleName());
         }
     }
-
 }

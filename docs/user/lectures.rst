@@ -14,9 +14,25 @@ Apart from :ref:`Exercises <exercises>` and :ref:`Exams <exams>`, Artemis can al
 Students
 ^^^^^^^^
 
-Students can see all published lectures of a course, grouped by date, when clicking on the tab labeled *Lectures*.
+Students can see all published lectures of a course by clicking on the tab labeled *Lectures*.
 
-|lectures-overview|
+|general-menu|
+
+Lecture Organization and Navigation
+""""""""""""""""""""""""""""""""""""
+
+The lecture overview provides an organized view of all course lectures. The sidebar displays lectures categorized by time periods to help students navigate course content efficiently:
+
+- **Future:** Upcoming lectures that haven't started yet
+- **Current:** Lectures active in the current week
+- **Past:** Lectures whose end date has passed
+- **No Date:** Lectures without specific dates assigned
+
+|lecture-overview-collapse|
+
+When a section(e.g No date) contains more than 5 lectures, Artemis may create weekly subsections to improve navigation, though the exact grouping depends on lecture dates and distribution across weeks.
+
+|lecture-overview-current| |lecture-overview-past|
 
 Clicking on a lecture leads to the following page, where students can see the title, description, lecture units, and attachments.
 
@@ -88,9 +104,8 @@ Lectures can be divided into lecture units, which can be of the following types:
 
     * **Text unit:** A text with markup.
     * **Exercise unit:** An exercise from the same course.
-    * **Video unit:** An embedded video stream or video from an external source.
+    * **Attachment Video unit:** A file that the student may download and an embedded video stream or video from an external source.
     * **Online unit:** A link to an external website.
-    * **Attachment unit:** A file that the student may download.
 
 Students see all released lecture units on the lecture details page.
 Clicking on a unit opens its contents.
@@ -108,12 +123,48 @@ Using the arrow buttons, the order of the lecture units can be changed.
 
 |units-management|
 
-Attachment Unit
-^^^^^^^^^^^^^^^
-An attachment unit consists of a name, file, and optionally a description and release date.
-Students complete this unit once they download the file.
+Attachment Video Unit
+^^^^^^^^^^^^^^^^^^^^^
+An attachment video unit consists of a name, file, an embedded video link, and optionally a description, a release date and a transcription.
+Artemis can convert the website link from common video sources to an embeddable URL using the arrow button.
+Students complete this unit when they watch the video for at least five minutes and download the attachment.
 
-|create-attachment-unit|
+For Attachment Video Units that contain a lecture recording, transcriptions can be generated using the supporting script
+according to the README.md under supporting_scripts/lecture-transcriptions.
+
+|create-attachment-video-unit|
+
+Either all Attachment Video Units of a lecture or specific Attachment Video Units can be sent to Iris, over the ingestion button in the lecture unit overview.
+Those transcriptions can be used to answer students' questions in the Iris chat.
+
+|send-all-lectures-to-iris|
+|send-one-unit-iris|
+
+Attachment Unit Management
+""""""""""""""""""""""""""
+Instructors can preview the Attachment Unit by clicking the |view-attachment-unit-btn| button.
+
+|view-attachment-unit|
+
+In the preview, instructors can enlarge pages, delete them, reorder them, merge new files, or hide pages. This feature enables instructors to easily edit lecture materials within the platform, without relying on external tools.
+
+The following video shows how to use all of the mentioned features effectively.
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/59823?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
+Pages can be hidden indefinitely, until a specific date, or until an exercise's due date. Hidden pages are invisible to students and cannot be referenced in the Communication section.
+
+The following video shows how to observe the effects of hidden pages on the Student Version and slide references.
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/59826?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
 
 Exercise Unit
 ^^^^^^^^^^^^^
@@ -138,14 +189,6 @@ Students complete this unit as soon as they open it.
 
 |create-text-unit|
 
-Video Unit
-^^^^^^^^^^
-A video unit consists of a name, an embeddable video link, and optionally a description and release date.
-Artemis can convert the website link from common video sources to an embeddable URL using the arrow button.
-Students complete this unit when they watch the video for at least five minutes.
-
-|create-video-unit|
-
 Competencies
 --------------
 
@@ -153,8 +196,14 @@ Instructors can create competencies, which are desired learning objectives, and 
 See :ref:`Adaptive Learning <adaptive-learning>` for more information.
 
 
-.. |lectures-overview| image:: lectures/lectures-overview.png
-    :width: 1000
+.. |general-menu| image:: lectures/general-menu-lecture.png
+    :width: 250
+.. |lecture-overview-collapse| image:: lectures/lecture-overview-collapse.png
+    :width: 250
+.. |lecture-overview-past| image:: lectures/lecture-overview-past.png
+    :width: 250
+.. |lecture-overview-current| image:: lectures/lecture-overview-current.png
+    :width: 250
 .. |lecture-details| image:: lectures/lecture-details.png
     :width: 1000
 .. |lectures-management| image:: lectures/lectures-management.png
@@ -183,7 +232,15 @@ See :ref:`Adaptive Learning <adaptive-learning>` for more information.
     :width: 1000
 .. |create-video-unit| image:: lectures/create-video-unit.png
     :width: 1000
-.. |create-attachment-unit| image:: lectures/create-attachment-unit.png
+.. |create-attachment-video-unit| image:: lectures/create-attachment-video-unit.png
+    :width: 1000
+.. |send-all-lectures-to-iris| image:: lectures/send-all-lectures-to-iris.png
+    :width: 1000
+.. |send-one-unit-iris| image:: lectures/send-one-unit-iris.png
+    :width: 1000
+.. |view-attachment-unit-btn| image:: lectures/view-attachment-unit-btn.png
+    :width: 80
+.. |view-attachment-unit| image:: lectures/view-attachment-unit.png
     :width: 1000
 .. |create-exercise-unit| image:: lectures/create-exercise-unit.png
     :width: 1000

@@ -1,17 +1,17 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -19,7 +19,8 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 /**
  * Spring Data JPA repository for the Competency entity.
  */
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
+@Lazy
 @Repository
 public interface CompetencyRepository extends ArtemisJpaRepository<Competency, Long>, JpaSpecificationExecutor<Competency> {
 
@@ -56,6 +57,13 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
             """)
     Optional<Competency> findByIdWithLectureUnitsAndExercises(@Param("competencyId") long competencyId);
 
+    @Query("""
+            SELECT c
+            FROM Competency c
+            WHERE c.course.id = :courseId
+            """)
+    Set<Competency> findAllByCourseId(@Param("courseId") long courseId);
+
     default Competency findByIdWithLectureUnitsAndExercisesElseThrow(long competencyId) {
         return getValueElseThrow(findByIdWithLectureUnitsAndExercises(competencyId), competencyId);
     }
@@ -67,4 +75,24 @@ public interface CompetencyRepository extends ArtemisJpaRepository<Competency, L
     long countByCourse(Course course);
 
     List<Competency> findByCourseIdOrderById(long courseId);
+
+    @Query("""
+            SELECT c
+            FROM LearningPath lp
+                JOIN lp.course.competencies c
+            WHERE lp.id = :learningPathId
+            """)
+    Set<Competency> findByLearningPathId(@Param("learningPathId") long learningPathId);
+
+    @Query("""
+            SELECT c
+            FROM LearningPath lp
+                JOIN lp.course.competencies c
+                LEFT JOIN FETCH c.lectureUnitLinks clul
+                LEFT JOIN FETCH clul.lectureUnit
+                LEFT JOIN FETCH c.exerciseLinks cel
+                LEFT JOIN FETCH cel.exercise
+            WHERE lp.id = :learningPathId
+            """)
+    Set<Competency> findByLearningPathIdWithLectureUnitsAndExercises(@Param("learningPathId") long learningPathId);
 }

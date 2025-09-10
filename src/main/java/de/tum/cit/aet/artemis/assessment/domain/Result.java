@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -38,7 +39,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.assessment.ResultListener;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -51,7 +51,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 
@@ -66,18 +65,15 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 public class Result extends DomainObject implements Comparable<Result> {
 
     @Column(name = "completion_date")
-    @JsonView(QuizView.Before.class)
     private ZonedDateTime completionDate;
 
     @Column(name = "jhi_successful")
-    @JsonView(QuizView.After.class)
     private Boolean successful;
 
     /**
      * Relative score in % (typically between 0 ... 100, can also be larger if bonus points are available)
      */
     @Column(name = "score")
-    @JsonView(QuizView.After.class)
     private Double score;
 
     /**
@@ -88,29 +84,20 @@ public class Result extends DomainObject implements Comparable<Result> {
      * For all other exercises (modeling, programming, etc.) - results are rated=true when students submit before the due date (or when the due date is null), multiple results can
      * be rated=true, then the result with the last completionDate counts towards the total score of a student - results are rated=false when students submit after the due date
      */
+    // TODO: we should change this to a primitive boolean in the future with default value false
+    @Nullable
     @Column(name = "rated")
-    @JsonView(QuizView.Before.class)
     private Boolean rated;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JsonView(QuizView.Before.class)
-    @JsonIgnoreProperties({ "results", "participation" })
+    @ManyToOne
+    @JsonIgnoreProperties({ "results" })
     private Submission submission;
 
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     private List<Feedback> feedbacks = new ArrayList<>();
-
-    /**
-     * @deprecated: Will be removed for 8.0, please use submission.participation instead
-     */
-    @ManyToOne
-    @JsonView(QuizView.Before.class)
-    @Deprecated(since = "7.7", forRemoval = true)
-    private Participation participation;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn()
@@ -118,7 +105,6 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "assessment_type")
-    @JsonView(QuizView.After.class)
     private AssessmentType assessmentType;
 
     @Column(name = "has_complaint")
@@ -226,16 +212,21 @@ public class Result extends DomainObject implements Comparable<Result> {
         setScore(totalPoints / maxPoints * 100, course);
     }
 
-    public Boolean isRated() {
-        return rated;
+    /**
+     * Checks whether the result is rated.
+     *
+     * @return true if the result is rated. If rated is null, it returns false.
+     */
+    public boolean isRated() {
+        return Boolean.TRUE.equals(this.rated);
     }
 
-    public Result rated(Boolean rated) {
+    public Result rated(boolean rated) {
         this.rated = rated;
         return this;
     }
 
-    public void setRated(Boolean rated) {
+    public void setRated(boolean rated) {
         this.rated = rated;
     }
 
@@ -246,7 +237,7 @@ public class Result extends DomainObject implements Comparable<Result> {
             return;
         }
         var dueDate = optionalDueDate.get();
-        if (getParticipation().getExercise() instanceof ProgrammingExercise) {
+        if (getSubmission().getParticipation().getExercise() instanceof ProgrammingExercise) {
             dueDate = dueDate.plusSeconds(PROGRAMMING_GRACE_PERIOD_SECONDS);
         }
         this.rated = !submissionDate.isAfter(dueDate);
@@ -262,11 +253,11 @@ public class Result extends DomainObject implements Comparable<Result> {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
             this.rated = true;
         }
-        else if (submission.getType() == SubmissionType.ILLEGAL || participation.isPracticeMode()) {
+        else if (submission.getParticipation().isPracticeMode()) {
             this.rated = false;
         }
         else {
-            setRatedIfNotAfterDueDate(participation, submission.getSubmissionDate());
+            setRatedIfNotAfterDueDate(submission.getParticipation(), submission.getSubmissionDate());
         }
     }
 
@@ -342,7 +333,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Sets the feedback type of a new feedback element. The type is set to MANUAL if it was not set before. It is set to AUTOMATIC_ADAPTED if Compass created the feedback
+     * Sets the feedback type of a new feedback element. The type is set to MANUAL if it was not set before. It is set to AUTOMATIC_ADAPTED if it was created
      * automatically and the tutor has overridden the feedback in the manual assessment. This is done to differentiate between automatic feedback that was overridden manually and
      * pure manual feedback to analyze the quality of automatic assessments. In all other cases the type stays the same.
      *
@@ -376,35 +367,6 @@ public class Result extends DomainObject implements Comparable<Result> {
             return false;
         }
         return !Objects.equals(existingText, newText);
-    }
-
-    /**
-     * @deprecated: Will be removed for 8.0, please use submission.participation instead
-     * @return the participation
-     */
-    @Deprecated(since = "7.7", forRemoval = true)
-    public Participation getParticipation() {
-        return participation;
-    }
-
-    /**
-     * @deprecated: Will be removed for 8.0, please use submission.participation instead
-     * @param participation the participation to set
-     * @return the result
-     */
-    @Deprecated(since = "7.7", forRemoval = true)
-    public Result participation(Participation participation) {
-        this.participation = participation;
-        return this;
-    }
-
-    /**
-     * @deprecated: Will be removed for 8.0, please use submission.participation instead
-     * @param participation the participation to set
-     */
-    @Deprecated(since = "7.7", forRemoval = true)
-    public void setParticipation(Participation participation) {
-        this.participation = participation;
     }
 
     public User getAssessor() {
@@ -549,7 +511,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @param removeHiddenFeedback true if feedbacks marked with visibility 'after due date' should also be removed.
      */
     public void filterSensitiveFeedbacks(boolean removeHiddenFeedback) {
-        filterSensitiveFeedbacks(removeHiddenFeedback, participation.getExercise());
+        filterSensitiveFeedbacks(removeHiddenFeedback, submission.getParticipation().getExercise());
     }
 
     /**
@@ -649,7 +611,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     public Double calculateTotalPointsForProgrammingExercises() {
         double totalPoints = 0.0;
         double scoreAutomaticTests = 0.0;
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) getParticipation().getExercise();
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) submission.getParticipation().getExercise();
         List<Feedback> feedbacks = getFeedbacks();
         var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
 
@@ -706,6 +668,16 @@ public class Result extends DomainObject implements Comparable<Result> {
         setTestCaseCount(originalResult.getTestCaseCount());
         setPassedTestCaseCount(originalResult.getPassedTestCaseCount());
         setCodeIssueCount(originalResult.getCodeIssueCount());
+    }
+
+    /**
+     * Checks if this result has been assessed.
+     *
+     * @return true if there is a completion date, false otherwise
+     */
+    @JsonIgnore
+    public boolean isAssessmentComplete() {
+        return completionDate != null;
     }
 
     @Override

@@ -11,6 +11,7 @@ import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRe
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
@@ -37,6 +38,9 @@ public abstract class AbstractFileUploadIntegrationTest extends AbstractSpringIn
 
     @Autowired
     protected ExamTestRepository examRepository;
+
+    @Autowired
+    protected StudentExamTestRepository studentExamTestRepository;
 
     @Autowired
     protected StudentParticipationTestRepository studentParticipationRepository;

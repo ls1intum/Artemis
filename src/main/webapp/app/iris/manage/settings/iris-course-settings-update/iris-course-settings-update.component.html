@@ -1,5 +1,5 @@
 <div class="container">
-    <h2 jhiTranslate="artemisApp.iris.settings.title.course"></h2>
+    <jhi-course-title-bar-title *titleBarTitle title="artemisApp.iris.settings.title.course" />
     @if (courseId) {
         <jhi-iris-settings-update [settingsType]="COURSE" [courseId]="courseId!" />
     }

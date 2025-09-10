@@ -1,10 +1,9 @@
 package de.tum.cit.aet.artemis.lecture.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.service.FilePathService.actualPathForPublicPath;
+import static de.tum.cit.aet.artemis.core.util.FilePathConverter.fileSystemPathForExternalUri;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -12,13 +11,13 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -35,8 +35,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
@@ -47,6 +48,7 @@ import tech.jhipster.web.util.ResponseUtil;
  * REST controller for managing Attachment.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/lecture/")
 public class AttachmentResource {
@@ -78,29 +80,6 @@ public class AttachmentResource {
     }
 
     /**
-     * POST /attachments : Create a new attachment.
-     *
-     * @param attachment the attachment object to create
-     * @param file       the file to save
-     * @return the ResponseEntity with status 201 (Created) and with body the new attachment, or with status 400 (Bad Request) if the attachment has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping(value = "attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @EnforceAtLeastEditor
-    public ResponseEntity<Attachment> createAttachment(@RequestPart Attachment attachment, @RequestPart MultipartFile file) throws URISyntaxException {
-        log.debug("REST request to save Attachment : {}", attachment);
-        attachment.setId(null);
-
-        Path basePath = FilePathService.getLectureAttachmentFilePath().resolve(attachment.getLecture().getId().toString());
-        Path savePath = fileService.saveFile(file, basePath, true);
-        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, attachment.getLecture().getId()).toString());
-
-        Attachment result = attachmentRepository.save(attachment);
-
-        return ResponseEntity.created(new URI("/api/lecture/attachments/" + result.getId())).body(result);
-    }
-
-    /**
      * PUT /attachments/:id : Updates an existing attachment.
      *
      * @param attachmentId     the id of the attachment to save
@@ -119,21 +98,21 @@ public class AttachmentResource {
 
         // Make sure that the original references are preserved.
         Attachment originalAttachment = attachmentRepository.findByIdOrElseThrow(attachment.getId());
-        attachment.setAttachmentUnit(originalAttachment.getAttachmentUnit());
+        attachment.setAttachmentVideoUnit(originalAttachment.getAttachmentVideoUnit());
 
         if (file != null) {
-            Path basePath = FilePathService.getLectureAttachmentFilePath().resolve(originalAttachment.getLecture().getId().toString());
-            Path savePath = fileService.saveFile(file, basePath, true);
-            attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, originalAttachment.getLecture().getId()).toString());
+            Path basePath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(originalAttachment.getLecture().getId().toString());
+            Path savePath = FileUtil.saveFile(file, basePath, FilePathType.LECTURE_ATTACHMENT, true);
+            attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.LECTURE_ATTACHMENT, originalAttachment.getLecture().getId()).toString());
             // Delete the old file
             URI oldPath = URI.create(originalAttachment.getLink());
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldPath), 0);
-            this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldPath));
+            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT), 0);
+            this.fileService.evictCacheForPath(FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT));
         }
 
         Attachment result = attachmentRepository.save(attachment);
         if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(result);
         }
         return ResponseEntity.ok(result);
     }
@@ -201,8 +180,8 @@ public class AttachmentResource {
         try {
             if (AttachmentType.FILE.equals(attachment.getAttachmentType())) {
                 URI oldPath = URI.create(attachment.getLink());
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldPath), 0);
-                this.fileService.evictCacheForPath(actualPathForPublicPath(oldPath));
+                fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT), 0);
+                this.fileService.evictCacheForPath(fileSystemPathForExternalUri(oldPath, FilePathType.LECTURE_ATTACHMENT));
             }
         }
         catch (RuntimeException exception) {

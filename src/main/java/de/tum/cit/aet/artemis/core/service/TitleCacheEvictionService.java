@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManagerFactory;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -16,10 +17,9 @@ import org.hibernate.internal.SessionFactoryImpl;
 import org.hibernate.persister.entity.EntityPersister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ApollonDiagram;
  * This is used in endpoints that return only the title of an entity which are consumed by breadcrumbs in the client.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class TitleCacheEvictionService implements PostUpdateEventListener, PostDeleteEventListener {
 
@@ -50,13 +51,15 @@ public class TitleCacheEvictionService implements PostUpdateEventListener, PostD
     }
 
     /**
-     * Registers Hibernate event listeners for POST_UPDATE and POST_DELETE events when the application is ready.
+     * Registers Hibernate event listeners for POST_UPDATE and POST_DELETE events on bean creation.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *
      * <p>
      * If the {@link EventListenerRegistry} is available, the listeners are appended and a debug message is logged.
      * If the registry is null, a warning is logged indicating a possible misconfiguration.
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @PostConstruct
     public void applicationReady() {
         var eventListenerRegistry = entityManagerFactory.unwrap(SessionFactoryImpl.class).getServiceRegistry().getService(EventListenerRegistry.class);
         if (eventListenerRegistry != null) {

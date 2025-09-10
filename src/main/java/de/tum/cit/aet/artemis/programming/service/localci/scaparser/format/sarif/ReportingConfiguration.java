@@ -26,5 +26,4 @@ public record ReportingConfiguration(Level level, PropertyBag properties) {
     public Optional<PropertyBag> getOptionalProperties() {
         return Optional.ofNullable(properties);
     }
-
 }

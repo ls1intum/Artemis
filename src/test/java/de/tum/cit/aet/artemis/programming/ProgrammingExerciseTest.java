@@ -7,9 +7,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -17,26 +14,25 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
-class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
+class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     private static final String TEST_PREFIX = "peinttest";
 
@@ -46,7 +42,7 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExerciseId = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
+        programmingExerciseId = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }
 
     void updateProgrammingExercise(ProgrammingExercise programmingExercise, String newProblem, String newTitle) throws Exception {
@@ -177,78 +173,12 @@ class ProgrammingExerciseTest extends AbstractProgrammingIntegrationJenkinsLocal
         updateProgrammingExercise(programmingExercise, "new problem 1", "new title 1");
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void findAppropriateSubmissionRespectingIndividualDueDate(boolean isSubmissionAfterIndividualDueDate) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        exercise.setDueDate(ZonedDateTime.now());
-        exercise = programmingExerciseRepository.save(exercise);
-
-        ProgrammingSubmission submission = new ProgrammingSubmission();
-        submission.setType(SubmissionType.OTHER);
-        if (isSubmissionAfterIndividualDueDate) {
-            submission.setSubmissionDate(ZonedDateTime.now().plusHours(26));
-        }
-        else {
-            // submission time after exercise due date but before individual due date
-            submission.setSubmissionDate(ZonedDateTime.now().plusHours(1));
-        }
-        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
-
-        ProgrammingExerciseStudentParticipation participation = participationRepository.findByExerciseIdAndStudentLogin(programmingExerciseId, TEST_PREFIX + "student1")
-                .orElseThrow();
-        participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
-        submission.setParticipation(participation);
-
-        Submission latestValidSubmission = exercise.findAppropriateSubmissionByResults(Set.of(submission));
-        if (isSubmissionAfterIndividualDueDate) {
-            assertThat(latestValidSubmission).isNull();
-        }
-        else {
-            assertThat(latestValidSubmission).isEqualTo(submission);
-        }
-    }
-
-    @Test
-    void testFindRelevantParticipations() {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-
-        StudentParticipation gradedParticipationInitialized = new StudentParticipation();
-        gradedParticipationInitialized.setInitializationState(InitializationState.INITIALIZED);
-        gradedParticipationInitialized.setExercise(exercise);
-        StudentParticipation gradedParticipationFinished = new StudentParticipation();
-        gradedParticipationFinished.setInitializationState(InitializationState.FINISHED);
-        gradedParticipationFinished.setExercise(exercise);
-        StudentParticipation practiceParticipation = new StudentParticipation();
-        practiceParticipation.setPracticeMode(true);
-        practiceParticipation.setExercise(exercise);
-        List<StudentParticipation> allParticipations = List.of(gradedParticipationInitialized, gradedParticipationFinished, practiceParticipation);
-
-        // Create all possible combinations of the entries in allParticipations
-        for (int i = 0; i < 2 << allParticipations.size(); i++) {
-            Set<StudentParticipation> participationsToTest = new HashSet<>();
-            for (int j = 0; j < allParticipations.size(); j++) {
-                if (((i >> j) & 1) == 1) {
-                    participationsToTest.add(allParticipations.get(j));
-                }
-            }
-            Set<StudentParticipation> expectedParticipations = new HashSet<>(participationsToTest);
-            if (expectedParticipations.contains(gradedParticipationInitialized)) {
-                expectedParticipations.remove(gradedParticipationFinished);
-            }
-
-            Set<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(participationsToTest);
-            assertThat(relevantParticipations).containsExactlyElementsOf(expectedParticipations);
-        }
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteProgrammingExerciseChannel() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         Exercise programmingExercise = course.getExercises().stream().findFirst().orElseThrow();
-        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(programmingExercise);
+        Channel exerciseChannel = conversationUtilService.addChannelToExercise(programmingExercise);
 
         request.delete("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, deleteProgrammingExerciseParamsFalse());
 

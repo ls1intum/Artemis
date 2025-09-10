@@ -1,18 +1,21 @@
 package de.tum.cit.aet.artemis.plagiarism.service.cache;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.ISet;
 import com.hazelcast.core.HazelcastInstance;
 
-@Profile(PROFILE_CORE)
+import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
+
+@Conditional(PlagiarismEnabled.class)
+@Lazy
 @Service
 public class PlagiarismCacheService {
 
@@ -25,6 +28,11 @@ public class PlagiarismCacheService {
         this.hazelcastInstance = hazelcastInstance;
     }
 
+    /**
+     * Gets the active plagiarism cases per course from hazelcast on bean creation.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
+     */
     @PostConstruct
     public void init() {
         this.activePlagiarismChecksPerCourse = hazelcastInstance.getSet(HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE);

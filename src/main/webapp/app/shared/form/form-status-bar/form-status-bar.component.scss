@@ -1,0 +1,23 @@
+.form-status-bar-container {
+    position: sticky;
+    top: -1rem;
+    z-index: 7;
+    background-color: var(--module-bg);
+}
+
+.form-status-line {
+    position: absolute;
+    top: calc(16px + 0.5rem);
+    right: 0;
+    left: 0;
+    margin: 0;
+}
+
+.form-status-circle {
+    position: relative;
+    z-index: 8;
+    height: 1.5rem;
+    width: 1.5rem;
+    background-color: var(--module-bg);
+    cursor: pointer;
+}

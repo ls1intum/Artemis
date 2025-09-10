@@ -1,7 +1,8 @@
 import { Page, expect } from '@playwright/test';
 import { UserCredentials } from '../../users';
 import { COURSE_ADMIN_BASE } from '../../constants';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseSummary } from '../../../e2e/course/CourseManagement.spec';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Management page.
@@ -21,10 +22,10 @@ export class CourseManagementPage {
     }
 
     /**
-     * Opens the course edit page.
+     * Opens the course settings page.
      */
-    async openCourseEdit() {
-        await this.page.locator('#edit-course').click();
+    async openCourseSettings() {
+        await this.page.locator('#course-settings').click();
     }
 
     /**
@@ -60,13 +61,43 @@ export class CourseManagementPage {
         await this.getCourse(courseID).locator('#course-card-header').click();
     }
 
+    private async assertCourseSummary(expectedCourseSummary: CourseSummary) {
+        expect(await this.page.locator(`text=/Test Course: ${expectedCourseSummary.isTestCourse}/`).isVisible()).toBe(true);
+
+        const exerciseTypes = [
+            { label: 'Number of Students', expected: expectedCourseSummary.students },
+            { label: 'Number of Tutors', expected: expectedCourseSummary.tutors },
+            { label: 'Number of Editors', expected: expectedCourseSummary.editors },
+            { label: 'Number of Instructors', expected: expectedCourseSummary.instructors },
+            { label: 'Number of Exams', expected: expectedCourseSummary.exams },
+            { label: 'Number of Lectures', expected: expectedCourseSummary.lectures },
+            { label: 'Number of Programming Exercises', expected: expectedCourseSummary.programingExercises },
+            { label: 'Number of Modeling Exercises', expected: expectedCourseSummary.modelingExercises },
+            { label: 'Number of Quiz Exercises', expected: expectedCourseSummary.quizExercises },
+            { label: 'Number of Text Exercises', expected: expectedCourseSummary.textExercises },
+            { label: 'Number of File Upload Exercises', expected: expectedCourseSummary.fileUploadExercises },
+            { label: 'Number of Communication Posts', expected: expectedCourseSummary.communicationPosts },
+        ];
+
+        for (const { label, expected } of exerciseTypes) {
+            const actual = Number((await this.page.locator(`text=/${label}: \\d+/`).innerText()).split(':')[1].trim());
+            expect(actual).toBe(expected);
+        }
+    }
+
     /**
      * Deletes the specified course.
      * @param course - The course to be deleted.
+     * @param expectedCourseSummary - if defined, the course summary is asserted to contain the expected values before deletion
      */
-    async deleteCourse(course: Course) {
+    async deleteCourse(course: Course, expectedCourseSummary?: CourseSummary) {
         await this.page.locator('#delete-course').click();
         await expect(this.page.locator('#delete')).toBeDisabled();
+
+        if (expectedCourseSummary) {
+            await this.assertCourseSummary(expectedCourseSummary);
+        }
+
         await this.page.locator('#confirm-entity-name').fill(course.title!);
         const responsePromise = this.page.waitForResponse(`${COURSE_ADMIN_BASE}/${course.id}`);
         await this.page.locator('#delete').click();
@@ -74,14 +105,41 @@ export class CourseManagementPage {
     }
 
     /**
-     * Adds the user to the student group of the course
-     * @param credentials the user that gets added to the student group of the course
-     * */
-    async addStudentToCourse(credentials: UserCredentials) {
-        const responsePromise = this.page.waitForResponse(`api/core/courses/*/students/${credentials.username}`);
-        await this.page.locator('#detail-value-artemisApp\\.course\\.studentGroupName').locator('a').click();
+     * Adds the user to a specific group of the course.
+     * @param credentials The user that gets added to the group.
+     * @param groupType The type of group (e.g., 'students', 'tutors', 'instructors').
+     * @param selector The selector for the group action button.
+     */
+    private async addUserToGroup(credentials: UserCredentials, groupType: string, selector: string) {
+        const responsePromise = this.page.waitForResponse(`api/core/courses/*/${groupType}/${credentials.username}`);
+        await this.page.locator('#user-management-dropdown').click();
+        await this.page.locator(selector).click();
         await this.confirmUserIntoGroup(credentials);
         await responsePromise;
+    }
+
+    /**
+     * Adds the user to the student group of the course.
+     * @param credentials The user that gets added to the student group of the course.
+     */
+    async addStudentToCourse(credentials: UserCredentials) {
+        await this.addUserToGroup(credentials, 'students', '#add-student');
+    }
+
+    /**
+     * Adds the user to the tutor group of the course.
+     * @param credentials The user that gets added to the tutor group of the course.
+     */
+    async addTutorToCourse(credentials: UserCredentials) {
+        await this.addUserToGroup(credentials, 'tutors', '#add-tutor');
+    }
+
+    /**
+     * Adds the user to the instructor group of the course.
+     * @param credentials The user that gets added to the instructor group of the course.
+     */
+    async addInstructorToCourse(credentials: UserCredentials) {
+        await this.addUserToGroup(credentials, 'instructors', '#add-instructor');
     }
 
     /**
@@ -90,10 +148,6 @@ export class CourseManagementPage {
     async removeFirstUser() {
         await this.page.locator('#registered-students button[jhideletebutton]').first().click();
         await this.page.locator('.modal #delete').click();
-    }
-
-    async clickEditCourse() {
-        await this.page.locator('#edit-course').click();
     }
 
     async updateCourse(course: Course) {
@@ -161,16 +215,8 @@ export class CourseManagementPage {
      * Retrieves the locator for the course header title.
      * @returns The locator for the course header title.
      */
-    getCourseHeaderTitle() {
-        return this.page.locator('#course-header-title');
-    }
-
-    /**
-     * Retrieves the locator for the course header description.
-     * @returns The locator for the course header description.
-     */
-    getCourseHeaderDescription() {
-        return this.page.locator('#course-header-description');
+    getCourseSidebarTitle() {
+        return this.page.locator('#test-course-title');
     }
 
     /**
@@ -196,6 +242,9 @@ export class CourseManagementPage {
     getCourseStudentGroupName() {
         return this.page.locator('#detail-value-artemisApp\\.course\\.studentGroupName');
     }
+    getNumberOfStudents() {
+        return this.page.locator('#number-of-students');
+    }
 
     /**
      * Retrieves the locator for the course tutor group name.
@@ -203,6 +252,10 @@ export class CourseManagementPage {
      */
     getCourseTutorGroupName() {
         return this.page.locator('#detail-value-artemisApp\\.course\\.teachingAssistantGroupName');
+    }
+
+    getNumberOfTutors() {
+        return this.page.locator('#number-of-tutors');
     }
 
     /**
@@ -213,12 +266,20 @@ export class CourseManagementPage {
         return this.page.locator('#detail-value-artemisApp\\.course\\.editorGroupName');
     }
 
+    getNumberOfEditors() {
+        return this.page.locator('#number-of-editors');
+    }
+
     /**
      * Retrieves the locator for the course instructor group.
      * @returns The locator for the course instructor group name.
      */
     getCourseInstructorGroupName() {
         return this.page.locator('#detail-value-artemisApp\\.course\\.instructorGroupName');
+    }
+
+    getNumberOfInstructors() {
+        return this.page.locator('#number-of-instructors');
     }
 
     /**

@@ -91,7 +91,7 @@
                                 [isFilterActive]="isFilterActive"
                             />
                         } @else {
-                            @for (sidebarItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track sidebarItem; let last = $last) {
+                            @for (sidebarItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track sidebarItem.id; let last = $last) {
                                 <div [ngClass]="{ 'mb-2': !last }">
                                     <div
                                         jhiSidebarCard

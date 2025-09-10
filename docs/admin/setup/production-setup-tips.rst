@@ -73,7 +73,7 @@ permissions in the ``/opt/artemis/`` directory that contains the ``Artemis.war``
      --add-opens java.management/sun.management=ALL-UNNAMED \
      --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
      -jar Artemis.war \
-     --spring.profiles.active=prod,localci,localvc,artemis,scheduling,buildagent,core,atlas,local,openapi
+     --spring.profiles.active=prod,localci,localvc,artemis,scheduling,buildagent,core,local,openapi
    SuccessExitStatus=143
    StandardOutput=/opt/artemis/artemis.log  # remove to use default journald logging/cleanup mechanisms
    StandardError=inherit

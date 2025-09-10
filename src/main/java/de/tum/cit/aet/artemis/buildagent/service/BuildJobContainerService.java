@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.ByteArrayInputStream;
@@ -28,6 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService.Repo
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
  * It is closely related to the {@link BuildJobExecutionService} which contains the methods that are used to execute the build jobs.
  */
+@Lazy
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildJobContainerService {
@@ -60,8 +62,6 @@ public class BuildJobContainerService {
     private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);
 
     private final BuildAgentConfiguration buildAgentConfiguration;
-
-    private final HostConfig hostConfig;
 
     private final BuildLogsMap buildLogsMap;
 
@@ -86,9 +86,8 @@ public class BuildJobContainerService {
     @Value("${artemis.continuous-integration.container-flags-limit.max-memory-swap:0}")
     private int maxMemorySwap;
 
-    public BuildJobContainerService(BuildAgentConfiguration buildAgentConfiguration, HostConfig hostConfig, BuildLogsMap buildLogsMap) {
+    public BuildJobContainerService(BuildAgentConfiguration buildAgentConfiguration, BuildLogsMap buildLogsMap) {
         this.buildAgentConfiguration = buildAgentConfiguration;
-        this.hostConfig = hostConfig;
         this.buildLogsMap = buildLogsMap;
     }
 
@@ -119,6 +118,7 @@ public class BuildJobContainerService {
         if (exerciseEnvVars != null && !exerciseEnvVars.isEmpty()) {
             envVars.addAll(exerciseEnvVars);
         }
+        HostConfig defaultHostConfig = buildAgentConfiguration.hostConfig();
         HostConfig customHostConfig;
         boolean customNetworkSelected = network != null;
         if (customNetworkSelected || cpuCount > 0 || memory > 0 || memorySwap > 0) {
@@ -126,20 +126,21 @@ public class BuildJobContainerService {
             String adjustedNetwork = customNetworkSelected ? network : "bridge";
 
             // Use provided values if they are greater than 0 and less than the maximum values, otherwise use either the maximum values or the default values from the host config.
-            long adjustedCpuCount = (cpuCount > 0) ? ((maxCpuCount > 0) ? Math.min(cpuCount, maxCpuCount) : cpuCount) : (hostConfig.getCpuQuota() / hostConfig.getCpuPeriod());
+            long adjustedCpuCount = (cpuCount > 0) ? ((maxCpuCount > 0) ? Math.min(cpuCount, maxCpuCount) : cpuCount)
+                    : (defaultHostConfig.getCpuQuota() / defaultHostConfig.getCpuPeriod());
 
             long adjustedMemory = (memory > 0)
                     ? ((maxMemory > 0) ? Math.min(convertMemoryFromMBToBytes(memory), convertMemoryFromMBToBytes(maxMemory)) : convertMemoryFromMBToBytes(memory))
-                    : hostConfig.getMemory();
+                    : defaultHostConfig.getMemory();
 
             long adjustedMemorySwap = (memorySwap > 0)
                     ? ((maxMemorySwap > 0) ? Math.min(convertMemoryFromMBToBytes(memorySwap), convertMemoryFromMBToBytes(maxMemorySwap)) : convertMemoryFromMBToBytes(memorySwap))
-                    : hostConfig.getMemorySwap();
+                    : defaultHostConfig.getMemorySwap();
 
-            customHostConfig = copyAndAdjustHostConfig(adjustedNetwork, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
+            customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, adjustedNetwork, customNetworkSelected, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
         }
         else {
-            customHostConfig = hostConfig;
+            customHostConfig = defaultHostConfig;
         }
         log.debug("Set docker network to {}", customHostConfig.getNetworkMode());
         try (final var createCommand = buildAgentConfiguration.getDockerClient().createContainerCmd(image)) {
@@ -150,17 +151,21 @@ public class BuildJobContainerService {
                     // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is
                     // indicated
                     // by the creation of a file "stop_container.txt" in the container's root directory.
-                    .withEntrypoint().withCmd("sh", "-c", "while [ ! -f " + LOCALCI_WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
+                    .withEntrypoint().withCmd("sh", "-c", "while [ ! -f " + LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
                     // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
                     // "docker exec -it <container-id> /bin/bash".
                     .exec();
         }
     }
 
-    private HostConfig copyAndAdjustHostConfig(String network, long cpuCount, long memory, long memorySwap) {
-        long cpuPeriod = hostConfig.getCpuPeriod();
-        return HostConfig.newHostConfig().withNetworkMode(network).withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
-                .withPidsLimit(hostConfig.getPidsLimit()).withAutoRemove(true);
+    private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, String network, boolean setNetwork, long cpuCount, long memory, long memorySwap) {
+        long cpuPeriod = defaultHostConfig.getCpuPeriod();
+        HostConfig host = HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
+                .withPidsLimit(defaultHostConfig.getPidsLimit()).withAutoRemove(true);
+        if (setNetwork) {
+            host.withNetworkMode(network);
+        }
+        return host;
     }
 
     private long convertMemoryFromMBToBytes(long memory) {
@@ -190,7 +195,7 @@ public class BuildJobContainerService {
         // container's
         // main process. The execution command can run concurrently with the main process. This setup with the ExecCreateCmdResponse gives us the ability to wait in code until the
         // command has finished before trying to extract the results.
-        executeDockerCommand(containerId, buildJobId, true, true, false, "bash", LOCALCI_WORKING_DIRECTORY + "/script.sh");
+        executeDockerCommand(containerId, buildJobId, true, true, false, "bash", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
     }
 
     /**
@@ -256,7 +261,7 @@ public class BuildJobContainerService {
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
-        executeDockerCommandWithoutAwaitingResponse(containerId, "touch", LOCALCI_WORKING_DIRECTORY + "/stop_container.txt");
+        executeDockerCommandWithoutAwaitingResponse(containerId, "touch", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/stop_container.txt");
     }
 
     /**
@@ -401,36 +406,38 @@ public class BuildJobContainerService {
 
         // Make sure to create the working directory in case it does not exist.
         // In case the test checkout path is the working directory, we only create up to the parent, as the working directory is created below.
-        addDirectory(buildJobContainerId, LOCALCI_WORKING_DIRECTORY + (testCheckoutPath.isEmpty() ? "" : "/testing-dir"), true);
+        addDirectory(buildJobContainerId, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + (testCheckoutPath.isEmpty() ? "" : "/testing-dir"), true);
         // Make sure the working directory and all subdirectories are accessible
-        executeDockerCommand(buildJobContainerId, null, false, false, true, "chmod", "-R", "777", LOCALCI_WORKING_DIRECTORY + "/testing-dir");
+        executeDockerCommand(buildJobContainerId, null, false, false, true, "chmod", "-R", "777", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir");
 
         // Copy the test repository to the container and move it to the test checkout path (may be the working directory)
-        addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, testRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath);
+        addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, testRepositoryPath, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath);
         // Copy the assignment repository to the container and move it to the assignment checkout path
-        addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, assignmentRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
+        addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, assignmentRepositoryPath,
+                LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
         if (solutionRepositoryPath != null) {
             solutionCheckoutPath = (!StringUtils.isBlank(solutionCheckoutPath)) ? solutionCheckoutPath
                     : RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
-            addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, solutionRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath);
+            addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, solutionRepositoryPath,
+                    LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath);
         }
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
             addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, auxiliaryRepositoriesPaths[i],
-                    LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
+                    LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
         }
 
         createScriptFile(buildJobContainerId);
     }
 
     private void createScriptFile(String buildJobContainerId) {
-        executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "echo \"$SCRIPT\" > " + LOCALCI_WORKING_DIRECTORY + "/script.sh");
-        executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "chmod +x " + LOCALCI_WORKING_DIRECTORY + "/script.sh");
+        executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "echo \"$SCRIPT\" > " + LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
+        executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "chmod +x " + LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
     }
 
     private void addAndPrepareDirectoryAndReplaceContent(String containerId, Path repositoryPath, String newDirectoryName) {
         copyToContainer(repositoryPath, containerId);
         addDirectory(containerId, newDirectoryName, true);
-        insertRepositoryFiles(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
+        insertRepositoryFiles(containerId, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
     }
 
     private void insertRepositoryFiles(String containerId, String oldName, String newName) {
@@ -444,8 +451,8 @@ public class BuildJobContainerService {
 
     private void copyToContainer(Path sourcePath, String containerId) {
         try (final var uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray());
-                final var copyToContainerCommand = buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId).withRemotePath(LOCALCI_WORKING_DIRECTORY)
-                        .withTarInputStream(uploadStream)) {
+                final var copyToContainerCommand = buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId)
+                        .withRemotePath(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).withTarInputStream(uploadStream)) {
             copyToContainerCommand.exec();
         }
         catch (IOException e) {
@@ -517,15 +524,30 @@ public class BuildJobContainerService {
 
                     @Override
                     public void onNext(Frame item) {
-                        String text = new String(item.getPayload());
-                        BuildLogDTO buildLogEntry = new BuildLogDTO(ZonedDateTime.now(), text);
-                        if (buildJobId != null) {
+                        String payload = new String(item.getPayload());
+                        String[] logLines = splitBehindNewLines(payload);
+                        ZonedDateTime now = ZonedDateTime.now();
+
+                        if (buildJobId == null) {
+                            return;
+                        }
+                        for (String line : logLines) {
+                            if (line.isEmpty()) {
+                                continue;
+                            }
+                            BuildLogDTO buildLogEntry = new BuildLogDTO(now, line);
                             buildLogsMap.appendBuildLogEntry(buildJobId, buildLogEntry);
                         }
                     }
 
                     @Override
                     public void onComplete() {
+                        latch.countDown();
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+                        log.error("Error while executing Docker command: {} on container {}", String.join(" ", command), containerId, throwable);
                         latch.countDown();
                     }
                 });
@@ -563,5 +585,10 @@ public class BuildJobContainerService {
             }
             return null;
         }
+    }
+
+    private String[] splitBehindNewLines(String input) {
+        String newlineLookBehindPattern = "(?<=\\R)";
+        return input.split(newlineLookBehindPattern);
     }
 }

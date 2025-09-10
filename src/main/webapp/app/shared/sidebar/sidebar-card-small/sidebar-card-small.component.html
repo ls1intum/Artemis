@@ -2,8 +2,8 @@
  operates differently over the MetisConversations service, it will get adjusted in a followup PR -->
 <div
     id="test-sidebar-card-small"
-    class="d-flex justify-content-between rounded-3 border-start border-5 highlight-card bg-module align-items-end py-1"
-    [ngClass]="!!this.sidebarItem.conversation?.hasUnreadMessage ? 'border-primary' : 'border-module'"
+    class="d-flex justify-content-between rounded-3 border-start border-5 item-border highlight-card bg-module align-items-end py-1"
+    [ngClass]="sidebarItem.conversation?.hasUnreadMessage && !sidebarItem.conversation?.isMuted ? 'border-primary' : 'border-module'"
     [routerLink]="itemSelected ? '../communication' : './communication'"
     [queryParams]="{ conversationId: sidebarItem?.id }"
     (click)="emitStoreAndRefresh(sidebarItem.id)"

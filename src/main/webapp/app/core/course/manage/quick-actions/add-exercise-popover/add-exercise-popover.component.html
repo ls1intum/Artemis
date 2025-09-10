@@ -1,0 +1,42 @@
+<p-popover #addExercisePopover [dismissable]="true" [style]="{ maxWidth: '25rem', width: '100%' }">
+    <div class="p-3 module-bg rounded shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0" jhiTranslate="entity.action.addExercise"></h5>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0" (click)="hidePopover()">
+                <fa-icon [icon]="faTimes" size="lg" />
+            </button>
+        </div>
+
+        <div class="d-flex flex-column gap-3">
+            @for (exercise of exerciseTypes; track exercise.type) {
+                <div class="row align-items-center">
+                    <div class="col-4">
+                        <strong jhiTranslate="{{ exercise.translationKey }}">{{ exercise.type }}</strong>
+                    </div>
+                    <div class="ms-n3 col-8">
+                        <div class="row gx-2">
+                            <div class="col-6">
+                                <jhi-exercise-create-button
+                                    [course]="course()"
+                                    [translationKey]="'global.generic.create'"
+                                    [exerciseType]="exercise.type"
+                                    [featureToggle]="exercise.featureToggle"
+                                    (click)="hidePopover()"
+                                />
+                            </div>
+                            <div class="col-6">
+                                <jhi-exercise-import-button
+                                    [course]="course()"
+                                    [translationKey]="'entity.action.to-import'"
+                                    [exerciseType]="exercise.type"
+                                    [featureToggle]="exercise.featureToggle"
+                                    (click)="hidePopover()"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</p-popover>

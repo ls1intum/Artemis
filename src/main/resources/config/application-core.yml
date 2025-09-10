@@ -1,3 +1,20 @@
+artemis:
+    atlas:
+        enabled: true
+    exam:
+        enabled: true
+    plagiarism:
+        enabled: true
+    text:
+        enabled: true
+    tutorialgroup:
+        enabled: true
+    user-management:
+        passkey:
+            enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
+            ask-users-to-setup: true # if true, users who have not set up a passkey will be asked to do so
+            token-validity-in-seconds-for-passkey: 15552000 # jwtToken is valid for 180 days when using passkey authentication
+
 spring:
     liquibase:
         enabled: true
@@ -10,6 +27,8 @@ spring:
           - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
           - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
           - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
+          # We can exclude this autoconfiguration. Using standard SpringDocs https://springdoc.org/ is fine and when excluding this, we avoid coupling OpenAPI specs to a profile
+          - tech.jhipster.config.apidoc.JHipsterSpringDocAutoConfiguration
     cloud:
         loadbalancer:
             cache:
@@ -23,7 +42,7 @@ management:
             probes:
                 enabled: true
         jhimetrics:
-            enabled: true
+            access: read_only
     metrics:
         enable:
             http: true

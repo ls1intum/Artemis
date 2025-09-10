@@ -1,0 +1,201 @@
+/* ==========================================================================
+Course Info Bar
+========================================================================== */
+.course-body-container {
+    position: relative;
+}
+
+.refresh-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.1s ease-out opacity;
+
+    &.active {
+        background-color: var(--overview-refresh-overlay-bg-color);
+        opacity: 1;
+        pointer-events: auto;
+        transition: 0.2s ease-in opacity;
+    }
+
+    .ng-fa-icon {
+        position: relative;
+        top: calc(50vh - 150px - 2.5vh);
+        transform: translateY(-50%);
+        color: var(--overview-refresh-overlay-color);
+    }
+}
+
+.back-button {
+    cursor: pointer;
+}
+
+.current-week-row {
+    ::ng-deep {
+        > div {
+            background-color: var(--overview-light-primary-background-color);
+        }
+    }
+}
+
+.statistic-summary {
+    margin-top: 25px;
+
+    .chart-container {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        margin-bottom: 20px;
+
+        .chart-text {
+            position: absolute;
+            width: 350px;
+        }
+    }
+
+    .color-legend-container {
+        margin-bottom: 40px;
+
+        .color-legend-entry {
+            display: inline-flex;
+            align-items: center;
+            width: 100%;
+        }
+    }
+}
+
+.exercise-row-container {
+    .control-label {
+        cursor: pointer;
+    }
+
+    .collapsed {
+        margin-top: 1rem;
+        border-bottom: 1px solid var(--overview-light-border-color);
+    }
+}
+
+.icon-container {
+    display: inline-block;
+    vertical-align: middle;
+    horiz-align: center;
+}
+
+.course-information {
+    padding-top: 29px;
+
+    .exercise-panel {
+        .row.has-exercises {
+            cursor: pointer;
+            border-radius: 3px;
+            &:hover {
+                background-color: var(--overview-light-background-color);
+                .icon {
+                    color: var(--primary);
+                }
+            }
+        }
+    }
+}
+
+.exercise-divider {
+    height: 0;
+    width: 100%;
+    margin: 1rem 0 0.5rem 0;
+    border-top: 1px solid var(--overview-light-border-color);
+}
+
+.color-indicator {
+    height: 20px;
+    width: 20px;
+    background-color: #0f6ab4;
+    position: relative;
+    top: -4px;
+    margin-right: 5px;
+    border-radius: 3px;
+}
+
+canvas#complete-chart {
+    z-index: 99;
+}
+
+.dev-button {
+    text-align: left;
+    color: white;
+    background-color: #3e8acc;
+    border: none;
+    border-radius: 1px;
+    &:hover {
+        background-color: #0f6ab4;
+    }
+    &:active {
+        box-shadow: 0 2px 0 var(--artemis-dark);
+    }
+    &:disabled {
+        background-color: gray;
+    }
+}
+
+/* Default the color to white even on bootstrap 5 */
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:disabled,
+.btn-info,
+.btn-info:hover,
+.btn-success,
+.btn-success:hover {
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .col-12 {
+        width: 100% !important;
+    }
+}
+
+.fadeInIcon {
+    /* Start the shake animation and make the animation last for 0.3 seconds */
+    animation: fadeIn 0.3s;
+
+    /* Animation only once */
+    animation-iteration-count: initial;
+}
+
+@media (max-width: 655px) {
+    .horizontal-scroll {
+        overflow-x: auto;
+    }
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        visibility: visible;
+        opacity: 1;
+    }
+}
+
+.content-sidebar-width {
+    // magic number is 255px sidebar width + 8px margin
+    width: calc(100% - 263px) !important;
+    transition: width 0.1s 0s ease-in-out;
+}
+.content-width {
+    width: 100%;
+    transition: width 0.1s 0s ease-in-out;
+}

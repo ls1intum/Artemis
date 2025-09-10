@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
  * Spring Data repository for the Team entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface TeamRepository extends ArtemisJpaRepository<Team, Long> {
 

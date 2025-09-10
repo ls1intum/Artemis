@@ -8,6 +8,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
@@ -23,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 
+@Lazy
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class TelemetrySendingService {
@@ -67,7 +69,7 @@ public class TelemetrySendingService {
     @Value("${spring.datasource.url}")
     private String datasourceUrl;
 
-    @Value("${info.test-server:false}")
+    @Value("${info.testServer:false}")
     private boolean isTestServer;
 
     /**

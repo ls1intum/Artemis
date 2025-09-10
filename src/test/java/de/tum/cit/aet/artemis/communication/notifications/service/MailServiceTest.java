@@ -10,8 +10,6 @@ import static org.mockito.Mockito.when;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
-import java.util.Set;
 
 import jakarta.mail.internet.MimeMessage;
 
@@ -24,18 +22,10 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-import de.tum.cit.aet.artemis.communication.domain.GroupNotificationType;
-import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
-import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
-import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomLinkRendererService;
-import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownCustomReferenceRendererService;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.TimeService;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -44,8 +34,6 @@ import tech.jhipster.config.JHipsterProperties;
  * we only test that the correct send method is called
  */
 class MailServiceTest {
-
-    private MailService mailService;
 
     private MailSendingService mailSendingService;
 
@@ -67,12 +55,7 @@ class MailServiceTest {
     @Mock
     private SpringTemplateEngine templateEngine;
 
-    @Mock
-    private TimeService timeService;
-
     private User student1;
-
-    private User student2;
 
     private String subject;
 
@@ -89,7 +72,7 @@ class MailServiceTest {
         student1.setEmail("benige8246@omibrown.com");
         student1.setLangKey("de");
 
-        student2 = new User();
+        User student2 = new User();
         student2.setLogin("student2");
         student2.setId(556L);
         student2.setEmail("bege123@abc.com");
@@ -115,10 +98,9 @@ class MailServiceTest {
         templateEngine = mock(SpringTemplateEngine.class);
         when(templateEngine.process(any(String.class), any())).thenReturn("test");
 
-        mailSendingService = new MailSendingService(jHipsterProperties, javaMailSender);
+        mailSendingService = new MailSendingService(jHipsterProperties, javaMailSender, mock(ProfileService.class), messageSource, templateEngine);
 
-        mailService = new MailService(messageSource, templateEngine, timeService, mailSendingService, new MarkdownCustomLinkRendererService(),
-                new MarkdownCustomReferenceRendererService());
+        MailService mailService = new MailService(messageSource, templateEngine, mailSendingService);
         ReflectionTestUtils.setField(mailService, "artemisServerUrl", new URI("http://localhost:8080").toURL());
     }
 
@@ -138,28 +120,5 @@ class MailServiceTest {
     void testNoMailSendExceptionThrown() {
         doThrow(new MailSendException("Some error occurred during mail send")).when(javaMailSender).send(any(MimeMessage.class));
         assertThatNoException().isThrownBy(() -> mailSendingService.sendEmail(student1, subject, content, false, true));
-    }
-
-    /**
-     * When the javaMailSender returns an exception, that exception should be caught and should not be thrown instead.
-     */
-    @Test
-    void testNoExceptionThrown() {
-        doThrow(new RuntimeException("Some random error occurred")).when(javaMailSender).send(any(MimeMessage.class));
-        var notification = new GroupNotification(null, NotificationConstants.NEW_ANNOUNCEMENT_POST_TITLE, NotificationConstants.NEW_ANNOUNCEMENT_POST_TEXT, false, new String[0],
-                student1, GroupNotificationType.STUDENT);
-        Post post = new Post();
-        post.setAuthor(student1);
-        post.setCreationDate(ZonedDateTime.now());
-        post.setVisibleForStudents(true);
-        post.setContent("hi test");
-        post.setTitle("announcement");
-
-        Course course = new Course();
-        course.setId(141L);
-        Channel channel = new Channel();
-        channel.setCourse(course);
-        post.setConversation(channel);
-        assertThatNoException().isThrownBy(() -> mailService.sendNotification(notification, Set.of(student1, student2), post));
     }
 }

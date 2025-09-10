@@ -1,11 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { Feedback } from 'app/entities/feedback.model';
-import { Result } from 'app/entities/result.model';
+import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { map } from 'rxjs/operators';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 export type EntityResponseType = HttpResponse<Result>;
 type ModelingAssessmentDTO = { feedbacks: Feedback[]; assessmentNote?: string };
@@ -74,8 +74,8 @@ export class ModelingAssessmentService {
         if (result.submission) {
             result.submission.submissionDate = convertDateFromServer(result.submission.submissionDate);
         }
-        if (result.participation) {
-            result.participation.initializationDate = convertDateFromServer(result.participation.initializationDate);
+        if (result.submission?.participation) {
+            result.submission!.participation!.initializationDate = convertDateFromServer(result.submission.participation.initializationDate);
         }
 
         return res.clone({ body: result });

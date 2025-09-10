@@ -1,4 +1,4 @@
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ProgrammingExerciseSubmission } from './pageobjects/exercises/programming/OnlineEditorPage';
 
 // Constants which are used in the test specs

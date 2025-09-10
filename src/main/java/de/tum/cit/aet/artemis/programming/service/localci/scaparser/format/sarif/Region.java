@@ -42,5 +42,4 @@ public record Region(Integer startLine, Integer startColumn, Integer endLine, In
     public Optional<Integer> getOptionalEndColumn() {
         return Optional.ofNullable(endColumn);
     }
-
 }

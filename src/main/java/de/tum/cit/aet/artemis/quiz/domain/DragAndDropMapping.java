@@ -11,10 +11,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 /**
  * A DragAndDropMapping.
@@ -26,23 +24,18 @@ import de.tum.cit.aet.artemis.quiz.config.QuizView;
 public class DragAndDropMapping extends DomainObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
     @Column(name = "drag_item_index")
-    @JsonView(QuizView.Before.class)
     private Integer dragItemIndex;
 
     @Column(name = "drop_location_index")
-    @JsonView(QuizView.Before.class)
     private Integer dropLocationIndex;
 
     @Column(name = "invalid")
-    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
     @ManyToOne
-    @JsonView(QuizView.Before.class)
     private DragItem dragItem;
 
     @ManyToOne
-    @JsonView(QuizView.Before.class)
     private DropLocation dropLocation;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -125,4 +118,5 @@ public class DragAndDropMapping extends DomainObject implements QuizQuestionComp
         return "DragAndDropMapping{" + "id=" + getId() + ", dragItemIndex='" + getDragItemIndex() + "'" + ", dropLocationIndex='" + getDropLocationIndex() + "'" + ", invalid='"
                 + isInvalid() + "'" + "}";
     }
+
 }

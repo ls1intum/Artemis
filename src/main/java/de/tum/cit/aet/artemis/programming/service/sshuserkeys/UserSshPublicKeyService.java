@@ -12,10 +12,10 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -25,16 +25,14 @@ import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class UserSshPublicKeyService {
 
     private final UserSshPublicKeyRepository userSshPublicKeyRepository;
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
-    public UserSshPublicKeyService(UserSshPublicKeyRepository userSshPublicKeyRepository, SingleUserNotificationService singleUserNotificationService) {
+    public UserSshPublicKeyService(UserSshPublicKeyRepository userSshPublicKeyRepository) {
         this.userSshPublicKeyRepository = userSshPublicKeyRepository;
-        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -66,7 +64,6 @@ public class UserSshPublicKeyService {
         }
 
         userSshPublicKeyRepository.save(newUserSshPublicKey);
-        singleUserNotificationService.notifyUserAboutNewlyAddedSshKey(user, newUserSshPublicKey);
     }
 
     /**
@@ -135,16 +132,6 @@ public class UserSshPublicKeyService {
         else {
             throw new AccessForbiddenException("SSH key", keyId);
         }
-    }
-
-    /**
-     * Returns whether the user of the specified id has stored SSH keys
-     *
-     * @param userId the ID of the user.
-     * @return true if the user has SSH keys, false if not
-     */
-    public boolean hasUserSSHkeys(Long userId) {
-        return userSshPublicKeyRepository.existsByUserId(userId);
     }
 
     /**

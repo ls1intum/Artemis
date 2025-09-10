@@ -13,6 +13,7 @@ import {
     computed,
     inject,
     input,
+    output,
     signal,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
@@ -41,9 +42,7 @@ import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachm
 import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
 import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
-import { faAngleDown, faGripLines, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { v4 as uuid } from 'uuid';
-import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { faAngleDown, faGripLines, faQuestionCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { TextEditorActionGroup } from 'app/shared/monaco-editor/model/actions/text-editor-action-group.model';
 import { HeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
@@ -54,28 +53,29 @@ import { CdkDrag, CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { TextEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { PostingEditType, ReferenceType } from 'app/communication/metis.util';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { SafeHtml } from '@angular/platform-browser';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { parseMarkdownForDomainActions } from 'app/shared/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatButton } from '@angular/material/button';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { facArtemisIntelligence } from 'app/icons/icons';
 import { faPaperPlane } from '@fortawesome/free-regular-svg-icons';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
-import { RedirectToIrisButtonComponent } from 'app/shared/metis/redirect-to-iris-button/redirect-to-iris-button.component';
-import { Course } from 'app/entities/course.model';
+import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file-uploader.service';
+import { facArtemisIntelligence } from 'app/shared/icons/icons';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -254,6 +254,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly useCommunicationForFileUpload = input<boolean>(false);
     readonly fallbackConversationId = input<number>();
 
+    showCloseButton = input<boolean>(false);
+    closeEditor = output<void>();
+
     @Output()
     markdownChange = new EventEmitter<string>();
 
@@ -317,6 +320,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     // Icons
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSpinner = faSpinner;
+    protected readonly faTimes = faTimes;
     protected readonly faGripLines = faGripLines;
     protected readonly faAngleDown = faAngleDown;
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
@@ -332,7 +336,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly EditType = PostingEditType;
 
     constructor() {
-        this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
+        this.uniqueMarkdownEditorId = 'markdown-editor-' + window.crypto.randomUUID().toString();
     }
 
     ngAfterContentInit(): void {
@@ -364,6 +368,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         return action?.hideInEditor ? undefined : action;
     }
 
+    /**
+     * Handles the click event on a text editor action button (e.g., bold, italic, emoji).
+     * If the action is of type EmojiAction, it sets the cursor location for emoji placement.
+     * Then it executes the action in the currently focused Monaco editor instance.
+     *
+     * @param event The mouse event triggered by the button click
+     * @param action The editor action to be executed
+     */
     handleActionClick(event: MouseEvent, action: TextEditorAction): void {
         const x = event.clientX;
         const y = event.clientY;
@@ -656,5 +668,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     applyOptionPreset(preset: MonacoEditorOptionPreset): void {
         this.monacoEditor.applyOptionPreset(preset);
+    }
+
+    /**
+     * Emits the closeEditor event when the close button is clicked
+     */
+    onCloseButtonClick(): void {
+        this.closeEditor.emit();
     }
 }

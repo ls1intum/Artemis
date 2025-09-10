@@ -60,8 +60,7 @@ spring:
 
 server:
     port: 8080
-    url: https://artemislocal.ase.in.tum.de
-
+    url: http://localhost
 # ===================================================================
 # JHipster specific properties
 #
@@ -100,22 +99,9 @@ jhipster:
 
 # Properties to be exposed on the /info management endpoint
 info:
-    guided-tour:
-        # Names of the tutorial groups that will be automatically added to newly created users
-        course-group-students: 'artemis-artemistutorial-students'
-        courseShortName: 'artemistutorial'
-        tours:
-            - cancel_tour: ''
-            - code_editor_tour: 'test'
-            - course_overview_tour: ''
-            - course_exercise_overview_tour: 'test'
-            - modeling_tour: 'UML Class Diagram'
-            - programming_exercise_fail_tour: 'test'
-            - programming_exercise_success_tour: 'test'
-            - tutor_assessment_tour: 'Patterns in Software Engineering'
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to true for development environment
-    text-assessment-analytics-enabled: true
+    textAssessmentAnalyticsEnabled: true
     operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page and sent to the telemetry service (e.g. the name of the university "Technische Universität München")
     operatorAdminName: Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
     contact: admin@uni.de # The admins contact email address, shown in the about us page, and sent to the telemetry service
@@ -131,15 +117,15 @@ eureka:
 
 # Theia configuration
 theia:
-    portal-url: https://theia-test.k8s.ase.cit.tum.de
+    portal-url: https://theia.artemis.cit.tum.de
 
     images:
         java:
-            Java-17: "ghcr.io/ls1intum/theia/java-17:latest"
-            Java-Test: "ghcr.io/ls1intum/theia/java-test:latest"
-            Java-Test2: "ghcr.io/ls1intum/theia/java-test:2"
+            Java-17: "java-17-latest"
+            Java-Test: "java-17-latest"
+            Java-Test2: "java-17-latest"
         c:
-            C: "ghcr.io/ls1intum/theia/c:latest"
+            C: "c-latest"
 
 artemis:
     push-notification-relay: https://hermes-sandbox.artemis.cit.tum.de
@@ -148,3 +134,9 @@ artemis:
         enabled: false # Disable sending any telemetry information to the telemetry service by setting this to false
         sendAdminDetails: false # Include the admins email and name in the telemetry data. Set to false to disable
         destination: https://telemetry.artemis.cit.tum.de
+    version-control:
+        local-vcs-repo-path: ./local-vcs-repos
+
+helios:
+  status:
+    enabled: false

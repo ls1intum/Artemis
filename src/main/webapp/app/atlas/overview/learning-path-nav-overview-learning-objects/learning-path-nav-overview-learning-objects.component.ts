@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
+import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
-import { LearningPathNavigationObjectDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathNavigationObjectDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { faCheckCircle, faLock } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';

@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -39,7 +40,6 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -47,13 +47,14 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 /**
  * Executes requested actions on the auxiliary repository of a programming exercise. Only available to TAs, Instructors and Admins.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/programming/auxiliary-repository/")
 public class AuxiliaryRepositoryResource extends RepositoryResource {
@@ -61,24 +62,23 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     public AuxiliaryRepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
-            RepositoryService repositoryService, Optional<VersionControlService> versionControlService, ProgrammingExerciseRepository programmingExerciseRepository,
-            RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
-        super(profileService, userRepository, authCheckService, gitService, repositoryService, versionControlService, programmingExerciseRepository, repositoryAccessService,
-                localVCServletService);
+            RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            Optional<LocalVCServletService> localVCServletService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+        super(profileService, userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
 
     @Override
-    Repository getRepository(Long auxiliaryRepositoryId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws GitAPIException {
+    Repository getRepository(Long auxiliaryRepositoryId, RepositoryActionType repositoryActionType, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
         final var auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, auxiliaryRepository.getExercise(), user, "auxiliary");
         final var repoUri = auxiliaryRepository.getVcsRepositoryUri();
-        return gitService.getOrCheckoutRepository(repoUri, pullOnGet);
+        return gitService.getOrCheckoutRepository(repoUri, pullOnGet, writeAccess);
     }
 
     @Override
-    VcsRepositoryUri getRepositoryUri(Long auxiliaryRepositoryId) {
+    LocalVCRepositoryUri getRepositoryUri(Long auxiliaryRepositoryId) {
         var auxRepo = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
         return auxRepo.getVcsRepositoryUri();
     }
@@ -97,9 +97,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     @Override
     String getOrRetrieveBranchOfDomainObject(Long auxiliaryRepositoryId) {
-        AuxiliaryRepository auxiliaryRepo = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(auxiliaryRepo.getExercise().getId());
-        return versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(exercise);
+        return auxiliaryRepositoryRepository.findBranchByRepoId(auxiliaryRepositoryId);
     }
 
     @Override
@@ -192,16 +190,13 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     public ResponseEntity<Map<String, String>> updateAuxiliaryFiles(@PathVariable("auxiliaryRepositoryId") Long auxiliaryRepositoryId,
             @RequestBody List<FileSubmission> submissions, @RequestParam Boolean commit, Principal principal) {
 
-        if (versionControlService.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "VCSNotPresent");
-        }
         AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
         ProgrammingExercise exercise = auxiliaryRepository.getExercise();
 
         Repository repository;
         try {
             repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, exercise, userRepository.getUserWithGroupsAndAuthorities(principal.getName()), "test");
-            repository = gitService.getOrCheckoutRepository(auxiliaryRepository.getVcsRepositoryUri(), true);
+            repository = gitService.getOrCheckoutRepository(auxiliaryRepository.getVcsRepositoryUri(), true, true);
         }
         catch (AccessForbiddenException e) {
             FileSubmissionError error = new FileSubmissionError(auxiliaryRepositoryId, "noPermissions");

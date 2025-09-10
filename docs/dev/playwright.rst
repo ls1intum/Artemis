@@ -312,20 +312,19 @@ Playwright testing best practices
         the page - use ``waitFor()`` function of a locator instead.
 
 
-Artemis Deployment on Bamboo Build Agent
-----------------------------------------
-Every execution of the Playwright test suite requires its own deployment of Artemis.
-The easiest way to accomplish this is to deploy Artemis locally on the build agent, which executes the Playwright tests.
-Using ``docker compose`` we can start a MySQL database and the Artemis server locally on the build agent and
-connect it to the prelive system in the university data center.
+Artemis Deployment on Github Runner
+-----------------------------------
+Every execution of the Playwright test suite requires the Artemis server and client to be deployed and started.
+The easiest way to accomplish this is to deploy Artemis locally on the Github runner, which executes the Playwright tests.
+Using ``docker compose`` the runner can start a MySQL database and the Artemis server (potentially as multi-node deployment) and the client locally.
 
 .. figure:: playwright/playwright_bamboo_deployment_diagram.svg
   :align: center
-  :alt: Artemis Deployment on Bamboo Build Agent for Playwright
+  :alt: Artemis Deployment on Github runner for Playwright
 
-  Artemis Deployment on Bamboo Build Agent for Playwright
+  Artemis Deployment on Github runner for Playwright
 
-In total there are three Docker containers started in the Bamboo build agent:
+In total there are three Docker containers started on the Github runner:
 
 1. MySQL
 
@@ -340,17 +339,14 @@ In total there are three Docker containers started in the Bamboo build agent:
 
   The Docker image for the Artemis container is created from the already existing
   `Dockerfile <https://github.com/ls1intum/Artemis/blob/develop/docker/artemis/Dockerfile>`__.
-  When the Bamboo build of the Playwright test suite starts, it retrieves the Artemis executable (.war file)
-  from the `Artemis build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`_.
+  When the build of the Playwright test suite starts, it retrieves the Artemis executable (.war file).
   Upon creation of the Artemis Docker image the executable is copied into the image together with configuration files
   for the Artemis server.
 
   The main configuration of the Artemis server are contained in the
   `Playwright environment configuration files <https://github.com/ls1intum/Artemis/tree/develop/docker/artemis/config>`__.
   However, those files do not contain any security relevant information.
-  Security relevant settings are instead passed to the Docker container via environment variables. This information is
-  accessible to the Bamboo build agent via
-  `Bamboo plan variables <https://confluence.atlassian.com/bamboo/bamboo-variables-289277087.html>`__.
+  Security relevant settings are instead passed to the Docker container via environment variables and GitHub secrets.
 
   The Artemis container is also configured to
   `depend on <https://docs.docker.com/compose/compose-file/compose-file-v2/#depends_on>`__
@@ -374,30 +370,6 @@ In total there are three Docker containers started in the Bamboo build agent:
   Furthermore, the Playwright container depends on the Artemis container and is only started
   once Artemis has been fully booted.
 
-**Bamboo webhook**
-
-The Artemis instance deployed on the build agent is not publicly available to improve the security of this setup.
-However, in order to get the build results for programming exercise submissions Artemis relies on a webhook from Bamboo
-to send POST requests to Artemis.
-To allow this, an extra rule has been added to the firewall allowing only the Bamboo instance in the prelive system
-to connect to the Artemis instance in the build agent.
-
-**Timing**
-
-As mentioned above, we want the Playwright test suite to be executed whenever new commits are pushed to a Git branch.
-This has been achieved by adding the
-`Playwright build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-AEPTMA1132>`__
-as a `child dependency <https://confluence.atlassian.com/bamboo/setting-up-plan-build-dependencies-289276887.html>`__
-to the `Artemis Build build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-WEBAPP>`__.
-The *Artemis Build* build plan is triggered whenever a new commit has been pushed to a branch.
-
-The Playwright build plan is only triggered after a successful build of the Artemis executable.
-This does imply a delay (about 10 minutes on average) between the push of new commits and the execution
-of the Playwright test suite, since the new Artemis executable first has to be built.
-
-**NOTE:** The Playwright test suite is only automatically executed for internal branches and pull requests
-(requires access to this GitHub repository), **not** for external ones.
-In case you need access rights, please contact the maintainer `Stephan Krusche <https://github.com/krusche>`__.
 
 Maintenance
 -----------
@@ -410,3 +382,123 @@ The Playwright Docker image we use always has browsers with specific versions in
 Therefore, the
 `docker-compose file <https://github.com/ls1intum/Artemis/blob/develop/docker/playwright.yml>`__
 should be updated every month to make sure that the latest Playwright image is used.
+
+Functionalities Covered
+-----------------------
+.. list-table::
+   :header-rows: 1
+
+   * - **Category**
+     - **Subcategory**
+     - **Description**
+   * - **Courses**
+     - Course Management
+     - Creating, editing, deleting courses; adding/removing students from a course
+   * -
+     - Course Exercise
+     - Tests filtering exercises based on their title.
+   * -
+     - Course Communication
+     - Messaging within courses, including channel creation, student participation, and message interactions.
+   * - **Exams**
+     - Exam Management
+     - Manage exam students and exercise groups
+   * -
+     - Exam Creation & Deletion
+     - Creating, editing, and deleting exams.
+   * -
+     - Exam Participation
+     - Early & normal hand-in, exam exercise participation for text, modeling, quiz, programming (Git SSH/HTTPS) exercises, exam announcements
+   * -
+     - Exam Assessment
+     - Assessing modeling, text, quiz and programming exercise submissions in exams, including complaint handling.
+   * -
+     - Exam Checklists
+     - Exam setup checks, including student registration, exercise groups, and exam publication.
+   * -
+     - Exam Date Verification
+     - Exams appear/disappear based on visibility dates.
+   * -
+     - Exam Results
+     - Exam result overviews for text, quiz, modeling, and programming exercises.
+   * -
+     - Exam Test Runs
+     - Creating, managing, and deleting exam test runs.
+   * -
+     - Exam Statistics
+     - Exam statistics is displayed correctly.
+   * - **Exercises**
+     - Exercise Import
+     - Importing text, quiz, modeling & programming exercises.
+   * - **File Upload Exercises**
+     - Management
+     - Creating and deleting file upload exercises.
+   * -
+     - Participation
+     - Students can participate in a file upload exercise.
+   * -
+     - Assessment & Feedback
+     - Assessing submissions, student feedback visibility, and complaint handling.
+   * - **Modeling Exercises**
+     - Management
+     - Creating, editing, and deleting modeling exercises.
+   * -
+     - Visibility Controls
+     - Students can access released/unreleased exercises.
+   * -
+     - Participation
+     - Students can start and submit models.
+   * -
+     - Assessment & Complaints
+     - Instructor and tutor assessments, student feedback, and complaint resolution.
+   * - **Programming Exercises**
+     - Management
+     - Creating and deleting programming exercises.
+   * -
+     - Team Management
+     - Forming and managing exercise teams.
+   * -
+     - Assessment
+     - Assessing programming exercise submissions.
+   * -
+     - Participation
+     - Submitting code through the code editor and Git (HTTPS & SSH), submissions for Java, C, and Python, team participation.
+   * -
+     - Static Code Analysis
+     - Configuring SCA grading and handling submissions with SCA errors.
+   * - **Quiz Exercises**
+     - Management
+     - Covers creating quizzes with multiple-choice, short-answer, and drag-and-drop questions.
+   * -
+     - Deletion & Export
+     - Ensures quizzes can be deleted and exported.
+   * -
+     - Participation
+     - Tests student participation in hidden, scheduled, and batch-based quizzes.
+   * -
+     - Assessment
+     - Verifies automatic assessment for multiple-choice and short-answer quizzes.
+   * -
+     - Drag-and-Drop Mechanics
+     - Ensures correct placement of draggable quiz elements.
+   * - **Text Exercises**
+     - Management
+     - Covers creating and deleting text exercises.
+   * -
+     - Participation
+     - Ensures students can submit text exercises.
+   * -
+     - Assessment & Complaints
+     - Tests instructor assessments, feedback visibility, and complaint handling.
+   * - **Lectures**
+     - Lecture Management
+     - Creating and deleting lectures, managing existing lectures
+   * - **Authentication**
+     - Logging in
+     - Logging in via UI and programmatically, login failures
+   * -
+     - Logging out
+     - Logging out successfully and canceling logout
+   * - **System Status**
+     - System status indicators
+     - Continuous integration & VC server health; Database, Hazelcast, and WebSocket health; Readiness and ping checks

@@ -1,46 +1,60 @@
 import { AfterViewChecked, Component, OnInit, Renderer2, inject } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { isOrion } from 'app/shared/orion/orion';
-import { ModalConfirmAutofocusComponent } from 'app/shared/orion/modal-confirm-autofocus/modal-confirm-autofocus.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_PASSKEY, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faKey } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from 'app/core/user/settings/passkey-settings/util/credential.util';
+import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
+import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 @Component({
     selector: 'jhi-home',
     templateUrl: './home.component.html',
     styleUrls: ['home.scss'],
-    imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent],
+    imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent, ButtonComponent],
 })
 export class HomeComponent implements OnInit, AfterViewChecked {
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faKey = faKey;
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
+
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
     private accountService = inject(AccountService);
     private loginService = inject(LoginService);
-    private stateStorageService = inject(StateStorageService);
+    private sessionStorageService = inject(SessionStorageService);
     private renderer = inject(Renderer2);
     private eventManager = inject(EventManager);
-    private orionConnectorService = inject(OrionConnectorService);
-    private modalService = inject(NgbModal);
     private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
+    private webauthnService = inject(WebauthnService);
+    private webauthnApiService = inject(WebauthnApiService);
+    private modalService = inject(NgbModal);
+    private localStorageService = inject(LocalStorageService);
+
+    protected usernameTouched = false;
+    protected passwordTouched = false;
 
     USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
     USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
@@ -58,6 +72,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     credentials: Credentials;
     isRegistrationEnabled = false;
     isPasswordLoginDisabled = false;
+    isPasskeyEnabled = false;
     loading = true;
     mainElementFocused = false;
 
@@ -68,24 +83,39 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     errorMessageUsername = 'home.errors.usernameIncorrect'; // default, might be overridden
     accountName?: string; // additional information in the welcome message
 
-    externalUserManagementActive = true;
-
     isFormValid = false;
     isSubmittingLogin = false;
 
-    profileInfo: ProfileInfo | undefined = undefined;
+    profileInfo: ProfileInfo;
 
-    // Icons
-    faCircleNotch = faCircleNotch;
-    usernameTouched = false;
-    passwordTouched = false;
+    /**
+     * <p>
+     * We want users to use passkey authentication over password authentication.
+     * </p>
+     * <p>
+     * If the passkey feature is enabled and no passkeys are set up yet, we display a modal that informs the user about passkeys and forwards to the setup page.
+     * </p>
+     */
+    openSetupPasskeyModal(): void {
+        if (!this.isPasskeyEnabled) {
+            return;
+        }
+
+        const earliestReminderDate = this.localStorageService.retrieveDate(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY);
+        const userDisabledReminderForCurrentTimeframe = earliestReminderDate && new Date() < earliestReminderDate;
+        if (userDisabledReminderForCurrentTimeframe) {
+            return;
+        }
+
+        if (!this.accountService.userIdentity?.askToSetupPasskey) {
+            return;
+        }
+
+        this.modalService.open(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
+    }
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.initializeWithProfileInfo(profileInfo);
-            }
-        });
+        this.initializeWithProfileInfo();
         this.accountService.identity().then((user) => {
             this.currentUserCallback(user!);
 
@@ -102,17 +132,45 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         }
     }
 
+    async loginWithPasskey() {
+        try {
+            const authenticatorCredential = await this.webauthnService.getCredential();
+
+            if (!authenticatorCredential || authenticatorCredential.type != 'public-key') {
+                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
+                throw new InvalidCredentialError();
+            }
+
+            const credential = getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential) as unknown as PublicKeyCredential;
+            if (!credential) {
+                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
+                throw new InvalidCredentialError();
+            }
+
+            await this.webauthnApiService.loginWithPasskey(credential);
+            this.handleLoginSuccess();
+        } catch (error) {
+            if (error instanceof InvalidCredentialError) {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
+            } else {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
+            }
+            // eslint-disable-next-line no-undef
+            console.error(error);
+            throw error;
+        }
+    }
+
     /**
      * Initializes the component with the required information received from the server.
-     * @param profileInfo The information from the server how logins should be handled.
      */
-    private initializeWithProfileInfo(profileInfo: ProfileInfo) {
-        this.profileInfo = profileInfo;
-        this.externalUserManagementActive = false;
+    private initializeWithProfileInfo() {
+        this.profileInfo = this.profileService.getProfileInfo();
+        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
 
-        this.accountName = profileInfo.accountName;
-        if (profileInfo.allowedLdapUsernamePattern) {
-            this.usernameRegexPattern = new RegExp(profileInfo.allowedLdapUsernamePattern);
+        this.accountName = this.profileInfo.accountName;
+        if (this.profileInfo.allowedLdapUsernamePattern) {
+            this.usernameRegexPattern = new RegExp(this.profileInfo.allowedLdapUsernamePattern);
         }
         if (this.accountName === 'TUM') {
             this.usernamePlaceholder = 'global.form.username.tumPlaceholder';
@@ -126,8 +184,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
         });
 
-        this.isRegistrationEnabled = !!profileInfo.registrationEnabled;
-        this.needsToAcceptTerms = !!profileInfo.needsToAcceptTerms;
+        this.isRegistrationEnabled = !!this.profileInfo.registrationEnabled;
+        this.needsToAcceptTerms = !!this.profileInfo.needsToAcceptTerms;
         this.activatedRoute.queryParams.subscribe((params) => {
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
             this.isPasswordLoginDisabled = !!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride;
@@ -172,7 +230,10 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 password: this.password,
                 rememberMe: this.rememberMe,
             })
-            .then(() => this.handleLoginSuccess())
+            .then(() => {
+                this.handleLoginSuccess();
+                this.openSetupPasskeyModal();
+            })
             .catch(() => {
                 this.authenticationError = true;
             })
@@ -193,47 +254,21 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             name: 'authenticationSuccess',
             content: 'Sending Authentication Success',
         });
-
-        this.handleOrionLogin();
-    }
-
-    /**
-     * Handle special login procedures when inside the Orion plugin.
-     */
-    private handleOrionLogin() {
-        if (!isOrion) {
-            return;
-        }
-
-        const modalRef: NgbModalRef = this.modalService.open(ModalConfirmAutofocusComponent as Component, {
-            size: 'lg',
-            backdrop: 'static',
-        });
-        modalRef.componentInstance.text = 'login.ide.confirmation';
-        modalRef.componentInstance.title = 'login.ide.title';
-        modalRef.result.then(
-            () => this.orionConnectorService.login(this.username, this.password),
-            () => {},
-        );
     }
 
     currentUserCallback(account: User) {
         this.account = account;
         if (account) {
             // previousState was set in the authExpiredInterceptor before being redirected to the login modal.
-            // since login is successful, go to stored previousState and clear previousState
-            const redirect = this.stateStorageService.getUrl();
+            // since login is successful, go to the stored previousState and clear the previousState
+            const redirect = this.sessionStorageService.retrieve<string>('previousUrl');
             if (redirect && redirect !== '') {
-                this.stateStorageService.storeUrl('');
+                this.sessionStorageService.store('previousUrl', '');
                 this.router.navigateByUrl(redirect);
             } else {
                 this.router.navigate(['courses']);
             }
         }
-    }
-
-    isAuthenticated() {
-        return this.accountService.isAuthenticated();
     }
 
     inputChange(event: any) {

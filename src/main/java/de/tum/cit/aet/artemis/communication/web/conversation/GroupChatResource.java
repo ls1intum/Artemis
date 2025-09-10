@@ -8,10 +8,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,22 +23,24 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.AddedToChannelNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.RemovedFromChannelNotification;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.GroupChatService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.GroupChatAuthorizationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/communication/courses/")
 public class GroupChatResource extends ConversationManagementResource {
@@ -55,11 +59,11 @@ public class GroupChatResource extends ConversationManagementResource {
 
     private final ConversationDTOService conversationDTOService;
 
-    private final SingleUserNotificationService singleUserNotificationService;
+    private final CourseNotificationService courseNotificationService;
 
-    public GroupChatResource(SingleUserNotificationService singleUserNotificationService, UserRepository userRepository, CourseRepository courseRepository,
-            GroupChatAuthorizationService groupChatAuthorizationService, ConversationService conversationService, GroupChatService groupChatService,
-            GroupChatRepository groupChatRepository, ConversationDTOService conversationDTOService) {
+    public GroupChatResource(UserRepository userRepository, CourseRepository courseRepository, GroupChatAuthorizationService groupChatAuthorizationService,
+            ConversationService conversationService, GroupChatService groupChatService, GroupChatRepository groupChatRepository, ConversationDTOService conversationDTOService,
+            CourseNotificationService courseNotificationService) {
         super(courseRepository);
         this.userRepository = userRepository;
         this.groupChatAuthorizationService = groupChatAuthorizationService;
@@ -67,7 +71,7 @@ public class GroupChatResource extends ConversationManagementResource {
         this.groupChatService = groupChatService;
         this.groupChatRepository = groupChatRepository;
         this.conversationDTOService = conversationDTOService;
-        this.singleUserNotificationService = singleUserNotificationService;
+        this.courseNotificationService = courseNotificationService;
     }
 
     /**
@@ -96,8 +100,12 @@ public class GroupChatResource extends ConversationManagementResource {
         }
 
         var groupChat = groupChatService.startGroupChat(course, chatMembers);
-        chatMembers.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, user, requestingUser,
-                NotificationType.CONVERSATION_CREATE_GROUP_CHAT));
+
+        var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(), groupChat.getName(),
+                groupChat.getId());
+
+        courseNotificationService.sendCourseNotification(addedToChannelNotification,
+                chatMembers.stream().filter(user -> !Objects.equals(user.getId(), requestingUser.getId())).toList());
 
         conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, groupChat, chatMembers);
 
@@ -151,8 +159,12 @@ public class GroupChatResource extends ConversationManagementResource {
         groupChatAuthorizationService.isAllowedToAddUsersToGroupChat(groupChatFromDatabase, requestingUser);
         var usersToRegister = conversationService.findUsersInDatabase(userLogins);
         conversationService.registerUsersToConversation(course, usersToRegister, groupChatFromDatabase, Optional.of(MAX_GROUP_CHAT_PARTICIPANTS));
-        usersToRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChatFromDatabase, user, requestingUser,
-                NotificationType.CONVERSATION_ADD_USER_GROUP_CHAT));
+
+        var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
+                groupChatFromDatabase.getName(), groupChatFromDatabase.getId());
+
+        courseNotificationService.sendCourseNotification(addedToChannelNotification, usersToRegister.stream().toList());
+
         return ResponseEntity.ok().build();
     }
 
@@ -183,8 +195,11 @@ public class GroupChatResource extends ConversationManagementResource {
         conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, groupChatFromDatabase);
         // ToDo: Discuss if we should delete the group chat if it has no participants left, but maybe we want to keep it for data analysis purposes
 
-        usersToDeRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChatFromDatabase, user, requestingUser,
-                NotificationType.CONVERSATION_REMOVE_USER_GROUP_CHAT));
+        var removedFromChannelNotification = new RemovedFromChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
+                groupChatFromDatabase.getName(), groupChatFromDatabase.getId());
+
+        courseNotificationService.sendCourseNotification(removedFromChannelNotification, usersToDeRegister.stream().toList());
+
         return ResponseEntity.ok().build();
     }
 

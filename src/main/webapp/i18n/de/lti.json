@@ -18,6 +18,16 @@
                 "iris": {
                     "header": "Iris hinzufügen",
                     "selector": "Bestätige, ob du eine Verknüpfung zu Iris hinzufügen willst"
+                },
+                "groupedContent": {
+                    "groupedExercises": {
+                        "header": "Gruppierung von Übungen aktivieren:",
+                        "selector": "Beim Auswählen mehrerer Übungen in der Tabelle werden diese gruppiert und in der Artemis-Seitenleiste in der Übungsansicht angezeigt."
+                    },
+                    "groupedLectures": {
+                        "header": "Gruppierung von Vorlesungen aktivieren:",
+                        "selector": "Beim Auswählen mehrerer Vorlesungen in der Tabelle werden diese gruppiert und in der Artemis-Seitenleiste in der Vorlesungsansicht angezeigt."
+                    }
                 }
             },
             "initializationError": "Die Initialisierung deines Benutzers wurde gestartet aber dein LTI-Konto wurde möglicherweise nicht korrekt erstellt. Bitte benachrichtige deine Übungsleitung, falls du dein Artemis-Passwort bisher nicht erhalten hast.",
@@ -53,6 +63,7 @@
             "jwkSetUri": "JWKSet URI",
             "customName": "Benutzerdefinierter Name",
             "exercises": "Aufgaben",
+            "lectures": "Vorlesungen",
             "startExercise": "<strong>Herzlich willkommen bei Artemis!</strong> Klicke auf den Button <i>Aufgabe starten</i>!",
             "ltiSuccessLoginRequired": "LTI Übung erfolgreich gestartet. Bitte melde dich als Nutzer:in {{user}} an.",
             "lti": "LTI",
@@ -71,7 +82,7 @@
                 "configurationForCourse": "LTI Konfiguration der Kurs {{ title }} bearbeiten",
                 "userPrefixTooltip": "Präfix für die neuen Benutzer, die für diesen Kurs erstellt werden. Es wird empfohlen, einen Wert zu verwenden, der die Benutzer eindeutig als Teil dieses Kurses identifiziert.",
                 "requireExistingUserTooltip": "Wenn ausgewählt, erfordert das Starten der Übung einen bestehenden Benutzer in Artemis. Wenn abgewählt, kann ein Benutzer beim ersten Start erstellt werden, wenn er noch nicht existiert",
-                "registrationIdTooltip": "ID, die zur Identifizierung der Registrierung der Lernplattform verwendet wird. Diese muss für alle Kurse eindeutig sein. Du kannst diesen Wert frei ändern, es wird jedoch empfohlen, den automatisch generierten Wert zu verwenden.",
+                "registrationIdTooltip": "ID, die zur Identifizierung der Registrierung der Lernplattform verwendet wird. Diese muss für alle Kurse eindeutig sein.",
                 "clientIdTooltip": "Es ist möglich, dieses Feld und die folgenden URI-Felder manuell zu konfigurieren, aber es wird dringend empfohlen, den Dynamic Registration Service zur automatischen Konfiguration zu verwenden.",
                 "form": {
                     "userPrefix": {
@@ -83,7 +94,8 @@
             "configuredPlatforms": "Konfigurierte Plattformen",
             "viewAdvancedSettings": "Erweiterte Einstellungen anzeigen",
             "closeAdvancedSettings": "Erweiterte Einstellungen schließen",
-            "addOrEditLtiPlatform": "LTI-Plattformkonfiguration hinzufügen oder bearbeiten"
+            "addLtiPlatform": "LTI-Plattformkonfiguration hinzufügen",
+            "editLtiPlatform": "LTI-Plattformkonfiguration bearbeiten"
         },
         "lti13": {
             "launch": {

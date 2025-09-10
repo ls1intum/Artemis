@@ -9,6 +9,7 @@ import java.util.Objects;
 
 import jakarta.ws.rs.BadRequestException;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
@@ -34,6 +36,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
  * REST controller for managing {@link IrisMessage}.
  */
 @Profile(PROFILE_IRIS)
+@Lazy
 @RestController
 @RequestMapping("api/iris/")
 public class IrisMessageResource {
@@ -98,6 +101,25 @@ public class IrisMessageResource {
 
         var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);
+    }
+
+    /**
+     * POST sessions/{sessionId}/tutor-suggestion: Send a new tutor suggestion request to the LLM
+     *
+     * @param sessionId of the session
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body true, or with status
+     * @throws URISyntaxException if the URI syntax is incorrect
+     */
+    @PostMapping("sessions/{sessionId}/tutor-suggestion")
+    @EnforceAtLeastTutor
+    public ResponseEntity<Void> sendTutorSuggestionMessage(@PathVariable Long sessionId) throws URISyntaxException {
+        var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
+        irisSessionService.checkIsIrisActivated(session);
+
+        irisSessionService.requestMessageFromIris(session);
+
+        var uriString = "/api/iris/sessions/" + session.getId() + "/tutor-suggestion";
+        return ResponseEntity.created(new URI(uriString)).build();
     }
 
     /**

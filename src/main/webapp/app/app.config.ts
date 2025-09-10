@@ -23,26 +23,18 @@ import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interc
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
-
-import { LoadingNotificationInterceptor } from 'app/shared/notification/loading-notification/loading-notification.interceptor';
-import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { provideNgxWebstorage, withLocalStorage, withNgxWebstorageConfig, withSessionStorage } from 'ngx-webstorage';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-
-export function initOrionConnector(connector: OrionConnectorService) {
-    return () => OrionConnectorService.initConnector(connector);
-}
+import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 
 export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
         importProvidersFrom(
             // TODO: we should exclude modules here in the future
-
             BrowserAnimationsModule,
             BrowserModule,
             RouterModule,
@@ -69,7 +61,6 @@ export const appConfig: ApplicationConfig = {
         // This enables service worker (PWA)
         importProvidersFrom(ServiceWorkerModule.register('ngsw-worker.js', { enabled: true })),
         provideHttpClient(withInterceptorsFromDi()),
-        provideNgxWebstorage(withNgxWebstorageConfig({ prefix: 'jhi', separator: '-' }), withLocalStorage(), withSessionStorage()),
         Title,
         { provide: LOCALE_ID, useValue: 'en' },
         { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
@@ -78,11 +69,13 @@ export const appConfig: ApplicationConfig = {
         { provide: WINDOW_INJECTOR_TOKEN, useValue: window },
         DatePipe,
         provideAppInitializer(() => {
+            const profileService = inject(ProfileService);
             inject(TraceService);
             // Ensure the service is initialized before any routing happens
             inject(ArtemisNavigationUtilService);
-            // Required, otherwise Orion will not work at all
-            initOrionConnector(inject(OrionConnectorService));
+            // we load this as early as possible to ensure that all config options are loaded before any routing or rendering happens
+            // this is important so that all components can access the profile info, by returning it here, this blocks the app initialization until profile info was loaded
+            return profileService.loadProfileInfo();
         }),
         /**
          * @description Interceptor declarations:

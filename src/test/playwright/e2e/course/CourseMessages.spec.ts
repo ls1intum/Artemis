@@ -1,10 +1,10 @@
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
 import { generateUUID, titleLowercase } from '../../support/utils';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
-import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
+import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
+import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
 
 test.describe('Course messages', { tag: '@fast' }, () => {
     let course: Course;
@@ -108,12 +108,12 @@ test.describe('Course messages', { tag: '@fast' }, () => {
                 await expect(courseMessages.getError()).toContainText('Names can only contain lowercase letters');
             });
 
-            test('Instructor should not be able to create a channel with name longer than 30 chars', async ({ login, courseMessages }) => {
+            test('Instructor should not be able to create a channel with name longer than 20 chars', async ({ login, courseMessages }) => {
                 await login(instructor, `/courses/${course.id}/communication`);
                 const name = 'way-way-way-too-long-channel-title';
                 await courseMessages.createChannelButton();
                 await courseMessages.setName(name);
-                await expect(courseMessages.getError()).toContainText('Name can be max 30 characters long!');
+                await expect(courseMessages.getError()).toContainText('Name can be max 20 characters long!');
             });
 
             test('Check that channel is created when a lecture is created', async ({ login, courseMessages, courseManagementAPIRequests }) => {

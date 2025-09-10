@@ -7,7 +7,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 export const routes: Routes = [
     {
         path: 'participate/:participationId',
-        loadComponent: () => import('./modeling-submission.component').then((m) => m.ModelingSubmissionComponent),
+        loadComponent: () => import('./modeling-submission/modeling-submission.component').then((m) => m.ModelingSubmissionComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.modelingExercise.home.title',
@@ -17,7 +17,7 @@ export const routes: Routes = [
     },
     {
         path: 'participate/:participationId/submission/:submissionId',
-        loadComponent: () => import('./modeling-submission.component').then((m) => m.ModelingSubmissionComponent),
+        loadComponent: () => import('./modeling-submission/modeling-submission.component').then((m) => m.ModelingSubmissionComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.modelingExercise.home.title',

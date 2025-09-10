@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +28,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -40,7 +40,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
+import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -59,6 +60,7 @@ import de.tum.cit.aet.artemis.fileupload.service.FileUploadSubmissionService;
  * REST controller for managing FileUploadSubmission.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadSubmissionResource extends AbstractSubmissionResource {
@@ -78,20 +80,20 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ExamSubmissionService examSubmissionService;
+    private final Optional<ExamSubmissionApi> examSubmissionApi;
 
     private final SingleUserNotificationService singleUserNotificationService;
 
-    public FileUploadSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
+    public FileUploadSubmissionResource(SubmissionRepository submissionRepository, FileUploadSubmissionService fileUploadSubmissionService,
             FileUploadExerciseRepository fileUploadExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService,
+            ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, Optional<ExamSubmissionApi> examSubmissionApi,
             StudentParticipationRepository studentParticipationRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository,
             SingleUserNotificationService singleUserNotificationService) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService, studentParticipationRepository);
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.examSubmissionService = examSubmissionService;
+        this.examSubmissionApi = examSubmissionApi;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.singleUserNotificationService = singleUserNotificationService;
     }
@@ -129,10 +131,14 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         }
 
         // Apply further checks if it is an exam submission
-        examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user);
+        if (exercise.isExamExercise()) {
+            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
+            api.checkSubmissionAllowanceElseThrow(exercise, user);
 
-        // Prevent multiple submissions (currently only for exam submissions)
-        fileUploadSubmission = (FileUploadSubmission) examSubmissionService.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
+            // Prevent multiple submissions (currently only for exam submissions)
+            fileUploadSubmission = (FileUploadSubmission) api.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
+        }
+
         // Check if the user is allowed to submit
         fileUploadSubmissionService.checkSubmissionAllowanceElseThrow(exercise, fileUploadSubmission, user);
 
@@ -149,10 +155,6 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         fileUploadSubmissionService.hideDetails(submission, user);
         long end = System.currentTimeMillis();
-        if (exercise.isCourseExercise()) {
-            // only notify users in course exercises about successful submissions
-            singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(exercise, user);
-        }
         log.info("handleFileUploadSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(submission);
     }
@@ -298,7 +300,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @GetMapping("participations/{participationId}/file-upload-editor")
     @EnforceAtLeastStudent
     public ResponseEntity<FileUploadSubmission> getDataForFileUpload(@PathVariable Long participationId) {
-        StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
+        StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
         FileUploadExercise fileUploadExercise;
         if (participation.getExercise() instanceof FileUploadExercise) {
             fileUploadExercise = (FileUploadExercise) participation.getExercise();
@@ -324,7 +326,6 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         // make sure only the latest submission and latest result is sent to the client
         participation.setSubmissions(null);
-        participation.setResults(null);
 
         if (fileUploadSubmission.getLatestResult() != null) {
             // do not send the feedback to the client

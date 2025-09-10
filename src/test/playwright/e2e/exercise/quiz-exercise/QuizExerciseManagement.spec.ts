@@ -1,5 +1,5 @@
-import { Course } from 'app/entities/course.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { admin } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
@@ -91,10 +91,11 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             quizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceTemplate] });
         });
 
-        test('Export quiz exercise questions', async ({ page, login, navigationBar, courseManagement, courseManagementExercises }) => {
+        test('Export quiz exercise questions', async ({ page, login, navigationBar, courseManagement, courseManagementExercises, quizExerciseOverview }) => {
             await login(admin, '/');
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
+            await courseManagementExercises.openQuizExerciseDetailsPage(quizExercise.id!);
             const downloadPromise = new Promise<void>((resolve, reject) => {
                 page.on('download', async (download) => {
                     const fileName = download.suggestedFilename();
@@ -109,8 +110,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
 
                 setTimeout(() => reject('Quiz questions export did not happen within the expected time frame'), 10000);
             });
-
-            await courseManagementExercises.exportQuizExercise(quizExercise.id!);
+            await quizExerciseOverview.exportQuizExercise();
             await expect(downloadPromise).resolves.toBeUndefined();
         });
     });

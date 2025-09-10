@@ -46,10 +46,9 @@ import de.tum.cit.aet.artemis.core.domain.User;
 // Annotation necessary to distinguish between concrete implementations of lecture-content when deserializing from JSON
 // @formatter:off
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = AttachmentUnit.class, name = "attachment"),
+    @JsonSubTypes.Type(value = AttachmentVideoUnit.class, name = "attachment"),
     @JsonSubTypes.Type(value = ExerciseUnit.class, name = "exercise"),
     @JsonSubTypes.Type(value = TextUnit.class, name = "text"),
-    @JsonSubTypes.Type(value = VideoUnit.class, name = "video"),
     @JsonSubTypes.Type(value = OnlineUnit.class, name = "online")
 })
 // @formatter:on
@@ -110,6 +109,8 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     public void setCompetencyLinks(Set<CompetencyLectureUnitLink> competencyLinks) {
         this.competencyLinks = competencyLinks;
     }
+
+    // NOTE: we explicitly do not add LectureTranscription here to avoid Hibernate issues because of its OneToOne relationship which is EAGER and cannot be set to LAZY
 
     @JsonIgnore(false)
     @JsonProperty("completed")

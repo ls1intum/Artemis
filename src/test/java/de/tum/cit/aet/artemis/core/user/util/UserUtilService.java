@@ -11,6 +11,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 /**
  * Service responsible for initializing the database with specific testdata related to Users for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class UserUtilService {
@@ -106,7 +108,7 @@ public class UserUtilService {
     /**
      * Creates and saves the given amount of Users with the given arguments.
      *
-     * @param loginPrefix The prefix that will be added in front of every User's username
+     * @param loginPrefix A number will be appended to this prefix to create the login
      * @param groups      The groups that the Users will be added to
      * @param authorities The authorities that the Users will have
      * @param amount      The amount of Users to generate
@@ -119,7 +121,7 @@ public class UserUtilService {
     /**
      * Creates and saves the given amount of Users with the given arguments.
      *
-     * @param loginPrefix        The prefix that will be added in front of every User's username
+     * @param loginPrefix        A number will be appended to this prefix to create the login
      * @param commonPasswordHash The password hash that will be set for every User
      * @param groups             The groups that the Users will be added to
      * @param authorities        The authorities that the Users will have
@@ -407,13 +409,12 @@ public class UserUtilService {
      * @param instructorName  The login of the instructor
      */
     public void addInstructor(final String instructorGroup, final String instructorName) {
-        if (!userExistsWithLogin(instructorName)) {
-            var newUsers = generateAndSaveActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, instructorAuthorities, 1);
-            if (!newUsers.isEmpty()) {
-                var instructor = userTestRepository.save(newUsers.getFirst());
-                assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
-            }
-        }
+        User instructor = createOrReuseExistingUser(instructorName, UserFactory.USER_PASSWORD);
+        String[] groups = new String[] { instructorGroup, "testgroup" };
+        instructor.setGroups(Set.of(groups));
+        instructor.setAuthorities(instructorAuthorities);
+        instructor = userTestRepository.save(instructor);
+        assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
 
     /**
@@ -423,13 +424,12 @@ public class UserUtilService {
      * @param editorName  The login of the editor
      */
     public void addEditor(final String editorGroup, final String editorName) {
-        if (!userExistsWithLogin(editorName)) {
-            var newUsers = generateAndSaveActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1);
-            if (!newUsers.isEmpty()) {
-                var editor = userTestRepository.save(newUsers.getFirst());
-                assertThat(editor.getId()).as("Editor has been created").isNotNull();
-            }
-        }
+        User editor = createOrReuseExistingUser(editorName, UserFactory.USER_PASSWORD);
+        String[] groups = new String[] { editorGroup, "testgroup" };
+        editor.setGroups(Set.of(groups));
+        editor.setAuthorities(editorAuthorities);
+        editor = userTestRepository.save(editor);
+        assertThat(editor.getId()).as("Editor has been created").isNotNull();
     }
 
     /**
@@ -439,13 +439,12 @@ public class UserUtilService {
      * @param taName  The login of the tutor
      */
     public void addTeachingAssistant(final String taGroup, final String taName) {
-        if (!userExistsWithLogin(taName)) {
-            var newUsers = generateAndSaveActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1);
-            if (!newUsers.isEmpty()) {
-                var ta = userTestRepository.save(newUsers.getFirst());
-                assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
-            }
-        }
+        User ta = createOrReuseExistingUser(taName, UserFactory.USER_PASSWORD);
+        String[] groups = new String[] { taGroup, "testgroup" };
+        ta.setGroups(Set.of(groups));
+        ta.setAuthorities(tutorAuthorities);
+        ta = userTestRepository.save(ta);
+        assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
     }
 
     /**
@@ -455,13 +454,12 @@ public class UserUtilService {
      * @param studentName  The login of the student
      */
     public void addStudent(final String studentGroup, final String studentName) {
-        if (!userExistsWithLogin(studentName)) {
-            var newUsers = generateAndSaveActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1);
-            if (!newUsers.isEmpty()) {
-                var student = userTestRepository.save(newUsers.getFirst());
-                assertThat(student.getId()).as("Student has been created").isNotNull();
-            }
-        }
+        User student = createOrReuseExistingUser(studentName, UserFactory.USER_PASSWORD);
+        String[] groups = new String[] { studentGroup, "testgroup" };
+        student.setGroups(Set.of(groups));
+        student.setAuthorities(studentAuthorities);
+        student = userTestRepository.save(student);
+        assertThat(student.getId()).as("Student has been created").isNotNull();
     }
 
     /**

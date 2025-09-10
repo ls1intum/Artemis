@@ -9,21 +9,25 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -38,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
  * such as Athena.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingExerciseCodeReviewFeedbackService {
 
@@ -95,7 +100,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         else {
             log.debug("tutor is responsible to process feedback request: {}", exerciseId);
             groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(programmingExercise);
-            return setIndividualDueDate(participation, programmingExercise, true);
+            return setIndividualDueDate(participation, true);
         }
     }
 
@@ -134,7 +139,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
             log.debug("Submission id: {}", submission.getId());
 
-            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
+            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
             var athenaResponse = api.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission, false);
 
             List<Feedback> feedbacks = athenaResponse.stream().filter(individualFeedbackItem -> individualFeedbackItem.filePath() != null)
@@ -183,11 +188,10 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      * Sets an individual due date for a participation, locks the repository,
      * and invalidates previous results to prepare for new feedback.
      *
-     * @param participation       the programming exercise student participation.
-     * @param programmingExercise the associated programming exercise.
+     * @param participation             the programming exercise student participation.
+     * @param invalidatePreviousResults flag indicating whether to invalidate previous results.
      */
-    private ProgrammingExerciseStudentParticipation setIndividualDueDate(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise,
-            boolean invalidatePreviousResults) {
+    private ProgrammingExerciseStudentParticipation setIndividualDueDate(ProgrammingExerciseStudentParticipation participation, boolean invalidatePreviousResults) {
         // The participations due date is a flag showing that a feedback request is sent
         participation.setIndividualDueDate(now());
 
@@ -196,7 +200,8 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         participation.setParticipant(participation.getParticipant());
 
         if (invalidatePreviousResults) {
-            var participationResults = participation.getResults();
+            Set<Result> participationResults = participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream().filter(Objects::nonNull))
+                    .collect(Collectors.toSet());
             participationResults.forEach(participationResult -> participationResult.setRated(false));
             this.resultRepository.saveAll(participationResults);
         }

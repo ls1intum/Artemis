@@ -1,35 +1,35 @@
 package de.tum.cit.aet.artemis.exam.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripperByArea;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.ImageDTO;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -37,7 +37,8 @@ import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 /**
  * Service Implementation for managing Exam Users.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ExamEnabled.class)
+@Lazy
 @Service
 public class ExamUserService {
 
@@ -70,15 +71,7 @@ public class ExamUserService {
             List<ExamUserWithImageDTO> studentWithImages = new ArrayList<>();
 
             for (ImageDTO image : images) {
-                PDFTextStripperByArea stripper = new PDFTextStripperByArea();
-                stripper.setSortByPosition(true);
-
-                // A4 page, where the Y coordinate of the bottom is 0 and the Y coordinate of the top is 842.
-                // If you have Y coordinates such as y1 = 806 and y2 = 36, then you can do this: y = 842 - y;
-                // and to get left upper corner of the image you subtract the height of the image from the y coordinate
-                Rectangle rect = new Rectangle(Math.round(image.xPosition()), 842 - (Math.round(image.yPosition())) - image.renderedHeight(), 4 * image.renderedWidth(),
-                        image.renderedHeight());
-                stripper.addRegion("image:" + (image.page() - 1), rect);
+                final var stripper = getPdfTextStripperByArea(image);
                 stripper.extractRegions(document.getPage(image.page() - 1));
                 String string = stripper.getTextForRegion("image:" + (image.page() - 1));
                 String[] studentInformation = string.split("\\s");
@@ -99,6 +92,19 @@ public class ExamUserService {
             log.error("Error while parsing PDF file", e);
             throw new InternalServerErrorException("Error while parsing PDF file");
         }
+    }
+
+    private static PDFTextStripperByArea getPdfTextStripperByArea(ImageDTO image) throws IOException {
+        PDFTextStripperByArea stripper = new PDFTextStripperByArea();
+        stripper.setSortByPosition(true);
+
+        // A4 page, where the Y coordinate of the bottom is 0 and the Y coordinate of the top is 842.
+        // If you have Y coordinates such as y1 = 806 and y2 = 36, then you can do this: y = 842 - y;
+        // and to get left upper corner of the image you subtract the height of the image from the y coordinate
+        Rectangle rect = new Rectangle(Math.round(image.xPosition()), 842 - (Math.round(image.yPosition())) - image.renderedHeight(), 4 * image.renderedWidth(),
+                image.renderedHeight());
+        stripper.addRegion("image:" + (image.page() - 1), rect);
+        return stripper;
     }
 
     /**
@@ -127,14 +133,15 @@ public class ExamUserService {
 
             ExamUser examUser = examUserOptional.get();
             String oldPathString = examUser.getStudentImagePath();
-            MultipartFile studentImageFile = fileService.convertByteArrayToMultipart("student_image", ".png", examUserWithImageDTO.image().imageInBytes());
-            Path savedPath = fileService.saveFile(studentImageFile, FilePathService.getStudentImageFilePath(), false);
+            MultipartFile studentImageFile = FileUtil.convertByteArrayToMultipart("student_image", ".png", examUserWithImageDTO.image().imageInBytes());
+            Path basePath = FilePathConverter.getStudentImageFilePath().resolve(examUser.getId().toString());
+            Path savedPath = FileUtil.saveFile(studentImageFile, basePath, FilePathType.EXAM_USER_IMAGE, true);
 
-            examUser.setStudentImagePath(FilePathService.publicPathForActualPathOrThrow(savedPath, examUser.getId()).toString());
+            examUser.setStudentImagePath(FilePathConverter.externalUriForFileSystemPath(savedPath, FilePathType.EXAM_USER_IMAGE, examUser.getId()).toString());
             examUserRepository.save(examUser);
 
             if (oldPathString != null) {
-                Path oldPath = FilePathService.actualPathForPublicPath(URI.create(oldPathString));
+                Path oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(oldPathString), FilePathType.EXAM_USER_IMAGE);
                 fileService.schedulePathForDeletion(oldPath, 0);
             }
         }
@@ -149,8 +156,11 @@ public class ExamUserService {
      * @param user the exam user whose images should be deleted
      */
     public void deleteAvailableExamUserImages(ExamUser user) {
-        Stream.of(user.getSigningImagePath(), user.getStudentImagePath()).filter(Objects::nonNull).map(URI::create).map(FilePathService::actualPathForPublicPath)
-                .forEach(path -> fileService.schedulePathForDeletion(path, 0));
+        Optional.ofNullable(user.getSigningImagePath()).map(URI::create).map(uri -> FilePathConverter.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_SIGNATURE))
+                .ifPresent(path -> fileService.schedulePathForDeletion(path, 0));
+
+        Optional.ofNullable(user.getStudentImagePath()).map(URI::create).map(uri -> FilePathConverter.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_IMAGE))
+                .ifPresent(path -> fileService.schedulePathForDeletion(path, 0));
     }
 
     /**

@@ -1,10 +1,10 @@
 import { Component, OnInit, effect, inject, input } from '@angular/core';
-import { BuildJobStatistics, SpanType } from 'app/entities/programming/build-job.model';
+import { BuildJobStatistics, SpanType } from 'app/buildagent/shared/entities/build-job.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { GraphColors } from 'app/entities/statistics.model';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
 import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
 import { ActivatedRoute } from '@angular/router';
@@ -12,7 +12,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

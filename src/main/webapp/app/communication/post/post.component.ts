@@ -7,23 +7,25 @@ import {
     OnChanges,
     OnInit,
     Renderer2,
+    effect,
     inject,
     input,
     model,
     output,
+    signal,
     viewChild,
 } from '@angular/core';
-import { Post } from 'app/entities/metis/post.model';
-import { PostingDirective } from 'app/communication/posting.directive';
-import { MetisService } from 'app/communication/metis.service';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { PostingDirective } from 'app/communication/directive/posting.directive';
+import { MetisService } from 'app/communication/service/metis.service';
 import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBookmark, faBullhorn, faComments, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
@@ -34,12 +36,13 @@ import { MessageInlineInputComponent } from '../message/message-inline-input/mes
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { throwError } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { PostingContentComponent } from 'app/communication/posting-content.components';
+import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
+import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
 
 @Component({
     selector: 'jhi-post',
@@ -85,6 +88,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
     modalRef = input<NgbModalRef | undefined>(undefined);
+    searchConfig = input<CourseWideSearchConfig | undefined>(undefined);
     showAnswers = model<boolean>(false);
 
     openThread = output<void>();
@@ -95,10 +99,11 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     static activeDropdownPost: PostComponent | undefined = undefined;
 
     showReactionSelector = false;
-    displayInlineInput = false;
+    displayInlineInput = signal(false);
     routerLink: RouteComponents;
     queryParams = {};
     showAnnouncementIcon = false;
+    showSearchResultInAnswersHint = false;
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
@@ -110,7 +115,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     mayEdit = false;
     mayDelete = false;
     canPin = false;
-    originalPostDetails: Post | AnswerPost | undefined = undefined;
+    originalPostDetails: Post | AnswerPost | undefined;
     readonly onNavigateToPost = output<Posting>();
 
     // Icons
@@ -124,36 +129,54 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly faShare = faShare;
 
     isConsecutive = input<boolean>(false);
-    forwardedPosts = input<Post[]>([]);
-    forwardedAnswerPosts = input<AnswerPost[]>([]);
+    forwardedPosts = input<(Post | undefined)[]>([]);
+    forwardedAnswerPosts = input<(AnswerPost | undefined)[]>([]);
     dropdownPosition = { x: 0, y: 0 };
     course: Course;
 
+    hasOriginalPostBeenDeleted: boolean;
+
     constructor() {
         super();
-        this.course = this.metisService.getCourse() ?? throwError('Course not found');
+        this.course = this.metisService.getCourse() ?? throwError(() => new Error('Course not found'));
+        // Reactive check: if forwarded post/answer is deleted, update flag
+        effect(() => {
+            const hasDeletedForwardedPost = this.forwardedPosts().length > 0 && this.forwardedPosts()[0] === undefined;
+            const hasDeletedForwardedAnswerPost = this.forwardedAnswerPosts().length > 0 && this.forwardedAnswerPosts()[0] === undefined;
+            this.hasOriginalPostBeenDeleted = hasDeletedForwardedAnswerPost || hasDeletedForwardedPost;
+        });
     }
 
     get reactionsBar() {
         return this.reactionsBarComponent();
     }
 
+    /**
+     * Returns true if the current post is pinned to the top.
+     */
     isPinned(): boolean {
         return this.posting.displayPriority === DisplayPriority.PINNED;
     }
 
+    /** Updates internal flag for edit permission */
     onMayEdit(value: boolean) {
         this.mayEdit = value;
     }
 
+    /** Updates internal flag for delete permission */
     onMayDelete(value: boolean) {
         this.mayDelete = value;
     }
 
+    /** Updates internal flag for pin permission */
     onCanPin(value: boolean) {
         this.canPin = value;
     }
 
+    /**
+     * Handles right-click context menu, sets the active dropdown post,
+     * and positions the dropdown near the cursor.
+     */
     onRightClick(event: MouseEvent) {
         const targetElement = event.target as HTMLElement;
         const isPointerCursor = window.getComputedStyle(targetElement).cursor === 'pointer';
@@ -180,6 +203,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         }
     }
 
+    /**
+     * Adjusts dropdown position if it overflows the screen on the right.
+     */
     adjustDropdownPosition() {
         const dropdownWidth = 200;
         const screenWidth = window.innerWidth;
@@ -189,6 +215,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         }
     }
 
+    /**
+     * Disables vertical scroll on main container to avoid background scroll when dropdown is active.
+     */
     disableBodyScroll() {
         const mainContainer = this.document.querySelector('.posting-infinite-scroll-container');
         if (mainContainer) {
@@ -196,6 +225,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         }
     }
 
+    /**
+     * Re-enables vertical scroll on the main container.
+     */
     enableBodyScroll() {
         const mainContainer = this.document.querySelector('.posting-infinite-scroll-container');
         if (mainContainer) {
@@ -203,6 +235,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         }
     }
 
+    /**
+     * Closes any open dropdown menus when clicking outside.
+     */
     @HostListener('document:click', ['$event'])
     onClickOutside() {
         this.showDropdown = false;
@@ -217,28 +252,50 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.pageType = this.metisService.getPageType();
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+        this.updateShowSearchResultInAnswersHint();
         this.sortAnswerPosts();
         this.assignPostingToPost();
         this.fetchForwardedMessages();
     }
 
+    updateShowSearchResultInAnswersHint() {
+        const searchConfig = this.searchConfig();
+        if (!searchConfig || !this.posting.answers) {
+            this.showSearchResultInAnswersHint = false;
+            return;
+        }
+
+        const searchQuery = searchConfig.searchTerm.toLowerCase();
+        if (!searchQuery) {
+            const selectedAuthorIds = searchConfig.selectedAuthors.map((author) => author.id);
+            const isSearchAuthorInAnswers =
+                this.posting.answers?.some((answer) => {
+                    const answerAuthorId = answer.author?.id;
+                    return selectedAuthorIds.includes(answerAuthorId);
+                }) ?? false;
+            this.showSearchResultInAnswersHint = isSearchAuthorInAnswers;
+            return;
+        }
+
+        this.showSearchResultInAnswersHint =
+            this.posting.answers?.some((answer) => {
+                const answerContent = answer.content?.toLowerCase();
+                return answerContent?.includes(searchQuery);
+            }) ?? false;
+    }
+
+    /**
+     * Sets originalPostDetails if forwarded post or forwarded answer post exists.
+     */
     fetchForwardedMessages(): void {
         try {
             if (this.forwardedPosts().length > 0) {
-                const forwardedMessage = this.forwardedPosts()[0];
-
-                if (forwardedMessage?.id) {
-                    this.originalPostDetails = forwardedMessage;
-                    this.changeDetector.markForCheck();
-                }
+                this.originalPostDetails = this.forwardedPosts()[0];
+                this.changeDetector.markForCheck();
             }
             if (this.forwardedAnswerPosts().length > 0) {
-                const forwardedMessage = this.forwardedAnswerPosts()[0];
-
-                if (forwardedMessage?.id) {
-                    this.originalPostDetails = forwardedMessage;
-                    this.changeDetector.markForCheck();
-                }
+                this.originalPostDetails = this.forwardedAnswerPosts()[0];
+                this.changeDetector.markForCheck();
             }
         } catch (error) {
             throw new Error(error.toString());
@@ -253,6 +310,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.routerLink = this.metisService.getLinkForPost();
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
         this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference) ?? false;
+        this.updateShowSearchResultInAnswersHint();
         this.sortAnswerPosts();
         this.assignPostingToPost();
     }
@@ -326,6 +384,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         }
     }
 
+    protected setDisplayInlineInput(active: boolean) {
+        this.displayInlineInput.set(active);
+    }
+
     private assignPostingToPost() {
         // This is needed because otherwise instanceof returns 'object'.
         if (this.posting && !(this.posting instanceof Post)) {
@@ -333,7 +395,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         }
     }
 
-    protected onTriggerNavigateToPost(post: Posting) {
+    /**
+     * Emits an event to notify parent components to navigate to the given post.
+     */
+    protected onTriggerNavigateToPost(post: Posting | undefined) {
+        if (!post) {
+            return;
+        }
         this.onNavigateToPost.emit(post);
     }
 }

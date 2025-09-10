@@ -4,7 +4,7 @@ import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { Subscription, from } from 'rxjs';
 
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-modal.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

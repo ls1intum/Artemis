@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class StatisticsService {
 
@@ -79,7 +81,7 @@ public class StatisticsService {
     }
 
     /**
-     * Forwards the request to the repository, which returns a List<Map<String, Object>>. For week, month or year the map from the Repository contains a String with the column
+     * Forwards the request to the repository, which returns a list of statistic entries. For week, month or year the map from the Repository contains a String with the column
      * name, "day" and "amount" and an Object being the value, either the date in the format "YYYY-MM-DD" or the amount of the findings. For day, the column names are "day" and
      * "amount", which then contains the date in the ZonedDateFormat as Integer and the amount as Long.
      * It then collects the amounts in an array, depending on the span value, and returns it
@@ -165,7 +167,7 @@ public class StatisticsService {
         Course course = exercises.stream().findFirst().orElseThrow().getCourseViaExerciseGroupOrCourseMember();
         var includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
                 .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
-        double averageScoreForCourse = Objects.requireNonNullElse(participantScoreRepository.findAvgScore(includedExercises), 0.0);
+        double averageScoreForCourse = Objects.requireNonNullElse(participantScoreRepository.findAvgRatedScore(includedExercises), 0.0);
         List<CourseStatisticsAverageScore> averageScoreForExercises = statisticsRepository.findAvgPointsForExercises(includedExercises);
         sortAfterReleaseDate(averageScoreForExercises);
         averageScoreForExercises.forEach(exercise -> {
@@ -220,7 +222,7 @@ public class StatisticsService {
 
         // average score & max points
         Double maxPoints = exercise.getMaxPoints();
-        Double averageScore = participantScoreRepository.findAvgScore(Set.of(exercise));
+        Double averageScore = participantScoreRepository.findAvgRatedScore(Set.of(exercise));
         double averageScoreForExercise = averageScore != null ? roundScoreSpecifiedByCourseSettings(averageScore, course) : 0.0;
         List<ScoreDistributionDTO> scores = participantScoreRepository.getScoreDistributionForExercise(exercise.getId());
         var scoreDistribution = new int[10];

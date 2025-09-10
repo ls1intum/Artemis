@@ -1,6 +1,6 @@
 import { EventEmitter } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ButtonType } from 'app/shared/components/button.component';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 
 /**
  * Defines the type of the action handled by delete dialog
@@ -20,7 +20,7 @@ export enum ActionType {
  * Key is i18n key, value is the value that will be displayed
  */
 export interface EntitySummary {
-    [key: string]: number | boolean | undefined;
+    [key: string]: string | number | boolean | undefined;
 }
 
 /**

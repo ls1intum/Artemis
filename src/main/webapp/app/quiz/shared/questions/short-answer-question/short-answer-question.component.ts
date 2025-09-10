@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
-import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
+import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
+import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
+import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
+import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/quiz/shared/entities/quiz-question.model';
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.constants';
@@ -19,13 +19,18 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-short-answer-question',
     templateUrl: './short-answer-question.component.html',
     providers: [ShortAnswerQuestionUtil],
-    styleUrls: ['./short-answer-question.component.scss', '../../../overview/quiz-participation.scss'],
+    styleUrls: ['./short-answer-question.component.scss', '../../../overview/participation/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [NgClass, NgbTooltip, TranslateDirective, NgbPopover, FaIconComponent, QuizScoringInfoStudentModalComponent, ArtemisTranslatePipe],
 })
 export class ShortAnswerQuestionComponent {
-    private artemisMarkdown = inject(ArtemisMarkdownService);
-    shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+    private readonly artemisMarkdown = inject(ArtemisMarkdownService);
+    readonly shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+
+    protected readonly faExclamationCircle = faExclamationCircle;
+    protected readonly farQuestionCircle = faQuestionCircle;
+
+    readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
     shortAnswerQuestion: ShortAnswerQuestion;
     _forceSampleSolution: boolean;
@@ -33,6 +38,7 @@ export class ShortAnswerQuestionComponent {
     @Input()
     set question(question: QuizQuestion) {
         this.shortAnswerQuestion = question as ShortAnswerQuestion;
+        this.hideSampleSolution();
         this.watchCollection();
     }
 
@@ -64,16 +70,10 @@ export class ShortAnswerQuestionComponent {
     @Output()
     submittedTextsChange = new EventEmitter<ShortAnswerSubmittedText[]>();
 
-    readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
-
     showingSampleSolution = false;
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
     sampleSolutions: ShortAnswerSolution[] = [];
     textParts: string[][];
-
-    // Icons
-    faExclamationCircle = faExclamationCircle;
-    farQuestionCircle = faQuestionCircle;
 
     /**
      * Update html for text, hint and explanation for the question and every answer option

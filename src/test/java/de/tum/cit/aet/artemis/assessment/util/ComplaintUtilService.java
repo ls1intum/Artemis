@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.assessment.util;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -19,11 +20,11 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
-import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 
 /**
  * Service responsible for initializing the database with specific testdata related to complaints for use in integration tests.
  */
+@Lazy
 @Service
 @Profile(SPRING_PROFILE_TEST)
 public class ComplaintUtilService {
@@ -90,16 +91,16 @@ public class ComplaintUtilService {
     }
 
     /**
-     * Creates and saves a given number of complaints for the given participation and student.
+     * Creates and saves a given number of complaints for the given submission and student.
      *
      * @param studentLogin       The student's login.
-     * @param participation      The participation to create the complaints for.
+     * @param submission         The submission to create the complaints for.
      * @param numberOfComplaints The number of complaints to create.
      * @param complaintType      The type of the complaints to create.
      */
-    public void addComplaints(String studentLogin, Participation participation, int numberOfComplaints, ComplaintType complaintType) {
+    public void addComplaints(String studentLogin, Submission submission, int numberOfComplaints, ComplaintType complaintType) {
         for (int i = 0; i < numberOfComplaints; i++) {
-            Result dummyResult = new Result().participation(participation);
+            Result dummyResult = new Result().submission(submission);
             dummyResult = resultTestRepository.save(dummyResult);
             Complaint complaint = new Complaint().participant(userUtilService.getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
@@ -124,16 +125,16 @@ public class ComplaintUtilService {
     }
 
     /**
-     * Creates and saves a given number of complaints for the given team and participation.
+     * Creates and saves a given number of complaints for the given team and submission.
      *
      * @param team               The team to create the complaints for.
-     * @param participation      The participation to create the complaints for.
+     * @param submission         The submission to create the complaints for.
      * @param numberOfComplaints The number of complaints to create.
      * @param complaintType      The type of the complaints to create.
      */
-    public void addTeamComplaints(Team team, Participation participation, int numberOfComplaints, ComplaintType complaintType) {
+    public void addTeamComplaints(Team team, Submission submission, int numberOfComplaints, ComplaintType complaintType) {
         for (int i = 0; i < numberOfComplaints; i++) {
-            Result dummyResult = new Result().participation(participation);
+            Result dummyResult = new Result().submission(submission);
             dummyResult = resultTestRepository.save(dummyResult);
             Complaint complaint = new Complaint().participant(team).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
@@ -150,8 +151,6 @@ public class ComplaintUtilService {
     public AssessmentUpdateDTO createComplaintAndResponse(Result textResult, String tutorLogin) {
         Complaint complaint = new Complaint().result(textResult).complaintText("This is not fair");
         complaintRepo.save(complaint);
-        complaint.getResult().setParticipation(null); // Break infinite reference chain
-
         ComplaintResponse complaintResponse = createInitialEmptyResponse(tutorLogin, complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");

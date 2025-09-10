@@ -5,12 +5,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.connector.AthenaRequestMockProvider;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
 /**
  * Base class for Athena tests providing common functionality
  */
-public abstract class AbstractAthenaTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+public abstract class AbstractAthenaTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     @Autowired
     protected AthenaRequestMockProvider athenaRequestMockProvider;

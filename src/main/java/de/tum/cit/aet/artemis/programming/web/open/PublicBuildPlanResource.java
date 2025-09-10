@@ -1,7 +1,15 @@
 package de.tum.cit.aet.artemis.programming.web.open;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+
+import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,9 +25,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 
-@Profile("jenkins")
+@Profile(PROFILE_JENKINS)
+@Lazy
 @RestController
-// TODO: should we adapt the mapping based on the profile?
 @RequestMapping("api/programming/public/")
 public class PublicBuildPlanResource {
 
@@ -48,10 +56,29 @@ public class PublicBuildPlanResource {
         final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
 
-        if (!programmingExercise.getBuildConfig().hasBuildPlanAccessSecretSet() || !secret.equals(programmingExercise.getBuildConfig().getBuildPlanAccessSecret())) {
+        if (!programmingExercise.getBuildConfig().hasBuildPlanAccessSecretSet() || !constantTimeEquals(secret, programmingExercise.getBuildConfig().getBuildPlanAccessSecret())) {
             throw new AccessForbiddenException();
         }
 
         return ResponseEntity.ok().body(buildPlan.getBuildPlan());
     }
+
+    /**
+     * Compares two strings in constant time to mitigate timing attacks.
+     * Returns false if either input is null.
+     *
+     * @param providedSecret the secret provided in the request
+     * @param expectedSecret the secret stored in the system (e.g., database)
+     * @return true if both secrets are non-null and equal, false otherwise
+     */
+    private boolean constantTimeEquals(@Nullable String providedSecret, @Nullable String expectedSecret) {
+        if (providedSecret == null || expectedSecret == null) {
+            return false;
+        }
+
+        byte[] providedBytes = providedSecret.getBytes(StandardCharsets.UTF_8);
+        byte[] expectedBytes = expectedSecret.getBytes(StandardCharsets.UTF_8);
+        return MessageDigest.isEqual(providedBytes, expectedBytes);
+    }
+
 }

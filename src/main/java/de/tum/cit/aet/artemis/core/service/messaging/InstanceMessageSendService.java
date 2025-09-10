@@ -21,27 +21,6 @@ public interface InstanceMessageSendService {
     void sendProgrammingExerciseScheduleCancel(Long exerciseId);
 
     /**
-     * Send a message to the main server that a modeling exercise was created or updated and a (re-)scheduling has to be performed
-     *
-     * @param exerciseId the id of the exercise that should be scheduled
-     */
-    void sendModelingExerciseSchedule(Long exerciseId);
-
-    /**
-     * Send a message to the main server that a modeling exercise was deleted and the scheduling should be cancelled
-     *
-     * @param exerciseId the id of the exercise that should be no longer be scheduled
-     */
-    void sendModelingExerciseScheduleCancel(Long exerciseId);
-
-    /**
-     * Send a message to the main server that a modeling exercise should be instantly get clustered
-     *
-     * @param exerciseId the id of the exercise that should be clustered
-     */
-    void sendModelingExerciseInstantClustering(Long exerciseId);
-
-    /**
      * Send a message to the main server that a text exercise was created or updated and a (re-)scheduling has to be performed
      *
      * @param exerciseId the id of the exercise that should be scheduled
@@ -105,4 +84,32 @@ public interface InstanceMessageSendService {
      * @param quizExerciseId the id of the quiz exercise that should be no longer be scheduled
      */
     void sendQuizExerciseStartCancel(Long quizExerciseId);
+
+    /**
+     * Send a message to schedule the unhiding of a slide at its expiration time
+     *
+     * @param slideId the id of the slide that should be scheduled for unhiding
+     */
+    void sendSlideUnhideSchedule(Long slideId);
+
+    /**
+     * Send a message to cancel the scheduled unhiding of a slide
+     *
+     * @param slideId the id of the slide whose unhiding task should be cancelled
+     */
+    void sendSlideUnhideScheduleCancel(Long slideId);
+
+    /**
+     * Send a message to schedule the ingestion of a lecture unit
+     *
+     * @param lectureUnitId the id of the lecture unit which should be sent to Iris
+     */
+    void sendLectureUnitAutoIngestionSchedule(Long lectureUnitId);
+
+    /**
+     * Send a message to cancel the ingestion of a lecture unit
+     *
+     * @param lectureUnitId the id of the lecture unit that should no longer be ingested
+     */
+    void sendLectureUnitAutoIngestionScheduleCancel(Long lectureUnitId);
 }

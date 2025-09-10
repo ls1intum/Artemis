@@ -8,16 +8,19 @@ import java.util.Arrays;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
+import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 
 @Profile(PROFILE_CORE)
 @Component
+@Lazy
 public class ToolsInterceptor implements HandlerInterceptor {
 
     private final TokenProvider tokenProvider;
@@ -28,17 +31,19 @@ public class ToolsInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        String jwtToken;
+        String jwtToken = null;
         try {
-            jwtToken = JWTFilter.extractValidJwt(request, tokenProvider);
+            JwtWithSource jwtWithSource = JWTFilter.extractValidJwt(request, tokenProvider);
+            if (jwtWithSource != null) {
+                jwtToken = jwtWithSource.jwt();
+            }
         }
         catch (IllegalArgumentException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return false;
         }
 
-        if (handler instanceof HandlerMethod && jwtToken != null) {
-            HandlerMethod handlerMethod = (HandlerMethod) handler;
+        if (handler instanceof HandlerMethod handlerMethod && jwtToken != null) {
             Method method = handlerMethod.getMethod();
 
             // Check if the method or its class has the @AllowedTools annotation

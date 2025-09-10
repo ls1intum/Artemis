@@ -14,14 +14,16 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.PostConstruct;
+
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -36,6 +38,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
@@ -43,6 +46,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 /**
  * Includes methods for managing and retrieving the shared build job queue and build agent information. Also contains methods for cancelling build jobs.
  */
+@Lazy
 @Service
 @Profile(PROFILE_LOCALCI)
 public class SharedQueueManagementService {
@@ -67,10 +71,12 @@ public class SharedQueueManagementService {
 
     /**
      * Initialize relevant data from hazelcast
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @PostConstruct
     public void init() {
-        this.distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), false);
+        this.distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener(), true);
         this.updateBuildAgentCapacity();
     }
 
@@ -87,7 +93,7 @@ public class SharedQueueManagementService {
             for (DockerImageBuild dockerImageBuild : lastBuildDatesForDockerImages) {
                 distributedDataAccessService.getDistributedDockerImageCleanupInfo().put(dockerImageBuild.dockerImage(), dockerImageBuild.lastBuildCompletionDate());
             }
-            log.info("pushDockerImageCleanupInfo took {}ms", System.currentTimeMillis() - startDate);
+            log.debug("pushDockerImageCleanupInfo took {}ms", System.currentTimeMillis() - startDate);
         }
     }
 
@@ -122,7 +128,7 @@ public class SharedQueueManagementService {
                     toRemove.add(job);
                 }
             }
-            distributedDataAccessService.getDistributedQueuedJobs().removeAll(toRemove);
+            distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
             updateCancelledQueuedBuildJobsStatus(toRemove);
         }
         else {
@@ -157,7 +163,7 @@ public class SharedQueueManagementService {
     public void cancelAllQueuedBuildJobs() {
         log.debug("Cancelling all queued build jobs");
         List<BuildJobQueueItem> queuedJobs = distributedDataAccessService.getQueuedJobs();
-        distributedDataAccessService.getDistributedQueuedJobs().clear();
+        distributedDataAccessService.getDistributedBuildJobQueue().clear();
         updateCancelledQueuedBuildJobsStatus(queuedJobs);
     }
 
@@ -193,7 +199,7 @@ public class SharedQueueManagementService {
                 toRemove.add(job);
             }
         }
-        distributedDataAccessService.getDistributedQueuedJobs().removeAll(toRemove);
+        distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
         updateCancelledQueuedBuildJobsStatus(toRemove);
     }
 
@@ -224,7 +230,7 @@ public class SharedQueueManagementService {
                 toRemove.add(queuedJob);
             }
         }
-        distributedDataAccessService.getDistributedQueuedJobs().removeAll(toRemove);
+        distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
         updateCancelledQueuedBuildJobsStatus(toRemove);
 
         List<BuildJobQueueItem> runningJobs = distributedDataAccessService.getProcessingJobs();
@@ -240,10 +246,10 @@ public class SharedQueueManagementService {
      * This method should only be called by an admin user.
      */
     public void clearDistributedData() {
-        distributedDataAccessService.getDistributedQueuedJobs().clear();
+        distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedDockerImageCleanupInfo().clear();
-        distributedDataAccessService.getDistributedResultQueue().clear();
+        distributedDataAccessService.getDistributedBuildResultQueue().clear();
         distributedDataAccessService.getDistributedBuildAgentInformation().clear();
     }
 
@@ -254,18 +260,28 @@ public class SharedQueueManagementService {
      * @param courseId the id of the course
      * @return the page of build jobs
      */
-    public Page<BuildJob> getFilteredFinishedBuildJobs(FinishedBuildJobPageableSearchDTO search, Long courseId) {
+    public Slice<BuildJob> getFilteredFinishedBuildJobs(FinishedBuildJobPageableSearchDTO search, Long courseId) {
         Duration buildDurationLower = search.buildDurationLower() == null ? null : Duration.ofSeconds(search.buildDurationLower());
         Duration buildDurationUpper = search.buildDurationUpper() == null ? null : Duration.ofSeconds(search.buildDurationUpper());
 
         var sortOptions = Sort.by(search.pageable().getSortedColumn());
         sortOptions = search.pageable().getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
         var pageRequest = PageRequest.of(search.pageable().getPage() - 1, search.pageable().getPageSize(), sortOptions);
+        // NOTE: in the default REST call, all filter criteria are null, and we can optimize the query by not passing them.
+        Slice<Long> buildJobIdsSlice;
+        long start = System.nanoTime();
+        if (search.buildStatus() == null && search.buildAgentAddress() == null && search.startDate() == null && search.endDate() == null
+                && StringUtils.isEmpty(search.pageable().getSearchTerm()) && courseId == null && buildDurationLower == null && buildDurationUpper == null) {
+            buildJobIdsSlice = buildJobRepository.findFinishedIds(pageRequest);
+        }
+        else {
+            buildJobIdsSlice = buildJobRepository.findFinishedIdsByFilterCriteria(search.buildStatus(), search.buildAgentAddress(), search.startDate(), search.endDate(),
+                    search.pageable().getSearchTerm(), courseId, buildDurationLower, buildDurationUpper, pageRequest);
+        }
 
-        Page<Long> buildJobIdsPage = buildJobRepository.findIdsByFilterCriteria(search.buildStatus(), search.buildAgentAddress(), search.startDate(), search.endDate(),
-                search.pageable().getSearchTerm(), courseId, buildDurationLower, buildDurationUpper, pageRequest);
+        log.info("findFinidhedIds took {} for search: {}", TimeLogUtil.formatDurationFrom(start), search);
 
-        List<Long> buildJobIds = buildJobIdsPage.toList();
+        List<Long> buildJobIds = buildJobIdsSlice.toList();
         // Fetch the build jobs with results. Since this query used "IN" clause, the order of the results is not guaranteed. We need to order them by the order of the ids.
         List<BuildJob> unorderedBuildJobs = buildJobRepository.findWithDataByIdIn(buildJobIds);
 
@@ -273,17 +289,22 @@ public class SharedQueueManagementService {
 
         List<BuildJob> orderedBuildJobs = buildJobIds.stream().map(buildJobMap::get).toList();
 
-        return new PageImpl<>(orderedBuildJobs, buildJobIdsPage.getPageable(), buildJobIdsPage.getTotalElements());
+        return new SliceImpl<>(orderedBuildJobs, buildJobIdsSlice.getPageable(), buildJobIdsSlice.hasNext());
     }
 
     /**
-     * Estimates how long the job will be queued for on the participation ID.
+     * Estimates the start time of a queued build job for a given participation ID.
+     * <p>
+     * The estimation is based on the number of jobs queued before the given job, the availability of build agents,
+     * and the remaining duration of currently running jobs. If the queue is empty or there is available capacity,
+     * the estimated start time is the current time. Otherwise, the method calculates when the job is expected to
+     * start by considering the completion times of preceding jobs and the processing capacity of build agents.
      *
      * @param participationId the ID of the participation for which the queue release date is estimated
      * @return the estimated queue release date as a {@link ZonedDateTime}
      */
     public ZonedDateTime getBuildJobEstimatedStartDate(long participationId) {
-        if (distributedDataAccessService.getDistributedQueuedJobs().isEmpty()
+        if (distributedDataAccessService.getDistributedBuildJobQueue().isEmpty()
                 || this.buildAgentsCapacity > this.runningBuildJobCount + distributedDataAccessService.getQueuedJobsSize()) {
             return ZonedDateTime.now();
         }

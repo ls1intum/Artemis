@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.util;
 
-import org.apache.commons.lang.time.DurationFormatUtils;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 
 public class TimeLogUtil {
 
@@ -23,12 +23,20 @@ public class TimeLogUtil {
         if (durationInSeconds < 60) {
             return roundOffTo2DecPlaces(durationInSeconds) + "sec";
         }
-        double durationInMinutes = durationInSeconds / 60.0;
+
+        /*
+         * Minutes and hours need a special treatment to prevent formats like this:
+         * '1.58min': Is this supposed to mean 1 min and 58 seconds or 1 min and 35 seconds?
+         * '1.94hours': Here it would be obvious that something is off, but how long is that really?
+         * This happens because there's not 100 seconds in a minute and also not 100 hours in a day.
+         */
+        int durationInMinutes = (int) (durationInSeconds / 60.0);
         if (durationInMinutes < 60) {
-            return roundOffTo2DecPlaces(durationInMinutes) + "min";
+            return durationInMinutes + ":" + ((int) durationInSeconds % 60) + "min";
         }
-        double durationInHours = durationInMinutes / 60.0;
-        return roundOffTo2DecPlaces(durationInHours) + "hours";
+
+        int durationInHours = durationInMinutes / 60;
+        return durationInHours + ":" + (durationInMinutes % 60) + "hours";
     }
 
     public static String formatDuration(long durationInSeconds) {

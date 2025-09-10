@@ -14,6 +14,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,13 +30,13 @@ import de.tum.cit.aet.artemis.communication.repository.CourseNotificationParamet
 import de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 /**
  * Service that handles all course notification logic. Whenever you want to create a new notification use this service
  * to send it to the users.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class CourseNotificationService {
 
@@ -55,8 +56,8 @@ public class CourseNotificationService {
 
     public CourseNotificationService(CourseNotificationRegistryService courseNotificationRegistryService, CourseNotificationSettingService courseNotificationSettingService,
             CourseNotificationRepository courseNotificationRepository, CourseNotificationParameterRepository courseNotificationParameterRepository,
-            UserCourseNotificationStatusService userCourseNotificationStatusService, UserRepository userRepository, CourseNotificationWebappService webappService,
-            CourseNotificationPushService pushService, CourseNotificationEmailService emailService) {
+            UserCourseNotificationStatusService userCourseNotificationStatusService, CourseNotificationWebappService webappService, CourseNotificationPushService pushService,
+            CourseNotificationEmailService emailService) {
         this.courseNotificationRegistryService = courseNotificationRegistryService;
         this.courseNotificationSettingService = courseNotificationSettingService;
         this.courseNotificationRepository = courseNotificationRepository;
@@ -77,6 +78,8 @@ public class CourseNotificationService {
         var setOfNotifiedUsers = new HashSet<User>();
 
         var courseNotificationEntityId = createCourseNotification(courseNotification);
+
+        courseNotification.notificationId = courseNotificationEntityId;
 
         for (var supportedChannel : supportedChannels) {
             var service = serviceMap.get(supportedChannel);
@@ -163,7 +166,7 @@ public class CourseNotificationService {
      */
     private CourseNotificationDTO convertToCourseNotificationDTO(CourseNotification notification, UserCourseNotificationStatusType status) {
         return new CourseNotificationDTO(notification.getReadableNotificationType(), notification.notificationId, notification.courseId, notification.creationDate,
-                notification.getCourseNotificationCategory(), notification.getParameters(), status);
+                notification.getCourseNotificationCategory(), notification.getParameters(), status, notification.getRelativeWebAppUrl());
     }
 
     /**
@@ -197,7 +200,12 @@ public class CourseNotificationService {
                 continue;
             }
 
-            parameterEntities.add(new CourseNotificationParameter(courseNotificationEntity, key, parameters.get(key).toString()));
+            String paramValue = parameters.get(key).toString();
+            if (paramValue.length() > 500) {
+                paramValue = paramValue.substring(0, 499);
+            }
+
+            parameterEntities.add(new CourseNotificationParameter(courseNotificationEntity, key, paramValue));
         }
 
         if (!parameterEntities.isEmpty()) {

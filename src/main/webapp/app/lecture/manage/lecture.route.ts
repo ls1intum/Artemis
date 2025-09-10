@@ -1,21 +1,21 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR } from 'app/shared/constants/authority.constants';
 import { lectureUnitRoute } from 'app/lecture/manage/lecture-units/lecture-unit-management.route';
-import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
+import { CourseManagementResolve } from 'app/core/course/manage/services/course-management-resolve.service';
 import { hasLectureUnsavedChangesGuard } from './hasLectureUnsavedChanges.guard';
-import { AttachmentResolve, LectureResolve } from 'app/lecture/manage/lecture-resolve.service';
+import { AttachmentResolve, LectureResolve } from 'app/lecture/manage/services/lecture-resolve.service';
 
 export const lectureRoute: Routes = [
     {
         path: '',
-        loadComponent: () => import('./lecture.component').then((m) => m.LectureComponent),
+        loadComponent: () => import('./lecture/lecture.component').then((m) => m.LectureComponent),
         resolve: {
             course: CourseManagementResolve,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.lecture.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -29,21 +29,21 @@ export const lectureRoute: Routes = [
         children: [
             {
                 path: 'new',
-                loadComponent: () => import('./lecture-update.component').then((m) => m.LectureUpdateComponent),
+                loadComponent: () => import('./lecture-update/lecture-update.component').then((m) => m.LectureUpdateComponent),
                 data: {
-                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: IS_AT_LEAST_EDITOR,
                     pageTitle: 'global.generic.create',
                 },
                 canActivate: [UserRouteAccessService],
             },
             {
                 path: ':lectureId',
-                loadComponent: () => import('./lecture-detail.component').then((m) => m.LectureDetailComponent),
+                loadComponent: () => import('./lecture-detail/lecture-detail.component').then((m) => m.LectureDetailComponent),
                 resolve: {
                     lecture: LectureResolve,
                 },
                 data: {
-                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    authorities: IS_AT_LEAST_EDITOR,
                     pageTitle: 'artemisApp.lecture.home.title',
                 },
                 canActivate: [UserRouteAccessService],
@@ -56,9 +56,9 @@ export const lectureRoute: Routes = [
                 children: [
                     {
                         path: 'attachments',
-                        loadComponent: () => import('app/lecture/manage/lecture-attachments.component').then((m) => m.LectureAttachmentsComponent),
+                        loadComponent: () => import('app/lecture/manage/lecture-attachments/lecture-attachments.component').then((m) => m.LectureAttachmentsComponent),
                         data: {
-                            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: IS_AT_LEAST_EDITOR,
                             pageTitle: 'artemisApp.lecture.attachments.title',
                         },
                         canActivate: [UserRouteAccessService],
@@ -79,9 +79,9 @@ export const lectureRoute: Routes = [
                     },
                     {
                         path: 'edit',
-                        loadComponent: () => import('./lecture-update.component').then((m) => m.LectureUpdateComponent),
+                        loadComponent: () => import('./lecture-update/lecture-update.component').then((m) => m.LectureUpdateComponent),
                         data: {
-                            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                            authorities: IS_AT_LEAST_EDITOR,
                             pageTitle: 'global.generic.edit',
                         },
                         canActivate: [UserRouteAccessService],

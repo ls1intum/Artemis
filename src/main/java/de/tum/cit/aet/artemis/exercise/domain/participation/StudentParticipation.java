@@ -10,12 +10,10 @@ import jakarta.persistence.ManyToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 @Entity
 @DiscriminatorValue(value = "SP")
@@ -26,11 +24,9 @@ public class StudentParticipation extends Participation {
     private Double presentationScore;
 
     @ManyToOne
-    @JsonView(QuizView.Before.class)
     private User student;
 
     @ManyToOne
-    @JsonView(QuizView.Before.class)
     private Team team;
 
     public Double getPresentationScore() {
@@ -70,20 +66,16 @@ public class StudentParticipation extends Participation {
      * @param participant either a team or user
      */
     public void setParticipant(Participant participant) {
-        if (participant instanceof User) {
-            this.student = (User) participant;
-        }
-        else if (participant instanceof Team) {
-            this.team = (Team) participant;
-        }
-        else if (participant == null) {
-            this.student = null;
-            if (this.team != null) {
-                this.team.setStudents(null);
+        switch (participant) {
+            case User user -> this.student = user;
+            case Team team1 -> this.team = team1;
+            case null -> {
+                this.student = null;
+                if (this.team != null) {
+                    this.team.setStudents(null);
+                }
             }
-        }
-        else {
-            throw new Error("Unknown participant type");
+            default -> throw new Error("Unknown participant type");
         }
     }
 

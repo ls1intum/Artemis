@@ -1,0 +1,209 @@
+<div>
+    <div class="row">
+        <div *titleBarTitle class="col-4 d-flex align-items-center">
+            <jhi-course-title-bar-title id="page-heading" title="artemisApp.lecture.home.title" />
+            <jhi-documentation-button [type]="documentationType" />
+        </div>
+        <div *titleBarActions class="d-flex flex-row-reverse bd-highlight">
+            <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
+                <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+                    <button
+                        class="btn btn-sm"
+                        [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }"
+                        ngbDropdownToggle
+                        id="filter-dropdown-button"
+                    >
+                        <fa-icon [icon]="faFilter" />
+                        <span class="d-s-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: activeFilters.size }"></span>
+                    </button>
+                    <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                        <li>
+                            <label>
+                                <input
+                                    id="filterPast"
+                                    class="ms-2 form-check-input"
+                                    (change)="toggleFilters([filterType.PAST])"
+                                    [checked]="activeFilters.has(filterType.PAST)"
+                                    type="checkbox"
+                                />
+                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterPast"></span>
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input
+                                    id="filterCurrent"
+                                    class="ms-2 form-check-input"
+                                    (change)="toggleFilters([filterType.CURRENT])"
+                                    [checked]="activeFilters.has(filterType.CURRENT)"
+                                    type="checkbox"
+                                />
+                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterCurrent"></span>
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input
+                                    id="filterFuture"
+                                    class="ms-2 form-check-input"
+                                    (change)="toggleFilters([filterType.FUTURE])"
+                                    [checked]="activeFilters.has(filterType.FUTURE)"
+                                    type="checkbox"
+                                />
+                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterFuture"></span>
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input
+                                    id="filterUnspecified"
+                                    class="ms-2 form-check-input"
+                                    (change)="toggleFilters([filterType.UNSPECIFIED])"
+                                    [checked]="activeFilters.has(filterType.UNSPECIFIED)"
+                                    type="checkbox"
+                                />
+                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterUnspecifiedDates"></span>
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+                <div class="d-flex-end text-end">
+                    <button (click)="openImportModal()" class="btn btn-primary btn-sm jh-create-entity import-lecture text-truncate" id="lecture-import-button">
+                        <fa-icon [icon]="faFileImport" />
+                        <span jhiTranslate="artemisApp.lecture.import.label"></span>
+                    </button>
+                    <a id="jh-create-entity" class="btn btn-primary btn-sm jh-create-entity create-lecture" [routerLink]="['new']">
+                        <fa-icon [icon]="faPlus" />
+                        <span jhiTranslate="artemisApp.lecture.home.createLabel"></span>
+                    </a>
+                    @if (lectureIngestionEnabled) {
+                        <button (click)="ingestLecturesInPyris()" class="btn btn-primary btn-sm jh-create-entity" id="backend-trigger-button">
+                            <fa-icon [icon]="faFileExport" />
+                            <span jhiTranslate="artemisApp.lecture.home.ingestLecturesInPyrisLabel"></span>
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <br />
+    @if (filteredLectures) {
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
+                        <th class="d-md-table-cell" jhiSortBy="id">
+                            <span jhiTranslate="global.field.id"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="title">
+                            <span jhiTranslate="artemisApp.lecture.title"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="description">
+                            <span jhiTranslate="artemisApp.lecture.description"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="visibleDate">
+                            <span jhiTranslate="artemisApp.lecture.visibleDate"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="startDate">
+                            <span jhiTranslate="artemisApp.lecture.startDate"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="endDate">
+                            <span jhiTranslate="artemisApp.lecture.endDate"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        @if (lectureIngestionEnabled) {
+                            <th jhiSortBy="ingested">
+                                <span jhiTranslate="artemisApp.lecture.ingestionState"></span>
+                                <fa-icon [icon]="faSort" />
+                            </th>
+                        }
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody class="markdown-preview" id="lecture-preview">
+                    @for (lecture of filteredLectures; track trackId(i, lecture); let i = $index) {
+                        <tr id="lecture-{{ lecture.id }}">
+                            <td>
+                                <a [routerLink]="[lecture.id]">{{ lecture.id }}</a>
+                            </td>
+                            <td>
+                                <a [routerLink]="[lecture.id]">{{ lecture.title }}</a>
+                            </td>
+                            <td [innerHTML]="lecture.description | htmlForMarkdown"></td>
+                            <td>{{ lecture.visibleDate | artemisDate }}</td>
+                            <td>{{ lecture.startDate | artemisDate }}</td>
+                            <td>{{ lecture.endDate | artemisDate }}</td>
+                            @if (lectureIngestionEnabled) {
+                                <td>
+                                    @switch (lecture.ingested) {
+                                        @case (IngestionState.NOT_STARTED) {
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.notStarted"></span>
+                                        }
+                                        @case (IngestionState.IN_PROGRESS) {
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.inProgress"></span>
+                                        }
+                                        @case (IngestionState.PARTIALLY_INGESTED) {
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.partiallyIngested"></span>
+                                        }
+                                        @case (IngestionState.DONE) {
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.done"></span>
+                                        }
+                                        @case (IngestionState.ERROR) {
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.error"></span>
+                                        }
+                                        @default {
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.loading"></span>
+                                        }
+                                    }
+                                </td>
+                            }
+                            <td class="text-end">
+                                <div class="btn-group flex-btn-group-container">
+                                    <div class="btn-group-vertical me-1 mb-1">
+                                        @if (lecture.isAtLeastEditor) {
+                                            <a [routerLink]="[lecture.id, 'attachments']" class="btn btn-primary mb-1 btn-sm" id="attachments">
+                                                <fa-icon [icon]="faFile" />
+                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.attachments"></span>
+                                            </a>
+                                            <a [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm" id="units">
+                                                <fa-icon [icon]="faPuzzlePiece" />
+                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.units"></span>
+                                            </a>
+                                        }
+                                    </div>
+                                    <div class="btn-group-vertical me-1 mb-1">
+                                        @if (lecture.isAtLeastEditor) {
+                                            <a [routerLink]="[lecture.id, 'edit']" class="btn btn-primary btn-sm">
+                                                <fa-icon [icon]="faPencilAlt" />
+                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                                            </a>
+                                        }
+                                        @if (lecture.isAtLeastInstructor) {
+                                            <button
+                                                class="mt-1"
+                                                jhiDeleteButton
+                                                id="delete-lecture"
+                                                [entityTitle]="lecture.title || ''"
+                                                deleteQuestion="artemisApp.lecture.delete.question"
+                                                deleteConfirmationText="artemisApp.lecture.delete.typeNameToConfirm"
+                                                (delete)="deleteLecture(lecture.id!)"
+                                                [dialogError]="dialogError$"
+                                            >
+                                                <fa-icon [icon]="faTrash" />
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

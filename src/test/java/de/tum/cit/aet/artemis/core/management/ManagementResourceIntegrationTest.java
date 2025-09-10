@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.repository.PersistenceAuditEventRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
@@ -86,7 +87,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
     void toggleFeatures() throws Exception {
         // This setup only needed in this test case
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        var programmingExercise1 = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        var programmingExercise1 = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var programmingExercise2 = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusHours(2), course);
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
@@ -95,8 +96,6 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         doNothing().when(continuousIntegrationService).deleteProject(any());
         doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
 
-        mockDefaultBranch(programmingExercise1);
-        mockDefaultBranch(programmingExercise2);
         mockTriggerFailedBuild(participation);
 
         // Try to access 5 different endpoints with programming feature toggle enabled
@@ -117,9 +116,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCI
         request.put("/api/exercise/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.FORBIDDEN);
         request.put("/api/exercise/participations/" + participation.getId() + "/cleanup-build-plan", null, HttpStatus.FORBIDDEN);
         request.postWithoutLocation("/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.FORBIDDEN, null);
-        programmingExercise2.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise2.getBuildConfig()));
-        programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
-        request.delete("/api/programming/programming-exercises/" + programmingExercise2.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/programming/programming-exercises/" + programmingExercise1.getId(), HttpStatus.FORBIDDEN);
 
         // Reset
         featureToggleService.enableFeature(Feature.ProgrammingExercises);

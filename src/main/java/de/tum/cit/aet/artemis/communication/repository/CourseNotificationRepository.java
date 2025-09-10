@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * Repository for the {@link CourseNotification} entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface CourseNotificationRepository extends ArtemisJpaRepository<CourseNotification, Long> {
 
@@ -40,6 +42,7 @@ public interface CourseNotificationRepository extends ArtemisJpaRepository<Cours
             WHERE us.user.id = :userId
                 AND cn.course.id = :courseId
                 AND us.status <> 2
+            ORDER BY cn.id DESC
             """)
     Page<CourseNotificationWithStatusDTO> findCourseNotificationsByUserIdAndCourseIdAndStatusNotArchived(@Param("userId") Long userId, @Param("courseId") Long courseId,
             Pageable pageable);
@@ -51,4 +54,12 @@ public interface CourseNotificationRepository extends ArtemisJpaRepository<Cours
      * @return list of course notifications that should be deleted
      */
     List<CourseNotification> findByDeletionDateBefore(ZonedDateTime date);
+
+    /**
+     * Find all course notifications by course id.
+     *
+     * @param courseId id to query for
+     * @return list of course notifications in the course
+     */
+    List<CourseNotification> findAllByCourseId(long courseId);
 }

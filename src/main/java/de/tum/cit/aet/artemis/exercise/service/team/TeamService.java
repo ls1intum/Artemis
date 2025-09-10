@@ -7,11 +7,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
@@ -27,12 +27,11 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
 import de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.web.TeamResource;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class TeamService {
 
@@ -40,19 +39,12 @@ public class TeamService {
 
     private final UserRepository userRepository;
 
-    private final Optional<VersionControlService> versionControlService;
+    private final ParticipationDeletionService participationDeletionService;
 
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
-    private final ParticipationService participationService;
-
-    public TeamService(TeamRepository teamRepository, UserRepository userRepository, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ParticipationService participationService) {
+    public TeamService(TeamRepository teamRepository, UserRepository userRepository, ParticipationDeletionService participationDeletionService) {
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
-        this.versionControlService = versionControlService;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.participationService = participationService;
+        this.participationDeletionService = participationDeletionService;
     }
 
     /**
@@ -185,7 +177,7 @@ public class TeamService {
         // Check group name is not null, a list of logins is given and it is not empty
         if (groupName != null && logins != null && !logins.isEmpty()) {
             // Find all users whose login is in the given login list and who have the given group name
-            existingStudentsWithLogin = userRepository.findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndLoginIn(groupName, new HashSet<>(logins));
+            existingStudentsWithLogin = userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(groupName, new HashSet<>(logins));
             // Get the list of logins of found users
             Set<String> existingLogins = existingStudentsWithLogin.stream().map(User::getLogin).collect(Collectors.toCollection(HashSet::new));
             // Add logins that are in given login list but not in found users to notFoundLogins
@@ -218,7 +210,7 @@ public class TeamService {
         // Check group name is not null, list of logins is given, list of registration numbers is given and it is not empty
         if (groupName != null && logins != null && registrationNumbers != null && !registrationNumbers.isEmpty()) {
             // Find all users whose login is in the given registration number list and who have the given group name
-            existingStudentsWithRegistrationNumber = userRepository.findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(groupName,
+            existingStudentsWithRegistrationNumber = userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(groupName,
                     new HashSet<>(registrationNumbers));
             // Find users whose login is in given logins
             Set<String> loginsSet = new HashSet<>(logins);
@@ -283,7 +275,7 @@ public class TeamService {
      */
     private TeamImportStrategy getTeamImportStrategy(TeamImportStrategyType importStrategyType) {
         return switch (importStrategyType) {
-            case PURGE_EXISTING -> new PurgeExistingStrategy(teamRepository, participationService);
+            case PURGE_EXISTING -> new PurgeExistingStrategy(teamRepository, participationDeletionService);
             case CREATE_ONLY -> new CreateOnlyStrategy(teamRepository);
         };
     }

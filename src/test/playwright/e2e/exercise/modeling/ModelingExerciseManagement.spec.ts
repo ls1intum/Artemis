@@ -1,8 +1,8 @@
 import dayjs from 'dayjs';
 import { MODELING_EDITOR_CANVAS } from '../../../support/constants';
 
-import { Course } from 'app/entities/course.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 
 import { admin, instructor, studentOne } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';

@@ -1,12 +1,10 @@
 package de.tum.cit.aet.artemis.communication.repository;
 
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getAnsweredOrReactedSpecification;
-import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getConversationSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getConversationsSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getCourseWideChannelsSpecification;
-import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getOwnSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getPinnedSpecification;
-import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSearchTextSpecification;
+import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSearchTextAndAuthorSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getSortSpecification;
 import static de.tum.cit.aet.artemis.communication.repository.MessageSpecs.getUnresolvedSpecification;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
@@ -18,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -38,6 +37,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
  * Spring Data repository for the Message (Post) entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface ConversationMessageRepository extends ArtemisJpaRepository<Post, Long>, CustomPostRepository {
 
@@ -54,8 +54,8 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
     private Specification<Post> configureSearchSpecification(Specification<Post> specification, PostContextFilterDTO postContextFilter, long userId) {
         return specification
         // @formatter:off
-            .and(getSearchTextSpecification(postContextFilter.searchText()))
-            .and(getOwnSpecification(Boolean.TRUE.equals(postContextFilter.filterToOwn()), userId))
+            .and(getSearchTextAndAuthorSpecification(postContextFilter.searchText(), postContextFilter.authorIds()))
+            .and(getCourseWideChannelsSpecification(Boolean.TRUE.equals(postContextFilter.filterToCourseWide()), postContextFilter.courseId()))
             .and(getAnsweredOrReactedSpecification(Boolean.TRUE.equals(postContextFilter.filterToAnsweredOrReacted()), userId))
             .and(getUnresolvedSpecification(Boolean.TRUE.equals(postContextFilter.filterToUnresolved())))
             .and(getPinnedSpecification(Boolean.TRUE.equals(postContextFilter.pinnedOnly())))
@@ -72,27 +72,9 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
      * @return returns a Page of Messages
      */
     default Page<Post> findMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId) {
-        var specification = Specification.where(getConversationSpecification(postContextFilter.conversationId()));
+        var specification = getConversationsSpecification(postContextFilter.conversationIds());
         specification = configureSearchSpecification(specification, postContextFilter, userId);
         // Fetch all necessary attributes to avoid lazy loading (even though relations are defined as EAGER in the domain class, specification queries do not respect this)
-        return findPostsWithSpecification(pageable, specification);
-    }
-
-    /**
-     * Generates SQL Query via specifications to find and sort messages from course-wide
-     *
-     * @param postContextFilter filtering and sorting properties for post objects
-     * @param pageable          paging object which contains the page number and number of records to fetch
-     * @param userId            the id of the user for which the messages should be returned
-     * @return returns a Page of Messages
-     */
-    default Page<Post> findCourseWideMessages(PostContextFilterDTO postContextFilter, Pageable pageable, long userId) {
-        Specification<Post> specification = Specification.where(getCourseWideChannelsSpecification(postContextFilter.courseId()))
-                .and(getConversationsSpecification(postContextFilter.courseWideChannelIds()));
-        if (postContextFilter.searchText() != null && !postContextFilter.searchText().isEmpty()) {
-            specification = Specification.where(getConversationsSpecification(postContextFilter.courseWideChannelIds()));
-        }
-        specification = configureSearchSpecification(specification, postContextFilter, userId);
         return findPostsWithSpecification(pageable, specification);
     }
 

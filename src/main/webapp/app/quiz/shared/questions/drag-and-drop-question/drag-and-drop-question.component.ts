@@ -1,27 +1,27 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewEncapsulation, inject } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
-import { DropLocation } from 'app/entities/quiz/drop-location.model';
+import { ImageComponent } from 'app/shared/image/image.component';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+import { RenderedQuizQuestionMarkDownElement } from 'app/quiz/shared/entities/quiz-question.model';
+import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
 import { faExclamationCircle, faExclamationTriangle, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
-import { DragItem } from 'app/entities/quiz/drag-item.model';
+import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { QuizScoringInfoStudentModalComponent } from '../quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
-import { DragItemComponent } from './drag-item.component';
+import { DragItemComponent } from './drag-item/drag-item.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 
 // options are optional ;)
 polyfill({
-    // use this to make use of the scroll behaviour
+    // use this to make use of the scroll behavior
     dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
 });
 
@@ -41,7 +41,7 @@ enum MappingResult {
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html',
     providers: [DragAndDropQuestionUtil],
-    styleUrls: ['./drag-and-drop-question.component.scss', '../../../overview/quiz-participation.scss'],
+    styleUrls: ['./drag-and-drop-question.component.scss', '../../../overview/participation/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         NgClass,
@@ -50,7 +50,7 @@ enum MappingResult {
         NgbPopover,
         QuizScoringInfoStudentModalComponent,
         CdkDropListGroup,
-        SecuredImageComponent,
+        ImageComponent,
         CdkDropList,
         NgStyle,
         DragItemComponent,
@@ -61,11 +61,17 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
 
+    protected readonly faSpinner = faSpinner;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faExclamationCircle = faExclamationCircle;
+
+    readonly MappingResult = MappingResult;
+
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     /** needed to trigger a manual reload of the drag and drop background picture */
-    @ViewChild(SecuredImageComponent, { static: false })
-    secureImageComponent: SecuredImageComponent;
+    readonly secureImageComponent = viewChild.required(ImageComponent);
 
     _question: DragAndDropQuestion;
     _forceSampleSolution: boolean;
@@ -73,6 +79,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     @Input()
     set question(question) {
         this._question = question;
+        this.hideSampleSolution();
         this.watchCollection();
     }
     get question() {
@@ -115,15 +122,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     incorrectLocationMappings: number;
     mappedLocations: number;
 
-    readonly MappingResult = MappingResult;
-
     loadingState = 'loading';
-
-    // Icons
-    faSpinner = faSpinner;
-    faQuestionCircle = faQuestionCircle;
-    faExclamationTriangle = faExclamationTriangle;
-    faExclamationCircle = faExclamationCircle;
 
     ngOnInit(): void {
         this.evaluateDropLocations();

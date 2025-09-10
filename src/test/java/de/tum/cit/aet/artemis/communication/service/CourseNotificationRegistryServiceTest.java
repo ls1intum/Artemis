@@ -111,6 +111,11 @@ class CourseNotificationRegistryServiceTest {
         public List<NotificationChannelOption> getSupportedChannels() {
             return List.of(NotificationChannelOption.EMAIL, NotificationChannelOption.WEBAPP);
         }
+
+        @Override
+        public String getRelativeWebAppUrl() {
+            return "/";
+        }
     }
 
     /**
@@ -147,6 +152,11 @@ class CourseNotificationRegistryServiceTest {
         @Override
         public List<NotificationChannelOption> getSupportedChannels() {
             return List.of(NotificationChannelOption.EMAIL, NotificationChannelOption.WEBAPP, NotificationChannelOption.PUSH);
+        }
+
+        @Override
+        public String getRelativeWebAppUrl() {
+            return "/";
         }
     }
 }

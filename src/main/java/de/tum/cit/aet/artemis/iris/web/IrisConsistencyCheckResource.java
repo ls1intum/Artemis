@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  * REST controller for checking consistency of exercises.
  */
 @Profile(PROFILE_IRIS)
+@Lazy
 @RestController
 @RequestMapping("api/iris/consistency-check/")
 public class IrisConsistencyCheckResource {

@@ -9,6 +9,7 @@ services:
             service: mysql
 
     artemis-app:
+        image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG}
         extends:
             file: ./artemis.yml
             service: artemis-app
@@ -16,6 +17,8 @@ services:
         depends_on:
             mysql:
                 condition: service_healthy
+        ports:
+          - "8080:8080"
         env_file:
             - ./artemis/config/playwright.env
             - ./artemis/config/playwright-local.env

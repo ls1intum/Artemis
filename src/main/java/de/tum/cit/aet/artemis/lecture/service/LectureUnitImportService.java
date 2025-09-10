@@ -10,25 +10,26 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.service.FilePathService;
-import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
+import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class LectureUnitImportService {
 
@@ -38,22 +39,16 @@ public class LectureUnitImportService {
 
     private final AttachmentRepository attachmentRepository;
 
-    private final FileService fileService;
-
     private final SlideSplitterService slideSplitterService;
 
-    private final Optional<PyrisWebhookService> pyrisWebhookService;
+    private final Optional<IrisLectureApi> irisLectureApi;
 
-    private final Optional<IrisSettingsRepository> irisSettingsRepository;
-
-    public LectureUnitImportService(LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository, FileService fileService,
-            SlideSplitterService slideSplitterService, Optional<PyrisWebhookService> pyrisWebhookService, Optional<IrisSettingsRepository> irisSettingsRepository) {
+    public LectureUnitImportService(LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository, SlideSplitterService slideSplitterService,
+            Optional<IrisLectureApi> irisLectureApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
-        this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
-        this.pyrisWebhookService = pyrisWebhookService;
-        this.irisSettingsRepository = irisSettingsRepository;
+        this.irisLectureApi = irisLectureApi;
     }
 
     /**
@@ -76,10 +71,9 @@ public class LectureUnitImportService {
         lectureUnitRepository.saveAll(lectureUnits);
 
         // Send lectures to pyris
-        if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(),
-                    lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).map(lectureUnit -> (AttachmentUnit) lectureUnit).toList());
-        }
+        irisLectureApi
+                .ifPresent(lectureApi -> lectureApi.autoUpdateAttachmentVideoUnitsInPyris(lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
+                        .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(unit -> unit.getAttachment() != null).toList()));
     }
 
     /**
@@ -100,29 +94,26 @@ public class LectureUnitImportService {
 
                 return lectureUnitRepository.save(textUnit);
             }
-            case VideoUnit importedVideoUnit -> {
-                VideoUnit videoUnit = new VideoUnit();
-                videoUnit.setName(importedVideoUnit.getName());
-                videoUnit.setReleaseDate(importedVideoUnit.getReleaseDate());
-                videoUnit.setDescription(importedVideoUnit.getDescription());
-                videoUnit.setSource(importedVideoUnit.getSource());
+            case AttachmentVideoUnit importedAttachmentVideoUnit -> {
+                // Create and save the attachment video unit, then the attachment itself, as the id is needed for file handling
+                AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+                attachmentVideoUnit.setName(importedAttachmentVideoUnit.getName());
+                attachmentVideoUnit.setReleaseDate(importedAttachmentVideoUnit.getReleaseDate());
+                attachmentVideoUnit.setDescription(importedAttachmentVideoUnit.getDescription());
+                attachmentVideoUnit.setVideoSource(importedAttachmentVideoUnit.getVideoSource());
+                attachmentVideoUnit = lectureUnitRepository.save(attachmentVideoUnit);
 
-                return lectureUnitRepository.save(videoUnit);
-            }
-            case AttachmentUnit importedAttachmentUnit -> {
-                // Create and save the attachment unit, then the attachment itself, as the id is needed for file handling
-                AttachmentUnit attachmentUnit = new AttachmentUnit();
-                attachmentUnit.setDescription(importedAttachmentUnit.getDescription());
-                attachmentUnit = lectureUnitRepository.save(attachmentUnit);
-
-                Attachment attachment = importAttachment(attachmentUnit.getId(), importedAttachmentUnit.getAttachment());
-                attachment.setAttachmentUnit(attachmentUnit);
-                attachmentRepository.save(attachment);
-                if (attachment.getLink().endsWith(".pdf")) {
-                    slideSplitterService.splitAttachmentUnitIntoSingleSlides(attachmentUnit);
+                if (importedAttachmentVideoUnit.getAttachment() != null) {
+                    Attachment attachment = importAttachment(attachmentVideoUnit.getId(), importedAttachmentVideoUnit.getAttachment());
+                    attachment.setAttachmentVideoUnit(attachmentVideoUnit);
+                    attachmentRepository.save(attachment);
+                    if (attachment.getLink().endsWith(".pdf")) {
+                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(attachmentVideoUnit);
+                    }
+                    attachmentVideoUnit.setAttachment(attachment);
                 }
-                attachmentUnit.setAttachment(attachment);
-                return attachmentUnit;
+
+                return attachmentVideoUnit;
             }
             case OnlineUnit importedOnlineUnit -> {
                 OnlineUnit onlineUnit = new OnlineUnit();
@@ -159,17 +150,22 @@ public class LectureUnitImportService {
         attachment.setVersion(importedAttachment.getVersion());
         attachment.setAttachmentType(importedAttachment.getAttachmentType());
 
-        Path oldPath = FilePathService.actualPathForPublicPathOrThrow(URI.create(importedAttachment.getLink()));
+        Path oldPath;
         Path newPath;
-        if (oldPath.toString().contains("/attachment-unit/")) {
-            newPath = FilePathService.getAttachmentUnitFilePath().resolve(entityId.toString());
+        FilePathType filePathType;
+        if (importedAttachment.getLink().contains("/attachment-unit/")) {
+            oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
+            newPath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(entityId.toString());
+            filePathType = FilePathType.ATTACHMENT_UNIT;
         }
         else {
-            newPath = FilePathService.getLectureAttachmentFilePath().resolve(entityId.toString());
+            oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.LECTURE_ATTACHMENT);
+            newPath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(entityId.toString());
+            filePathType = FilePathType.LECTURE_ATTACHMENT;
         }
         log.debug("Copying attachment file from {} to {}", oldPath, newPath);
-        Path savePath = fileService.copyExistingFileToTarget(oldPath, newPath);
-        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, entityId).toString());
+        Path savePath = FileUtil.copyExistingFileToTarget(oldPath, newPath, filePathType);
+        attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, filePathType, entityId).toString());
         return attachment;
     }
 }

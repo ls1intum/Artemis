@@ -158,6 +158,10 @@
                     "emptyError": "{{ exercise }}: No results found"
                 }
             },
+            "startTraining": "Start Training",
+            "nextQuestion": "Next Question",
+            "endTraining": "End Training",
+            "submit": "Submit",
             "refresh": "Refresh",
             "course": "Course",
             "type": "Type",
@@ -217,7 +221,11 @@
             },
             "errors": {
                 "exerciseNotFound": "This exercise was not found",
-                "projectTypeCouldNotBeDetermined": "The project type could not be determined, please switch to the advanced mode to manually define it!"
+                "projectTypeCouldNotBeDetermined": "The project type could not be determined, please switch to the advanced mode to manually define it!",
+                "deactivatedExerciseType": {
+                    "label": "Deactivated exercise type",
+                    "tooltip": "This exercise type is currently deactivated. Editing is currently not supported. You should contact the Artemis-hosting system administration."
+                }
             },
             "form": {
                 "title": {
@@ -265,6 +273,20 @@
                 },
                 "maxPenalty": {
                     "pattern": "The maximum penalty must be between 0 and 100 percent!"
+                },
+                "continuousPlagiarismControl": {
+                    "similarityThreshold": {
+                        "pattern": "Similarity threshold must be 0-100 %."
+                    },
+                    "minimumScore": {
+                        "customMin": "Minimum score must be 0-100 %."
+                    },
+                    "minimumSize": {
+                        "customMin": "Minimum size must be a positive number."
+                    },
+                    "continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod": {
+                        "pattern": "Response period must be 7-31 days."
+                    }
                 }
             },
             "exam": "Exam",

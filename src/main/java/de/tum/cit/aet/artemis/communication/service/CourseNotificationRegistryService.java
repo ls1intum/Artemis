@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.CourseNo
  * of new notification types.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class CourseNotificationRegistryService {
 
@@ -68,7 +70,7 @@ public class CourseNotificationRegistryService {
     /**
      * Returns a list of all registered notifications in camelCase format.
      *
-     * @return list of all notifications in camelCase format.
+     * @return map of all notifications in camelCase format.
      */
     public Map<Short, String> getNotificationTypes() {
         Map<Short, String> result = new HashMap<>();

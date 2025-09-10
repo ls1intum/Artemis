@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.aeolus;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
  * Service for generating build scripts for programming exercises using Aeolus
  */
 @Profile(PROFILE_AEOLUS)
+@Lazy
 @Service
 public class AeolusBuildScriptGenerationService extends BuildScriptGenerationService {
 
@@ -46,7 +48,7 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
 
     @Override
     public String getScript(ProgrammingExercise programmingExercise) throws JsonProcessingException {
-        if (!profileService.isLocalCiActive()) {
+        if (!profileService.isLocalCIActive()) {
             return null;
         }
         Windfile windfile = programmingExercise.getBuildConfig().getWindfile();

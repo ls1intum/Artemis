@@ -1,0 +1,58 @@
+<div class="card" style="min-height: 80px !important">
+    <div
+        id="course-{{ course().id }}-header"
+        class="card-header text-white"
+        [routerLink]="['/lti/exercises', course().id]"
+        [ngStyle]="{ 'background-color': courseColor, color: contentColor }"
+    >
+        <a class="stretched-link" [routerLink]="['/lti/exercises', course().id]"></a>
+        <div class="container">
+            <div class="row d-flex">
+                <div class="col-2 header-col image-col">
+                    @if (course().courseIconPath) {
+                        <jhi-image [src]="course().courseIconPath || ''" />
+                    }
+                </div>
+                <div class="col-7 header-col title-col px-3">
+                    <h5 class="card-title text-center">
+                        {{ course().title + ' (' + course().shortName + ')' }}
+                    </h5>
+                </div>
+                <div class="col-2 header-col course-info-col"></div>
+            </div>
+        </div>
+    </div>
+    <div class="card-body text-start">
+        <div class="row">
+            <!-- Left column -->
+            <div class="col-6">
+                <p><strong>ID:</strong> {{ course().id }}</p>
+                <p>
+                    <strong><span jhiTranslate="artemisApp.course.delete.summary.numberStudents"></span>:</strong> {{ course().numberOfStudents ?? 0 }}
+                </p>
+            </div>
+
+            <!-- Right column -->
+            <div class="col-6">
+                @if (course().startDate) {
+                    <p>
+                        <strong><span jhiTranslate="artemisApp.course.startDate"></span>:</strong> {{ course().startDate | artemisDate }}
+                    </p>
+                }
+                @if (course().endDate) {
+                    <p>
+                        <strong><span jhiTranslate="artemisApp.course.endDate"></span>:</strong> {{ course().endDate | artemisDate }}
+                    </p>
+                }
+            </div>
+        </div>
+
+        <!-- Description -->
+        @if (course().description) {
+            <p class="mt-3">
+                <strong><span jhiTranslate="artemisApp.course.description"></span>:</strong>
+                <span class="text-muted" style="font-size: 0.95rem">{{ course().description }}</span>
+            </p>
+        }
+    </div>
+</div>

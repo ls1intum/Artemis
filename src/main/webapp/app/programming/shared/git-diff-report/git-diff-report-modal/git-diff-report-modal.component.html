@@ -1,0 +1,22 @@
+<div>
+    <div class="modal-header">
+        <h3
+            class="modal-title"
+            jhiTranslate="{{ diffForTemplateAndSolution() ? 'artemisApp.programmingExercise.diffReport.title' : 'artemisApp.programmingExercise.diffReport.titleForSubmissions' }}"
+        ></h3>
+        <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
+    </div>
+    <div class="modal-body">
+        @if (repositoryDiffInformation()) {
+            <div class="row mb-2">
+                <jhi-git-diff-report [repositoryDiffInformation]="repositoryDiffInformation()" [diffForTemplateAndSolution]="diffForTemplateAndSolution()" />
+            </div>
+        } @else {
+            <div class="text-center">
+                <span class="spinner-border spinner-border-lg" role="status" aria-hidden="true">
+                    <span class="visually-hidden" jhiTranslate="loading"></span>
+                </span>
+            </div>
+        }
+    </div>
+</div>

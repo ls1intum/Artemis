@@ -7,6 +7,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.channels.UnresolvedAddressException;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -16,7 +18,10 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.sshd.client.SshClient;
+import org.apache.sshd.client.config.hosts.HostConfigEntryResolver;
 import org.apache.sshd.client.future.ConnectFuture;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.SshException;
@@ -25,6 +30,8 @@ import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceW
 import org.apache.sshd.common.session.helpers.AbstractSession;
 import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -38,6 +45,8 @@ import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshGitCommand;
 @Profile(PROFILE_LOCALVC)
 class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
+    private static final Logger log = LoggerFactory.getLogger(LocalVCSshIntegrationTest.class);
+
     private static final String TEST_PREFIX = "localvcsshint";
 
     @Override
@@ -45,10 +54,11 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         return TEST_PREFIX;
     }
 
-    private final String hostname = "localhost";
+    @Value("${server.url}")
+    private String artemisServerUrl;
 
     @Value("${artemis.version-control.ssh-port}")
-    private int port;
+    private int sshPort;
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -73,20 +83,33 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         try (SshClient client = SshClient.setUpDefaultClient()) {
             client.start();
 
-            ClientSession session;
-            try {
-                ConnectFuture connectFuture = client.connect(user.getName(), hostname, port);
-                connectFuture.await(10, TimeUnit.SECONDS);
-
-                session = connectFuture.getSession();
-                session.addPublicKeyIdentity(keyPair);
-
-                session.auth().verify(10, TimeUnit.SECONDS);
-            }
-            catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            ClientSession session = connect(client, user, keyPair);
             assertThat(session.isAuthenticated()).isTrue();
+        }
+    }
+
+    @NotNull
+    private ClientSession connect(SshClient client, User user, KeyPair keyPair) throws IOException {
+        try {
+            // avoid using any local host config which could confuse the test
+            client.setHostConfigEntryResolver(HostConfigEntryResolver.EMPTY);
+
+            URI uri = URI.create(artemisServerUrl);
+            String host = uri.getHost();
+            log.info("Connecting to SSH server at {}:{} for user {}", host, sshPort, user.getName());
+            ConnectFuture connectFuture = client.connect(user.getName(), host, sshPort);
+            connectFuture.await(10, TimeUnit.SECONDS);
+
+            ClientSession session = connectFuture.getSession();
+            session.addPublicKeyIdentity(keyPair);
+
+            session.auth().verify(10, TimeUnit.SECONDS);
+            return session;
+        }
+        catch (IOException | UnresolvedAddressException e) {
+            log.error("Error during SSH connection", e);
+            // rethrow the exception to indicate failure to the caller for assertions
+            throw e;
         }
     }
 
@@ -105,14 +128,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
             try (SshClient client = SshClient.setUpDefaultClient()) {
                 client.start();
-
-                ConnectFuture connectFuture = client.connect(user.getName(), hostname, port);
-                connectFuture.await(10, TimeUnit.SECONDS);
-
-                ClientSession session = connectFuture.getSession();
-                session.addPublicKeyIdentity(keyPair);
-
-                session.auth().verify(10, TimeUnit.SECONDS);
+                connect(client, user, keyPair);
             }
         }).isInstanceOf(SshException.class);
     }
@@ -129,14 +145,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
             try (SshClient client = SshClient.setUpDefaultClient()) {
                 client.start();
-
-                ConnectFuture connectFuture = client.connect(user.getName(), hostname, port);
-                connectFuture.await(10, TimeUnit.SECONDS);
-
-                ClientSession session = connectFuture.getSession();
-                session.addPublicKeyIdentity(keyPair);
-
-                session.auth().verify(10, TimeUnit.SECONDS);
+                connect(client, user, keyPair);
             }
         }).isInstanceOf(SshException.class);
     }
@@ -193,20 +202,8 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         SshClient client = SshClient.setUpDefaultClient();
         client.start();
 
-        ClientSession clientSession;
+        ClientSession clientSession = connect(client, user, keyPair);
         int numberOfSessions = serverSessions.size();
-        try {
-            ConnectFuture connectFuture = client.connect(user.getName(), hostname, port);
-            connectFuture.await(10, TimeUnit.SECONDS);
-
-            clientSession = connectFuture.getSession();
-            clientSession.addPublicKeyIdentity(keyPair);
-
-            clientSession.auth().verify(10, TimeUnit.SECONDS);
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
 
         serverSessions = sshServer.getActiveSessions();
         var attachedServerSessions = serverSessions.stream().filter(Objects::nonNull).count();

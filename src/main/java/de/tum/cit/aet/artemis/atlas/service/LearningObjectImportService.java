@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
@@ -21,7 +20,8 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.function.ThrowingBiFunction;
 
@@ -29,6 +29,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -38,23 +39,23 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.fileupload.api.FileUploadImportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
-import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseImportService;
+import de.tum.cit.aet.artemis.lecture.api.LectureImportApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
-import de.tum.cit.aet.artemis.lecture.service.LectureUnitImportService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionConfigHelper;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
@@ -63,12 +64,14 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
 import de.tum.cit.aet.artemis.text.api.TextExerciseImportApi;
+import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Service for importing learning objects related to competencies.
  */
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
+@Lazy
 @Service
 public class LearningObjectImportService {
 
@@ -80,9 +83,7 @@ public class LearningObjectImportService {
 
     private final ProgrammingExerciseImportService programmingExerciseImportService;
 
-    private final FileUploadExerciseRepository fileUploadExerciseRepository;
-
-    private final FileUploadExerciseImportService fileUploadExerciseImportService;
+    private final Optional<FileUploadImportApi> fileUploadImportApi;
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
@@ -94,13 +95,13 @@ public class LearningObjectImportService {
 
     private final QuizExerciseImportService quizExerciseImportService;
 
-    private final LectureRepository lectureRepository;
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
-    private final LectureImportService lectureImportService;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
-    private final LectureUnitRepository lectureUnitRepository;
+    private final Optional<LectureUnitApi> lectureUnitApi;
 
-    private final LectureUnitImportService lectureUnitImportService;
+    private final Optional<LectureImportApi> lectureImportApi;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
@@ -113,27 +114,26 @@ public class LearningObjectImportService {
     private final CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
 
     public LearningObjectImportService(ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
-            FileUploadExerciseImportService fileUploadExerciseImportService, ModelingExerciseRepository modelingExerciseRepository,
-            ModelingExerciseImportService modelingExerciseImportService, Optional<TextExerciseImportApi> textExerciseImportApi, QuizExerciseRepository quizExerciseRepository,
-            QuizExerciseImportService quizExerciseImportService, LectureRepository lectureRepository, LectureImportService lectureImportService,
-            LectureUnitRepository lectureUnitRepository, LectureUnitImportService lectureUnitImportService, CourseCompetencyRepository courseCompetencyRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, GradingCriterionRepository gradingCriterionRepository,
-            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
+            ProgrammingExerciseImportService programmingExerciseImportService, Optional<FileUploadImportApi> fileUploadImportApi,
+            ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseImportService modelingExerciseImportService,
+            Optional<TextExerciseImportApi> textExerciseImportApi, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService,
+            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<LectureUnitApi> lectureUnitApi,
+            Optional<LectureImportApi> lectureImportApi, CourseCompetencyRepository courseCompetencyRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            GradingCriterionRepository gradingCriterionRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository,
+            CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
-        this.fileUploadExerciseRepository = fileUploadExerciseRepository;
-        this.fileUploadExerciseImportService = fileUploadExerciseImportService;
+        this.fileUploadImportApi = fileUploadImportApi;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
         this.textExerciseImportApi = textExerciseImportApi;
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizExerciseImportService = quizExerciseImportService;
-        this.lectureRepository = lectureRepository;
-        this.lectureImportService = lectureImportService;
-        this.lectureUnitRepository = lectureUnitRepository;
-        this.lectureUnitImportService = lectureUnitImportService;
+        this.lectureRepositoryApi = lectureRepositoryApi;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
+        this.lectureUnitApi = lectureUnitApi;
+        this.lectureImportApi = lectureImportApi;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
@@ -170,7 +170,8 @@ public class LearningObjectImportService {
 
         courseCompetencyRepository.saveAll(importedCourseCompetencies);
         exerciseRepository.saveAll(importedExercises);
-        lectureRepository.saveAll(importedLectures);
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+        api.saveAll(importedLectures);
     }
 
     private void importOrLoadExercises(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
@@ -199,14 +200,15 @@ public class LearningObjectImportService {
     private Exercise importOrLoadExercise(Exercise sourceExercise, Course course) throws JsonProcessingException {
         return switch (sourceExercise) {
             case ProgrammingExercise programmingExercise -> importOrLoadProgrammingExercise(programmingExercise, course);
-            case FileUploadExercise fileUploadExercise ->
-                importOrLoadExercise(fileUploadExercise, course, fileUploadExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
-                        fileUploadExerciseRepository::findWithGradingCriteriaByIdElseThrow, fileUploadExerciseImportService::importFileUploadExercise);
+            case FileUploadExercise fileUploadExercise -> {
+                FileUploadImportApi api = fileUploadImportApi.orElseThrow(() -> new ApiProfileNotPresentException(FileUploadImportApi.class, PROFILE_CORE));
+                yield importOrLoadExercise(fileUploadExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId, api::findWithGradingCriteriaByIdElseThrow,
+                        api::importFileUploadExercise);
+            }
             case ModelingExercise modelingExercise -> importOrLoadExercise(modelingExercise, course, modelingExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
-                    modelingExerciseRepository::findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow,
-                    modelingExerciseImportService::importModelingExercise);
+                    modelingExerciseRepository::findByIdWithExampleSubmissionsAndResultsElseThrow, modelingExerciseImportService::importModelingExercise);
             case TextExercise textExercise -> {
-                var api = textExerciseImportApi.orElseThrow(() -> new ApiNotPresentException(TextExerciseImportApi.class, PROFILE_CORE));
+                var api = textExerciseImportApi.orElseThrow(() -> new TextApiNotPresentException(TextExerciseImportApi.class));
                 yield importOrLoadExercise(textExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId,
                         api::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, api::importTextExercise);
             }
@@ -269,7 +271,6 @@ public class LearningObjectImportService {
         programmingExercise.setTutorParticipations(new HashSet<>());
         programmingExercise.setExampleSubmissions(new HashSet<>());
         programmingExercise.setAttachments(new HashSet<>());
-        programmingExercise.setPosts(new HashSet<>());
         programmingExercise.setPlagiarismCases(new HashSet<>());
         programmingExercise.setCompetencyLinks(new HashSet<>());
     }
@@ -329,15 +330,21 @@ public class LearningObjectImportService {
     private void importOrLoadLectureUnit(CompetencyLectureUnitLink sourceLectureUnitLink, CourseCompetency sourceCourseCompetency,
             Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures,
             Set<LectureUnit> importedLectureUnits) throws NoUniqueQueryException {
+        if (lectureUnitApi.isEmpty() || lectureUnitRepositoryApi.isEmpty()) {
+            return;
+        }
+        LectureUnitApi api = lectureUnitApi.get();
+        LectureUnitRepositoryApi repositoryApi = lectureUnitRepositoryApi.get();
+
         LectureUnit sourceLectureUnit = sourceLectureUnitLink.getLectureUnit();
         Lecture sourceLecture = sourceLectureUnit.getLecture();
         Lecture importedLecture = importOrLoadLecture(sourceLecture, courseToImportInto, titleToImportedLectures);
 
-        Optional<LectureUnit> foundLectureUnit = lectureUnitRepository.findByNameAndLectureTitleAndCourseIdWithCompetencies(sourceLectureUnit.getName(), sourceLecture.getTitle(),
+        Optional<LectureUnit> foundLectureUnit = repositoryApi.findByNameAndLectureTitleAndCourseIdWithCompetencies(sourceLectureUnit.getName(), sourceLecture.getTitle(),
                 courseToImportInto.getId());
         LectureUnit importedLectureUnit;
         if (foundLectureUnit.isEmpty()) {
-            importedLectureUnit = lectureUnitImportService.importLectureUnit(sourceLectureUnit);
+            importedLectureUnit = api.importLectureUnit(sourceLectureUnit);
 
             importedLecture.getLectureUnits().add(importedLectureUnit);
             importedLectureUnit.setLecture(importedLecture);
@@ -356,11 +363,14 @@ public class LearningObjectImportService {
     }
 
     private Lecture importOrLoadLecture(Lecture sourceLecture, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures) throws NoUniqueQueryException {
+        LectureImportApi importApi = lectureImportApi.orElseThrow(() -> new LectureApiNotPresentException(LectureImportApi.class));
+        LectureRepositoryApi repositoryApi = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+
         Optional<Lecture> foundLecture = Optional.ofNullable(titleToImportedLectures.get(sourceLecture.getTitle()));
         if (foundLecture.isEmpty()) {
-            foundLecture = lectureRepository.findUniqueByTitleAndCourseIdWithLectureUnitsElseThrow(sourceLecture.getTitle(), courseToImportInto.getId());
+            foundLecture = repositoryApi.findUniqueByTitleAndCourseIdWithLectureUnitsElseThrow(sourceLecture.getTitle(), courseToImportInto.getId());
         }
-        Lecture importedLecture = foundLecture.orElseGet(() -> lectureImportService.importLecture(sourceLecture, courseToImportInto, false));
+        Lecture importedLecture = foundLecture.orElseGet(() -> importApi.importLecture(sourceLecture, courseToImportInto, false));
         titleToImportedLectures.put(importedLecture.getTitle(), importedLecture);
 
         return importedLecture;

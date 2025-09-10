@@ -11,7 +11,7 @@
                 "exercise": "Übung",
                 "video": "Video",
                 "online": "Online",
-                "attachment": "Datei"
+                "attachmentVideo": "Datei/Video"
             },
             "releaseDate": "Veröffentlichungsdatum",
             "details": {
@@ -28,6 +28,7 @@
             "updated": "Texteinheit aktualisiert",
             "tooltip": "Das ist eine Texteinheit",
             "isolated": "Isoliert öffnen",
+            "originalVersion": "Originalversion",
             "notReleasedTooltip": "Text nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "markdownHelp": "Hier kann Markdown eingegeben werden. Mehr Informationen:",
             "cachedMarkdown": "Artemis hat ungespeichertes Markdown im local storage gefunden. Möchtest du es laden? Speicherdatum:",
@@ -45,38 +46,6 @@
             "delete": {
                 "question": "Willst du wirklich die Texteinheit <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
                 "typeNameToConfirm": "Bitte gib den Namen der Texteinheit zur Bestätigung ein.",
-                "buttonText": "Löschen"
-            }
-        },
-        "videoUnit": {
-            "created": "Eine neue Videoeinheit wurde erstellt",
-            "updated": "Videoeinheit aktualisiert",
-            "tooltip": "Das ist eine Videoeinheit",
-            "description": "Beschreibung",
-            "notReleasedTooltip": "Video nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
-            "createVideoUnit": {
-                "title": "Erstelle Videoeinheit",
-                "name": "Name",
-                "namePlaceHolder": "Gib der Videoeinheit einen Namen",
-                "description": "Beschreibung",
-                "descriptionPlaceHolder": "Gib der Videoeinheit eine Beschreibung",
-                "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",
-                "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein.",
-                "descriptionMaxLengthValidationError": "Die Beschreibung kann maximal 1000 Zeichen lang sein.",
-                "source": "Einbettbares Video URL",
-                "sourcePlaceHolder": "Gib eine URL zu einem einbettbarem Video ein.",
-                "sourceRequiredValidationError": "Video URL ist ein Pflichtfeld",
-                "sourceURLValidationError": "Keine valide URL",
-                "urlVideoHelper": "Umwandlung in einbettbares Format ",
-                "urlHelperPlaceholder": "Du kannst hier eine Video-URL eingeben und den Pfeil benutzen, um sie in die korrekte einbettbare URL umzuwandeln",
-                "urlHelperValidationError": "Automatische Formatumwandlung ist nicht möglich für diese URL"
-            },
-            "editVideoUnit": {
-                "title": "Bearbeite eine Videoeinheit"
-            },
-            "delete": {
-                "question": "Willst du wirklich die Videoeinheit <strong>{{ title }}</strong> löschen?Du kannst diese Aktion nicht rückgängig machen!",
-                "typeNameToConfirm": "Bitte gib den Namen der Videoeinheit zur Bestätigung ein.",
                 "buttonText": "Löschen"
             }
         },
@@ -111,11 +80,12 @@
                 "buttonText": "Löschen"
             }
         },
-        "attachmentUnit": {
+        "attachmentVideoUnit": {
             "created": "Eine neue Dateieinheit wurde erstellt",
             "updated": "Dateieinheit aktualisiert",
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
-            "createAttachmentUnits": {
+            "transcriptionInvalidJson": "Die Transkriptions-JSON ist ungültig und wurde ignoriert.",
+            "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis sucht nach der Gliederung (Folie mit Titel 'Outline' und Stichpunkten mit Kapitelüberschriften) und unterteilt das PDF in Einheiten.",
                     "secondLine": "Artemis erwartet eine Wiederholung der Gliederungsfolie vor jeder Einheit.",
@@ -158,15 +128,15 @@
                 "lectureFileToolTip": "Bitte auswählen, um die automatische Trennung von Vorlesungseinheiten zu aktivieren.",
                 "processTimeInfo": "Die Verarbeitung der Vortragseinheiten kann einige Sekunden dauern. Habe bitte etwas Geduld."
             },
-            "createAttachmentUnit": {
+            "createAttachmentVideoUnit": {
                 "title": "Dateieinheit erstellen",
                 "name": "Name",
-                "namePlaceHolder": "Gib der Datei einen Namen",
+                "namePlaceHolder": "Gib der Einheit einen Namen",
                 "description": "Beschreibung",
                 "updateNotificationText": "Update Benachrichtigungstext",
                 "updateNotificationTextPlaceholder": "Optionaler Benachrichtigungstext für Studierende über Änderungen.",
                 "updateNotificationTextMaxLengthValidationError": "Der Benachrichtigungstext kann maximal 1000 Zeichen lang sein.",
-                "descriptionPlaceHolder": "Gib der Datei eine Beschreibung",
+                "descriptionPlaceHolder": "Gib der Einheit eine Beschreibung",
                 "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",
                 "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein.",
                 "descriptionMaxLengthValidationError": "Die Beschreibung kann maximal 1000 Zeichen lang sein.",
@@ -176,9 +146,18 @@
                 "chooseFile": "Datei auswählen",
                 "fileTooBig": "Die Datei ist zu groß! Die maximale Dateigröße beträgt 20 MB.",
                 "fileLimitation": "(max. Größe 20 MB)",
-                "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}"
+                "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}",
+                "source": "Einbettbares Video URL",
+                "sourcePlaceHolder": "Gib eine URL zu einem einbettbarem Video ein.",
+                "sourceRequiredValidationError": "Video URL ist ein Pflichtfeld",
+                "sourceURLValidationError": "Keine valide URL",
+                "urlVideoHelper": "Umwandlung in einbettbares Format ",
+                "urlHelperPlaceholder": "Du kannst hier eine Video-URL eingeben und den Pfeil benutzen, um sie in die korrekte einbettbare URL umzuwandeln",
+                "urlHelperValidationError": "Automatische Formatumwandlung ist nicht möglich für diese URL",
+                "videoTranscription": "Video Transkription",
+                "videoTranscriptionPlaceholder": "Füge hier die Transkription des Videos ein."
             },
-            "editAttachmentUnit": {
+            "editAttachmentVideoUnit": {
                 "title": "Bearbeite Dateieinheit"
             },
             "tooltip": "Das ist eine Datei",
@@ -186,10 +165,10 @@
             "version": "Version",
             "FileName": "Dateiname",
             "description": "Beschreibung",
-            "download": "Herunterladen",
+            "download": "Datei herunterladen",
             "delete": {
                 "question": "Willst du wirklich die Dateieinheit <strong>{{ title }}</strong> löschen? Die Datei wird auch gelöscht! Du kannst diese Aktion nicht rückgängig machen!",
-                "typeNameToConfirm": "Bitte gib den Namen der Dateieinheit zur Bestätigung ein.",
+                "typeNameToConfirm": "Bitte gib den Namen der Datei/Video Unit zur Bestätigung ein.",
                 "buttonText": "Löschen"
             }
         },

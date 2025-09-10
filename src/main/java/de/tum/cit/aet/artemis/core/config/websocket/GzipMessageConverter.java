@@ -42,7 +42,7 @@ public class GzipMessageConverter extends MappingJackson2MessageConverter {
         if (nativeHeaders instanceof Map<?, ?> nativeMapHeaders) {
             final var messageIsCompressed = containsCompressionHeader(nativeMapHeaders);
             if (messageIsCompressed) {
-                log.info("Decompressing message payload for incoming message");
+                log.debug("Decompressing message payload for incoming message");
                 Object payload = message.getPayload();
                 if (payload instanceof byte[] bytePayload) {
                     byte[] decompressed = decodeAndDecompress(bytePayload);
@@ -74,7 +74,7 @@ public class GzipMessageConverter extends MappingJackson2MessageConverter {
 
     private static boolean checkSimpleValue(Object value) {
         if (value instanceof Boolean booleanValue) {
-            return Boolean.TRUE.equals(booleanValue);
+            return booleanValue;
         }
         if (value instanceof String stringValue) {
             return Boolean.parseBoolean(stringValue);

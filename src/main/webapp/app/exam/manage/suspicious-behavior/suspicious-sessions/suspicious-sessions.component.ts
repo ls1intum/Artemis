@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, input } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam/exam-session.model';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({

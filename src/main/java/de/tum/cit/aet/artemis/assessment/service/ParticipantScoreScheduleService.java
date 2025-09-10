@@ -14,6 +14,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
 
@@ -21,9 +22,8 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
  *
  * @see ResultListener
  */
+@Lazy
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 public class ParticipantScoreScheduleService {
@@ -125,8 +126,10 @@ public class ParticipantScoreScheduleService {
 
     /**
      * Schedule all outdated participant scores when the service is started.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @PostConstruct
     public void startup() {
         scheduler.schedule(() -> {
             isRunning.set(true);
@@ -187,7 +190,7 @@ public class ParticipantScoreScheduleService {
 
         var resultsToProcess = resultRepository.findAllByLastModifiedDateAfter(latestRun);
         resultsToProcess.forEach(result -> {
-            if (result.getParticipation() instanceof StudentParticipation studentParticipation) {
+            if (result.getSubmission().getParticipation() instanceof StudentParticipation studentParticipation) {
                 var lastModified = result.getLastModifiedDate() == null ? Instant.now() : result.getLastModifiedDate();
                 scheduleTask(studentParticipation.getExercise().getId(), studentParticipation.getParticipant().getId(), lastModified, null);
             }

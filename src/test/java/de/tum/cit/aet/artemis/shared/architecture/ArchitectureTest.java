@@ -12,6 +12,7 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleName;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameContaining;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
+import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.annotatedWith;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.name;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
@@ -21,6 +22,7 @@ import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.have;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.is;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.constructors;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.members;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
@@ -49,7 +51,9 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
@@ -68,6 +72,7 @@ import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaCall;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaConstructor;
 import com.tngtech.archunit.core.domain.JavaEnumConstant;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
@@ -81,6 +86,7 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
+import de.tum.cit.aet.artemis.core.config.PublicResourcesConfiguration;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
@@ -229,18 +235,16 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoHazelcastUsageInConstructors() {
-        // CacheHandler and QuizCache are exceptions because these classes are not created during startup
-        var exceptions = or(declaredClassSimpleName("QuizCache"), declaredClassSimpleName("CacheHandler"));
-        var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor()).or(exceptions)))
+        var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor())))
                 .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use @PostConstruct-methods instead.");
         notUseHazelcastInConstructor.check(allClassesWithHazelcast);
     }
 
     @Test
-    void ensureSpringComponentsAreProfileAnnotated() {
+    void ensureSpringComponentsAreProfileOrConditionalAnnotated() {
         ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
                 .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).and()
-                .doNotBelongToAnyOf(ApplicationConfiguration.class, ConditionalMetricsExclusionConfiguration.class).should(beProfileAnnotated())
+                .doNotBelongToAnyOf(ApplicationConfiguration.class, ConditionalMetricsExclusionConfiguration.class).should(beProfileOrConditionalAnnotated())
                 .because("we want to be able to exclude these classes from application startup by specifying profiles");
 
         rule.check(productionClasses);
@@ -271,14 +275,15 @@ class ArchitectureTest extends AbstractArchitectureTest {
         };
     }
 
-    private static ArchCondition<JavaClass> beProfileAnnotated() {
+    private static ArchCondition<JavaClass> beProfileOrConditionalAnnotated() {
         return new ArchCondition<>("be annotated with @Profile") {
 
             @Override
             public void check(JavaClass item, ConditionEvents events) {
                 boolean hasProfileAnnotation = item.isAnnotatedWith(Profile.class);
-                if (!hasProfileAnnotation) {
-                    String message = String.format("Class %s is not annotated with @Profile", item.getFullName());
+                boolean hasConditionalAnnotation = item.isAnnotatedWith(Conditional.class);
+                if (!(hasProfileAnnotation || hasConditionalAnnotation)) {
+                    String message = String.format("Class %s is neither annotated with @Profile or @Conditional", item.getFullName());
                     events.add(SimpleConditionEvent.violated(item, message));
                 }
             }
@@ -288,7 +293,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest",
-                "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest" };
+                "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest",
+                "IrisTutorSuggestionIntegrationTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
@@ -306,7 +312,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void shouldNotUserAutowiredAnnotation() {
         ArchRule rule = noFields().should().beAnnotatedWith(Autowired.class).because("fields should not rely on field injection via @Autowired");
-        final var exceptions = new String[] { "PublicResourcesConfiguration", "QuizProcessCacheTask", "QuizStartTask" };
+        final var exceptions = new Class[] { PublicResourcesConfiguration.class };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
     }
@@ -319,8 +325,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
         String identifyingPackage = "authorization";
 
         ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class))
-                .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod))).because(
-                        "every test environment should have a corresponding authorization test covering the endpoints of this environment. Examples are \"AuthorizationJenkinsGitlabTest\" or \"AuthorizationGitlabCISamlTest\".");
+                .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod)))
+                .because("every test environment should have a corresponding authorization test covering the endpoints of this environment.");
         rule.check(testClasses);
     }
 
@@ -379,6 +385,15 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void ensureSpringComponentsAreLazyAnnotated() {
+        ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
+                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).should().beAnnotatedWith(Lazy.class)
+                .because("All Spring components should be lazy-loaded to improve startup time");
+
+        rule.check(allClasses);
+    }
+
+    @Test
     void testAsyncTestShouldWait() {
         ArchRule rule = methods().that(areInIntegrationTests()).and(callAnAsyncMethod()).should(callAWaitMethod()).because("tests should wait for async effects");
         rule.check(testClasses);
@@ -434,6 +449,55 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     private static DescribedPredicate<JavaCall<?>> callMethod(Class<?> owner, String methodName) {
         return JavaCall.Predicates.target(owner(type(owner))).and(JavaCall.Predicates.target(name(methodName)));
+    }
+
+    @Test
+    void testUsageOfSchedulingClasses() {
+        // Classes that are not itself part of the scheduling profile
+        // should use classes with scheduling profile annotation only in an optional context.
+        // We check this using constructors (constructor injection) since otherwise usages of the optional itself would be detected
+        constructors().that().areDeclaredInClassesThat(and(annotatedWith(Profile.class), not(classWithSchedulingProfile()))).should(correctlyUseSchedulingParameters())
+                .check(productionClasses);
+    }
+
+    private DescribedPredicate<JavaClass> classWithSchedulingProfile() {
+        return new DescribedPredicate<>("have scheduling profile") {
+
+            @Override
+            public boolean test(JavaClass javaClass) {
+                var profiles = getProfiles(javaClass);
+                for (String profile : profiles) {
+                    if (profile.contains("scheduling") && !profile.contains("!scheduling")) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        };
+    }
+
+    private String[] getProfiles(JavaClass javaClass) {
+        if (!javaClass.isAnnotatedWith(Profile.class)) {
+            return new String[0];
+        }
+        Profile profile = javaClass.getAnnotationOfType(Profile.class);
+        return profile.value();
+    }
+
+    private ArchCondition<JavaConstructor> correctlyUseSchedulingParameters() {
+        return new ArchCondition<>("correctly wrap scheduling dependencies in optionals") {
+
+            @Override
+            public void check(JavaConstructor item, ConditionEvents events) {
+                var parameters = item.getParameters();
+                for (var parameter : parameters) {
+                    if (classWithSchedulingProfile().test(parameter.getRawType())) {
+                        events.add(violated(parameter,
+                                String.format("Class %s uses class %s without wrapping it with Optionals.", parameter.getOwner().getFullName(), parameter.getType().getName())));
+                    }
+                }
+            }
+        };
     }
 
 }

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class GroupNotificationScheduleService {
 
@@ -146,6 +148,7 @@ public class GroupNotificationScheduleService {
      */
     @Async
     public void checkNotificationsForNewExerciseAsync(Exercise exercise) {
+
         SecurityUtils.setAuthorizationObject(); // required for async
         // TODO: in a course with 2000 participants, this can take really long, we should optimize this
         checkNotificationForExerciseRelease(exercise);

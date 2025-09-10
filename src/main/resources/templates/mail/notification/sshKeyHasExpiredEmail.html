@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<th:block th:replace="~{mail/notification/fragments :: head}"/>
+<head>
+    <title th:text="#{email.notification.sshKeyExpiry.sshKeysHasExpiredWarning}">Notification Title</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
 
 <body>
-<!-- Message Body Start -->
 <th:block th:replace="~{mail/notification/fragments :: header}" />
 
 <div id="message-body">
@@ -35,6 +38,8 @@
 
     <th:block th:replace="~{mail/notification/fragments :: farewell}" />
 </div>
+
+<th:block th:replace="~{mail/notification/fragments :: footer}" />
 
 </body>
 </html>

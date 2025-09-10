@@ -1,20 +1,22 @@
 package de.tum.cit.aet.artemis.tutorialgroup.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Set;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
-@Profile(PROFILE_CORE)
+@Conditional(TutorialGroupEnabled.class)
 @Controller
+@Lazy
 public class TutorialGroupApi extends AbstractTutorialGroupApi {
 
     private final TutorialGroupRepository tutorialGroupRepository;
@@ -40,5 +42,9 @@ public class TutorialGroupApi extends AbstractTutorialGroupApi {
 
     public void deleteById(Long id) {
         tutorialGroupRepository.deleteById(id);
+    }
+
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromTutorialsGroups(long userId, Long courseId) {
+        return tutorialGroupService.getCalendarEventDTOsFromTutorialsGroups(userId, courseId);
     }
 }

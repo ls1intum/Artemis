@@ -69,13 +69,23 @@
                 "noMessages": "Keine Nachrichten gefunden",
                 "loadingMessages": "Nachrichten laden..."
             },
+            "globalSearch": {
+                "searchBarDefault": "Suche nach einer Nachrichten in allen Kanälen, Direktnachrichten und Gruppen (Strg/Cmd + K)",
+                "searchBarWithConversationSelected": "Suche nach einer Nachricht in den ausgewählten Unterhaltungen",
+                "noConversationFound": "Keine Unterhaltung für '{{ search }}' gefunden",
+                "noUserFound": "Kein Benutzer für '{{ search }}' gefunden",
+                "userQueryTooShort": "Bitte gib mindestens 3 Zeichen ein, um nach einem/einer Nutzer:in zu suchen.",
+                "toolTip": "Gib 'in:' ein, um eine Unterhaltung zum Suchen auszuwählen, oder 'from:', um Nachrichten von einem/einer bestimmten Nutzer:in zu finden",
+                "filterConversationPreselection": "um in einer Unterhaltung zu suchen",
+                "filterUserPreselection": "um Nachrichten von einem/einer bestimmten Nutzer:in zu finden"
+            },
             "overview": {
                 "title": "Nachrichten",
-                "searchBarDefault": "Suche nach Nachrichten in allen Kanälen (Strg/Cmd + K)",
                 "sortedByDate": "Sortiert nach Datum",
                 "postContextFilter": "Zeige Nachrichten in:",
                 "one_extra_context": "weiterer",
                 "multiple_extra_contexts": "weitere",
+                "filterToCourseWide": "Kursweit",
                 "filterToUnresolved": "Ungeklärt",
                 "filterToOwn": "Eigene",
                 "filterToAnsweredOrReacted": "Reagiert",
@@ -89,21 +99,20 @@
                 "sortPostsBy": "Sortiere nach:",
                 "sortDescending": "Absteigend",
                 "sortAscending": "Aufsteigend",
-                "ANSWER_COUNT": "Antworten",
                 "CREATION_DATE": "Datum",
-                "VOTES": "Stimmen (➕)",
                 "TECH_SUPPORT": "Technische Hilfe",
                 "ORGANIZATION": "Organisation",
                 "RANDOM": "Sonstiges",
                 "ANNOUNCEMENT": "Ankündigung",
-                "allPublicMessages": "Alle öffentlichen Nachrichten",
+                "allMessages": "Alle Nachrichten",
                 "searchResults": "Suchergebnisse für {{ search }}",
+                "searchResultInAnswersHint": "Suchergebnis in Antworten",
                 "mobileDisclaimer": "Bitte erst eine Konversation auswählen.",
                 "mobileDisclaimerCallToAction": "Konversation wählen",
                 "savedPosts": "Gespeicherte Nachrichten",
-                "progress": "In Bearbeitung",
-                "completed": "Erledigt",
-                "archived": "Archiviert",
+                "IN_PROGRESS": "In Bearbeitung",
+                "COMPLETED": "Erledigt",
+                "ARCHIVED": "Archiviert",
                 "emptySavedPosts": "Hier ist noch nichts. Speichere Nachrichten, damit sie hier auftauchen.",
                 "deleteNoticeSavedPosts": "Erledigte und archivierte Lesezeichen werden nach 100 Tagen gelöscht."
             },
@@ -176,9 +185,20 @@
                 "searchBar": "Nach Name oder Kanal suchen",
                 "viewConversation": "Unterhaltung anzeigen",
                 "forwardedFrom": "Weitergeleitet von",
+                "forwardedFromUnknown": "Weitergeleitet von einer Konversation",
+                "forwardedMessageDeleted": "Diese Nachricht wurde gelöscht",
                 "showLess": "Weniger anzeigen",
                 "showMore": "Mehr anzeigen"
-            }
+            },
+            "newMessages": "Neu",
+            "newMessagesButton": "Zur ersten ungelesenen Nachricht springen"
+        },
+        "communicationDisabled": {
+            "title": "Willkommen zur Kommunikation!",
+            "description": "Die Kommunikations-Funktionen sind aktuell deaktiviert.\n Das Aktivieren ermöglicht die Kommunikation zwischen Nutzer:innen in privaten oder öffentlichen Kanälen, die nur von Lehrenden und Tutor:innen erstellt werden können. Die Studierenden können mit anderen Studierenden interagieren und Fragen stellen, während Moderator:innen Kursinformationen bereitstellen und inhaltliche Fragen beantworten können.\n Zusätzlich können auch noch Direktnachrichten/Gruppenchats aktiviert werden. Dann können alle Nutzer:innen Direktnachrichten oder einen privaten Gruppenchat starten und andere Nutzer:innen hinzufügen. Ein Gruppenchat ist auf zehn Mitglieder begrenzt.\nDie aktivierten oder deaktivierten Features können jederzeit in den Einstellungen geändert werden.",
+            "buttonLabelWithoutDirectMessages": "Kommunikation aktivieren (ohne Direktnachrichten)",
+            "buttonLabelWithDirectMessages": "Kommunikation aktivieren (mit Direktnachrichten)",
+            "enableError": "Fehler beim Aktivieren der Kommunikation. Bitte versuche es später erneut."
         }
     }
 }

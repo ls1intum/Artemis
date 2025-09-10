@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * Spring Data JPA repository for the Course entity.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
@@ -62,34 +64,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     Set<String> findAllTeachingAssistantGroupNames();
 
     @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.instructorGroupName LIKE :name
-            """)
-    Course findCourseByInstructorGroupName(@Param("name") String name);
-
-    @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.editorGroupName LIKE :name
-            """)
-    Course findCourseByEditorGroupName(@Param("name") String name);
-
-    @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.teachingAssistantGroupName LIKE :name
-            """)
-    Course findCourseByTeachingAssistantGroupName(@Param("name") String name);
-
-    @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.studentGroupName LIKE :name
-            """)
-    Course findCourseByStudentGroupName(@Param("name") String name);
-
-    @Query("""
             SELECT COUNT(c) > 0
             FROM Course c
             WHERE c.id = :courseId
@@ -104,6 +78,15 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
                 AND (c.endDate >= :now OR c.endDate IS NULL)
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
+
+    @Query("""
+            SELECT DISTINCT c
+            FROM Course c
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND c.learningPathsEnabled=true
+            """)
+    List<Course> findAllActiveForUserAndLearningPathsEnabled(@Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT DISTINCT c
@@ -131,15 +114,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
     Optional<Course> findWithEagerCompetenciesAndPrerequisitesById(long courseId);
 
-    @Query("""
-            SELECT c
-            FROM Course c
-                LEFT JOIN FETCH c.learningPaths learningPaths
-                LEFT JOIN FETCH learningPaths.competencies
-            WHERE c.id = :courseId
-            """)
-    Optional<Course> findWithEagerLearningPathsAndLearningPathCompetencies(@Param("courseId") long courseId);
-
     // Note: we load attachments directly because otherwise, they will be loaded in subsequent DB calls due to the EAGER relationship
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerLecturesById(long courseId);
@@ -158,12 +132,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites" })
-    Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites", "exams" })
-    Optional<Course> findWithEagerExercisesAndLecturesAndAttachmentsAndLectureUnitsAndCompetenciesAndExamsById(long courseId);
 
     @Query("""
             SELECT course
@@ -473,18 +441,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     }
 
     @NotNull
-    default Course findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(long courseId) {
-        return getValueElseThrow(findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId), courseId);
-    }
-
-    @NotNull
     default Course findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerCompetenciesAndPrerequisitesById(courseId), courseId);
-    }
-
-    @NotNull
-    default Course findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(long courseId) {
-        return getValueElseThrow(findWithEagerLearningPathsAndLearningPathCompetencies(courseId), courseId);
     }
 
     Page<Course> findByTitleIgnoreCaseContaining(String partialTitle, Pageable pageable);

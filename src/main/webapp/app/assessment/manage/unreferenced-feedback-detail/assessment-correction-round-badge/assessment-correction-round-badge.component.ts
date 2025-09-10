@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgStyle } from '@angular/common';
 

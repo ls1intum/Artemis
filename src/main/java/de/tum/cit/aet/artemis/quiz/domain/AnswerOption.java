@@ -11,10 +11,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 /**
  * A AnswerOption.
@@ -26,23 +24,18 @@ import de.tum.cit.aet.artemis.quiz.config.QuizView;
 public class AnswerOption extends DomainObject implements QuizQuestionComponent<MultipleChoiceQuestion> {
 
     @Column(name = "text")
-    @JsonView(QuizView.Before.class)
     private String text;
 
     @Column(name = "hint")
-    @JsonView(QuizView.Before.class)
     private String hint;
 
     @Column(name = "explanation", length = 500)
-    @JsonView(QuizView.After.class)
     private String explanation;
 
     @Column(name = "is_correct")
-    @JsonView(QuizView.After.class)
     private Boolean isCorrect;
 
     @Column(name = "invalid")
-    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -53,17 +46,21 @@ public class AnswerOption extends DomainObject implements QuizQuestionComponent<
         return text;
     }
 
+    public void setText(String text) {
+        this.text = text;
+    }
+
     public AnswerOption text(String text) {
         this.text = text;
         return this;
     }
 
-    public void setText(String text) {
-        this.text = text;
-    }
-
     public String getHint() {
         return hint;
+    }
+
+    public void setHint(String hint) {
+        this.hint = hint;
     }
 
     public AnswerOption hint(String hint) {
@@ -71,12 +68,12 @@ public class AnswerOption extends DomainObject implements QuizQuestionComponent<
         return this;
     }
 
-    public void setHint(String hint) {
-        this.hint = hint;
-    }
-
     public String getExplanation() {
         return explanation;
+    }
+
+    public void setExplanation(String explanation) {
+        this.explanation = explanation;
     }
 
     public AnswerOption explanation(String explanation) {
@@ -87,10 +84,6 @@ public class AnswerOption extends DomainObject implements QuizQuestionComponent<
     public AnswerOption isInvalid(boolean invalid) {
         this.invalid = invalid;
         return this;
-    }
-
-    public void setExplanation(String explanation) {
-        this.explanation = explanation;
     }
 
     public Boolean isIsCorrect() {
@@ -128,4 +121,5 @@ public class AnswerOption extends DomainObject implements QuizQuestionComponent<
         return "AnswerOption{" + "id=" + getId() + ", text='" + getText() + "'" + ", hint='" + getHint() + "'" + ", explanation='" + getExplanation() + "'" + ", isCorrect='"
                 + isIsCorrect() + "'" + ", invalid='" + isInvalid() + "'" + "}";
     }
+
 }

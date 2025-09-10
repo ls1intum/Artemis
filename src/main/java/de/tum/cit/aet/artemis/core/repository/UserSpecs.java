@@ -3,9 +3,11 @@ package de.tum.cit.aet.artemis.core.repository;
 import java.util.Arrays;
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.domain.Specification;
 
@@ -27,6 +29,7 @@ public class UserSpecs {
      * @param searchTerm term to match
      * @return specification used to chain database operations
      */
+    @NotNull
     public static Specification<User> getSearchTermSpecification(String searchTerm) {
         String extendedSearchTerm = "%" + searchTerm + "%";
         return (root, query, criteriaBuilder) -> {
@@ -45,13 +48,15 @@ public class UserSpecs {
      * @param authorities set of possible authorities
      * @return specification used to chain database operations
      */
+    @NotNull
     public static Specification<User> getAllUsersMatchingAuthorities(Set<String> authorities) {
         return (root, query, criteriaBuilder) -> {
             Join<User, Authority> joinedAuthorities = root.join(User_.AUTHORITIES, JoinType.LEFT);
             joinedAuthorities.on(criteriaBuilder.in(joinedAuthorities.get(Authority_.NAME)).value(authorities));
 
-            query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(joinedAuthorities), authorities.size()));
-
+            if (query != null) {
+                query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(joinedAuthorities), authorities.size()));
+            }
             return null;
         };
     }
@@ -61,6 +66,7 @@ public class UserSpecs {
      *
      * @return specification used to chain database operations
      */
+    @NotNull
     public static Specification<User> getAllUsersMatchingEmptyAuthorities() {
         return (root, query, criteriaBuilder) -> criteriaBuilder.isEmpty(root.get(User_.AUTHORITIES));
     }
@@ -71,6 +77,7 @@ public class UserSpecs {
      * @param authorities provided authorities
      * @return specification used to chain database operations
      */
+    @Nullable
     public static Specification<User> getAuthoritySpecification(Set<String> authorities) {
         if (authorities.contains(FILTER_NO_AUTHORITY)) {
             // Empty authorities
@@ -90,14 +97,15 @@ public class UserSpecs {
      * @param external true if the account should be external
      * @return specification used to chain database operations
      */
+    @Nullable
     public static Specification<User> getInternalOrExternalSpecification(boolean internal, boolean external) {
         if (!internal && !external) {
             return null;
         }
         else {
             return (root, query, criteriaBuilder) -> {
-                Predicate internalPredicate = criteriaBuilder.equal(root.get(User_.IS_INTERNAL), internal);
-                Predicate externalPredicate = criteriaBuilder.notEqual(root.get(User_.IS_INTERNAL), external);
+                Predicate internalPredicate = criteriaBuilder.equal(root.get(User_.INTERNAL), internal);
+                Predicate externalPredicate = criteriaBuilder.notEqual(root.get(User_.INTERNAL), external);
 
                 return criteriaBuilder.and(internalPredicate, externalPredicate);
             };
@@ -111,6 +119,7 @@ public class UserSpecs {
      * @param withRegistrationNumber true if the account should have a registration number
      * @return specification used to chain database operations
      */
+    @Nullable
     public static Specification<User> getWithOrWithoutRegistrationNumberSpecification(Boolean noRegistrationNumber, Boolean withRegistrationNumber) {
         if (!noRegistrationNumber && !withRegistrationNumber) {
             return null;
@@ -136,6 +145,7 @@ public class UserSpecs {
      * @param deactivated true if the account should be deactivated
      * @return specification used to chain database operations
      */
+    @Nullable
     public static Specification<User> getActivatedOrDeactivatedSpecification(boolean activated, boolean deactivated) {
         if (!activated && !deactivated) {
             return null;
@@ -164,9 +174,12 @@ public class UserSpecs {
      *
      * @return specification used to chain database operations
      */
+    @NotNull
     public static Specification<User> distinct() {
         return (root, query, criteriaBuilder) -> {
-            query.distinct(true);
+            if (query != null) {
+                query.distinct(true);
+            }
             return null;
         };
     }
@@ -176,9 +189,10 @@ public class UserSpecs {
      *
      * @return specification used to chain database operations
      */
+    @NotNull
     public static Specification<User> notSoftDeleted() {
         return (root, query, criteriaBuilder) -> {
-            Predicate notDeletedPredicate = criteriaBuilder.equal(root.get(User_.IS_DELETED), false);
+            Predicate notDeletedPredicate = criteriaBuilder.equal(root.get(User_.DELETED), false);
 
             return criteriaBuilder.and(notDeletedPredicate);
         };

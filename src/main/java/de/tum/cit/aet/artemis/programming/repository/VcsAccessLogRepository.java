@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,10 +20,11 @@ import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
  * <br>
  * <p>
  * <b>Note</b>: Please keep in mind that the User entities are soft-deleted when adding new queries to this repository.
- * If you don't need deleted user entities, add `WHERE user.isDeleted = FALSE` to your query.
+ * If you don't need deleted user entities, add `WHERE user.deleted = FALSE` to your query.
  * </p>
  */
 @Profile(PROFILE_LOCALVC)
+@Lazy
 @Repository
 public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLog, Long> {
 

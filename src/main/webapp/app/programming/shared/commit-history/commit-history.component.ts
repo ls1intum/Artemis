@@ -2,15 +2,15 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { CommitInfo, ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { tap } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { CommitsInfoComponent } from '../commits-info/commits-info.component';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
@@ -71,21 +71,9 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
                     if (this.repositoryType === 'TEMPLATE') {
                         this.participation = this.exercise.templateParticipation!;
                         (this.participation as TemplateProgrammingExerciseParticipation).programmingExercise = this.exercise;
-                        this.participation.results = this.participation.submissions
-                            ?.filter((submission) => submission.results && submission.results?.length > 0)
-                            .map((submission) => {
-                                submission.results![0].participation = this.participation!;
-                                return submission.results![0];
-                            });
                     } else if (this.repositoryType === 'SOLUTION') {
                         this.participation = this.exercise.solutionParticipation!;
                         (this.participation as SolutionProgrammingExerciseParticipation).programmingExercise = this.exercise;
-                        this.participation.results = this.participation.submissions
-                            ?.filter((submission) => submission.results && submission.results?.length > 0)
-                            .map((submission) => {
-                                submission.results![0].participation = this.participation!;
-                                return submission.results![0];
-                            });
                     } else if (this.repositoryType === 'TESTS') {
                         this.isTestRepository = true;
                         this.participation = this.exercise.templateParticipation!;
@@ -111,8 +99,10 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             .pipe(
                 tap((participation) => {
                     this.participation = participation;
-                    this.participation.results?.forEach((result) => {
-                        result.participation = participation!;
+                    this.participation.submissions?.forEach((submission) => {
+                        submission.results?.forEach((result) => {
+                            result.submission = submission;
+                        });
                     });
                 }),
             )
@@ -184,15 +174,15 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      * @private
      */
     private setCommitResults() {
+        const results = this.participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
         this.commits.forEach((commit) => {
-            this.participation.results?.forEach((result) => {
+            commit.result = results.find((result) => {
                 const submission = result.submission as ProgrammingSubmission;
-                if (submission) {
-                    if (submission.commitHash === commit.hash) {
-                        commit.result = result;
-                    }
-                }
+                return submission && submission.commitHash === commit.hash;
             });
+            if (commit.result?.submission) {
+                commit.result.submission.participation = this.participation;
+            }
         });
     }
 

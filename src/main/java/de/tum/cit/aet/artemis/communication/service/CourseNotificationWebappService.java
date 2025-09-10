@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -22,10 +23,13 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * </p>
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class CourseNotificationWebappService extends CourseNotificationBroadcastService {
 
     private static final String WEBSOCKET_TOPIC_PREFIX = "/topic/communication/notification/";
+
+    private static final String WEBSOCKET_BROADCAST_TOPIC_PREFIX = "/topic/communication/notification/all";
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -50,6 +54,7 @@ public class CourseNotificationWebappService extends CourseNotificationBroadcast
     protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients) {
         recipients.forEach(user -> {
             websocketMessagingService.sendMessageToUser(user.getLogin(), WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification);
+            websocketMessagingService.sendMessageToUser(user.getLogin(), WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification);
         });
     }
 }

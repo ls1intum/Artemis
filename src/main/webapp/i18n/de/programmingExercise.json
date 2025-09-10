@@ -2,7 +2,7 @@
     "artemisApp": {
         "programmingExercise": {
             "home": {
-                "title": "Programmieraufgaben",
+                "title": "Programmieraufgabe",
                 "createLabel": "Programmieraufgabe erstellen",
                 "editLabel": "Programmieraufgabe bearbeiten",
                 "importLabel": "Programmieraufgabe importieren",
@@ -32,14 +32,6 @@
             },
             "reset": {
                 "pleaseSelectOperations": "Bitte wähle die durchzuführenden Operationen für <strong>{{ title }}</strong> aus:",
-                "deleteBuildPlans": {
-                    "title": "Lösche Build Pläne der Studierenden (auf {{ ciPlatform }}).",
-                    "info": "Die Build-Pläne werden automatisch neu erstellt, sobald Studierende erneut abgeben."
-                },
-                "deleteRepositories": {
-                    "title": "Lösche Repositories der Studierenden (auf {{ vcPlatform }}).",
-                    "warning": "Archivierung der Übung vor Aktivierung dieser Option wird empfohlen."
-                },
                 "deleteParticipationsSubmissionsAndResults": "Lösche Teilnahmen, Abgaben und Ergebnisse der Studierenden (in Artemis).",
                 "artefactsWarning": "Das Löschen von Teilnahmen, Abgaben und Ergebnissen von Studierenden, ohne dabei die zugehörigen Repositories und Build-Pläne zu entfernen, kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte überprüfe sorgfältig, ob dies die gewünschte Aktion ist, bevor du den Vorgang fortsetzt.",
                 "recreateBuildPlans": "Erstelle Build Pläne der Aufgabe (BASE und SOLUTION) erneut und überschreibe alle vorherigen Änderungen.",
@@ -211,13 +203,9 @@
             "solutionResult": "Ergebnis der Musterlösung",
             "structureTestOracle": "Oracle Strukturtest aktualisieren",
             "structureTestOracleWarning": "Diese Aktion extrahiert die Struktur-Tests des Test-Repositories and speichert sie in der Datei test.json. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
-            "combineTemplateCommits": "Template-Commits zusammenführen",
             "checkPlagiarism": "Plagiatsprüfung",
             "checkPlagiarismSuccess": "Plagiatsprüfung abgeschlossen. Ergebnisse sind in der zip-Datei enthalten.",
-            "combineTemplateCommitsWarning": "Diese Aktion führt alle Commits im Template-Repository in einen Commit zusammen. ACHTUNG: Hierdurch gehen alle nicht committeten Änderungen aus dem Online-Editor verloren!",
-            "combineTemplateCommitsError": "Template-Repository-Commits konnten nicht zusammengeführt werden.",
-            "diffReportError": "Der Diff Report konnte nicht erstellt werden.",
-            "combineTemplateCommitsSuccess": "Template-Repository-Commits wurden zusammengeführt.",
+            "repositoryFilesError": "Repository-Dateien konnten nicht abgerufen werden.",
             "editable": {
                 "unsaved": "Ungespeichert.",
                 "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",
@@ -545,9 +533,6 @@
                 "submissionBuildPlan": "Abgabe-Build-Plan",
                 "solutionBuildPlan": "Lösungs-Build-Plan"
             },
-            "orion": {
-                "openEditor": "Editor Öffnen"
-            },
             "reEvaluate": "Alle erneut bewerten",
             "reEvaluateTooltip": "Neubewertung der letzten automatischen Ergebnisse aller Teilnahmen. Manuelle Bewertungen sind davon nicht betroffen.",
             "reEvaluateSuccessful": "{{number}} automatischen Ergebnisse wurden erfolgreich aktualisiert, einschließlich der Vorlage und der Lösung.",
@@ -662,7 +647,6 @@
                     "deleted": "Gelöscht",
                     "renamed": "Umbenannt"
                 },
-                "errorWhileFetchingRepos": "Fehler beim Abrufen der Repositories. Bitte überprüfe deine Internetverbindung und öffne das Popup erneut.",
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
                 "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
                 "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
@@ -670,10 +654,10 @@
 
                 "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
                 "lineStatTooltipExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden",
-                "lineStatTooltipFullReportExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen.",
-                "lineStatTooltipFullReport": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungs-Repositories hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen.",
-                "lineStatTooltipFullEntry": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungsversionen dieser Datei hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen.",
-                "lineStatTooltipFullEntryExamTimeline": "Gefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe dieser Datei hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen."
+                "lineStatTooltipFullReportExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden.",
+                "lineStatTooltipFullReport": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungs-Repositories hinzugefügt und entfernt wurden.",
+                "lineStatTooltipFullEntry": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungsversionen dieser Datei hinzugefügt und entfernt wurden.",
+                "lineStatTooltipFullEntryExamTimeline": "Gefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe dieser Datei hinzugefügt und entfernt wurden."
             },
             "projectTypes": {
                 "PLAIN_GRADLE": "Gradle",
@@ -689,16 +673,6 @@
             "customizeBuildPlansWithAeolusTooltip": "Aktiviere diese Option, um das Docker Image und das Build Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker Container ausgeführt wird.",
             "customizeBuildPlansTooltip": "Aktiviere diese Option, um das Docker Image und das Build Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker Container ausgeführt wird.",
             "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
-            "buildLogStatistics": {
-                "title": "Durchschnittliche Statistiken der Build-Logs",
-                "numberOfBuilds": "# Builds",
-                "agentSetupDuration": "Einrichtung Buildagent",
-                "testDuration": "Testausführung",
-                "scaDuration": "Statische Codeanalyse",
-                "totalJobDuration": "kompletter Job",
-                "dependenciesDownloadedCount": "Anzahl heruntergeladener Abhängigkeiten",
-                "tooltip": "The durchschnittlichen Statistiken werden von allen Builds (Template-, Lösung- und Studierendenabgaben) berechnet. Die Anzahl der heruntergeladenen Abhängigkeiten kann durch Caching im Docker-Image verringert werden."
-            },
             "studentDownloadTestsTooltip": "Hier kannst du die Tests runterladen. Die Beispiellösung wird automatisch an der Stelle eingefügt an der du deine Lösung platzieren musst, um diese zu testen.",
             "commitInfo": {
                 "title": "Commit-Informationen",
@@ -757,7 +731,9 @@
             },
             "artemisIntelligence": {
                 "consistencyCheckAlert": {
-                    "title": "Resultat der Konsistenzprüfung"
+                    "title": "Resultat der Konsistenzprüfung",
+                    "improvement": "Verbesserungsempfehlung",
+                    "inconsistencies": "Bitte überprüfe die FAQ auf inhaltliche Inkonsistenzen und passe es entsprechend an, damit es stimmig und klar verständlich ist."
                 }
             }
         },

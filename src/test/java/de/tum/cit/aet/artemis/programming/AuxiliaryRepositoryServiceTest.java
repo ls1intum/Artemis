@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -26,7 +27,7 @@ class AuxiliaryRepositoryServiceTest extends AbstractProgrammingIntegrationIndep
     @BeforeEach
     void setUp() {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        programmingExerciseBeforeUpdate = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExerciseBeforeUpdate = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseBeforeUpdate.setReleaseDate(null);
         programmingExerciseBeforeUpdate.setAuxiliaryRepositories(new ArrayList<>());
         programmingExerciseRepository.save(programmingExerciseBeforeUpdate);

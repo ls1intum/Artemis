@@ -3,16 +3,16 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
@@ -31,12 +31,12 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ProgrammingExerciseGroupCellComponent } from './programming-exercise-cell/programming-exercise-group-cell.component';
 import { QuizExerciseGroupCellComponent } from './quiz-exercise-cell/quiz-exercise-group-cell.component';
 import { ModelingExerciseGroupCellComponent } from './modeling-exercise-cell/modeling-exercise-group-cell.component';
@@ -44,6 +44,7 @@ import { FileUploadExerciseGroupCellComponent } from './file-upload-exercise-cel
 import { LowerCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -62,6 +63,7 @@ import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-
         ExamExerciseRowButtonsComponent,
         LowerCasePipe,
         ArtemisTranslatePipe,
+        FeatureOverlayComponent,
     ],
 })
 export class ExerciseGroupsComponent implements OnInit {
@@ -86,8 +88,9 @@ export class ExerciseGroupsComponent implements OnInit {
     latestIndividualEndDate?: dayjs.Dayjs;
     exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
 
-    localVCEnabled = true;
     localCIEnabled = true;
+    textExerciseEnabled = false;
+    disabledExerciseTypes: string[] = [];
 
     // Icons
     faPlus = faPlus;
@@ -120,10 +123,11 @@ export class ExerciseGroupsComponent implements OnInit {
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-            this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
-        });
+        this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
+        if (!this.textExerciseEnabled) {
+            this.disabledExerciseTypes.push(ExerciseType.TEXT);
+        }
     }
 
     /**
@@ -166,7 +170,7 @@ export class ExerciseGroupsComponent implements OnInit {
 
     /**
      * Delete the exercise group with the given id.
-     * @param exerciseGroupId {number}
+     * @param exerciseGroupId
      * @param event representation of users choices to delete the student repositories and base repositories
      */
     deleteExerciseGroup(exerciseGroupId: number, event: { [key: string]: boolean }) {
@@ -301,5 +305,9 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
             }
         });
+    }
+
+    protected isExerciseTypeDisabled(exerciseType: ExerciseType) {
+        return this.disabledExerciseTypes.includes(exerciseType);
     }
 }

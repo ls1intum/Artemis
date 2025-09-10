@@ -1,13 +1,15 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Result } from 'app/entities/result.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
-import { ExerciseDetailsType, ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
+import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { ResultTemplateStatus, evaluateTemplateStatus } from 'app/exercise/result/result.utils';
 import { FeedbackComponent } from '../feedback.component';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-standalone-feedback',
@@ -22,6 +24,7 @@ export class StandaloneFeedbackComponent implements OnInit {
 
     exercise?: Exercise;
     result?: Result;
+    participation: Participation;
 
     showMissingAutomaticFeedbackInformation = false;
     messageKey?: string;
@@ -40,12 +43,10 @@ export class StandaloneFeedbackComponent implements OnInit {
                 const participation = this.exercise?.studentParticipations?.find((participation) => participation.id === participationId);
                 if (participation) {
                     participation.exercise = this.exercise;
+                    this.participation = participation;
                 }
 
-                const relevantResult = participation?.results?.find((result) => result.id == resultId);
-                if (relevantResult) {
-                    relevantResult.participation = participation;
-                }
+                const relevantResult = getAllResultsOfAllSubmissions(participation?.submissions).find((result) => result.id == resultId);
 
                 this.result = relevantResult;
 

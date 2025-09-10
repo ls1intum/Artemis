@@ -69,9 +69,18 @@
                 "noMessages": "No messages found",
                 "loadingMessages": "Loading messages..."
             },
+            "globalSearch": {
+                "searchBarDefault": "Search for a message across all channels, direct chats and groups (Ctrl/Cmd + K)",
+                "searchBarWithConversationSelected": "Search for a message in selected conversations",
+                "noConversationFound": "No conversation found for '{{ search }}'",
+                "noUserFound": "No user found for '{{ search }}'",
+                "userQueryTooShort": "Please enter at least 3 characters to search for a user.",
+                "toolTip": "Type 'in:' to select a conversation to search in or 'from:' to get messages from a specific author",
+                "filterConversationPreselection": "to filter by conversation",
+                "filterUserPreselection": "to filter by author"
+            },
             "overview": {
                 "title": "Posts",
-                "searchBarDefault": "Search for a message across all channels (Ctrl/Cmd + K)",
                 "sortedByDate": "Sorted by Date",
                 "postContextFilter": "Show messages for:",
                 "one_extra_context": "other",
@@ -83,27 +92,27 @@
                     "lecture": "Lectures",
                     "exam": "Exams"
                 },
+                "filterToCourseWide": "Course-wide",
                 "filterToUnresolved": "Unresolved",
                 "filterToOwn": "Own",
                 "filterToAnsweredOrReacted": "Reacted",
                 "sortPostsBy": "Sort by:",
                 "sortDescending": "Descending",
                 "sortAscending": "Ascending",
-                "ANSWER_COUNT": "Replies",
                 "CREATION_DATE": "Date",
-                "VOTES": "Votes (➕)",
                 "TECH_SUPPORT": "Tech Support",
                 "ORGANIZATION": "Organization",
                 "RANDOM": "Random",
                 "ANNOUNCEMENT": "Announcement",
-                "allPublicMessages": "All Public Messages",
+                "allMessages": "All Messages",
                 "searchResults": "Search Results for '{{ search }}'",
+                "searchResultInAnswersHint": "Search result in replies",
                 "mobileDisclaimer": "Please select a conversation first.",
                 "mobileDisclaimerCallToAction": "Select conversation",
                 "savedPosts": "Saved Messages",
-                "progress": "In Progress",
-                "completed": "Completed",
-                "archived": "Archived",
+                "IN_PROGRESS": "In Progress",
+                "COMPLETED": "Completed",
+                "ARCHIVED": "Archived",
                 "emptySavedPosts": "There is nothing here yet. Bookmark messages and they will appear here.",
                 "deleteNoticeSavedPosts": "Archived and completed bookmarks will be removed after 100 days."
             },
@@ -176,9 +185,20 @@
                 "searchBar": "Search by name or channel",
                 "viewConversation": "View conversation",
                 "forwardedFrom": "Forwarded from",
+                "forwardedFromUnknown": "Forwarded from a conversation",
+                "forwardedMessageDeleted": "This message has been deleted",
                 "showLess": "Show less",
                 "showMore": "Show more"
-            }
+            },
+            "newMessages": "New",
+            "newMessagesButton": "Jump to first unread message"
+        },
+        "communicationDisabled": {
+            "title": "Welcome to Communication!",
+            "description": "The communication features are currently disabled.\nEnabling them allows users to communicate in private or public channels, which can only be created by instructors and tutors. Students can interact with each other and ask questions, while moderators can provide course information and answer content-related inquiries.\nAdditionally, direct messages and group chats can be enabled. Once activated, all users can start direct messages or private group chats and invite others. A group chat is limited to ten members.\n You can enable or disable the features anytime in the settings.",
+            "buttonLabelWithoutDirectMessages": "Enable communication (no direct messages)",
+            "buttonLabelWithDirectMessages": "Enable communication (with direct messages)",
+            "enableError": "An error occurred while enabling communication. Please try again."
         }
     }
 }

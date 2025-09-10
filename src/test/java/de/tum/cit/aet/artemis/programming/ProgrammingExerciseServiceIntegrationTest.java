@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
@@ -37,10 +38,10 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        userUtilService.addInstructor("other-instructors", TEST_PREFIX + "instructorother");
+        userUtilService.addInstructor("other-instructors", TEST_PREFIX + "instructorother1");
         additionalEmptyCourse = courseUtilService.addEmptyCourse();
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         // Needed, as we need the test cases for the next steps
         programmingExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(programmingExercise);
         programmingExerciseUtilService.addTasksToProgrammingExercise(programmingExercise);
@@ -72,7 +73,6 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         assertThat(newlyImported.getAttachments()).isNull();
         assertThat(newlyImported.getTutorParticipations()).isNull();
         assertThat(newlyImported.getExampleSubmissions()).isNull();
-        assertThat(newlyImported.getPosts()).isNull();
         assertThat(newlyImported.getStudentParticipations()).isNull();
         final var newTestCaseIDs = newlyImported.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
         assertThat(newlyImported.getTestCases()).hasSameSizeAs(programmingExercise.getTestCases());
@@ -218,7 +218,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         programmingExerciseRepository.save(programmingExercise);
 
         var otherCourse = courseUtilService.addCourseInOtherInstructionGroupAndExercise("Programming");
-        var otherProgrammingExercise = exerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
+        var otherProgrammingExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
         otherProgrammingExercise.setTitle(title);
         programmingExerciseRepository.save(otherProgrammingExercise);
 

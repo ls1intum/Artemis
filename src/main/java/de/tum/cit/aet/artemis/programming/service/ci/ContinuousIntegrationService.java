@@ -72,10 +72,9 @@ public interface ContinuousIntegrationService {
      * **Important**: make sure that participation.programmingExercise.templateParticipation is initialized, otherwise an org.hibernate.LazyInitializationException can occur
      *
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
-     * @param branch        the default branch of the git repository that is used in the build plan
      */
     // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
-    void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch);
+    void configureBuildPlan(ProgrammingExerciseParticipation participation);
 
     /**
      * Delete project with given identifier from CI system.

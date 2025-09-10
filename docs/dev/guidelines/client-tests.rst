@@ -169,7 +169,7 @@ Some guidelines:
                     });
 
                     ...
-                    httpMock = injector.get(HttpTestingController);
+                    httpMock = TestBed.inject(HttpTestingController);
                 });
 
                 afterEach(() => {

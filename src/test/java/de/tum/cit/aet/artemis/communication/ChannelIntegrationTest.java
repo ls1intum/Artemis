@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Fail.fail;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
@@ -25,12 +24,14 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
 import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
+import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
@@ -38,7 +39,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -65,7 +66,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     private TutorialGroupUtilService tutorialGroupUtilService;
 
     @Autowired
-    private LectureRepository lectureRepository;
+    private LectureTestRepository lectureRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -78,6 +79,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private CourseNotificationTestRepository courseNotificationRepository;
 
     @BeforeEach
     @Override
@@ -631,12 +635,11 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", HttpStatus.OK, params);
         var course = courseRepository.findByIdElseThrow(exampleCourseId);
-        var allStudentLogins = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
-        var allTutorLogins = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream().map(User::getLogin)
+        var allStudentLogins = userRepository.findAllByDeletedIsFalseAndGroupsContains(course.getStudentGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        var allTutorLogins = userRepository.findAllByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream().map(User::getLogin)
                 .collect(Collectors.toSet());
-        var allEditorLogins = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(course.getEditorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
-        var allInstructorLogins = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()).stream().map(User::getLogin)
-                .collect(Collectors.toSet());
+        var allEditorLogins = userRepository.findAllByDeletedIsFalseAndGroupsContains(course.getEditorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        var allInstructorLogins = userRepository.findAllByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
         var allUserLogins = new HashSet<>(allStudentLogins);
         allUserLogins.addAll(allTutorLogins);
         allUserLogins.addAll(allEditorLogins);
@@ -896,7 +899,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         courseUtilService.enableMessagingForCourse(course);
         TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
                 ZonedDateTime.now().plusDays(1));
-        Channel exerciseChannel = exerciseUtilService.addChannelToExercise(exercise);
+        Channel exerciseChannel = conversationUtilService.addChannelToExercise(exercise);
 
         Channel returnedExerciseChannel = request.get("/api/communication/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
 
@@ -933,7 +936,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void createFeedbackChannel_asStudent_shouldReturnForbidden() {
+    void createFeedbackChannel_asStudent_shouldReturnForbidden() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
@@ -946,20 +949,15 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
-        String BASE_ENDPOINT = "api/communication/courses/{courseId}/{exerciseId}/feedback-channel";
+        String BASE_ENDPOINT = "api/communication/courses/{courseId}/exercises/{exerciseId}/feedback-channel";
 
-        try {
-            request.postWithoutResponseBody(BASE_ENDPOINT.replace("{courseId}", course.getId().toString()).replace("{exerciseId}", programmingExercise.getId().toString()),
-                    feedbackChannelRequest, HttpStatus.FORBIDDEN);
-        }
-        catch (Exception e) {
-            fail("There was an error executing the post request.", e);
-        }
+        request.postWithoutResponseBody(BASE_ENDPOINT.replace("{courseId}", course.getId().toString()).replace("{exerciseId}", programmingExercise.getId().toString()),
+                feedbackChannelRequest, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createFeedbackChannel_asInstructor_shouldCreateChannel() {
+    void createFeedbackChannel_asInstructor_shouldCreateChannel() throws Exception {
         long courseId = 1L;
         long exerciseId = 1L;
         ChannelDTO channelDTO = new ChannelDTO();
@@ -971,16 +969,10 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         FeedbackChannelRequestDTO feedbackChannelRequest = new FeedbackChannelRequestDTO(channelDTO, List.of("Sample feedback text"), "Sample testName");
 
-        String BASE_ENDPOINT = "/api/communication/courses/{courseId}/{exerciseId}/feedback-channel";
+        String BASE_ENDPOINT = "/api/communication/courses/{courseId}/exercises/{exerciseId}/feedback-channel";
 
-        ChannelDTO response = null;
-        try {
-            response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", Long.toString(courseId)).replace("{exerciseId}", Long.toString(exerciseId)),
-                    feedbackChannelRequest, ChannelDTO.class, HttpStatus.CREATED);
-        }
-        catch (Exception e) {
-            fail("Failed to create feedback channel", e);
-        }
+        ChannelDTO response = request.postWithResponseBody(BASE_ENDPOINT.replace("{courseId}", Long.toString(courseId)).replace("{exerciseId}", Long.toString(exerciseId)),
+                feedbackChannelRequest, ChannelDTO.class, HttpStatus.CREATED);
 
         assertThat(response).isNotNull();
         assertThat(response.getName()).isEqualTo("feedback-channel");
@@ -1005,12 +997,10 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         User instructor1 = userTestRepository.getUser();
         request.postWithoutLocation("/api/communication/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK, null);
         List<Channel> updatedChannels = channelRepository.findChannelsByCourseId(exampleCourseId);
-        updatedChannels.forEach(channel -> {
-            await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
-                var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), instructor1.getId());
-                assertThat(participant).isPresent().get().extracting(ConversationParticipant::getUnreadMessagesCount).isEqualTo(0L);
-            });
-        });
+        updatedChannels.forEach(channel -> await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+            var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), instructor1.getId());
+            assertThat(participant).isPresent().get().extracting(ConversationParticipant::getUnreadMessagesCount).isEqualTo(0L);
+        }));
 
     }
 
@@ -1033,6 +1023,67 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // cleanup
         conversationRepository.deleteById(initialChannel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldSendNotificationWhenUserIsRegisteredAndFeatureEnabled() throws Exception {
+        var channel = createChannel(true, TEST_PREFIX + "notification");
+
+        userUtilService.changeUser(testPrefix + "instructor1");
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register",
+                List.of(testPrefix + "student1", testPrefix + "student2"), HttpStatus.OK);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasAddedToChannelNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(exampleCourseId))
+                    .anyMatch(notification -> notification.getType() == 19);
+
+            assertThat(hasAddedToChannelNotification).isTrue();
+        });
+
+        conversationRepository.deleteById(channel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldSendNotificationWhenUserIsRemovedAndFeatureEnabled() throws Exception {
+        var channel = createChannel(true, TEST_PREFIX + "notification");
+        addUsersToConversation(channel.getId(), "student1", "student2");
+
+        userUtilService.changeUser(testPrefix + "instructor1");
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/deregister",
+                List.of(testPrefix + "student1", testPrefix + "student2"), HttpStatus.OK);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasRemovedFromChannelNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(exampleCourseId))
+                    .anyMatch(notification -> notification.getType() == 20);
+
+            assertThat(hasRemovedFromChannelNotification).isTrue();
+        });
+
+        conversationRepository.deleteById(channel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldSentNotificationWhenChannelIsAndFeatureEnabled() throws Exception {
+        var channel = createChannel(true, TEST_PREFIX + "notification");
+        addUsersToConversation(channel.getId(), "student1", "student2");
+
+        request.delete("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.OK);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasChannelDeletedNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(exampleCourseId))
+                    .anyMatch(notification -> notification.getType() == 18);
+
+            assertThat(hasChannelDeletedNotification).isTrue();
+        });
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {

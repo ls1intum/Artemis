@@ -9,13 +9,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
 
+import jakarta.annotation.PostConstruct;
+
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -25,6 +27,7 @@ import net.sourceforge.plantuml.FileFormatOption;
 import net.sourceforge.plantuml.SourceStringReader;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class PlantUmlService {
 
@@ -34,23 +37,26 @@ public class PlantUmlService {
 
     private static final String LIGHT_THEME_FILE_NAME = "puml-theme-artemislight.puml";
 
-    private static final Path PATH_TMP_THEME = Path.of(System.getProperty("java.io.tmpdir"), "artemis-puml-theme");
+    private final Path PATH_TMP_THEME;
 
     private final ResourceLoaderService resourceLoaderService;
 
-    public PlantUmlService(ResourceLoaderService resourceLoaderService) {
+    public PlantUmlService(ResourceLoaderService resourceLoaderService, @Value("${artemis.temp-path}") Path tempPath) {
         this.resourceLoaderService = resourceLoaderService;
+        this.PATH_TMP_THEME = tempPath.resolve("artemis-puml-theme");
     }
 
     /**
      * Initializes themes and sets system properties for PlantUML security when the application is ready.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      *
      * <p>
      * Deletes temporary theme files to ensure updates, ensures themes are available, and configures PlantUML security settings.
      *
      * @throws IOException if an I/O error occurs during file deletion
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @PostConstruct
     public void applicationReady() throws IOException {
         // Delete on first launch to ensure updates
         Files.deleteIfExists(PATH_TMP_THEME.resolve(DARK_THEME_FILE_NAME));

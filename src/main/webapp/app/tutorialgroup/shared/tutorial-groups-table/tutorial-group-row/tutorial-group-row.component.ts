@@ -1,13 +1,13 @@
-import { ChangeDetectionStrategy, Component, HostBinding, Input, TemplateRef, ViewEncapsulation } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { Course } from 'app/entities/course.model';
+import { ChangeDetectionStrategy, Component, HostBinding, TemplateRef, ViewEncapsulation, input } from '@angular/core';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { RouterLink } from '@angular/router';
 import { TutorialGroupUtilizationIndicatorComponent } from '../../tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MeetingPatternPipe } from 'app/tutorialgroup/shared/meeting-pattern.pipe';
+import { MeetingPatternPipe } from 'app/tutorialgroup/shared/pipe/meeting-pattern.pipe';
 
 @Component({
     selector: '[jhi-tutorial-group-row]',
@@ -21,34 +21,20 @@ export class TutorialGroupRowComponent {
     readonly Math = Math;
     @HostBinding('class') class = 'tutorial-group-row';
 
-    @Input()
-    showIdColumn = false;
+    readonly showIdColumn = input(false);
 
-    /**
-     * If true we show the campus column
-     */
-    @Input()
-    tutorialGroupsSplitAcrossMultipleCampuses = false;
-    /**
-     * If true we show the online / offline column
-     */
-    @Input()
-    mixOfOfflineAndOfflineTutorialGroups = false;
+    readonly tutorialGroupsSplitAcrossMultipleCampuses = input(false);
+    readonly mixOfOfflineAndOfflineTutorialGroups = input(false);
 
-    /**
-     * If true we show the language column
-     */
-    @Input()
-    mifOfDifferentLanguages = false;
+    readonly mifOfDifferentLanguages = input(false);
 
-    @Input()
-    showChannelColumn = false;
+    readonly showChannelColumn = input(false);
 
-    @Input() extraColumn: TemplateRef<any>;
+    readonly extraColumn = input<TemplateRef<any> | null>(null);
 
-    @Input() tutorialGroup: TutorialGroup;
+    readonly tutorialGroup = input.required<TutorialGroup>();
 
-    @Input() course: Course;
+    readonly course = input<Course>();
 
-    @Input() timeZone?: string = undefined;
+    readonly timeZone = input<string>();
 }

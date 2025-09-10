@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import {
     ControlValueAccessor,
     FormBuilder,
@@ -14,6 +14,7 @@ import {
 import { Subscription } from 'rxjs';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from '../language/translate.directive';
+import { CopyToClipboardButtonComponent } from 'app/shared/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 
 @Component({
     selector: 'jhi-confirm-entity-name',
@@ -31,7 +32,7 @@ import { TranslateDirective } from '../language/translate.directive';
             useExisting: ConfirmEntityNameComponent,
         },
     ],
-    imports: [NgClass, TranslateDirective, FormsModule, ReactiveFormsModule],
+    imports: [NgClass, TranslateDirective, FormsModule, ReactiveFormsModule, CopyToClipboardButtonComponent],
 })
 export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
     private fb = inject(FormBuilder);
@@ -42,8 +43,11 @@ export class ConfirmEntityNameComponent implements OnInit, OnDestroy, ControlVal
     @Input()
     set entityName(entityName: string) {
         this.currentEntityName = entityName;
+        this.entityNameSignal.set(entityName);
         this.onValidatorChange?.();
     }
+
+    entityNameSignal = signal<string>('');
 
     get entityName(): string {
         return this.currentEntityName;

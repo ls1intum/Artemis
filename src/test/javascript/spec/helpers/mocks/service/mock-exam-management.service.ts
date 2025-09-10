@@ -1,6 +1,6 @@
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 
 export class MockExamManagementService {
     findAllCurrentAndUpcomingExams() {

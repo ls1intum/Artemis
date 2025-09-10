@@ -11,9 +11,11 @@ import java.util.regex.Pattern;
 import jakarta.validation.Valid;
 
 import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,6 +45,7 @@ import io.jsonwebtoken.ExpiredJwtException;
  * Rest Controller for managing push notification device tokens for native clients.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/communication/push_notification/")
 public class PushNotificationResource {
@@ -108,17 +111,22 @@ public class PushNotificationResource {
             throw new IllegalArgumentException("Version code is not valid");
         }
 
-        PushNotificationApiType apiType = pushNotificationRegisterBody.apiType() != null ? pushNotificationRegisterBody.apiType() : PushNotificationApiType.DEFAULT;
-
-        User user = userRepository.getUser();
-
-        PushNotificationDeviceConfiguration deviceConfiguration = new PushNotificationDeviceConfiguration(pushNotificationRegisterBody.token(),
-                pushNotificationRegisterBody.deviceType(), expirationDate, newKey.getEncoded(), user, apiType, pushNotificationRegisterBody.versionCode());
+        final var deviceConfiguration = getPushNotificationDeviceConfiguration(pushNotificationRegisterBody, expirationDate, newKey);
         pushNotificationDeviceConfigurationRepository.save(deviceConfiguration);
 
         var encodedKey = Base64.getEncoder().encodeToString(newKey.getEncoded());
 
         return ResponseEntity.ok(new PushNotificationRegisterDTO(encodedKey, Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM));
+    }
+
+    private PushNotificationDeviceConfiguration getPushNotificationDeviceConfiguration(PushNotificationRegisterBody pushNotificationRegisterBody, Date expirationDate,
+            SecretKey newKey) {
+        PushNotificationApiType apiType = pushNotificationRegisterBody.apiType() != null ? pushNotificationRegisterBody.apiType() : PushNotificationApiType.DEFAULT;
+
+        User user = userRepository.getUser();
+
+        return new PushNotificationDeviceConfiguration(pushNotificationRegisterBody.token(), pushNotificationRegisterBody.deviceType(), expirationDate, newKey.getEncoded(), user,
+                apiType, pushNotificationRegisterBody.versionCode());
     }
 
     /**

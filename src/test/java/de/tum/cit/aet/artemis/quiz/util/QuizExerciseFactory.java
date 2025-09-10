@@ -15,7 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.util.ResourceUtils;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseFactory;
@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizGroup;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
@@ -48,6 +47,8 @@ import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
  */
 public class QuizExerciseFactory {
 
+    public static final String DRAG_ITEM_PATH_PREFIX = "drag-and-drop/drag-items/";
+
     /**
      * Creates a quiz exercise with the given dates and adds it to the course.
      * The quiz consist of one multiple choice, one drag and drop, and one short answer question.
@@ -63,6 +64,32 @@ public class QuizExerciseFactory {
         QuizExercise quizExercise = generateQuizExercise(releaseDate, dueDate, quizMode, course);
         addQuestionsToQuizExercise(quizExercise);
 
+        return quizExercise;
+    }
+
+    /**
+     * Creates a synchronized quiz exercise with the given dates and adds it to the course.
+     * The quiz consist of one multiple choice, one drag and drop, and one short answer question.
+     *
+     * @param course      The course the quiz should be added to.
+     * @param releaseDate The release date of the quiz.
+     * @param startTime   The startTime of the batch (synchronized quizzes have exactly one batch in which all participate).
+     * @param duration    The duration of the quiz in seconds.
+     * @return The created quiz.
+     */
+    public static QuizExercise createSynchronizedQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime startTime, int duration) {
+        QuizExercise quizExercise = (QuizExercise) ExerciseFactory.populateExercise(new QuizExercise(), releaseDate, null, null, course);
+        quizExercise.setTitle("Synchronized Quiz");
+        quizExercise.setProblemStatement(null);
+        quizExercise.setGradingInstructions(null);
+        quizExercise.setPresentationScoreEnabled(false);
+        quizExercise.setIsOpenForPractice(false);
+        quizExercise.setAllowedNumberOfAttempts(1);
+        quizExercise.setDuration(duration);
+        quizExercise.setRandomizeQuestionOrder(true);
+        quizExercise.setQuizMode(QuizMode.SYNCHRONIZED);
+        quizExercise.setQuizBatches(Set.of(generateQuizBatch(quizExercise, startTime)));
+        addQuestionsToQuizExercise(quizExercise);
         return quizExercise;
     }
 
@@ -171,11 +198,11 @@ public class QuizExerciseFactory {
 
         var dragItem1 = new DragItem().text("D1");
         dragItem1.setTempID(generateTempId());
-        var dragItem2 = new DragItem().pictureFilePath("dragItemImage2.png");
+        var dragItem2 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "dragItemImage2.png");
         dragItem2.setTempID(generateTempId());
         var dragItem3 = new DragItem().text("D3");
         dragItem3.setTempID(generateTempId());
-        var dragItem4 = new DragItem().pictureFilePath("dragItemImage4.png");
+        var dragItem4 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "dragItemImage4.png");
         dragItem4.setTempID(generateTempId());
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
@@ -474,12 +501,12 @@ public class QuizExerciseFactory {
         dragItem4.setTempID(generateTempId());
         try {
             FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"),
-                    FilePathService.getDragItemFilePath().resolve("10").resolve("drag_item.jpg").toFile());
+                    FilePathConverter.getDragItemFilePath().resolve("10").resolve("drag_item.jpg").toFile());
         }
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        var dragItem5 = new DragItem().pictureFilePath("drag-and-drop/drag-items/10/drag_item.jpg");
+        var dragItem5 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "10/drag_item.jpg");
         dragItem4.setInvalid(true);
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
@@ -713,72 +740,5 @@ public class QuizExerciseFactory {
      */
     public static void setQuizQuestionsIdToNull(QuizSubmission quizSubmission) {
         quizSubmission.getSubmittedAnswers().forEach(answer -> answer.getQuizQuestion().setId(null));
-    }
-
-    /**
-     * Creates a quiz group with the given name.
-     *
-     * @param name The name of the quiz group.
-     * @return The created quiz group.
-     */
-    @NotNull
-    public static QuizGroup createQuizGroup(String name) {
-        QuizGroup quizGroup = new QuizGroup();
-        quizGroup.setName(name);
-        return quizGroup;
-    }
-
-    /**
-     * Creates a multiple choice question with the given title and quiz group.
-     *
-     * @param title     The title of the quiz question.
-     * @param quizGroup The group of the quiz question.
-     * @return The created multiple choice question.
-     */
-    @NotNull
-    public static MultipleChoiceQuestion createMultipleChoiceQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
-        MultipleChoiceQuestion quizQuestion = QuizExerciseFactory.createMultipleChoiceQuestion();
-        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
-        return quizQuestion;
-    }
-
-    /**
-     * Creates a drag and drop question with the given title and quiz group.
-     *
-     * @param title     The title of the quiz question.
-     * @param quizGroup The group of the quiz question.
-     * @return The created drag and drop question.
-     */
-    @NotNull
-    public static DragAndDropQuestion createDragAndDropQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
-        DragAndDropQuestion quizQuestion = QuizExerciseFactory.createDragAndDropQuestion();
-        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
-        return quizQuestion;
-    }
-
-    /**
-     * Creates a short answer question with the given title and quiz group.
-     *
-     * @param title     The title of the quiz question.
-     * @param quizGroup The group of the quiz question.
-     * @return The created short answer question.
-     */
-    @NotNull
-    public static ShortAnswerQuestion createShortAnswerQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
-        ShortAnswerQuestion quizQuestion = QuizExerciseFactory.createShortAnswerQuestion();
-        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
-        return quizQuestion;
-    }
-
-    /**
-     * Sets the title and group of the quiz question.
-     *
-     * @param quizQuestion The quiz question to be updated.
-     * @param title        The new title of the quiz question.
-     * @param quizGroup    The new group of the quiz question.
-     */
-    private static void setQuizQuestionsTitleAndGroup(QuizQuestion quizQuestion, String title, QuizGroup quizGroup) {
-        quizQuestion.setTitle(title);
-        quizQuestion.setQuizGroup(quizGroup);
     }
 }

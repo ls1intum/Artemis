@@ -1,0 +1,76 @@
+<div class="date-box">
+    <div class="popover-title mb-2">
+        <h5>
+            @if (isMultiplePages()) {
+                <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.hideMultiplePages" [translateValues]="{ param: pagesDisplay() }"></span>
+            } @else {
+                <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.hidePage" [translateValues]="{ param: pagesDisplay() }"></span>
+            }
+        </h5>
+    </div>
+    <div class="checkbox-container mb-3">
+        <input type="checkbox" id="date-box-checkbox" [ngModel]="hideForever()" (ngModelChange)="onHideForeverChange($event)" />
+        <label for="date-box-checkbox">
+            <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.hideForever"></span>
+        </label>
+    </div>
+    <div class="button-container">
+        <button class="btn btn-primary" (click)="selectCalendar()" [disabled]="hideForever()">
+            <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.selectDate"></span>
+        </button>
+        <button class="btn btn-primary" (click)="selectExercise()" [disabled]="hideForever()">
+            <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.selectExercise"></span>
+        </button>
+    </div>
+    @if (calendarSelected()) {
+        <div class="calendar-container mt-3">
+            <input type="datetime-local" class="form-control" [ngModel]="defaultDate()" (ngModelChange)="defaultDate.set($event)" [min]="defaultDate()" />
+        </div>
+    }
+    @if (exerciseSelected()) {
+        <div class="exercise-container mt-2">
+            @if (categorizedExercises().length === 0) {
+                <p class="text-muted">
+                    <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.noExercises"></span>
+                </p>
+            } @else {
+                @for (typeGroup of categorizedExercises(); track typeGroup.type) {
+                    <div class="type-section">
+                        <h6 class="type-header text-capitalize">
+                            <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.exerciseTypeTitle" [translateValues]="{ param: typeGroup.type }"></span>
+                        </h6>
+                        <div class="list-group">
+                            @for (exercise of typeGroup.exercises; track exercise.id) {
+                                <label class="list-group-item list-group-item-action" [class.active]="selectedExercise()?.id === exercise.id">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <div class="form-check mb-0">
+                                            <input
+                                                class="form-check-input"
+                                                type="radio"
+                                                name="exercise-selection"
+                                                [id]="'exercise-' + exercise.id"
+                                                [value]="exercise.id"
+                                                [checked]="selectedExercise()?.id === exercise.id"
+                                                (change)="selectedExercise.set(exercise)"
+                                            />
+                                            <span class="ms-2">{{ exercise.title }}</span>
+                                        </div>
+                                        <small class="text-muted">{{ formatDueDate(exercise.dueDate!) }}</small>
+                                    </div>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    }
+    <div class="submit-container mt-3 d-flex justify-content-between">
+        <button class="btn btn-secondary" (click)="selectionCancelledOutput.emit(true)">
+            <span jhiTranslate="entity.action.cancel"></span>
+        </button>
+        <button class="btn btn-primary" (click)="onSubmit()" [disabled]="isSubmitDisabled()">
+            <span jhiTranslate="entity.action.save"></span>
+        </button>
+    </div>
+</div>

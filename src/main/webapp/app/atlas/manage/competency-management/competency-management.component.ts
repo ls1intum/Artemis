@@ -1,12 +1,12 @@
 import { Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
-import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/entities/competency.model';
+import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
 import { firstValueFrom, map } from 'rxjs';
 import { faCircleQuestion, faEdit, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -14,7 +14,7 @@ import {
     ImportAllCourseCompetenciesModalComponent,
     ImportAllCourseCompetenciesResult,
 } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
-import { CourseCompetencyApiService } from 'app/atlas/shared/course-competency-api.service';
+import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -22,11 +22,23 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CourseCompetenciesRelationModalComponent } from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
 import { CourseCompetencyExplanationModalComponent } from 'app/atlas/manage/course-competency-explanation-modal/course-competency-explanation-modal.component';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 @Component({
     selector: 'jhi-competency-management',
     templateUrl: './competency-management.component.html',
-    imports: [CompetencyManagementTableComponent, TranslateDirective, FontAwesomeModule, RouterModule],
+    imports: [
+        CompetencyManagementTableComponent,
+        TranslateDirective,
+        FontAwesomeModule,
+        RouterModule,
+        CourseTitleBarTitleComponent,
+        CourseTitleBarTitleDirective,
+        CourseTitleBarActionsDirective,
+    ],
 })
 export class CompetencyManagementComponent implements OnInit {
     protected readonly faEdit = faEdit;
@@ -48,6 +60,7 @@ export class CompetencyManagementComponent implements OnInit {
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly sessionStorageService = inject(SessionStorageService);
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly isLoading = signal<boolean>(false);
@@ -55,10 +68,6 @@ export class CompetencyManagementComponent implements OnInit {
     readonly courseCompetencies = signal<CourseCompetency[]>([]);
     competencies = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.COMPETENCY));
     prerequisites = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.PREREQUISITE));
-
-    private readonly irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo?.activeProfiles?.includes(PROFILE_IRIS))), {
-        initialValue: false,
-    });
 
     irisCompetencyGenerationEnabled = signal<boolean>(false);
     standardizedCompetenciesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies), { requireSync: true });
@@ -69,7 +78,7 @@ export class CompetencyManagementComponent implements OnInit {
             untracked(async () => await this.loadCourseCompetencies(courseId));
         });
         effect(() => {
-            const irisEnabled = this.irisEnabled();
+            const irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
             untracked(async () => {
                 if (irisEnabled) {
                     await this.loadIrisEnabled();
@@ -79,11 +88,11 @@ export class CompetencyManagementComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        const lastVisit = sessionStorage.getItem('lastTimeVisitedCourseCompetencyExplanation');
+        const lastVisit = this.sessionStorageService.retrieve('alreadyVisitedCompetencyManagement');
         if (!lastVisit) {
             this.openCourseCompetencyExplanation();
         }
-        sessionStorage.setItem('lastTimeVisitedCourseCompetencyExplanation', Date.now().toString());
+        this.sessionStorageService.store('alreadyVisitedCompetencyManagement', true);
     }
 
     private async loadIrisEnabled() {

@@ -26,13 +26,12 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyDragAndDropAllOrNothing;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyDragAndDropProportionalWithPenalty;
@@ -52,7 +51,6 @@ public class DragAndDropQuestion extends QuizQuestion {
     private final transient FileService fileService = new FileService();
 
     @Column(name = "background_file_path")
-    @JsonView(QuizView.Before.class)
     private String backgroundFilePath;
 
     // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
@@ -61,7 +59,6 @@ public class DragAndDropQuestion extends QuizQuestion {
     @JoinColumn(name = "question_id")
     @OrderColumn
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     private List<DropLocation> dropLocations = new ArrayList<>();
 
     // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
@@ -70,7 +67,6 @@ public class DragAndDropQuestion extends QuizQuestion {
     @JoinColumn(name = "question_id")
     @OrderColumn
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     private List<DragItem> dragItems = new ArrayList<>();
 
     // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
@@ -79,7 +75,6 @@ public class DragAndDropQuestion extends QuizQuestion {
     @JoinColumn(name = "question_id")
     @OrderColumn
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.After.class)
     private List<DragAndDropMapping> correctMappings = new ArrayList<>();
 
     public String getBackgroundFilePath() {
@@ -94,6 +89,10 @@ public class DragAndDropQuestion extends QuizQuestion {
         return dropLocations;
     }
 
+    public void setDropLocations(List<DropLocation> dropLocations) {
+        this.dropLocations = dropLocations;
+    }
+
     public DragAndDropQuestion addDropLocation(DropLocation dropLocation) {
         this.dropLocations.add(dropLocation);
         dropLocation.setQuestion(this);
@@ -106,12 +105,12 @@ public class DragAndDropQuestion extends QuizQuestion {
         return this;
     }
 
-    public void setDropLocations(List<DropLocation> dropLocations) {
-        this.dropLocations = dropLocations;
-    }
-
     public List<DragItem> getDragItems() {
         return dragItems;
+    }
+
+    public void setDragItems(List<DragItem> dragItems) {
+        this.dragItems = dragItems;
     }
 
     public DragAndDropQuestion addDragItem(DragItem dragItem) {
@@ -126,12 +125,12 @@ public class DragAndDropQuestion extends QuizQuestion {
         return this;
     }
 
-    public void setDragItems(List<DragItem> dragItems) {
-        this.dragItems = dragItems;
-    }
-
     public List<DragAndDropMapping> getCorrectMappings() {
         return correctMappings;
+    }
+
+    public void setCorrectMappings(List<DragAndDropMapping> dragAndDropMappings) {
+        this.correctMappings = dragAndDropMappings;
     }
 
     public DragAndDropQuestion addCorrectMapping(DragAndDropMapping dragAndDropMapping) {
@@ -144,10 +143,6 @@ public class DragAndDropQuestion extends QuizQuestion {
         this.correctMappings.remove(dragAndDropMapping);
         dragAndDropMapping.setQuestion(null);
         return this;
-    }
-
-    public void setCorrectMappings(List<DragAndDropMapping> dragAndDropMappings) {
-        this.correctMappings = dragAndDropMappings;
     }
 
     @Override
@@ -190,7 +185,7 @@ public class DragAndDropQuestion extends QuizQuestion {
         // delete old file if necessary
         try {
             if (backgroundFilePath != null) {
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(backgroundFilePath)), 0);
+                fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(backgroundFilePath), FilePathType.DRAG_AND_DROP_BACKGROUND), 0);
             }
         }
         catch (FilePathParsingException e) {
@@ -450,4 +445,5 @@ public class DragAndDropQuestion extends QuizQuestion {
         question.setId(getId());
         return question;
     }
+
 }

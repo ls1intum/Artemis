@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
  */
 @Validated
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/assessment/")
 public class RatingResource {
@@ -136,9 +138,9 @@ public class RatingResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         List<Rating> responseRatings = ratingService.getAllRatingsByCourse(courseId);
         responseRatings.forEach(rating -> {
+            rating.getResult().getSubmission().getParticipation().getExercise().setCourse(null);
+            rating.getResult().getSubmission().getParticipation().getExercise().setExerciseGroup(null);
             rating.getResult().setSubmission(null);
-            rating.getResult().getParticipation().getExercise().setCourse(null);
-            rating.getResult().getParticipation().getExercise().setExerciseGroup(null);
         });
         return ResponseEntity.ok(responseRatings);
     }
@@ -151,7 +153,7 @@ public class RatingResource {
     private void checkIfUserIsOwnerOfSubmissionElseThrow(Long resultId) {
         User user = userRepository.getUser();
         Result result = resultRepository.findByIdElseThrow(resultId);
-        if (!authCheckService.isOwnerOfParticipation((StudentParticipation) result.getParticipation(), user)) {
+        if (!authCheckService.isOwnerOfParticipation((StudentParticipation) result.getSubmission().getParticipation(), user)) {
             log.warn("User {} has tried to access rating for result {}", user.getLogin(), resultId);
             throw new AccessForbiddenException();
         }

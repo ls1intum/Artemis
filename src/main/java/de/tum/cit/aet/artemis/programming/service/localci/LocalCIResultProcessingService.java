@@ -7,21 +7,26 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -47,17 +52,17 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 
 @Profile(PROFILE_LOCALCI)
+@Lazy
 @Service
 public class LocalCIResultProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIResultProcessingService.class);
 
     private static final int BUILD_STATISTICS_UPDATE_THRESHOLD = 10;
-
-    private final HazelcastInstance hazelcastInstance;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
@@ -77,13 +82,20 @@ public class LocalCIResultProcessingService {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
+    private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
+
     private UUID listenerId;
 
-    public LocalCIResultProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ProgrammingExerciseGradingService programmingExerciseGradingService,
-            ProgrammingMessagingService programmingMessagingService, BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
-            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService) {
-        this.hazelcastInstance = hazelcastInstance;
+    @Value("${artemis.continuous-integration.concurrent-result-processing-size:4}")
+    private int concurrentResultProcessingSize;
+
+    private ThreadPoolExecutor resultProcessingExecutor;
+
+    public LocalCIResultProcessingService(ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
+            BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository,
+            ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
+            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService,
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -93,14 +105,28 @@ public class LocalCIResultProcessingService {
         this.buildLogEntryService = buildLogEntryService;
         this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
         this.distributedDataAccessService = distributedDataAccessService;
+        this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
     }
 
     /**
      * Initializes the result queue, build agent information map and the locks.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
-    @EventListener(ApplicationReadyEvent.class)
+    @PostConstruct
     public void init() {
-        this.listenerId = distributedDataAccessService.getDistributedResultQueue().addItemListener(new ResultQueueListener(), true);
+        initResultProcessingExecutor();
+        this.listenerId = distributedDataAccessService.getDistributedBuildResultQueue().addItemListener(new ResultQueueListener(), true);
+    }
+
+    private void initResultProcessingExecutor() {
+        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-result-%d")
+                .setUncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in result processing thread {}", t.getName(), e)).build();
+        // buffer up to 1000 tasks before rejecting new tasks. Rejections will not lead to loss because the results maintain in the queue but this speeds up
+        // result processing under high load so we do not need to wait for the polling schedule if many results are processed very fast.
+        resultProcessingExecutor = new ThreadPoolExecutor(concurrentResultProcessingSize, concurrentResultProcessingSize, 0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(1000), threadFactory, new ThreadPoolExecutor.AbortPolicy());
+        log.info("Initialized LocalCI result processing executor with pool size {}", concurrentResultProcessingSize);
     }
 
     /**
@@ -111,22 +137,57 @@ public class LocalCIResultProcessingService {
     public void removeListener() {
         // check if Hazelcast is still active, before invoking this
         try {
-            if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
-                distributedDataAccessService.getDistributedResultQueue().removeItemListener(this.listenerId);
+            if (distributedDataAccessService.isInstanceRunning()) {
+                distributedDataAccessService.getDistributedBuildResultQueue().removeItemListener(this.listenerId);
             }
         }
         catch (HazelcastInstanceNotActiveException e) {
             log.error("Could not remove listener as hazelcast instance is not active.");
         }
+        finally {
+            shutdownResultProcessingExecutor();
+        }
+    }
+
+    private void shutdownResultProcessingExecutor() {
+        if (resultProcessingExecutor == null || resultProcessingExecutor.isShutdown()) {
+            return;
+        }
+
+        resultProcessingExecutor.shutdown();
+        try {
+            boolean terminated = resultProcessingExecutor.awaitTermination(5, TimeUnit.SECONDS);
+            if (!terminated) {
+                log.warn("Result processing executor did not terminate in time, forcing shutdown");
+                resultProcessingExecutor.shutdownNow();
+            }
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("Result processing executor termination interrupted", e);
+            resultProcessingExecutor.shutdownNow();
+        }
     }
 
     /**
-     * Processes the build job results published by the build agents, notifies the user about the result and saves the result to the database.
+     * Submit an asynchronous task that polls one item from the result queue and processes it.
      */
-    public void processResult() {
+    public void processResultAsync() {
+        try {
+            resultProcessingExecutor.execute(this::processResult);
+        }
+        catch (RejectedExecutionException ex) {
+            // this is not an issue as we rely on the queue and will continue polling from it once another
+            // event listener or schedule triggers
+            log.debug("Result processing executor queue is full.");
+        }
+    }
 
-        // set lock to prevent multiple nodes from processing the same build job
-        ResultQueueItem resultQueueItem = distributedDataAccessService.getDistributedResultQueue().poll();
+    /**
+     * Polls a build job result from the build job queue, notifies the user about the result and saves the result to the database.
+     */
+    private void processResult() {
+        ResultQueueItem resultQueueItem = distributedDataAccessService.getDistributedBuildResultQueue().poll();
 
         if (resultQueueItem == null) {
             return;
@@ -196,7 +257,7 @@ public class LocalCIResultProcessingService {
                         programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
                     }
                     else {
-                        programmingMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
+                        programmingSubmissionMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
                                 new BuildTriggerWebsocketError("Result could not be processed", programmingExerciseParticipation.getId()));
                     }
 
@@ -241,9 +302,7 @@ public class LocalCIResultProcessingService {
     private BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
         try {
             BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
-            buildJobRepository.findByBuildJobId(queueItem.id()).ifPresent(existingBuildJob -> {
-                buildJob.setId(existingBuildJob.getId());
-            });
+            buildJobRepository.findByBuildJobId(queueItem.id()).ifPresent(existingBuildJob -> buildJob.setId(existingBuildJob.getId()));
             return buildJobRepository.save(buildJob);
         }
         catch (Exception e) {
@@ -293,7 +352,7 @@ public class LocalCIResultProcessingService {
         @Override
         public void itemAdded(ItemEvent<ResultQueueItem> event) {
             log.debug("Result of build job with id {} added to queue", event.getItem().buildJobQueueItem().id());
-            processResult();
+            processResultAsync();
         }
 
         @Override

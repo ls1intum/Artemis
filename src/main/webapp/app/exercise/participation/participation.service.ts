@@ -3,23 +3,18 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Exercise } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import dayjs from 'dayjs/esm';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
-export type EntityBlobResponseType = HttpResponse<Blob>;
-export type BuildArtifact = {
-    fileName: string;
-    fileContent: Blob;
-};
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationService {
@@ -89,11 +84,6 @@ export class ParticipationService {
         return this.http.delete<void>(`${this.resourceUrl}/${participationId}`, { params: options, observe: 'response' });
     }
 
-    deleteForGuidedTour(participationId: number, req?: any): Observable<HttpResponse<any>> {
-        const options = createRequestOption(req);
-        return this.http.delete<void>(`api/exercise/guided-tour/participations/${participationId}`, { params: options, observe: 'response' });
-    }
-
     cleanupBuildPlan(participation: StudentParticipation): Observable<EntityResponseType> {
         const copy = this.convertParticipationDatesFromClient(participation);
         return this.http
@@ -120,7 +110,6 @@ export class ParticipationService {
     protected convertParticipationResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             ParticipationService.convertParticipationDatesFromServer(res.body);
-            res.body.results = this.submissionService.convertResultArrayDatesFromServer(res.body.results);
             res.body.submissions = this.submissionService.convertSubmissionArrayDatesFromServer(res.body.submissions);
             res.body.exercise = ExerciseService.convertExerciseDatesFromServer(res.body.exercise);
         }
@@ -230,9 +219,6 @@ export class ParticipationService {
         }
 
         participations.forEach((participation) => {
-            if (participation.results) {
-                combinedParticipation.results = combinedParticipation.results ? combinedParticipation.results.concat(participation.results) : participation.results;
-            }
             if (participation.submissions) {
                 combinedParticipation.submissions = combinedParticipation.submissions
                     ? combinedParticipation.submissions.concat(participation.submissions)
@@ -241,11 +227,6 @@ export class ParticipationService {
         });
 
         // make sure that results and submissions are connected with the participation because some components need this
-        if (combinedParticipation.results?.length) {
-            combinedParticipation.results.forEach((result) => {
-                result.participation = combinedParticipation;
-            });
-        }
         if (combinedParticipation.submissions?.length) {
             combinedParticipation.submissions.forEach((submission) => {
                 submission.participation = combinedParticipation;

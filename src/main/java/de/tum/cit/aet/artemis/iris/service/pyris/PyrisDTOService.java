@@ -7,16 +7,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisFeedbackDTO;
@@ -27,26 +25,20 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
+@Lazy
 @Service
 @Profile(PROFILE_IRIS)
 public class PyrisDTOService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisDTOService.class);
 
-    private final GitService gitService;
-
     private final RepositoryService repositoryService;
 
-    private final ProfileService profileService;
-
-    public PyrisDTOService(GitService gitService, RepositoryService repositoryService, ProfileService profileService) {
-        this.gitService = gitService;
+    public PyrisDTOService(RepositoryService repositoryService) {
         this.repositoryService = repositoryService;
-        this.profileService = profileService;
     }
 
     /**
@@ -59,9 +51,6 @@ public class PyrisDTOService {
     public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseDTO(ProgrammingExercise exercise) {
         var templateRepositoryContents = getFilteredRepositoryContents(exercise.getTemplateParticipation());
         var solutionRepositoryContents = getFilteredRepositoryContents(exercise.getSolutionParticipation());
-
-        // var templateRepositoryContents = new HashMap<String, String>();
-        // var solutionRepositoryContents = new HashMap<String, String>();
 
         Map<String, String> testsRepositoryContents = getRepositoryContents(exercise.getVcsTestRepositoryUri());
 
@@ -134,30 +123,12 @@ public class PyrisDTOService {
      * @param repositoryUri the repositoryUri of the repository
      * @return the repository or empty if it could not be fetched
      */
-    private Map<String, String> getRepositoryContents(VcsRepositoryUri repositoryUri) {
+    private Map<String, String> getRepositoryContents(LocalVCRepositoryUri repositoryUri) {
         try {
-            if (profileService.isLocalVcsActive()) {
-                return Optional.ofNullable(gitService.getBareRepository(repositoryUri)).map(bareRepository -> {
-                    var lastCommitObjectId = gitService.getLastCommitHash(repositoryUri);
-                    if (lastCommitObjectId == null) {
-                        return null;
-                    }
-                    var lastCommitHash = lastCommitObjectId.getName();
-                    try {
-                        return repositoryService.getFilesContentFromBareRepository(bareRepository, lastCommitHash);
-                    }
-                    catch (IOException e) {
-                        log.error("Could not fetch repository contents from bare repository", e);
-                        return null;
-                    }
-                }).orElse(Map.of());
-            }
-            else {
-                return Optional.ofNullable(gitService.getOrCheckoutRepository(repositoryUri, true)).map(repositoryService::getFilesContentFromWorkingCopy).orElse(Map.of());
-            }
+            return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repositoryUri);
         }
-        catch (GitAPIException e) {
-            log.error("Could not fetch repository", e);
+        catch (IOException e) {
+            log.error("Could not get repository content", e);
             return Map.of();
         }
     }

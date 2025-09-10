@@ -25,10 +25,7 @@ public record CommitInfoDTO(String hash, String message, ZonedDateTime timestamp
      */
     public static CommitInfoDTO of(RevCommit commit) {
         var authorIdent = commit.getAuthorIdent();
-        var commitTime = authorIdent.getWhen();
-        var timeZone = authorIdent.getTimeZone();
-        var commitTimestamp = ZonedDateTime.ofInstant(commitTime.toInstant(), timeZone.toZoneId());
-
+        var commitTimestamp = ZonedDateTime.ofInstant(authorIdent.getWhenAsInstant(), authorIdent.getZoneId());
         return new CommitInfoDTO(commit.getId().getName(), commit.getFullMessage(), commitTimestamp, commit.getAuthorIdent().getName(), commit.getAuthorIdent().getEmailAddress());
     }
 }

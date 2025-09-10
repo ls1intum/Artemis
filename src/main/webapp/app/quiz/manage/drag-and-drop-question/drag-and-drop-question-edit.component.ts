@@ -6,33 +6,33 @@ import {
     EventEmitter,
     Input,
     OnChanges,
+    OnDestroy,
     OnInit,
     Output,
+    OutputRefSubscription,
     SimpleChanges,
-    ViewChild,
     ViewEncapsulation,
     inject,
+    viewChild,
 } from '@angular/core';
-import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
+import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
-import { DragState } from 'app/entities/quiz/drag-state.enum';
+import { DragState } from 'app/quiz/shared/entities/drag-state.enum';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { DragItem } from 'app/entities/quiz/drag-item.model';
-import { DropLocation } from 'app/entities/quiz/drop-location.model';
-import { QuizQuestionEdit } from 'app/quiz/manage/quiz-question-edit.interface';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
+import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
+import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { cloneDeep } from 'lodash-es';
 import { round } from 'app/shared/util/utils';
 import { MAX_SIZE_UNIT } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import { debounceTime, filter } from 'rxjs/operators';
-import { ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent, ImageLoadingStatus } from 'app/shared/image/image.component';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
-import { FileService } from 'app/shared/http/file.service';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -61,12 +61,13 @@ import {
     faUpload,
 } from '@fortawesome/free-solid-svg-icons';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { FileService } from 'app/shared/service/file.service';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
     templateUrl: './drag-and-drop-question-edit.component.html',
     providers: [DragAndDropQuestionUtil],
-    styleUrls: ['./drag-and-drop-question-edit.component.scss', '../quiz-exercise.scss', '../../../../quiz/shared/quiz.scss'],
+    styleUrls: ['./drag-and-drop-question-edit.component.scss', '../exercise/quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         FaIconComponent,
@@ -77,7 +78,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
         QuizScoringInfoModalComponent,
         MarkdownEditorMonacoComponent,
         CdkDropListGroup,
-        SecuredImageComponent,
+        ImageComponent,
         NgClass,
         CdkDropList,
         NgStyle,
@@ -89,15 +90,37 @@ import { addPublicFilePrefix } from 'app/app.constants';
         ArtemisTranslatePipe,
     ],
 })
-export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
+export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit, OnDestroy {
+    protected readonly faBan = faBan;
+    protected readonly faPlus = faPlus;
+    protected readonly faTrash = faTrash;
+    protected readonly faUndo = faUndo;
+    protected readonly faFont = faFont;
+    protected readonly faEye = faEye;
+    protected readonly faChevronUp = faChevronUp;
+    protected readonly faChevronDown = faChevronDown;
+    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faBars = faBars;
+    protected readonly faUnlink = faUnlink;
+    protected readonly faCopy = faCopy;
+    protected readonly farFileImage = faFileImage;
+    protected readonly faAngleRight = faAngleRight;
+    protected readonly faAngleDown = faAngleDown;
+    protected readonly faUpload = faUpload;
+    protected readonly faScissors = faScissors;
+
+    readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
+
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
     private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
     private fileService = inject(FileService);
 
-    @ViewChild('clickLayer', { static: false }) private clickLayer: ElementRef;
-    @ViewChild('backgroundImage ', { static: false }) private backgroundImage: SecuredImageComponent;
-    @ViewChild('markdownEditor', { static: false }) private markdownEditor: MarkdownEditorMonacoComponent;
+    private readonly clickLayer = viewChild.required<ElementRef>('clickLayer');
+    private readonly backgroundImage = viewChild.required<ImageComponent>('backgroundImage');
+    private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
+
+    private adjustClickLayerWidthSubscription?: OutputRefSubscription;
 
     @Input() question: DragAndDropQuestion;
     @Input() questionIndex: number;
@@ -144,27 +167,6 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
     dragAndDropDomainActions = [this.explanationAction, this.hintAction];
 
-    // Icons
-    faBan = faBan;
-    faPlus = faPlus;
-    faTrash = faTrash;
-    faUndo = faUndo;
-    faFont = faFont;
-    faEye = faEye;
-    faChevronUp = faChevronUp;
-    faChevronDown = faChevronDown;
-    faPencilAlt = faPencilAlt;
-    faBars = faBars;
-    faUnlink = faUnlink;
-    faCopy = faCopy;
-    farFileImage = faFileImage;
-    faAngleRight = faAngleRight;
-    faAngleDown = faAngleDown;
-    faUpload = faUpload;
-    faScissors = faScissors;
-
-    readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
-
     /**
      * Actions when initializing component.
      */
@@ -188,6 +190,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                 }
             }
         }
+    }
+
+    ngOnDestroy(): void {
+        this.adjustClickLayerWidthSubscription?.unsubscribe();
     }
 
     /**
@@ -234,13 +240,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             }
         }
 
-        this.backgroundImage.endLoadingProcess
-            .pipe(
-                filter((loadingStatus) => loadingStatus === ImageLoadingStatus.SUCCESS),
-                // Some time until image render. Need to wait until image width is computed.
-                debounceTime(300),
-            )
-            .subscribe(() => this.adjustClickLayerWidth());
+        this.adjustClickLayerWidthSubscription = this.backgroundImage().loadingStatus.subscribe((loadingStatus) => {
+            if (loadingStatus === ImageLoadingStatus.SUCCESS) {
+                setTimeout(() => this.adjustClickLayerWidth(), 300);
+            }
+        });
+
         // render import images on UI immediatly
         this.makeFileMapPreview();
         // Trigger click layer width adjustment upon window resize.
@@ -254,11 +259,11 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         // Make the background image visible upon successful image load. Initially it is set to hidden and not
         // conditionally loaded via '*ngIf' because otherwise the reference would be undefined and hence we
         // wouldn't be able to subscribe to the loading process updates.
-        this.backgroundImage.element.nativeElement.style.visibility = 'visible';
+        this.backgroundImage().element.nativeElement.style.visibility = 'visible';
 
         // Adjust the click layer to correspond to the area of the background image.
-        this.clickLayer.nativeElement.style.width = `${this.backgroundImage.element.nativeElement.offsetWidth}px`;
-        this.clickLayer.nativeElement.style.left = `${this.backgroundImage.element.nativeElement.offsetLeft}px`;
+        this.clickLayer().nativeElement.style.width = `${this.backgroundImage().element.nativeElement.offsetWidth}px`;
+        this.clickLayer().nativeElement.style.left = `${this.backgroundImage().element.nativeElement.offsetLeft}px`;
     }
 
     /**
@@ -326,7 +331,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     mouseMove(event: MouseEvent): void {
         // Update mouse x and y value
-        const backgroundElement = this.clickLayer.nativeElement as HTMLElement;
+        const backgroundElement = this.clickLayer().nativeElement as HTMLElement;
         const backgroundOffsetLeft = backgroundElement.getBoundingClientRect().x + window.scrollX;
         const backgroundOffsetTop = backgroundElement.getBoundingClientRect().y + window.scrollY;
         const backgroundWidth = backgroundElement.offsetWidth;
@@ -385,7 +390,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         if (this.draggingState !== DragState.NONE) {
             switch (this.draggingState) {
                 case DragState.CREATE:
-                    const backgroundElement = this.clickLayer.nativeElement as HTMLElement;
+                    const backgroundElement = this.clickLayer().nativeElement as HTMLElement;
                     const backgroundWidth = backgroundElement.offsetWidth;
                     const backgroundHeight = backgroundElement.offsetHeight;
                     if ((this.currentDropLocation!.width! / MAX_SIZE_UNIT) * backgroundWidth < 14 && (this.currentDropLocation!.height! / MAX_SIZE_UNIT) * backgroundHeight < 14) {
@@ -443,7 +448,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     dropLocationMouseDown(dropLocation: DropLocation): void {
         if (this.draggingState === DragState.NONE) {
-            const backgroundElement = this.clickLayer.nativeElement as HTMLElement;
+            const backgroundElement = this.clickLayer().nativeElement as HTMLElement;
             const backgroundWidth = backgroundElement.offsetWidth;
             const backgroundHeight = backgroundElement.offsetHeight;
 
@@ -490,7 +495,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     resizeMouseDown(dropLocation: DropLocation, resizeLocationY: string, resizeLocationX: string): void {
         if (this.draggingState === DragState.NONE) {
-            const backgroundElement = this.clickLayer.nativeElement as HTMLElement;
+            const backgroundElement = this.clickLayer().nativeElement as HTMLElement;
             const backgroundWidth = backgroundElement.offsetWidth;
             const backgroundHeight = backgroundElement.offsetHeight;
 
@@ -808,6 +813,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.question.dropLocations = cloneDeep(this.backupQuestion.dropLocations);
         this.question.dragItems = cloneDeep(this.backupQuestion.dragItems);
         this.question.correctMappings = cloneDeep(this.backupQuestion.correctMappings);
+        this.question.isHighlighted = this.backupQuestion.isHighlighted;
         this.resetQuestionText();
     }
 
@@ -906,7 +912,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     prepareForSave(): void {
         this.cleanupQuestion();
-        this.markdownEditor.parseMarkdown();
+        this.markdownEditor().parseMarkdown();
     }
 
     /**
@@ -951,7 +957,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                         this.question.correctMappings!.push(dndMapping);
                     }
                 };
-                image.src = this.backgroundImage.src;
+                image.src = this.backgroundImage().src();
             }
         }
         this.blankOutBackgroundImage();
@@ -992,7 +998,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                 this.setBackgroundFileFromFile(this.dataUrlToFile(dataUrlCanvas, 'background'));
             }
         };
-        image.src = this.backgroundImage.src;
+        image.src = this.backgroundImage().src();
     }
 
     /**

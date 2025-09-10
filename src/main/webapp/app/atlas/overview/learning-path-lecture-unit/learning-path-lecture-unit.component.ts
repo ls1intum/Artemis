@@ -1,15 +1,14 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
+import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { lastValueFrom } from 'rxjs';
-import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
-import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
-import { isCommunicationEnabled } from 'app/entities/course.model';
+import { isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
@@ -17,7 +16,7 @@ import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exer
 @Component({
     selector: 'jhi-learning-path-lecture-unit',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [VideoUnitComponent, TextUnitComponent, AttachmentUnitComponent, OnlineUnitComponent, DiscussionSectionComponent, TranslateDirective, ExerciseUnitComponent],
+    imports: [TextUnitComponent, AttachmentVideoUnitComponent, OnlineUnitComponent, DiscussionSectionComponent, TranslateDirective, ExerciseUnitComponent],
     templateUrl: './learning-path-lecture-unit.component.html',
 })
 export class LearningPathLectureUnitComponent {
@@ -27,6 +26,7 @@ export class LearningPathLectureUnitComponent {
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
     private readonly alertService = inject(AlertService);
 
+    readonly courseId = input.required<number>();
     readonly lectureUnitId = input.required<number>();
     readonly isLoading = signal<boolean>(false);
     readonly lectureUnit = signal<LectureUnit | undefined>(undefined);

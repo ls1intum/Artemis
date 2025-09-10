@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.exception;
 
 import java.io.Serial;
+import java.util.Collection;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -30,5 +31,9 @@ public class AccessForbiddenException extends RuntimeException {
 
     public AccessForbiddenException(String entityType, long entityId) {
         super("You are not allowed to access the " + entityType + " with id " + entityId);
+    }
+
+    public AccessForbiddenException(String entityType, Collection<Long> entityIds) {
+        super("You are not allowed to access the " + entityType + " with ids " + entityIds);
     }
 }

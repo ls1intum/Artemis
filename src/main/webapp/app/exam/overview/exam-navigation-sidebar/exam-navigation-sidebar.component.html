@@ -27,7 +27,7 @@
                             </span>
                         </div>
                     </div>
-                    @for (sidebarItem of sidebarData?.ungroupedData; track sidebarItem; let last = $last; let i = $index) {
+                    @for (sidebarItem of sidebarData?.ungroupedData; track sidebarItem.id; let last = $last; let i = $index) {
                         <div [ngClass]="{ 'mb-2': !last }">
                             <div
                                 class="pointer rounded-3 col-12 px-2 pt-2 pb-1 border-5 highlight-card bg-module"

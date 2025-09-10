@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import { Course, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -25,17 +25,15 @@ export interface TutorialGroupsConfigurationFormData {
 export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChanges {
     private fb = inject(FormBuilder);
 
-    @Input()
-    formData: TutorialGroupsConfigurationFormData = {
+    readonly formData = input<TutorialGroupsConfigurationFormData>({
         period: undefined,
         usePublicTutorialGroupChannels: false,
         useTutorialGroupChannels: false,
-    };
-    @Input() isEditMode = false;
-    @Output() formSubmitted: EventEmitter<TutorialGroupsConfigurationFormData> = new EventEmitter<TutorialGroupsConfigurationFormData>();
+    });
+    readonly isEditMode = input(false);
+    readonly formSubmitted = output<TutorialGroupsConfigurationFormData>();
 
-    @Input()
-    course: Course;
+    readonly course = input.required<Course>();
 
     faCalendarAlt = faCalendarAlt;
 
@@ -66,8 +64,9 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
     }
     ngOnChanges() {
         this.initializeForm();
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+        const formData = this.formData();
+        if (this.isEditMode() && formData) {
+            this.setFormValues(formData);
         }
     }
     private setFormValues(formData: TutorialGroupsConfigurationFormData) {
@@ -76,7 +75,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
     }
 
     get showChannelDeletionWarning() {
-        if (!this.isEditMode) {
+        if (!this.isEditMode()) {
             return false;
         }
         if (this.existingChannelSetting === undefined) {

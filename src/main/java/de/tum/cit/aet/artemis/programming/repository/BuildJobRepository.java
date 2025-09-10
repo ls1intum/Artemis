@@ -5,13 +5,15 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -29,18 +31,27 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.BuildJobStatisticsDTO;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>, JpaSpecificationExecutor<BuildJob> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
+    @EntityGraph(type = LOAD, attributePaths = { "result", "result.submission", "result.submission.participation", "result.submission.participation.exercise" })
     List<BuildJob> findWithDataByIdIn(List<Long> ids);
+
+    @Query("""
+            SELECT b.id
+            FROM BuildJob b
+            WHERE b.buildCompletionDate IS NOT NULL
+            """)
+    Slice<Long> findFinishedIds(Pageable pageable);
 
     // Cast to string is necessary. Otherwise, the query will fail on PostgreSQL.
     @Query("""
             SELECT b.id
             FROM BuildJob b
                 LEFT JOIN Course c ON b.courseId = c.id
-            WHERE (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
+            WHERE b.buildCompletionDate IS NOT NULL
+                AND (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
                 AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
                 AND (CAST(:startDate AS string) IS NULL OR b.buildSubmissionDate >= :startDate)
                 AND (CAST(:endDate AS string) IS NULL OR b.buildSubmissionDate <= :endDate)
@@ -54,7 +65,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
                 AND (:durationUpper IS NULL OR (b.buildCompletionDate - b.buildStartDate) <= :durationUpper)
 
             """)
-    Page<Long> findIdsByFilterCriteria(@Param("buildStatus") BuildStatus buildStatus, @Param("buildAgentAddress") String buildAgentAddress,
+    Slice<Long> findFinishedIdsByFilterCriteria(@Param("buildStatus") BuildStatus buildStatus, @Param("buildAgentAddress") String buildAgentAddress,
             @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("searchTerm") String searchTerm, @Param("courseId") Long courseId,
             @Param("durationLower") Duration durationLower, @Param("durationUpper") Duration durationUpper, Pageable pageable);
 
@@ -69,14 +80,16 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
 
     @Query("""
-             SELECT new de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob(
-                 b.result.id,
-                 b.buildJobId
-             )
-             FROM BuildJob b
-             WHERE b.result.id IN :resultIds
+            SELECT new de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob(
+                b.result.id,
+                b.exerciseId,
+                b.buildJobId
+            )
+            FROM BuildJob b
+            WHERE b.participationId = :participationId
+                AND b.result.id IS NOT NULL
             """)
-    Set<ResultBuildJob> findBuildJobIdsForResultIds(@Param("resultIds") List<Long> resultIds);
+    Set<ResultBuildJob> findBuildJobIdsWithResultForParticipationId(@Param("participationId") long participationId);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO(
@@ -99,18 +112,28 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     /**
      * Get the number of build jobs for a list of exercise ids.
      *
+     * @param courseId the id of the course
+     * @return the number of build jobs
+     */
+    @Query("""
+            SELECT COUNT(b)
+            FROM BuildJob b
+            WHERE b.courseId = :courseId
+            """)
+    long countBuildJobsByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Get the number of build jobs for a list of exercise ids (used for exams).
+     *
      * @param exerciseIds the list of exercise ids
      * @return the number of build jobs
      */
     @Query("""
             SELECT COUNT(b)
             FROM BuildJob b
-                LEFT JOIN Result r ON b.result.id = r.id
-                LEFT JOIN Participation p ON r.participation.id = p.id
-                LEFT JOIN Exercise e ON p.exercise.id = e.id
-            WHERE e.id IN :exerciseIds
+            WHERE b.exerciseId IN :exerciseIds
             """)
-    long countBuildJobsByExerciseIds(@Param("exerciseIds") List<Long> exerciseIds);
+    long countBuildJobsByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.programming.dto.BuildJobStatisticsDTO(

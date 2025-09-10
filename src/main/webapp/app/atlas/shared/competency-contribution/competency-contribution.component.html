@@ -1,0 +1,34 @@
+@if (this.atlasEnabled && this.competencies.length) {
+    <div class="mt-4 mb-2">
+        <h5 [jhiTranslate]="'artemisApp.competency.competencyContribution.title'"></h5>
+        @if (this.competencies.length > 3) {
+            <p-carousel [value]="this.competencies" [numVisible]="3" [numScroll]="1" [circular]="true">
+                <ng-template let-competency #item>
+                    <div class="p-2">
+                        <jhi-competency-contribution-card
+                            [competencyId]="competency.competencyId"
+                            [courseId]="this.courseId()"
+                            [title]="competency.title"
+                            [weight]="competency.weight"
+                            [mastery]="competency.mastery"
+                        />
+                    </div>
+                </ng-template>
+            </p-carousel>
+        } @else {
+            <div class="row row-cols-3">
+                @for (competency of this.competencies; track competency.competencyId) {
+                    <div class="col">
+                        <jhi-competency-contribution-card
+                            [competencyId]="competency.competencyId"
+                            [courseId]="this.courseId()"
+                            [title]="competency.title"
+                            [weight]="competency.weight"
+                            [mastery]="competency.mastery"
+                        />
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}

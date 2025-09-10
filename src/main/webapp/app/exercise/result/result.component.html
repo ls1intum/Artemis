@@ -47,7 +47,7 @@
                 @if (showIcon) {
                     <fa-icon class="result-score-icon" [class]="textColorClass" [icon]="resultIconClass" size="lg" />
                 }
-                <span [ngClass]="textColorClass" class="guided-tour result" [class.clickable-result]="false" id="result-score">
+                <span [ngClass]="textColorClass" class="result" [class.clickable-result]="false" id="result-score">
                     <span [ngbTooltip]="resultTooltip | artemisTranslate">
                         {{ resultString }}
                     </span>
@@ -65,7 +65,7 @@
                 @if (showIcon) {
                     <fa-icon class="result-score-icon" [class]="textColorClass" [icon]="resultIconClass" size="lg" />
                 }
-                <span [ngClass]="textColorClass" class="guided-tour result" [class.clickable-result]="false" id="result-score">
+                <span [ngClass]="textColorClass" class="result" [class.clickable-result]="false" id="result-score">
                     <span [ngbTooltip]="resultTooltip | artemisTranslate">
                         {{ resultString }}
                     </span>
@@ -79,7 +79,7 @@
                 }
                 <span
                     [class]="textColorClass"
-                    class="guided-tour result"
+                    class="result"
                     [ngClass]="{ 'clickable-result': !isInSidebarCard && exercise?.type !== ExerciseType.QUIZ }"
                     id="result-score"
                     (click)="!isInSidebarCard ? showDetails(result!) : ''"

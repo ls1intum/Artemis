@@ -13,7 +13,7 @@ public interface ContinuousIntegrationTriggerService {
      * triggers a build for the build plan in the given participation
      *
      * @param participation the participation with the id of the build plan that should be triggered
-     * @param triggerAll    true if this build was triggerd as part of a trigger all request. Currently only used for Local CI.
+     * @param triggerAll    true if this build was triggered as part of a trigger all request. Currently only used for Local CI.
      * @throws ContinuousIntegrationException if the request to the CI failed.
      */
     void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll) throws ContinuousIntegrationException;

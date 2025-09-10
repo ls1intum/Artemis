@@ -1,14 +1,14 @@
 import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
-import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { generateUUID, titleLowercase } from '../utils';
 import lectureTemplate from '../../fixtures/lecture/template.json';
 import { COURSE_ADMIN_BASE, Exercise } from '../constants';
 import { UserCredentials } from '../users';
 import { Commands } from '../commands';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 
 /**
  * A class which encapsulates all API requests related to course management.

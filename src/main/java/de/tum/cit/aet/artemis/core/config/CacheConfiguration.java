@@ -7,22 +7,19 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGE
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
-import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
-import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
@@ -31,16 +28,14 @@ import org.springframework.boot.info.GitProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.KeyGenerator;
-import org.springframework.cloud.client.ServiceInstance;
-import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
-import org.springframework.scheduling.annotation.Scheduled;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.config.EvictionConfig;
@@ -62,27 +57,52 @@ import de.tum.cit.aet.artemis.programming.service.localci.LocalCIPriorityQueueCo
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
+/**
+ * Configures and initializes the Hazelcast-based distributed caching system for Artemis instances,
+ * including default cache maps, file caching, serialization, clustering behavior, and split-brain protection.
+ *
+ * <p>
+ * Establishes a Hazelcast cluster that supports synchronization and scalability in both local development and production
+ * deployments. It also enables shared job queues for local continuous integration (CI) setups and supports
+ * role-based membership (e.g., lite members for build agents).
+ *
+ * <p>
+ * <strong>Responsibilities:</strong>
+ * <ul>
+ * <li>Defines Hazelcast cache maps with specific eviction and backup policies for domain objects and files.</li>
+ * <li>Manages Hazelcast instance creation based on Spring profiles and environment-specific properties.</li>
+ * <li>Registers a custom serializer for {@link java.nio.file.Path} to enable file caching across nodes.</li>
+ * <li>Supports isolation in test environments to avoid interference between test executions by randomizing cluster names and ports.</li>
+ * <li>Provides cluster configuration options for discovery-based and local-only deployments, using either
+ * service registration metadata or loopback interfaces.</li>
+ * <li>Sets up split-brain protection and conditions for when clustering should be enabled or disabled.</li>
+ * <li>Registers Hazelcast-aware Spring beans such as {@link org.springframework.cache.CacheManager}
+ * and {@link org.springframework.cache.interceptor.KeyGenerator}.</li>
+ * </ul>
+ *
+ * <p>
+ * <strong>Separation of Concerns:</strong>
+ * This class encapsulates all Hazelcast configuration aspects, including topology, caching behavior,
+ * and serialization. It is distinct from {@link HazelcastConnection}, which is responsible for
+ * dynamically connecting cluster nodes at runtime based on service discovery. By decoupling static
+ * configuration from runtime coordination, the system ensures better modularity, testability, and maintainability.
+ */
 @Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Lazy(value = false)
 @Configuration
 @EnableCaching
 public class CacheConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(CacheConfiguration.class);
 
-    @Nullable
-    private final GitProperties gitProperties;
+    private final Optional<GitProperties> gitProperties;
 
-    @Nullable
-    private final BuildProperties buildProperties;
+    private final Optional<BuildProperties> buildProperties;
 
     private final ServerProperties serverProperties;
 
-    // the discovery service client that connects against the registration (jhipster registry) so that multiple server nodes can find each other to synchronize using Hazelcast
-    private final DiscoveryClient discoveryClient;
-
     // the service registry, in our current deployment this is the jhipster registry which offers a Eureka Server under the hood
-    @Nullable
-    private final Registration registration;
+    private final Optional<Registration> registration;
 
     private final ApplicationContext applicationContext;
 
@@ -91,7 +111,7 @@ public class CacheConfiguration {
     @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
     private String instanceName;
 
-    @Value("${spring.hazelcast.interface:}")
+    @Value("${spring.hazelcast.interface:}")    // if not specified, it will be an empty string
     private String hazelcastInterface;
 
     @Value("${spring.hazelcast.port:5701}")
@@ -100,17 +120,18 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
 
-    // NOTE: the registration is optional
-    public CacheConfiguration(ServerProperties serverProperties, DiscoveryClient discoveryClient, ApplicationContext applicationContext,
-            @Autowired(required = false) @Nullable Registration registration, @Autowired(required = false) @Nullable GitProperties gitProperties,
-            @Autowired(required = false) @Nullable BuildProperties buildProperties, Environment env) {
-        this.serverProperties = serverProperties;
-        this.discoveryClient = discoveryClient;
+    public CacheConfiguration(ApplicationContext applicationContext, Optional<GitProperties> gitProperties, Optional<BuildProperties> buildProperties,
+            ServerProperties serverProperties, Optional<Registration> registration, Environment env) {
         this.applicationContext = applicationContext;
-        this.registration = registration;
         this.gitProperties = gitProperties;
         this.buildProperties = buildProperties;
+        this.serverProperties = serverProperties;
+        this.registration = registration;
         this.env = env;
+
+        // Do not send telemetry to Hazelcast.
+        // https://docs.hazelcast.com/hazelcast/5.5/phone-homes
+        System.setProperty("hazelcast.phone.home.enabled", "false");
     }
 
     @PreDestroy
@@ -126,51 +147,8 @@ public class CacheConfiguration {
     }
 
     /**
-     * This scheduled task regularly checks if all members of the Hazelcast cluster are connected to each other.
-     * This is one countermeasure to a split cluster.
-     */
-    @Scheduled(fixedRate = 2, initialDelay = 1, timeUnit = TimeUnit.MINUTES)
-    public void connectToAllMembers() {
-        if (env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
-            return;
-        }
-        if (registration == null) {
-            return;
-        }
-        String serviceId = registration.getServiceId();
-        var hazelcastInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
-        if (hazelcastInstance == null) {
-            log.warn("Hazelcast instance not found, cannot connect to cluster members");
-            return;
-        }
-
-        var hazelcastMemberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> {
-            try {
-                return member.getAddress().getInetAddress().getHostAddress();
-            }
-            catch (UnknownHostException e) {
-                return "unknown";
-            }
-        }).toList();
-
-        log.debug("Current Registry members: {}", discoveryClient.getInstances(serviceId).stream().map(ServiceInstance::getHost).toList());
-        log.debug("Current Hazelcast members: {}", hazelcastMemberAddresses);
-
-        for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-            var instanceHost = instance.getHost();
-            // Workaround for IPv6 addresses, as they are enclosed in brackets
-            var instanceHostClean = instanceHost.replace("[", "").replace("]", "");
-            if (hazelcastMemberAddresses.stream().noneMatch(member -> member.equals(instanceHostClean))) {
-                var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
-                var clusterMemberAddress = instanceHost + ":" + clusterMemberPort;
-                log.info("Adding Hazelcast cluster member {}", clusterMemberAddress);
-                hazelcastInstance.getConfig().getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
-            }
-        }
-    }
-
-    /**
      * Setup the hazelcast instance based on the given jHipster properties and the enabled spring profiles.
+     * Note: It does not connect to other instances, this is done in {@link HazelcastConnection#connectToAllMembers()}.
      *
      * @param jHipsterProperties the jhipster properties
      * @return the created HazelcastInstance
@@ -187,6 +165,8 @@ public class CacheConfiguration {
             testConfig.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
             testConfig.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
             testConfig.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", initializeDomainMapConfig(jHipsterProperties));
+
+            testConfig.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
             NetworkConfig networkConfig = testConfig.getNetworkConfig();
             // Set network configuration to prevent joining other nodes
@@ -215,7 +195,6 @@ public class CacheConfiguration {
         Config config = new Config();
         config.setInstanceName(instanceName);
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-
         config.getNetworkConfig().getJoin().getAutoDetectionConfig().setEnabled(false);
 
         // Always enable TcpIp config: There has to be at least one join-config and we can not use multicast as this creates unwanted clusters
@@ -228,14 +207,15 @@ public class CacheConfiguration {
 
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
-        if (registration == null) {
+        // Configure all Hazelcast properties, but do not connect yet to other instances
+        if (registration.isEmpty()) {
             log.info("No discovery service is set up, Hazelcast cannot create a multi-node cluster.");
             hazelcastBindOnlyOnInterface("127.0.0.1", config);
         }
         else {
             // The serviceId is by default the application's name,
             // see the "spring.application.name" standard Spring property
-            String serviceId = registration.getServiceId();
+            String serviceId = registration.get().getServiceId();
             log.info("Configuring Hazelcast clustering for instanceId: {}", serviceId);
 
             // Bind to the interface specified in the config if the value is set
@@ -255,29 +235,16 @@ public class CacheConfiguration {
 
                 // In the local configuration, the hazelcast port is the http-port + the hazelcastPort as offset
                 config.getNetworkConfig().setPort(serverProperties.getPort() + hazelcastPort); // Own port
-                registration.getMetadata().put("hazelcast.port", String.valueOf(serverProperties.getPort() + hazelcastPort));
-
-                for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-                    var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(serverProperties.getPort() + hazelcastPort));
-                    String clusterMemberAddress = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
-                    log.info("Adding Hazelcast (dev) cluster member {}", clusterMemberAddress);
-                    config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
-                }
+                registration.get().getMetadata().put("hazelcast.port", String.valueOf(serverProperties.getPort() + hazelcastPort));
             }
             else { // Production configuration, one host per instance all using the configured port
                 config.setClusterName("prod");
                 config.setInstanceName(instanceName);
                 config.getNetworkConfig().setPort(hazelcastPort); // Own port
-                registration.getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
-
-                for (ServiceInstance instance : discoveryClient.getInstances(serviceId)) {
-                    var clusterMemberPort = instance.getMetadata().getOrDefault("hazelcast.port", String.valueOf(hazelcastPort));
-                    String clusterMemberAddress = instance.getHost() + ":" + clusterMemberPort; // Address where the other instance is expected
-                    log.info("Adding Hazelcast (prod) cluster member {}", clusterMemberAddress);
-                    config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(clusterMemberAddress);
-                }
+                registration.get().getMetadata().put("hazelcast.port", String.valueOf(hazelcastPort));
             }
         }
+
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
         config.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
         config.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", initializeDomainMapConfig(jHipsterProperties));
@@ -308,15 +275,18 @@ public class CacheConfiguration {
         return Hazelcast.newHazelcastInstance(config);
     }
 
-    private void configureQueueCluster(Config config, JHipsterProperties jHipsterProperties) {
-        // Queue specific configurations
-        log.debug("Configure Build Job Queue synchronization in Hazelcast for Local CI");
-        QueueConfig queueConfig = new QueueConfig("buildJobQueue");
-        queueConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
-        queueConfig.setPriorityComparatorClassName(LocalCIPriorityQueueComparator.class.getName());
-        config.addQueueConfig(queueConfig);
-    }
-
+    /**
+     * Binds the Hazelcast instance strictly to the given network interface by setting it
+     * as the local and public address. This ensures that Hazelcast does not bind to or listen on
+     * unintended interfaces, preventing undesired cluster formation or exposure.
+     *
+     * <p>
+     * Additionally, this method sets internal Hazelcast system properties to disable
+     * fallback bindings to any available interface (server/client), enforcing strict network boundaries.
+     *
+     * @param hazelcastInterface the IP address or hostname of the network interface to bind to (e.g. {@code "127.0.0.1"} or {@code "eth0"})
+     * @param config             the Hazelcast configuration object to apply the network settings to
+     */
     private void hazelcastBindOnlyOnInterface(String hazelcastInterface, Config config) {
         // Hazelcast should bind to the interface and use it as local and public address
         log.debug("Binding Hazelcast to interface {}", hazelcastInterface);
@@ -328,6 +298,27 @@ public class CacheConfiguration {
         config.setProperty("hazelcast.socket.bind.any", "false");
         config.setProperty("hazelcast.socket.server.bind.any", "false");
         config.setProperty("hazelcast.socket.client.bind.any", "false");
+    }
+
+    /**
+     * Configures a shared job queue named {@code buildJobQueue} for synchronizing tasks
+     * between nodes in a local continuous integration (CI) setup using Hazelcast.
+     *
+     * <p>
+     * This queue is configured with a backup count to ensure fault tolerance and a
+     * priority-based comparator to control job scheduling order. It is only activated
+     * when specific profiles (e.g., {@code localci}, {@code buildagent}) are enabled.
+     *
+     * @param config             the Hazelcast configuration to which the queue configuration will be added
+     * @param jHipsterProperties the JHipster properties used to extract cache-related parameters such as backup count
+     */
+    private void configureQueueCluster(Config config, JHipsterProperties jHipsterProperties) {
+        // Queue specific configurations
+        log.debug("Configure Build Job Queue synchronization in Hazelcast for Local CI");
+        QueueConfig queueConfig = new QueueConfig("buildJobQueue");
+        queueConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
+        queueConfig.setPriorityComparatorClassName(LocalCIPriorityQueueComparator.class.getName());
+        config.addQueueConfig(queueConfig);
     }
 
     /**
@@ -344,7 +335,7 @@ public class CacheConfiguration {
 
     @Bean
     public KeyGenerator keyGenerator() {
-        return new PrefixedKeyGenerator(this.gitProperties, this.buildProperties);
+        return new PrefixedKeyGenerator(this.gitProperties.orElse(null), this.buildProperties.orElse(null));
     }
 
     // config for files in the files system

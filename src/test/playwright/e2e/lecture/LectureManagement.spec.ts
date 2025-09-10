@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/entities/course.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 
 import { admin, instructor } from '../../support/users';
 import { generateUUID } from '../../support/utils';
@@ -93,6 +93,11 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
             await lectureManagement.openUnitsPage(lecture.id!);
             await lectureManagement.addExerciseUnit(exercise.id!);
             await expect(page.locator('.exercise-title', { hasText: new RegExp(`^${exercise.title!}$`) })).toBeVisible();
+        });
+
+        test('Can open page to add attachment unit to the lecture', async ({ lectureManagement, page }) => {
+            await lectureManagement.openAttachmentUnitCreationPage(lecture.id!);
+            await expect(page.getByText('Create Attachment Unit')).toBeVisible();
         });
     });
 

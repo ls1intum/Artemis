@@ -1,0 +1,33 @@
+<form name="setupPasskeyModal" (ngSubmit)="setupPasskey()">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <fa-icon [icon]="faShieldHalved" />
+            <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.title"></span>
+        </h4>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+    </div>
+    <div class="modal-body">
+        <p jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></p>
+        <p jhiTranslate="artemisApp.userSettings.setupPasskeyModal.description.howItWorks"></p>
+        <p jhiTranslate="artemisApp.userSettings.setupPasskeyModal.description.recommendation"></p>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="remindMeIn30Days()">
+            <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.remindMeIn30Days"></span>
+        </button>
+
+        <div class="ms-auto">
+            <button
+                type="button"
+                class="btn btn-secondary"
+                (click)="closeModal()"
+                jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupLater"
+                aria-label="Set Up Later"
+            ></button>
+            <button type="button" class="btn btn-primary" (click)="setupPasskey()">
+                <fa-icon [icon]="faKey" />
+                <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupPasskey"></span>
+            </button>
+        </div>
+    </div>
+</form>

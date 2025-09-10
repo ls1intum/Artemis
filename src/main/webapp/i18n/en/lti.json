@@ -18,6 +18,16 @@
                 "iris": {
                     "header": "Add Iris",
                     "selector": "Confirm whether you want to add a link to Iris"
+                },
+                "groupedContent": {
+                    "groupedExercises": {
+                        "header": "Activate exercise grouping:",
+                        "selector": "If activated, selecting multiple exercises in the table will group them and display them in the Artemis sidebar within the exercise view"
+                    },
+                    "groupedLectures": {
+                        "header": "Activate lecture grouping:",
+                        "selector": "If activated, selecting multiple lectures in the table will group them and display them in the Artemis sidebar within the lecture view"
+                    }
                 }
             },
             "initializationError": "Your user initialization process was started but your LTI account was possible created with issues. Please ask your instructor for help if you didn't receive your Artemis password yet.",
@@ -55,6 +65,7 @@
             "startExercise": "<strong>Welcome to Artemis!</strong> Click the button <i>Start Exercise</i>!",
             "ltiSuccessLoginRequired": "Successfully launched LTI exercise. Please log in as user {{user}}.",
             "exercises": "Exercises",
+            "lectures": "Lectures",
             "lti": "LTI",
             "configurationForCourse": "LTI Configuration for course {{ title }}",
             "lti13LaunchUrl": "LTI 1.3 Launch URL",
@@ -71,7 +82,7 @@
                 "configurationForCourse": "Edit LTI Configuration for course {{ title }}",
                 "userPrefixTooltip": "Prefix used for the new users created for this course. It is recommended to use a value that clearly identifies users as part of this course.",
                 "requireExistingUserTooltip": "If selected, launching the exercise requires an existing user on Artemis. If deselected, a user will be created on first launch if it does not yet exist",
-                "registrationIdTooltip": "ID used to identify the registration of the learning platform. This must be unique across all courses. You can freely change this value, but it is recommended to use the auto-generated value.",
+                "registrationIdTooltip": "ID used to identify the registration of the learning platform. This must be unique across all courses.",
                 "clientIdTooltip": "It is possible to configure this field and the URI fields below manually, but it is highly recommended to use the Dynamic Registration Service to configure them automatically.",
                 "form": {
                     "userPrefix": {
@@ -83,7 +94,8 @@
             "configuredPlatforms": "Configured Platforms",
             "viewAdvancedSettings": "View Advanced Settings",
             "closeAdvancedSettings": "Close Advanced Settings",
-            "addOrEditLtiPlatform": "Add or edit LTI Platform Configuration"
+            "addLtiPlatform": "Add LTI Platform Configuration",
+            "editLtiPlatform": "Edit LTI Platform Configuration"
         },
         "lti13": {
             "launch": {

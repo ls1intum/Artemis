@@ -1,8 +1,8 @@
 import { omit, sum } from 'lodash-es';
 import { captureException } from '@sentry/angular';
-import { Result } from 'app/entities/result.model';
-import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 export function cleanString(str?: string): string {
     if (!str) {
@@ -109,8 +109,10 @@ export const average = (values: Array<number>): number => {
  * finds the latest result based on the max id
  * @param results
  */
-export const findLatestResult = (results: Result[] | undefined) => {
-    return results?.length ? results.reduce((current, result) => (current.id! > result.id! ? current : result)) : undefined;
+export const findLatestResult = (results?: (Result | null | undefined)[]): Result | undefined => {
+    // discard null / undefined items
+    const clean: Result[] = (results ?? []).filter((r): r is Result => r != null);
+    return clean.length ? clean.reduce((a, b) => (a.id! > b.id! ? a : b)) : undefined;
 };
 
 export const isDate = (input: any) => {
@@ -174,4 +176,8 @@ export function roundToNextMultiple(value: number, multiple: number, roundUp: bo
 
 export function removeSpecialCharacters(input: string): string {
     return input.replace(/[^a-zA-Z0-9]/g, '');
+}
+
+export function secondsToMilliseconds(seconds: number): number {
+    return seconds * 1000;
 }

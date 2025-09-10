@@ -1,7 +1,5 @@
 import { Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
-import { FileService } from 'app/shared/http/file.service';
-
 import {
     faAt,
     faBan,
@@ -25,6 +23,7 @@ import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FileService } from 'app/shared/service/file.service';
 
 @Component({
     selector: 'jhi-posting-content-part',
@@ -45,7 +44,37 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
     hasClickedUserReference = false;
 
     // Only allow certain html tags and attributes
-    allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'mark', 'p', 'pre', 'small', 's', 'span', 'strong', 'sub', 'sup'];
+
+    allowedHtmlTags: string[] = [
+        'a',
+        'b',
+        'br',
+        'blockquote',
+        'code',
+        'del',
+        'em',
+        'hr',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'i',
+        'ins',
+        'li',
+        'mark',
+        'p',
+        'pre',
+        'small',
+        's',
+        'span',
+        'strong',
+        'sub',
+        'sup',
+        'ul',
+        'ol',
+    ];
     allowedHtmlAttributes: string[] = ['href'];
 
     // icons
@@ -80,24 +109,21 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
         this.imageNotFound = true;
     }
 
+    /**
+     * Processes content before and after any reference (user/channel/etc.)
+     */
     processContent() {
         if (this.postingContentPart()?.contentBeforeReference) {
-            this.processedContentBeforeReference = this.escapeNumberedList(this.postingContentPart()?.contentBeforeReference || '');
-            this.processedContentBeforeReference = this.escapeUnorderedList(this.processedContentBeforeReference);
+            this.processedContentBeforeReference = this.normalizeSpacing(this.postingContentPart()?.contentBeforeReference || '');
         }
 
         if (this.postingContentPart()?.contentAfterReference) {
-            this.processedContentAfterReference = this.escapeNumberedList(this.postingContentPart()?.contentAfterReference || '');
-            this.processedContentAfterReference = this.escapeUnorderedList(this.processedContentAfterReference);
+            this.processedContentAfterReference = this.normalizeSpacing(this.postingContentPart()?.contentAfterReference || '');
         }
     }
 
-    escapeNumberedList(content: string): string {
-        return content.replace(/^(\s*\d+)\. /gm, '$1\\.  ');
-    }
-
-    escapeUnorderedList(content: string): string {
-        return content.replace(/^(- )/gm, '\\$1');
+    normalizeSpacing(content: string): string {
+        return content.replace(/\n{3,}/g, '\n\n');
     }
 
     /**

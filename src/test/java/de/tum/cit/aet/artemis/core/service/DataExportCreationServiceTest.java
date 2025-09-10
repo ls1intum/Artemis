@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -13,6 +12,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -72,20 +72,19 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
-class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "dataexportcreation";
 
     private static final String FILE_FORMAT_TXT = ".txt";
 
     private static final String FILE_FORMAT_PDF = ".pdf";
-
-    private static final String FILE_FORMAT_ZIP = ".zip";
 
     private static final String FILE_FORMAT_CSV = ".csv";
 
@@ -270,7 +269,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         }
         var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1", assessmentDueDateInTheFuture);
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService);
         ProgrammingExercise programmingExercise;
         if (assessmentDueDateInTheFuture) {
             programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().plusMinutes(1));
@@ -279,7 +278,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
             programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().minusMinutes(1));
         }
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin,
-                programmingExerciseTestService.studentRepo.localRepoFile.toURI());
+                URI.create(LocalRepositoryUriUtil.convertToLocalVcUriString(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile, localVCRepoPath)));
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false, "abc");
         var submission2 = programmingExerciseUtilService.createProgrammingSubmission(participation, true, "def");
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusMinutes(1));
@@ -310,8 +309,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         var modelingExercises = exerciseRepository.findAllExercisesByCourseId(course1.getId()).stream().filter(exercise -> exercise instanceof ModelingExercise).toList();
         createPlagiarismData(userLogin, programmingExercise, modelingExercises);
         // Mock student repo
-        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), anyString(), anyBoolean());
+        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile.toPath(), null);
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
         return course1;
     }
 
@@ -346,11 +345,12 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var course = courseUtilService.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(userForExport, TEST_PREFIX + "student",
                 courseShortName, true, true);
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService);
         var exam = course.getExams().iterator().next();
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).orElseThrow();
         var studentExam = examUtilService.addStudentExamWithUser(exam, userForExport);
-        examUtilService.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel, programmingExerciseTestService.studentRepo.localRepoFile.toURI());
+        examUtilService.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel,
+                URI.create(LocalRepositoryUriUtil.convertToLocalVcUriString(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile, localVCRepoPath)));
         Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userForExport.getId());
         var submission = studentExams.iterator().next().getExercises().getFirst().getStudentParticipations().iterator().next().getSubmissions().iterator().next();
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
@@ -359,8 +359,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         feedback.setDetailText("detailed feedback");
         feedback.setText("feedback");
         participationUtilService.addFeedbackToResult(feedback, submission.getFirstResult());
-        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepository(any(), anyString(), anyBoolean());
+        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile.toPath(), null);
+        doReturn(studentRepository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(), any(Path.class), anyBoolean(), anyBoolean());
         return exam;
     }
 
@@ -551,7 +551,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         var loginUser2 = TEST_PREFIX + "student2";
         conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(loginUser2, course, "student 2 message");
         var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userUtilService.getUserByLogin(loginUser2).getId());
-        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", answerPosts.getFirst());
+        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", answerPosts.iterator().next());
     }
 
     @Test
@@ -610,21 +610,10 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         Exception exception = new RuntimeException("error");
         doThrow(exception).when(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), anyLong());
         doNothing().when(mailService).sendDataExportFailedEmailToAdmin(any(), any(), any());
-        doNothing().when(singleUserNotificationService).notifyUserAboutDataExportCreation(any(DataExport.class));
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         assertThat(dataExportFromDb.getDataExportState()).isEqualTo(DataExportState.FAILED);
-        verify(singleUserNotificationService).notifyUserAboutDataExportFailure(any(DataExport.class));
         verify(mailService).sendDataExportFailedEmailToAdmin(any(User.class), eq(dataExportFromDb), eq(exception));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDataExportSuccess_informsUser() {
-        var dataExport = initDataExport();
-        doNothing().when(singleUserNotificationService).notifyUserAboutDataExportCreation(any(DataExport.class));
-        dataExportCreationService.createDataExport(dataExport);
-        verify(singleUserNotificationService).notifyUserAboutDataExportCreation(any(DataExport.class));
     }
 
     @Test

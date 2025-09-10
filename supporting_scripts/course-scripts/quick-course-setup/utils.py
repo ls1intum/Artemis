@@ -76,7 +76,7 @@ def get_user_details_by_index(user_index: int) -> Dict[str, Any]:
         "firstName": username,
         "lastName": username,
         "langKey": "en",
-        "guidedTourSettings": [],
+
         "groups": groups,
         "password": password
     }
@@ -97,7 +97,6 @@ def get_student_details_by_index(user_index: int) -> Dict[str, Any]:
         "firstName": "Test",
         "lastName": f"User{user_index}",
         "langKey": "en",
-        "guidedTourSettings": [],
         "groups": groups,
         "password": password
     }

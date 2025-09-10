@@ -26,5 +26,4 @@ public record PhysicalLocation(ArtifactLocation artifactLocation, Region region)
     public Optional<Region> getOptionalRegion() {
         return Optional.ofNullable(region);
     }
-
 }

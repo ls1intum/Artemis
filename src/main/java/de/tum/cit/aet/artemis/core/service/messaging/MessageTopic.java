@@ -8,9 +8,6 @@ public enum MessageTopic {
     // @formatter:off
     PROGRAMMING_EXERCISE_SCHEDULE("programming-exercise-schedule"),
     PROGRAMMING_EXERCISE_SCHEDULE_CANCEL("programming-exercise-schedule-cancel"),
-    MODELING_EXERCISE_SCHEDULE("modeling-exercise-schedule"),
-    MODELING_EXERCISE_SCHEDULE_CANCEL("modeling-exercise-schedule-cancel"),
-    MODELING_EXERCISE_INSTANT_CLUSTERING("modeling-exercise-instant-clustering"),
     TEXT_EXERCISE_SCHEDULE("text-exercise-schedule"),
     TEXT_EXERCISE_SCHEDULE_CANCEL("text-exercise-schedule-cancel"),
     USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS("user-management-remove-non-activated-users"),
@@ -21,7 +18,11 @@ public enum MessageTopic {
     STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION("student-exam-reschedule-during-conduction"),
     PARTICIPANT_SCORE_SCHEDULE("participant-score-schedule"),
     QUIZ_EXERCISE_START_SCHEDULE("quiz-exercise-start-schedule"),
-    QUIZ_EXERCISE_START_CANCEL("quiz-exercise-start-cancel");
+    QUIZ_EXERCISE_START_CANCEL("quiz-exercise-start-cancel"),
+    SLIDE_UNHIDE_SCHEDULE("slide-unhide-schedule"),
+    SLIDE_UNHIDE_SCHEDULE_CANCEL("slide-unhide-schedule-cancel"),
+    LECTURE_UNIT_AUTO_INGESTION_SCHEDULE("lecture-unit-auto-ingestion-schedule"),
+    LECTURE_UNIT_AUTO_INGESTION_SCHEDULE_CANCEL("lecture-unit-auto-ingestion-schedule-cancel");
     // @formatter:on
 
     private final String topic;

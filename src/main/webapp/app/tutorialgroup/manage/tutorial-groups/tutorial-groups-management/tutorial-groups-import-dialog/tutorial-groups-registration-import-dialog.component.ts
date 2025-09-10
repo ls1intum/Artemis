@@ -1,12 +1,11 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, input } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, inject, input, viewChild } from '@angular/core';
 import { faBan, faCheck, faCircleNotch, faFileImport, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
 import { cleanString } from 'app/shared/util/utils';
 import { ParseResult, parse } from 'papaparse';
 import { AlertService } from 'app/shared/service/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
-import { StudentDTO } from 'app/entities/student-dto.model';
+import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { HttpResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,7 +15,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { titleRegex } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
 
 /**
  * Each row is a object with the structure
@@ -56,16 +56,15 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     private csvDownloadService = inject(CsvDownloadService);
 
     ngUnsubscribe = new Subject<void>();
-
-    @ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
+    fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     selectedFile?: File;
 
     courseId = input.required<number>();
 
-    registrationsDisplayedInTable: TutorialGroupRegistrationImportDTO[] = [];
-    allRegistrations: TutorialGroupRegistrationImportDTO[] = [];
-    notImportedRegistrations: TutorialGroupRegistrationImportDTO[] = [];
-    importedRegistrations: TutorialGroupRegistrationImportDTO[] = [];
+    registrationsDisplayedInTable: TutorialGroupRegistrationImport[] = [];
+    allRegistrations: TutorialGroupRegistrationImport[] = [];
+    notImportedRegistrations: TutorialGroupRegistrationImport[] = [];
+    importedRegistrations: TutorialGroupRegistrationImport[] = [];
 
     isCSVParsing = false;
     protected readonly CsvExample = CsvExample;
@@ -189,7 +188,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
      * The column "title" is mandatory, all other columns are optional
      * @param csvFile File that contains one registration per row
      */
-    private async readRegistrationsFromCSVFile(csvFile: File): Promise<TutorialGroupRegistrationImportDTO[]> {
+    private async readRegistrationsFromCSVFile(csvFile: File): Promise<TutorialGroupRegistrationImport[]> {
         let csvRows: ParsedCSVRow[] = [];
         try {
             this.isCSVParsing = true;
@@ -239,9 +238,9 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         // convert the 'raw' csv rows into a list of TutorialGroupImportDTOs
         const registrations = csvFixedPlaceRows
             .map((csvRow) => {
-                const registration: TutorialGroupRegistrationImportDTO = {
+                const registration: TutorialGroupRegistrationImport = {
                     title: csvRow[usedTitleHeader]?.trim() || '',
-                } as TutorialGroupRegistrationImportDTO;
+                } as TutorialGroupRegistrationImport;
                 registration.student = {
                     registrationNumber: csvRow[usedRegistrationNumberHeader]?.trim() || '',
                     login: csvRow[usedLoginHeader]?.trim() || '',
@@ -252,11 +251,11 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
                 registration.capacity = csvRow[usedCapacityHeader] ? Number(csvRow[usedCapacityHeader]) : undefined;
                 registration.language = csvRow[usedLanguageHeader]?.trim() || '';
                 registration.additionalInformation = csvRow[usedAdditionalInfoHeader]?.trim() || '';
-                registration.isOnline = csvRow[usedIsOnlineHeader]?.trim().toLowerCase() || '';
+                registration.isOnline = csvRow[usedIsOnlineHeader] ? Boolean(csvRow[usedIsOnlineHeader]?.trim().toLowerCase()) : undefined;
 
                 return registration;
             })
-            .sort((a, b) => a.title.localeCompare(b.title));
+            .sort((a, b) => this.compareTitle(a, b));
 
         this.performExtraDTOValidation(registrations);
         if (this.validationErrors && this.validationErrors.length > 0) {
@@ -267,12 +266,28 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         }
     }
 
+    private compareTitle(a: TutorialGroupRegistrationImport, b: TutorialGroupRegistrationImport) {
+        const titleA = a.title;
+        const titleB = b.title;
+
+        if (titleA && titleB) {
+            return titleA.localeCompare(titleB);
+        }
+        if (titleA && !titleB) {
+            return -1; // a comes first
+        }
+        if (!titleA && titleB) {
+            return 1; // b comes first
+        }
+        return 0;
+    }
+
     removeWhitespacesAndUnderscoresFromHeaderName(header: string) {
         return header.trim().toLowerCase().replace(/_/g, '-').replace(/\s+/g, '');
     }
 
     resetFileUpload() {
-        this.fileInput.nativeElement.value = ''; // remove selected file so user can fix the file and select it again
+        this.fileInput().nativeElement.value = ''; // remove selected file so user can fix the file and select it again
         this.selectedFile = undefined;
     }
 
@@ -329,7 +344,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         }
     }
 
-    performExtraDTOValidation(registrations: TutorialGroupRegistrationImportDTO[]): void {
+    performExtraDTOValidation(registrations: TutorialGroupRegistrationImport[]): void {
         const duplicatedRegistrationNumbers = this.duplicatedRegistrationNumbers(registrations);
         const maxLength = 1000;
         if (duplicatedRegistrationNumbers !== null) {
@@ -389,7 +404,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
             : this.translateService.instant('artemisApp.tutorialGroupImportDialog.errorMessages.noIdentificationInformation') + invalidList.join(', ');
     }
 
-    duplicatedRegistrationNumbers(registrations: TutorialGroupRegistrationImportDTO[]): string | null {
+    duplicatedRegistrationNumbers(registrations: TutorialGroupRegistrationImport[]): string | null {
         const duplicatedRegistrationNumbers: string[] = [];
         const registrationNumbers = registrations.map((registration) => registration.student?.registrationNumber).filter((registrationNumber) => registrationNumber);
 
@@ -397,7 +412,9 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
 
         uniqueRegistrationNumbers.forEach((registrationNumber) => {
             if (registrationNumbers.filter((rn) => rn === registrationNumber).length > 1) {
-                duplicatedRegistrationNumbers.push(registrationNumber);
+                if (registrationNumber) {
+                    duplicatedRegistrationNumbers.push(registrationNumber);
+                }
             }
         });
 
@@ -406,7 +423,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
             : this.translateService.instant('artemisApp.tutorialGroupImportDialog.errorMessages.duplicatedRegistrationNumbers') + duplicatedRegistrationNumbers.join(', ');
     }
 
-    duplicatedLogins(registrations: TutorialGroupRegistrationImportDTO[]): string | null {
+    duplicatedLogins(registrations: TutorialGroupRegistrationImport[]): string | null {
         const duplicatedLogins: string[] = [];
         const logins = registrations.map((registration) => registration.student?.login).filter((login) => login);
 
@@ -414,7 +431,9 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
 
         uniqueLogins.forEach((login) => {
             if (logins.filter((l) => l === login).length > 1) {
-                duplicatedLogins.push(login);
+                if (login) {
+                    duplicatedLogins.push(login);
+                }
             }
         });
 
@@ -444,11 +463,11 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         this.activeModal.close();
     }
 
-    onSaveSuccess(registrations: HttpResponse<TutorialGroupRegistrationImportDTO[]>) {
+    onSaveSuccess(registrations: HttpResponse<TutorialGroupRegistrationImport[]>) {
         this.isImporting = false;
         this.isImportDone = true;
         this.registrationsDisplayedInTable = registrations.body ?? [];
-        this.registrationsDisplayedInTable = this.registrationsDisplayedInTable.sort((a, b) => a.title.localeCompare(b.title));
+        this.registrationsDisplayedInTable = this.registrationsDisplayedInTable.sort((a, b) => this.compareTitle(a, b));
         this.allRegistrations = this.registrationsDisplayedInTable;
         this.notImportedRegistrations = this.allRegistrations.filter((registration) => registration.importSuccessful !== true);
         this.importedRegistrations = this.allRegistrations.filter((registration) => registration.importSuccessful === true);
@@ -461,11 +480,11 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         this.isImporting = false;
     }
 
-    wasImported(registration: TutorialGroupRegistrationImportDTO): boolean {
+    wasImported(registration: TutorialGroupRegistrationImport): boolean {
         return this.isImportDone && registration.importSuccessful === true;
     }
 
-    wasNotImported(registration: TutorialGroupRegistrationImportDTO): boolean {
+    wasNotImported(registration: TutorialGroupRegistrationImport): boolean {
         return this.isImportDone && registration.importSuccessful !== true;
     }
 

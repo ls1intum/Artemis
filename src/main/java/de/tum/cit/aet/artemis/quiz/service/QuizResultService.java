@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -13,13 +14,13 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class QuizResultService {
 
@@ -45,20 +47,17 @@ public class QuizResultService {
 
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
-    private final ResultService resultService;
-
     private final SubmissionRepository submissionRepository;
 
     private final ResultRepository resultRepository;
 
     public QuizResultService(QuizExerciseRepository quizExerciseRepository, QuizStatisticService quizStatisticService,
-            StudentParticipationRepository studentParticipationRepository, SubmittedAnswerRepository submittedAnswerRepository, ResultService resultService,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository) {
+            StudentParticipationRepository studentParticipationRepository, SubmittedAnswerRepository submittedAnswerRepository, SubmissionRepository submissionRepository,
+            ResultRepository resultRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizStatisticService = quizStatisticService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
-        this.resultService = resultService;
         this.submissionRepository = submissionRepository;
         this.resultRepository = resultRepository;
     }
@@ -106,9 +105,8 @@ public class QuizResultService {
      */
     private Set<Result> evaluateSubmissions(@NotNull QuizExercise quizExercise) {
         Set<Result> createdResults = new HashSet<>();
-        List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(studentParticipations);
-        ZonedDateTime quizDeadline = quizExercise.getDueDate();
 
         for (var participation : studentParticipations) {
             if (participation.isTestRun()) {
@@ -147,7 +145,8 @@ public class QuizResultService {
 
                 participation.setInitializationState(InitializationState.FINISHED);
 
-                Optional<Result> existingRatedResult = participation.getResults().stream().filter(result -> Boolean.TRUE.equals(result.isRated())).findFirst();
+                Optional<Result> existingRatedResult = participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).filter(Objects::nonNull)
+                        .filter(Result::isRated).findFirst();
 
                 if (existingRatedResult.isPresent()) {
                     // A rated result already exists; no need to create a new one
@@ -156,7 +155,7 @@ public class QuizResultService {
                 }
                 else {
                     // No rated result exists; create a new one
-                    Result result = new Result().participation(participation).rated(true).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
+                    Result result = new Result().rated(true).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
 
                     // Associate submission with result
                     result.setSubmission(quizSubmission);
@@ -165,19 +164,10 @@ public class QuizResultService {
                     quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
                     result.evaluateQuizSubmission(quizExercise);
 
-                    // Detach submission to maintain proper save order
-                    result.setSubmission(null);
-
                     // Save entities individually
                     submissionRepository.save(quizSubmission);
                     result = resultRepository.save(result);
 
-                    // Update participation with new result
-                    participation.addResult(result);
-                    studentParticipationRepository.save(participation);
-
-                    // Re-associate result with submission and save
-                    result.setSubmission(quizSubmission);
                     quizSubmission.addResult(result);
                     submissionRepository.save(quizSubmission);
 

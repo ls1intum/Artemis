@@ -3,8 +3,8 @@ import { Component, inject, output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
-import { Exam } from 'app/entities/exam/exam.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { examWorkingTime } from 'app/exam/overview/exam.utils';
 import { FormsModule } from '@angular/forms';
 import { WorkingTimeChangeComponent } from 'app/exam/shared/working-time-change/working-time-change.component';
@@ -19,6 +19,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [FormsModule, TranslateDirective, WorkingTimeControlComponent, WorkingTimeChangeComponent, ConfirmEntityNameComponent, FaIconComponent],
 })
 export class ExamEditWorkingTimeDialogComponent {
+    protected readonly faBan = faBan;
+    protected readonly faSpinner = faSpinner;
+    protected readonly faCheck = faCheck;
+
     private activeModal = inject(NgbActiveModal);
     private examManagementService = inject(ExamManagementService);
 
@@ -26,11 +30,6 @@ export class ExamEditWorkingTimeDialogComponent {
     examChange = output<Exam>();
 
     isLoading: boolean;
-
-    // Icons
-    faBan = faBan;
-    faSpinner = faSpinner;
-    faCheck = faCheck;
 
     workingTimeSeconds = 0;
 

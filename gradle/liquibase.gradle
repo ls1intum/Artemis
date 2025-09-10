@@ -10,7 +10,7 @@ dependencies {
     }
     liquibaseRuntime "org.liquibase:liquibase-core:${liquibase_version}"
     // Dependency required to parse options. Refer to https://github.com/liquibase/liquibase-gradle-plugin/tree/Release_2.2.0#news.
-    liquibaseRuntime "info.picocli:picocli:4.7.6"
+    liquibaseRuntime "info.picocli:picocli:4.7.7"
 
     liquibaseRuntime "org.liquibase.ext:liquibase-hibernate6:${liquibase_version}"
     liquibaseRuntime "com.mysql:mysql-connector-j:${mysql_version}"
@@ -50,16 +50,17 @@ def liquibaseCommand(command) {
             classpath sourceSets.main.runtimeClasspath
             classpath configurations.liquibaseRuntime
         }
-        mainClass = "liquibase.integration.commandline.Main"
+        mainClass = "liquibase.integration.commandline.LiquibaseCommandLine"
 
         args = [
             "--changeLogFile=src/main/resources/config/liquibase/changelog/" + buildTimestamp() +"_changelog.xml",
             "--referenceUsername=root",
-            "--referencePassword=12345678",
-            "--referenceUrl=jdbc:mysql://localhost:3306/Artemis?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
+            "--referencePassword=",
+            // we need an empty database to compare with for the creation of the new initial schema
+            "--referenceUrl=jdbc:mysql://localhost:3306/ArtemisEmpty?&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
             "--username=root",
-            "--password=12345678",
-            "--url=jdbc:mysql://localhost:3306/Artemis700?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
+            "--password=",
+            "--url=jdbc:mysql://localhost:3306/Artemis?&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
             "--driver=com.mysql.cj.jdbc.Driver",
             command
         ]

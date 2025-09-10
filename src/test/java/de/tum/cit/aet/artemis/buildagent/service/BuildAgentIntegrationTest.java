@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_RESULTS_DIRECTORY;
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -18,7 +18,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
@@ -51,6 +53,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
 
+    @Value("${artemis.continuous-integration.pause-after-consecutive-failed-jobs}")
+    private int pauseAfterConsecutiveFailures;
+
     private IQueue<BuildJobQueueItem> buildJobQueue;
 
     private IMap<String, BuildJobQueueItem> processingJobs;
@@ -65,6 +70,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
     private ITopic<String> resumeBuildAgentTopic;
 
+    @Autowired
+    private ApplicationContext applicationContext;
+
     @BeforeAll
     void init() {
         processingJobs = this.hazelcastInstance.getMap("processingJobs");
@@ -74,6 +82,9 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         canceledBuildJobsTopic = hazelcastInstance.getTopic("canceledBuildJobsTopic");
         pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
         resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
+        // this triggers the initialization of all required beans in the application context
+        // in production the DeferredEagerBeanInitializer would do this automatically
+        applicationContext.getBean(SharedQueueProcessingService.class);
     }
 
     @BeforeEach
@@ -112,7 +123,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
         when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
         doAnswer(invocation -> {
-            Thread.sleep(500);
+            Thread.sleep(1000);
             return null;
         }).when(startContainerCmd).exec();
         // For this test, we need to return different test result streams for different containers. This is necessary since the first job would close the stream
@@ -125,8 +136,10 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         DockerClientTestService.mockCreateContainerCmd(dockerClient, container1, image1);
         DockerClientTestService.mockCreateContainerCmd(dockerClient, container2, image2);
 
-        dockerClientTestService.mockTestResultsForContainer(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY, container1);
-        dockerClientTestService.mockTestResultsForContainer(dockerClient, ALL_SUCCEED_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY, container2);
+        dockerClientTestService.mockTestResultsForContainer(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH,
+                LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY, container1);
+        dockerClientTestService.mockTestResultsForContainer(dockerClient, ALL_SUCCEED_TEST_RESULTS_PATH, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY,
+                container2);
 
         var queueItem = createBaseBuildJobQueueItemForTriggerWithImage(image1);
         var queueItem2 = createBaseBuildJobQueueItemForTriggerWithImage(image2);
@@ -338,6 +351,67 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
+        });
+    }
+
+    @Test
+    void testBuildAgentPullImageWithRandomNetworkFailure() {
+        var inspectImageCmd = mock(InspectImageCmd.class);
+        var inspectImageResponse = new InspectImageResponse().withArch("amd64");
+
+        when(dockerClient.inspectImageCmd(anyString())).thenReturn(inspectImageCmd);
+        AtomicInteger fails = new AtomicInteger(0);
+        doAnswer(invocation -> {
+            if (fails.incrementAndGet() <= 2) {
+                throw new NotFoundException("Simulated network failure");
+            }
+            return inspectImageResponse;
+        }).when(inspectImageCmd).exec();
+
+        var queueItem = createBaseBuildJobQueueItemForTrigger();
+        buildJobQueue.add(queueItem);
+
+        await().until(() -> {
+            var resultQueueItem = resultQueue.poll();
+            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
+                    && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
+        });
+    }
+
+    @Test
+    void testBuildAgentPausesAfterConsecutiveFailures() {
+        // run 1 successful job to ensure no previous jobs failed already
+        var queueItem = createBaseBuildJobQueueItemForTrigger();
+
+        buildJobQueue.add(queueItem);
+
+        await().until(() -> {
+            var resultQueueItem = resultQueue.poll();
+            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
+                    && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
+        });
+
+        // then 5 failings jobs
+        StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
+        when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
+        when(startContainerCmd.exec()).thenThrow(new RuntimeException("Container start failed"));
+
+        for (int i = 0; i < pauseAfterConsecutiveFailures; i++) {
+            buildJobQueue.add(createBaseBuildJobQueueItemForTrigger());
+        }
+
+        await().until(() -> resultQueue.size() >= pauseAfterConsecutiveFailures);
+
+        await().until(() -> {
+            var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+            return buildAgent != null && buildAgent.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
+        });
+
+        // resume and wait for unpause not interfere with other tests
+        resumeBuildAgentTopic.publish(buildAgentShortName);
+        await().until(() -> {
+            var buildAgent = buildAgentInformation.get(hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+            return buildAgent.status() != BuildAgentInformation.BuildAgentStatus.SELF_PAUSED;
         });
     }
 }

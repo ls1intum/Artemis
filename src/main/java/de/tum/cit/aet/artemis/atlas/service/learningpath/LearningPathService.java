@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.service.learningpath;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -14,10 +12,12 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphEdgeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathAverageProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathCompetencyGraphDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
@@ -49,10 +50,11 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 
 /**
  * Service Implementation for managing Learning Paths.
@@ -65,7 +67,8 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository
  * <li>and retrieval of ngx graph representations.</li>
  * </ul>
  */
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
+@Lazy
 @Service
 public class LearningPathService {
 
@@ -74,6 +77,8 @@ public class LearningPathService {
     private final UserRepository userRepository;
 
     private final LearningPathRepository learningPathRepository;
+
+    private final LearningPathRepositoryService learningPathRepositoryService;
 
     private final CompetencyProgressRepository competencyProgressRepository;
 
@@ -85,7 +90,7 @@ public class LearningPathService {
 
     private final CompetencyRelationRepository competencyRelationRepository;
 
-    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -93,19 +98,20 @@ public class LearningPathService {
 
     private final CourseLearnerProfileService courseLearnerProfileService;
 
-    public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
-            LearningPathNavigationService learningPathNavigationService, CourseRepository courseRepository, CompetencyRepository competencyRepository,
-            CompetencyRelationRepository competencyRelationRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+    public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, LearningPathRepositoryService learningPathRepositoryService,
+            CompetencyProgressRepository competencyProgressRepository, LearningPathNavigationService learningPathNavigationService, CourseRepository courseRepository,
+            CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
             StudentParticipationRepository studentParticipationRepository, CourseCompetencyRepository courseCompetencyRepository,
             CourseLearnerProfileService courseLearnerProfileService) {
         this.userRepository = userRepository;
         this.learningPathRepository = learningPathRepository;
+        this.learningPathRepositoryService = learningPathRepositoryService;
         this.competencyProgressRepository = competencyProgressRepository;
         this.learningPathNavigationService = learningPathNavigationService;
         this.courseRepository = courseRepository;
         this.competencyRepository = competencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
-        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.studentParticipationRepository = studentParticipationRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.courseLearnerProfileService = courseLearnerProfileService;
@@ -163,8 +169,8 @@ public class LearningPathService {
         LearningPath lpToCreate = new LearningPath();
         lpToCreate.setUser(user);
         lpToCreate.setCourse(course);
-        lpToCreate.getCompetencies().addAll(course.getCompetencies());
-        lpToCreate.getCompetencies().addAll(course.getPrerequisites());
+        lpToCreate.addCompetencies(course.getCompetencies());
+        lpToCreate.addCompetencies(course.getPrerequisites());
         var persistedLearningPath = learningPathRepository.save(lpToCreate);
         log.debug("Created LearningPath (id={}) for user (id={}) in course (id={})", persistedLearningPath.getId(), user.getId(), course.getId());
         updateLearningPathProgress(persistedLearningPath);
@@ -181,54 +187,9 @@ public class LearningPathService {
     public SearchResultPageDTO<LearningPathInformationDTO> getAllOfCourseOnPageWithSize(@NotNull SearchTermPageableSearchDTO<String> search, long courseId) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.LEARNING_PATH);
         final var searchTerm = search.getSearchTerm();
-        final Page<LearningPath> learningPathPage = learningPathRepository.findByLoginOrNameInCourse(searchTerm, courseId, pageable);
+        final Page<LearningPath> learningPathPage = learningPathRepository.findWithEagerUserByLoginOrNameInCourse(searchTerm, courseId, pageable);
         final List<LearningPathInformationDTO> contentDTOs = learningPathPage.getContent().stream().map(LearningPathInformationDTO::of).toList();
         return new SearchResultPageDTO<>(contentDTOs, learningPathPage.getTotalPages());
-    }
-
-    /**
-     * Links given competency to all learning paths of the course.
-     *
-     * @param competency Competency that should be added to each learning path
-     * @param courseId   course id that the learning paths belong to
-     */
-    public void linkCompetencyToLearningPathsOfCourse(@NotNull CourseCompetency competency, long courseId) {
-        var course = courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(courseId);
-        var learningPaths = course.getLearningPaths();
-        learningPaths.forEach(learningPath -> learningPath.addCompetency(competency));
-        learningPathRepository.saveAll(learningPaths);
-        log.debug("Linked competency (id={}) to learning paths", competency.getId());
-    }
-
-    /**
-     * Links a list of competencies to all learning paths of the course.
-     *
-     * @param competencies The list of competencies that should be added
-     * @param courseId     course id that the learning paths belong to
-     */
-    public void linkCompetenciesToLearningPathsOfCourse(@NotNull List<? extends CourseCompetency> competencies, long courseId) {
-        if (competencies.isEmpty()) {
-            return;
-        }
-        var course = courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(courseId);
-        var learningPaths = course.getLearningPaths();
-        learningPaths.forEach(learningPath -> learningPath.addCompetencies(new HashSet<>(competencies)));
-        learningPathRepository.saveAll(learningPaths);
-        log.debug("Linked {} competencies to learning paths", competencies.size());
-    }
-
-    /**
-     * Remove linked competency from all learning paths of the course.
-     *
-     * @param competency Competency that should be removed from each learning path
-     * @param courseId   course id that the learning paths belong to
-     */
-    public void removeLinkedCompetencyFromLearningPathsOfCourse(@NotNull CourseCompetency competency, long courseId) {
-        var course = courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(courseId);
-        var learningPaths = course.getLearningPaths();
-        learningPaths.forEach(learningPath -> learningPath.removeCompetency(competency));
-        learningPathRepository.saveAll(learningPaths);
-        log.debug("Removed linked competency (id={}) from learning paths", competency.getId());
     }
 
     /**
@@ -238,7 +199,7 @@ public class LearningPathService {
      * @param userId   id of the user the learning path is linked to
      */
     public void updateLearningPathProgress(long courseId, long userId) {
-        final var learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(courseId, userId);
+        final var learningPath = learningPathRepositoryService.findWithEagerCompetenciesByCourseIdAndUserId(courseId, userId);
         learningPath.ifPresent(this::updateLearningPathProgress);
     }
 
@@ -262,6 +223,27 @@ public class LearningPathService {
         }
         learningPathRepository.save(learningPath);
         log.debug("Updated LearningPath (id={}) for user (id={})", learningPath.getId(), userId);
+    }
+
+    /**
+     * Calculate the average learning path progress for all enrolled students in a course
+     *
+     * @param courseId the id of the course
+     * @return the average progress as a double (0.0 to 100.0)
+     */
+    public LearningPathAverageProgressDTO getAverageProgressForCourse(long courseId) {
+        List<LearningPath> learningPaths = learningPathRepository.findAllByCourseIdForEnrolledStudents(courseId);
+
+        if (learningPaths.isEmpty()) {
+            return new LearningPathAverageProgressDTO(courseId, 0.0, 0);
+        }
+
+        double totalProgress = learningPaths.stream().mapToInt(LearningPath::getProgress).sum();
+
+        double averageProgress = totalProgress / learningPaths.size();
+        averageProgress = Math.round(averageProgress * 100.0) / 100.0;
+
+        return new LearningPathAverageProgressDTO(courseId, averageProgress, learningPaths.size());
     }
 
     /**
@@ -298,7 +280,7 @@ public class LearningPathService {
      * @param learningPathId the id of the learning path
      */
     public void startLearningPathForCurrentUser(long learningPathId) {
-        final var learningPath = learningPathRepository.findByIdElseThrow(learningPathId);
+        final var learningPath = learningPathRepository.findWithEagerUserByIdElseThrow(learningPathId);
         final var currentUser = userRepository.getUser();
         if (!learningPath.getUser().equals(currentUser)) {
             throw new AccessForbiddenException("You are not allowed to start this learning path.");
@@ -419,12 +401,12 @@ public class LearningPathService {
      * @return the learning path with fetched data
      */
     public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(long learningPathId) {
-        Optional<LearningPath> optionalLearningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId);
+        Optional<LearningPath> optionalLearningPath = learningPathRepositoryService.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId);
         LearningPath learningPath;
         if (optionalLearningPath.isEmpty()) {
             LearningPath learningPathWithCourse = learningPathRepository.findWithEagerCourseByIdElseThrow(learningPathId);
             courseLearnerProfileService.createCourseLearnerProfile(learningPathWithCourse.getCourse(), learningPathWithCourse.getUser());
-            learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(learningPathId);
+            learningPath = learningPathRepositoryService.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(learningPathId);
         }
         else {
             learningPath = optionalLearningPath.get();
@@ -447,13 +429,15 @@ public class LearningPathService {
             });
             return learningPath;
         }
+
+        LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
         Long userId = learningPath.getUser().getId();
         Set<Long> competencyIds = learningPath.getCompetencies().stream().map(CourseCompetency::getId).collect(Collectors.toSet());
         Map<Long, CompetencyProgress> competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, userId).stream()
                 .collect(Collectors.toMap(progress -> progress.getCompetency().getId(), cp -> cp));
         Set<LectureUnit> lectureUnits = learningPath.getCompetencies().stream()
                 .flatMap(competency -> competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit)).collect(Collectors.toSet());
-        Map<Long, LectureUnitCompletion> completions = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, userId).stream()
+        Map<Long, LectureUnitCompletion> completions = api.findByLectureUnitsAndUserId(lectureUnits, userId).stream()
                 .collect(Collectors.toMap(completion -> completion.getLectureUnit().getId(), cp -> cp));
         Set<Long> exerciseIds = learningPath.getCompetencies().stream().flatMap(competency -> competency.getExerciseLinks().stream())
                 .map(exerciseLink -> exerciseLink.getExercise().getId()).collect(Collectors.toSet());

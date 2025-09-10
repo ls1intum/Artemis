@@ -18,10 +18,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 /**
  * A SubmittedAnswer.
@@ -49,12 +47,10 @@ import de.tum.cit.aet.artemis.quiz.config.QuizView;
 public abstract class SubmittedAnswer extends DomainObject {
 
     @Column(name = "score_in_points")
-    @JsonView(QuizView.After.class)
     private Double scoreInPoints;
 
     @ManyToOne
     @JsonIgnoreProperties({ "questionStatistic", "exercise" })
-    @JsonView(QuizView.Before.class)
     private QuizQuestion quizQuestion;
 
     @ManyToOne
@@ -104,4 +100,5 @@ public abstract class SubmittedAnswer extends DomainObject {
      * @param quizExercise the changed quizExercise-object
      */
     public abstract void checkAndDeleteReferences(QuizExercise quizExercise);
+
 }

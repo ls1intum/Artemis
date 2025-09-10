@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
 import { UserCredentials } from '../../../users';
 import { Commands } from '../../../commands';
 import { CoursesPage } from '../../course/CoursesPage';
@@ -15,10 +15,10 @@ export class ProgrammingExerciseOverviewPage {
         this.courseOverview = courseOverview;
     }
 
-    async getResultScore() {
+    async checkResultScore(expectedResult: string) {
         const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
         await resultScore.waitFor({ state: 'visible' });
-        return resultScore;
+        await expect(resultScore.getByText(expectedResult)).toBeVisible();
     }
 
     async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {
@@ -74,7 +74,7 @@ export class ProgrammingExerciseOverviewPage {
 }
 
 export enum GitCloneMethod {
-    https,
-    httpsWithToken,
-    ssh,
+    https = 'https',
+    httpsWithToken = 'https with token',
+    ssh = 'ssh',
 }

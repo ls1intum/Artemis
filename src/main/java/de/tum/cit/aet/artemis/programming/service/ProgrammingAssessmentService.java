@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -24,32 +25,29 @@ import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
-import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingAssessmentService extends AssessmentService {
-
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
 
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, ExamDateService examDateService, UserRepository userRepository, Optional<LtiNewResultService> ltiNewResultService,
-            SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
+            SubmissionRepository submissionRepository, Optional<ExamDateApi> examDateApi, UserRepository userRepository, Optional<LtiApi> ltiApi,
+            SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examDateService, userRepository, ltiNewResultService, singleUserNotificationService, resultWebsocketService);
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+                submissionRepository, examDateApi, userRepository, ltiApi, singleUserNotificationService, resultWebsocketService);
         this.athenaFeedbackApi = athenaFeedbackApi;
     }
 
@@ -62,16 +60,13 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * @return result that was saved in the database
      */
     private Result saveManualAssessment(Result result, User assessor) {
-        var participation = result.getParticipation();
+        var participation = result.getSubmission().getParticipation();
 
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);
         result.setCompletionDate(null);
 
-        Result finalResult = resultService.storeFeedbackInResult(result, result.getFeedbacks(), true);
-
-        finalResult.setParticipation(participation);
-        return finalResult;
+        return resultService.storeFeedbackInResult(result, result.getFeedbacks(), true);
     }
 
     /**
@@ -99,9 +94,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
         newManualResult.setHasComplaint(existingManualResult.getHasComplaint().orElse(false));
         newManualResult = saveManualAssessment(newManualResult, assessor);
 
-        if (submission.getParticipation() == null) {
-            newManualResult.setParticipation(submission.getParticipation());
-        }
         Result savedResult = resultRepository.save(newManualResult);
         savedResult.setSubmission(submission);
 
@@ -123,14 +115,13 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
         // Note: we always need to report the result over LTI, even if the assessment due date is not over yet.
         // Otherwise, it might never become visible in the external system
-        ltiNewResultService.ifPresent(newResultService -> newResultService.onNewResult(participation));
+        ltiApi.ifPresent(newResultService -> newResultService.onNewResult(participation));
         if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             resultWebsocketService.broadcastNewResult(participation, newManualResult);
         }
 
         sendFeedbackToAthena(exercise, submission, newManualResult.getFeedbacks());
         handleResolvedFeedbackRequest(participation);
-        newManualResult.setParticipation(participation);
 
         return newManualResult;
     }

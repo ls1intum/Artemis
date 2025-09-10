@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,14 +25,14 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.AcceptExternalLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
-import de.tum.cit.aet.artemis.core.service.user.UserService;
-import de.tum.cit.aet.artemis.lti.service.LtiService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -55,24 +56,22 @@ import tech.jhipster.web.util.PaginationUtil;
  * Another option would be to have a specific JPA entity graph to handle this case.
  */
 @Profile(PROFILE_CORE)
+@Lazy
 @RestController
 @RequestMapping("api/core/")
 public class UserResource {
 
     private static final Logger log = LoggerFactory.getLogger(UserResource.class);
 
-    private final UserService userService;
-
     private final UserCreationService userCreationService;
 
-    private final Optional<LtiService> ltiService;
+    private final Optional<LtiApi> ltiApi;
 
     private final UserRepository userRepository;
 
-    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, Optional<LtiService> ltiService) {
+    public UserResource(UserRepository userRepository, UserCreationService userCreationService, Optional<LtiApi> ltiApi) {
         this.userRepository = userRepository;
-        this.userService = userService;
-        this.ltiService = ltiService;
+        this.ltiApi = ltiApi;
         this.userCreationService = userCreationService;
     }
 
@@ -95,7 +94,6 @@ public class UserResource {
         page.forEach(user -> {
             // remove some values which are not needed in the client
             user.setLangKey(null);
-            user.setLastNotificationRead(null);
             user.setLastModifiedBy(null);
             user.setLastModifiedDate(null);
             user.setCreatedBy(null);
@@ -104,32 +102,6 @@ public class UserResource {
         });
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-    }
-
-    @PutMapping("users/notification-date")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Void> updateUserNotificationDate() {
-        log.debug("REST request to update notification date for logged-in user");
-        User user = userRepository.getUser();
-        userRepository.updateUserNotificationReadDate(user.getId());
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * Updates the HideNotificationsUntil property that indicates which notifications to show (based on their creation date)
-     *
-     * @param showAllNotifications is true if all notifications should be displayed in the sidebar else depending on the HideNotificationsUntil property
-     * @return the ResponseEntity with status 200 (OK) that the update was successful
-     */
-    @PutMapping("users/notification-visibility")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Void> updateUserNotificationVisibility(@RequestBody boolean showAllNotifications) {
-        log.debug("REST request to update notification visibility for logged-in user");
-        User user = userRepository.getUser();
-        // if all notifications (regardless of their creation date) should be shown hideUntil should be null
-        ZonedDateTime hideUntil = showAllNotifications ? null : ZonedDateTime.now();
-        userService.updateUserNotificationVisibility(user.getId(), hideUntil);
-        return ResponseEntity.ok().build();
     }
 
     /**
@@ -144,7 +116,7 @@ public class UserResource {
         if (user.getActivated()) {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }
-        if ((ltiService.isPresent() && !ltiService.get().isLtiCreatedUser(user)) || !user.isInternal()) {
+        if ((ltiApi.isPresent() && !ltiApi.get().isLtiCreatedUser(user)) || !user.isInternal()) {
             user.setActivated(true);
             userRepository.save(user);
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
@@ -155,19 +127,20 @@ public class UserResource {
     }
 
     /**
-     * PUT users/accept-external-llm-usage : sets the externalLLMUsageAccepted flag for the user to ZonedDateTime.now()
+     * PUT users/accept-external-llm-usage : sets the externalLLMUsageAccepted flag for the user to ZonedDateTime.now() or null,
+     * depending on whether the user accepted or declined the usage of external LLMs.
      *
+     * @param acceptExternalLLMUsageDTO the DTO containing the user's choice regarding external LLM usage
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found),
      *         or with status 400 (Bad Request) if external LLM usage was already accepted
      */
     @PutMapping("users/accept-external-llm-usage")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> setExternalLLMUsageAcceptedToTimestamp() {
+    public ResponseEntity<Void> setExternalLLMUsageAcceptedToTimestamp(@RequestBody AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO) {
         User user = userRepository.getUser();
-        if (user.getExternalLLMUsageAcceptedTimestamp() != null) {
-            return ResponseEntity.badRequest().build();
-        }
-        userRepository.updateExternalLLMUsageAcceptedToDate(user.getId(), ZonedDateTime.now());
+
+        ZonedDateTime hasAcceptedTimestamp = acceptExternalLLMUsageDTO.accepted() ? ZonedDateTime.now() : null;
+        userRepository.updateExternalLLMUsageAcceptedToDate(user.getId(), hasAcceptedTimestamp);
         return ResponseEntity.ok().build();
     }
 }

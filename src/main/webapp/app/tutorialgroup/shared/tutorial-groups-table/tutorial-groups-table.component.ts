@@ -1,12 +1,12 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, OnChanges, SimpleChanges, TemplateRef, inject, input } from '@angular/core';
 import { faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink } from '@angular/router';
@@ -27,20 +27,15 @@ export class TutorialGroupsTableComponent implements OnChanges {
 
     @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
 
-    @Input()
-    showIdColumn = false;
+    readonly showIdColumn = input(false);
 
-    @Input()
-    showChannelColumn = false;
+    readonly showChannelColumn = input(false);
 
-    @Input()
-    tutorialGroups: TutorialGroup[] = [];
+    readonly tutorialGroups = input<TutorialGroup[]>([]);
 
-    @Input()
-    course: Course;
+    readonly course = input.required<Course>();
 
-    @Input()
-    timeZone?: string = undefined;
+    readonly timeZone = input<string>();
 
     timeZoneUsedForDisplay = dayjs.tz.guess();
 
@@ -69,11 +64,11 @@ export class TutorialGroupsTableComponent implements OnChanges {
 
     sortRows() {
         if (this.sortingPredicate === 'dayAndTime') {
-            this.sortService.sortByMultipleProperties(this.tutorialGroups, ['tutorialGroupSchedule.dayOfWeek', 'tutorialGroupSchedule.startTime'], this.ascending);
+            this.sortService.sortByMultipleProperties(this.tutorialGroups(), ['tutorialGroupSchedule.dayOfWeek', 'tutorialGroupSchedule.startTime'], this.ascending);
         } else if (this.sortingPredicate === 'capacityAndRegistrations') {
-            this.sortService.sortByMultipleProperties(this.tutorialGroups, ['capacity', 'numberOfRegisteredUsers'], this.ascending);
+            this.sortService.sortByMultipleProperties(this.tutorialGroups(), ['capacity', 'numberOfRegisteredUsers'], this.ascending);
         } else {
-            this.sortService.sortByProperty(this.tutorialGroups, this.sortingPredicate, this.ascending);
+            this.sortService.sortByProperty(this.tutorialGroups(), this.sortingPredicate, this.ascending);
         }
     }
 
@@ -92,11 +87,13 @@ export class TutorialGroupsTableComponent implements OnChanges {
                     case 'tutorialGroups':
                         {
                             if (change.currentValue && change.currentValue.length > 0) {
-                                this.tutorialGroupsSplitAcrossMultipleCampuses = this.tutorialGroups.some(
-                                    (tutorialGroup) => tutorialGroup.campus !== this.tutorialGroups[0].campus,
+                                this.tutorialGroupsSplitAcrossMultipleCampuses = this.tutorialGroups().some(
+                                    (tutorialGroup) => tutorialGroup.campus !== this.tutorialGroups()[0].campus,
                                 );
-                                this.mixOfOfflineAndOfflineTutorialGroups = this.tutorialGroups.some((tutorialGroup) => tutorialGroup.isOnline !== this.tutorialGroups[0].isOnline);
-                                this.mifOfDifferentLanguages = this.tutorialGroups.some((tutorialGroup) => tutorialGroup.language !== this.tutorialGroups[0].language);
+                                this.mixOfOfflineAndOfflineTutorialGroups = this.tutorialGroups().some(
+                                    (tutorialGroup) => tutorialGroup.isOnline !== this.tutorialGroups()[0].isOnline,
+                                );
+                                this.mifOfDifferentLanguages = this.tutorialGroups().some((tutorialGroup) => tutorialGroup.language !== this.tutorialGroups()[0].language);
                                 this.cdr.detectChanges();
                             }
                         }

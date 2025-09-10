@@ -1,22 +1,22 @@
-import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChildren, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewEncapsulation, inject, viewChildren } from '@angular/core';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
-import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
+import { QuizReEvaluateWarningComponent } from './warning/quiz-re-evaluate-warning.component';
+import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
-import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
-import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizExercisePopupService } from 'app/quiz/manage/quiz-exercise-popup.service';
-import { Duration } from 'app/quiz/manage/quiz-exercise-interfaces';
+import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExercisePopupService } from 'app/quiz/manage/service/quiz-exercise-popup.service';
+import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
 import { cloneDeep } from 'lodash-es';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
-import { QuizExerciseValidationDirective } from 'app/quiz/manage/quiz-exercise-validation.directive';
-import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { QuizExerciseValidationDirective } from 'app/quiz/manage/util/quiz-exercise-validation.directive';
+import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { faExclamationCircle, faExclamationTriangle, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { ReEvaluateDragAndDropQuestionComponent } from 'app/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -58,8 +58,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
 
     private subscription: Subscription;
 
-    @ViewChildren(ReEvaluateDragAndDropQuestionComponent)
-    reEvaluateDragAndDropQuestionComponents: ReEvaluateDragAndDropQuestionComponent[];
+    readonly reEvaluateDragAndDropQuestionComponents = viewChildren(ReEvaluateDragAndDropQuestionComponent);
 
     modalService: NgbModal;
     popupService: QuizExercisePopupService;
@@ -127,7 +126,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
      */
     save(): void {
         const files = new Map<string, File>();
-        for (const component of this.reEvaluateDragAndDropQuestionComponents) {
+        for (const component of this.reEvaluateDragAndDropQuestionComponents()) {
             component.fileMap.forEach((value, filename) => {
                 files.set(filename, value.file);
             });

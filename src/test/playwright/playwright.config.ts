@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 import { parseNumber } from './support/utils';
 import 'app/shared/util/map.extension';
@@ -22,7 +22,25 @@ export default defineConfig({
     retries: parseNumber(process.env.TEST_RETRIES) ?? 2,
     workers: parseNumber(process.env.TEST_WORKER_PROCESSES) ?? 3,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-    reporter: [['junit', { outputFile: process.env.PLAYWRIGHT_JUNIT_OUTPUT_NAME ?? './test-reports/results.xml' }]],
+    reporter: [
+        ['list'],
+        ['junit', { outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/results-${process.env.PLAYWRIGHT_TEST_TYPE}.xml` : './test-reports/results.xml' }],
+        [
+            'monocart-reporter',
+            {
+                outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/monocart-report-${process.env.PLAYWRIGHT_TEST_TYPE}` : './test-reports/monocart-report',
+                coverage: {
+                    reports: ['lcov', 'json'],
+                    filter: {
+                        '**/src/**': true,
+                        '**/node_modules/**': false,
+                        client: false,
+                        '**/**': true,
+                    },
+                },
+            },
+        ],
+    ],
     globalSetup: require.resolve('./init/global-setup.ts'),
 
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -41,7 +59,7 @@ export default defineConfig({
             name: 'fast-tests',
             grep: /@fast|^[^@]*$/,
             timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 45) * 1000,
-            use: { ...devices['Desktop Chrome'] },
+            use: { browserName: 'chromium', viewport: { width: 1920, height: 1080 } },
         },
         // Tests with @slow tag. These tests are expected to run longer
         // than faster tests and have higher timeout.
@@ -49,7 +67,10 @@ export default defineConfig({
             name: 'slow-tests',
             grep: /@slow/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
-            use: { ...devices['Desktop Chrome'] },
+            use: {
+                browserName: 'chromium',
+                viewport: { width: 1920, height: 1080 },
+            },
         },
         // Tests with @sequential tag. These tests are triggering programming exercise submissions.
         // Running only one programming exercise evaluation at a time could make the tests more stable.
@@ -58,7 +79,10 @@ export default defineConfig({
             name: 'sequential-tests',
             grep: /@sequential/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
-            use: { ...devices['Desktop Chrome'] },
+            use: {
+                browserName: 'chromium',
+                viewport: { width: 1920, height: 1080 },
+            },
         },
     ],
 });

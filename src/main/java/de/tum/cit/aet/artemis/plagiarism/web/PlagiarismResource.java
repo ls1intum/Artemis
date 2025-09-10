@@ -1,12 +1,11 @@
 package de.tum.cit.aet.artemis.plagiarism.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +29,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
@@ -40,7 +40,8 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
 /**
  * REST controller for managing Plagiarism Cases.
  */
-@Profile(PROFILE_CORE)
+@Conditional(PlagiarismEnabled.class)
+@Lazy
 @RestController
 @RequestMapping("api/plagiarism/")
 public class PlagiarismResource {
@@ -121,7 +122,7 @@ public class PlagiarismResource {
      */
     @GetMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/for-split-view")
     @EnforceAtLeastStudent
-    public ResponseEntity<PlagiarismComparison<?>> getPlagiarismComparisonForSplitView(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId) {
+    public ResponseEntity<PlagiarismComparison> getPlagiarismComparisonForSplitView(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
@@ -158,7 +159,7 @@ public class PlagiarismResource {
      * @param comparison to anonymize.
      * @param userLogin  of the student asking to see his plagiarism comparison.
      */
-    private void checkStudentAccess(PlagiarismComparison<?> comparison, String userLogin) {
+    private void checkStudentAccess(PlagiarismComparison comparison, String userLogin) {
         if (comparison.getSubmissionA().getStudentLogin().equals(userLogin)) {
             comparison.getSubmissionA().setStudentLogin(YOUR_SUBMISSION);
             comparison.getSubmissionB().setStudentLogin(OTHER_SUBMISSION);

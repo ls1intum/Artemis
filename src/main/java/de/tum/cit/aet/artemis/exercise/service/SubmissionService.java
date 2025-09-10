@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -41,7 +43,8 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -57,13 +60,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 // TODO: this class has too many dependencies to other services. We should reduce this
 public class SubmissionService {
 
     private static final Logger log = LoggerFactory.getLogger(SubmissionService.class);
 
-    private final ExamDateService examDateService;
+    private final Optional<ExamDateApi> examDateApi;
 
     private final ExerciseDateService exerciseDateService;
 
@@ -93,7 +97,7 @@ public class SubmissionService {
 
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository,
+            FeedbackRepository feedbackRepository, Optional<ExamDateApi> examDateApi, ExerciseDateService exerciseDateService, CourseRepository courseRepository,
             ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
@@ -102,7 +106,7 @@ public class SubmissionService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.feedbackRepository = feedbackRepository;
-        this.examDateService = examDateService;
+        this.examDateApi = examDateApi;
         this.exerciseDateService = exerciseDateService;
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
@@ -188,8 +192,7 @@ public class SubmissionService {
         List<T> submissions;
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
-            submissions = participations.stream().map(StudentParticipation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
-                    .map(submission -> (T) submission)
+            submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
                     .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound) != null)
                     .collect(Collectors.toCollection(ArrayList::new));
         }
@@ -220,8 +223,7 @@ public class SubmissionService {
                     ZonedDateTime.now());
         }
 
-        // TODO: we could move the ILLEGAL check into the database
-        var submissionsWithoutResult = participations.stream().map(Participation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get).toList();
+        var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
 
         if (correctionRound > 0) {
             // remove submission if user already assessed first correction round
@@ -364,7 +366,6 @@ public class SubmissionService {
         // do not send old submissions or old results to the client
         if (submission.getParticipation() != null) {
             submission.getParticipation().setSubmissions(null);
-            submission.getParticipation().setResults(null);
 
             Exercise exercise = submission.getParticipation().getExercise();
             if (exercise != null) {
@@ -394,10 +395,9 @@ public class SubmissionService {
      */
     public Result saveNewEmptyResult(Submission submission) {
         Result result = new Result();
-        result.setParticipation(submission.getParticipation());
-        result = resultRepository.save(result);
         result.setSubmission(submission);
         submission.addResult(result);
+        result = resultRepository.save(result);
         submissionRepository.save(submission);
         return result;
     }
@@ -446,7 +446,6 @@ public class SubmissionService {
             return saveNewEmptyResult(submission);
         }
         Result newResult = new Result();
-        newResult.setParticipation(submission.getParticipation());
         copyFeedbackToNewResult(newResult, oldResult);
         return copyResultContentAndAddToSubmission(submission, newResult, oldResult);
     }
@@ -464,7 +463,6 @@ public class SubmissionService {
     public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks, String assessmentNoteText) {
         Result newResult = new Result();
         updateAssessmentNoteAfterComplaintResponse(newResult, assessmentNoteText, submission.getLatestResult().getAssessor());
-        newResult.setParticipation(submission.getParticipation());
         copyFeedbackToResult(newResult, feedbacks);
         newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
         return newResult;
@@ -489,8 +487,8 @@ public class SubmissionService {
         newResult.setScore(oldResult.getScore());
         newResult.setRated(oldResult.isRated());
         newResult.copyProgrammingExerciseCounters(oldResult);
+        newResult.setSubmission(submission);
         var savedResult = resultRepository.save(newResult);
-        savedResult.setSubmission(submission);
         submission.addResult(savedResult);
         submissionRepository.save(submission);
         return savedResult;
@@ -505,12 +503,11 @@ public class SubmissionService {
      * @return the result with correctly persisted relationship to its submission
      */
     public Result saveNewResult(Submission submission, final Result result) {
-        result.setSubmission(null);
-        if (result.getParticipation() == null) {
-            result.setParticipation(submission.getParticipation());
+        result.setSubmission(submission);
+        if (result.getSubmission().getParticipation() == null) {
+            result.getSubmission().setParticipation(submission.getParticipation());
         }
         var savedResult = resultRepository.save(result);
-        savedResult.setSubmission(submission);
         submission.addResult(savedResult);
         submissionRepository.save(submission);
         return savedResult;
@@ -535,7 +532,6 @@ public class SubmissionService {
             var latestSubmission = studentParticipation.findLatestSubmission();
             if (latestSubmission.isPresent() && latestSubmission.get().getResultForCorrectionRound(correctionRound) == null) {
                 Result result = new Result();
-                result.setParticipation(studentParticipation);
                 result.setAssessor(assessor);
                 result.setCompletionDate(ZonedDateTime.now());
                 result.setScore(score, studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember());
@@ -642,7 +638,6 @@ public class SubmissionService {
             Optional<Submission> optionalSubmission = participation.findLatestSubmission();
             if (optionalSubmission.isPresent() && (!submittedOnly || optionalSubmission.get().isSubmitted())) {
                 participation.setSubmissions(Set.of(optionalSubmission.get()));
-                Optional.ofNullable(optionalSubmission.get().getLatestResult()).ifPresent(result -> participation.setResults(Set.of(result)));
             }
             else {
                 participation.setSubmissions(Set.of());
@@ -688,7 +683,8 @@ public class SubmissionService {
         final boolean isExamMode = exercise.isExamExercise();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (isExamMode) {
-            ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            ZonedDateTime latestIndividualExamEndDate = api.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                 log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
@@ -722,7 +718,7 @@ public class SubmissionService {
      * @return a list of modeling submissions for the given exercise id
      */
     public <T extends Submission> List<T> getAllSubmissionsForExercise(Long exerciseId, boolean submittedOnly, boolean examMode) {
-        List<StudentParticipation> participations;
+        Collection<StudentParticipation> participations;
         if (examMode) {
             participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseIdIgnoreTestRuns(exerciseId);
         }
@@ -809,7 +805,7 @@ public class SubmissionService {
      * @param complaint the complaint which gets prepared
      */
     private void prepareComplaintAndSubmission(Complaint complaint, Submission submission) {
-        StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getParticipation();
+        StudentParticipation studentParticipation = (StudentParticipation) complaint.getResult().getSubmission().getParticipation();
         studentParticipation.setParticipant(null);
         studentParticipation.setExercise(null);
         complaint.setParticipant(null);

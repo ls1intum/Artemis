@@ -13,11 +13,11 @@ import {
     output,
     viewChild,
 } from '@angular/core';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { PostingDirective } from 'app/communication/posting.directive';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { PostingDirective } from 'app/communication/directive/posting.directive';
 import dayjs from 'dayjs/esm';
 import { animate, style, transition, trigger } from '@angular/animations';
-import { Reaction } from 'app/entities/metis/reaction.model';
+import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { faBookmark, faPencilAlt, faShare, faSmile, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -29,8 +29,8 @@ import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { captureException } from '@sentry/angular';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
-import { Course } from 'app/entities/course.model';
-import { PostingContentComponent } from 'app/communication/posting-content.components';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
@@ -87,7 +87,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     readonly faShare = faShare;
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
-    static activeDropdownPost: AnswerPostComponent | null = null;
+    static activeDropdownPost: AnswerPostComponent | undefined = undefined;
     mayEdit = false;
     mayDelete = false;
 
@@ -117,12 +117,19 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         this.posting = { ...this.posting, reactions: updatedReactions };
     }
 
+    /**
+     * Closes dropdown if user clicks anywhere outside the component.
+     */
     @HostListener('document:click', ['$event'])
     onClickOutside() {
         this.showDropdown = false;
         this.enableBodyScroll();
     }
 
+    /**
+     * Disables vertical scrolling in the thread answer post container.
+     * Prevents background scroll when context menu is open.
+     */
     private disableBodyScroll() {
         const mainContainer = this.document.querySelector('.thread-answer-post');
         if (mainContainer) {
@@ -130,6 +137,9 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         }
     }
 
+    /**
+     * Re-enables vertical scrolling in the thread container.
+     */
     enableBodyScroll() {
         const mainContainer = this.document.querySelector('.thread-answer-post');
         if (mainContainer) {
@@ -137,14 +147,20 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         }
     }
 
+    /** Updates internal flag for delete permission */
     onMayDelete(value: boolean) {
         this.mayDelete = value;
     }
 
+    /** Updates internal flag for edit permission */
     onMayEdit(value: boolean) {
         this.mayEdit = value;
     }
 
+    /**
+     * Displays custom context menu on right-click,
+     * and sets this component as the currently active dropdown.
+     */
     onRightClick(event: MouseEvent) {
         const targetElement = event.target as HTMLElement;
         let isPointerCursor: boolean;
@@ -158,6 +174,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         if (!isPointerCursor) {
             event.preventDefault();
 
+            // Close any other active dropdown
             if (AnswerPostComponent.activeDropdownPost !== this) {
                 AnswerPostComponent.cleanupActiveDropdown();
             }
@@ -175,6 +192,9 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         }
     }
 
+    /**
+     * Adjusts dropdown position if it would overflow the screen.
+     */
     adjustDropdownPosition() {
         const dropdownWidth = 200;
         const screenWidth = window.innerWidth;
@@ -184,12 +204,16 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         }
     }
 
+    /**
+     * Static utility that clears the currently active dropdown post,
+     * re-enables scrolling and updates view.
+     */
     private static cleanupActiveDropdown(): void {
         if (AnswerPostComponent.activeDropdownPost) {
             AnswerPostComponent.activeDropdownPost.showDropdown = false;
             AnswerPostComponent.activeDropdownPost.enableBodyScroll();
             AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
-            AnswerPostComponent.activeDropdownPost = null;
+            AnswerPostComponent.activeDropdownPost = undefined;
         }
     }
 

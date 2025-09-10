@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
-import { DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Subject, firstValueFrom, of } from 'rxjs';
-import { ParticipationWebsocketService } from 'app/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import {
     CommitState,
@@ -16,52 +16,52 @@ import {
     FileType,
     GitConflictState,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { buildLogs, extractedBuildLogErrors, extractedErrorFiles } from '../../helpers/sample/build-logs';
-import { problemStatement } from '../../helpers/sample/problemStatement.json';
-import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/overview/programming-submission.service';
-import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
+import { buildLogs, extractedBuildLogErrors, extractedErrorFiles } from 'test/helpers/sample/build-logs';
+import { problemStatement } from 'test/helpers/sample/problemStatement.json';
+import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/shared/services/programming-submission.service';
+import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/mock-programming-submission.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
-import { Participation } from 'app/entities/participation/participation.model';
-import { BuildLogEntryArray } from 'app/entities/programming/build-log.model';
-import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { BuildLogEntryArray } from 'app/buildagent/shared/entities/build-log.model';
+import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { ResultService } from 'app/exercise/result/result.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
-import { CodeEditorBuildLogService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
-import { Feedback } from 'app/entities/feedback.model';
-import { DomainService } from 'app/programming/shared/code-editor/service/code-editor-domain.service';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
-import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
-import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
-import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
-import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import {
+    CodeEditorBuildLogService,
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+} from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
+import { MockCodeEditorRepositoryService } from 'test/helpers/mocks/service/mock-code-editor-repository.service';
+import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
+import { MockCodeEditorBuildLogService } from 'test/helpers/mocks/service/mock-code-editor-build-log.service';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { omit } from 'lodash-es';
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { MonacoEditorComponent } from '../../../../../main/webapp/app/shared/monaco-editor/monaco-editor.component';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { GuidedTourMapping } from 'app/core/guided-tour/guided-tour-setting.model';
 
 describe('CodeEditorContainerIntegration', () => {
     let container: CodeEditorContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorContainerComponent>;
-    let containerDebugElement: DebugElement;
     let conflictService: CodeEditorConflictStateService;
     let domainService: DomainService;
     let checkIfRepositoryIsCleanStub: jest.SpyInstance;
@@ -74,7 +74,6 @@ describe('CodeEditorContainerIntegration', () => {
     let commitStub: jest.SpyInstance;
     let getStudentParticipationWithLatestResultStub: jest.SpyInstance;
     let getLatestPendingSubmissionStub: jest.SpyInstance;
-    let guidedTourService: GuidedTourService;
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | undefined>;
     let getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
 
@@ -89,9 +88,9 @@ describe('CodeEditorContainerIntegration', () => {
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: ResultService, useClass: MockResultService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
                 { provide: CodeEditorRepositoryFileService, useClass: MockCodeEditorRepositoryFileService },
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
@@ -108,18 +107,16 @@ describe('CodeEditorContainerIntegration', () => {
 
         containerFixture = TestBed.createComponent(CodeEditorContainerComponent);
         container = containerFixture.componentInstance;
-        containerDebugElement = containerFixture.debugElement;
-        guidedTourService = TestBed.inject(GuidedTourService);
 
-        const codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
-        const codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
-        const participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
-        const resultService = containerDebugElement.injector.get(ResultService);
-        const buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
-        const programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
-        conflictService = containerDebugElement.injector.get(CodeEditorConflictStateService);
-        domainService = containerDebugElement.injector.get(DomainService);
-        const submissionService = containerDebugElement.injector.get(ProgrammingSubmissionService);
+        const codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
+        const codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
+        const participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        const resultService = TestBed.inject(ResultService);
+        const buildLogService = TestBed.inject(CodeEditorBuildLogService);
+        const programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+        conflictService = TestBed.inject(CodeEditorConflictStateService);
+        domainService = TestBed.inject(DomainService);
+        const submissionService = TestBed.inject(ProgrammingSubmissionService);
 
         subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
 
@@ -154,7 +151,7 @@ describe('CodeEditorContainerIntegration', () => {
 
     const cleanInitialize = () => {
         const exercise = { id: 1, problemStatement };
-        const participation = { id: 2, exercise, student: { id: 99 }, results: [result] } as StudentParticipation;
+        const participation = { id: 2, exercise, student: { id: 99 }, submissions: [{ results: [result] }] } as StudentParticipation;
         const isCleanSubject = new Subject();
         const getRepositoryContentSubject = new Subject();
         const getBuildLogsSubject = new Subject();
@@ -214,7 +211,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // called by build output
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.results![0]);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.submissions![0].results![0]);
     };
 
     const loadFile = async (fileName: string, fileContent: string) => {
@@ -232,7 +229,7 @@ describe('CodeEditorContainerIntegration', () => {
 
     it('should not load files and render other components correctly if the repository status cannot be retrieved', fakeAsync(() => {
         const exercise = { id: 1, problemStatement, course: { id: 2 } };
-        const participation = { id: 2, exercise, results: [result] } as StudentParticipation;
+        const participation = { id: 2, exercise, submissions: [{ results: [result] }] } as StudentParticipation;
         const isCleanSubject = new Subject();
         const getBuildLogsSubject = new Subject();
         checkIfRepositoryIsCleanStub.mockReturnValue(isCleanSubject);
@@ -290,7 +287,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.results![0]);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.submissions![0].results![0]);
 
         flush();
         discardPeriodicTasks();
@@ -386,8 +383,9 @@ describe('CodeEditorContainerIntegration', () => {
 
     it('should wait for build result after submission if no unsaved changes exist', () => {
         cleanInitialize();
-        const successfulSubmission = { id: 1, buildFailed: false } as ProgrammingSubmission;
-        const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
+        const successfulSubmission = { id: 1, buildFailed: false, participation: { id: 3 } } as ProgrammingSubmission;
+        const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[] } as Result;
+        successfulSubmission.results = [successfulResult];
         successfulResult.submission = successfulSubmission;
         const expectedBuildLog = new BuildLogEntryArray();
         expect(container.unsavedFiles).toStrictEqual({});
@@ -400,7 +398,7 @@ describe('CodeEditorContainerIntegration', () => {
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
             submission: {} as ProgrammingSubmission,
-            participationId: successfulResult!.participation!.id!,
+            participationId: successfulResult!.submission.participation!.id!,
         });
         container.actions.commit();
         containerFixture.detectChanges();
@@ -412,7 +410,7 @@ describe('CodeEditorContainerIntegration', () => {
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
             submission: undefined,
-            participationId: successfulResult!.participation!.id!,
+            participationId: successfulResult!.submission.participation!.id!,
         });
         subscribeForLatestResultOfParticipationSubject.next(successfulResult);
         containerFixture.detectChanges();
@@ -424,8 +422,8 @@ describe('CodeEditorContainerIntegration', () => {
 
     it('should first save unsaved files before triggering commit', async () => {
         cleanInitialize();
-        const successfulSubmission = { id: 1, buildFailed: false } as ProgrammingSubmission;
-        const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
+        const successfulSubmission = { id: 1, buildFailed: false, participation: { id: 3 } } as ProgrammingSubmission;
+        const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[] } as Result;
         successfulResult.submission = successfulSubmission;
         const expectedBuildLog = new BuildLogEntryArray();
         const unsavedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
@@ -456,7 +454,7 @@ describe('CodeEditorContainerIntegration', () => {
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
             submission: {} as ProgrammingSubmission,
-            participationId: successfulResult!.participation!.id!,
+            participationId: successfulResult!.submission.participation!.id!,
         });
 
         // Commit state should change asynchronously
@@ -470,7 +468,7 @@ describe('CodeEditorContainerIntegration', () => {
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
             submission: undefined,
-            participationId: successfulResult!.participation!.id!,
+            participationId: successfulResult!.submission.participation!.id!,
         });
         containerFixture.detectChanges();
 
@@ -482,12 +480,8 @@ describe('CodeEditorContainerIntegration', () => {
     });
 
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
-        const guidedTourMapping = {} as GuidedTourMapping;
-        jest.spyOn<any, any>(guidedTourService, 'checkTourState').mockReturnValue(true);
-        guidedTourService.guidedTourMapping = guidedTourMapping;
-
         const successfulResult = { id: 3, successful: false };
-        const participation = { id: 1, results: [successfulResult], exercise: { id: 99 } } as StudentParticipation;
+        const participation = { id: 1, submissions: [{ results: [successfulResult] }], exercise: { id: 99 } } as StudentParticipation;
         const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();
         const isCleanSubject = new Subject();

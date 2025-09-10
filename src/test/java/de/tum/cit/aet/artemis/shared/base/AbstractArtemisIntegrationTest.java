@@ -4,6 +4,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -11,6 +14,7 @@ import java.util.Optional;
 import jakarta.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.parallel.Execution;
@@ -29,15 +33,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
-import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.communication.service.notifications.ConversationNotificationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.GeneralInstantNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.TutorialGroupNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.FirebasePushNotificationService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.HibernateQueryInterceptor;
 import de.tum.cit.aet.artemis.core.util.QueryCountAssert;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
@@ -84,16 +85,17 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @AutoConfigureEmbeddedDatabase
 public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
-    @Value("${server.url}")
-    protected String artemisServerUrl;
-
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
+
+    @Value("${artemis.temp-path}")
+    protected Path tempPath;
 
     // NOTE: we prefer MockitoSpyBean over MockitoBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
     @MockitoSpyBean
     protected Lti13Service lti13Service;
 
+    // TODO: in the future, we should not mock gitService anymore
     @MockitoSpyBean
     protected GitService gitService;
 
@@ -107,12 +109,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected GroupNotificationService groupNotificationService;
 
     @MockitoSpyBean
-    protected TutorialGroupNotificationService tutorialGroupNotificationService;
-
-    @MockitoSpyBean
-    protected ConversationNotificationService conversationNotificationService;
-
-    @MockitoSpyBean
     protected SingleUserNotificationService singleUserNotificationService;
 
     @MockitoSpyBean
@@ -122,7 +118,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected MailService mailService;
 
     @MockitoSpyBean
-    protected GeneralInstantNotificationService generalInstantNotificationService;
+    protected MailSendingService mailSendingService;
 
     @MockitoSpyBean
     protected FirebasePushNotificationService firebasePushNotificationService;
@@ -169,12 +165,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @MockitoSpyBean
     protected TextBlockService textBlockService;
 
-    @MockitoSpyBean
-    protected CompetencyProgressService competencyProgressService;
-
-    @MockitoSpyBean
-    protected CompetencyProgressApi competencyProgressApi;
-
     @Autowired
     protected RequestUtilService request;
 
@@ -205,9 +195,19 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Autowired
     protected CourseTestRepository courseRepository;
 
+    private static final Path rootPath = Path.of("local", "upload");
+
+    @BeforeAll
+    static void setup() {
+        // Set the static file upload path for all tests
+        // This makes it a simple unit test that doesn't require a server start.
+        FilePathConverter.setFileUploadPath(rootPath);
+    }
+
     @BeforeEach
-    void mockMailService() {
+    void mockMailService() throws IOException {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
+        Files.createDirectories(tempPath);
     }
 
     @BeforeEach
@@ -229,10 +229,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     protected void resetSpyBeans() {
-        Mockito.reset(gitService, groupNotificationService, conversationNotificationService, tutorialGroupNotificationService, singleUserNotificationService,
-                websocketMessagingService, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
-                uriService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService, competencyProgressService,
-                competencyProgressApi);
+        Mockito.reset(gitService, groupNotificationService, singleUserNotificationService, websocketMessagingService, examAccessService, mailService, instanceMessageSendService,
+                programmingExerciseScheduleService, programmingExerciseParticipationService, uriService, scheduleService, participantScoreScheduleService, javaMailSender,
+                programmingTriggerService, zipFileService);
     }
 
     @Override

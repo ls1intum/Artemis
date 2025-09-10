@@ -2,16 +2,13 @@ package de.tum.cit.aet.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,10 +26,8 @@ import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
-import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -40,9 +35,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
-class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
+class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "programmingexamtest";
 
@@ -66,8 +61,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
 
     private Course course1;
 
-    private Exam exam1;
-
     private static final int NUMBER_OF_STUDENTS = 2;
 
     private static final int NUMBER_OF_TUTORS = 1;
@@ -77,7 +70,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
 
         course1 = courseUtilService.addEmptyCourse();
-        exam1 = examUtilService.addExam(course1);
+        examUtilService.addExam(course1);
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
     }
@@ -148,24 +141,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
 
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGenerateStudentExamsTemplateCombine() throws Exception {
-        Exam examWithProgramming = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, true);
-        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
-
-        // invoke generate student exams
-        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + examWithProgramming.getId() + "/generate-student-exams", Optional.empty(),
-                StudentExam.class, HttpStatus.OK);
-
-        verify(gitService, never()).combineAllCommitsOfRepositoryIntoOne(any());
-
-        // invoke prepare exercise start
-        ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam1, course1);
-
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam1.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
     }
 
     @Test

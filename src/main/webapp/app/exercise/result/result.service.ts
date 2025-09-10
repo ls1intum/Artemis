@@ -2,22 +2,22 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Result } from 'app/entities/result.model';
-import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Feedback } from 'app/entities/feedback.model';
-import { StudentParticipation, isPracticeMode } from 'app/entities/participation/student-participation.model';
-import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { isResultPreliminary } from 'app/programming/shared/utils/programming-exercise.utils';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { captureException } from '@sentry/angular';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import {
     isAIResultAndFailed,
@@ -72,11 +72,12 @@ export class ResultService implements IResultService {
      * If either of the arguments is undefined the error is forwarded to sentry and an empty string is returned
      * @param result the result containing all necessary information like the achieved points
      * @param exercise the exercise where the result belongs to
+     * @param participation the participation of the exercise and result
      * @param short flag that indicates if the resultString should use the short format
      */
-    getResultString(result: Result | undefined, exercise: Exercise | undefined, short?: boolean): string {
-        if (result && exercise) {
-            return this.getResultStringDefinedParameters(result, exercise, short);
+    getResultString(result: Result | undefined, exercise: Exercise | undefined, participation: Participation | undefined, short?: boolean): string {
+        if (result && exercise && participation) {
+            return this.getResultStringDefinedParameters(result, exercise, participation, short);
         } else {
             captureException('Tried to generate a result string, but either the result or exercise was undefined');
             return '';
@@ -88,9 +89,10 @@ export class ResultService implements IResultService {
      * Contains the score, achieved points and if it's a programming exercise the tests and code issues as well
      * @param result the result containing all necessary information like the achieved points
      * @param exercise the exercise where the result belongs to
+     * @param participation the participation of the exercise and result
      * @param short flag that indicates if the resultString should use the short format
      */
-    private getResultStringDefinedParameters(result: Result, exercise: Exercise, short: boolean | undefined): string {
+    private getResultStringDefinedParameters(result: Result, exercise: Exercise, participation: Participation, short: boolean | undefined): string {
         const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
         if (exercise.type !== ExerciseType.PROGRAMMING) {
@@ -99,7 +101,7 @@ export class ResultService implements IResultService {
             }
             return this.getResultStringNonProgrammingExercise(relativeScore, points, short);
         } else {
-            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points, short);
+            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, participation, relativeScore, points, short);
         }
     }
 
@@ -146,11 +148,20 @@ export class ResultService implements IResultService {
      * If the result is a build failure or no tests were executed, the string replaces some parts with a helpful explanation
      * @param result the result containing all necessary information like the achieved points
      * @param exercise the exercise where the result belongs to
+     * @param participation the participation of the exercise and result
      * @param relativeScore the achieved score in percent
      * @param points the amount of achieved points
      * @param short flag that indicates if the resultString should use the short format
      */
-    private getResultStringProgrammingExercise(result: Result, exercise: ProgrammingExercise, relativeScore: number, points: number, short: boolean | undefined): string {
+    private getResultStringProgrammingExercise(
+        result: Result,
+        exercise: ProgrammingExercise,
+        participation: Participation,
+        relativeScore: number,
+        points: number,
+        short: boolean | undefined,
+    ): string {
+        const latestSubmission = (result.submission ?? participation.submissions?.[0]) as ProgrammingSubmission;
         let buildAndTestMessage: string;
         if (isAIResultAndFailed(result)) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackFailed');
@@ -160,7 +171,7 @@ export class ResultService implements IResultService {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackTimedOut');
         } else if (isAIResultAndProcessed(result)) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackSuccessful');
-        } else if (result.submission && (result.submission as ProgrammingSubmission).buildFailed) {
+        } else if (latestSubmission?.buildFailed) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildFailed');
         } else if (!result.testCaseCount) {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulNoTests');
@@ -174,7 +185,7 @@ export class ResultService implements IResultService {
 
         let resultString = this.getBaseResultStringProgrammingExercise(result, relativeScore, points, buildAndTestMessage, short);
 
-        if (isStudentParticipation(result) && isResultPreliminary(result, exercise)) {
+        if (isStudentParticipation(result) && isResultPreliminary(result, participation, exercise)) {
             resultString += ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
         }
 
@@ -230,7 +241,7 @@ export class ResultService implements IResultService {
             .pipe(map((res: ResultsWithPointsArrayResponseType) => this.convertResultsWithPointsResponse(res)));
     }
 
-    getFeedbackDetailsForResult(participationId: number, result: Result): Observable<HttpResponse<Feedback[]>> {
+    getFeedbackDetailsForResult(participationId: number | undefined, result: Result): Observable<HttpResponse<Feedback[]>> {
         return this.http.get<Feedback[]>(`${this.participationResourceUrl}/${participationId}/results/${result.id!}/details`, { observe: 'response' }).pipe(
             map((res) => {
                 const feedbacks = res.body ?? [];
@@ -272,7 +283,7 @@ export class ResultService implements IResultService {
 
     private convertResultDatesFromServer(result: Result) {
         result.completionDate = convertDateFromServer(result.completionDate);
-        ParticipationService.convertParticipationDatesFromServer(result.participation as StudentParticipation);
+        ParticipationService.convertParticipationDatesFromServer(result.submission?.participation as StudentParticipation);
         SubmissionService.convertSubmissionDateFromServer(result.submission);
     }
 
@@ -302,15 +313,11 @@ export class ResultService implements IResultService {
     }
 
     public static processReceivedResult(exercise: Exercise, result: Result): Result {
-        if (result.participation) {
-            result.participation.results = [result];
-            (result.participation as StudentParticipation).exercise = exercise;
+        if (result.submission?.participation) {
+            (result.submission.participation as StudentParticipation).exercise = exercise;
             // Nest submission into participation so that it is available for the result component
-            if (result.submission) {
-                result.participation.submissions = [result.submission];
-            }
         }
-        result.durationInMinutes = ResultService.durationInMinutes(result.completionDate!, result.participation?.initializationDate ?? exercise.releaseDate!);
+        result.durationInMinutes = ResultService.durationInMinutes(result.completionDate!, result.submission?.participation?.initializationDate ?? exercise.releaseDate!);
         return result;
     }
 

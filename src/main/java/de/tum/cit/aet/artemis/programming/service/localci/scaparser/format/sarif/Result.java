@@ -129,5 +129,4 @@ public record Result(String ruleId, Integer ruleIndex, ReportingDescriptorRefere
             }
         }
     }
-
 }

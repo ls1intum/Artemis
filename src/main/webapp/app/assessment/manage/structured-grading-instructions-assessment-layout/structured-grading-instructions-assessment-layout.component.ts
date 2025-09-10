@@ -7,7 +7,7 @@ import { delay, startWith } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 @Component({
@@ -95,7 +95,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      * the corresponding drop method is in AssessmentDetailComponent
      */
     drag(event: any, instruction: GradingInstruction) {
-        // The mimetype has to be text/plain to enable dragging into an external application, e.g. Orion, Apollon
+        // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon
         event.dataTransfer.setData('text/plain', JSON.stringify(instruction));
     }
     /**

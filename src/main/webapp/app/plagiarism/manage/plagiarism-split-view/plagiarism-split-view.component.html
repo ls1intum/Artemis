@@ -1,13 +1,10 @@
 <div class="plagiarism-split-view">
     <div class="plagiarism-split-pane" jhiPane>
         @if (plagiarismComparison) {
-            @if (isModelingExercise) {
-                <jhi-modeling-submission-viewer [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()" [hideContent]="false" />
-            }
             @if (isProgrammingOrTextExercise) {
                 <jhi-text-submission-viewer
                     [fileSelectedSubject]="this.fileSelectedSubject"
-                    [exercise]="exercise"
+                    [exercise]="exercise()"
                     [matches]="matchesA"
                     [plagiarismSubmission]="getTextSubmissionA()"
                     [isLockFilesEnabled]="isLockFilesEnabled"
@@ -25,21 +22,14 @@
     </div>
     <div class="plagiarism-split-pane" jhiPane>
         @if (plagiarismComparison) {
-            @if (isModelingExercise) {
-                <jhi-modeling-submission-viewer
-                    [exercise]="exercise"
-                    [plagiarismSubmission]="getModelingSubmissionB()"
-                    [hideContent]="forStudent && dayjs(exercise.dueDate).isAfter(dayjs())"
-                />
-            }
             @if (isProgrammingOrTextExercise) {
                 <jhi-text-submission-viewer
                     [fileSelectedSubject]="this.fileSelectedSubject"
-                    [exercise]="exercise"
+                    [exercise]="exercise()"
                     [matches]="matchesB"
                     [plagiarismSubmission]="getTextSubmissionB()"
                     [isLockFilesEnabled]="isLockFilesEnabled"
-                    [hideContent]="forStudent && dayjs(exercise.dueDate).isAfter(dayjs())"
+                    [hideContent]="forStudent() && dayjs(exercise()?.dueDate).isAfter(dayjs())"
                     [dropdownHoverSubject]="this.dropdownHoverSubject"
                     [showFilesSubject]="this.showFilesSubject"
                 />

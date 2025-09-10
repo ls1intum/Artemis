@@ -42,7 +42,7 @@ public class CheckstyleParser implements ParserStrategy {
     @Override
     public StaticCodeAnalysisReportDTO parse(String reportContent) {
         try {
-            List<CheckstyleFile> files = xmlMapper.readValue(reportContent, new com.fasterxml.jackson.core.type.TypeReference<List<CheckstyleFile>>() {
+            List<CheckstyleFile> files = xmlMapper.readValue(reportContent, new com.fasterxml.jackson.core.type.TypeReference<>() {
             });
             return createReportFromFiles(files);
         }

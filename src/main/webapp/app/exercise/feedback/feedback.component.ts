@@ -3,28 +3,27 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
-import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/programming/build-log.model';
-import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
+import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/buildagent/shared/entities/build-log.model';
+import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { Badge, ResultService } from 'app/exercise/result/result.service';
-import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { Result } from 'app/entities/result.model';
-import { BuildLogService } from 'app/programming/service/build-log.service';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { BuildLogService } from 'app/programming/shared/services/build-log.service';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
-import { createCommitUrl, isProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { isProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { BarChartModule, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { GraphColors } from 'app/entities/statistics.model';
-import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
-import { Course } from 'app/entities/course.model';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
+import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/util/statistics-graph.utils';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercise/feedback/item/feedback-item-service';
 import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/programming-feedback-item.service';
-import { FeedbackService } from 'app/exercise/feedback/feedback.service';
+import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { evaluateTemplateStatus, isOnlyCompilationTested, isStudentParticipation, resultIsPreliminary } from '../result/result.utils';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { ChartData } from 'app/exercise/feedback/chart/feedback-chart-data';
@@ -38,6 +37,7 @@ import { FeedbackNodeComponent } from './node/feedback-node.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { Participation, getLatestSubmission } from 'app/exercise/shared/entities/participation/participation.model';
 
 // Modal -> Result details view
 @Component({
@@ -62,7 +62,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private resultService = inject(ResultService);
     private buildLogService = inject(BuildLogService);
     private translateService = inject(TranslateService);
-    private profileService = inject(ProfileService);
     private feedbackService = inject(FeedbackService);
     private feedbackChartService = inject(FeedbackChartService);
     private injector = inject(Injector);
@@ -75,8 +74,11 @@ export class FeedbackComponent implements OnInit, OnChanges {
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
 
+    private showTestDetails = false;
+
     @Input() exercise?: Exercise;
     @Input() result: Result;
+    @Input() participation: Participation;
 
     /**
      * Specify the feedback.testCase.id values that should be shown, all other values will not be visible.
@@ -100,7 +102,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
     @Input() latestDueDate?: dayjs.Dayjs;
     @Input() taskName?: string;
     @Input() numberOfNotExecutedTests?: number;
-
     @Input() isExamReviewPage = false;
     @Input() isPrinting = false;
 
@@ -108,16 +109,13 @@ export class FeedbackComponent implements OnInit, OnChanges {
     faXmark = faXmark;
     faCircleNotch = faCircleNotch;
     faExclamationTriangle = faExclamationTriangle;
-    private showTestDetails = false;
     isLoading = false;
     loadingFailed = false;
     buildLogs: BuildLogEntryArray;
     course?: Course;
     isOnlyCompilationTested: boolean;
 
-    commitHashURLTemplate?: string;
     commitHash?: string;
-    commitUrl?: string;
 
     chartData: ChartData = {
         xScaleMax: 100,
@@ -165,13 +163,11 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
         this.commitHash = this.getCommitHash().slice(0, 11);
 
-        this.isOnlyCompilationTested = isOnlyCompilationTested(this.result, evaluateTemplateStatus(this.exercise, this.result.participation, this.result, false));
-
-        // Get active profiles, to distinguish between VC systems for the commit link of the result
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
-            this.commitUrl = this.getCommitUrl(this.result, this.exercise as ProgrammingExercise, this.commitHashURLTemplate);
-        });
+        this.isOnlyCompilationTested = isOnlyCompilationTested(
+            this.result,
+            this.participation,
+            evaluateTemplateStatus(this.exercise, this.result.submission?.participation, this.result, false),
+        );
     }
 
     /**
@@ -193,7 +189,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
      * Sets up the information related to the exercise.
      */
     private initializeExerciseInformation() {
-        this.exercise ??= this.result.participation?.exercise;
+        this.exercise ??= this.participation?.exercise;
         if (this.exercise) {
             this.course = getCourseFromExercise(this.exercise);
         }
@@ -203,7 +199,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
         }
 
         // In case the exerciseType is not set, we try to set it back if the participation is from a programming exercise
-        if (!this.exerciseType && isProgrammingExerciseParticipation(this.result?.participation)) {
+        if (!this.exerciseType && isProgrammingExerciseParticipation(this.participation)) {
             this.exerciseType = ExerciseType.PROGRAMMING;
         }
 
@@ -224,7 +220,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         feedbacks.forEach((feedback) => (feedback.result = this.result));
                         return of(feedbacks);
                     } else {
-                        return this.resultService.getFeedbackDetailsForResult(this.result.participation!.id!, this.result).pipe(map((response) => response.body));
+                        return this.resultService.getFeedbackDetailsForResult(this.participation?.id, this.result).pipe(map((response) => response.body));
                     }
                 }),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
@@ -240,22 +236,19 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         }
                     }
 
-                    // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
-                    if (
-                        this.result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA &&
-                        this.exerciseType === ExerciseType.PROGRAMMING &&
-                        this.result.participation &&
-                        (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)
-                    ) {
-                        return this.fetchAndSetBuildLogs(this.result.participation.id!, this.result.id);
+                    // If the submission is marked with buildFailed, fetch the build logs.
+                    const buildFailed = (getLatestSubmission(this.participation) as ProgrammingSubmission)?.buildFailed;
+
+                    if (this.result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && this.exerciseType === ExerciseType.PROGRAMMING && buildFailed) {
+                        return this.fetchAndSetBuildLogs(this.participation.id!, this.result.id);
                     }
 
                     if (this.showScoreChart) {
                         this.updateChart(this.feedbackItemNodes);
                     }
 
-                    if (isStudentParticipation(this.result)) {
-                        this.badge = ResultService.evaluateBadge(this.result.participation!, this.result);
+                    if (isStudentParticipation(this.participation)) {
+                        this.badge = ResultService.evaluateBadge(this.participation, this.result);
                     }
 
                     return of(null);
@@ -313,11 +306,5 @@ export class FeedbackComponent implements OnInit, OnChanges {
                 feedbackNode.open = true;
             }
         });
-    }
-
-    private getCommitUrl(result: Result, programmingExercise: ProgrammingExercise | undefined, commitHashURLTemplate: string | undefined) {
-        const projectKey = programmingExercise?.projectKey;
-        const programmingSubmission = result.submission as ProgrammingSubmission;
-        return createCommitUrl(commitHashURLTemplate, projectKey, result.participation, programmingSubmission);
     }
 }

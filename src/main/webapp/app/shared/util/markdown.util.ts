@@ -1,4 +1,4 @@
-import { ExerciseHintExplanationInterface } from 'app/entities/quiz/quiz-question.model';
+import { ExerciseHintExplanationInterface } from 'app/quiz/shared/entities/quiz-question.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';

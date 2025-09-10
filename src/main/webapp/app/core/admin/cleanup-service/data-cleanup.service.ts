@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { convertDateFromClient } from 'app/utils/date.utils';
+import { convertDateFromClient } from 'app/shared/util/date.utils';
 
 export interface CleanupServiceExecutionRecordDTO {
     executionDate: dayjs.Dayjs;

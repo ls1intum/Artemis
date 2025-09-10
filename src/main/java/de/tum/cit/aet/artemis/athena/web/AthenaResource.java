@@ -1,9 +1,10 @@
 package de.tum.cit.aet.artemis.athena.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils.hashSha256;
 
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -11,8 +12,10 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +32,6 @@ import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -51,19 +53,18 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 import de.tum.cit.aet.artemis.text.api.TextApi;
 import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
+import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 
 /**
  * REST controller for Athena feedback suggestions.
  */
 @Profile(PROFILE_ATHENA)
+@Lazy
 @RestController
 @RequestMapping("api/athena/")
 public class AthenaResource {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaResource.class);
-
-    @Value("${artemis.athena.secret}")
-    private String athenaSecret;
 
     private final CourseRepository courseRepository;
 
@@ -87,14 +88,16 @@ public class AthenaResource {
 
     private final AthenaModuleService athenaModuleService;
 
+    private final byte[] athenaSecretHash;
+
     /**
      * The AthenaResource provides an endpoint for the client to fetch feedback suggestions from Athena.
      */
     public AthenaResource(CourseRepository courseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<TextSubmissionApi> textSubmissionApi,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, AuthorizationCheckService authCheckService,
-            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaRepositoryExportService athenaRepositoryExportService,
-            AthenaModuleService athenaModuleService) {
+            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaRepositoryExportService athenaRepositoryExportService, AthenaModuleService athenaModuleService,
+            @Value("${artemis.athena.secret}") String athenaSecret) {
         this.courseRepository = courseRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.textSubmissionApi = textSubmissionApi;
@@ -106,6 +109,7 @@ public class AthenaResource {
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.athenaRepositoryExportService = athenaRepositoryExportService;
         this.athenaModuleService = athenaModuleService;
+        this.athenaSecretHash = hashSha256(athenaSecret);
     }
 
     @FunctionalInterface
@@ -166,8 +170,8 @@ public class AthenaResource {
     @GetMapping("text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<TextFeedbackDTO>> getTextFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        var api = textRepositoryApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE));
-        var submissionApi = textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE));
+        var api = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class));
+        var submissionApi = textSubmissionApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class));
 
         return getFeedbackSuggestions(exerciseId, submissionId, api::findByIdElseThrow, submissionApi::findByIdElseThrow,
                 athenaFeedbackSuggestionsService::getTextFeedbackSuggestions);
@@ -240,10 +244,10 @@ public class AthenaResource {
     /**
      * Check if the given auth header is valid for Athena, otherwise throw an exception.
      *
-     * @param auth the auth header value to check
+     * @param incomingSecret the auth header value to check
      */
-    private void checkAthenaSecret(String auth) {
-        if (!auth.equals(athenaSecret)) {
+    private void checkAthenaSecret(String incomingSecret) {
+        if (!MessageDigest.isEqual(athenaSecretHash, hashSha256(incomingSecret))) {
             log.error("Athena secret does not match");
             throw new AccessForbiddenException("Athena secret does not match");
         }
@@ -260,7 +264,8 @@ public class AthenaResource {
     @GetMapping("public/programming-exercises/{exerciseId}/submissions/{submissionId}/repository")
     @EnforceNothing // We check the Athena secret instead
     @ManualConfig
-    public ResponseEntity<Resource> getRepository(@PathVariable long exerciseId, @PathVariable long submissionId, @RequestHeader("Authorization") String auth) throws IOException {
+    public ResponseEntity<Resource> getRepository(@PathVariable long exerciseId, @PathVariable long submissionId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth)
+            throws IOException {
         log.debug("REST call to get student repository for exercise {}, submission {}", exerciseId, submissionId);
         checkAthenaSecret(auth);
         return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, submissionId, null));
@@ -276,7 +281,7 @@ public class AthenaResource {
     @GetMapping("public/programming-exercises/{exerciseId}/repository/template")
     @EnforceNothing // We check the Athena secret instead
     @ManualConfig
-    public ResponseEntity<Resource> getTemplateRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
+    public ResponseEntity<Resource> getTemplateRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth) throws IOException {
         log.debug("REST call to get template repository for exercise {}", exerciseId);
         checkAthenaSecret(auth);
         return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.TEMPLATE));
@@ -292,7 +297,7 @@ public class AthenaResource {
     @GetMapping("public/programming-exercises/{exerciseId}/repository/solution")
     @EnforceNothing // We check the Athena secret instead
     @ManualConfig
-    public ResponseEntity<Resource> getSolutionRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
+    public ResponseEntity<Resource> getSolutionRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth) throws IOException {
         log.debug("REST call to get solution repository for exercise {}", exerciseId);
         checkAthenaSecret(auth);
         return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.SOLUTION));
@@ -308,7 +313,7 @@ public class AthenaResource {
     @GetMapping("public/programming-exercises/{exerciseId}/repository/tests")
     @EnforceNothing // We check the Athena secret instead
     @ManualConfig
-    public ResponseEntity<Resource> getTestRepository(@PathVariable long exerciseId, @RequestHeader("Authorization") String auth) throws IOException {
+    public ResponseEntity<Resource> getTestRepository(@PathVariable long exerciseId, @RequestHeader(HttpHeaders.AUTHORIZATION) String auth) throws IOException {
         log.debug("REST call to get test repository for exercise {}", exerciseId);
         checkAthenaSecret(auth);
         return ResponseUtil.ok(athenaRepositoryExportService.exportRepository(exerciseId, null, RepositoryType.TESTS));

@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
-import { Course, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -16,13 +16,10 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     imports: [RouterLink, FaIconComponent, TranslateDirective, ArtemisDatePipe],
 })
 export class CourseTutorialGroupCardComponent {
-    @Input()
-    course: Course;
-    @Input()
-    tutorialGroup: TutorialGroup;
+    readonly course = input.required<Course>();
+    readonly tutorialGroup = input.required<TutorialGroup>();
 
-    @Input()
-    showChannelLink = false;
+    readonly showChannelLink = input(false);
 
     // icons
     faPersonChalkboard = faPersonChalkboard;

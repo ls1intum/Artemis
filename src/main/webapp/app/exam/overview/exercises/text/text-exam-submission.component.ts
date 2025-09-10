@@ -1,24 +1,25 @@
 import { Component, OnInit, inject, input, output } from '@angular/core';
-import { TextEditorService } from 'app/text/overview/text-editor.service';
+import { TextEditorService } from 'app/text/overview/service/text-editor.service';
 import { Subject } from 'rxjs';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { StringCountService } from 'app/text/overview/string-count.service';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { StringCountService } from 'app/text/overview/service/string-count.service';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
+import { SafeHtml } from '@angular/platform-browser';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { onTextEditorTab } from 'app/utils/text.utils';
+import { onTextEditorTab } from 'app/shared/util/text.utils';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -39,6 +40,7 @@ import { onTextEditorTab } from 'app/utils/text.utils';
 export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
     private textService = inject(TextEditorService);
     private stringCountService = inject(StringCountService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
 
     exerciseType = ExerciseType.TEXT;
 
@@ -53,7 +55,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     // answer represents the view state
     answer: string;
-    problemStatementHtml: string;
+    problemStatementHtml: SafeHtml;
     private textEditorInput = new Subject<string>();
 
     // Icons
@@ -64,7 +66,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     ngOnInit(): void {
         // show submission answers in UI
-        this.problemStatementHtml = htmlForMarkdown(this.exercise()?.problemStatement);
+        this.problemStatementHtml = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement);
         this.updateViewFromSubmission();
     }
 
@@ -76,7 +78,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         return this.exercise();
     }
 
-    updateProblemStatement(newProblemStatementHtml: string): void {
+    updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
         this.problemStatementHtml = newProblemStatementHtml;
         this.changeDetectorReference.detectChanges();
     }

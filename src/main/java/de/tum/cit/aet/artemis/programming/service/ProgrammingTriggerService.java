@@ -4,32 +4,29 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.TRIGGER_INSTRUCTOR_BUILD;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -44,12 +41,11 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingTriggerService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingTriggerService.class);
-
-    private final ProfileService profileService;
 
     @Value("${artemis.external-system-request.batch-size}")
     private int externalSystemRequestBatchSize;
@@ -71,20 +67,23 @@ public class ProgrammingTriggerService {
 
     private final AuditEventRepository auditEventRepository;
 
-    private final ResultRepository resultRepository;
-
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     private final ParticipationService participationService;
 
+    private final ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService;
+
     private final ProgrammingMessagingService programmingMessagingService;
+
+    private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
 
     public ProgrammingTriggerService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository, ResultRepository resultRepository,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuditEventRepository auditEventRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingMessagingService programmingMessagingService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProfileService profileService) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, ProgrammingSubmissionMessagingService programmingSubmissionMessagingService) {
         this.participationService = participationService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -93,69 +92,10 @@ public class ProgrammingTriggerService {
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.auditEventRepository = auditEventRepository;
-        this.resultRepository = resultRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.programmingMessagingService = programmingMessagingService;
-        this.profileService = profileService;
-    }
-
-    /**
-     * Executes setTestCasesChanged with testCasesChanged = true, also triggers template and solution build.
-     * This method should be used if the solution participation would otherwise not be built.
-     *
-     * @param programmingExerciseId ProgrammingExercise id
-     * @throws EntityNotFoundException if there is no programming exercise for the given id.
-     */
-    public void setTestCasesChangedAndTriggerTestCaseUpdate(long programmingExerciseId) throws EntityNotFoundException {
-        setTestCasesChanged(programmingExerciseId, true);
-        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndBuildConfigById(programmingExerciseId).orElseThrow();
-
-        try {
-            ContinuousIntegrationTriggerService ciTriggerService = continuousIntegrationTriggerService.orElseThrow();
-            ciTriggerService.triggerBuild(programmingExercise.getSolutionParticipation());
-            ciTriggerService.triggerBuild(programmingExercise.getTemplateParticipation());
-        }
-        catch (ContinuousIntegrationException ex) {
-            log.error("Could not trigger build for solution repository after test case update for programming exercise with id {}", programmingExerciseId);
-        }
-    }
-
-    /**
-     * see the description below
-     *
-     * @param programmingExerciseId id of a ProgrammingExercise.
-     * @param testCasesChanged      set to true to mark the programming exercise as dirty.
-     * @throws EntityNotFoundException if the programming exercise does not exist.
-     */
-    public void setTestCasesChanged(long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        setTestCasesChanged(programmingExercise, testCasesChanged);
-    }
-
-    /**
-     * If testCasesChanged = true, this marks the programming exercise as dirty, meaning that its test cases were changed and the student submissions should be built & tested.
-     * This method also sends out a notification to the client if testCasesChanged = true.
-     * In case the testCaseChanged value is the same for the programming exercise or the programming exercise is not released or has no results, the method will return immediately.
-     *
-     * @param programmingExercise a ProgrammingExercise.
-     * @param testCasesChanged    set to true to mark the programming exercise as dirty.
-     * @throws EntityNotFoundException if the programming exercise does not exist.
-     */
-    private void setTestCasesChanged(ProgrammingExercise programmingExercise, boolean testCasesChanged) throws EntityNotFoundException {
-
-        // If the flag testCasesChanged has not changed, we can stop the execution
-        // Also, if the programming exercise has no results yet, there is no point in setting test cases changed to *true*.
-        // It is only relevant when there are student submissions that should get an updated result.
-
-        boolean resultsExist = resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId());
-
-        if (testCasesChanged == programmingExercise.getTestCasesChanged() || (!resultsExist && testCasesChanged)) {
-            return;
-        }
-        programmingExercise.setTestCasesChanged(testCasesChanged);
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-        // Send a websocket message about the new state to the client.
-        programmingMessagingService.notifyUserAboutTestCaseChanged(testCasesChanged, updatedProgrammingExercise);
+        this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
+        this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
     }
 
     /**
@@ -168,20 +108,18 @@ public class ProgrammingTriggerService {
      * @throws EntityNotFoundException if there is no programming exercise for the given exercise id.
      */
     @Async
-    public void triggerInstructorBuildForExercise(Long exerciseId) throws EntityNotFoundException {
+    public void triggerInstructorBuildForExercise(long exerciseId) throws EntityNotFoundException {
         // Async can't access the authentication object. We need to do any security checks before this point.
         SecurityUtils.setAuthorizationObject();
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         // Let the instructor know that a build run was triggered.
         programmingMessagingService.notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
-        List<ProgrammingExerciseStudentParticipation> participations = new ArrayList<>(
-                programmingExerciseStudentParticipationRepository.findWithSubmissionsAndTeamStudentsByExerciseId(exerciseId));
-
+        Set<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findWithLatestSubmissionByExerciseId(exerciseId);
         triggerBuildForParticipations(participations);
 
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
-        setTestCasesChanged(programmingExercise, false);
+        programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise, false);
         // Let the instructor know that the build run is finished.
         programmingMessagingService.notifyInstructorAboutCompletedExerciseBuildRun(programmingExercise);
     }
@@ -191,11 +129,11 @@ public class ProgrammingTriggerService {
      *
      * @param participations the participations for which the method triggerBuild should be executed.
      */
-    public void triggerBuildForParticipations(List<ProgrammingExerciseStudentParticipation> participations) {
+    public void triggerBuildForParticipations(Collection<ProgrammingExerciseStudentParticipation> participations) {
         var index = 0;
         for (var participation : participations) {
             // Execute requests in batches when using an external build system.
-            if (!profileService.isLocalCiActive() && index > 0 && index % externalSystemRequestBatchSize == 0) {
+            if (index > 0 && index % externalSystemRequestBatchSize == 0) {
                 try {
                     log.info("Sleep for {}s during triggerBuild", externalSystemRequestBatchWaitingTime / 1000);
                     Thread.sleep(externalSystemRequestBatchWaitingTime);
@@ -247,12 +185,12 @@ public class ProgrammingTriggerService {
                 }
                 continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, true);
                 // TODO: this is a workaround, in the future we should use the participation to notify the client and avoid using the submission
-                programmingMessagingService.notifyUserAboutSubmission(submission, participation.getProgrammingExercise().getId());
+                programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, participation.getProgrammingExercise().getId());
             }
             catch (Exception e) {
                 log.error("Trigger build failed for {} with the exception {}", participation.getBuildPlanId(), e.getMessage());
                 BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), participation.getId());
-                programmingMessagingService.notifyUserAboutSubmissionError(participation, error);
+                programmingSubmissionMessagingService.notifyUserAboutSubmissionError(participation, error);
             }
         }
     }
@@ -276,12 +214,12 @@ public class ProgrammingTriggerService {
                 // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             }
             continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExerciseParticipation);
-            programmingMessagingService.notifyUserAboutSubmission(submission, programmingExerciseParticipation.getExercise().getId());
+            programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, programmingExerciseParticipation.getExercise().getId());
         }
         catch (Exception e) {
             log.error("Trigger build failed for {} with the exception {}", programmingExerciseParticipation.getBuildPlanId(), e.getMessage());
             BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
-            programmingMessagingService.notifyUserAboutSubmissionError(submission, error);
+            programmingSubmissionMessagingService.notifyUserAboutSubmissionError(submission, error);
         }
     }
 
@@ -320,11 +258,11 @@ public class ProgrammingTriggerService {
         ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType);
         try {
             continuousIntegrationTriggerService.orElseThrow().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation(), commitHash, triggeredByPushTo);
-            programmingMessagingService.notifyUserAboutSubmission(submission, participation.getProgrammingExercise().getId());
+            programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, participation.getProgrammingExercise().getId());
         }
         catch (Exception e) {
             BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), submission.getParticipation().getId());
-            programmingMessagingService.notifyUserAboutSubmissionError(submission, error);
+            programmingSubmissionMessagingService.notifyUserAboutSubmissionError(submission, error);
         }
     }
 

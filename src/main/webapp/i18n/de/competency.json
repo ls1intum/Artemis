@@ -146,6 +146,14 @@
                 "progressCourseExplanation": "Durchschnittlicher Kurs Fortschritt: Momentan hat der Kurs durchschnittlich <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht.",
                 "softDueDate": "Empfohlen"
             },
+            "competencyContribution": {
+                "title": "Verwandte Kompetenzen",
+                "weightIconTooltips": {
+                    "low": "Niedrige Relevanz für die Kompetenz",
+                    "medium": "Mittlere Relevanz für die Kompetenz",
+                    "high": "Hohe Relevanzz für die Kompetenz"
+                }
+            },
             "competencyPopover": {
                 "connectedCompetencies": "Verbundene Kompetenzen",
                 "explanation": "Diese Vorlesungseinheit hilft dir bei der Erreichung der folgenden Kompetenzen:",

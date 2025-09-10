@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +17,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 /**
  * Spring Data repository for the IrisMessage entity.
  */
+@Lazy
 @Repository
 @Profile(PROFILE_IRIS)
 public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage, Long> {
@@ -34,7 +36,7 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
             SELECT COUNT(DISTINCT m)
             FROM IrisMessage m
                 JOIN TREAT (m.session AS IrisChatSession) s
-            WHERE s.user.id = :userId
+            WHERE s.userId = :userId
                 AND m.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.LLM
                 AND m.sentAt BETWEEN :start AND :end
             """)

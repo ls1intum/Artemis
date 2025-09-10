@@ -5,26 +5,33 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -34,15 +41,16 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class ProgrammingExerciseParticipationService {
 
@@ -62,9 +70,14 @@ public class ProgrammingExerciseParticipationService {
 
     private final GitService gitService;
 
+    private final ResultRepository resultRepository;
+
+    private final SubmissionRepository submissionRepository;
+
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService) {
+            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
+            ResultRepository resultRepository, SubmissionRepository submissionRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -72,6 +85,8 @@ public class ProgrammingExerciseParticipationService {
         this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
+        this.resultRepository = resultRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -206,37 +221,14 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Stashes all changes, which were not submitted/committed before the due date, of a programming participation
-     *
-     * @param programmingExercise exercise with information about the due date
-     * @param participation       student participation whose not submitted changes will be stashed
-     */
-    public void stashChangesInStudentRepositoryAfterDueDateHasPassed(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
-        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            try {
-                // Note: exam exercise do not have a due date, this method should only be invoked directly after the due date so now check is needed here
-                Repository repo = gitService.getOrCheckoutRepository(participation);
-                gitService.stashChanges(repo);
-            }
-            catch (GitAPIException e) {
-                log.error("Stashing student repository for participation {} in exercise '{}' did not work as expected: {}", participation.getId(), programmingExercise.getTitle(),
-                        e.getMessage());
-            }
-        }
-        else {
-            log.warn("Cannot stash student repository for participation {} because the repository was not copied yet!", participation.getId());
-        }
-    }
-
-    /**
      * Replaces all files except the .git folder of the target repository with the files from the source repository
      *
-     * @param targetURL the repository where all files should be replaced
-     * @param sourceURL the repository that should be used as source for all files
+     * @param targetUri the repository where all files should be replaced
+     * @param sourceUri the repository that should be used as source for all files
      */
-    public void resetRepository(VcsRepositoryUri targetURL, VcsRepositoryUri sourceURL) throws GitAPIException, IOException {
-        Repository targetRepo = gitService.getOrCheckoutRepository(targetURL, true);
-        Repository sourceRepo = gitService.getOrCheckoutRepository(sourceURL, true);
+    public void resetRepository(LocalVCRepositoryUri targetUri, LocalVCRepositoryUri sourceUri) throws GitAPIException, IOException {
+        Repository targetRepo = gitService.getOrCheckoutRepository(targetUri, true, true);
+        Repository sourceRepo = gitService.getOrCheckoutRepository(sourceUri, true, true);
 
         // Replace everything but the files corresponding to git (such as the .git folder or the .gitignore file)
         FilenameFilter filter = (dir, name) -> !dir.isDirectory() || !name.contains(".git");
@@ -350,5 +342,64 @@ public class ProgrammingExerciseParticipationService {
             log.error("Could not get commit infos for test repository with participation id {}", participation.getId());
             return List.of();
         }
+    }
+
+    /**
+     * Returns the matching template, solution or student participation for a given build plan key.
+     *
+     * @param planKey the build plan key
+     * @return the matching participation
+     */
+    @Nullable
+    public ProgrammingExerciseParticipation getParticipationWithResults(String planKey) {
+        // we have to support template, solution and student build plans here
+        if (planKey.endsWith("-" + BuildPlanType.TEMPLATE.getName())) {
+            return templateParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
+        }
+        else if (planKey.endsWith("-" + BuildPlanType.SOLUTION.getName())) {
+            return solutionParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
+        }
+        List<ProgrammingExerciseStudentParticipation> participations = studentParticipationRepository.findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(planKey);
+        ProgrammingExerciseStudentParticipation participation = null;
+        if (!participations.isEmpty()) {
+            participation = participations.getFirst();
+            if (participations.size() > 1) {
+                // in the rare case of multiple participations, take the latest one.
+                for (ProgrammingExerciseStudentParticipation otherParticipation : participations) {
+                    if (otherParticipation.getInitializationDate().isAfter(participation.getInitializationDate())) {
+                        participation = otherParticipation;
+                    }
+                }
+            }
+        }
+        return participation;
+    }
+
+    /**
+     * Retrieves the {@link ProgrammingExerciseStudentParticipation} for the given ID, including
+     * its latest {@link Submission} and the most recent {@link Result} with feedback (if available).
+     *
+     * <p>
+     * If no submission exists for the participation, the returned participation will contain
+     * an empty set of submissions. If a submission exists but no result with feedback is found,
+     * the submission will contain an empty list of results.
+     * </p>
+     *
+     * @param participationId the ID of the student participation to retrieve
+     * @return the participation enriched with its latest submission and corresponding result (if available)
+     * @throws EntityNotFoundException if no participation exists with the given ID
+     */
+    public ProgrammingExerciseStudentParticipation findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(long participationId) throws EntityNotFoundException {
+        ProgrammingExerciseStudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
+        Optional<Submission> latestSubmissionOptional = submissionRepository.findLatestSubmissionByParticipationId(participationId);
+        if (latestSubmissionOptional.isEmpty()) {
+            participation.setSubmissions(Set.of());
+            return participation;
+        }
+        Submission latestSubmission = latestSubmissionOptional.get();
+        Optional<Result> latestResultOptional = resultRepository.findLatestResultWithFeedbacksBySubmissionId(latestSubmission.getId(), ZonedDateTime.now());
+        latestResultOptional.ifPresentOrElse(latestResult -> latestSubmission.setResults(List.of(latestResult)), () -> latestSubmission.setResults(List.of()));
+        participation.setSubmissions(Set.of(latestSubmission));
+        return participation;
     }
 }

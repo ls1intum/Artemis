@@ -1,10 +1,7 @@
 package de.tum.cit.aet.artemis.core.service.user;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.security.Role.EDITOR;
-import static de.tum.cit.aet.artemis.core.security.Role.INSTRUCTOR;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
-import static de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT;
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -17,20 +14,19 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -38,23 +34,9 @@ import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import tech.jhipster.security.RandomUtil;
 
 @Profile(PROFILE_CORE)
+@Lazy
 @Service
 public class UserCreationService {
-
-    @Value("${artemis.user-management.use-external}")
-    private Boolean useExternalUserManagement;
-
-    @Value("${info.guided-tour.course-group-students:#{null}}")
-    private Optional<String> tutorialGroupStudents;
-
-    @Value("${info.guided-tour.course-group-tutors:#{null}}")
-    private Optional<String> tutorialGroupTutors;
-
-    @Value("${info.guided-tour.course-group-editors:#{null}}")
-    private Optional<String> tutorialGroupEditors;
-
-    @Value("${info.guided-tour.course-group-instructors:#{null}}")
-    private Optional<String> tutorialGroupInstructors;
 
     private static final Logger log = LoggerFactory.getLogger(UserCreationService.class);
 
@@ -64,27 +46,20 @@ public class UserCreationService {
 
     private final AuthorityRepository authorityRepository;
 
-    private final CourseRepository courseRepository;
-
     private final OrganizationRepository organizationRepository;
 
     private final Optional<CIUserManagementService> optionalCIUserManagementService;
 
     private final CacheManager cacheManager;
 
-    private final Optional<LearnerProfileApi> learnerProfileApi;
-
-    public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository, CourseRepository courseRepository,
-            Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager, OrganizationRepository organizationRepository,
-            Optional<LearnerProfileApi> learnerProfileApi) {
+    public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
+            Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager, OrganizationRepository organizationRepository) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
-        this.courseRepository = courseRepository;
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.cacheManager = cacheManager;
         this.organizationRepository = organizationRepository;
-        this.learnerProfileApi = learnerProfileApi;
     }
 
     /**
@@ -102,8 +77,8 @@ public class UserCreationService {
      * @param isInternal         true if the actual password gets saved in the database
      * @return newly created user
      */
-    public User createUser(String login, @Nullable String password, @Nullable Set<String> groups, String firstName, String lastName, String email, String registrationNumber,
-            String imageUrl, String langKey, boolean isInternal) {
+    public User createUser(String login, @Nullable String password, @Nullable Set<String> groups, String firstName, String lastName, String email,
+            @Nullable String registrationNumber, String imageUrl, String langKey, boolean isInternal) {
         User newUser = new User();
 
         if (isInternal) {
@@ -122,7 +97,10 @@ public class UserCreationService {
         // needs to be mutable --> new HashSet<>(Set.of())
         newUser.setGroups(groups != null ? new HashSet<>(groups) : new HashSet<>());
         newUser.setEmail(email);
-        newUser.setRegistrationNumber(registrationNumber);
+        // an empty string is considered as null to satisfy the unique constraint on registration number
+        if (StringUtils.hasText(registrationNumber)) {
+            newUser.setRegistrationNumber(registrationNumber);
+        }
         newUser.setImageUrl(imageUrl);
         newUser.setLangKey(langKey);
         // new user is not active
@@ -144,7 +122,6 @@ public class UserCreationService {
         }
         newUser = saveUser(newUser);
         final User finalNewUser = newUser;
-        learnerProfileApi.ifPresent(api -> api.createProfile(finalNewUser));
         log.debug("Created user: {}", newUser);
         return newUser;
     }
@@ -177,9 +154,6 @@ public class UserCreationService {
         user.setPassword(passwordHash);
         user.setResetKey(RandomUtil.generateResetKey());
         user.setResetDate(Instant.now());
-        if (!useExternalUserManagement) {
-            addTutorialGroups(userDTO); // Automatically add interactive tutorial course groups to the new created user if it has been specified
-        }
         try {
             Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
             user.setOrganizations(matchingOrganizations);
@@ -190,14 +164,15 @@ public class UserCreationService {
         user.setGroups(userDTO.getGroups());
         user.setActivated(true);
         user.setInternal(true);
-        user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
+        // an empty string is considered as null to satisfy the unique constraint on registration number
+        if (StringUtils.hasText(userDTO.getVisibleRegistrationNumber())) {
+            user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
+        }
         saveUser(user);
 
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
 
         addUserToGroupsInternal(user, userDTO.getGroups());
-
-        learnerProfileApi.ifPresent(api -> api.createProfile(user));
 
         log.debug("Created Information for User: {}", user);
         return user;
@@ -237,7 +212,9 @@ public class UserCreationService {
             user.setLastName(lastName);
             user.setEmail(email.toLowerCase());
             user.setLangKey(langKey);
-            user.setImageUrl(imageUrl);
+            if (imageUrl != null) {
+                user.setImageUrl(imageUrl);
+            }
             saveUser(user);
             log.info("Changed Information for User: {}", user);
             optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user, null));
@@ -258,8 +235,13 @@ public class UserCreationService {
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
         user.setEmail(updatedUserDTO.getEmail().toLowerCase());
-        user.setRegistrationNumber(updatedUserDTO.getVisibleRegistrationNumber());
-        user.setImageUrl(updatedUserDTO.getImageUrl());
+        // an empty string is considered as null to satisfy the unique constraint on registration number
+        if (StringUtils.hasText(updatedUserDTO.getVisibleRegistrationNumber())) {
+            user.setRegistrationNumber(updatedUserDTO.getVisibleRegistrationNumber());
+        }
+        if (updatedUserDTO.getImageUrl() != null) {
+            user.setImageUrl(updatedUserDTO.getImageUrl());
+        }
         user.setActivated(updatedUserDTO.isActivated());
         user.setLangKey(updatedUserDTO.getLangKey());
         user.setGroups(updatedUserDTO.getGroups());
@@ -284,6 +266,17 @@ public class UserCreationService {
         user.setActivationKey(null);
         saveUser(user);
         log.info("Activated user: {}", user);
+    }
+
+    /**
+     * Deactivate user
+     *
+     * @param user the user that should be deactivated
+     */
+    public void deactivateUser(User user) {
+        user.setActivated(false);
+        saveUser(user);
+        log.info("Deactivated user: {}", user);
     }
 
     /**
@@ -345,39 +338,6 @@ public class UserCreationService {
         if (userChanged) {
             // we only save if this is needed
             saveUser(user);
-        }
-    }
-
-    /**
-     * Adds the tutorial course groups to a user basing on its authorities,
-     * if a course with the given group names exist
-     * The groups can be customized in application-dev.yml or application-prod.yml
-     * at {info.tutorial-course-groups}
-     *
-     * @param user the userDTO to add to the groups to
-     */
-    private void addTutorialGroups(ManagedUserVM user) {
-        if (tutorialGroupInstructors.isPresent() || tutorialGroupEditors.isPresent() || tutorialGroupTutors.isPresent() || tutorialGroupStudents.isPresent()) {
-            Set<String> groupsToAdd = new HashSet<>();
-            if (tutorialGroupStudents.isPresent() && courseRepository.findCourseByStudentGroupName(tutorialGroupStudents.get()) != null) {
-                groupsToAdd.add(tutorialGroupStudents.get());
-            }
-            if (tutorialGroupTutors.isPresent() && user.getAuthorities().contains(TEACHING_ASSISTANT.getAuthority())
-                    && courseRepository.findCourseByTeachingAssistantGroupName(tutorialGroupTutors.get()) != null) {
-                groupsToAdd.add(tutorialGroupTutors.get());
-            }
-            if (tutorialGroupEditors.isPresent() && user.getAuthorities().contains(EDITOR.getAuthority())
-                    && courseRepository.findCourseByEditorGroupName(tutorialGroupEditors.get()) != null) {
-                groupsToAdd.add(tutorialGroupEditors.get());
-            }
-            if (tutorialGroupInstructors.isPresent() && user.getAuthorities().contains(INSTRUCTOR.getAuthority())
-                    && courseRepository.findCourseByInstructorGroupName(tutorialGroupInstructors.get()) != null) {
-                groupsToAdd.add(tutorialGroupInstructors.get());
-            }
-            if (user.getGroups() != null) {
-                groupsToAdd.addAll(user.getGroups());
-            }
-            user.setGroups(groupsToAdd);
         }
     }
 }
