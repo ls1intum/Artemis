@@ -3,7 +3,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { Selection, UMLModel, UMLModelElement, findElement } from '@ls1intum/apollon';
-import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -22,11 +21,6 @@ import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import * as testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
-
-// has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
-Text.size = () => {
-    return { width: 0, height: 0 };
-};
 
 describe('QuizExercise Generator', () => {
     let quizExerciseService: QuizExerciseService;

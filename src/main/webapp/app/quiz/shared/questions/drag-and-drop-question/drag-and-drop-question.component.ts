@@ -61,6 +61,13 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
 
+    protected readonly faSpinner = faSpinner;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faExclamationCircle = faExclamationCircle;
+
+    readonly MappingResult = MappingResult;
+
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     /** needed to trigger a manual reload of the drag and drop background picture */
@@ -72,6 +79,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     @Input()
     set question(question) {
         this._question = question;
+        this.hideSampleSolution();
         this.watchCollection();
     }
     get question() {
@@ -114,15 +122,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     incorrectLocationMappings: number;
     mappedLocations: number;
 
-    readonly MappingResult = MappingResult;
-
     loadingState = 'loading';
-
-    // Icons
-    faSpinner = faSpinner;
-    faQuestionCircle = faQuestionCircle;
-    faExclamationTriangle = faExclamationTriangle;
-    faExclamationCircle = faExclamationCircle;
 
     ngOnInit(): void {
         this.evaluateDropLocations();
