@@ -190,21 +190,9 @@ class JenkinsServiceTest extends AbstractProgrammingIntegrationJenkinsLocalVCTes
         jenkinsRequestMockProvider.mockDeleteBuildPlanPlain(projectKey, templateJobName);
         jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
         jenkinsRequestMockProvider.mockGetJobPlain(projectKey, templateJobName, dummyJob);
-        jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
-        jenkinsRequestMockProvider.mockGetJobConfigPlain(projectKey, templateJobName);
-        jenkinsRequestMockProvider.mockUpdatePlanConfigPlain(projectKey, templateJobName);
-        jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
-        jenkinsRequestMockProvider.mockGetFolderConfigPlain(projectKey);
-        jenkinsRequestMockProvider.mockUpdateFolderConfigPlain(projectKey);
         jenkinsRequestMockProvider.mockTriggerBuildPlain(projectKey, templateJobName);
         jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
         jenkinsRequestMockProvider.mockGetJobPlain(projectKey, solutionJobName, dummyJob);
-        jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
-        jenkinsRequestMockProvider.mockGetJobConfigPlain(projectKey, solutionJobName);
-        jenkinsRequestMockProvider.mockUpdatePlanConfigPlain(projectKey, solutionJobName);
-        jenkinsRequestMockProvider.mockGetFolderJob(projectKey, dummyFolder);
-        jenkinsRequestMockProvider.mockGetFolderConfigPlain(projectKey);
-        jenkinsRequestMockProvider.mockUpdateFolderConfigPlain(projectKey);
         jenkinsRequestMockProvider.mockTriggerBuildPlain(projectKey, solutionJobName);
 
         continuousIntegrationService.recreateBuildPlansForExercise(programmingExercise);
