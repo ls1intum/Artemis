@@ -9,6 +9,7 @@ These guidelines are intended to ensure high-quality, constructive, and efficien
     They ensure code quality, knowledge sharing, and collective ownership of the codebase.
     It is very important that **all** developers actively participate in reviews and take the time to provide thoughtful, constructive feedback.
     A careful and diligent review process strengthens both the project and the team.
+    Reviews work best as a give-and-take: if you'd like your PRs reviewed, make sure you also review others' PRs.
 
 General Principles
 ------------------
@@ -23,13 +24,14 @@ Review Workflow
 ---------------
 1. **Preparation**
 
+   - Make sure that the PR is marked as "ready for review" and not in a draft state. Afterwards, add yourself to the reviewers.
    - Read the pull request (PR) description and related issue(s) to understand the context and requirements.
    - Review the "Steps for Testing" and any provided documentation.
    - Check that all relevant checklist items in the pull request template are checked by the developer and that non-applicable items have been removed. If you notice missing or incorrectly checked items, request clarification or corrections from the author.
 
 2. **Testing**
 
-   - Deploy the PR to a test server and verify its functionality. See :doc:`../testservers` for instructions.
+   - Deploy the PR to a test server and verify its functionality. See :doc:`../testservers` for instructions, and use the provided `Test Accounts <https://confluence.aet.cit.tum.de/spaces/ArTEMiS/pages/25252245/Test+Accounts+Test+Servers#TestAccounts%26TestServers-TestAccounts>`__ for logging in.
    - Follow the provided testing steps to verify new and changed functionality.
    - Additionally, test related or potentially affected functionality beyond the provided steps to identify possible side effects or regressions.
    - If possible, test on all relevant platforms and configurations.
