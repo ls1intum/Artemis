@@ -1,0 +1,30 @@
+diff --git a/node_modules/webstomp-client/src/client.js b/node_modules/webstomp-client/src/client.js
+index 500796b..f5bbab5 100644
+--- a/node_modules/webstomp-client/src/client.js
++++ b/node_modules/webstomp-client/src/client.js
+@@ -88,7 +88,7 @@ class Client {
+                         this.debug(`connected to server ${frame.headers.server}`);
+                         this.connected = true;
+                         this.version = frame.headers.version;
+-                        this._setupHeartbeat(frame.headers);
++                        this._setupHeartbeat(frame.headers, errorCallback);
+                         if (connectCallback) connectCallback(frame);
+                         break;
+                     // [MESSAGE Frame](http://stomp.github.com/stomp-specification-1.1.html#MESSAGE)
+@@ -336,7 +336,7 @@ class Client {
+     }
+ 
+     // Heart-beat negotiation
+-    _setupHeartbeat(headers) {
++    _setupHeartbeat(headers, errorCallback) {
+         if (this.version !== VERSIONS.V1_1 && this.version !== VERSIONS.V1_2) return;
+ 
+         // heart-beat header received from the server looks like:
+@@ -361,6 +361,7 @@ class Client {
+                 // We wait twice the TTL to be flexible on window's setInterval calls
+                 if (delta > ttl * 2) {
+                     this.debug(`did not receive server activity for the last ${delta}ms`);
++                    if (errorCallback) errorCallback(`did not receive server activity for the last ${delta}ms`);
+                     this.ws.close();
+                 }
+             }, ttl);
