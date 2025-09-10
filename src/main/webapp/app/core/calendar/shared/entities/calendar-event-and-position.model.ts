@@ -7,7 +7,8 @@ export interface PositionInfo {
     width: number;
 }
 
-export interface CalendarEventAndPosition {
+export interface CalendarEventAndMetadata {
     event: CalendarEvent;
     position: PositionInfo;
+    eventSubtypeDescriptor?: string;
 }

@@ -8,6 +8,13 @@ const DRAFT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 export class DraftService {
     private localStorageService = inject(LocalStorageService);
 
+    /**
+     * Saves a draft message to local storage.
+     * If the content is empty or whitespace-only, the draft is cleared instead.
+     *
+     * @param key - The unique key for storing the draft
+     * @param content - The draft content to save
+     */
     saveDraft(key: string, content: string): void {
         const trimmedContent = content.trim();
         if (key && trimmedContent) {
@@ -21,6 +28,13 @@ export class DraftService {
         }
     }
 
+    /**
+     * Loads a draft message from local storage.
+     * Returns undefined if the draft doesn't exist, is expired (older than 7 days), or is invalid.
+     *
+     * @param key - The unique key for retrieving the draft
+     * @returns The draft content if valid and not expired, undefined otherwise
+     */
     loadDraft(key: string): string | undefined {
         if (!key) return undefined;
 

@@ -177,3 +177,7 @@ export function roundToNextMultiple(value: number, multiple: number, roundUp: bo
 export function removeSpecialCharacters(input: string): string {
     return input.replace(/[^a-zA-Z0-9]/g, '');
 }
+
+export function secondsToMilliseconds(seconds: number): number {
+    return seconds * 1000;
+}

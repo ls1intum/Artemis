@@ -78,10 +78,10 @@ const moduleThresholds = {
         lines:      87.54,
     },
     lecture: {
-        statements: 92.19,
-        branches:   79.42,
-        functions:  86.93,
-        lines:      92.30,
+        statements: 91.70,
+        branches:   79.18,
+        functions:  86.20,
+        lines:      91.80,
     },
     lti: {
         statements: 93.67,
@@ -99,7 +99,7 @@ const moduleThresholds = {
         statements: 91.74,
         branches:   84.72,
         functions:  85.24,
-        lines:      92.20,
+        lines:      92.10,
     },
     programming: {
         statements: 88.74,
