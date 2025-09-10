@@ -79,7 +79,7 @@ public class HyperionConsistencyCheckService {
         Mono<List<ConsistencyIssue>> structuralMono = Mono.fromCallable(() -> runStructuralCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
         Mono<List<ConsistencyIssue>> semanticMono = Mono.fromCallable(() -> runSemanticCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
 
-        List<ConsistencyIssue> combinedIssues = new ArrayList<>();
+        List<ConsistencyIssue> combinedIssues;
         combinedIssues = Mono.zip(structuralMono, semanticMono, (a, b) -> {
             List<ConsistencyIssue> combined = new ArrayList<>();
             if (a != null) {
@@ -91,7 +91,10 @@ public class HyperionConsistencyCheckService {
             return combined;
         }).block();
 
-        List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
+        List<ConsistencyIssueDTO> issueDTOs = null;
+        if (combinedIssues != null) {
+            issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
+        }
         return new ConsistencyCheckResponseDTO(issueDTOs);
     }
 
@@ -158,7 +161,7 @@ public class HyperionConsistencyCheckService {
     /**
      * Normalize structural issue structured output schema to internal issue representations.
      *
-     * @param structuralIssues parsed structural model output (may be null)
+     * @param structuralIssues parsed structural model output
      * @return immutable list of issues
      */
     private List<ConsistencyIssue> toGenericConsistencyIssue(StructuredOutputSchema.StructuralConsistencyIssues structuralIssues) {
@@ -172,7 +175,7 @@ public class HyperionConsistencyCheckService {
     /**
      * Normalize semantic issue structured output schema to internal issue representations.
      *
-     * @param semanticIssues parsed semantic model output (may be null)
+     * @param semanticIssues parsed semantic model output
      * @return immutable list of issues
      */
     private List<ConsistencyIssue> toGenericConsistencyIssue(StructuredOutputSchema.SemanticConsistencyIssues semanticIssues) {
