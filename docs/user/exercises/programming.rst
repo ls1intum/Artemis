@@ -120,7 +120,7 @@ For manual assessment, the online editor provides the following features tailore
 4. **Instructions**: The instructions provide the structured grading criteria and the problem statement, including the tasks the student has solved successfully as determined by the test cases of the exercise. You can review the test cases associated with each task by clicking on the number of passing tests next to the task, e.g. |problem-statement-task|
 5. **Result**: The top right corner holds the current result of the student's submission. By clicking on it, you can review the test cases and feedback currently attached to the submission.
 
-You can add feedback directly in the source code by first hovering over the line you want to comment on and then clicking the |add-feedback-button| that appears next to the line number. Students will be able to see feedback added this way in the same location when viewing their assessed submission in the online editor.
+You can add feedback directly in the source code by first hovering over the line you want to comment on and then clicking the |add-feedback-button| that appears next to the line number. Alternatively, when the editor is focused during assessment, press the "+" key (including the numpad "+") to open the inline feedback widget at the current cursor line. Students will be able to see feedback added this way in the same location when viewing their assessed submission in the online editor.
 
 .. figure:: programming/online-editor-feedback.png
    :alt: Feedback in the online editor
