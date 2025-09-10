@@ -26,7 +26,7 @@ public class InMemoryDirCache extends DirCache {
      * file first with {@link #read()}.
      *
      * @param indexLocation location of the index file on disk.
-     * @param fs            the file system abstraction which will be necessary to perform
+     * @param fileSystem    the file system abstraction which will be necessary to perform
      *                          certain file system operations.
      */
     public InMemoryDirCache(File indexLocation, FS fileSystem) {
@@ -38,8 +38,7 @@ public class InMemoryDirCache extends DirCache {
      * including the trailing SHA-1 checksum.
      *
      * @param outputStream the destination output stream
-     * @throws IOException              if writing fails
-     * @throws NoSuchAlgorithmException if SHA-1 is unavailable
+     * @throws IOException if writing fails
      */
     public void writeTo(OutputStream outputStream) throws IOException {
         // Collect and sort entries by path (byte-order, as Git expects)

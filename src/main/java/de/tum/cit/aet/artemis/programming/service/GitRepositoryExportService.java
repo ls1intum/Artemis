@@ -195,11 +195,9 @@ public class GitRepositoryExportService {
      *
      * @param programmingExercise the programming exercise that has the repository
      * @param repositoryType      the type of repository to export (template, solution, or tests)
-     * @param exportErrors        list of failures that occurred during the export
      * @return an InputStreamResource containing the zipped repository, or null if export failed
      */
-    public InputStreamResource exportInstructorRepositoryForExerciseInMemory(ProgrammingExercise programmingExercise, RepositoryType repositoryType, List<String> exportErrors)
-            throws IOException {
+    public InputStreamResource exportInstructorRepositoryForExerciseInMemory(ProgrammingExercise programmingExercise, RepositoryType repositoryType) throws IOException {
         String zippedRepoName = getZippedRepoName(programmingExercise, repositoryType.getName());
         return exportRepositoryWithFullHistoryToMemory(programmingExercise.getRepositoryURI(repositoryType), zippedRepoName);
     }
@@ -209,11 +207,10 @@ public class GitRepositoryExportService {
      *
      * @param programmingExercise the programming exercise that has the repository
      * @param auxiliaryRepository the auxiliary repository to export
-     * @param exportErrors        list of failures that occurred during the export
      * @return an InputStreamResource containing the zipped repository, or null if export failed
      */
-    public InputStreamResource exportInstructorAuxiliaryRepositoryForExerciseInMemory(ProgrammingExercise programmingExercise, AuxiliaryRepository auxiliaryRepository,
-            List<String> exportErrors) throws IOException {
+    public InputStreamResource exportInstructorAuxiliaryRepositoryForExerciseInMemory(ProgrammingExercise programmingExercise, AuxiliaryRepository auxiliaryRepository)
+            throws IOException {
         String zippedRepoName = getZippedRepoName(programmingExercise, auxiliaryRepository.getRepositoryName());
         return exportRepositoryWithFullHistoryToMemory(auxiliaryRepository.getVcsRepositoryUri(), zippedRepoName);
     }

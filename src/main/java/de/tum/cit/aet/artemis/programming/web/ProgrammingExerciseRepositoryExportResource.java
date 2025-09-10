@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -95,8 +94,7 @@ public class ProgrammingExerciseRepositoryExportResource {
 
         long start = System.nanoTime();
 
-        InputStreamResource resource = gitRepositoryExportService.exportInstructorRepositoryForExerciseInMemory(programmingExercise, repositoryType,
-                Collections.synchronizedList(new ArrayList<>()));
+        InputStreamResource resource = gitRepositoryExportService.exportInstructorRepositoryForExerciseInMemory(programmingExercise, repositoryType);
 
         log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", resource.getFilename(), programmingExercise.getId(),
                 programmingExercise.getTitle(), formatDurationFrom(start));
@@ -130,8 +128,7 @@ public class ProgrammingExerciseRepositoryExportResource {
                     .body(null);
         }
 
-        InputStreamResource resource = gitRepositoryExportService.exportInstructorAuxiliaryRepositoryForExerciseInMemory(programmingExercise, auxiliaryRepository,
-                Collections.synchronizedList(new ArrayList<>()));
+        InputStreamResource resource = gitRepositoryExportService.exportInstructorAuxiliaryRepositoryForExerciseInMemory(programmingExercise, auxiliaryRepository);
 
         if (resource == null) {
             return ResponseEntity.internalServerError().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
