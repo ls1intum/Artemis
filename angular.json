@@ -49,7 +49,6 @@
                   "rfdc",
                   "shallowequal",
                   "markdown-it-class",
-                  "smoothscroll-polyfill",
                   "use-sync-external-store/shim",
                   "use-sync-external-store/shim/with-selector",
                   "webcola",
