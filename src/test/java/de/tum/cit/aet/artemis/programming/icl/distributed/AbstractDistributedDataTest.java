@@ -299,9 +299,10 @@ public abstract class AbstractDistributedDataTest {
         Consumer<String> mockConsumer = Mockito.mock(Consumer.class);
         topic.addMessageListener(mockConsumer);
         topic.publish("Hello, World!");
+        topic.publish("Another message");
 
         // Verify that the mock listener received the message
-        verify(mockConsumer, timeout(1000)).accept("Hello, World!");
-
+        verify(mockConsumer, timeout(100)).accept("Hello, World!");
+        verify(mockConsumer, timeout(100)).accept("Another message");
     }
 }
