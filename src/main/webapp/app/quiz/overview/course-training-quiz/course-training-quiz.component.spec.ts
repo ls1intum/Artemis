@@ -43,6 +43,12 @@ const question3: QuizQuestion = {
     exportQuiz: false,
 };
 
+const mockTrainingQuestions = [
+    { quizQuestion: question1, isRated: false },
+    { quizQuestion: question2, isRated: true },
+    { quizQuestion: question3, isRated: false },
+];
+
 const course = { id: 1, title: 'Test Course' };
 
 const answer: SubmittedAnswerAfterEvaluation = { selectedOptions: [{ scoreInPoints: 2 }] };
@@ -73,7 +79,7 @@ describe('CourseTrainingQuizComponent', () => {
                 },
             ]);
         quizService = TestBed.inject(CourseTrainingQuizService);
-        jest.spyOn(quizService, 'getQuizQuestions').mockReturnValue(of([question1, question2, question3]));
+        jest.spyOn(quizService, 'getQuizQuestions').mockReturnValue(of(mockTrainingQuestions));
         jest.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
         fixture = TestBed.createComponent(CourseTrainingQuizComponent);
@@ -94,8 +100,8 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     it('should load questions from service', () => {
-        expect(component.questionsSignal()).toEqual(mockQuestions);
-        expect(component.questions()).toEqual(mockQuestions);
+        expect(component.questionsSignal()).toEqual(mockTrainingQuestions);
+        expect(component.questions()).toEqual(mockTrainingQuestions);
     });
 
     it('should check for last question', () => {
@@ -114,7 +120,7 @@ describe('CourseTrainingQuizComponent', () => {
 
     it('should return the current question based on currentIndex', () => {
         component.currentIndex.set(0);
-        expect(component.currentQuestion()).toBe(question1);
+        expect(component.currentQuestion()).toBe(mockTrainingQuestions[0]);
     });
 
     it('should go to the next question and call initQuestion', () => {
@@ -142,7 +148,7 @@ describe('CourseTrainingQuizComponent', () => {
         const submitSpy = jest.spyOn(TestBed.inject(CourseTrainingQuizService), 'submitForTraining').mockReturnValue(of(new HttpResponse({ body: answer })));
         const showResultSpy = jest.spyOn(component, 'applyEvaluatedAnswer');
         // Drag and Drop
-        jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question1, exerciseId: 1 } as any);
+        jest.spyOn(component, 'currentQuestion').mockReturnValue({ quizQuestion: question1, isRated: false, exerciseId: 1 } as any);
         component.currentIndex.set(0);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
@@ -150,7 +156,7 @@ describe('CourseTrainingQuizComponent', () => {
         expect(showResultSpy).toHaveBeenCalledWith(answer);
         jest.clearAllMocks();
         // Multiple Choice
-        jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question2, exerciseId: 2 } as any);
+        jest.spyOn(component, 'currentQuestion').mockReturnValue({ quizQuestion: question1, isRated: false, exerciseId: 1 } as any);
         component.currentIndex.set(1);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
@@ -158,7 +164,7 @@ describe('CourseTrainingQuizComponent', () => {
         expect(showResultSpy).toHaveBeenCalledWith(answer);
         jest.clearAllMocks();
         // Short Answer
-        jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question3, exerciseId: 3 } as any);
+        jest.spyOn(component, 'currentQuestion').mockReturnValue({ quizQuestion: question3, isRated: false, exerciseId: 3 } as any);
         component.currentIndex.set(2);
         component.onSubmit();
         expect(submitSpy).toHaveBeenCalledOnce();
