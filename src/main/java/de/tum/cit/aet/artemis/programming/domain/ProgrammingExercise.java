@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.programming.config.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
@@ -190,11 +191,11 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public void setTestRepositoryUri(String testRepositoryUri) {
-        this.testRepositoryUri = testRepositoryUri;
+        this.testRepositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(testRepositoryUri);
     }
 
     public String getTestRepositoryUri() {
-        return testRepositoryUri;
+        return RepositoryUriConversionUtil.toFullRepositoryUri(testRepositoryUri);
     }
 
     public List<AuxiliaryRepository> getAuxiliaryRepositories() {
@@ -430,7 +431,7 @@ public class ProgrammingExercise extends Exercise {
         }
 
         try {
-            return new LocalVCRepositoryUri(templateRepositoryUri);
+            return new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(templateRepositoryUri));
         }
         catch (LocalVCInternalException e) {
             log.warn("Cannot create URI for templateRepositoryUri: {} due to the following error: {}", templateRepositoryUri, e.getMessage());
@@ -451,7 +452,7 @@ public class ProgrammingExercise extends Exercise {
         }
 
         try {
-            return new LocalVCRepositoryUri(solutionRepositoryUri);
+            return new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(solutionRepositoryUri));
         }
         catch (LocalVCInternalException e) {
             log.warn("Cannot create URI for solutionRepositoryUri: {} due to the following error: {}", solutionRepositoryUri, e.getMessage());
@@ -471,7 +472,7 @@ public class ProgrammingExercise extends Exercise {
         }
 
         try {
-            return new LocalVCRepositoryUri(testRepositoryUri);
+            return new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(testRepositoryUri));
         }
         catch (LocalVCInternalException e) {
             log.warn("Cannot create URI for testRepositoryUri: {} due to the following error: {}", testRepositoryUri, e.getMessage());

@@ -1,0 +1,135 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
+                       http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.3.xsd">
+    <!-- 
+    This migration converts full repository URLs in the exercise table (test_repository_url) to shorter repository paths.
+    Example: "https://artemis.tum.de/git/project/exercise-test.git" -> "project/exercise-test"
+    -->
+    
+    <changeSet author="tobias-lippert" id="20250911222736-1">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="exercise"/>
+            <columnExists tableName="exercise" columnName="test_repository_url"/>
+        </preConditions>
+        
+        <comment>Convert full test repository URLs to shorter repository paths in exercise table</comment>
+        
+        <!-- Update test repository URLs to store only the unique path part -->
+        <!-- This uses a regex to extract the path between /git/ and .git -->
+        <sql dbms="postgresql">
+            UPDATE exercise 
+            SET test_repository_url = REGEXP_REPLACE(test_repository_url, '^.*?/git/([^?]+?)(?:\.git)?(?:\?.*)?$', '\1')
+            WHERE test_repository_url IS NOT NULL 
+              AND test_repository_url LIKE '%/git/%';
+        </sql>
+        
+        <sql dbms="mysql">
+            UPDATE exercise 
+            SET test_repository_url = REGEXP_REPLACE(test_repository_url, '^.*?/git/([^?]+?)(\\.git)?(?:\\?.*)?$', '$1')
+            WHERE test_repository_url IS NOT NULL 
+              AND test_repository_url LIKE '%/git/%';
+        </sql>
+        
+        <sql dbms="h2">
+            UPDATE exercise 
+            SET test_repository_url = REGEXP_REPLACE(test_repository_url, '^.*?/git/([^?]+?)(\\.git)?(?:\\?.*)?$', '$1')
+            WHERE test_repository_url IS NOT NULL 
+              AND test_repository_url LIKE '%/git/%';
+        </sql>
+        
+        <!-- Reduce column size since we're storing shorter paths now -->
+        <modifyDataType tableName="exercise" columnName="test_repository_url" newDataType="varchar(150)"/>
+        
+        <rollback>
+            <!-- Rollback is not easily possible without knowing the original server URL -->
+            <!-- This would require manual intervention or a separate backup table -->
+            <comment>Rollback requires manual restoration of full URLs with proper server configuration</comment>
+        </rollback>
+    </changeSet>
+    
+    <!-- Also handle auxiliary repository URLs if they exist -->
+    <changeSet author="tobias-lippert" id="20250911222736-2">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="auxiliary_repository"/>
+            <columnExists tableName="auxiliary_repository" columnName="repository_url"/>
+        </preConditions>
+        
+        <comment>Convert full auxiliary repository URLs to shorter repository paths</comment>
+        
+        <sql dbms="postgresql">
+            UPDATE auxiliary_repository 
+            SET repository_url = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(?:\.git)?(?:\?.*)?$', '\1')
+            WHERE repository_url IS NOT NULL 
+              AND repository_url LIKE '%/git/%';
+        </sql>
+        
+        <sql dbms="mysql">
+            UPDATE auxiliary_repository 
+            SET repository_url = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(\\.git)?(?:\\?.*)?$', '$1')
+            WHERE repository_url IS NOT NULL 
+              AND repository_url LIKE '%/git/%';
+        </sql>
+        
+        <sql dbms="h2">
+            UPDATE auxiliary_repository 
+            SET repository_url = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(\\.git)?(?:\\?.*)?$', '$1')
+            WHERE repository_url IS NOT NULL 
+              AND repository_url LIKE '%/git/%';
+        </sql>
+        
+        <!-- Reduce column size since we're storing shorter paths now -->
+        <modifyDataType tableName="auxiliary_repository" columnName="repository_url" newDataType="varchar(150)"/>
+        
+        <rollback>
+            <comment>Rollback requires manual restoration of full URLs with proper server configuration</comment>
+        </rollback>
+    </changeSet>
+
+    <changeSet author="tobias-lippert" id="20250911222736-3">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="participation"/>
+            <columnExists tableName="participation" columnName="repository_url"/>
+        </preConditions>
+
+        <comment>Convert full repository URLs to shorter repository paths in participation table</comment>
+
+        <!-- Update repository URLs to store only the unique path part -->
+        <!-- This uses a regex to extract the path between /git/ and .git -->
+        <sql dbms="postgresql">
+            UPDATE participation
+            SET repository_url = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(?:\.git)?(?:\?.*)?$', '\1')
+            WHERE repository_url IS NOT NULL
+              AND repository_url LIKE '%/git/%'
+              AND discriminator IN ('TEPEP', 'SEPEP', 'PESP');
+        </sql>
+
+        <sql dbms="mysql">
+            UPDATE participation
+            SET repository_url = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(\\.git)?(?:\\?.*)?$', '$1')
+            WHERE repository_url IS NOT NULL
+              AND repository_url LIKE '%/git/%'
+              AND discriminator IN ('TEPEP', 'SEPEP', 'PESP');
+        </sql>
+
+        <sql dbms="h2">
+            UPDATE participation
+            SET repository_url = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(\\.git)?(?:\\?.*)?$', '$1')
+            WHERE repository_url IS NOT NULL
+              AND repository_url LIKE '%/git/%'
+              AND discriminator IN ('TPEP', 'SPEP', 'PESP');
+        </sql>
+
+        <!-- Reduce column size since we're storing shorter paths now -->
+        <modifyDataType tableName="participation" columnName="repository_url" newDataType="varchar(150)"/>
+
+        <rollback>
+            <!-- Rollback is not easily possible without knowing the original server URL -->
+            <!-- This would require manual intervention or a separate backup table -->
+            <comment>Rollback requires manual restoration of full URLs with proper server configuration</comment>
+        </rollback>
+    </changeSet>
+    
+</databaseChangeLog>

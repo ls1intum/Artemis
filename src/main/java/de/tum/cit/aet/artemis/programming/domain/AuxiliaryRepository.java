@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
+import de.tum.cit.aet.artemis.programming.config.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Entity
@@ -73,11 +74,11 @@ public class AuxiliaryRepository extends DomainObject {
     private ProgrammingExercise exercise;
 
     public String getRepositoryUri() {
-        return repositoryUri;
+        return RepositoryUriConversionUtil.toFullRepositoryUri(repositoryUri);
     }
 
     public void setRepositoryUri(String repositoryUri) {
-        this.repositoryUri = repositoryUri;
+        this.repositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(repositoryUri);
     }
 
     public String getCheckoutDirectory() {

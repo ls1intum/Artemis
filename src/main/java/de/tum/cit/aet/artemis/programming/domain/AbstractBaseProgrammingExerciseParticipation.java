@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.programming.config.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @MappedSuperclass
@@ -23,16 +24,16 @@ public abstract class AbstractBaseProgrammingExerciseParticipation extends Parti
 
     @Override
     public String getRepositoryUri() {
-        return repositoryUri;
+        return RepositoryUriConversionUtil.toFullRepositoryUri(repositoryUri);
     }
 
     @Override
     public void setRepositoryUri(String repositoryUri) {
-        this.repositoryUri = repositoryUri;
+        this.repositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(repositoryUri);
     }
 
     public void setRepositoryUri(@NotNull LocalVCRepositoryUri repositoryUri) {
-        this.repositoryUri = repositoryUri.getURI().toString();
+        this.repositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(repositoryUri.getURI().toString());
     }
 
     @Override
