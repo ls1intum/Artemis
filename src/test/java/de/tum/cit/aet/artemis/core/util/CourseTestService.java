@@ -2825,8 +2825,6 @@ public class CourseTestService {
 
         // Check results
         assertThat(courseDTO).isNotNull();
-
-        assertThat(courseDTO.activeStudents()).isNullOrEmpty();
     }
 
     // Test

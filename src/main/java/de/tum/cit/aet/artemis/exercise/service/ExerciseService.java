@@ -262,7 +262,8 @@ public class ExerciseService {
             numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { new DueDateStat(numberOfAssessments, 0L) };
         }
 
-        // TODO: why do we use DueDateStat here? late values are always 0
+        // TODO: Refactor the usage of DueDateStats. For exam exercises, it has the meaning of first and second correction round instead of before and after due dat
+        // For course exercises, we do not seem to care about the number assessments of late submissions
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
         final DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;

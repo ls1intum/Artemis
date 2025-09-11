@@ -207,9 +207,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     Optional<Result> findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(@Param("resultId") long resultId);
 
     /**
-     * counts the number of assessments of a course, which are either rated or not rated
+     * counts the number of assessments of a course, which are either rated or not rated (excluding test run participations)
      *
-     * @param exerciseIds - the ids of the exercises of the course (should be filtered to only include exercises with manual assessment)
+     * @param exerciseIdsWithManualAssessment - the ids of the exercises of the course (should be filtered to only include exercises with manual assessment)
      * @return the number of assessments for the course
      */
     @Query("""
@@ -222,7 +222,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND p.testRun = FALSE
                 AND p.exercise.id IN :exerciseIds
             """)
-    long countAssessmentsForExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
+    long countAssessmentsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIdsWithManualAssessment);
 
     /**
      * Load a result from the database by its id together with the associated submission and the list of feedback items.
@@ -276,6 +276,13 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") long exerciseId);
 
+    /**
+     * Counts the number of finished assessments for a set of exercise IDs, ignoring test runs.
+     * Only submissions that have been submitted before the due date (if set) are considered.
+     *
+     * @param exerciseIds set of exercise IDs
+     * @return the number of finished assessments for the given exercise IDs, ignoring test runs
+     */
     @Query("""
             SELECT COUNT(DISTINCT p)
             FROM StudentParticipation p
@@ -581,7 +588,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         if (exerciseIds == null || exerciseIds.isEmpty()) {
             return 0;
         }
-        return countAssessmentsForExerciseIds(exerciseIds);
+        return countAssessmentsForExerciseIdsIgnoreTestRuns(exerciseIds);
     }
 
     @Query("""

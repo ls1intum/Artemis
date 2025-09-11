@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.core.service.course;
 import static de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT;
 import static de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.getWeekOfDate;
-import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.sortDataIntoWeeks;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.getWeekOfDate;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoWeeks;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.time.DayOfWeek;
@@ -210,14 +210,14 @@ public class CourseStatsService {
      */
     public CourseManagementDetailViewDTO getStatsForDetailView(Course course, GradingScale gradingScale) {
 
-        var start = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
         Set<Exercise> courseExercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
         log.debug("exerciseRepository.findAllExercisesByCourseId took {} ms for course with id {}", System.currentTimeMillis() - start, course.getId());
         start = System.currentTimeMillis();
         Set<Long> courseExerciseIdsWithManualAssessments = exerciseRepository.findExerciseIdsWithManualAssessmentByCourseId(course.getId());
         log.debug("exerciseRepository.findExerciseIdsWithManualAssessmentsByCourseId took {} ms for course with id {}", System.currentTimeMillis() - start, course.getId());
         if (courseExercises == null || courseExercises.isEmpty()) {
-            return new CourseManagementDetailViewDTO(0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0.0, 0.0, List.of(), 0.0);
+            return new CourseManagementDetailViewDTO(0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0.0, 0.0, 0.0);
         }
         // For the average score we need to only consider scores which are included completely or as bonus
         Set<Exercise> includedExercises = courseExercises.stream().filter(Exercise::isCourseExercise)
@@ -299,15 +299,15 @@ public class CourseStatsService {
                     System.currentTimeMillis() - start, course.getId());
             currentPercentageMoreFeedbacks = calculatePercentage(currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks);
         }
-        var currentAbsoluteAverageScore = roundScoreSpecifiedByCourseSettings((averageScoreForCourse / 100.0) * currentMaxAverageScore, course);
-        var currentPercentageAverageScore = currentMaxAverageScore > 0.0 ? roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course) : 0.0;
+        double currentAbsoluteAverageScore = roundScoreSpecifiedByCourseSettings((averageScoreForCourse / 100.0) * currentMaxAverageScore, course);
+        double currentPercentageAverageScore = currentMaxAverageScore > 0.0 ? roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course) : 0.0;
         start = System.currentTimeMillis();
         double currentTotalLlmCostInEur = llmTokenUsageTraceRepository.calculateTotalLlmCostInEurForCourse(course.getId());
         log.debug("llmTokenUsageTraceRepository.calculateTotalLlmCostInEurForCourse took {} ms for course with id {}", System.currentTimeMillis() - start, course.getId());
 
         return new CourseManagementDetailViewDTO(currentPercentageAssessments, numberOfAssessments, numberOfSubmissions, currentPercentageComplaints, currentAbsoluteComplaints,
                 currentMaxComplaints, currentPercentageMoreFeedbacks, currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks, currentPercentageAverageScore,
-                currentAbsoluteAverageScore, currentMaxAverageScore, List.of(), currentTotalLlmCostInEur);
+                currentAbsoluteAverageScore, currentMaxAverageScore, currentTotalLlmCostInEur);
     }
 
     private double calculatePercentage(double positive, double total) {

@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core;
 
-import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.sortDataIntoMonths;
-import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.sortDataIntoWeeks;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoMonths;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoWeeks;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
