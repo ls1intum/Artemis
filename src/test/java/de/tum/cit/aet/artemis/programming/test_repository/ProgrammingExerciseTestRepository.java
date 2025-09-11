@@ -60,7 +60,7 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
             """)
     List<ProgrammingExercise> findAllWithEagerTemplateAndSolutionParticipations();
 
-    // Note: we have to use left join here to avoid issues in the where clause, see the explanation above
+    // Note: we should use left join here to avoid issues in the where clause
     @Query("""
             SELECT pe
             FROM ProgrammingExercise pe

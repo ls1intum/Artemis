@@ -32,23 +32,24 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 public interface ProgrammingExerciseStudentParticipationRepository extends ArtemisJpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
     /**
-     * Loads a participation with:
-     * - all submissions, and
-     * - only those results that are either
-     * (a) AUTOMATIC, or
-     * (b) completed (non-null completionDate) and whose exercise has no assessmentDueDate
-     * or an assessmentDueDate before the given {@code dateTime}.
+     * Loads a {@link ProgrammingExerciseStudentParticipation} by id with all related submissions and results in one query (avoiding N+1 issues via {@code LEFT JOIN FETCH}).
      *
-     * Implementation notes:
-     * - Uses FETCH JOINs to materialize the object graph in one round trip.
-     * - Predicates are applied in the LEFT JOIN ... ON clause so the join remains outer,
-     * avoiding accidental inner-join semantics and reducing row count.
-     * - DISTINCT is required to collapse duplicates introduced by fetch joins.
-     * - Works on providers supporting JPQL JOIN ... ON (e.g., Hibernate).
+     * <p>
+     * Includes results if:
+     * <ul>
+     * <li>they are automatic,</li>
+     * <li>they are completed and the assessment due date is before {@code dateTime} (or not set), or</li>
+     * <li>no result exists yet.</li>
+     * </ul>
      *
-     * @param participationId the id of the participation to load
-     * @param dateTime        the cutoff instant to compare against assessmentDueDate
-     * @return the participation with submissions and the filtered results
+     * <p>
+     * This ensures automatic feedback is always visible, manual assessments are only shown
+     * after due dates, and participations without results remain accessible.
+     * </p>
+     *
+     * @param participationId the participation id
+     * @param dateTime        reference time for assessment due date checks
+     * @return the participation with submissions and relevant results, if found
      */
     @Query("""
             SELECT DISTINCT p
@@ -159,22 +160,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     Page<String> findRepositoryUrisByRecentDueDateOrRecentExamEndDate(@Param("earliestDate") ZonedDateTime earliestDate, @Param("latestDate") ZonedDateTime latestDate,
             Pageable pageable);
-
-    @Query("""
-            SELECT participation
-            FROM ProgrammingExerciseStudentParticipation participation
-                LEFT JOIN FETCH participation.submissions s
-            WHERE participation.exercise.id = :exerciseId
-                AND participation.student.login = :username
-                AND participation.testRun = :testRun
-            ORDER BY participation.id DESC
-            """)
-    List<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(@Param("exerciseId") long exerciseId,
-            @Param("username") String username, @Param("testRun") boolean testRun);
-
-    default Optional<ProgrammingExerciseStudentParticipation> findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun) {
-        return findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(exerciseId, username, testRun).stream().findFirst();
-    }
 
     @Query("""
             SELECT participation
