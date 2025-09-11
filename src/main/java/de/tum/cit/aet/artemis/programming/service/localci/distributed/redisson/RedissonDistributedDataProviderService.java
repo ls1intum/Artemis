@@ -5,6 +5,7 @@ import java.util.Set;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.LocalCiBuildAgentRedisDataCondition;
@@ -13,6 +14,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.Di
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 
+@Lazy
 @Service
 @Conditional(LocalCiBuildAgentRedisDataCondition.class)
 public class RedissonDistributedDataProviderService implements DistributedDataProvider {
