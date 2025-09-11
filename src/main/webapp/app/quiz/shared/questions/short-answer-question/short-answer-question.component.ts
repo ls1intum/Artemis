@@ -24,8 +24,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [NgClass, NgbTooltip, TranslateDirective, NgbPopover, FaIconComponent, QuizScoringInfoStudentModalComponent, ArtemisTranslatePipe],
 })
 export class ShortAnswerQuestionComponent {
-    private artemisMarkdown = inject(ArtemisMarkdownService);
-    shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+    private readonly artemisMarkdown = inject(ArtemisMarkdownService);
+    readonly shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+
+    protected readonly faExclamationCircle = faExclamationCircle;
+    protected readonly farQuestionCircle = faQuestionCircle;
+
+    readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
     shortAnswerQuestion: ShortAnswerQuestion;
     _forceSampleSolution: boolean;
@@ -33,6 +38,7 @@ export class ShortAnswerQuestionComponent {
     @Input()
     set question(question: QuizQuestion) {
         this.shortAnswerQuestion = question as ShortAnswerQuestion;
+        this.hideSampleSolution();
         this.watchCollection();
     }
 
@@ -64,16 +70,10 @@ export class ShortAnswerQuestionComponent {
     @Output()
     submittedTextsChange = new EventEmitter<ShortAnswerSubmittedText[]>();
 
-    readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
-
     showingSampleSolution = false;
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
     sampleSolutions: ShortAnswerSolution[] = [];
     textParts: string[][];
-
-    // Icons
-    faExclamationCircle = faExclamationCircle;
-    farQuestionCircle = faQuestionCircle;
 
     /**
      * Update html for text, hint and explanation for the question and every answer option

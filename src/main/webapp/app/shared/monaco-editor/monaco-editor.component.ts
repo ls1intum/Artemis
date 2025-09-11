@@ -470,48 +470,52 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      */
     private registerCustomBackspaceAction(editor: monaco.editor.IStandaloneCodeEditor) {
         this.customBackspaceCommandId =
-            editor.addCommand(monaco.KeyCode.Backspace, () => {
-                const model = editor.getModel();
-                const selection = editor.getSelection();
-                if (!model || !selection) return;
+            editor.addCommand(
+                monaco.KeyCode.Backspace,
+                () => {
+                    const model = editor.getModel();
+                    const selection = editor.getSelection();
+                    if (!model || !selection) return;
 
-                if (!selection.isEmpty()) {
-                    editor.trigger('keyboard', 'deleteLeft', null);
-                    return;
-                }
+                    if (!selection.isEmpty()) {
+                        editor.trigger('keyboard', 'deleteLeft', null);
+                        return;
+                    }
 
-                const lineNumber = selection.startLineNumber;
-                const column = selection.startColumn;
-                const lineContent = model.getLineContent(lineNumber);
+                    const lineNumber = selection.startLineNumber;
+                    const column = selection.startColumn;
+                    const lineContent = model.getLineContent(lineNumber);
 
-                const textBeforeCursor = lineContent.substring(0, column - 1);
-                const splitter = new Graphemer();
-                const graphemes = splitter.splitGraphemes(textBeforeCursor);
+                    const textBeforeCursor = lineContent.substring(0, column - 1);
+                    const splitter = new Graphemer();
+                    const graphemes = splitter.splitGraphemes(textBeforeCursor);
 
-                if (textBeforeCursor.length === 0) {
-                    editor.trigger('keyboard', 'deleteLeft', null);
-                    return;
-                }
+                    if (textBeforeCursor.length === 0) {
+                        editor.trigger('keyboard', 'deleteLeft', null);
+                        return;
+                    }
 
-                const lastGrapheme = graphemes.pop();
-                const deletedLength = lastGrapheme?.length ?? 1;
-                const newTextBeforeCursor = graphemes.join('');
-                const textAfterCursor = lineContent.substring(column - 1);
+                    const lastGrapheme = graphemes.pop();
+                    const deletedLength = lastGrapheme?.length ?? 1;
+                    const newTextBeforeCursor = graphemes.join('');
+                    const textAfterCursor = lineContent.substring(column - 1);
 
-                const newLineContent = newTextBeforeCursor + textAfterCursor;
+                    const newLineContent = newTextBeforeCursor + textAfterCursor;
 
-                model.pushEditOperations(
-                    [],
-                    [
-                        {
-                            range: new monaco.Range(lineNumber, 1, lineNumber, lineContent.length + 1),
-                            text: newLineContent,
-                        },
-                    ],
-                    () => null,
-                );
-                const newCursorPosition = column - deletedLength;
-                editor.setSelection(new monaco.Range(lineNumber, newCursorPosition, lineNumber, newCursorPosition));
-            }) || undefined;
+                    model.pushEditOperations(
+                        [],
+                        [
+                            {
+                                range: new monaco.Range(lineNumber, 1, lineNumber, lineContent.length + 1),
+                                text: newLineContent,
+                            },
+                        ],
+                        () => null,
+                    );
+                    const newCursorPosition = column - deletedLength;
+                    editor.setSelection(new monaco.Range(lineNumber, newCursorPosition, lineNumber, newCursorPosition));
+                },
+                'editorTextFocus && !findWidgetVisible',
+            ) || undefined;
     }
 }
