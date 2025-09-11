@@ -338,14 +338,11 @@ public class ExamService {
                         participation -> participation.getProgrammingExercise() != null && participation.getProgrammingExercise().getId().equals(programmingExercise.getId()))
                         .findAny().ifPresent(programmingExercise::setSolutionParticipation);
             });
-            Set<Long> solutionSubmissionIds = solutionProgrammingExerciseParticipations.stream().flatMap(p -> p.getSubmissions().stream().map(DomainObject::getId))
-                    .collect(Collectors.toSet());
-            Set<Long> templateSubmissionIds = templateProgrammingExerciseParticipations.stream().flatMap(p -> p.getSubmissions().stream().map(DomainObject::getId))
-                    .collect(Collectors.toSet());
-
-            Map<Long, Result> latestResultsForSolutionSubmissions = resultRepository.findLatestResultsBySubmissionIds(solutionSubmissionIds).stream()
+            Map<Long, Result> latestResultsForTemplateSubmissions = resultRepository
+                    .findLatestResultsByParticipationIds(templateProgrammingExerciseParticipations.stream().map(DomainObject::getId).collect(Collectors.toSet())).stream()
                     .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1));
-            Map<Long, Result> latestResultsForTemplateSubmissions = resultRepository.findLatestResultsBySubmissionIds(templateSubmissionIds).stream()
+            Map<Long, Result> latestResultsForSolutionSubmissions = resultRepository
+                    .findLatestResultsByParticipationIds(solutionProgrammingExerciseParticipations.stream().map(DomainObject::getId).collect(Collectors.toSet())).stream()
                     .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1));
 
             programmingExercises.forEach(programmingExercise -> {
