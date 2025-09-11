@@ -88,6 +88,8 @@ artemis:
     restricted-modules: module_text_llm,module_programming_llm
   apollon:
     conversion-service-url: http://localhost:8080
+  hyperion:
+    enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
 
   scheduling: # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
     programming-exercises-cleanup-time: 0 0 3 * * * # every day at 3am
@@ -106,7 +108,7 @@ artemis:
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
 
 
-# Configure Spring AI for Hyperion profile
+# Configure Spring AI, if you want to use Hyperion
 spring:
   ai:
     # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html

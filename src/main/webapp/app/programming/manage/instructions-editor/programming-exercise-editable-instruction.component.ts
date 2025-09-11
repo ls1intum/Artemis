@@ -41,7 +41,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
-import { PROFILE_HYPERION, PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, PROFILE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
@@ -87,7 +87,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     courseId: number;
     exerciseId: number;
     irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-    hyperionEnabled = this.profileService.isProfileActive(PROFILE_HYPERION);
+    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
     artemisIntelligenceActions = computed(() => {
         const actions = [];
         if (this.hyperionEnabled) {

@@ -263,19 +263,21 @@ Hyperion provides AI-assisted exercise creation features via Spring AI. No exter
 Quick setup for development
 """""""""""""""""""""""
 
-1. Enable the profile
+1. Enable the hyperion service
 
-   Add ``hyperion`` to your Spring profiles when you want Hyperion features available:
+    In your ``application-local.yml``, enable the hyperion service:
 
-   .. code-block:: bash
-
-      --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,hyperion
+   .. code-block:: yaml
+        artemis:
+            hyperion:
+                enabled: true
 
 2. Configure Spring AI
 
    Set up your preferred provider (Azure OpenAI or OpenAI) in ``application-local.yml``. Examples:
 
    .. code-block:: yaml
+
         spring:
           ai:
             # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html

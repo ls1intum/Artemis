@@ -2,7 +2,7 @@ artemis:
     atlas:
         enabled: true
     hyperion:
-        enabled: false
+        enabled: true # TODO: SET TO FALSE BEFORE MERGE!!
     exam:
         enabled: true
     plagiarism:
