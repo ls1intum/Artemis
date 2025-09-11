@@ -52,11 +52,14 @@ public class HyperionProblemStatementRewriteService {
         Map<String, String> input = Map.of("text", problemStatementText.trim());
         String renderedPrompt = templateService.render(resourcePath, input);
         try {
-            // formatter:off
-            String responseContent = chatClient.prompt()
+            // @formatter:off
+            String responseContent = chatClient
+                    .prompt()
                     .system("You are an expert technical writing assistant for programming exercise problem statements. Return only the rewritten statement, no explanations.")
-                    .user(renderedPrompt).call().content();
-            // formatter:on
+                    .user(renderedPrompt)
+                    .call()
+                    .content();
+            // @formatter:on
             String result = responseContent.trim();
             boolean improved = !result.equals(problemStatementText.trim());
             return new ProblemStatementRewriteResponseDTO(result, improved);

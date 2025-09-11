@@ -77,7 +77,12 @@ public class HyperionConsistencyCheckService {
         var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
         var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
 
-        List<ConsistencyIssue> combinedIssues = Flux.merge(structuralMono.flatMapMany(Flux::fromIterable), semanticMono.flatMapMany(Flux::fromIterable)).collectList().block();
+        // @formatter:off
+        List<ConsistencyIssue> combinedIssues = Flux.merge(
+            structuralMono.flatMapMany(Flux::fromIterable),
+            semanticMono.flatMapMany(Flux::fromIterable)
+        ).collectList().block();
+        // @formatter:on
 
         List<ConsistencyIssueDTO> issueDTOs = Objects.requireNonNullElse(combinedIssues, new ArrayList<ConsistencyIssue>()).stream().map(this::mapConsistencyIssueToDto).toList();
         return new ConsistencyCheckResponseDTO(issueDTOs);
@@ -93,11 +98,15 @@ public class HyperionConsistencyCheckService {
         var resourcePath = "/prompts/hyperion/consistency_structural.st";
         String renderedPrompt = templates.render(resourcePath, input);
         try {
-            // formatter:off
-            var structuralIssues = chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.")
-                    .user(renderedPrompt).call().entity(StructuredOutputSchema.StructuralConsistencyIssues.class);
+            // @formatter:off
+            var structuralIssues = chatClient
+                .prompt()
+                .system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.")
+                .user(renderedPrompt)
+                .call()
+                .entity(StructuredOutputSchema.StructuralConsistencyIssues.class);
+            // @formatter:on
             return toGenericConsistencyIssue(structuralIssues);
-            // formatter:on
         }
         catch (RuntimeException e) {
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
@@ -115,11 +124,15 @@ public class HyperionConsistencyCheckService {
         var resourcePath = "/prompts/hyperion/consistency_semantic.st";
         String renderedPrompt = templates.render(resourcePath, input);
         try {
-            // formatter:off
-            var semanticIssues = chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.")
-                    .user(renderedPrompt).call().entity(StructuredOutputSchema.SemanticConsistencyIssues.class);
+            // @formatter:off
+            var semanticIssues = chatClient
+                .prompt()
+                .system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.")
+                .user(renderedPrompt)
+                .call()
+                .entity(StructuredOutputSchema.SemanticConsistencyIssues.class);
+            // @formatter:on
             return toGenericConsistencyIssue(semanticIssues);
-            // formatter:on
         }
         catch (RuntimeException e) {
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
