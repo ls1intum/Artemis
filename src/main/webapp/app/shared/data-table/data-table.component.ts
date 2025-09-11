@@ -81,6 +81,7 @@ type PagingValue = number | 'all';
 export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     private sortService = inject(SortService);
     private localStorageService = inject(LocalStorageService);
+    private resizeScheduled = false;
 
     /**
      * @property templateRef Ref to the content child of this component (which is ngx-datatable)
@@ -212,11 +213,17 @@ export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
 
     /**
      * Life cycle hook called by Angular after a component has been checked for changes.
+     * Throttled to one global resize per animation frame.
      */
     ngAfterViewChecked() {
-        // Either the browser window can change or orientation on mobile devices.
-        // We then need all ngx-table to resize their width or heights appropriately.
-        window.dispatchEvent(new Event('resize'));
+        if (this.resizeScheduled) {
+            return;
+        }
+        this.resizeScheduled = true;
+        requestAnimationFrame(() => {
+            this.resizeScheduled = false;
+            window.dispatchEvent(new Event('resize'));
+        });
     }
 
     /**
