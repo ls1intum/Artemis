@@ -1,11 +1,6 @@
 package de.tum.cit.aet.artemis.programming.icl.distributed;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertIterableEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.timeout;
@@ -73,12 +68,12 @@ public abstract class AbstractDistributedDataTest {
         verify(mockListener, timeout(1000).times(1)).itemAdded(argThat("a"::equals));
 
         String head = queue.peek();
-        assertEquals("a", head);
-        assertEquals(1, queue.size());
+        assertThat(head).isEqualTo("a");
+        assertThat(queue.size()).isEqualTo(1);
 
         queue.poll();
         verify(mockListener, timeout(1000).times(1)).itemRemoved(argThat("a"::equals));
-        assertTrue(queue.isEmpty());
+        assertThat(queue.isEmpty()).isTrue();
     }
 
     @Test
@@ -88,13 +83,13 @@ public abstract class AbstractDistributedDataTest {
         queue.add("x");
         queue.add("y");
         queue.add("z");
-        assertEquals(3, queue.size());
+        assertThat(queue.size()).isEqualTo(3);
 
         queue.clear();
-        assertTrue(queue.isEmpty());
-        assertEquals(0, queue.size());
-        assertNull(queue.peek());
-        assertNull(queue.poll());
+        assertThat(queue.isEmpty()).isTrue();
+        assertThat(queue.size()).isEqualTo(0);
+        assertThat(queue.peek()).isNull();
+        assertThat(queue.poll()).isNull();
     }
 
     @Test
@@ -105,14 +100,14 @@ public abstract class AbstractDistributedDataTest {
 
         List<String> items = List.of("a", "b", "c", "d");
         boolean modified = queue.addAll(items);
-        assertTrue(modified);
-        assertEquals(4, queue.size());
-        assertIterableEquals(items, queue.getAll());
+        assertThat(modified).isTrue();
+        assertThat(queue.size()).isEqualTo(4);
+        assertThat(queue.getAll()).containsExactlyElementsOf(items);
         verify(mockListener, timeout(1000).times(4)).itemAdded(argThat(s -> Set.of("a", "b", "c", "d").contains(s)));
 
         queue.removeAll(Set.of("b", "d"));
-        assertEquals(2, queue.size());
-        assertIterableEquals(List.of("a", "c"), queue.getAll());
+        assertThat(queue.size()).isEqualTo(2);
+        assertThat(queue.getAll()).containsExactlyElementsOf(List.of("a", "c"));
         verify(mockListener, timeout(1000).times(2)).itemRemoved(argThat(s -> Set.of("b", "d").contains(s)));
 
         queue.clear();
@@ -121,27 +116,27 @@ public abstract class AbstractDistributedDataTest {
     @Test
     void testGetNameIsCorrect() {
         DistributedQueue<String> queue = getDistributedDataProvider().getQueue("testQueueName");
-        assertEquals("testQueueName", queue.getName());
+        assertThat(queue.getName()).isEqualTo("testQueueName");
     }
 
     @Test
     void testIsEmptyAndSize() {
         DistributedQueue<String> queue = getDistributedDataProvider().getQueue("testQueueSizeEmpty");
 
-        assertTrue(queue.isEmpty());
-        assertEquals(0, queue.size());
+        assertThat(queue.isEmpty()).isTrue();
+        assertThat(queue.size()).isEqualTo(0);
 
         queue.add("v1");
         queue.add("v2");
-        assertFalse(queue.isEmpty());
-        assertEquals(2, queue.size());
+        assertThat(queue.isEmpty()).isFalse();
+        assertThat(queue.size()).isEqualTo(2);
 
         queue.poll();
-        assertEquals(1, queue.size());
+        assertThat(queue.size()).isEqualTo(1);
 
         queue.clear();
-        assertTrue(queue.isEmpty());
-        assertEquals(0, queue.size());
+        assertThat(queue.isEmpty()).isTrue();
+        assertThat(queue.size()).isEqualTo(0);
     }
 
     @Test
@@ -171,7 +166,7 @@ public abstract class AbstractDistributedDataTest {
         QueueListener genericListener = Mockito.mock(QueueListener.class);
 
         UUID id = queue.addListener(genericListener);
-        assertNotNull(id);
+        assertThat(id).isNotNull();
 
         // Should not throw
         queue.removeListener(id);
@@ -231,15 +226,13 @@ public abstract class AbstractDistributedDataTest {
         map.put("key3", "value3");
 
         List<String> values = map.values().stream().toList();
-        assert values.size() == 3;
-        assert values.contains("value1");
-        assert values.contains("value2");
-        assert values.contains("value3");
+        assertThat(values).hasSize(3);
+        assertThat(values).contains("value1", "value2", "value3");
 
         map.remove("key1");
 
-        assert map.size() == 2;
-        assert !map.values().contains("value1");
+        assertThat(map.size()).isEqualTo(2);
+        assertThat(map.values()).doesNotContain("value1");
         map.clear();
     }
 
@@ -250,10 +243,10 @@ public abstract class AbstractDistributedDataTest {
         map.put("key2", "value2");
         map.put("key3", "value3");
 
-        assert map.size() == 3;
+        assertThat(map.size()).isEqualTo(3);
         map.clear();
 
-        assert map.size() == 0;
+        assertThat(map.size()).isEqualTo(0);
     }
 
     @Test
@@ -263,13 +256,13 @@ public abstract class AbstractDistributedDataTest {
         map.put("key2", "value2");
         map.put("key3", "value3");
 
-        assert map.size() == 3;
+        assertThat(map.size()).isEqualTo(3);
 
         var mapCopy = map.getMapCopy();
-        assert mapCopy.size() == 3;
-        assert mapCopy.get("key1").equals("value1");
-        assert mapCopy.get("key2").equals("value2");
-        assert mapCopy.get("key3").equals("value3");
+        assertThat(mapCopy.size()).isEqualTo(3);
+        assertThat(mapCopy.get("key1")).isEqualTo("value1");
+        assertThat(mapCopy.get("key2")).isEqualTo("value2");
+        assertThat(mapCopy.get("key3")).isEqualTo("value3");
 
         map.clear();
     }
@@ -284,9 +277,10 @@ public abstract class AbstractDistributedDataTest {
         assert map.size() == 3;
 
         var allValues = map.getAll(Set.of("key1", "key3"));
-        assert allValues.size() == 2;
-        assert allValues.get("key1").equals("value1");
-        assert allValues.get("key3").equals("value3");
+        assertThat(allValues.size()).isEqualTo(2);
+        assertThat(allValues.get("key1")).isEqualTo("value1");
+        assertThat(allValues.get("key2")).isEqualTo("value2");
+        assertThat(allValues.get("key3")).isEqualTo("value3");
 
         map.clear();
     }
