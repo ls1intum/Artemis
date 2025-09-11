@@ -108,10 +108,7 @@ public class LocalCIMissingJobService {
     public void retryMissingJobs() {
         log.debug("Checking for missing build jobs to retry");
 
-        var start = System.currentTimeMillis();
         Slice<BuildJob> missingJobsSlice = getMissingJobsToRetrySliceOfLastHour(50);
-        log.debug("Retrieving missing jobs took {} ms", System.currentTimeMillis() - start);
-
         List<BuildJob> missingJobs = missingJobsSlice.getContent();
         log.debug("Processing {} missing build jobs to retry", missingJobs.size());
 
