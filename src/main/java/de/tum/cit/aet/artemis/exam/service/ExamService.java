@@ -313,8 +313,17 @@ public class ExamService {
         }
     }
 
-    public Exam findWithExerciseGroupsAndExercisesAndDetailsByIdElseThrow(long examId) {
-        Exam exam = examRepository.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+    /**
+     * Get one exam with exercise groups, exercises and additional details.
+     * Additional details are:
+     * - template and solution participation for programming exercises with latest submission and result
+     * - questions for quiz exercises
+     *
+     * @param examId the id of the entity
+     * @return the exam with exercise groups and additional details
+     */
+    private Exam findWithExerciseGroupsAndExercisesAndDetailsByIdElseThrow(long examId) {
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         Set<QuizExercise> quizExercises = getAllExercisesForExamByType(exam, QuizExercise.class);
         Set<ProgrammingExercise> programmingExercises = getAllExercisesForExamByType(exam, ProgrammingExercise.class);
         Set<Long> quizExerciseIds = quizExercises.stream().map(DomainObject::getId).collect(Collectors.toSet());

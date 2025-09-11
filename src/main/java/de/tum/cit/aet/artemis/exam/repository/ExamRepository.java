@@ -528,8 +528,4 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             """)
 
     Set<ExamSidebarDataDTO> findSidebarDataForRealStudentExamsByCourseId(@Param("courseId") long courseId, @Param("now") ZonedDateTime now, @Param("studentId") long studentId);
-
-    default Exam findByIdWithExerciseGroupsAndExercisesElseThrow(long examId) {
-        return getValueElseThrow(findWithExerciseGroupsAndExercisesById(examId), examId);
-    }
 }

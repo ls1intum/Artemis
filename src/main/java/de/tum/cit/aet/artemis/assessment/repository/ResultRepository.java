@@ -904,6 +904,12 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     Optional<Result> findLatestResultWithFeedbacksBySubmissionId(@Param("submissionId") long submissionId, @Param("dateTime") ZonedDateTime dateTime);
 
+    /**
+     * Find the latest results for the given participation IDs.
+     *
+     * @param participationIds the participation IDs for which to find the latest results
+     * @return a set of latest results
+     */
     @Query("""
             SELECT r
             FROM Result r
