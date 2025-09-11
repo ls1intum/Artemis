@@ -338,22 +338,37 @@ public class ExamService {
                         participation -> participation.getProgrammingExercise() != null && participation.getProgrammingExercise().getId().equals(programmingExercise.getId()))
                         .findAny().ifPresent(programmingExercise::setSolutionParticipation);
             });
-            Set<Result> templateAndSolutionResults = resultRepository.findLatestResultsByParticipationIds(programmingExerciseIds);
-            templateAndSolutionResults.forEach(result -> {
-                if (result.getSubmission().getParticipation() instanceof TemplateProgrammingExerciseParticipation templateParticipation) {
-                    programmingExercises.stream()
-                            .filter(exercise -> exercise.getTemplateParticipation() != null && exercise.getTemplateParticipation().getId().equals(templateParticipation.getId()))
-                            .findAny().ifPresent(exercise -> exercise.getTemplateParticipation().setResults(List.of(result)));
+            Set<Long> solutionSubmissionIds = solutionProgrammingExerciseParticipations.stream().flatMap(p -> p.getSubmissions().stream().map(DomainObject::getId))
+                    .collect(Collectors.toSet());
+            Set<Long> templateSubmissionIds = templateProgrammingExerciseParticipations.stream().flatMap(p -> p.getSubmissions().stream().map(DomainObject::getId))
+                    .collect(Collectors.toSet());
+
+            Map<Long, Result> latestResultsForSolutionSubmissions = resultRepository.findLatestResultsBySubmissionIds(solutionSubmissionIds).stream()
+                    .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1));
+            Map<Long, Result> latestResultsForTemplateSubmissions = resultRepository.findLatestResultsBySubmissionIds(templateSubmissionIds).stream()
+                    .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1));
+
+            programmingExercises.forEach(programmingExercise -> {
+                if (programmingExercise.getSolutionParticipation() != null) {
+                    programmingExercise.getSolutionParticipation().getSubmissions().forEach(submission -> {
+                        Result result = latestResultsForSolutionSubmissions.get(submission.getId());
+                        if (result != null) {
+                            submission.setResults(List.of(result));
+                        }
+                    });
                 }
-                else if (result.getSubmission().getParticipation() instanceof SolutionProgrammingExerciseParticipation solutionParticipation) {
-                    programmingExercises.stream()
-                            .filter(exercise -> exercise.getSolutionParticipation() != null && exercise.getSolutionParticipation().getId().equals(solutionParticipation.getId()))
-                            .findAny().ifPresent(exercise -> exercise.getSolutionParticipation().s.setResults(List.of(result)));
+                if (programmingExercise.getTemplateParticipation() != null) {
+                    programmingExercise.getTemplateParticipation().getSubmissions().forEach(submission -> {
+                        Result result = latestResultsForTemplateSubmissions.get(submission.getId());
+                        if (result != null) {
+                            submission.setResults(List.of(result));
+                        }
+                    });
                 }
             });
 
         }
-
+        return exam;
     }
 
     /**
