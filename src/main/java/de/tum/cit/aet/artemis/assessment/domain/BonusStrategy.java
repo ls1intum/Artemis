@@ -25,8 +25,8 @@ public enum BonusStrategy implements IBonusStrategy {
         public BonusExampleDTO calculateBonusForStrategy(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double bonusToAchievedPoints,
                 GradingScale sourceGradingScale, Double sourceAchievedPoints, Double sourceReachablePoints, double weight) {
             final double bonusToReachablePoints = bonusToGradingScale.getMaxPoints();
-            GradeStep bonusGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * sourceAchievedPoints / sourceReachablePoints, sourceGradingScale.getId());
-            GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * bonusToAchievedPoints / bonusToReachablePoints, bonusToGradingScale.getId());
+            GradeStep bonusGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * sourceAchievedPoints / sourceReachablePoints, sourceGradingScale);
+            GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * bonusToAchievedPoints / bonusToReachablePoints, bonusToGradingScale);
             GradeStep maxGradeStep = bonusToGradingScale.maxGrade();
 
             Double bonusGrade = bonusGradeStep.getNumericValue();
@@ -56,7 +56,7 @@ public enum BonusStrategy implements IBonusStrategy {
         public BonusExampleDTO calculateBonusForStrategy(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double bonusToAchievedPoints,
                 GradingScale sourceGradingScale, Double sourceAchievedPoints, Double sourceReachablePoints, double weight) {
             final double bonusToReachablePoints = bonusToGradingScale.getMaxPoints();
-            GradeStep bonusGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * sourceAchievedPoints / sourceReachablePoints, sourceGradingScale.getId());
+            GradeStep bonusGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * sourceAchievedPoints / sourceReachablePoints, sourceGradingScale);
 
             Double bonusGrade = bonusGradeStep.getNumericValue();
             if (bonusGrade == null) {
@@ -69,8 +69,8 @@ public enum BonusStrategy implements IBonusStrategy {
             if (exceedsMax) {
                 finalPoints = bonusToGradingScale.getMaxPoints();
             }
-            GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * bonusToAchievedPoints / bonusToReachablePoints, bonusToGradingScale.getId());
-            GradeStep finalGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * finalPoints / bonusToReachablePoints, bonusToGradingScale.getId());
+            GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * bonusToAchievedPoints / bonusToReachablePoints, bonusToGradingScale);
+            GradeStep finalGradeStep = gradingScaleRepository.matchPercentageToGradeStep(100. * finalPoints / bonusToReachablePoints, bonusToGradingScale);
 
             return new BonusExampleDTO(bonusToAchievedPoints, sourceAchievedPoints, bonusToRawGradeStep.getGradeName(), bonusGrade, finalPoints, finalGradeStep.getGradeName(),
                     exceedsMax);
