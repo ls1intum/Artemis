@@ -49,12 +49,9 @@ public class GitRepositoryExportService {
 
     private final ZipFileService zipFileService;
 
-    private final InMemoryRepositoryBuilder inMemoryRepositoryBuilder;
-
-    public GitRepositoryExportService(GitService gitService, ZipFileService zipFileService, InMemoryRepositoryBuilder inMemoryRepositoryBuilder) {
+    public GitRepositoryExportService(GitService gitService, ZipFileService zipFileService) {
         this.gitService = gitService;
         this.zipFileService = zipFileService;
-        this.inMemoryRepositoryBuilder = inMemoryRepositoryBuilder;
 
         try {
             ArchiveCommand.registerFormat("zip", new ZipFormat());
@@ -181,12 +178,11 @@ public class GitRepositoryExportService {
      * @param repositoryUri the URI of the repository to export
      * @param filename      the desired filename for the export (without extension)
      * @return InputStreamResource containing the zipped repository content with full history
-     * @throws GitAPIException if the git operation fails
-     * @throws IOException     if IO operations fail
+     * @throws IOException if IO operations fail
      */
     public InputStreamResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws IOException {
         Repository repository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false);
-        byte[] zipData = inMemoryRepositoryBuilder.buildZip(repository);
+        byte[] zipData = InMemoryRepositoryBuilder.buildZip(repository);
         return createZipInputStreamResource(zipData, filename);
     }
 

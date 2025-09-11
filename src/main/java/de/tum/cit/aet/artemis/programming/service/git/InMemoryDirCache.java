@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheEntry;
@@ -18,6 +19,12 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.util.FS;
 
 public class InMemoryDirCache extends DirCache {
+
+    public static final int READ_WRITE_MODE = 0100644;
+
+    public static final int EXECUTE_MODE = 0100755;
+
+    public static final int DIRECTORY_EXECUTE_MODE = 040755;
 
     /**
      * Create a new in-core index representation.
@@ -44,16 +51,18 @@ public class InMemoryDirCache extends DirCache {
         // Collect and sort entries by path (byte-order, as Git expects)
         final int entryCount = getEntryCount();
         DirCacheEntry[] entries = new DirCacheEntry[entryCount];
-        for (int i = 0; i < entryCount; i++)
+        for (int i = 0; i < entryCount; i++) {
             entries[i] = getEntry(i);
-        Arrays.sort(entries, (a, b) -> {
-            byte[] pathABytes = a.getPathString().getBytes(StandardCharsets.UTF_8);
-            byte[] pathBBytes = b.getPathString().getBytes(StandardCharsets.UTF_8);
+        }
+        Arrays.sort(entries, (cacheEntryA, cacheEntryB) -> {
+            byte[] pathABytes = cacheEntryA.getPathString().getBytes(StandardCharsets.UTF_8);
+            byte[] pathBBytes = cacheEntryB.getPathString().getBytes(StandardCharsets.UTF_8);
             int minLength = Math.min(pathABytes.length, pathBBytes.length);
             for (int i = 0; i < minLength; i++) {
                 int diff = (pathABytes[i] & 0xff) - (pathBBytes[i] & 0xff);
-                if (diff != 0)
+                if (diff != 0) {
                     return diff;
+                }
             }
             return pathABytes.length - pathBBytes.length;
         });
@@ -70,19 +79,21 @@ public class InMemoryDirCache extends DirCache {
         // Each entry
         for (DirCacheEntry entry : entries) {
             // --- stat fields (32-bit each) ---
+
             // ctime seconds, ctime nanoseconds
-            writeInt(buffer, intBuffer, safeSeconds(entry));     // ctime sec (0 if unknown)
-            writeInt(buffer, intBuffer, safeNanos(entry));       // ctime nsec (0 if unknown)
+            writeInt(buffer, intBuffer, 0);     // ctime sec (0 if unknown)
+            writeInt(buffer, intBuffer, 0);     // ctime nsec (0 if unknown)
+
             // mtime seconds, mtime nanoseconds
-            writeInt(buffer, intBuffer, safeSeconds(entry));     // mtime sec (reuse if you don't track separately)
-            writeInt(buffer, intBuffer, safeNanos(entry));       // mtime nsec
+            writeInt(buffer, intBuffer, 0);     // mtime sec (reuse if you don't track separately)
+            writeInt(buffer, intBuffer, 0);     // mtime nsec
 
             // dev, ino
             writeInt(buffer, intBuffer, 0);
             writeInt(buffer, intBuffer, 0);
 
             // mode (file type + perms). Prefer entry.getFileMode().getBits()
-            int mode = (entry.getFileMode() != null) ? entry.getFileMode().getBits() : 0100644;
+            int mode = (entry.getFileMode() != null) ? entry.getFileMode().getBits() : READ_WRITE_MODE;
             writeInt(buffer, intBuffer, mode);
 
             // uid, gid
@@ -95,8 +106,9 @@ public class InMemoryDirCache extends DirCache {
 
             // object id (20 bytes, SHA-1)
             ObjectId objectId = entry.getObjectId();
-            if (objectId == null)
+            if (objectId == null) {
                 throw new IOException("DirCacheEntry missing ObjectId for " + entry.getPathString());
+            }
             byte[] objectIdRaw = new byte[Constants.OBJECT_ID_LENGTH];
             objectId.copyRawTo(objectIdRaw, 0);
             buffer.write(objectIdRaw);
@@ -114,10 +126,20 @@ public class InMemoryDirCache extends DirCache {
             // The entry (from ctime sec to NUL) must make the total entry size a multiple of 8
             int entryLength = 62 /* fixed */ + pathBytes.length + 1; // 62 = 10*4 + 20 + 2
             int padding = (8 - (entryLength % 8)) % 8;
-            for (int i = 0; i < padding; i++)
-                buffer.write(0);
+            IntStream.range(0, padding).map(i -> 0).forEach(buffer::write);
         }
 
+        writeTrailingChecksum(outputStream, buffer);
+    }
+
+    /**
+     * Write the buffered index content to the output stream, followed by the SHA-1 checksum of all preceding bytes.
+     *
+     * @param outputStream the destination output stream
+     * @param buffer       the buffer containing the index content
+     * @throws IOException if writing fails
+     */
+    private static void writeTrailingChecksum(OutputStream outputStream, ByteArrayOutputStream buffer) throws IOException {
         // Trailing checksum (SHA-1 of all preceding bytes)
         byte[] data = buffer.toByteArray();
         try {
@@ -132,17 +154,17 @@ public class InMemoryDirCache extends DirCache {
         }
     }
 
+    /**
+     * Write a 32-bit integer to the output stream in big-endian byte order.
+     *
+     * @param stream    the destination output stream
+     * @param intBuffer a reusable ByteBuffer for integer conversion
+     * @param value     the integer value to write
+     * @throws IOException if writing fails
+     */
     private static void writeInt(OutputStream stream, ByteBuffer intBuffer, int value) throws IOException {
         intBuffer.clear();
         intBuffer.putInt(value);
         stream.write(intBuffer.array(), 0, 4);
-    }
-
-    private static int safeSeconds(DirCacheEntry entry) {
-        return 0;
-    }
-
-    private static int safeNanos(DirCacheEntry entry) {
-        return 0;
     }
 }

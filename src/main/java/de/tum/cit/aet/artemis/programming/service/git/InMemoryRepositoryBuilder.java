@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service.git;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.programming.service.git.InMemoryDirCache.DIRECTORY_EXECUTE_MODE;
+import static de.tum.cit.aet.artemis.programming.service.git.InMemoryDirCache.EXECUTE_MODE;
+import static de.tum.cit.aet.artemis.programming.service.git.InMemoryDirCache.READ_WRITE_MODE;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -10,6 +12,7 @@ import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.zip.Deflater;
@@ -33,48 +36,43 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.pack.PackConfig;
-import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.Transport;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.util.FS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 
-@Profile(PROFILE_CORE)
-@Component
-@Lazy
+/**
+ * Builds an in-memory, checkout-ready Git repository as a single ZIP archive.
+ * <p>
+ * The ZIP contains the working tree at the root and a synthetic {@code .git/}
+ * directory with minimal refs, config, and a packed object store. No disk IO is used.
+ * <p>
+ * Thread-safety: all methods are stateless and thread-safe.
+ */
 public class InMemoryRepositoryBuilder {
 
     private static final Logger log = LoggerFactory.getLogger(InMemoryRepositoryBuilder.class);
 
-    private static final int READ_WRITE_MODE = 0100644;
-
-    private static final int EXECUTE_MODE = 0100755;
-
-    private static final int DIRECTORY_EXECUTE_MODE = 040755;
-
-    @Value("${artemis.version-control.build-agent-git-username}")
-    private String buildAgentGitUsername;
-
-    @Value("${artemis.version-control.build-agent-git-password}")
-    private String buildAgentGitPassword;
-
     /**
-     * Build an in-memory ZIP that, when extracted, is a fully-usable Git repo:
-     * working tree files at root + .git/ with objects/pack, refs, HEAD, config.
+     * Creates an in-memory ZIP that, once extracted, is a usable non-bare Git repo.
+     * The archive contains:
+     * <ul>
+     * <li>All working tree files of {@code repository.branch} at {@code origin}</li>
+     * <li>{@code .git/HEAD}, {@code .git/refs/...}, {@code .git/config}</li>
+     * <li>{@code .git/objects/pack/pack-*.pack} and matching {@code .idx}</li>
+     * <li>A serialized Git index matching the working tree</li>
+     * </ul>
      *
-     * @param repository Repository containing the remote URI and branch information
-     * @return byte[] ZIP payload
+     * @param repository logical repository descriptor providing remote URI and branch
+     * @return ZIP file bytes
+     * @throws IllegalArgumentException if the requested branch does not exist on the remote
+     * @throws IOException              if fetching or ZIP serialization fails
      */
-    public byte[] buildZip(Repository repository) throws IOException {
+    public static byte[] buildZip(Repository repository) throws IOException {
 
         URI remoteUri = repository.getRemoteRepositoryUri().getURI();
 
@@ -82,17 +80,14 @@ public class InMemoryRepositoryBuilder {
         InMemoryRepository repo = new InMemoryRepository.Builder().setRepositoryDescription(new DfsRepositoryDescription("inmem")).setFS(FS.DETECTED).build();
 
         // Configure "origin" (so we can also write it into .git/config later)
-        StoredConfig cfg = repo.getConfig();
-        cfg.setString("remote", "origin", "url", remoteUri.toString());
-        cfg.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
-        cfg.save();
+        StoredConfig storedConfig = repo.getConfig();
+        storedConfig.setString("remote", "origin", "url", remoteUri.toString());
+        storedConfig.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
+        storedConfig.save();
 
         log.debug("Fetching from {}", remoteUri);
         // Fetch: all branches
         try (Transport transport = Transport.open(repo, remoteUri.toString())) {
-            // Set credentials for localvc authentication
-            CredentialsProvider credentialsProvider = new UsernamePasswordCredentialsProvider(buildAgentGitUsername, buildAgentGitPassword);
-            transport.setCredentialsProvider(credentialsProvider);
             transport.fetch(NullProgressMonitor.INSTANCE, List.of(new RefSpec("+refs/heads/*:refs/remotes/origin/*")));
         }
         catch (Exception e) {
@@ -115,7 +110,7 @@ public class InMemoryRepositoryBuilder {
             zipOutputStream.setLevel(Deflater.BEST_COMPRESSION);
 
             // keep a set of created directory entries to avoid duplicates
-            Set<String> createdDirs = new java.util.HashSet<>();
+            Set<String> createdDirs = new HashSet<>();
             // Create .git scaffolding FIRST (deduped)
             writeGitScaffold(zipOutputStream, createdDirs);
 
@@ -188,7 +183,17 @@ public class InMemoryRepositoryBuilder {
         return outputStream.toByteArray();
     }
 
-    private void writeGitConfig(URI remoteUri, String branch, ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) throws IOException {
+    /**
+     * Writes a minimal {@code .git/config} that defines {@code origin} and
+     * associates the current branch with {@code refs/heads/&lt;branch&gt;}.
+     *
+     * @param remoteUri       remote URL to store under {@code remote.origin.url}
+     * @param branch          branch name to bind under {@code [branch "&lt;name&gt;"]}
+     * @param zipOutputStream open ZIP stream to receive the entry
+     * @param createdDirs     set used to deduplicate directory entries
+     * @throws IOException if the ZIP entry cannot be written
+     */
+    private static void writeGitConfig(URI remoteUri, String branch, ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) throws IOException {
         // Minimal config with origin
         String config = """
                 [core]
@@ -206,7 +211,18 @@ public class InMemoryRepositoryBuilder {
         putGitBytes(zipOutputStream, createdDirs, "config", config.getBytes(StandardCharsets.UTF_8));
     }
 
-    private void createGitIndex(InMemoryRepository repo, ObjectId commitId, ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) throws IOException {
+    /**
+     * Packs all reachable objects from {@code commitId} into a single {@code pack-*.pack}
+     * with matching {@code .idx} and writes both under {@code .git/objects/pack/}.
+     * The pack file name is computed as the SHA-1 of its content, as in standard Git.
+     *
+     * @param repo            in-memory repository containing fetched objects
+     * @param commitId        tip commit that defines reachability for the pack
+     * @param zipOutputStream open ZIP stream to receive pack and index entries
+     * @param createdDirs     set used to deduplicate directory entries
+     * @throws IOException if pack/index creation or ZIP writes fail
+     */
+    private static void createGitIndex(InMemoryRepository repo, ObjectId commitId, ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) throws IOException {
         // Create pack + index
         byte[] packBytes;
         byte[] idxBytes;
@@ -248,19 +264,35 @@ public class InMemoryRepositoryBuilder {
 
     // ---- Helpers ----------------------------------------------------------------
 
-    private void writeGitScaffold(ZipArchiveOutputStream zos, Set<String> createdDirs) {
-        mkdir(zos, createdDirs, ".git/");
-        mkdir(zos, createdDirs, ".git/objects/");
-        mkdir(zos, createdDirs, ".git/objects/pack/");
-        mkdir(zos, createdDirs, ".git/refs/");
-        mkdir(zos, createdDirs, ".git/refs/heads/");
+    /**
+     * Adds the minimal directory skeleton for {@code .git/} into the ZIP.
+     * Idempotent: duplicate directories are suppressed via {@code createdDirs}.
+     *
+     * @param zipOutputStream open ZIP stream
+     * @param createdDirs     directory de-duplication set
+     */
+    private static void writeGitScaffold(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) {
+        mkdir(zipOutputStream, createdDirs, ".git/");
+        mkdir(zipOutputStream, createdDirs, ".git/objects/");
+        mkdir(zipOutputStream, createdDirs, ".git/objects/pack/");
+        mkdir(zipOutputStream, createdDirs, ".git/refs/");
+        mkdir(zipOutputStream, createdDirs, ".git/refs/heads/");
     }
 
-    private void ensureParentDirs(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs, String path) {
+    /**
+     * Ensures that all parent directories of {@code path} exist as ZIP directory
+     * entries (normalized with forward slashes). Safe to call repeatedly.
+     *
+     * @param zipOutputStream open ZIP stream
+     * @param createdDirs     directory de-duplication set
+     * @param path            file path whose parent directories should be materialized
+     */
+    private static void ensureParentDirs(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs, String path) {
         String norm = path.replace('\\', '/');
         int last = norm.lastIndexOf('/');
-        if (last < 0)
+        if (last < 0) {
             return; // no parent
+        }
         String parent = norm.substring(0, last); // up to (but not including) the leaf
         int i = 0;
         while ((i = parent.indexOf('/', i)) != -1) {
@@ -272,7 +304,15 @@ public class InMemoryRepositoryBuilder {
         mkdir(zipOutputStream, createdDirs, parent.endsWith("/") ? parent : parent + "/");
     }
 
-    private void mkdir(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs, String dir) {
+    /**
+     * Adds a ZIP directory entry with POSIX execute bits (drwxr-xr-x) if it does not
+     * already exist in {@code createdDirs}. Logs and skips on IO errors.
+     *
+     * @param zipOutputStream open ZIP stream
+     * @param createdDirs     directory de-duplication set
+     * @param dir             directory path (with or without trailing slash)
+     */
+    private static void mkdir(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs, String dir) {
         if (!dir.endsWith("/")) {
             dir = dir + "/";
         }
@@ -292,7 +332,17 @@ public class InMemoryRepositoryBuilder {
         }
     }
 
-    private void putGitBytes(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs, String relPath, byte[] bytes) throws IOException {
+    /**
+     * Writes a file under {@code .git/} at {@code relPath} with the given bytes.
+     * Parent directories are created if missing.
+     *
+     * @param zipOutputStream open ZIP stream
+     * @param createdDirs     directory de-duplication set
+     * @param relPath         path relative to {@code .git/} (e.g., {@code refs/heads/main})
+     * @param bytes           file content
+     * @throws IOException if the ZIP entry cannot be written
+     */
+    private static void putGitBytes(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs, String relPath, byte[] bytes) throws IOException {
         String full = ".git/" + relPath;
         ensureParentDirs(zipOutputStream, createdDirs, full);  // parent dirs only
         ZipArchiveEntry zipEntry = new ZipArchiveEntry(full);
@@ -301,7 +351,13 @@ public class InMemoryRepositoryBuilder {
         zipOutputStream.closeArchiveEntry();
     }
 
-    private String toHex(byte[] bytes) {
+    /**
+     * Converts a byte array to lowercase hexadecimal without separators.
+     *
+     * @param bytes input bytes
+     * @return hex string, two characters per byte
+     */
+    private static String toHex(byte[] bytes) {
         StringBuilder stringBuilder = new StringBuilder(bytes.length * 2);
         for (byte b : bytes) {
             stringBuilder.append(String.format("%02x", b));
