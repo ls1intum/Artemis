@@ -5,7 +5,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { QuizTrainingAnswer } from '../course-training-quiz/QuizTrainingAnswer';
+import { QuizTrainingAnswer } from '../course-training-quiz/quiz-training-answer.model';
 import { SubmittedAnswerAfterEvaluation } from '../course-training-quiz/SubmittedAnswerAfterEvaluation';
 
 describe('CourseTrainingQuizService', () => {

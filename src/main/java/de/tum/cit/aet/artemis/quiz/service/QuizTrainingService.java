@@ -40,13 +40,16 @@ public class QuizTrainingService {
     public SubmittedAnswerAfterEvaluationDTO submitForTraining(long quizQuestionId, long userId, QuizTrainingAnswerDTO studentSubmittedAnswer, ZonedDateTime answeredAt) {
         QuizQuestion quizQuestion = quizQuestionRepository.findByIdElseThrow(quizQuestionId);
         SubmittedAnswer answer = studentSubmittedAnswer.submittedAnswer();
+        boolean isRated = studentSubmittedAnswer.isRated();
 
         double score = quizQuestion.scoreForAnswer(answer);
 
         answer.setScoreInPoints(score);
         answer.setQuizQuestion(quizQuestion);
 
-        quizQuestionProgressService.saveProgressFromTraining(quizQuestion, userId, answer, answeredAt);
+        if (isRated) {
+            quizQuestionProgressService.saveProgressFromTraining(quizQuestion, userId, answer, answeredAt);
+        }
 
         return SubmittedAnswerAfterEvaluationDTO.of(answer);
     }

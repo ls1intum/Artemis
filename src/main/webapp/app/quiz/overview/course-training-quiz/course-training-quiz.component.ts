@@ -18,9 +18,10 @@ import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-dr
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/QuizTrainingAnswer';
+import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/quiz-training-answer.model';
 import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluation';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { QuizQuestionTraining } from 'app/quiz/overview/course-training-quiz/quiz-question-training.model';
 
 @Component({
     selector: 'jhi-course-practice-quiz',
@@ -37,7 +38,7 @@ export class CourseTrainingQuizComponent {
     private router = inject(Router);
     private quizService = inject(CourseTrainingQuizService);
 
-    private static readonly INITIAL_QUESTIONS: QuizQuestion[] = [];
+    private static readonly INITIAL_QUESTIONS: QuizQuestionTraining[] = [];
 
     currentIndex = signal(0);
     private alertService = inject(AlertService);
@@ -101,7 +102,7 @@ export class CourseTrainingQuizComponent {
     nextQuestion(): void {
         if (this.currentIndex() < this.questions().length - 1) {
             this.currentIndex.set(this.currentIndex() + 1);
-            const question = this.currentQuestion();
+            const question = this.currentQuestion()?.quizQuestion;
             if (question) {
                 this.initQuestion(question);
             }
@@ -136,7 +137,7 @@ export class CourseTrainingQuizComponent {
      */
     applySelection() {
         this.trainingAnswer.submittedAnswer = undefined;
-        const question = this.currentQuestion();
+        const question = this.currentQuestion()?.quizQuestion;
         if (!question) {
             return;
         }
@@ -173,7 +174,7 @@ export class CourseTrainingQuizComponent {
      * Submits the quiz for practice
      */
     onSubmit() {
-        const questionId = this.currentQuestion()?.id;
+        const questionId = this.currentQuestion()?.quizQuestion?.id;
         if (!questionId) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
@@ -182,6 +183,7 @@ export class CourseTrainingQuizComponent {
             return;
         }
         this.applySelection();
+        this.trainingAnswer.isRated = this.currentQuestion()?.isRated;
         this.quizService.submitForTraining(this.trainingAnswer, questionId, this.courseId()).subscribe({
             next: (response: HttpResponse<SubmittedAnswerAfterEvaluation>) => {
                 if (response.body) {
@@ -218,7 +220,7 @@ export class CourseTrainingQuizComponent {
      * Applies the evaluated answer to the current question
      */
     applyEvaluatedAnswer(evaluatedAnswer: SubmittedAnswerAfterEvaluation) {
-        const question = this.currentQuestion();
+        const question = this.currentQuestion()?.quizQuestion;
         if (!question) return;
 
         switch (question.type) {

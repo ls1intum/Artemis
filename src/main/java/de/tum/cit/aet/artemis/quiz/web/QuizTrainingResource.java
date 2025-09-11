@@ -26,9 +26,8 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.QuizTrainingAnswerDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingService;
@@ -68,15 +67,14 @@ public class QuizTrainingResource {
      */
     @GetMapping("courses/{courseId}/training-questions")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<QuizQuestionWithSolutionDTO>> getQuizQuestionsForPractice(@PathVariable long courseId) {
+    public ResponseEntity<List<QuizQuestionTrainingDTO>> getQuizQuestionsForPractice(@PathVariable long courseId) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        List<QuizQuestion> quizQuestions = quizQuestionProgressService.getQuestionsForSession(courseId, user.getId());
-        List<QuizQuestionWithSolutionDTO> quizQuestionsWithSolutions = quizQuestions.stream().map(QuizQuestionWithSolutionDTO::of).toList();
-        return ResponseEntity.ok(quizQuestionsWithSolutions);
+        List<QuizQuestionTrainingDTO> quizQuestions = quizQuestionProgressService.getQuestionsForSession(courseId, user.getId());
+        return ResponseEntity.ok(quizQuestions);
     }
 
     /**

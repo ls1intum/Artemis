@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 import de.tum.cit.aet.artemis.quiz.dto.QuizTrainingAnswerDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
@@ -145,8 +146,12 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizExercise.setQuizQuestions(questions);
         quizExerciseTestRepository.save(quizExercise);
 
-        List<QuizQuestion> result = quizQuestionProgressService.getQuestionsForSession(1L, userId);
-        assertThat(result.size()).isEqualTo(10);
+        List<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(1L, userId);
+        assertThat(result.size()).isEqualTo(12);
+
+        for (QuizQuestionTrainingDTO dto : result) {
+            assertThat(dto.isRated()).isTrue();
+        }
 
         List<QuizQuestionProgress> progresses = result.stream().map(q -> quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, q.getId()).orElseThrow()).toList();
 
@@ -155,6 +160,44 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         List<ZonedDateTime> sortedDueDates = new ArrayList<>(dueDates);
         sortedDueDates.sort(Comparator.naturalOrder());
         assertThat(dueDates).isEqualTo(sortedDueDates);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetQuestionsForSessionNoDueDate() {
+        Course course = new Course();
+        course.setId(1L);
+        courseTestRepository.save(course);
+
+        QuizExercise quizExercise = new QuizExercise();
+        quizExercise.setCourse(course);
+        quizExercise.setIsOpenForPractice(true);
+        quizExerciseTestRepository.save(quizExercise);
+
+        List<QuizQuestion> questions = new ArrayList<>();
+
+        for (int i = 0; i < 12; i++) {
+            QuizQuestion question = quizQuestionRepository.save(new MultipleChoiceQuestion());
+            questions.add(question);
+
+            QuizQuestionProgress progress = new QuizQuestionProgress();
+            progress.setUserId(userId);
+            progress.setQuizQuestionId(question.getId());
+            QuizQuestionProgressData data = new QuizQuestionProgressData();
+            data.setDueDate(ZonedDateTime.now().plusDays(i + 1));
+            progress.setProgressJson(data);
+            progress.setLastAnsweredAt(ZonedDateTime.now());
+            quizQuestionProgressRepository.save(progress);
+        }
+
+        quizExercise.setQuizQuestions(questions);
+        quizExerciseTestRepository.save(quizExercise);
+
+        List<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(1L, userId);
+        assertThat(result.size()).isEqualTo(12);
+        for (QuizQuestionTrainingDTO dto : result) {
+            assertThat(dto.isRated()).isFalse();
+        }
     }
 
     @Test
@@ -237,7 +280,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
         submittedAnswer.setQuizQuestion(mcQuestion);
         submittedAnswer.setSelectedOptions(Set.of());
-        QuizTrainingAnswerDTO trainingAnswerDTO = new QuizTrainingAnswerDTO(submittedAnswer);
+        QuizTrainingAnswerDTO trainingAnswerDTO = new QuizTrainingAnswerDTO(submittedAnswer, true);
 
         SubmittedAnswerAfterEvaluationDTO result = request.postWithResponseBody("/api/quiz/courses/" + course.getId() + "/training-questions/" + mcQuestion.getId() + "/submit",
                 trainingAnswerDTO, SubmittedAnswerAfterEvaluationDTO.class, HttpStatus.OK);

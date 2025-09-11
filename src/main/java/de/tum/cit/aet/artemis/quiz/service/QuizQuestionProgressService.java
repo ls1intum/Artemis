@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,8 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 
@@ -91,7 +94,7 @@ public class QuizQuestionProgressService {
      * @param userId   ID of the user for whom the quiz questions are to be fetched
      * @return A list of 10 quiz questions sorted by due date
      */
-    public List<QuizQuestion> getQuestionsForSession(Long courseId, Long userId) {
+    public List<QuizQuestionTrainingDTO> getQuestionsForSession(Long courseId, Long userId) {
         Set<QuizQuestion> allQuestions = quizQuestionRepository.findAllQuizQuestionsByCourseId(courseId);
         Set<Long> questionIds = allQuestions.stream().map(QuizQuestion::getId).collect(Collectors.toSet());
         Set<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, questionIds);
@@ -106,9 +109,26 @@ public class QuizQuestionProgressService {
         List<QuizQuestion> dueQuestions = allQuestions.stream().filter(q -> {
             ZonedDateTime dueDate = dueDateMap.getOrDefault(q.getId(), now);
             return !dueDate.toLocalDate().isAfter(now.toLocalDate());
-        }).sorted(Comparator.comparing(q -> dueDateMap.getOrDefault(q.getId(), now))).limit(10).toList();
+        }).sorted(Comparator.comparing(q -> dueDateMap.getOrDefault(q.getId(), now))).toList();
 
-        return dueQuestions;
+        List<QuizQuestion> questionsForSession;
+        boolean hasDueQuestions = !dueQuestions.isEmpty();
+
+        if (hasDueQuestions) {
+            questionsForSession = dueQuestions;
+        }
+        else {
+            questionsForSession = allQuestions.stream().collect(Collectors.collectingAndThen(Collectors.toList(), list -> {
+                Collections.shuffle(list);
+                return list;
+            }));
+        }
+
+        return questionsForSession.stream().map(q -> {
+            QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(q);
+            boolean isRated = hasDueQuestions && dueQuestions.contains(q);
+            return QuizQuestionTrainingDTO.of(dto, isRated);
+        }).toList();
     }
 
     /**
