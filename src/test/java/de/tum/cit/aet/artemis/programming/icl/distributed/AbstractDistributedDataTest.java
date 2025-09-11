@@ -279,7 +279,7 @@ public abstract class AbstractDistributedDataTest {
         var allValues = map.getAll(Set.of("key1", "key3"));
         assertThat(allValues.size()).isEqualTo(2);
         assertThat(allValues.get("key1")).isEqualTo("value1");
-        assertThat(allValues.get("key2")).isEqualTo("value2");
+        assertThat(allValues.get("key2")).isNull();
         assertThat(allValues.get("key3")).isEqualTo("value3");
 
         map.clear();
