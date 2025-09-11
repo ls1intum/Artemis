@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.programming.config.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
@@ -120,7 +121,7 @@ public class ProgrammingUtilTestService {
         var savedExercise = exerciseRepository.save(exercise);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(savedExercise);
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(templateRepoUri.toString());
+        templateParticipation.setRepositoryUri(RepositoryUriConversionUtil.toShortRepositoryUri(templateRepoUri.toString()));
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         var templateSubmission = new ProgrammingSubmission();
         templateSubmission.setParticipation(templateParticipation);
@@ -168,7 +169,7 @@ public class ProgrammingUtilTestService {
         savedExercise.setBuildConfig(buildConfig);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);
         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
-        solutionParticipation.setRepositoryUri(solutionRepoUri.toString());
+        solutionParticipation.setRepositoryUri(RepositoryUriConversionUtil.toShortRepositoryUri(solutionRepoUri.toString()));
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
         var solutionSubmission = new ProgrammingSubmission();
         solutionSubmission.setParticipation(solutionParticipation);

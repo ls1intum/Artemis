@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
+import de.tum.cit.aet.artemis.programming.config.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -174,6 +175,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected ChatModel chatModel;
 
     protected URI localVCBaseUri;
+
+    // this is necessary otherwise the @PostConstruct method in RepositoryUriConversionUtil is not called and the staticServerUrl is null
+    @Autowired
+    private RepositoryUriConversionUtil repositoryUriConversionUtil;
 
     @Value("${artemis.version-control.url}")
     public void setLocalVCBaseUri(URI localVCBaseUri) {

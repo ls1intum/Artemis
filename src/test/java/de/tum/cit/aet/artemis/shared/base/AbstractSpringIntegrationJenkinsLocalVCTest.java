@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.core.connector.JenkinsRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
+import de.tum.cit.aet.artemis.programming.config.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -111,6 +112,10 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
         this.localVCBaseUri = localVCBaseUri;
         ProgrammingExerciseFactory.localVCBaseUri = localVCBaseUri; // Set the static field in ProgrammingExerciseFactory for convenience
     }
+
+    // this is necessary otherwise the @PostConstruct method in RepositoryUriConversionUtil is not called and the staticServerUrl is null
+    @Autowired
+    private RepositoryUriConversionUtil repositoryUriConversionUtil;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     protected Path localVCRepoPath;
