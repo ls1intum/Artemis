@@ -1,20 +1,18 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactType;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
@@ -23,6 +21,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.Severity;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -32,14 +31,14 @@ import reactor.core.scheduler.Schedulers;
  * Flow:
  * <ol>
  * <li>Refetch exercise with template & solution participations.</li>
- * <li>Render textual snapshot (problem statement + repositories) via {@link HyperionProgrammingExerciseContextRenderer}.</li>
+ * <li>Render textual snapshot (problem statement + repositories) via {@link HyperionProgrammingExerciseContextRendererService}.</li>
  * <li>Execute structural & semantic prompts concurrently using the Spring AI {@link ChatClient}.</li>
  * <li>Parse structured JSON into schema classes, normalize, aggregate, and expose as DTOs.</li>
  * </ol>
  */
 @Service
 @Lazy
-@Profile(PROFILE_HYPERION)
+@Conditional(HyperionEnabled.class)
 public class HyperionConsistencyCheckService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionConsistencyCheckService.class);
@@ -50,10 +49,10 @@ public class HyperionConsistencyCheckService {
 
     private final HyperionPromptTemplateService templates;
 
-    private final HyperionProgrammingExerciseContextRenderer exerciseContextRenderer;
+    private final HyperionProgrammingExerciseContextRendererService exerciseContextRenderer;
 
-    public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, @Autowired(required = false) ChatClient chatClient,
-            HyperionPromptTemplateService templates, HyperionProgrammingExerciseContextRenderer exerciseContextRenderer) {
+    public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
+            HyperionProgrammingExerciseContextRendererService exerciseContextRenderer) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.chatClient = chatClient;
         this.templates = templates;
@@ -64,37 +63,23 @@ public class HyperionConsistencyCheckService {
      * Execute structural and semantic consistency checks. Model calls run concurrently on bounded elastic threads.
      * Any individual failure degrades gracefully to an empty list; the aggregated response is always non-null.
      *
-     * @param user     invoking user
      * @param exercise programming exercise reference to check consistency for
      * @return aggregated consistency issues
      */
-    public ConsistencyCheckResponseDTO checkConsistency(User user, ProgrammingExercise exercise) {
-        log.info("Performing consistency check for exercise {} by user {}", exercise.getId(), user.getLogin());
+    public ConsistencyCheckResponseDTO checkConsistency(ProgrammingExercise exercise) {
+        log.debug("Performing consistency check for exercise {}", exercise.getId());
         var exerciseWithParticipations = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
 
         String renderedRepositoryContext = exerciseContextRenderer.renderContext(exerciseWithParticipations);
         String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
         var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage);
 
-        Mono<List<ConsistencyIssue>> structuralMono = Mono.fromCallable(() -> runStructuralCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
-        Mono<List<ConsistencyIssue>> semanticMono = Mono.fromCallable(() -> runSemanticCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+        var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+        var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
 
-        List<ConsistencyIssue> combinedIssues;
-        combinedIssues = Mono.zip(structuralMono, semanticMono, (a, b) -> {
-            List<ConsistencyIssue> combined = new ArrayList<>();
-            if (a != null) {
-                combined.addAll(a);
-            }
-            if (b != null) {
-                combined.addAll(b);
-            }
-            return combined;
-        }).block();
+        List<ConsistencyIssue> combinedIssues = Flux.merge(structuralMono.flatMapMany(Flux::fromIterable), semanticMono.flatMapMany(Flux::fromIterable)).collectList().block();
 
-        List<ConsistencyIssueDTO> issueDTOs = null;
-        if (combinedIssues != null) {
-            issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
-        }
+        List<ConsistencyIssueDTO> issueDTOs = Objects.requireNonNullElse(combinedIssues, new ArrayList<ConsistencyIssue>()).stream().map(this::mapConsistencyIssueToDto).toList();
         return new ConsistencyCheckResponseDTO(issueDTOs);
     }
 
@@ -108,9 +93,11 @@ public class HyperionConsistencyCheckService {
         var resourcePath = "/prompts/hyperion/consistency_structural.st";
         String renderedPrompt = templates.render(resourcePath, input);
         try {
+            // formatter:off
             var structuralIssues = chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.")
                     .user(renderedPrompt).call().entity(StructuredOutputSchema.StructuralConsistencyIssues.class);
             return toGenericConsistencyIssue(structuralIssues);
+            // formatter:on
         }
         catch (RuntimeException e) {
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
@@ -128,9 +115,11 @@ public class HyperionConsistencyCheckService {
         var resourcePath = "/prompts/hyperion/consistency_semantic.st";
         String renderedPrompt = templates.render(resourcePath, input);
         try {
+            // formatter:off
             var semanticIssues = chatClient.prompt().system("You are a senior code review assistant for programming exercises. Return only JSON matching the schema.")
                     .user(renderedPrompt).call().entity(StructuredOutputSchema.SemanticConsistencyIssues.class);
             return toGenericConsistencyIssue(semanticIssues);
+            // formatter:on
         }
         catch (RuntimeException e) {
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
@@ -191,6 +180,7 @@ public class HyperionConsistencyCheckService {
             List<StructuredOutputSchema.ArtifactLocation> relatedLocations) {
     }
 
+    // TODO: try to use records instead of static classes
     // Grouped structured output schema for parsing AI responses
     private static class StructuredOutputSchema {
 

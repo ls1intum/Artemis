@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -9,16 +8,19 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.stream.IntStream;
+
+import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
@@ -81,18 +83,18 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
  * Lines are always numbered and separated per file with a fixed-width horizontal rule; trees appear only for
  * repositories (not the problem statement pseudo file).
  */
-@Component
+@Service
 @Lazy
-@Profile(PROFILE_HYPERION)
-public class HyperionProgrammingExerciseContextRenderer {
+@Conditional(HyperionEnabled.class)
+public class HyperionProgrammingExerciseContextRendererService {
 
-    private static final Logger log = LoggerFactory.getLogger(HyperionProgrammingExerciseContextRenderer.class);
+    private static final Logger log = LoggerFactory.getLogger(HyperionProgrammingExerciseContextRendererService.class);
 
     private final RepositoryService repositoryService;
 
-    private final HyperionProgrammingLanguageContextFilter languageFilter;
+    private final HyperionProgrammingLanguageContextFilterService languageFilter;
 
-    public HyperionProgrammingExerciseContextRenderer(RepositoryService repositoryService, HyperionProgrammingLanguageContextFilter languageFilter) {
+    public HyperionProgrammingExerciseContextRendererService(RepositoryService repositoryService, HyperionProgrammingLanguageContextFilterService languageFilter) {
         this.repositoryService = repositoryService;
         this.languageFilter = languageFilter;
     }
@@ -109,35 +111,29 @@ public class HyperionProgrammingExerciseContextRenderer {
         }
         String problemStatement = Objects.requireNonNullElse(exercise.getProblemStatement(), "");
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
-        Map<String, String> templateRepository = fetchRepoContents(exercise.getTemplateParticipation() == null ? null : exercise.getTemplateParticipation().getVcsRepositoryUri(),
+        Map<String, String> templateRepoFiles = fetchRepoContents(exercise.getTemplateParticipation() == null ? null : exercise.getTemplateParticipation().getVcsRepositoryUri(),
                 "template", exercise.getId());
-        Map<String, String> solutionRepository = fetchRepoContents(exercise.getSolutionParticipation() == null ? null : exercise.getSolutionParticipation().getVcsRepositoryUri(),
+        Map<String, String> solutionRepoFiles = fetchRepoContents(exercise.getSolutionParticipation() == null ? null : exercise.getSolutionParticipation().getVcsRepositoryUri(),
                 "solution", exercise.getId());
 
-        templateRepository = languageFilter.filter(templateRepository, language);
-        solutionRepository = languageFilter.filter(solutionRepository, language);
+        templateRepoFiles = languageFilter.filter(templateRepoFiles, language);
+        solutionRepoFiles = languageFilter.filter(solutionRepoFiles, language);
 
         List<String> parts = new ArrayList<>(3);
         parts.add(renderRepository(Map.of("problem_statement.md", problemStatement), "Problem Statement"));
-        parts.add(renderRepository(templateRepository, "Template Repository"));
-        parts.add(renderRepository(solutionRepository, "Solution Repository"));
+        parts.add(renderRepository(templateRepoFiles, "Template Repository"));
+        parts.add(renderRepository(solutionRepoFiles, "Solution Repository"));
         return String.join("\n\n", parts);
     }
 
-    private Map<String, String> fetchRepoContents(VcsRepositoryUri uri, String label, Long exerciseId) {
-        if (uri == null) {
+    private Map<String, String> fetchRepoContents(@Nullable LocalVCRepositoryUri localVCRepositoryUri, String label, long exerciseId) {
+        if (localVCRepositoryUri == null) {
             return Map.of();
         }
         try {
-            // Only LocalVC repositories are currently supported for direct bare content retrieval.
-            if (uri instanceof LocalVCRepositoryUri localUri) {
-                return repositoryService.getFilesContentFromBareRepositoryForLastCommit(localUri);
-            }
-            // For other VCS types (e.g., remote), we skip to keep Hyperion optional and fail-safe.
-            log.debug("Skipping repository content fetch for unsupported VCS URI type {} on exercise {}", uri.getClass().getSimpleName(), exerciseId);
-            return Map.of();
+            return repositoryService.getFilesContentFromBareRepositoryForLastCommit(localVCRepositoryUri);
         }
-        catch (Exception ex) {
+        catch (IOException ex) {
             log.warn("Could not fetch {} repository contents for exercise {}", label, exerciseId, ex);
             return Map.of();
         }
@@ -169,11 +165,11 @@ public class HyperionProgrammingExerciseContextRenderer {
 
     private static String renderFileStructure(String root, Iterable<String> paths) {
         DirNode rootNode = new DirNode();
-        for (String p : paths) {
-            if (p == null || p.isBlank()) {
+        for (String path : paths) {
+            if (path == null || path.isBlank()) {
                 continue;
             }
-            String[] segments = Arrays.stream(p.split("/")).filter(s -> !s.isBlank()).toArray(String[]::new);
+            String[] segments = Arrays.stream(path.split("/")).filter(s -> !s.isBlank()).toArray(String[]::new);
             if (Arrays.stream(segments).anyMatch(seg -> seg.startsWith("."))) {
                 continue;
             }
@@ -216,8 +212,8 @@ public class HyperionProgrammingExerciseContextRenderer {
     private static final int HR_WIDTH = 80;
 
     private static String renderFileString(String root, String path, String content) {
-        String hr = "-".repeat(HR_WIDTH);
-        String header = (root != null && !root.isBlank() ? hr + "\n" + root + "/" + path + ":\n" + hr : hr + "\n" + path + ":\n" + hr);
+        String horizonalLine = "-".repeat(HR_WIDTH);
+        String header = (root != null && !root.isBlank() ? horizonalLine + "\n" + root + "/" + path + ":\n" + horizonalLine : horizonalLine + "\n" + path + ":\n" + horizonalLine);
         if (content == null) {
             content = "";
         }
@@ -225,10 +221,10 @@ public class HyperionProgrammingExerciseContextRenderer {
         int w = Integer.toString(lines.size()).length();
         List<String> out = new ArrayList<>(lines.size() + 1);
         out.add(header);
-        for (int i = 0; i < lines.size(); i++) {
+        IntStream.range(0, lines.size()).forEach(i -> {
             String num = String.format("%" + w + "d", i + 1);
             out.add(num + " | " + lines.get(i));
-        }
+        });
         return String.join("\n", out);
     }
 }

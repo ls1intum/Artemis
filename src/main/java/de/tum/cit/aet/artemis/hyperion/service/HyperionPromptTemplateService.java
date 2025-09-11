@@ -1,25 +1,25 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
 
-@Component
+import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+
+@Service
 @Lazy
-@Profile(PROFILE_HYPERION)
+@Conditional(HyperionEnabled.class)
 public class HyperionPromptTemplateService {
 
     /**
      * Render the template at the given classpath resource path with the provided variables.
-     *
+     * <p>
      * Supporting placeholders of the form {{var}}
      *
      * @param resourcePath classpath to the template resource
@@ -29,8 +29,7 @@ public class HyperionPromptTemplateService {
     public String render(String resourcePath, Map<String, String> variables) {
         try {
             var resource = new ClassPathResource(resourcePath);
-            String template = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
-            String rendered = template;
+            String rendered = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
             for (var entry : variables.entrySet()) {
                 rendered = rendered.replace("{{" + entry.getKey() + "}}", entry.getValue());
             }

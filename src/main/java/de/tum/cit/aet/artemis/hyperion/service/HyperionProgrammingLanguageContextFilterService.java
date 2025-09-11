@@ -1,27 +1,26 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
-
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 /**
  * Filters repository files based on programming language conventions for context rendering.
  * Extensible via a simple strategy registry; currently ships with Java support.
  */
-@Component
+@Service
 @Lazy
-@Profile(PROFILE_HYPERION)
-public class HyperionProgrammingLanguageContextFilter {
+@Conditional(HyperionEnabled.class)
+public class HyperionProgrammingLanguageContextFilterService {
 
     /** Pluggable strategy contract for language-specific file filtering. */
     public interface Strategy {
@@ -46,7 +45,7 @@ public class HyperionProgrammingLanguageContextFilter {
         }
     };
 
-    public HyperionProgrammingLanguageContextFilter() {
+    public HyperionProgrammingLanguageContextFilterService() {
         // Register built-ins
         register(new JavaStrategy());
     }
@@ -57,7 +56,7 @@ public class HyperionProgrammingLanguageContextFilter {
      * @param strategy the strategy to register
      * @return this filter for chaining
      */
-    public HyperionProgrammingLanguageContextFilter register(Strategy strategy) {
+    public HyperionProgrammingLanguageContextFilterService register(Strategy strategy) {
         if (strategy != null && strategy.language() != null) {
             strategies.put(strategy.language(), strategy);
         }
@@ -93,13 +92,13 @@ public class HyperionProgrammingLanguageContextFilter {
         @Override
         public Map<String, String> filter(Map<String, String> files) {
             Map<String, String> result = new LinkedHashMap<>();
-            for (var e : files.entrySet()) {
-                String p = e.getKey();
-                String content = e.getValue();
-                if (p == null || !p.endsWith(".java")) {
+            for (var entry : files.entrySet()) {
+                String filePath = entry.getKey();
+                String content = entry.getValue();
+                if (filePath == null || !filePath.endsWith(".java")) {
                     continue;
                 }
-                List<String> parts = Arrays.asList(p.split("/"));
+                List<String> parts = Arrays.asList(filePath.split("/"));
                 if (parts.stream().noneMatch("src"::equals)) {
                     continue;
                 }
@@ -109,7 +108,7 @@ public class HyperionProgrammingLanguageContextFilter {
                 if (content != null && content.length() > 50 * 1024) {
                     continue;
                 }
-                result.put(p, content);
+                result.put(filePath, content);
             }
             return result;
         }

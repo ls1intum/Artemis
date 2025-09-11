@@ -25,9 +25,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 class HyperionConsistencyCheckServiceTest {
 
@@ -35,25 +35,22 @@ class HyperionConsistencyCheckServiceTest {
     private RepositoryService repositoryService;
 
     @Mock
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Mock
     private ChatModel chatModel;
 
-    private ChatClient chatClient;
-
-    private HyperionConsistencyCheckService service;
-
-    private HyperionProgrammingExerciseContextRenderer exerciseContextRenderer;
+    private HyperionConsistencyCheckService hyperionConsistencyCheckService;
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        this.chatClient = ChatClient.create(chatModel);
+        ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
         // Wire minimal renderer with mocked dependencies
-        this.exerciseContextRenderer = new HyperionProgrammingExerciseContextRenderer(repositoryService, new HyperionProgrammingLanguageContextFilter());
-        this.service = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer);
+        HyperionProgrammingExerciseContextRendererService exerciseContextRenderer = new HyperionProgrammingExerciseContextRendererService(repositoryService,
+                new HyperionProgrammingLanguageContextFilterService());
+        this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer);
     }
 
     @Test
@@ -86,7 +83,7 @@ class HyperionConsistencyCheckServiceTest {
 
         var user = new User();
         user.setLogin("instructor");
-        ConsistencyCheckResponseDTO resp = service.checkConsistency(user, exercise);
+        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise);
 
         assertThat(resp).isNotNull();
         assertThat(resp.issues()).isNotEmpty();

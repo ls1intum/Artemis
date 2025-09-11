@@ -26,16 +26,14 @@ class HyperionProblemStatementRewriteServiceTest {
     @Mock
     private ChatModel chatModel;
 
-    private ChatClient chatClient;
-
-    private HyperionProblemStatementRewriteService service;
+    private HyperionProblemStatementRewriteService hyperionProblemStatementRewriteService;
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        this.chatClient = ChatClient.create(chatModel);
+        ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
-        this.service = new HyperionProblemStatementRewriteService(chatClient, templateService);
+        this.hyperionProblemStatementRewriteService = new HyperionProblemStatementRewriteService(chatClient, templateService);
     }
 
     @Test
@@ -46,7 +44,7 @@ class HyperionProblemStatementRewriteServiceTest {
         var user = new User();
         var course = new Course();
 
-        ProblemStatementRewriteResponseDTO resp = service.rewriteProblemStatement(user, course, "Original");
+        ProblemStatementRewriteResponseDTO resp = hyperionProblemStatementRewriteService.rewriteProblemStatement(course, "Original");
         assertThat(resp).isNotNull();
         assertThat(resp.improved()).isTrue();
         assertThat(resp.rewrittenText()).isEqualTo(rewritten);

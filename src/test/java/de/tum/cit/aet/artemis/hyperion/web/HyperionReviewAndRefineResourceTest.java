@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -19,7 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
-    private CourseRepository courseRepository;
+    private CourseTestRepository courseRepository;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -72,11 +72,11 @@ class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocal
     }
 
     private void mockConsistencyNoIssues() {
-        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}")))));
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}"))))).when(chatModel).call(any(Prompt.class));
     }
 
     private void mockRewriteImproved() {
-        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Improved problem statement.")))));
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Improved problem statement."))))).when(chatModel).call(any(Prompt.class));
     }
 
     @Test
