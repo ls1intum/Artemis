@@ -6,13 +6,6 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-// @formatter:off
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamRoomUploadInformationDTO(
-    @NotNull String uploadedFileName,
-    long durationNanos,
-    int numberOfUploadedRooms,
-    int numberOfUploadedSeats,
-    @NotNull List<String> uploadedRoomNames
-) {}
-// @formatter:on
+public record ExamRoomUploadInformationDTO(@NotNull String uploadedFileName, int numberOfUploadedRooms, int numberOfUploadedSeats, @NotNull List<String> uploadedRoomNames) {
+}

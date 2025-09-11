@@ -17,13 +17,11 @@
                 "uploadSummary": {
                     "title": "Upload Summary",
                     "file": "Filename:",
-                    "duration": "Processing Time:",
                     "roomsUploaded": "Uploaded Rooms:",
                     "seatsUploaded": "Uploaded Seats:"
                 },
                 "deletionSummary": {
                     "title": "Deletion Summary",
-                    "duration": "Processing Time:",
                     "roomsDeleted": "Deleted Rooms:"
                 },
                 "examRoomOverview": {
