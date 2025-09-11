@@ -100,7 +100,7 @@ public class CalendarResource {
     @GetMapping("subscription-token")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getCalendarEventSubscriptionToken() {
-        User user = userRepository.getUser();
+        User user = userRepository.getUserWithCalendarSubscriptionTokenStore();
         String token = calendarSubscriptionService.getOrCreateSubscriptionTokenFor(user);
         return ResponseEntity.ok(token);
     }
@@ -120,7 +120,7 @@ public class CalendarResource {
     @GetMapping("courses/{courseId}/calendar-events-ics")
     public ResponseEntity<String> getCalendarEventSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
             @RequestParam("filterOptions") Set<CalendarSubscriptionFilterOption> filterOptions, @RequestParam("language") Language language) {
-        User user = userRepository.findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
+        User user = userRepository.findOneByCalendarSubscriptionTokenStore_Token(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
         Course course = courseRepository.findByIdElseThrow(courseId);
         boolean userIsStudent = authorizationCheckService.isOnlyStudentInCourse(course, user);
         boolean userIsCourseStaff = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);

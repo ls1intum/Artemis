@@ -101,6 +101,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByLogin(String login);
 
+    @EntityGraph(type = LOAD, attributePaths = { "calendarSubscriptionTokenStore" })
+    Optional<User> findOneWithCalendarSubscriptionTokenStoreByLogin(String login);
+
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
 
@@ -128,8 +131,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(String calendarSubscriptionToken);
+    @EntityGraph(attributePaths = { "groups", "authorities" })
+    Optional<User> findOneByCalendarSubscriptionTokenStore_Token(String token);
 
     /**
      * Retrieves a list of user roles within a specified course based on the provided user IDs. This method is highly optimized for performance.
@@ -832,6 +835,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     default User getUser() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneByLogin(currentUserLogin));
+    }
+
+    @NotNull
+    default User getUserWithCalendarSubscriptionTokenStore() {
+        String currentUserLogin = getCurrentUserLogin();
+        return getValueElseThrow(findOneWithCalendarSubscriptionTokenStoreByLogin(currentUserLogin));
     }
 
     /**

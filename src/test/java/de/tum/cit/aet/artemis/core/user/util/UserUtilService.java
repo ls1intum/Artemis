@@ -23,6 +23,7 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Authority;
+import de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -200,14 +201,16 @@ public class UserUtilService {
     }
 
     /**
-     * Updates and saves the user's calendarSubscriptionToken
+     * Updates and saves the user's calendarSubscriptionToken in his calendarSubscriptionTokenStore.
      *
      * @param user                      The User to update
      * @param calendarSubscriptionToken The calendarSubscriptionToken to set
      * @return The updated User
      */
     public User setUserCalendarSubscriptionTokenAndSave(User user, String calendarSubscriptionToken) {
-        user.setCalendarSubscriptionToken(calendarSubscriptionToken);
+        CalendarSubscriptionTokenStore store = new CalendarSubscriptionTokenStore();
+        store.setToken(calendarSubscriptionToken);
+        user.setCalendarSubscriptionTokenStore(store);
         return userTestRepository.save(user);
     }
 

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20250819203300-factor-out-calendar-subscription-token-into-store" author="marlonnienaber">
+        <!-- Create new token store table with token property. Connect user table via 1-to-1 relationship -->
+        <createTable tableName="calendar_subscription_token_store">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="token" type="varchar(32)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </createTable>
+
+        <addColumn tableName="jhi_user">
+            <column name="calendar_subscription_token_store_id" type="bigint">
+                <constraints nullable="true" unique="true"/>
+            </column>
+        </addColumn>
+
+        <addForeignKeyConstraint
+                baseColumnNames="calendar_subscription_token_store_id"
+                baseTableName="jhi_user"
+                constraintName="FK_CALENDAR_SUBSCRIPTION_TOKEN_STORE_ON_USER"
+                deferrable="false"
+                initiallyDeferred="false"
+                onDelete="RESTRICT"
+                onUpdate="CASCADE"
+                referencedColumnNames="id"
+                referencedTableName="calendar_subscription_token_store"
+                validate="true"/>
+
+        <createIndex indexName="idx_user_calendar_subscription_store" tableName="jhi_user">
+            <column name="calendar_subscription_token_store_id"/>
+        </createIndex>
+
+        <!-- Transfer tokens into the new table -->
+        <sql>
+            INSERT INTO calendar_subscription_token_store (token)
+            SELECT jhiUser.calendar_subscription_token
+            FROM jhi_user jhiUser
+            WHERE jhiUser.calendar_subscription_token IS NOT NULL;
+        </sql>
+
+        <!-- Connect token stores to their user -->
+        <sql>
+            UPDATE jhi_user
+            SET calendar_subscription_token_store_id = (
+                SELECT store.id
+                FROM calendar_subscription_token_store store
+                WHERE store.token = jhi_user.calendar_subscription_token
+            )
+            WHERE calendar_subscription_token IS NOT NULL;
+        </sql>
+
+        <!-- Drop the old column -->
+        <dropColumn tableName="jhi_user" columnName="calendar_subscription_token"/>
+
+        <rollback>
+            <!-- Recreate old user column -->
+            <addColumn tableName="jhi_user">
+                <column name="calendar_subscription_token" type="varchar(32)">
+                    <constraints nullable="true" unique="true"/>
+                </column>
+            </addColumn>
+
+            <!-- Move data back to the user column -->
+            <sql>
+                UPDATE jhi_user
+                SET calendar_subscription_token = (
+                    SELECT store.token
+                    FROM calendar_subscription_token_store store
+                    WHERE store.id = jhi_user.calendar_subscription_token_store_id
+                )
+                WHERE calendar_subscription_token_store_id IS NOT NULL;
+            </sql>
+
+            <!-- Drop new table, column, constraint and index -->
+            <dropForeignKeyConstraint baseTableName="jhi_user" constraintName="FK_CALENDAR_SUBSCRIPTION_TOKEN_STORE_ON_USER"/>
+            <dropIndex indexName="idx_user_calendar_subscription_store" tableName="jhi_user"/>
+            <dropColumn tableName="jhi_user" columnName="calendar_subscription_token_store_id"/>
+            <dropTable tableName="calendar_subscription_token_store"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

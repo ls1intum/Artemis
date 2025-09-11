@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
@@ -52,11 +53,11 @@ public class CalendarSubscriptionService {
      * @return the existing or newly generated token
      */
     public String getOrCreateSubscriptionTokenFor(User user) {
-        String token = user.getCalendarSubscriptionToken();
-        if (token == null) {
-            token = generateUniqueSubscriptionTokenFor(user);
+        CalendarSubscriptionTokenStore tokenStore = user.getCalendarSubscriptionTokenStore();
+        if (tokenStore == null) {
+            return generateUniqueSubscriptionTokenFor(user);
         }
-        return token;
+        return tokenStore.getToken();
     }
 
     /**
@@ -72,7 +73,9 @@ public class CalendarSubscriptionService {
         boolean generationSuccessful;
         do {
             token = convertBytesToSubscriptionToken(generateSubscriptionTokenBytes());
-            user.setCalendarSubscriptionToken(token);
+            CalendarSubscriptionTokenStore tokenStore = new CalendarSubscriptionTokenStore();
+            tokenStore.setToken(token);
+            user.setCalendarSubscriptionTokenStore(tokenStore);
             try {
                 userRepository.saveAndFlush(user);
                 generationSuccessful = true;
