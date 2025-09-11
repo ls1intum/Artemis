@@ -52,6 +52,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -284,8 +285,10 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 boolean hasProfileAnnotation = item.isAnnotatedWith(Profile.class);
                 boolean hasConditionalAnnotation = item.isAnnotatedWith(Conditional.class);
                 boolean hasConditionalOnExpression = item.isAnnotatedWith(ConditionalOnExpression.class);
-                if (!(hasProfileAnnotation || hasConditionalAnnotation || hasConditionalOnExpression)) {
-                    String message = String.format("Class %s is neither annotated with @Profile, @Conditional, @ConditionalOnExpression", item.getFullName());
+                boolean hasConditionalOnProperty = item.isAnnotatedWith(ConditionalOnProperty.class);
+                if (!(hasProfileAnnotation || hasConditionalAnnotation || hasConditionalOnExpression || hasConditionalOnProperty)) {
+                    String message = String.format("Class %s is neither annotated with @Profile, @Conditional, @ConditionalOnExpression or @ConditionalOnProperty",
+                            item.getFullName());
                     events.add(SimpleConditionEvent.violated(item, message));
                 }
             }
