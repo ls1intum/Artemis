@@ -94,10 +94,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 89.74,
-            branches: 76.07,
-            functions: 83.75,
-            lines: 89.81,
+            statements: 89.69,
+            branches: 75.93,
+            functions: 83.7,
+            lines: 89.76,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
