@@ -22,10 +22,10 @@ import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.dto.TutorParticipationDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository;
-import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
+import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -59,10 +59,10 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
     private GradingInstructionRepository gradingInstructionRepository;
 
     @Autowired
-    private GradingCriterionRepository gradingCriterionRepository;
+    private TutorParticipationTestRepository tutorParticipationRepository;
 
     @Autowired
-    private TutorParticipationRepository tutorParticipationRepository;
+    private GradingCriterionRepository gradingCriterionRepository;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
