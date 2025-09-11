@@ -17,15 +17,9 @@ import { MockLanguageHelper, MockTranslateService } from 'src/test/javascript/sp
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import * as testClassDiagram from 'src/test/javascript/spec/helpers/sample/modeling/test-models/class-diagram.json';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
-import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockCourseManagementService } from 'src/test/javascript/spec/helpers/mocks/service/mock-course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-
-// has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
-Text.size = () => {
-    return { width: 0, height: 0 };
-};
 
 describe('ApollonDiagramDetail Component', () => {
     let apollonDiagramService: ApollonDiagramService;
@@ -85,6 +79,7 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('save', async () => {
+        jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
         fixture.componentInstance.apollonDiagram = diagram;
         // setup
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
