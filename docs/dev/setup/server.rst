@@ -106,8 +106,6 @@ module replacement in the client.
   ``dev,jenkins,localvc,artemis,scheduling,core,atlas,local``.
 * **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with ``athena`` profile and Local VC / CI enabled
   (see `Athena Service <#athena-service>`__).
-* **Artemis (Server, LocalVC & LocalCI, Hyperion):** The server will be started separated from the client with ``hyperion`` profile and Local VC / CI enabled
-  (see `Hyperion <#hyperion-service>`__).
 * **Artemis (Server, LocalVC & LocalCI, Theia):** The server will be started separated from the client with ``theia`` profile and Local VC / CI enabled.
 * **Artemis (BuildAgent):** The server will be started separated from the client with the profiles ``buildagent,local``.
   This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
