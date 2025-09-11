@@ -30,7 +30,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { DebugElement } from '@angular/core';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -38,7 +38,6 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -455,19 +454,7 @@ describe('ExampleTextSubmissionComponent', () => {
     it('should read and understood', () => {
         // GIVEN
         const tutorParticipationService = TestBed.inject(TutorParticipationService);
-        jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: {
-                        id: 1,
-                        exerciseId: EXERCISE_ID,
-                        tutorId: 10,
-                        status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
-                        trainedCount: 0,
-                    },
-                }),
-            ),
-        );
+        jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: {} })));
         const alertSpy = jest.spyOn(alertService, 'success');
 
         const router = TestBed.inject(Router);
