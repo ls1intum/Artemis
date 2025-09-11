@@ -28,9 +28,4 @@ export class ExampleSubmissionDTO {
         this.usedForTutorial = usedForTutorial;
         this.assessmentExplanation = assessmentExplanation;
     }
-
-    /** Convert an entity to a DTO instance */
-    static fromEntity(entity: ExampleSubmission): ExampleSubmissionDTO {
-        return new ExampleSubmissionDTO(entity.id, entity.usedForTutorial, entity.assessmentExplanation);
-    }
 }
