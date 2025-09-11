@@ -81,6 +81,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         buildAgentInformation = distributedDataAccessService.getDistributedBuildAgentInformation();
         pauseBuildAgentTopic = distributedDataAccessService.getPauseBuildAgentTopic();
         resumeBuildAgentTopic = distributedDataAccessService.getResumeBuildAgentTopic();
+        canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
         // this triggers the initialization of all required beans in the application context
         // in production the DeferredEagerBeanInitializer would do this automatically
         applicationContext.getBean(SharedQueueProcessingService.class);

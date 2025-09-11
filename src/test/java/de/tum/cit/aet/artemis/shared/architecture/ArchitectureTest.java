@@ -51,6 +51,7 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -282,8 +283,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
             public void check(JavaClass item, ConditionEvents events) {
                 boolean hasProfileAnnotation = item.isAnnotatedWith(Profile.class);
                 boolean hasConditionalAnnotation = item.isAnnotatedWith(Conditional.class);
-                if (!(hasProfileAnnotation || hasConditionalAnnotation)) {
-                    String message = String.format("Class %s is neither annotated with @Profile or @Conditional", item.getFullName());
+                boolean hasConditionalOnExpression = item.isAnnotatedWith(ConditionalOnExpression.class);
+                if (!(hasProfileAnnotation || hasConditionalAnnotation || hasConditionalOnExpression)) {
+                    String message = String.format("Class %s is neither annotated with @Profile, @Conditional, @ConditionalOnExpression", item.getFullName());
                     events.add(SimpleConditionEvent.violated(item, message));
                 }
             }
