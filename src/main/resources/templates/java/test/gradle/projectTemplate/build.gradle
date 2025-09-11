@@ -19,7 +19,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.13.0'
+    testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.15.0'
     implementation 'org.apache.commons:commons-lang3:3.18.0'
 
     // testImplementation(':${exerciseNamePomXml}')
@@ -158,7 +158,7 @@ pmd {
     ruleSets = ["$scaConfigDirectory/pmd-configuration.xml"]
     rulesMinimumPriority = 5
     ignoreFailures = true
-    toolVersion = '7.2.0'
+    toolVersion = '7.16.0'
     // exclude the test files
     pmdTest.enabled = false
     pmdMain.reports {
