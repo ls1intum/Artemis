@@ -34,6 +34,7 @@ export class ShortAnswerQuestionComponent {
 
     question = input.required<QuizQuestion>();
     shortAnswerQuestion = computed(() => this.question() as ShortAnswerQuestion);
+    _forceSampleSolution: boolean;
 
     // TODO: Map vs. Array --> consistency
     submittedTexts = model<ShortAnswerSubmittedText[]>([]);
@@ -53,6 +54,7 @@ export class ShortAnswerQuestionComponent {
         effect(() => {
             const currentQuestion = this.shortAnswerQuestion();
             if (currentQuestion) {
+                this.hideSampleSolution();
                 this.watchCollection();
             }
         });

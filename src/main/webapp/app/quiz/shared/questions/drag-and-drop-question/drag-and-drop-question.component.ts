@@ -107,6 +107,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
         effect(() => {
             const currentQuestion = this.dragAndDropQuestion();
             if (currentQuestion) {
+                this.hideSampleSolution();
                 this.watchCollection();
             }
         });

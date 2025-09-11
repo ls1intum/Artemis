@@ -50,6 +50,7 @@ describe('ShortAnswerQuestionComponent', () => {
         alternativeQuestion.hint = hint;
         const explanation = 'This is a very good explanation!';
         alternativeQuestion.explanation = explanation;
+        jest.spyOn(component, 'hideSampleSolution');
 
         fixture.componentRef.setInput('question', alternativeQuestion);
         fixture.detectChanges();
@@ -59,6 +60,8 @@ describe('ShortAnswerQuestionComponent', () => {
         expect(extractSafeHtmlText(component.renderedQuestion.text)).toBe(`<p>${text}</p>`);
         expect(extractSafeHtmlText(component.renderedQuestion.hint)).toBe(`<p>${hint}</p>`);
         expect(extractSafeHtmlText(component.renderedQuestion.explanation)).toBe(`<p>${explanation}</p>`);
+        expect(component.hideSampleSolution).toHaveBeenCalledOnce();
+        expect(component.showingSampleSolution).toBeFalsy();
     });
 
     it('should set submitted texts', () => {
