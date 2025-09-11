@@ -17,3 +17,20 @@ export enum ExampleSubmissionMode {
     READ_AND_CONFIRM = 'readConfirm',
     ASSESS_CORRECTLY = 'assessCorrectly',
 }
+
+export class ExampleSubmissionDTO {
+    public id?: number;
+    public usedForTutorial?: boolean;
+    public assessmentExplanation?: string;
+
+    constructor(id?: number, usedForTutorial?: boolean, assessmentExplanation?: string) {
+        this.id = id;
+        this.usedForTutorial = usedForTutorial;
+        this.assessmentExplanation = assessmentExplanation;
+    }
+
+    /** Convert an entity to a DTO instance */
+    static fromEntity(entity: ExampleSubmission): ExampleSubmissionDTO {
+        return new ExampleSubmissionDTO(entity.id, entity.usedForTutorial, entity.assessmentExplanation);
+    }
+}

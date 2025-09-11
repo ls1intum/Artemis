@@ -1,7 +1,7 @@
 import { User } from 'app/core/user/user.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import { ExampleSubmission, ExampleSubmissionDTO } from 'app/assessment/shared/entities/example-submission.model';
 
 export const enum TutorParticipationStatus {
     NOT_PARTICIPATED = 'NOT_PARTICIPATED',
@@ -19,10 +19,14 @@ export class TutorParticipation implements BaseEntity {
     public trainedExampleSubmissions?: ExampleSubmission[];
 }
 
-export interface TutorParticipationDTO {
-    id: number;
-    exerciseId: number;
-    tutorId: number;
-    status: TutorParticipationStatus;
-    trainedCount: number;
+export class TutorParticipationDTO {
+    id?: number;
+    exerciseId?: number;
+    tutorId?: number;
+    status?: TutorParticipationStatus;
+    trainedExampleSubmissions?: ExampleSubmissionDTO[];
+
+    constructor() {
+        this.trainedExampleSubmissions = [];
+    }
 }
