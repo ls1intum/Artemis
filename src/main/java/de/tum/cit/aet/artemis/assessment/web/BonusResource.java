@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Bonus;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.dto.BonusExampleDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.assessment.repository.BonusRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.service.BonusService;
@@ -320,7 +322,8 @@ public class BonusResource {
         if (sourceGradingScale.getCourse() != null) {
             // fetch course with exercises to calculate reachable points
             Course course = courseRepository.findWithEagerExercisesById(sourceGradingScale.getCourse().getId());
-            sourceReachablePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, course.getExercises());
+            sourceReachablePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale,
+                    course.getExercises().stream().map(ExerciseCourseScoreDTO::from).collect(Collectors.toSet()));
         }
         return sourceReachablePoints;
     }
