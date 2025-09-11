@@ -6,7 +6,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.Distri
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.local.LocalDataProviderService;
 
 @TestPropertySource(properties = { "artemis.continuous-integration.data-store=Local" })
-public class LocalDataTest extends AbstractDistributedDataTest {
+class LocalDataTest extends AbstractDistributedDataTest {
 
     private final LocalDataProviderService distributedDataProvider;
 

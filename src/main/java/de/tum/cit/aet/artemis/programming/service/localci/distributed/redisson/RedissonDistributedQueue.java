@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.
 
 public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
 
-    static final Logger log = LoggerFactory.getLogger(RedissonDistributedQueue.class);
+    private static final Logger log = LoggerFactory.getLogger(RedissonDistributedQueue.class);
 
     private final RQueue<T> queue;
 

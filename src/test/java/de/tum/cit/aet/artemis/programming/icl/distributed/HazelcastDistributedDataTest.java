@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.hazelcast.
 @SpringBootTest
 @ActiveProfiles({ PROFILE_TEST_BUILDAGENT, PROFILE_BUILDAGENT, "local" })
 @TestPropertySource(properties = { "artemis.continuous-integration.data-store=Hazelcast" })
-public class HazelcastDistributedDataTest extends AbstractDistributedDataTest {
+class HazelcastDistributedDataTest extends AbstractDistributedDataTest {
 
     @Autowired
     private HazelcastDistributedDataProviderService distributedDataProvider;
