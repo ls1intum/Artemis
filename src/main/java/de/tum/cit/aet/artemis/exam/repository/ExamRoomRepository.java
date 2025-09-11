@@ -4,6 +4,7 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -61,4 +62,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             WHERE erea.exam.id = :examId
             """)
     Set<ExamRoom> findAllByExamId(long examId);
+
+    @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = { "layoutStrategies" })
+    Set<ExamRoom> findAllWithEagerLayoutStrategiesByIdIn(Set<Long> ids);
 }

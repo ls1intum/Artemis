@@ -1347,7 +1347,6 @@ public class ExamResource {
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam
-     *
      * @return the ResponseEntity with status 200 (OK) and with body a summary of the deletion of the exam
      */
     @GetMapping("courses/{courseId}/exams/{examId}/deletion-summary")
@@ -1356,5 +1355,29 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         log.debug("REST request to get deletion summary for exam : {}", examId);
         return ResponseEntity.ok(examDeletionService.getExamDeletionSummary(examId));
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/distribute.registered-students : Distribute all students registered to
+     * an exam across a selection of rooms
+     *
+     * @param courseId    the id of the course
+     * @param examId      the id of the exam
+     * @param examRoomIds the ids of all the exam rooms we want to distribute the students to
+     */
+    @PostMapping("courses/{courseId}/exams/{examId}/distribute-registered-students")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> distributeRegisteredStudents(@PathVariable long courseId, @PathVariable long examId, @RequestBody Set<Long> examRoomIds) {
+        log.debug("REST request to distribute students across rooms for exam : {}", examId);
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+
+        if (examRoomIds == null || examRoomIds.isEmpty()) {
+            // TODO: Add translation
+            throw new BadRequestAlertException("Missing room IDs", ENTITY_NAME, "missingRoomIDs");
+        }
+
+        examService.distributeRegisteredStudents(examId, examRoomIds);
+
+        return ResponseEntity.ok().build();
     }
 }

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -11,12 +12,15 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -41,6 +45,8 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 @Lazy
 @Service
 public class ExamRoomService {
+
+    private static final Logger log = LoggerFactory.getLogger(ExamRoomService.class);
 
     private static final String ENTITY_NAME = "examroomservice";
 
@@ -372,6 +378,63 @@ public class ExamRoomService {
         examRoomRepository.deleteAllById(outdatedAndUnusedExamRoomIds);
 
         return new ExamRoomDeletionSummaryDTO(outdatedAndUnusedExamRoomIds.size());
+    }
+
+    public Collection<ExamSeatDTO> getDefaultUsableSeats(ExamRoom examRoom) {
+        var defaultLayoutStrategy = examRoom.getLayoutStrategies().stream().filter(layoutStrategy -> layoutStrategy.getName().equals("default")).findAny().orElseThrow();
+
+        return switch (defaultLayoutStrategy.getType()) {
+            case FIXED_SELECTION -> getDefaultUsableSeatsFixedSelection(examRoom, defaultLayoutStrategy.getParametersJson());
+            case RELATIVE_DISTANCE -> getDefaultUsableSeatsRelativeDistance(examRoom, defaultLayoutStrategy.getParametersJson());
+        };
+    }
+
+    // @formatter:off
+    private record FixedSelectionInput() {}
+    // @formatter:on
+
+    private Collection<ExamSeatDTO> getDefaultUsableSeatsFixedSelection(ExamRoom examRoom, String layoutStrategyParameters) {
+        return null;
+    }
+
+    // @formatter:off
+    private record RelativeDistanceInput(
+        @JsonProperty("first_row") int firstRow,
+        @JsonProperty("xspace") double xSpace,
+        @JsonProperty("yspace") double ySpace
+    ) {}
+    // @formatter:on
+
+    private Collection<ExamSeatDTO> getDefaultUsableSeatsRelativeDistance(ExamRoom examRoom, String layoutStrategyParameters) {
+        log.debug("getDefaultUsableSeatsRelativeDistance: {}", layoutStrategyParameters);
+        RelativeDistanceInput relativeDistanceInput;
+        try {
+            relativeDistanceInput = objectMapper.readValue(layoutStrategyParameters, RelativeDistanceInput.class);
+        }
+        catch (JsonProcessingException e) {
+            // TODO: Translation
+            throw new BadRequestAlertException("Sire, reinforce the layout strategy", ENTITY_NAME, "readRelativeDistance");
+        }
+
+        final int firstRow = relativeDistanceInput.firstRow;
+        final double xSpace = relativeDistanceInput.xSpace;
+        final double ySpace = relativeDistanceInput.ySpace;
+
+        List<ExamSeatDTO> examSeatsFilteredAndSorted = examRoom.getSeats().stream()
+                // Filter out all exam rooms that are before the "first row". The coords start at 0, the row numbers at 1
+                .filter(examSeatDTO -> examSeatDTO.yCoordinate() >= (firstRow - 1)).filter(examSeatDTO -> examSeatDTO.seatCondition() == SeatCondition.USABLE)
+                .sorted(Comparator.comparingDouble(ExamSeatDTO::yCoordinate).thenComparingDouble(ExamSeatDTO::xCoordinate)).toList();
+
+        List<ExamSeatDTO> selectedSeats = new ArrayList<>();
+        for (ExamSeatDTO examSeatDTO : examSeatsFilteredAndSorted) {
+            boolean isFarEnough = selectedSeats.stream().noneMatch(
+                    existing -> Math.abs(existing.yCoordinate() - examSeatDTO.yCoordinate()) <= ySpace && Math.abs(existing.xCoordinate() - examSeatDTO.xCoordinate()) <= xSpace);
+            if (isFarEnough) {
+                selectedSeats.add(examSeatDTO);
+            }
+        }
+
+        return selectedSeats;
     }
 
 }
