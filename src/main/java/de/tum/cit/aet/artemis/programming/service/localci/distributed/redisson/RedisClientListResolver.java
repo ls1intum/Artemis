@@ -6,14 +6,14 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.types.RedisClientInfo;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("redis")
+@ConditionalOnProperty(value = "artemis.continuous-integration.data-store", havingValue = "Redis")
 public class RedisClientListResolver {
 
     private static final Logger log = LoggerFactory.getLogger(RedisClientListResolver.class);
@@ -34,7 +34,7 @@ public class RedisClientListResolver {
         }
         for (RedisClientInfo clientInfo : clients) {
             String clientName = clientInfo.getName();
-            // TODO: also make this configurable via application properties
+            // TODO: also make this configurable via application properties?
             if (clientName.toLowerCase().startsWith("artemis")) {
                 uniqueClients.add(clientName);
             }

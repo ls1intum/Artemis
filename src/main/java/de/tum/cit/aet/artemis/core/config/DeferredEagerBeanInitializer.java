@@ -2,10 +2,8 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI_AND_LOCAL_DATA;
 
 import java.util.Arrays;
-import java.util.Collection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,8 +45,8 @@ public class DeferredEagerBeanInitializer {
      * This method should be called after the application is fully started to not block the startup process.
      */
     public void initializeDeferredEagerBeans() {
-        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (!activeProfiles.contains("redis") && !activeProfiles.contains(PROFILE_LOCALCI_AND_LOCAL_DATA)) {
+        String dataStoreConfig = env.getProperty("artemis.continuous-integration.data-store", "Hazelcast");
+        if (dataStoreConfig.equalsIgnoreCase("Hazelcast")) {
             try {
                 // Force eager initialization of HazelcastConnection first, so that connections are established as early as possible.
                 context.getBean(HazelcastConnection.class);

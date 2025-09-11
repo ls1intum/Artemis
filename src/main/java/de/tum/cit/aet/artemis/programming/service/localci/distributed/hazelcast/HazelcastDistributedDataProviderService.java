@@ -13,7 +13,7 @@ import com.hazelcast.cluster.Member;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
-import de.tum.cit.aet.artemis.core.config.LocalCiBuildAgentNotLocalOrRedisDataCondition;
+import de.tum.cit.aet.artemis.core.config.LocalCiBuildAgentHazelcastDataCondition;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.
 
 @Lazy
 @Service
-@Conditional(LocalCiBuildAgentNotLocalOrRedisDataCondition.class)
+@Conditional(LocalCiBuildAgentHazelcastDataCondition.class)
 public class HazelcastDistributedDataProviderService implements DistributedDataProvider {
 
     private final HazelcastInstance hazelcastInstance;

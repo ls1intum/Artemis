@@ -5,7 +5,7 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
-import org.springframework.context.annotation.Profile;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson.R
 /**
  * Service determining the health of the Athena service and its assessment modules.
  */
-@Profile("redis")
+@ConditionalOnProperty(value = "artemis.continuous-integration.data-store", havingValue = "Redis")
 @Component
 public class RedisHealthIndicator implements HealthIndicator {
 

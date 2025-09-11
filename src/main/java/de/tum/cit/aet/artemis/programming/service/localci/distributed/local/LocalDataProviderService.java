@@ -1,14 +1,12 @@
 package de.tum.cit.aet.artemis.programming.service.localci.distributed.local;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI_AND_LOCAL_DATA;
-
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
@@ -18,7 +16,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.
 
 @Service
 @Lazy
-@Profile(PROFILE_LOCALCI_AND_LOCAL_DATA)
+@ConditionalOnProperty(value = "artemis.continuous-integration.data-store", havingValue = "Local")
 public class LocalDataProviderService implements DistributedDataProvider {
 
     private final ConcurrentHashMap<String, DistributedQueue<?>> queues = new ConcurrentHashMap<>();

@@ -10,12 +10,13 @@ import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
-public class LocalCiBuildAgentNotLocalOrRedisDataCondition implements Condition {
+public class LocalCiBuildAgentHazelcastDataCondition implements Condition {
 
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
         final Collection<String> activeProfiles = Arrays.asList(context.getEnvironment().getActiveProfiles());
-        return (activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)) && !activeProfiles.contains("LOCAL_LOCALCI_DATA")
-                && !activeProfiles.contains("redis");
+        String dataStoreConfig = context.getEnvironment().getProperty("artemis.continuous-integration.data-store", "Hazelcast");
+
+        return (activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)) && dataStoreConfig.equalsIgnoreCase("Hazelcast");
     }
 }
