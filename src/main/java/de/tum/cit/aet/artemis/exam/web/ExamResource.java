@@ -1377,13 +1377,11 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         if (examRoomIds == null || examRoomIds.isEmpty()) {
-            // TODO: Add translation
-            throw new BadRequestAlertException("Sire, you didn't specify any room IDs", ENTITY_NAME, "noRoomIDs");
+            throw new BadRequestAlertException("You didn't specify any room IDs", ENTITY_NAME, "noRoomIDs");
         }
 
         if (!examRoomService.allRoomsExistAndAreNewestVersions(examRoomIds)) {
-            // TODO: Add translation
-            throw new BadRequestAlertException("Sire, you have invalid room IDs", ENTITY_NAME, "invalidRoomIDs");
+            throw new BadRequestAlertException("You have invalid room IDs", ENTITY_NAME, "invalidRoomIDs");
         }
 
         examService.distributeRegisteredStudents(examId, examRoomIds);

@@ -1472,9 +1472,6 @@ public class ExamService {
      * @param examRoomIds The ids of the rooms to distribute to
      */
     public void distributeRegisteredStudents(long examId, @NotNull @NotEmpty Set<Long> examRoomIds) {
-        // First we need to throw out possibly existing distributions:
-        examRoomExamAssignmentRepository.deleteAllByExamId(examId);
-
         // Now we find all exam rooms that we want to use for the exam
         final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         final var examRooms = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
@@ -1492,7 +1489,7 @@ public class ExamService {
                     Map.of("numberOfUsableSeats", numberOfUsableSeats, "numberOfExamUsers", examUsers.size()));
         }
 
-        // Since we know we have enough space, we can now assign these rooms to the exam
+        examRoomExamAssignmentRepository.deleteAllByExamId(examId);
         for (ExamRoom examRoom : examRooms) {
             var examRoomExamAssignment = new ExamRoomExamAssignment();
             examRoomExamAssignment.setExamRoom(examRoom);
@@ -1502,7 +1499,6 @@ public class ExamService {
 
         // Now we distribute students to the seats
         final var examUsersIterator = examUsers.iterator();
-
         roomNumberToUsableSeatsDefaultLayout.forEach((roomNumber, usableSeats) -> usableSeats.stream().takeWhile(ignored -> examUsersIterator.hasNext()).forEach(seat -> {
             ExamUser nextExamUser = examUsersIterator.next();
             nextExamUser.setPlannedRoom(roomNumber);
