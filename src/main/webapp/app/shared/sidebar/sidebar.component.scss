@@ -3,6 +3,7 @@
 .scrollable-item-content {
     --search-height: 60px;
     overflow-y: auto;
+
     @include dynamic-content-height(--header-height, --search-height, --filter-height, --channel-search-height);
 
     &.filter-height {

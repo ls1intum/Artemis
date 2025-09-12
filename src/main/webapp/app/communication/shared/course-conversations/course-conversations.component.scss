@@ -9,6 +9,7 @@
 
 .scrollable-communication-content {
     --channel-search-height: 59px;
+
     @include dynamic-content-height(--header-height, --channel-search-height);
     overflow-y: auto;
 }

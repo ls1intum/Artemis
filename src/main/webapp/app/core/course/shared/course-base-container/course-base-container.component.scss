@@ -35,6 +35,7 @@
         position: sticky;
         z-index: 1;
         display: block;
+
         @include dynamic-content-height(--spacing-modules);
         width: calc(100vw - $menu-width-open);
         overflow: hidden;
