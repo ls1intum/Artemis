@@ -1470,11 +1470,11 @@ public class ExamService {
         examRoomExamAssignmentRepository.deleteAllByExamId(examId);
 
         // Now we find all exam rooms that we want to use for the exam
-        Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
-        var examRooms = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
+        final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
+        final var examRooms = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
 
         // Now we extract all usable seats from the exam rooms and check if there is enough space to seat all registered students
-        var examUsers = exam.getExamUsers();
+        final var examUsers = exam.getExamUsers();
         Map<String, Collection<ExamSeatDTO>> roomNumberToUsableSeatsDefaultLayout = new HashMap<>();
         for (ExamRoom examRoom : examRooms) {
             roomNumberToUsableSeatsDefaultLayout.put(examRoom.getRoomNumber(), examRoomService.getDefaultUsableSeats(examRoom));
@@ -1495,24 +1495,17 @@ public class ExamService {
         }
 
         // Now we distribute students to the seats
-        var examUsersIterator = examUsers.iterator();
+        final var examUsersIterator = examUsers.iterator();
 
-        entryLoop: for (var entry : roomNumberToUsableSeatsDefaultLayout.entrySet()) {
-            String roomNumber = entry.getKey();
-            var seats = entry.getValue();
-
-            for (ExamSeatDTO seat : seats) {
-                if (!examUsersIterator.hasNext()) {
-                    break entryLoop;
-                }
-
+        roomNumberToUsableSeatsDefaultLayout.forEach((roomNumber, usableSeats) -> {
+            usableSeats.stream().takeWhile(ignored -> examUsersIterator.hasNext()).forEach(seat -> {
                 ExamUser nextExamUser = examUsersIterator.next();
                 nextExamUser.setPlannedRoom(roomNumber);
                 nextExamUser.setPlannedSeat(seat.name());
                 nextExamUser = examUserRepository.save(nextExamUser);
                 exam.addExamUser(nextExamUser);
-            }
-        }
+            });
+        });
 
         examRepository.save(exam);
     }
