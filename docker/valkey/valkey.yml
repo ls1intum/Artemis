@@ -23,22 +23,7 @@ services:
     networks:
       - artemis
 
-  redis-insight:
-    image: redis/redisinsight:latest
-    restart: always
-    ports:
-      - "5540:5540"
-    volumes:
-      - redis-insight:/data
-    networks:
-      - artemis
-
 networks:
   artemis:
     driver: "bridge"
     name: artemis
-
-volumes:
-  redis-insight:
-    driver: local
-    name: redis-insight

@@ -109,7 +109,6 @@ configurations.configureEach {
     exclude group: "javax.xml.bind", module: "jaxb-api"
 
     exclude group: "org.junit.vintage", module: "junit-vintage-engine"
-    // would need to remove the exclusion for testcontainer to work properly
     exclude group: "junit", module: "junit"
     exclude group: "com.vaadin.external.google", module: "android-json"
     exclude group: "org.xmlunit", module: "xmlunit-core"
@@ -505,8 +504,6 @@ dependencies {
     testImplementation "org.junit.platform:junit-platform-commons:${junit_platform_version}"
     testImplementation "org.junit.platform:junit-platform-engine:${junit_platform_version}"
     testImplementation "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
-
-
 }
 
 // we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ":mockitoAgent" after it has been resolved

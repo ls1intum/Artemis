@@ -45,7 +45,7 @@ public class RedisHealthIndicator implements HealthIndicator {
     @Override
     public Health health() {
         try (RedisConnection connection = redisConnectionFactory.getConnection()) {
-            // Check if Redis is up
+
             String ping = connection.ping();
             if (ping == null) {
                 return Health.down().withDetail("ping", "Redis ping failed").build();
