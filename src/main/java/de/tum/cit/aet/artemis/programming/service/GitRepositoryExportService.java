@@ -38,6 +38,20 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.git.InMemoryRepositoryBuilder;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
+/**
+ * Service for exporting Git repositories to ZIPs fully in memory.
+ *
+ * <p>
+ * Supports two main export modes:
+ * <ul>
+ * <li>Snapshot export (no .git directory) using JGit's Archive command.</li>
+ * <li>Full-history export (including a synthetic .git directory) using an in-memory
+ * repository builder.</li>
+ * </ul>
+ *
+ * The service returns {@link org.springframework.core.io.InputStreamResource} instances so
+ * controllers can stream responses without writing temporary files.
+ */
 @Profile(PROFILE_CORE)
 @Lazy
 @Service

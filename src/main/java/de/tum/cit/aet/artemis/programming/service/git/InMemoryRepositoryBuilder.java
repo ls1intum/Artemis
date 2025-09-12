@@ -8,9 +8,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.security.DigestOutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -77,7 +74,14 @@ public class InMemoryRepositoryBuilder {
         URI remoteUri = repository.getLocalPath().toUri();
 
         // 1) Create an in-memory bare repository and fetch from the remote
-        InMemoryRepository repo = new InMemoryRepository.Builder().setRepositoryDescription(new DfsRepositoryDescription("inmem")).setFS(FS.DETECTED).build();
+        InMemoryRepository repo;
+
+        try {
+            repo = new InMemoryRepository.Builder().setRepositoryDescription(new DfsRepositoryDescription("inmem")).setFS(FS.DETECTED).build();
+        }
+        catch (IOException e) {
+            throw new IOException("Failed to build in-memory repository", e);
+        }
 
         // Configure "origin" (so we can also write it into .git/config later)
         StoredConfig storedConfig = repo.getConfig();
@@ -236,20 +240,11 @@ public class InMemoryRepositoryBuilder {
             // This drives the traversal from `objectWalk` and prevents null ids inside preparePack
             packWriter.preparePack(NullProgressMonitor.INSTANCE, objectWalk, Collections.singleton(commitId), PackWriter.NONE, PackWriter.NONE);
 
-            // Write .pack while computing its SHA-1 (Git pack filename = sha1 of content)
-            MessageDigest sha1;
-            try {
-                sha1 = MessageDigest.getInstance("SHA-1");
-            }
-            catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
-            }
+            // Write .pack and derive its canonical name from JGit
             ByteArrayOutputStream packOut = new ByteArrayOutputStream();
-            try (DigestOutputStream digestOut = new DigestOutputStream(packOut, sha1)) {
-                packWriter.writePack(NullProgressMonitor.INSTANCE, NullProgressMonitor.INSTANCE, digestOut);
-            }
+            packWriter.writePack(NullProgressMonitor.INSTANCE, NullProgressMonitor.INSTANCE, packOut);
             packBytes = packOut.toByteArray();
-            packHashHex = toHex(sha1.digest());
+            packHashHex = packWriter.computeName().name();
 
             // Write .idx
             ByteArrayOutputStream idxOut = new ByteArrayOutputStream();

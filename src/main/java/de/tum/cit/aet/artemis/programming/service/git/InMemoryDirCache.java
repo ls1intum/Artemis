@@ -18,6 +18,11 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.util.FS;
 
+/**
+ * Simple in-memory {@link DirCache} capable of serializing itself to the Git index
+ * file format (v2). Used to embed a coherent index into exported repositories without
+ * touching the filesystem.
+ */
 public class InMemoryDirCache extends DirCache {
 
     public static final int READ_WRITE_MODE = 0100644;

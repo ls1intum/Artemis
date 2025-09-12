@@ -43,6 +43,13 @@ import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 
+/**
+ * REST resource exposing repository export endpoints for programming exercises.
+ *
+ * <p>
+ * Provides instructor exports (template/solution/tests and auxiliary repositories),
+ * student-requested solution/tests exports (without .git), and student repository exports.
+ */
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.ProgrammingExercises)
 @Lazy
@@ -130,11 +137,6 @@ public class ProgrammingExerciseRepositoryExportResource {
 
         InputStreamResource resource = gitRepositoryExportService.exportInstructorAuxiliaryRepositoryForExerciseInMemory(programmingExercise, auxiliaryRepository);
 
-        if (resource == null) {
-            return ResponseEntity.internalServerError().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "internalServerError",
-                    "There was an error on the server and the zip file could not be created.")).body(null);
-        }
-
         log.info("Export of auxiliary repository {} for programming exercise {} with title '{}' was successful in {}.", auxiliaryRepository.getName(), programmingExercise.getId(),
                 programmingExercise.getTitle(), formatDurationFrom(start));
 
@@ -180,11 +182,6 @@ public class ProgrammingExerciseRepositoryExportResource {
             zippedRepoName = FileUtil.sanitizeFilename(zippedRepoName);
 
             InputStreamResource zipResource = gitRepositoryExportService.exportRepositorySnapshot(repositoryUri, zippedRepoName);
-
-            if (zipResource == null) {
-                return ResponseEntity.internalServerError()
-                        .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "exportFailed", "Failed to export repository")).body(null);
-            }
 
             log.info("Successfully exported repository for programming exercise {} with title {} in {} ms", programmingExercise.getId(), programmingExercise.getTitle(),
                     (System.nanoTime() - start) / 1000000);

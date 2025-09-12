@@ -16,6 +16,11 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Internal helper for streaming ZIP creation from a {@link java.nio.file.Path} stream.
+ * Not part of the public API; used by {@link ZipFileService} to implement file- and
+ * memory-based ZIP assembly with minimal buffering.
+ */
 final class ZipStreamHelper {
 
     private static final Logger log = LoggerFactory.getLogger(ZipStreamHelper.class);
