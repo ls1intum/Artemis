@@ -104,7 +104,7 @@ export class ExamRoomsComponent {
     });
 
     // Fields for working with SortDirective
-    sortAttribute: 'roomNumber' | 'name' | 'building' | 'maxCapacity' = 'roomNumber';
+    sortAttribute: 'id' | 'roomNumber' | 'name' | 'building' | 'maxCapacity' = 'id';
     ascending: boolean = true;
 
     // Fields for working with DeletionDialogService
@@ -122,6 +122,7 @@ export class ExamRoomsComponent {
         this.examRoomsService.getAdminOverview().subscribe({
             next: (examRoomAdminOverviewResponse: HttpResponse<ExamRoomAdminOverviewDTO>) => {
                 this.overview.set(examRoomAdminOverviewResponse.body as ExamRoomAdminOverviewDTO);
+                this.sortRows();
             },
             error: (errorResponse: HttpErrorResponse) => {
                 this.showErrorNotification('examRoomOverview.loadError', {}, errorResponse.message);

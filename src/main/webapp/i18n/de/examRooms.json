@@ -36,6 +36,7 @@
                     "uniqueLayoutStrategies": "Einzigartige Verteilungsstrategien:",
                     "distinctLayoutStrategyNames": "Alle verfügbaren Verteilungsstrategien:",
                     "examRoomsTitle": "Alle verfügbaren Prüfungsräume",
+                    "id": "ID",
                     "roomNumber": "Raumnummer",
                     "roomName": "Raumname",
                     "building": "Gebäude",
