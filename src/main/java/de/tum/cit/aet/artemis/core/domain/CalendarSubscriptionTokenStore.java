@@ -8,7 +8,7 @@ import jakarta.persistence.Table;
 @Table(name = "calendar_subscription_token_store")
 public class CalendarSubscriptionTokenStore extends DomainObject {
 
-    @Column(name = "token", length = 32, unique = true)
+    @Column(name = "token", length = 32, nullable = false, unique = true)
     private String token;
 
     public String getToken() {
