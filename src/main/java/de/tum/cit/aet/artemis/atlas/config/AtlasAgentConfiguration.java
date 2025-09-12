@@ -15,17 +15,13 @@ import org.springframework.web.client.RestTemplate;
 @Lazy
 public class AtlasAgentConfiguration {
 
-    @Value("${artemis.atlas.agent.azure.api-key}")
+    @Value("${artemis.azure.openai.api-key}")
     private String azureApiKey;
 
-    @Value("${artemis.atlas.agent.azure.endpoint}")
+    @Value("${artemis.azure.openai.endpoint}")
     private String azureEndpoint;
 
-    @Value("${artemis.atlas.agent.azure.api-version}")
-    private String azureApiVersion;
-
-    @Value("${artemis.atlas.agent.model}")
-    private String model;
+    private static final String AZURE_API_VERSION = "2025-01-01-preview";
 
     /**
      * REST template configured for Azure OpenAI API calls.
@@ -54,10 +50,7 @@ public class AtlasAgentConfiguration {
     }
 
     public String getAzureApiVersion() {
-        return azureApiVersion;
+        return AZURE_API_VERSION;
     }
 
-    public String getModel() {
-        return model;
-    }
 }
