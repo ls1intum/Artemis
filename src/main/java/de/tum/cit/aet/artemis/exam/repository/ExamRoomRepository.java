@@ -62,20 +62,15 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
      * @return A collection of all outdated and unused exam rooms
      */
     @Query("""
-            WITH latestRooms AS (
-                SELECT
-                    roomNumber AS roomNumber,
-                    name AS name,
-                    MAX(createdDate) AS maxCreatedDate
-                FROM ExamRoom
-                GROUP BY roomNumber, name
-            )
-            SELECT examRoom.id
-            FROM ExamRoom examRoom
-            JOIN latestRooms latestRoom
-                ON examRoom.roomNumber = latestRoom.roomNumber
-                AND examRoom.name = latestRoom.name
-                AND examRoom.createdDate = latestRoom.maxCreatedDate
+                SELECT id
+                FROM (
+                    SELECT er.id AS id, er.roomNumber AS roomNumber, er.name AS name, er.createdDate AS createdDate, ROW_NUMBER() OVER (
+                        PARTITION BY er.roomNumber, er.name
+                        ORDER BY er.createdDate DESC
+                    ) AS rowNumber
+                    FROM ExamRoom er
+                )
+                WHERE rowNumber = 1
             """)
     Set<Long> findAllIdsOfCurrentExamRooms();
 
