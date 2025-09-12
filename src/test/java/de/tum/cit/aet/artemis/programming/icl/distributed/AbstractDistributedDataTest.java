@@ -327,6 +327,21 @@ public abstract class AbstractDistributedDataTest {
     }
 
     @Test
+    void testMapKeySet() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getMap("keySetTest");
+        map.put("key1", "value1");
+        map.put("key2", "value2");
+        map.put("key3", "value3");
+
+        Set<String> keySet = map.keySet();
+
+        assertThat(keySet).hasSize(3);
+        assertThat(keySet).containsExactlyInAnyOrder("key1", "key2", "key3");
+
+        map.clear();
+    }
+
+    @Test
     void testPublishSubscribe() {
         DistributedTopic<String> topic = getDistributedDataProvider().getTopic("testTopic");
 
