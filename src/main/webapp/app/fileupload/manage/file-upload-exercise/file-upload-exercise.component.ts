@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, model } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -35,7 +35,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     private accountService = inject(AccountService);
     private sortService = inject(SortService);
 
-    @Input() fileUploadExercises: FileUploadExercise[] = [];
+    fileUploadExercises = model<FileUploadExercise[]>([]);
     filteredFileUploadExercises: FileUploadExercise[] = [];
 
     // Icons
@@ -49,7 +49,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     farListAlt = faListAlt;
 
     protected get exercises() {
-        return this.fileUploadExercises;
+        return this.fileUploadExercises();
     }
 
     protected loadExercises(): void {
@@ -58,14 +58,14 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
             .pipe(filter((res) => !!res.body))
             .subscribe({
                 next: (res: HttpResponse<FileUploadExercise[]>) => {
-                    this.fileUploadExercises = res.body!;
+                    this.fileUploadExercises.set(res.body!);
                     // reconnect exercise with course
-                    this.fileUploadExercises.forEach((exercise) => {
+                    this.fileUploadExercises().forEach((exercise) => {
                         exercise.course = this.course;
                         this.accountService.setAccessRightsForExercise(exercise);
                         this.selectedExercises = [];
                     });
-                    this.emitExerciseCount(this.fileUploadExercises.length);
+                    this.emitExerciseCount(this.fileUploadExercises().length);
                     this.applyFilter();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -73,7 +73,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     }
 
     protected applyFilter(): void {
-        this.filteredFileUploadExercises = this.fileUploadExercises.filter((exercise) => this.filter.matchesExercise(exercise));
+        this.filteredFileUploadExercises = this.fileUploadExercises().filter((exercise) => this.filter.matchesExercise(exercise));
         this.emitFilteredExerciseCount(this.filteredFileUploadExercises.length);
     }
 
@@ -108,7 +108,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.fileUploadExercises, this.predicate, this.reverse);
+        this.sortService.sortByProperty(this.fileUploadExercises(), this.predicate, this.reverse);
         this.applyFilter();
     }
 

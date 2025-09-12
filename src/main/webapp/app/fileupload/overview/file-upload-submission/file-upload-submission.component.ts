@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, input, viewChild } from '@angular/core';
 import { UpperCasePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -68,16 +68,16 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     private accountService = inject(AccountService);
 
     readonly addParticipationToResult = addParticipationToResult;
-    @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
+    readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
-    @Input() participationId?: number;
-    @Input() displayHeader = true;
-    @Input() expandProblemStatement = true;
-    @Input() displayedInExamSummary = false;
+    readonly participationId = input<number>();
+    readonly displayHeader = input(true);
+    readonly expandProblemStatement = input(true);
+    readonly displayedInExamSummary = input(false);
 
-    @Input() inputExercise?: FileUploadExercise;
-    @Input() inputSubmission?: FileUploadSubmission;
-    @Input() inputParticipation?: StudentParticipation;
+    readonly inputExercise = input<FileUploadExercise>();
+    readonly inputSubmission = input<FileUploadSubmission>();
+    readonly inputParticipation = input<StudentParticipation>();
 
     submission?: FileUploadSubmission;
     submittedFileName: string;
@@ -111,7 +111,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         if (this.inputValuesArePresent()) {
             this.setupComponentWithInputValues();
         } else {
-            const participationId = this.participationId ?? Number(this.route.snapshot.paramMap.get('participationId'));
+            const participationId = this.participationId() ?? Number(this.route.snapshot.paramMap.get('participationId'));
             if (Number.isNaN(participationId)) {
                 return this.alertService.error('artemisApp.fileUploadExercise.error');
             }
@@ -160,7 +160,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     }
 
     private inputValuesArePresent(): boolean {
-        return !!(this.inputExercise || this.inputSubmission || this.inputParticipation);
+        return !!(this.inputExercise() || this.inputSubmission() || this.inputParticipation());
     }
 
     /**
@@ -171,14 +171,14 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * @private
      */
     private setupComponentWithInputValues() {
-        if (this.inputExercise) {
-            this.fileUploadExercise = this.inputExercise;
+        if (this.inputExercise()) {
+            this.fileUploadExercise = this.inputExercise()!;
         }
-        if (this.inputSubmission) {
-            this.submission = this.inputSubmission;
+        if (this.inputSubmission()) {
+            this.submission = this.inputSubmission()!;
         }
-        if (this.inputParticipation) {
-            this.participation = this.inputParticipation;
+        if (this.inputParticipation()) {
+            this.participation = this.inputParticipation()!;
         }
 
         if (this.submission?.submitted) {
@@ -225,7 +225,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 } else {
                     this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file.name });
                 }
-                this.fileInput.nativeElement.value = '';
+                this.fileInput().nativeElement.value = '';
                 this.submissionFile = undefined;
                 this.isSaving = false;
             },
