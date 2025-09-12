@@ -144,7 +144,22 @@ Collapsable styling
             bottom: 15px;
         }
     }
+}
 
+.editor-sidebar-left:not(.collapsed--horizontal) {
+    .code-editor-status {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(max-content, 1fr));
+        column-gap: 10px;
+
+        > :not(:first-child) {
+            border-left: 1px solid rgba(0, 0, 0, 0.125);
+            padding-left: 20px;
+        }
+    }
+}
+
+.editor-sidebar-left.collapsed--horizontal {
     .code-editor-status {
         > :not(:last-child) {
             padding-bottom: 5px;
@@ -157,19 +172,6 @@ Collapsable styling
 
         span {
             display: none !important;
-        }
-    }
-}
-
-.editor-sidebar-left:not(.collapsed--horizontal) {
-    .code-editor-status {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(max-content, 1fr));
-        column-gap: 10px;
-
-        > :not(:first-child) {
-            border-left: 1px solid rgba(0, 0, 0, 0.125);
-            padding-left: 20px;
         }
     }
 }

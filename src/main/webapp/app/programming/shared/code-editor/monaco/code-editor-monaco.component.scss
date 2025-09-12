@@ -15,7 +15,6 @@
 .monaco-add-feedback-button::before {
     cursor: pointer;
     content: '\ea60'; // codicon-plus
-    /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
     font-family: codicon;
     font-size: 1.1em;
     background-color: var(--monaco-editor-add-feedback-button-background);

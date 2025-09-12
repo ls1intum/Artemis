@@ -19,6 +19,10 @@
       "ignore": ["after-comment", "inside-block"]
     }],
 
+    "font-family-no-missing-generic-family-keyword": [true,{
+      "ignoreFontFamilies": ["codicon"]
+    }],
+
     "color-function-alias-notation": null,
     "color-function-notation": null,
 

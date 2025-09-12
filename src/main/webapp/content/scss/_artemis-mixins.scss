@@ -1,5 +1,4 @@
 /* define position style mixin */
-
 @mixin position-style($position, $top, $left, $bottom, $right, $z-index) {
     position: $position;
     top: $top;
@@ -10,7 +9,6 @@
 }
 
 /* define user-select mixin */
-
 @mixin user-select($value) {
     -webkit-user-select: $value;
     -moz-user-select: $value;
@@ -19,7 +17,6 @@
 }
 
 /* apply transform translate3d mixin */
-
 @mixin transformTranslate3D($tx, $ty, $tz) {
     -webkit-transform: translate3d($tx, $ty, $tz);
     -moz-transform: translate3d($tx, $ty, $tz);
@@ -29,7 +26,6 @@
 }
 
 /* quiz mapping letter or number mixin */
-
 @mixin quiz-mapping-letter-number($color) {
     width: 30px;
     height: 30px;
@@ -41,7 +37,6 @@
 }
 
 /* dnd quiz statistic letter position mixin */
-
 @mixin dnd-letter-position($tx, $ty, $tz) {
     @include transformTranslate3D($tx, $ty, $tz);
 

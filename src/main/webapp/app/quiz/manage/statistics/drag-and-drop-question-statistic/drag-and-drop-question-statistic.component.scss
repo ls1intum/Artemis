@@ -82,13 +82,11 @@
         /* letter for solution mapping */
         .letter {
             @include quiz-mapping-letter-number(#428bca);
-
             @include dnd-letter-position(-63%, -63%, 0);
         }
 
         .letter-solution {
             @include quiz-mapping-letter-number(#5cb85c);
-
             @include dnd-letter-position(-63%, -63%, 0);
         }
 
