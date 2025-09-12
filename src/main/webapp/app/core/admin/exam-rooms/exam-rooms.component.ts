@@ -97,6 +97,7 @@ export class ExamRoomsComponent {
             (examRoomDTO) =>
                 ({
                     ...examRoomDTO,
+                    defaultCapacity: this.getDefaultCapacityOfExamRoom(examRoomDTO),
                     maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO),
                     layoutStrategyNames: this.getLayoutStrategyNames(examRoomDTO),
                 }) as ExamRoomDTOExtended,
@@ -104,7 +105,7 @@ export class ExamRoomsComponent {
     });
 
     // Fields for working with SortDirective
-    sortAttribute: 'id' | 'roomNumber' | 'name' | 'building' | 'maxCapacity' = 'id';
+    sortAttribute: 'id' | 'roomNumber' | 'name' | 'building' | 'defaultCapacity' | 'maxCapacity' = 'id';
     ascending: boolean = true;
 
     // Fields for working with DeletionDialogService
@@ -262,7 +263,16 @@ export class ExamRoomsComponent {
     }
 
     private getMaxCapacityOfExamRoom(examRoom: ExamRoomDTO): number {
-        return examRoom.layoutStrategies?.map((layoutStrategy) => layoutStrategy.capacity ?? 0).reduce((max, curr) => Math.max(max, curr), 0) ?? 0;
+        return examRoom.layoutStrategies?.map((layoutStrategy) => layoutStrategy.capacity).reduce((max, curr) => Math.max(max, curr), 0) ?? 0;
+    }
+
+    private getDefaultCapacityOfExamRoom(examRoom: ExamRoomDTO): number {
+        return (
+            examRoom.layoutStrategies
+                ?.filter((layoutStrategy) => layoutStrategy.name.toLowerCase() === 'default')
+                .map((layoutStrategy) => layoutStrategy.capacity)
+                .at(0) ?? 0
+        );
     }
 
     private getLayoutStrategyNames(examRoom: ExamRoomDTO): string {

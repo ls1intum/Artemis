@@ -40,6 +40,7 @@
                     "roomNumber": "Room Number",
                     "roomName": "Room Name",
                     "building": "Building",
+                    "defaultCapacity": "Default Capacity",
                     "maxCapacity": "Maximum Capacity",
                     "layoutStrategies": "Layout Strategies"
                 }

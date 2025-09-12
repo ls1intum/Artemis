@@ -86,13 +86,18 @@
                             <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.building"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
+                        <th jhiSortBy="defaultCapacity">
+                            <!-- 5. Default capacity -->
+                            <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.defaultCapacity"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
                         <th jhiSortBy="maxCapacity">
-                            <!-- 5. Max capacity -->
+                            <!-- 6. Max capacity -->
                             <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.maxCapacity"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
                         <th>
-                            <!-- 6. Layout strategies -->
+                            <!-- 7. Layout strategies -->
                             <span jhiTranslate="artemisApp.examRooms.adminOverview.examRoomOverview.layoutStrategies"></span>
                         </th>
                     </tr>
@@ -118,11 +123,15 @@
                                     <span>{{ examRoom.building }}</span>
                                 </td>
                                 <td>
-                                    <!-- 5. Max capacity -->
+                                    <!-- 5. Default capacity -->
+                                    <span>{{ examRoom.defaultCapacity }}</span>
+                                </td>
+                                <td>
+                                    <!-- 6. Max capacity -->
                                     <span>{{ examRoom.maxCapacity }}</span>
                                 </td>
                                 <td>
-                                    <!-- 6. Layout strategies -->
+                                    <!-- 7. Layout strategies -->
                                     <span>{{ examRoom.layoutStrategyNames }}</span>
                                 </td>
                             </tr>

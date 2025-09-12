@@ -109,6 +109,7 @@ describe('ExamRoomsComponentTest', () => {
         expect(component.examRoomData()).toHaveLength(1);
         expect(component.examRoomData()![0]).toEqual({
             ...uploadedRoom,
+            defaultCapacity: 30,
             maxCapacity: 30,
             layoutStrategyNames: 'default',
         });

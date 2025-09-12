@@ -15,6 +15,7 @@ export interface ExamRoomDTO {
 }
 
 export interface ExamRoomDTOExtended extends ExamRoomDTO {
+    defaultCapacity: number;
     maxCapacity: number;
     layoutStrategyNames: string;
 }
@@ -22,7 +23,7 @@ export interface ExamRoomDTOExtended extends ExamRoomDTO {
 export interface ExamRoomLayoutStrategyDTO {
     name: string;
     type: string;
-    capacity: number | undefined;
+    capacity: number;
 }
 
 export interface NumberOfStored {
