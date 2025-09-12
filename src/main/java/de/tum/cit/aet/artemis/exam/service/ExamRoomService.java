@@ -384,10 +384,10 @@ public class ExamRoomService {
         List<List<ExamSeatDTO>> sortedRows = rows.entrySet().stream().sorted(Map.Entry.comparingByKey()) // sort rows by y
                 .map(entry -> entry.getValue().stream().sorted(Comparator.comparingDouble(ExamSeatDTO::xCoordinate)).toList()).toList();
 
-        return pickSelectedSeats(seatInputs, sortedRows);
+        return pickSelectedSeats(seatInputs, sortedRows, examRoom.getRoomNumber());
     }
 
-    private static List<ExamSeatDTO> pickSelectedSeats(List<FixedSelectionSeatInput> seatInputs, List<List<ExamSeatDTO>> sortedRows) {
+    private static List<ExamSeatDTO> pickSelectedSeats(List<FixedSelectionSeatInput> seatInputs, List<List<ExamSeatDTO>> sortedRows, String roomNumber) {
         List<ExamSeatDTO> selectedSeats = new ArrayList<>();
         for (FixedSelectionSeatInput seatInput : seatInputs) {
             final int rowIndex = seatInput.rowIndex();
@@ -395,7 +395,7 @@ public class ExamRoomService {
 
             if (rowIndex < 0 || sortedRows.size() <= rowIndex || seatIndex < 0 || sortedRows.get(rowIndex).size() <= seatIndex) {
                 // TODO: Translation
-                throw new BadRequestAlertException("Sire, the selected seat " + seatInput + " does not exist", ENTITY_NAME, "seatNotFoundFixedSelection");
+                throw new BadRequestAlertException("Sire, the selected seat " + seatInput + " does not exist in room " + roomNumber, ENTITY_NAME, "seatNotFoundFixedSelection");
             }
 
             selectedSeats.add(sortedRows.get(rowIndex).get(seatIndex));
