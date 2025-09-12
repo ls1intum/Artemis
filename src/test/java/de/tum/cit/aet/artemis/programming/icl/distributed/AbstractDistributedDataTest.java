@@ -8,6 +8,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -20,6 +21,7 @@ import org.springframework.test.context.ActiveProfiles;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapEntryListener;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.listener.MapListener;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueItemListener;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueListener;
@@ -178,7 +180,7 @@ public abstract class AbstractDistributedDataTest {
     }
 
     @Test
-    void testMapListenerTriggers() {
+    void testMapEntryListenerTriggers() {
         DistributedMap<String, String> someMap = getDistributedDataProvider().getMap("someMap");
 
         MapEntryListener<String, String> mockListener = Mockito.mock(MapEntryListener.class);
@@ -196,7 +198,7 @@ public abstract class AbstractDistributedDataTest {
     }
 
     @Test
-    void testMapListenerTriggerCount() {
+    void testMapEntryListenerTriggerCount() {
         DistributedMap<String, String> map = getDistributedDataProvider().getMap("testMap");
 
         MapEntryListener<String, String> mockListener = Mockito.mock(MapEntryListener.class);
@@ -213,6 +215,23 @@ public abstract class AbstractDistributedDataTest {
         verify(mockListener, timeout(1000).times(10)).entryAdded(argThat(event -> event.key().startsWith("key") && event.value().startsWith("value")));
         verify(mockListener, timeout(1000).times(10)).entryUpdated(argThat(event -> event.key().startsWith("key") && event.value().startsWith("newValue")));
         verify(mockListener, timeout(1000).times(10)).entryRemoved(argThat(event -> event.key().startsWith("key") && event.oldValue().startsWith("newValue")));
+    }
+
+    @Test
+    void testMapListenerTriggers() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getMap("mapListenerTest");
+
+        MapListener mockListener = Mockito.mock(MapListener.class);
+        map.addListener(mockListener);
+
+        map.put("key1", "value1");
+        verify(mockListener, timeout(1000)).entryAdded();
+
+        map.put("key1", "value2");
+        verify(mockListener, timeout(1000)).entryUpdated();
+
+        map.remove("key1");
+        verify(mockListener, timeout(1000)).entryRemoved();
     }
 
     @Test
@@ -278,6 +297,32 @@ public abstract class AbstractDistributedDataTest {
         assertThat(allValues.get("key1")).isEqualTo("value1");
         assertThat(allValues.get("key2")).isNull();
         assertThat(allValues.get("key3")).isEqualTo("value3");
+
+        map.clear();
+    }
+
+    @Test
+    void testMapEntrySet() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getMap("entrySetTest");
+        map.put("key1", "value1");
+        map.put("key2", "value2");
+        map.put("key3", "value3");
+
+        Set<Map.Entry<String, String>> entrySet = map.entrySet();
+
+        assertThat(entrySet).hasSize(3);
+        assertThat(entrySet).anySatisfy(entry -> {
+            assertThat(entry.getKey()).isEqualTo("key1");
+            assertThat(entry.getValue()).isEqualTo("value1");
+        });
+        assertThat(entrySet).anySatisfy(entry -> {
+            assertThat(entry.getKey()).isEqualTo("key2");
+            assertThat(entry.getValue()).isEqualTo("value2");
+        });
+        assertThat(entrySet).anySatisfy(entry -> {
+            assertThat(entry.getKey()).isEqualTo("key3");
+            assertThat(entry.getValue()).isEqualTo("value3");
+        });
 
         map.clear();
     }
