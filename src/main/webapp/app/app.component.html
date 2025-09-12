@@ -13,8 +13,8 @@
         </div>
     }
     @if (showSkeleton) {
-        <div class="card" style="border-style: none">
-            <div class="card-body" [ngClass]="{ 'course-overview pt-0': isCourseOverview }">
+        <div>
+            <div [ngClass]="{ 'course-overview px-3': isCourseOverview }">
                 <router-outlet />
             </div>
         </div>
@@ -23,10 +23,8 @@
     }
     <jhi-course-notification-popup-overlay />
     @if (showSkeleton && !isShownViaLti) {
-        <div>
-            @if (isTestRunExam || !isExamStarted) {
-                <jhi-footer />
-            }
-        </div>
+        @if (isTestRunExam || !isExamStarted) {
+            <jhi-footer />
+        }
     }
 </div>
