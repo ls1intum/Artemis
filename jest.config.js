@@ -96,7 +96,7 @@ module.exports = {
             // TODO: in the future, the following values should increase to at least 90%
             statements: 89.67,
             branches: 75.93,
-            functions: 83.71,
+            functions: 83.68,
             lines: 89.75,
         },
     },
