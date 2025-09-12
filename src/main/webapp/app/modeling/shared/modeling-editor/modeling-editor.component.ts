@@ -1,12 +1,12 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
-import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLElementType, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { isFullScreen } from 'app/shared/util/fullscreen.util';
 import { faCheck, faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Patch } from '@ls1intum/apollon';
+// import { Patch } from '@ls1intum/apollon';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, NgStyle } from '@angular/common';
@@ -34,12 +34,11 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     @Input() savedStatus?: { isChanged?: boolean; isSaving?: boolean };
 
     @Output() private onModelChanged: EventEmitter<UMLModel> = new EventEmitter<UMLModel>();
-    @Output() onModelPatch = new EventEmitter<Patch>();
+    @Output() onModelPatch = new EventEmitter<string>();
 
     @Output() explanationChange = new EventEmitter();
 
     private modelSubscription: number;
-    private modelPatchSubscription: number;
 
     readonlyApollonDiagram?: SVG;
     readOnlySVG?: SafeHtml;
@@ -55,14 +54,13 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     async ngAfterViewInit(): Promise<void> {
         this.initializeApollonEditor();
         if (this.readOnly) {
-            await this.apollonEditor?.nextRender;
-            this.readonlyApollonDiagram = await this.apollonEditor?.exportAsSVG();
-            if (this.readonlyApollonDiagram?.svg) {
-                this.readOnlySVG = this.sanitizer.bypassSecurityTrustHtml(this.readonlyApollonDiagram.svg);
+            if (this.apollonEditor) {
+                await ApollonEditor.exportModelAsSvg(this.apollonEditor?.model);
+                this.readonlyApollonDiagram = await this.apollonEditor?.exportAsSVG();
+                if (this.readonlyApollonDiagram?.svg) {
+                    this.readOnlySVG = this.sanitizer.bypassSecurityTrustHtml(this.readonlyApollonDiagram.svg);
+                }
             }
-
-            // Destroy the Apollon editor after exporting the SVG, to avoid SVG <marker> id collisions
-            this.destroyApollonEditor();
         } else {
             this.setupInteract();
         }
@@ -73,8 +71,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     private initializeApollonEditor(): void {
         if (this.apollonEditor) {
-            this.apollonEditor.unsubscribeFromModelChange(this.modelSubscription);
-            this.apollonEditor.unsubscribeFromModelChangePatches(this.modelPatchSubscription);
+            this.apollonEditor.unsubscribe(this.modelSubscription);
             this.apollonEditor.destroy();
         }
 
@@ -94,7 +91,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 this.onModelChanged.emit(model);
             });
 
-            this.modelPatchSubscription = this.apollonEditor.subscribeToModelChangePatches((patch: Patch) => {
+            this.apollonEditor.sendBroadcastMessage((patch) => {
                 this.onModelPatch.emit(patch);
             });
         }
@@ -106,11 +103,11 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     private destroyApollonEditor(): void {
         if (this.apollonEditor) {
             if (this.modelSubscription) {
-                this.apollonEditor.unsubscribeFromModelChange(this.modelSubscription);
+                this.apollonEditor.unsubscribe(this.modelSubscription);
             }
-            if (this.modelPatchSubscription) {
-                this.apollonEditor.unsubscribeFromModelChangePatches(this.modelPatchSubscription);
-            }
+            // if (this.modelPatchSubscription) {
+            //     this.apollonEditor.unsubscribeFromModelChangePatches(this.modelPatchSubscription);
+            // }
             this.apollonEditor.destroy();
             this.apollonEditor = undefined;
         }
@@ -163,7 +160,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             this.umlModel = changes.umlModel.currentValue;
             // Apollon doesn't need assessments in Modeling mode
             ModelingEditorComponent.removeAssessments(this.umlModel);
-            this.apollonEditor.model = this.umlModel;
+            // this.apollonEditor.model = this.umlModel;
         }
     }
 
@@ -176,33 +173,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         } catch (err) {
             captureException(err);
         }
-    }
-
-    /**
-     * Return the UMLModelElement of the type class with the @param name
-     * @param name class name
-     * @param umlModel current model that is assessed
-     */
-    elementWithClass(name: string, umlModel: UMLModel) {
-        return Object.values(umlModel.elements).find((element) => element.name.trim() === name && element.type === UMLElementType.Class);
-    }
-
-    /**
-     * Return the UMLModelElement of the type ClassAttribute with the @param attribute
-     * @param attribute name
-     * @param umlModel current model that is assessed
-     */
-    elementWithAttribute(attribute: string, umlModel: UMLModel) {
-        return Object.values(umlModel.elements).find((element) => element.name.includes(attribute) && element.type === UMLElementType.ClassAttribute);
-    }
-
-    /**
-     * Return the UMLModelElement of the type ClassMethod with the @param method
-     * @param method name
-     * @param umlModel current model that is assessed
-     */
-    elementWithMethod(method: string, umlModel: UMLModel) {
-        return Object.values(umlModel.elements).find((element) => element.name.includes(method) && element.type === UMLElementType.ClassMethod);
     }
 
     /**
@@ -222,7 +192,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * Import a patch into the Apollon editor
      * @param patch the patch to import
      */
-    importPatch(patch: Patch) {
-        this.apollonEditor?.importPatch(patch);
+    importPatch(patch: string) {
+        this.apollonEditor?.receiveBroadcastedMessage(patch);
     }
 }

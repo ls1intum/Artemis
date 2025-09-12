@@ -1,7 +1,6 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
@@ -20,8 +19,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/shared/util/global.utils';
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
-import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
@@ -42,6 +40,8 @@ import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/cour
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 
 @Component({
@@ -159,6 +159,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
         // Get the modelingExercise
         this.activatedRoute.data.subscribe(({ modelingExercise }) => {
+            // console.log('DEBUG modelingExercise,', JSON.stringify(modelingExercise));
             this.modelingExercise = modelingExercise;
 
             if (this.modelingExercise.exampleSolutionModel != undefined) {
@@ -202,8 +203,9 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
                         if (this.isExamMode) {
                             // The target exerciseGroupId where we want to import into
-                            const exerciseGroupId = params['exerciseGroupId'];
-                            const examId = params['examId'];
+                            // const exerciseGroupId = params['exerciseGroupId'];
+                            // const examId = params['examId'];
+                            const { exerciseGroupId, examId } = params;
 
                             this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.modelingExercise.exerciseGroup = res.body!));
                             // We reference exam exercises by their exercise group, not their course. Having both would lead to conflicts on the server
@@ -233,19 +235,25 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     async calculateFormSectionStatus() {
-        await this.modelingEditor?.apollonEditor?.nextRender;
         this.formSectionStatus = [
             {
                 title: 'artemisApp.exercise.sections.general',
                 valid: this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(),
             },
-            { title: 'artemisApp.exercise.sections.mode', valid: Boolean(this.teamConfigFormGroupComponent?.formValid) },
-            { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
+            {
+                title: 'artemisApp.exercise.sections.mode',
+                valid: Boolean(this.teamConfigFormGroupComponent?.formValid),
+            },
+            {
+                title: 'artemisApp.exercise.sections.problem',
+                valid: true,
+                empty: !this.modelingExercise.problemStatement,
+            },
             {
                 title: 'artemisApp.exercise.sections.solution',
                 valid: Boolean(this.isExamMode || (!this.modelingExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField?.dateInput.valid)),
                 empty:
-                    isEmpty(this.modelingEditor?.getCurrentModel()?.elements) ||
+                    isEmpty(this.modelingEditor?.getCurrentModel()?.nodes) ||
                     (!this.isExamMode && !this.modelingExercise.exampleSolutionPublicationDate) ||
                     !this.modelingExercise.exampleSolutionExplanation,
             },

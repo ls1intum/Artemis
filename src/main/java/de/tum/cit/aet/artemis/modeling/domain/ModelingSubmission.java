@@ -88,7 +88,7 @@ public class ModelingSubmission extends Submission {
                 return false;
             }
             // TODO: further improve this!!
-            return model == null || model.isBlank() || jacksonObjectMapper.readTree(getModel()).get("elements").isEmpty();
+            return model == null || model.isBlank() || jacksonObjectMapper.readTree(getModel()).get("nodes").isEmpty();
         }
         catch (JsonProcessingException ex) {
             return false;
