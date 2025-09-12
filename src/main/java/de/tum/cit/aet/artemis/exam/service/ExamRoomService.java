@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -310,7 +312,10 @@ public class ExamRoomService {
         final int numberOfStoredExamSeats = examRooms.stream().mapToInt(er -> er.getSeats().size()).sum();
         final int numberOfStoredLayoutStrategies = examRooms.stream().mapToInt(er -> er.getLayoutStrategies().size()).sum();
 
-        final Set<ExamRoomDTO> examRoomDTOS = examRooms.stream()
+        Map<String, ExamRoom> newestRoomByRoomNumber = examRooms.stream()
+                .collect(Collectors.toMap(ExamRoom::getRoomNumber, Function.identity(), BinaryOperator.maxBy(Comparator.comparing(ExamRoom::getCreatedDate))));
+
+        final Set<ExamRoomDTO> examRoomDTOS = newestRoomByRoomNumber.values().stream()
                 .map(examRoom -> new ExamRoomDTO(examRoom.getId(), examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoom.getSeats().size(),
                         examRoom.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
                 .collect(Collectors.toSet());
