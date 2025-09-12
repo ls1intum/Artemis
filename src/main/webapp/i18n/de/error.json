@@ -116,8 +116,6 @@
         "reactionNotFound": "Die Reaktion konnte nicht gefunden werden.",
         "missingAssociation": "Die Reaktion muss einem Beitrag oder einer Antwort zugeordnet sein.",
         "missingUser": "Autor:in muss existieren.",
-        "missingID": "ID muss vorhanden sein.",
-        "missingCreationDate": "Das Erstellungsdatum muss vorhanden sein.",
         "emojiIdMissing": "emojiId muss gesetzt sein."
     }
 }

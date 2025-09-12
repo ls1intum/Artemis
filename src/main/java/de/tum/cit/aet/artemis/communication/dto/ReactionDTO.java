@@ -19,39 +19,11 @@ public record ReactionDTO(Long id, AuthorDTO user, ZonedDateTime creationDate, @
      * @param reaction the Reaction entity to map from
      */
     public ReactionDTO(Reaction reaction) {
-        this(getIdOrThrow(reaction), AuthorDTO.fromUser(reaction.getUser()), getCreationDateOrThrow(reaction), reaction.getEmojiId(), relatedPostIdOrThrow(reaction));
+        this(reaction.getId(), AuthorDTO.fromUser(reaction.getUser()), reaction.getCreationDate(), reaction.getEmojiId(), relatedPostIdOrThrow(reaction));
     }
 
     /**
-     * Return the Creation Date for the reaction
-     *
-     * @param reaction the Reaction entity
-     * @return the Creation Date of the Reaction entity
-     * @throws BadRequestAlertException if the Creation Date does not exist
-     */
-    private static ZonedDateTime getCreationDateOrThrow(Reaction reaction) {
-        if (reaction.getCreationDate() != null) {
-            return reaction.getCreationDate();
-        }
-        throw new BadRequestAlertException("The creation date must exist.", "reaction", "missingCreationDate");
-    }
-
-    /**
-     * Return the ID for the reaction
-     *
-     * @param reaction the Reaction entity
-     * @return the ID of the Reaction entity
-     * @throws BadRequestAlertException if ID does not exist
-     */
-    private static long getIdOrThrow(Reaction reaction) {
-        if (reaction.getId() != null) {
-            return reaction.getId();
-        }
-        throw new BadRequestAlertException("Id must exist.", "reaction", "missingID");
-    }
-
-    /**
-     * Determines the related post ID for the reaction
+     * Determines the related post-ID for the reaction
      *
      * @param reaction the Reaction entity
      * @return the ID of the associated Post or AnswerPost

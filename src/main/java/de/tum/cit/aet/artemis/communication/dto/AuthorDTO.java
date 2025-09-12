@@ -20,9 +20,6 @@ public record AuthorDTO(Long id, String name, String imageUrl) {
      * @throws BadRequestAlertException if the user does not exist
      */
     public static AuthorDTO fromUser(User user) {
-        if (user == null) {
-            throw new BadRequestAlertException("The user must exist.", "reaction", "missingUser");
-        }
-        return new AuthorDTO(user);
+        return user == null ? null : new AuthorDTO(user);
     }
 }
