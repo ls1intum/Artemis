@@ -22,6 +22,7 @@
 .scrollable-content {
     --message-input-height-dev: 164px;
     --message-input-height-prod: 148px;
+
     overflow-y: auto;
     overflow-x: hidden;
     max-height: calc(100vh - var(--header-height) - var(--message-input-height-prod));
@@ -39,7 +40,7 @@
 
 .message-input {
     border-top: 1px solid;
-    border-color: var(--bs-card-border-color);
+    border-color: var(--bs-border-color);
 }
 
 .communication-message-wrap {

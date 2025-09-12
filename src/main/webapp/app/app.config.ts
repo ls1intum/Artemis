@@ -31,6 +31,7 @@ import { LoadingNotificationInterceptor } from 'app/core/loading-notification/lo
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { providePrimeNG } from 'primeng/config';
 import { AuraArtemis } from './primeng-artemis-theme';
+import { Configuration } from 'app/openapi/configuration';
 
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -126,5 +127,6 @@ export const appConfig: ApplicationConfig = {
                 },
             },
         }),
+        { provide: Configuration, useFactory: () => new Configuration({ withCredentials: true, basePath: '' }) },
     ],
 };

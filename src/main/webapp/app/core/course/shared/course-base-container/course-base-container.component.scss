@@ -12,7 +12,6 @@
     overflow-x: hidden;
     position: sticky;
     width: 100vw;
-    margin: -1rem -1rem;
 }
 
 .mat-drawer-side {
@@ -90,7 +89,7 @@
     &.exam-is-active {
         .mat-drawer-content {
             width: 100vw;
-            margin-left: 0px !important;
+            margin-left: 0 !important;
         }
     }
 
@@ -119,7 +118,6 @@ a:not(.btn):not(.tab-link):hover {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-
     opacity: 0;
     pointer-events: none;
     transition: 0.1s ease-out opacity;

@@ -138,7 +138,8 @@
                 "lti": "LTI Konfiguration",
                 "standardizedCompetencies": "Standardisierte Kompetenzen",
                 "cleanupService": "Aufräumdienst",
-                "lectureTranscription": "Vorlesungstranskription"
+                "lectureTranscription": "Vorlesungstranskription",
+                "examRooms": "Prüfungsräume"
             },
             "language": "Sprache",
             "settings": "Einstellungen"
