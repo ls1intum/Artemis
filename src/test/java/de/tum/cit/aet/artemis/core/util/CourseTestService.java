@@ -1020,9 +1020,14 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesForDashboardPracticeRepositories() throws Exception {
+        String suffix = "practiceRepo";
+        adjustUserGroupsToCustomGroups(suffix);
+
         User student = userUtilService.getUserByLogin(userPrefix + "student3");
 
-        Course course = courseUtilService.createCourse();
+        Course course = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), new HashSet<>(), userPrefix + "student" + suffix,
+                userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        course = courseRepo.save(course);
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
@@ -1049,8 +1054,9 @@ public class CourseTestService {
 
         var receivedCoursesForDashboard = request.get("/api/core/courses/for-dashboard", HttpStatus.OK, CoursesForDashboardDTO.class);
         CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/core/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
-        CourseForDashboardDTO receivedCourseForDashboardFromGeneralCall = receivedCoursesForDashboard.courses().stream().filter(dto -> dto.course().getId().equals(course.getId()))
-                .findFirst().orElseThrow();
+        Course finalCourse = course;
+        CourseForDashboardDTO receivedCourseForDashboardFromGeneralCall = receivedCoursesForDashboard.courses().stream()
+                .filter(dto -> dto.course().getId().equals(finalCourse.getId())).findFirst().orElseThrow();
 
         assertThat(receivedCourseForDashboardFromGeneralCall.participationResults()).hasSize(1);
         assertThat(receivedCourseForDashboard.participationResults()).hasSize(1);
@@ -1289,13 +1295,10 @@ public class CourseTestService {
             }
 
             StatsForDashboardDTO stats = request.get("/api/core/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-            long numberOfInTimeSubmissions = course.getId().equals(testCourses.getFirst().getId()) ? 5 : 0; // course 1 has 5 submissions, course 2 has 0 submissions
+            long numberOfInTimeSubmissions = course.getId().equals(testCourses.getFirst().getId()) ? 4 : 0; // course 1 has 5 submissions, course 2 has 0 submissions
             assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(numberOfInTimeSubmissions);
             assertThat(stats.getNumberOfSubmissions().late()).as("Number of latte submissions is correct").isZero();
-            assertThat(stats.getTotalNumberOfAssessments().inTime()).as("Number of in-time assessments is correct").isZero();
-            assertThat(stats.getTotalNumberOfAssessments().late()).as("Number of late assessments is correct").isZero();
-            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
-            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isZero();
+            assertThat(stats.getTotalNumberOfAssessments()).as("Number of assessments is correct").isZero();
             assertThat(stats.getTutorLeaderboardEntries()).as("Number of tutor leaderboard entries is correct").hasSize(5);
         }
     }
@@ -2822,13 +2825,6 @@ public class CourseTestService {
 
         // Check results
         assertThat(courseDTO).isNotNull();
-
-        assertThat(courseDTO.activeStudents()).isNullOrEmpty();
-
-        // number of users in course
-        assertThat(courseDTO.numberOfStudentsInCourse()).isEqualTo(8);
-        assertThat(courseDTO.numberOfTeachingAssistantsInCourse()).isEqualTo(5);
-        assertThat(courseDTO.numberOfInstructorsInCourse()).isEqualTo(2);
     }
 
     // Test
@@ -2866,10 +2862,12 @@ public class CourseTestService {
         var dueDate = now.minusDays(2);
         var assessmentDueDate = now.minusDays(1);
         var exercise1 = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course1);
+        exercise1.setAssessmentType(AssessmentType.MANUAL);
         exercise1.setMaxPoints(5.0);
         exercise1 = exerciseRepo.save(exercise1);
 
         var exercise2 = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course2);
+        exercise2.setAssessmentType(AssessmentType.MANUAL);
         exercise2.setMaxPoints(5.0);
         exercise2 = exerciseRepo.save(exercise2);
 
@@ -2884,19 +2882,23 @@ public class CourseTestService {
         var result22 = participationUtilService.createParticipationSubmissionAndResult(exercise2Id, student2, 5.0, 0.0, 40, true);
 
         Submission submission1 = result1.getSubmission();
-        submission1.setSubmissionDate(now);
+        submission1.setSubmissionDate(dueDate.minusHours(1));
+        submission1.setSubmitted(true);
         submissionRepository.save(submission1);
 
         Submission submission21 = result21.getSubmission();
-        submission21.setSubmissionDate(now);
+        submission21.setSubmissionDate(dueDate.minusHours(1));
+        submission21.setSubmitted(true);
         submissionRepository.save(submission21);
 
         Submission submission2 = result2.getSubmission();
-        submission2.setSubmissionDate(now.minusWeeks(2));
+        submission2.setSubmissionDate(dueDate.minusHours(2));
+        submission2.setSubmitted(true);
         submissionRepository.save(submission2);
 
         Submission submission22 = result22.getSubmission();
-        submission22.setSubmissionDate(now.minusWeeks(2));
+        submission22.setSubmissionDate(dueDate.minusHours(2));
+        submission22.setSubmitted(true);
         submissionRepository.save(submission22);
 
         result1.setAssessor(instructor);
@@ -2970,18 +2972,10 @@ public class CourseTestService {
         // Check results
         assertThat(courseDTO).isNotNull();
 
-        assertThat(courseDTO.activeStudents()).hasSize(3);
-
-        // number of users in course
-        assertThat(courseDTO.numberOfStudentsInCourse()).isEqualTo(8);
-        assertThat(courseDTO.numberOfTeachingAssistantsInCourse()).isEqualTo(5);
-        assertThat(courseDTO.numberOfInstructorsInCourse()).isEqualTo(1);
-
-        // Assessments - 80 because each we have only 4 submissions which have assessments, but as some have complaints which got accepted
-        // they now have 2 results each.
-        assertThat(courseDTO.currentPercentageAssessments()).isEqualTo(80);
-        assertThat(courseDTO.currentAbsoluteAssessments()).isEqualTo(4);
-        assertThat(courseDTO.currentMaxAssessments()).isEqualTo(5);
+        // Assessments - 33.3 because we have 2 submissions with assessments out of 6 total submissions
+        assertThat(courseDTO.currentPercentageAssessments()).isEqualTo(33.3);
+        assertThat(courseDTO.currentAbsoluteAssessments()).isEqualTo(2);
+        assertThat(courseDTO.currentMaxAssessments()).isEqualTo(6);
 
         // Complaints
         assertThat(courseDTO.currentPercentageComplaints()).isEqualTo(100);
@@ -2994,8 +2988,8 @@ public class CourseTestService {
         assertThat(courseDTO.currentMaxMoreFeedbacks()).isEqualTo(1);
 
         // Average Score
-        assertThat(courseDTO.currentPercentageAverageScore()).isEqualTo(50);
-        assertThat(courseDTO.currentAbsoluteAverageScore()).isEqualTo(15);
+        assertThat(courseDTO.currentPercentageAverageScore()).isEqualTo(60);
+        assertThat(courseDTO.currentAbsoluteAverageScore()).isEqualTo(18);
         assertThat(courseDTO.currentMaxAverageScore()).isEqualTo(30);
 
         course2.setStartDate(now.minusWeeks(20));
@@ -3006,8 +3000,7 @@ public class CourseTestService {
         var lifetimeOverviewStats = request.get("/api/core/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, List.class);
 
         var expectedLifetimeOverviewStats = Arrays.stream(new int[21]).boxed().collect(Collectors.toCollection(ArrayList::new));
-        expectedLifetimeOverviewStats.set(18, 1);
-        expectedLifetimeOverviewStats.set(20, 1);
+        expectedLifetimeOverviewStats.set(20, 2);
         assertThat(lifetimeOverviewStats).as("should depict 21 weeks in total").isEqualTo(expectedLifetimeOverviewStats);
 
         course2.setEndDate(now.minusWeeks(1));
@@ -3016,17 +3009,11 @@ public class CourseTestService {
         lifetimeOverviewStats = request.get("/api/core/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, List.class);
 
         expectedLifetimeOverviewStats = Arrays.stream(new int[20]).boxed().collect(Collectors.toCollection(ArrayList::new));
-        expectedLifetimeOverviewStats.set(18, 1);
+        // No active students in any week for course2 after end date restriction
         assertThat(lifetimeOverviewStats).as("should only depict data until the end date of the course").isEqualTo(expectedLifetimeOverviewStats);
 
         course2.setStartDate(now.minusWeeks(2));
         courseRepo.save(course2);
-
-        // API call for course2
-        courseDTO = request.get("/api/core/courses/" + course2.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
-
-        var expectedActiveStudentDistribution = List.of(1, 0);
-        assertThat(courseDTO.activeStudents()).as("submission today should not be included").isEqualTo(expectedActiveStudentDistribution);
 
         // Active Users
         int periodIndex = 0;

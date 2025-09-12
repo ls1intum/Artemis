@@ -22,6 +22,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -371,10 +372,23 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT e.id
             FROM Exercise e
-                LEFT JOIN e.course c
-            WHERE c.id = :courseId
+            WHERE e.course.id = :courseId
             """)
-    Set<Long> findAllIdsByCourseId(@Param("courseId") Long courseId);
+    Set<Long> findExerciseIdsByCourseId(@Param("courseId") Long courseId);
+
+    /**
+     * @param courseId - course id of the exercises we want to fetch
+     * @return all exercise-ids which belong to the course and have manual assessment enabled, i.e. text, modeling, file upload and programming exercises with manual or
+     *         semi-automatic assessment
+     */
+    @Query("""
+            SELECT e.id
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+                AND e.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                AND TYPE(e) <> de.tum.cit.aet.artemis.quiz.domain.QuizExercise
+            """)
+    Set<Long> findExerciseIdsWithManualAssessmentByCourseId(@Param("courseId") Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
@@ -682,4 +696,12 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE exercise.course.id = :courseId AND TYPE(exercise) IN (FileUploadExercise, TextExercise, ModelingExercise, ProgrammingExercise)
             """)
     Set<NonQuizExerciseCalendarEventDTO> getNonQuizExerciseCalendarEventsDAOsForCourseId(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO(e.id, TYPE(e), e.includedInOverallScore, e.assessmentType, e.dueDate, e.assessmentDueDate, p.buildAndTestStudentSubmissionsAfterDueDate, e.maxPoints, e.bonusPoints, e.course.id)
+            FROM Exercise e
+                LEFT JOIN ProgrammingExercise p ON e.id = p.id
+            WHERE e.course.id = :courseId
+            """)
+    Set<ExerciseCourseScoreDTO> findCourseExerciseScoreInformationByCourseId(@Param("courseId") long courseId);
 }
