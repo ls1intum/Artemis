@@ -7,6 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +18,7 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasAgentConfiguration;
 import de.tum.cit.aet.artemis.atlas.config.AtlasAgentEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 
 /**
  * Service for Atlas Agent functionality with Azure OpenAI integration.
@@ -25,6 +27,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasAgentEnabled;
 @Lazy
 @Service
 @AtlasAgentEnabled
+@Conditional(AtlasEnabled.class)
 public class AtlasAgentService {
 
     private static final Logger log = LoggerFactory.getLogger(AtlasAgentService.class);
