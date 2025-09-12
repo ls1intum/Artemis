@@ -112,7 +112,7 @@
             "cannotStart": "Teamübung kann nicht ohne zugewiesenes Team gestartet werden."
         },
         "assignmentRepositoryNotAllowed": "Assignment-Repositories werden für Klausuraufgaben nicht unterstützt. Bitte nutze stattdessen das Testlauf-Feature, um die Aufgabe auszuprobieren.",
-       "room": {
+        "room": {
             "fileEmpty": "Die hochgeladene Datei enthält keinen Inhalt",
             "fileTooLarge": "Die hochgeladene Datei überschreitet die maximal zulässige Dateigröße von {{ maxSize }}",
             "malformedJson": "Konnte {{ roomNumber }} nicht verarbeiten, der JSON Inhalt scheint falsch formatiert zu sein",
