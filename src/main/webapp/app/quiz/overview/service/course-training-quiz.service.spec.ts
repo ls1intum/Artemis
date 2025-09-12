@@ -33,7 +33,7 @@ describe('CourseTrainingQuizService', () => {
         service.getQuizQuestions(courseId).subscribe((questions) => {
             expect(questions).toEqual(mockQuestions);
         });
-        const req = httpMock.expectOne(`api/quiz/courses/${courseId}/training/questions`);
+        const req = httpMock.expectOne(`api/quiz/courses/${courseId}/training-questions`);
         expect(req.request.method).toBe('GET');
         req.flush(mockQuestions);
     });
@@ -47,7 +47,7 @@ describe('CourseTrainingQuizService', () => {
             expect(res.body!.scoreInPoints).toBe(10);
         });
 
-        const req = httpMock.expectOne(`api/quiz/courses/${courseId}/training/${questionId}/submit`);
+        const req = httpMock.expectOne(`api/quiz/courses/${courseId}/training-questions/${questionId}/submit`);
         expect(req.request.method).toBe('POST');
         req.flush(mockAnswer);
         tick();

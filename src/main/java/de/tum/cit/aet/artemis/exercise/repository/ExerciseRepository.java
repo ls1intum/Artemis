@@ -372,10 +372,23 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT e.id
             FROM Exercise e
-                LEFT JOIN e.course c
-            WHERE c.id = :courseId
+            WHERE e.course.id = :courseId
             """)
-    Set<Long> findAllIdsByCourseId(@Param("courseId") Long courseId);
+    Set<Long> findExerciseIdsByCourseId(@Param("courseId") Long courseId);
+
+    /**
+     * @param courseId - course id of the exercises we want to fetch
+     * @return all exercise-ids which belong to the course and have manual assessment enabled, i.e. text, modeling, file upload and programming exercises with manual or
+     *         semi-automatic assessment
+     */
+    @Query("""
+            SELECT e.id
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+                AND e.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
+                AND TYPE(e) <> de.tum.cit.aet.artemis.quiz.domain.QuizExercise
+            """)
+    Set<Long> findExerciseIdsWithManualAssessmentByCourseId(@Param("courseId") Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
