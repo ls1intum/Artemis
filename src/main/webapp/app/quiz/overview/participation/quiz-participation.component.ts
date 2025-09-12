@@ -981,7 +981,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }
         questionElement.scrollIntoView({
             behavior: 'smooth',
-            block: 'nearest',
+            block: 'center',
             inline: 'start',
         });
 

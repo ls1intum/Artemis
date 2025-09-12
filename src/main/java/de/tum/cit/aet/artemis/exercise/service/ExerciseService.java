@@ -236,19 +236,19 @@ public class ExerciseService {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
         DueDateStat numberOfSubmissions;
-        DueDateStat totalNumberOfAssessments;
+        long numberOfAssessments;
 
         if (exercise instanceof ProgrammingExercise) {
             numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countSubmissionsByExerciseIdSubmitted(exerciseId), 0L);
-            totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId), 0L);
+            numberOfAssessments = programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exerciseId);
         }
         else {
             numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exerciseId);
-            totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
+            numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exerciseId);
         }
 
         stats.setNumberOfSubmissions(numberOfSubmissions);
-        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
+        stats.setTotalNumberOfAssessments(numberOfAssessments);
 
         final DueDateStat[] numberOfAssessmentsOfCorrectionRounds;
         int numberOfCorrectionRounds = 1;
@@ -259,9 +259,11 @@ public class ExerciseService {
         }
         else {
             // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
-            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+            numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { new DueDateStat(numberOfAssessments, 0L) };
         }
 
+        // TODO: Refactor the usage of DueDateStats. For exam exercises, it has the meaning of first and second correction round instead of before and after due dat
+        // For course exercises, we do not seem to care about the number assessments of late submissions
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
         final DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
