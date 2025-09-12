@@ -82,8 +82,7 @@ public class AtlasAgentService {
                 HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
                 // Make request to Azure OpenAI - correct URL format for Azure OpenAI
-                String url = configuration.getAzureEndpoint() + "/openai/deployments/" + configuration.getModel() + "/chat/completions?api-version="
-                        + configuration.getAzureApiVersion();
+                String url = configuration.getAzureEndpoint() + "/openai/deployments/" + "gpt-4o" + "/chat/completions?api-version=" + configuration.getAzureApiVersion();
                 ResponseEntity<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.POST, entity,
                         new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {
                         });
