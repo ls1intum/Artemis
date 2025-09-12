@@ -194,9 +194,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     List<ProgrammingExercise> findAllByRecentExamEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
 
-    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.team", "studentParticipations.team.students" })
-    Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(long exerciseId);
-
     @Query("""
             SELECT pe
             FROM ProgrammingExercise pe
@@ -441,6 +438,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 JOIN p.submissions s
             WHERE p.exercise.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 AND p.exercise.id IN :exerciseIds
+                AND p.testRun = FALSE
                 AND s.submitted = TRUE
             """)
     long countAllSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
@@ -743,11 +741,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     default ProgrammingExercise saveForCreation(ProgrammingExercise exercise) {
         this.saveAndFlush(exercise);
         return this.findForCreationByIdElseThrow(exercise.getId());
-    }
-
-    @NotNull
-    default ProgrammingExercise findWithEagerStudentParticipationsByIdElseThrow(long programmingExerciseId) {
-        return getValueElseThrow(findWithEagerStudentParticipationsById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
