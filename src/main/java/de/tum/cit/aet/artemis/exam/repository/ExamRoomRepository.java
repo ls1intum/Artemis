@@ -79,6 +79,15 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             """)
     Set<Long> findAllIdsOfCurrentExamRooms();
 
+    @Query("""
+            SELECT er
+            FROM ExamRoom er
+            JOIN ExamRoomExamAssignment erea
+                ON er.id = erea.examRoom.id
+            WHERE erea.exam.id = :examId
+            """)
+    Set<ExamRoom> findAllByExamId(long examId);
+
     @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = { "layoutStrategies" })
     Set<ExamRoom> findAllWithEagerLayoutStrategiesByIdIn(Set<Long> ids);
 }
