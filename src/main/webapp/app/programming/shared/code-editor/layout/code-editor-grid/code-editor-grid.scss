@@ -5,11 +5,12 @@ Code-Editor Layout Styles
 .editor-wrapper {
     display: grid;
     grid-template-rows: min-content auto auto;
-    grid-row-gap: 10px;
+    row-gap: 10px;
 
     .collapsed--horizontal {
         width: 50px !important;
     }
+
     .collapsed--vertical {
         height: 42px !important;
     }
@@ -47,6 +48,7 @@ Code-Editor Layout Styles
                 height: 100%;
             }
         }
+
         .editor-sidebar-right {
             flex: 0 1 auto;
             display: flex;
@@ -77,6 +79,7 @@ Code-Editor Layout Styles
         .rg-bottom-bottom {
             display: none;
         }
+
         > * + .rg-bottom-bottom {
             display: inherit !important;
         }
@@ -94,9 +97,11 @@ Collapsable styling
 // File browser
 .editor-sidebar-left.collapsed--horizontal {
     flex: none !important;
+
     .card-header {
         height: 100%;
         width: 100%;
+
         > fa-icon {
             display: none;
         }
@@ -139,13 +144,28 @@ Collapsable styling
             bottom: 15px;
         }
     }
+
+    .code-editor-status {
+        > :not(:last-child) {
+            padding-bottom: 5px;
+        }
+
+        > :not(:first-child) {
+            padding-top: 5px;
+            border-top: 1px solid rgba(0, 0, 0, 0.125);
+        }
+
+        span {
+            display: none !important;
+        }
+    }
 }
 
 .editor-sidebar-left:not(.collapsed--horizontal) {
     .code-editor-status {
         display: grid;
         grid-template-columns: repeat(2, minmax(max-content, 1fr));
-        grid-column-gap: 10px;
+        column-gap: 10px;
 
         > :not(:first-child) {
             border-left: 1px solid rgba(0, 0, 0, 0.125);
@@ -154,31 +174,19 @@ Collapsable styling
     }
 }
 
-.editor-sidebar-left.collapsed--horizontal {
-    .code-editor-status {
-        > :not(:last-child) {
-            padding-bottom: 5px;
-        }
-        > :not(:first-child) {
-            padding-top: 5px;
-            border-top: 1px solid rgba(0, 0, 0, 0.125);
-        }
-        span {
-            display: none !important;
-        }
-    }
-}
-
 // Instructions
 .editor-sidebar-right.collapsed--horizontal {
     flex: none !important;
+
     .card-header {
         height: 100%;
         width: 100%;
+
         > fa-icon {
             display: none;
         }
     }
+
     .instructions-wrapper__content {
         height: auto !important;
 
@@ -254,6 +262,7 @@ Collapsable styling
     .instructions__content {
         height: auto;
     }
+
     .editable-instruction-container__status {
         display: flex;
         flex-flow: column;

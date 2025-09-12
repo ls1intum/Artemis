@@ -6,6 +6,7 @@
     box-sizing: border-box;
     margin-bottom: 18px;
     background: #fefefe;
+
     @include user-select(none);
 
     /* display drag and drop background image in full size */
@@ -81,11 +82,13 @@
         /* letter for solution mapping */
         .letter {
             @include quiz-mapping-letter-number(#428bca);
+
             @include dnd-letter-position(-63%, -63%, 0);
         }
 
         .letter-solution {
             @include quiz-mapping-letter-number(#5cb85c);
+
             @include dnd-letter-position(-63%, -63%, 0);
         }
 

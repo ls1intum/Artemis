@@ -8,18 +8,20 @@
     z-index: 1;
 }
 
-.monaco-add-feedback-button:hover:before {
+.monaco-add-feedback-button:hover::before {
     background-color: var(--monaco-editor-add-feedback-button-hover-background);
 }
 
-.monaco-add-feedback-button:before {
+.monaco-add-feedback-button::before {
     cursor: pointer;
     content: '\ea60'; // codicon-plus
+    /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
     font-family: codicon;
     font-size: 1.1em;
     background-color: var(--monaco-editor-add-feedback-button-background);
     color: var(--monaco-editor-add-feedback-button-text);
     border-radius: 35%;
+
     // Cosmetic adjustment: create a small gap between the button and the line number
     padding-left: 1px;
     margin-left: 1px;
