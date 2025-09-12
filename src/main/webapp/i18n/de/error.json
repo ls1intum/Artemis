@@ -115,7 +115,6 @@
         "wrongCourse": "Die Reaktion gehört nicht zum ausgewählten Kurs.",
         "reactionNotFound": "Die Reaktion konnte nicht gefunden werden.",
         "missingAssociation": "Die Reaktion muss einem Beitrag oder einer Antwort zugeordnet sein.",
-        "missingUser": "Autor:in muss existieren.",
         "emojiIdMissing": "emojiId muss gesetzt sein."
     }
 }
