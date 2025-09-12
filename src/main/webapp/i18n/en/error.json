@@ -115,6 +115,7 @@
         "wrongCourse": "The reaction does not belong to the selected course.",
         "reactionNotFound": "The reaction could not be found.",
         "missingAssociation": "The reaction must be associated with a post or an answer post.",
-        "emojiIdMissing": "emojiId must be set"
+        "missingUser": "The user must exist.",
+        "emojiIdMissing": "emojiId must be set."
     }
 }

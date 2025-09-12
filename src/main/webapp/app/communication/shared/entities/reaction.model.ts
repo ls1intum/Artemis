@@ -12,7 +12,7 @@ export class Reaction {
     public answerPost?: AnswerPost;
 }
 
-export class CreateReactionDTO {
+export class ReactionDTO {
     emojiId?: string;
     relatedPostId?: number;
 
@@ -24,7 +24,7 @@ export class CreateReactionDTO {
     /**
      * Converts a Reaction to a minimal API payload.
      */
-    static fromReaction(reaction: Reaction): CreateReactionDTO {
-        return new CreateReactionDTO(reaction.emojiId, reaction.post?.id ?? reaction.answerPost?.id);
+    static fromReaction(reaction: Reaction): ReactionDTO {
+        return new ReactionDTO(reaction.emojiId, reaction.post?.id ?? reaction.answerPost?.id);
     }
 }
