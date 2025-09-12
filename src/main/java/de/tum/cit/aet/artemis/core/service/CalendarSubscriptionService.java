@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import net.fortuna.ical4j.model.Calendar;
@@ -37,55 +38,41 @@ public class CalendarSubscriptionService {
 
     private final UserRepository userRepository;
 
+    private final CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository;
+
     private final String artemisServerUrl;
 
-    CalendarSubscriptionService(UserRepository userRepository, @Value("${server.url}") String artemisServerUrl) {
+    CalendarSubscriptionService(UserRepository userRepository, CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository,
+            @Value("${server.url}") String artemisServerUrl) {
         this.userRepository = userRepository;
+        this.calendarSubscriptionTokenStoreRepository = calendarSubscriptionTokenStoreRepository;
         this.artemisServerUrl = artemisServerUrl;
-    }
-
-    /**
-     * Returns the existing calendar subscription token of a given user if present or generates a new one.
-     * The token is a unique, shared secret between the user and the server and is embedded into the URLs of
-     * the iCalendar subscriptions to enable authentication and authorization.
-     *
-     * @param user the {@link User} for whom the subscription token is requested
-     * @return the existing or newly generated token
-     */
-    public String getOrCreateSubscriptionTokenFor(User user) {
-        CalendarSubscriptionTokenStore tokenStore = user.getCalendarSubscriptionTokenStore();
-        if (tokenStore == null) {
-            return generateUniqueSubscriptionTokenFor(user);
-        }
-        return tokenStore.getToken();
     }
 
     /**
      * Uses a CSPRNG that is part of SecureRandom to generate a cryptographically secure, random subscription token.
      * Each token is a string of 32 lower-case, hexadecimal characters.
-     * Generates new tokens as long as a different user already uses the current token to ensure uniqueness.
+     * Attempts to generate a unique token 10 times, then throws (should never happen in practice because of astronomical unlikeliness).
      *
-     * @param user the {@link User} for whom the subscription token is requested
+     * @param userLogin the login of the {@link User} for whom the subscription token is requested
      * @return the generated token
      */
-    private String generateUniqueSubscriptionTokenFor(User user) {
-        String token;
-        boolean generationSuccessful;
-        do {
-            token = convertBytesToSubscriptionToken(generateSubscriptionTokenBytes());
-            CalendarSubscriptionTokenStore tokenStore = new CalendarSubscriptionTokenStore();
-            tokenStore.setToken(token);
-            user.setCalendarSubscriptionTokenStore(tokenStore);
+    public String createSubscriptionTokenForUser(String userLogin) {
+        User user = userRepository.getUserByLoginElseThrow(userLogin);
+        final int MAXIMUM_ATTEMPT_NUMBER = 10;
+        for (int attempt = 1; attempt <= MAXIMUM_ATTEMPT_NUMBER; attempt++) {
+            String token = convertBytesToSubscriptionToken(generateSubscriptionTokenBytes());
+            CalendarSubscriptionTokenStore store = new CalendarSubscriptionTokenStore();
+            store.setToken(token);
+            store.setUser(user);
             try {
-                userRepository.saveAndFlush(user);
-                generationSuccessful = true;
+                calendarSubscriptionTokenStoreRepository.saveAndFlush(store);
+                return token;
             }
-            catch (DataIntegrityViolationException ex) {
-                generationSuccessful = false;
+            catch (DataIntegrityViolationException ignored) {
             }
         }
-        while (!generationSuccessful);
-        return token;
+        throw new IllegalStateException("Could not generate a unique calendar subscription token after " + MAXIMUM_ATTEMPT_NUMBER + " attempts");
     }
 
     private byte[] generateSubscriptionTokenBytes() {

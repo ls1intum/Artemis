@@ -131,9 +131,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
 
-    @EntityGraph(attributePaths = { "groups", "authorities" })
-    Optional<User> findOneByCalendarSubscriptionTokenStore_Token(String token);
-
     /**
      * Retrieves a list of user roles within a specified course based on the provided user IDs. This method is highly optimized for performance.
      *
@@ -1393,4 +1390,13 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastInstructorInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
+
+    @EntityGraph(attributePaths = { "groups", "authorities" })
+    @Query("""
+                    SELECT jhiUser
+                    FROM CalendarSubscriptionTokenStore store
+                        JOIN store.user jhiUser
+                    WHERE store.token = :token
+            """)
+    Optional<User> findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
 }

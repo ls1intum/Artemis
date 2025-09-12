@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepository;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -57,6 +58,8 @@ public class CalendarResource {
 
     private static final Logger log = LoggerFactory.getLogger(CalendarResource.class);
 
+    private final CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository;
+
     private final UserRepository userRepository;
 
     private final Optional<TutorialGroupApi> tutorialGroupApi;
@@ -75,9 +78,10 @@ public class CalendarResource {
 
     private final CalendarSubscriptionService calendarSubscriptionService;
 
-    public CalendarResource(UserRepository userRepository, Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamApi> examApi, LectureApi lectureApi,
-            ExerciseService exerciseService, QuizExerciseService quizExerciseService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
-            CalendarSubscriptionService calendarSubscriptionService) {
+    public CalendarResource(CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository, UserRepository userRepository,
+            Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamApi> examApi, LectureApi lectureApi, ExerciseService exerciseService, QuizExerciseService quizExerciseService,
+            CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, CalendarSubscriptionService calendarSubscriptionService) {
+        this.calendarSubscriptionTokenStoreRepository = calendarSubscriptionTokenStoreRepository;
         this.userRepository = userRepository;
         this.tutorialGroupApi = tutorialGroupApi;
         this.examApi = examApi;
@@ -100,9 +104,9 @@ public class CalendarResource {
     @GetMapping("subscription-token")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getCalendarEventSubscriptionToken() {
-        User user = userRepository.getUserWithCalendarSubscriptionTokenStore();
-        String token = calendarSubscriptionService.getOrCreateSubscriptionTokenFor(user);
-        return ResponseEntity.ok(token);
+        String userLogin = userRepository.getCurrentUserLogin();
+        Optional<String> token = calendarSubscriptionTokenStoreRepository.findTokenByUserLogin(userLogin);
+        return token.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(calendarSubscriptionService.createSubscriptionTokenForUser(userLogin)));
     }
 
     /**
@@ -120,7 +124,7 @@ public class CalendarResource {
     @GetMapping("courses/{courseId}/calendar-events-ics")
     public ResponseEntity<String> getCalendarEventSubscriptionFile(@PathVariable long courseId, @RequestParam("token") String token,
             @RequestParam("filterOptions") Set<CalendarSubscriptionFilterOption> filterOptions, @RequestParam("language") Language language) {
-        User user = userRepository.findOneByCalendarSubscriptionTokenStore_Token(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
+        User user = userRepository.findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(token).orElseThrow(() -> new AccessForbiddenException("Invalid token!"));
         Course course = courseRepository.findByIdElseThrow(courseId);
         boolean userIsStudent = authorizationCheckService.isOnlyStudentInCourse(course, user);
         boolean userIsCourseStaff = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
