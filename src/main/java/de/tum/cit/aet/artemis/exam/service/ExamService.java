@@ -1466,24 +1466,20 @@ public class ExamService {
     }
 
     /**
-     * Distribute all students who are registered for a given exam across a selection of rooms
+     * Distribute all students who are registered for a given exam across a selection of rooms.
+     * At the moment this function only support distributing via the "default" layout strategy.
      *
      * @param examId      The exam
      * @param examRoomIds The ids of the rooms to distribute to
      */
     public void distributeRegisteredStudents(long examId, @NotNull @NotEmpty Set<Long> examRoomIds) {
-        // Now we find all exam rooms that we want to use for the exam
         final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         final var examRooms = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
 
-        // Now we extract all usable seats from the exam rooms and check if there is enough space to seat all registered students
         final var examUsers = exam.getExamUsers();
-        Map<String, List<ExamSeatDTO>> roomNumberToUsableSeatsDefaultLayout = new HashMap<>();
-        for (ExamRoom examRoom : examRooms) {
-            roomNumberToUsableSeatsDefaultLayout.put(examRoom.getRoomNumber(), examRoomService.getDefaultUsableSeats(examRoom));
-        }
 
-        int numberOfUsableSeats = roomNumberToUsableSeatsDefaultLayout.values().stream().mapToInt(List::size).sum();
+        int numberOfUsableSeats = examRooms.stream()
+                .mapToInt(examRoom -> examRoom.getLayoutStrategies().stream().filter(ls -> ls.getName().equals("default")).findAny().orElseThrow().getCapacity()).sum();
         if (numberOfUsableSeats < examUsers.size()) {
             throw new BadRequestAlertException("Sire, reinforce the seating!", ENTITY_NAME, "notEnoughExamSeats",
                     Map.of("numberOfUsableSeats", numberOfUsableSeats, "numberOfExamUsers", examUsers.size()));
@@ -1498,6 +1494,11 @@ public class ExamService {
         }
 
         // Now we distribute students to the seats
+        Map<String, List<ExamSeatDTO>> roomNumberToUsableSeatsDefaultLayout = new HashMap<>();
+        for (ExamRoom examRoom : examRooms) {
+            roomNumberToUsableSeatsDefaultLayout.put(examRoom.getRoomNumber(), examRoomService.getDefaultUsableSeats(examRoom));
+        }
+
         final var examUsersIterator = examUsers.iterator();
         roomNumberToUsableSeatsDefaultLayout.forEach((roomNumber, usableSeats) -> usableSeats.stream().takeWhile(ignored -> examUsersIterator.hasNext()).forEach(seat -> {
             ExamUser nextExamUser = examUsersIterator.next();
