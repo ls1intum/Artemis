@@ -74,7 +74,7 @@ public class InMemoryRepositoryBuilder {
      */
     public static byte[] buildZip(Repository repository) throws IOException {
 
-        URI remoteUri = repository.getRemoteRepositoryUri().getURI();
+        URI remoteUri = repository.getLocalPath().toUri();
 
         // 1) Create an in-memory bare repository and fetch from the remote
         InMemoryRepository repo = new InMemoryRepository.Builder().setRepositoryDescription(new DfsRepositoryDescription("inmem")).setFS(FS.DETECTED).build();

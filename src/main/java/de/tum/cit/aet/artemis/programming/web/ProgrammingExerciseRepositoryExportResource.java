@@ -96,7 +96,7 @@ public class ProgrammingExerciseRepositoryExportResource {
 
         InputStreamResource resource = gitRepositoryExportService.exportInstructorRepositoryForExerciseInMemory(programmingExercise, repositoryType);
 
-        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", resource.getFilename(), programmingExercise.getId(),
+        log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryType, programmingExercise.getId(),
                 programmingExercise.getTitle(), formatDurationFrom(start));
 
         return ResponseEntity.ok().contentLength(resource.contentLength()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", resource.getFilename())
