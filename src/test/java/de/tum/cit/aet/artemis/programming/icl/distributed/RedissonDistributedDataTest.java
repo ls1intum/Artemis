@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.Distri
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson.RedissonDistributedDataProviderService;
 
 @TestPropertySource(properties = { "artemis.continuous-integration.data-store=Redis", "spring.data.redis.client-name=artemis-node-1" })
-// requires docker for testContainers to spin up test redis instance
+// requires docker for testContainers to start test redis instance
 @EnabledIf("isDockerAvailable")
 class RedissonDistributedDataTest extends AbstractDistributedDataTest {
 

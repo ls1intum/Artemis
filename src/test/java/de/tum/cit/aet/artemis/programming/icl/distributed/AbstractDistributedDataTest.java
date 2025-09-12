@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.icl.distributed;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -28,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 
 @SpringBootTest
-@ActiveProfiles({ PROFILE_BUILDAGENT })
+@ActiveProfiles({ PROFILE_TEST_BUILDAGENT, PROFILE_BUILDAGENT, "test" })
 public abstract class AbstractDistributedDataTest {
 
     protected abstract DistributedDataProvider getDistributedDataProvider();
