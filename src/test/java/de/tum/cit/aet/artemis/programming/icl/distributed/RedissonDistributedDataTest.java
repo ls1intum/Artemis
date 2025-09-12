@@ -1,13 +1,9 @@
 package de.tum.cit.aet.artemis.programming.icl.distributed;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
-
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.DockerClientFactory;
 
@@ -16,10 +12,8 @@ import com.redis.testcontainers.RedisStackContainer;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson.RedissonDistributedDataProviderService;
 
-@SpringBootTest
-// ensure RedissonDistributedDataProviderService is loaded
-@ActiveProfiles({ PROFILE_BUILDAGENT })
 @TestPropertySource(properties = { "artemis.continuous-integration.data-store=Redis", "spring.data.redis.client-name=artemis-node-1" })
+// requires docker for testContainers to spin up test redis instance
 @EnabledIf("isDockerAvailable")
 class RedissonDistributedDataTest extends AbstractDistributedDataTest {
 

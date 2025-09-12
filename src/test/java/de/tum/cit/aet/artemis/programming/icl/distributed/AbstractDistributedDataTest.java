@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.icl.distributed;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -13,6 +14,8 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
@@ -22,6 +25,8 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueListener;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 
+@SpringBootTest
+@ActiveProfiles({ PROFILE_BUILDAGENT })
 public abstract class AbstractDistributedDataTest {
 
     protected abstract DistributedDataProvider getDistributedDataProvider();
@@ -31,7 +36,7 @@ public abstract class AbstractDistributedDataTest {
         DistributedQueue<String> queue = getDistributedDataProvider().getQueue("testQueue");
         // Create a mock listener
         QueueItemListener<String> mockListener = Mockito.mock(QueueItemListener.class);
-        // Register the mock listener
+
         queue.addItemListener(mockListener);
 
         queue.add("item1");
@@ -45,7 +50,7 @@ public abstract class AbstractDistributedDataTest {
     void testQueueListenerTriggerCount() {
         DistributedQueue<String> queue = getDistributedDataProvider().getQueue("testQueueListenerCount");
         QueueItemListener<String> mockListener = Mockito.mock(QueueItemListener.class);
-        // Register the mock listener
+
         queue.addItemListener(mockListener);
 
         for (int i = 0; i < 10; i++) {
@@ -176,21 +181,16 @@ public abstract class AbstractDistributedDataTest {
     void testMapListenerTriggers() {
         DistributedMap<String, String> someMap = getDistributedDataProvider().getMap("someMap");
 
-        // Create a mock listener
         MapEntryListener<String, String> mockListener = Mockito.mock(MapEntryListener.class);
 
-        // Register the mock listener
         someMap.addEntryListener(mockListener);
 
-        // Test add operation
         someMap.put("key1", "value1");
         verify(mockListener, timeout(1000)).entryAdded(argThat(event -> "key1".equals(event.key()) && "value1".equals(event.value())));
 
-        // Test update operation
         someMap.put("key1", "value2");
         verify(mockListener, timeout(1000)).entryUpdated(argThat(event -> "key1".equals(event.key()) && "value2".equals(event.value()) && "value1".equals(event.oldValue())));
 
-        // Test remove operation
         someMap.remove("key1");
         verify(mockListener, timeout(1000)).entryRemoved(argThat(event -> "key1".equals(event.key()) && "value2".equals(event.oldValue())));
     }
@@ -199,13 +199,10 @@ public abstract class AbstractDistributedDataTest {
     void testMapListenerTriggerCount() {
         DistributedMap<String, String> map = getDistributedDataProvider().getMap("testMap");
 
-        // Create a mock listener
         MapEntryListener<String, String> mockListener = Mockito.mock(MapEntryListener.class);
 
-        // Register the mock listener
         map.addEntryListener(mockListener);
 
-        // Test add operation
         for (int i = 0; i < 10; i++) {
             map.put("key" + i, "value" + i);
             map.put("key" + i, "newValue" + i);
@@ -289,13 +286,11 @@ public abstract class AbstractDistributedDataTest {
     void testPublishSubscribe() {
         DistributedTopic<String> topic = getDistributedDataProvider().getTopic("testTopic");
 
-        // Create a mock listener
         Consumer<String> mockConsumer = Mockito.mock(Consumer.class);
         topic.addMessageListener(mockConsumer);
         topic.publish("Hello, World!");
         topic.publish("Another message");
 
-        // Verify that the mock listener received the message
         verify(mockConsumer, timeout(100)).accept("Hello, World!");
         verify(mockConsumer, timeout(100)).accept("Another message");
     }
