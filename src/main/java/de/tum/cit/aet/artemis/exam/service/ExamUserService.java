@@ -5,11 +5,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -27,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.ImageDTO;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -35,9 +31,7 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
-import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
-import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 
@@ -180,61 +174,5 @@ public class ExamUserService {
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ExamUserWithImageDTO(String studentRegistrationNumber, ImageDTO image) {
-    }
-
-    /**
-     * Sets the transient planned room and planned seat fields for all {@link ExamUser}s.
-     * The exam users must all belong to the same exam.
-     *
-     * @param examUsers                                All exam users for which the transient fields should be set.
-     * @param ignoreExamUsersWithoutPlannedRoomAndSeat If true, exam users without a planned room or seat will be ignored.
-     *                                                     If false, an exception will be thrown when an exam user without a planned room or seat is encountered.
-     * @throws de.tum.cit.aet.artemis.core.exception.BadRequestAlertException If ignoreExamUsersWithoutPlannedRoomAndSeat is false and the conditions are met as described,
-     *                                                                            or if the planned room or seat cannot be mapped to actual entities.
-     */
-    public void setPlannedRoomAndSeatTransientForExamUsers(Collection<ExamUser> examUsers, boolean ignoreExamUsersWithoutPlannedRoomAndSeat) {
-        var usedExams = examUsers.stream().map(ExamUser::getExam).distinct().toList();
-        if (usedExams.size() != 1) {
-            throw new BadRequestAlertException("All exam users must belong to the same exam", ENTITY_NAME, "examUserService.multipleExams", Map.of("foundExams", usedExams.size()));
-        }
-        long examId = usedExams.getFirst().getId();
-        Set<ExamRoom> examRoomsUsedInExam = examRoomRepository.findAllByExamId(examId);
-
-        for (ExamUser examUser : examUsers) {
-            final String plannedRoomName = examUser.getPlannedRoom();
-            final String plannedSeatName = examUser.getPlannedSeat();
-
-            if (!StringUtils.hasText(plannedRoomName) || !StringUtils.hasText(plannedSeatName)) {
-                if (ignoreExamUsersWithoutPlannedRoomAndSeat) {
-                    continue;
-                }
-                else {
-                    throw new BadRequestAlertException("Exam user does not have a planned room or seat", ENTITY_NAME, "examUser.service.missingPlannedRoomOrSeat",
-                            Map.of("userName", examUser.getUser().getLogin()));
-                }
-            }
-
-            Optional<ExamRoom> matchingRoom = examRoomsUsedInExam.stream()
-                    .filter(room -> room.getName().equalsIgnoreCase(plannedRoomName) || room.getAlternativeName().equalsIgnoreCase(plannedRoomName)).findFirst();
-            if (matchingRoom.isEmpty()) {
-                throw new BadRequestAlertException("Planned room of exam user cannot be mapped to an actual room", ENTITY_NAME, "examUser.service.plannedRoomNotFound",
-                        Map.of("userName", examUser.getUser().getLogin(), "plannedRoom", plannedRoomName));
-            }
-
-            Optional<ExamSeatDTO> matchingSeat = matchingRoom.get().getSeats().stream().filter(seat -> seat.name().equalsIgnoreCase(plannedSeatName)).findFirst();
-            if (matchingSeat.isEmpty()) {
-                throw new BadRequestAlertException("Planned seat of exam user cannot be mapped to an actual seat", ENTITY_NAME, "examUser.service.plannedSeatNotFound",
-                        Map.of("userName", examUser.getUser().getLogin(), "plannedSeat", plannedSeatName));
-            }
-
-            examUser.setTransientPlannedRoomAndSeat(matchingRoom.get(), matchingSeat.get());
-        }
-    }
-
-    /**
-     * @see #setPlannedRoomAndSeatTransientForExamUsers(Collection, boolean)
-     */
-    public void setPlannedRoomAndSeatTransientForExamUsers(Collection<ExamUser> examUsers) {
-        setPlannedRoomAndSeatTransientForExamUsers(examUsers, false);
     }
 }
