@@ -171,8 +171,9 @@ public class CalendarResource {
      * @return the set retrieved by the supplier if include is true and the api is available, otherwise and empty set
      */
     private <A, T> Set<T> getIfShouldBeIncludedAndApiAvailable(boolean include, Optional<A> apiOptional, Function<A, Set<T>> supplier) {
-        if (!include)
+        if (!include) {
             return Collections.emptySet();
+        }
         return apiOptional.map(supplier).orElseGet(Collections::emptySet);
     }
 
