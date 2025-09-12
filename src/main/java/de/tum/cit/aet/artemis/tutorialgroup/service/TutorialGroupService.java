@@ -35,6 +35,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.DeregisteredFromTutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.RegisteredToTutorialGroupNotification;
+import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -54,7 +55,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailScheduleDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTOMetaData;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
@@ -83,10 +84,12 @@ public class TutorialGroupService {
 
     private final CourseNotificationService courseNotificationService;
 
+    private final OneToOneChatRepository oneToOneChatRepository;
+
     public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupRepository tutorialGroupRepository,
             UserRepository userRepository, AuthorizationCheckService authorizationCheckService, TutorialGroupSessionRepository tutorialGroupSessionRepository,
             TutorialGroupChannelManagementService tutorialGroupChannelManagementService, ConversationDTOService conversationDTOService,
-            CourseNotificationService courseNotificationService) {
+            CourseNotificationService courseNotificationService, OneToOneChatRepository oneToOneChatRepository) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
@@ -95,6 +98,7 @@ public class TutorialGroupService {
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.conversationDTOService = conversationDTOService;
         this.courseNotificationService = courseNotificationService;
+        this.oneToOneChatRepository = oneToOneChatRepository;
     }
 
     /**
@@ -634,12 +638,19 @@ public class TutorialGroupService {
     public TutorialGroupDetailGroupDTO getTutorialGroupDetailTutorialGroupDTO(Long tutorialGroupId, ZoneId courseTimeZone) {
         TutorialGroupDetailGroupDTO groupDto = tutorialGroupRepository.getTutorialGroupDetailGroupDTO(tutorialGroupId)
                 .orElseThrow(() -> new EntityNotFoundException("Tutorial Group Not Found with id: " + tutorialGroupId));
+        TutorialGroupDetailGroupDTOMetaData metaData = groupDto.getMetaData();
+
+        Long courseId = metaData.courseId();
+        String tutorLogin = groupDto.getTeachingAssistantLogin();
+        String currentUserLogin = userRepository.getCurrentUserLogin();
+        Optional<Long> tutorChatId = oneToOneChatRepository.findIdOfChatInCourseBetweenUsers(courseId, tutorLogin, currentUserLogin);
+        tutorChatId.ifPresent(groupDto::setTutorChatId);
+
         Set<TutorialGroupDetailSessionDTO> sessionDtos = tutorialGroupSessionRepository.getTutorialGroupDetailSessionDTOs(tutorialGroupId);
-        TutorialGroupDetailScheduleDTO scheduleDto = groupDto.getSchedule();
-        int scheduleDayOfWeek = scheduleDto.dayOfWeek();
-        LocalTime scheduleStart = LocalTime.parse(scheduleDto.startTime());
-        LocalTime scheduleEnd = LocalTime.parse(scheduleDto.endTime());
-        String scheduleLocation = scheduleDto.location();
+        int scheduleDayOfWeek = metaData.scheduleDayOfWeek();
+        LocalTime scheduleStart = LocalTime.parse(metaData.scheduleStartTime());
+        LocalTime scheduleEnd = LocalTime.parse(metaData.scheduleEndTime());
+        String scheduleLocation = metaData.scheduleLocation();
         for (TutorialGroupDetailSessionDTO sessionDto : sessionDtos) {
             setSessionStatusFlags(sessionDto, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone);
         }

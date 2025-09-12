@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, input, signal, viewChild } from '@
 import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -18,6 +18,9 @@ import { Color, PieChartComponent, PieChartModule, ScaleType } from '@swimlane/n
 import { SelectModule } from 'primeng/select';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupDetailSessionStatusIndicatorComponent } from 'app/tutorialgroup/overview/tutorial-group-detail-session-status-indicator/tutorial-group-detail-session-status-indicator.component';
+import { Router, RouterLink } from '@angular/router';
+import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 interface SessionData {
     date: string;
@@ -45,12 +48,16 @@ type ListOption = 'all-sessions' | 'future-sessions';
         SelectModule,
         TutorialGroupDetailSessionStatusIndicatorComponent,
         NgClass,
+        RouterLink,
     ],
     templateUrl: './new-tutorial-group-detail.component.html',
     styleUrl: './new-tutorial-group-detail.component.scss',
 })
 export class NewTutorialGroupDetailComponent {
     private translateService = inject(TranslateService);
+    private oneToOneChatService = inject(OneToOneChatService);
+    private alertService = inject(AlertService);
+    private router = inject(Router);
 
     course = input.required<Course>();
     tutorialGroup = input.required<TutorialGroupDetailGroupDTO>();
@@ -131,6 +138,25 @@ export class NewTutorialGroupDetailComponent {
         { label: 'Future Sessions', value: 'future-sessions' as const },
     ];
     selectedListOption = signal<ListOption>('all-sessions');
+    messagingEnabled = computed<boolean>(() => isMessagingEnabled(this.course()));
+    tutorChatLink = computed(() => {
+        const courseId = this.course().id;
+        const tutorChatId = this.tutorialGroup().tutorChatId;
+        if (!tutorChatId) return undefined;
+        return {
+            routerLink: ['/courses', courseId, 'communication'],
+            queryParams: { conversationId: tutorChatId },
+        };
+    });
+    groupChannelLink = computed(() => {
+        const courseId = this.course().id;
+        const tutorialGroupChannelId = this.tutorialGroup().groupChannelId;
+        if (!tutorialGroupChannelId) return undefined;
+        return {
+            routerLink: ['/courses', courseId, 'communication'],
+            queryParams: { conversationId: tutorialGroupChannelId },
+        };
+    });
 
     readonly faFlag = faFlag;
     readonly faUsers = faUsers;
@@ -148,6 +174,26 @@ export class NewTutorialGroupDetailComponent {
             pieChart.margins = [0, 0, 0, 0];
             pieChart.update();
         });
+    }
+
+    createTutorChat() {
+        const courseId = this.course().id;
+        const tutorLogin = this.tutorialGroup().teachingAssistantLogin;
+        if (courseId) {
+            this.oneToOneChatService.create(courseId, tutorLogin).subscribe({
+                next: (res) => {
+                    const chatId = res.body?.id;
+                    if (chatId) {
+                        this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: chatId } });
+                    } else {
+                        this.alertService.addErrorAlert('Error while creating tutor chat');
+                    }
+                },
+                error: () => {
+                    this.alertService.addErrorAlert('Error while creating tutor chat');
+                },
+            });
+        }
     }
 
     private computeNextSessionDataUsing(sessions: TutorialGroupDetailSessionDTO[]): SessionData | undefined {

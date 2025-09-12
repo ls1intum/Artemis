@@ -149,10 +149,13 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
                 tutorialGroup.language,
                 tutorialGroup.isOnline,
                 CONCAT(tutorialGroup.teachingAssistant.firstName, CONCAT(' ', tutorialGroup.teachingAssistant.lastName)),
+                tutorialGroup.teachingAssistant.login,
                 tutorialGroup.teachingAssistant.imageUrl,
                 tutorialGroup.capacity,
                 tutorialGroup.campus,
-                new de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailScheduleDTO(
+                tutorialGroup.tutorialGroupChannel.id,
+                new de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTOMetaData(
+                    tutorialGroup.course.id,
                     tutorialGroup.tutorialGroupSchedule.dayOfWeek,
                     tutorialGroup.tutorialGroupSchedule.startTime,
                     tutorialGroup.tutorialGroupSchedule.endTime,

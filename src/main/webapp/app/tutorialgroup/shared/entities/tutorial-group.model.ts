@@ -41,8 +41,11 @@ export class TutorialGroupDetailGroupDTO {
         public isOnline: boolean,
         public sessions: TutorialGroupDetailSessionDTO[],
         public teachingAssistantName: string,
+        public teachingAssistantLogin: string,
         public teachingAssistantImageUrl?: string,
         public capacity?: number,
         public campus?: string,
+        public groupChannelId?: number,
+        public tutorChatId?: number,
     ) {}
 }

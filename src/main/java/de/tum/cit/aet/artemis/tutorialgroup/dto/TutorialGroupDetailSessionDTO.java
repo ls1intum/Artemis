@@ -32,7 +32,6 @@ public class TutorialGroupDetailSessionDTO {
     private final Integer attendanceCount;
 
     @NotNull
-    @JsonIgnore
     private final TutorialGroupSessionStatus originSessionStatus;
 
     public TutorialGroupDetailSessionDTO(ZonedDateTime start, ZonedDateTime end, String location, TutorialGroupSessionStatus originSessionStatus, Integer attendanceCount) {
@@ -95,6 +94,7 @@ public class TutorialGroupDetailSessionDTO {
         return attendanceCount;
     }
 
+    @JsonIgnore
     public TutorialGroupSessionStatus getOriginSessionStatus() {
         return originSessionStatus;
     }

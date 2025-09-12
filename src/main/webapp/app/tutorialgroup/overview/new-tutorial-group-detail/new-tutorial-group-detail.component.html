@@ -1,5 +1,20 @@
 <div class="frame">
-    <h1 id="page-title">{{ tutorialGroup().title }}</h1>
+    <div class="header">
+        <h1 id="page-title">{{ tutorialGroup().title }}</h1>
+        <div class="spacer"></div>
+        @if (messagingEnabled()) {
+            @let chatLink = tutorChatLink();
+            @if (chatLink) {
+                <a [routerLink]="chatLink.routerLink" [queryParams]="chatLink.queryParams" class="btn btn-outline-secondary">Tutor Chat</a>
+            } @else {
+                <button class="btn btn-outline-secondary" (click)="createTutorChat()">Tutor Chat</button>
+            }
+            @let channelLink = groupChannelLink();
+            @if (channelLink) {
+                <a [routerLink]="channelLink.routerLink" [queryParams]="channelLink.queryParams" class="btn btn-outline-secondary">Group Channel</a>
+            }
+        }
+    </div>
     <hr />
     <div class="card-row">
         <section class="card small" aria-labelledby="tutor-card-title">
@@ -34,7 +49,7 @@
                 <div class="info-stack">
                     <div class="info-item" role="listitem" aria-labelledby="mode-label" aria-describedby="mode-value">
                         <fa-icon [icon]="faTag" aria-hidden="true" />
-                        <span class="info-label" id="mode-label">>{{ ('artemisApp.pages.tutorialGroupDetail.mode' | artemisTranslate) + ':' }}</span>
+                        <span class="info-label" id="mode-label">{{ ('artemisApp.pages.tutorialGroupDetail.mode' | artemisTranslate) + ':' }}</span>
                         <span jhiTranslate="{{ tutorialGroupMode() }}" id="mode-value"></span>
                     </div>
                     <div class="info-item" role="listitem" aria-labelledby="campus-label" aria-describedby="campus-value">

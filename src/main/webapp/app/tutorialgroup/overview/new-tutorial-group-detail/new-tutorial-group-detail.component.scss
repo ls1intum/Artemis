@@ -3,10 +3,21 @@
     flex-direction: column;
     gap: 1rem;
 
-    h1 {
-        font-size: 1.75rem;
-        font-weight: 400;
-        margin: 0;
+    .header {
+        display: flex;
+        gap: 0.5rem;
+        align-items: end;
+
+        .spacer {
+            flex: 1;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 400;
+            line-height: 1;
+            margin: 0;
+        }
     }
 
     hr {
@@ -48,6 +59,7 @@
             .tutor-card-content {
                 display: flex;
                 flex-direction: column;
+                align-items: center;
                 gap: 0.5rem;
             }
 

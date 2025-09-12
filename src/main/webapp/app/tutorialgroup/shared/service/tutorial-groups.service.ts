@@ -68,9 +68,12 @@ export class TutorialGroupsService {
                                 ),
                         ),
                         response.teachingAssistantName,
+                        response.teachingAssistantLogin,
                         response.teachingAssistantImageUrl,
                         response.capacity,
                         response.campus,
+                        response.groupChannelId,
+                        response.tutorChatId,
                     ),
             ),
         );
