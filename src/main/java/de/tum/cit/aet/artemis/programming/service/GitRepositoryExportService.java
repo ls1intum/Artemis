@@ -85,27 +85,27 @@ public class GitRepositoryExportService {
      * @return path to zip file or directory.
      * @throws IOException if the zipping or copying process failed.
      */
-    public Path getRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName, boolean zipOutput) throws IOException, UncheckedIOException {
+    public Path getRepositoryWithParticipation(Repository repo, String repositoryDir, boolean hideStudentName, boolean zipOutput) throws IOException {
         var exercise = repo.getParticipation().getProgrammingExercise();
         String courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
 
-        String repoName = FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
+        String sanitizedRepoName = FileUtil.sanitizeFilename(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {
-            repoName += "-student-submission.git";
+            sanitizedRepoName += "-student-submission.git";
         }
         else {
             var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
 
-            repoName += "-" + studentTeamOrDefault;
+            sanitizedRepoName += "-" + studentTeamOrDefault;
         }
-        repoName = participation.addPracticePrefixIfTestRun(repoName);
+        sanitizedRepoName = participation.addPracticePrefixIfTestRun(sanitizedRepoName);
 
         if (zipOutput) {
-            return zipFiles(repo.getLocalPath(), repoName, repositoryDir, null);
+            return zipFiles(repo.getLocalPath(), sanitizedRepoName, repositoryDir, null);
         }
         else {
-            Path targetDir = Path.of(repositoryDir, repoName);
+            Path targetDir = Path.of(repositoryDir, sanitizedRepoName);
 
             FileUtils.copyDirectory(repo.getLocalPath().toFile(), targetDir.toFile());
             return targetDir;
