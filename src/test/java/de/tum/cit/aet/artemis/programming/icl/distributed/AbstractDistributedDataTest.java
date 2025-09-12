@@ -169,13 +169,12 @@ public abstract class AbstractDistributedDataTest {
 
     @Test
     void testAddAndRemoveQueueListenerRegistration() {
-        DistributedQueue<String> queue = getDistributedDataProvider().getQueue("testQueueGenericListener");
-        QueueListener genericListener = Mockito.mock(QueueListener.class);
+        DistributedQueue<String> queue = getDistributedDataProvider().getQueue("testListener");
+        QueueListener listener = Mockito.mock(QueueListener.class);
 
-        UUID id = queue.addListener(genericListener);
+        UUID id = queue.addListener(listener);
         assertThat(id).isNotNull();
 
-        // Should not throw
         queue.removeListener(id);
     }
 
