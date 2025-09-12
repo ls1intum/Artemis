@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -138,7 +138,7 @@ public class ExamRoomService {
      * @param examRoomInput The Jackson parsed exam room input
      * @return The ExamRoom as stored in the JSON room data.
      */
-    private static ExamRoom convertRoomNumberAndExamRoomInputToExamRoom(String roomNumber, ExamRoomInput examRoomInput) {
+    private ExamRoom convertRoomNumberAndExamRoomInputToExamRoom(String roomNumber, ExamRoomInput examRoomInput) {
         if (examRoomInput == null) {
             throw new BadRequestAlertException("Malformed room JSON", ENTITY_NAME, "room.malformedJson", Map.of("roomNumber", roomNumber));
         }
@@ -170,7 +170,7 @@ public class ExamRoomService {
         return room;
     }
 
-    private static ExamRoom extractSeatsAndLayouts(ExamRoom room, ExamRoomInput examRoomInput) {
+    private ExamRoom extractSeatsAndLayouts(ExamRoom room, ExamRoomInput examRoomInput) {
         // It is imperative that the seats are parsed before the layout strategies are parsed, as the size calculation
         // for relative layouts will only be done if the rooms have already been parsed
         room.setSeats(convertRowInputsToExamSeatDTOs(examRoomInput.rows, room.getRoomNumber()));
@@ -232,7 +232,7 @@ public class ExamRoomService {
      * @param room                    The exam room for which the parsed layout strategies are.
      * @return A list of all layout strategies this room has to offer.
      */
-    private static List<LayoutStrategy> convertLayoutInputsToLayoutStrategies(Map<String, JsonNode> layoutNamesToLayoutNode, ExamRoom room) {
+    private List<LayoutStrategy> convertLayoutInputsToLayoutStrategies(Map<String, JsonNode> layoutNamesToLayoutNode, ExamRoom room) {
         if (layoutNamesToLayoutNode == null) {
             throw new BadRequestAlertException("Couldn't parse room " + room.getRoomNumber() + " because the layouts are missing", ENTITY_NAME, "room.missingLayouts",
                     Map.of("roomNumber", room.getRoomNumber()));
@@ -269,15 +269,17 @@ public class ExamRoomService {
                                 "room.malformedLayout", Map.of("roomNumber", room.getRoomNumber(), "layoutName", layoutName));
                     }
 
-                    layoutStrategy.setCapacity(layoutDetailNode.size());
+                    // We could just straight up use layoutDetailNode.size() here, but by doing it like this we also ensure that the data will be parseable
+                    int capacity = getUsableSeatsFixedSelection(room, layoutStrategy.getParametersJson()).size();
+                    layoutStrategy.setCapacity(capacity);
                 }
                 case LayoutStrategyType.RELATIVE_DISTANCE -> {
                     if (!layoutDetailNode.isObject()) {
                         throw new BadRequestAlertException("Couldn't parse room " + room.getRoomNumber() + " because the layouts couldn't be converted", ENTITY_NAME,
                                 "room.malformedLayout", Map.of("roomNumber", room.getRoomNumber(), "layoutName", layoutName));
                     }
-
-                    layoutStrategy.setCapacity(calculateSeatsFromRelativeDistanceLayout(layoutDetailNode, room));
+                    int capacity = getUsableSeatsRelativeDistance(room, layoutStrategy.getParametersJson()).size();
+                    layoutStrategy.setCapacity(capacity);
                 }
             }
 
@@ -285,48 +287,6 @@ public class ExamRoomService {
         });
 
         return layouts;
-    }
-
-    /**
-     * Calculates how many seats can be used for a given {@link LayoutStrategyType#RELATIVE_DISTANCE} layout strategy.
-     * <p/>
-     * The layout we expect is:
-     * <ul>
-     * <li>"first_row": Integer</li>
-     * <li>"xspace": float</li>
-     * <li>"yspace": float</li>
-     * </ul>
-     * <p/>
-     * However, any or all of those can be omitted. If omitted, they will default to 0, which means no restrictions.
-     *
-     * @param layoutDetailNode The JSON node containing the expected relative layout information
-     * @return The number of exam seats that can be used with the given layout
-     */
-    private static int calculateSeatsFromRelativeDistanceLayout(JsonNode layoutDetailNode, ExamRoom examRoom) {
-        if (examRoom.getSeats().isEmpty()) {
-            return 0;
-        }
-
-        // first_row in some rooms is -1. I assume this means the same as 0
-        final int firstRow = layoutDetailNode.path("first_row").asInt(0);
-        final double xSpace = layoutDetailNode.path("xspace").asDouble(0);
-        final double ySpace = layoutDetailNode.path("yspace").asDouble(0);
-
-        List<ExamSeatDTO> examSeatsFilteredAndSorted = examRoom.getSeats().stream()
-                // Filter out all exam rooms that are before the "first row". The coords start at 0, the row numbers at 1
-                .filter(examSeatDTO -> examSeatDTO.yCoordinate() >= (firstRow - 1)).filter(examSeatDTO -> examSeatDTO.seatCondition() == SeatCondition.USABLE)
-                .sorted(Comparator.comparingDouble(ExamSeatDTO::yCoordinate).thenComparingDouble(ExamSeatDTO::xCoordinate)).toList();
-
-        List<ExamSeatDTO> selectedSeats = new ArrayList<>();
-        for (ExamSeatDTO examSeatDTO : examSeatsFilteredAndSorted) {
-            boolean isFarEnough = selectedSeats.stream().noneMatch(
-                    existing -> Math.abs(existing.yCoordinate() - examSeatDTO.yCoordinate()) <= ySpace && Math.abs(existing.xCoordinate() - examSeatDTO.xCoordinate()) <= xSpace);
-            if (isFarEnough) {
-                selectedSeats.add(examSeatDTO);
-            }
-        }
-
-        return selectedSeats.size();
     }
 
     private static ExamRoomUploadInformationDTO getExamRoomUploadInformationDTO(MultipartFile zipFile, Set<ExamRoom> examRooms) {
@@ -380,32 +340,81 @@ public class ExamRoomService {
         return new ExamRoomDeletionSummaryDTO(outdatedAndUnusedExamRoomIds.size());
     }
 
-    public Collection<ExamSeatDTO> getDefaultUsableSeats(ExamRoom examRoom) {
+    /**
+     * Calculates the exam seats that are usable for an exam, according to the default layout
+     *
+     * @param examRoom The exam room, containing seats and default layout
+     * @return All seats that can be used for the exam, in ascending order
+     */
+    public List<ExamSeatDTO> getDefaultUsableSeats(ExamRoom examRoom) {
         var defaultLayoutStrategy = examRoom.getLayoutStrategies().stream().filter(layoutStrategy -> layoutStrategy.getName().equals("default")).findAny().orElseThrow();
 
         return switch (defaultLayoutStrategy.getType()) {
-            case FIXED_SELECTION -> getDefaultUsableSeatsFixedSelection(examRoom, defaultLayoutStrategy.getParametersJson());
-            case RELATIVE_DISTANCE -> getDefaultUsableSeatsRelativeDistance(examRoom, defaultLayoutStrategy.getParametersJson());
+            case FIXED_SELECTION -> getUsableSeatsFixedSelection(examRoom, defaultLayoutStrategy.getParametersJson());
+            case RELATIVE_DISTANCE -> getUsableSeatsRelativeDistance(examRoom, defaultLayoutStrategy.getParametersJson());
         };
     }
 
-    // @formatter:off
-    private record FixedSelectionInput() {}
-    // @formatter:on
-
-    private Collection<ExamSeatDTO> getDefaultUsableSeatsFixedSelection(ExamRoom examRoom, String layoutStrategyParameters) {
-        return null;
+    private record FixedSelectionSeatInput(@JsonProperty("row_index") int rowIndex, @JsonProperty("seat_index") int seatIndex,
+            @JsonProperty("aisle_adjacent") boolean aisleAdjacent) {
     }
 
-    // @formatter:off
-    private record RelativeDistanceInput(
-        @JsonProperty("first_row") int firstRow,
-        @JsonProperty("xspace") double xSpace,
-        @JsonProperty("yspace") double ySpace
-    ) {}
-    // @formatter:on
+    /**
+     * Calculates the seats that can be used for a given {@link ExamRoom} and {@link LayoutStrategyType#FIXED_SELECTION} {@link LayoutStrategy}
+     *
+     * @param examRoom                 The exam room
+     * @param layoutStrategyParameters The JSON parameter string of the fixed-selection layout strategy
+     * @return All seats that can be used given the layout, in ascending order
+     */
+    private List<ExamSeatDTO> getUsableSeatsFixedSelection(ExamRoom examRoom, String layoutStrategyParameters) {
+        List<FixedSelectionSeatInput> seatInputs;
+        try {
+            seatInputs = objectMapper.readValue(layoutStrategyParameters, new TypeReference<>() {
+            });
+        }
+        catch (JsonProcessingException e) {
+            // TODO: Translation
+            throw new BadRequestAlertException("Sire, the fixed selection couldn't be parsed", ENTITY_NAME, "invalidFixedSelection");
+        }
 
-    private Collection<ExamSeatDTO> getDefaultUsableSeatsRelativeDistance(ExamRoom examRoom, String layoutStrategyParameters) {
+        // Group seats by row
+        Map<Double, List<ExamSeatDTO>> rows = examRoom.getSeats().stream().collect(Collectors.groupingBy(ExamSeatDTO::yCoordinate));
+
+        // Sort rows by y ascending, and seats within row by x ascending
+        List<List<ExamSeatDTO>> sortedRows = rows.entrySet().stream().sorted(Map.Entry.comparingByKey()) // sort rows by y
+                .map(entry -> entry.getValue().stream().sorted(Comparator.comparingDouble(ExamSeatDTO::xCoordinate)).toList()).toList();
+
+        return pickSelectedSeats(seatInputs, sortedRows);
+    }
+
+    private static List<ExamSeatDTO> pickSelectedSeats(List<FixedSelectionSeatInput> seatInputs, List<List<ExamSeatDTO>> sortedRows) {
+        List<ExamSeatDTO> selectedSeats = new ArrayList<>();
+        for (FixedSelectionSeatInput seatInput : seatInputs) {
+            final int rowIndex = seatInput.rowIndex();
+            final int seatIndex = seatInput.seatIndex();
+
+            if (rowIndex < 0 || sortedRows.size() <= rowIndex || seatIndex < 0 || sortedRows.get(rowIndex).size() <= seatIndex) {
+                // TODO: Translation
+                throw new BadRequestAlertException("Sire, the selected seat " + seatInput + " does not exist", ENTITY_NAME, "seatNotFoundFixedSelection");
+            }
+
+            selectedSeats.add(sortedRows.get(rowIndex).get(seatIndex));
+        }
+
+        return selectedSeats;
+    }
+
+    private record RelativeDistanceInput(@JsonProperty("first_row") int firstRow, @JsonProperty("xspace") double xSpace, @JsonProperty("yspace") double ySpace) {
+    }
+
+    /**
+     * Calculates the seats that can be used for a given {@link ExamRoom} and {@link LayoutStrategyType#RELATIVE_DISTANCE} {@link LayoutStrategy}
+     *
+     * @param examRoom                 The exam room
+     * @param layoutStrategyParameters The JSON parameter string of the relative-selection layout strategy
+     * @return All seats that can be used given the layout, in ascending order
+     */
+    private List<ExamSeatDTO> getUsableSeatsRelativeDistance(ExamRoom examRoom, String layoutStrategyParameters) {
         log.debug("getDefaultUsableSeatsRelativeDistance: {}", layoutStrategyParameters);
         RelativeDistanceInput relativeDistanceInput;
         try {
@@ -435,6 +444,16 @@ public class ExamRoomService {
         }
 
         return selectedSeats;
+    }
+
+    /**
+     * Checks whether all given exam room ids exist and refer to the newest version of a room
+     *
+     * @param examRoomIds list of room ids
+     * @return {@code true} iff the {@link #examRoomRepository} contains all the given ids
+     */
+    public boolean allRoomsExistAndAreNewestVersions(Set<Long> examRoomIds) {
+        return examRoomRepository.findAllIdsOfCurrentExamRooms().containsAll(examRoomIds);
     }
 
 }

@@ -1465,6 +1465,12 @@ public class ExamService {
         return events;
     }
 
+    /**
+     * Distribute all students who are registered for a given exam across a selection of rooms
+     *
+     * @param examId      The exam
+     * @param examRoomIds The ids of the rooms to distribute to
+     */
     public void distributeRegisteredStudents(long examId, @NotNull @NotEmpty Set<Long> examRoomIds) {
         // First we need to throw out possibly existing distributions:
         examRoomExamAssignmentRepository.deleteAllByExamId(examId);
@@ -1475,12 +1481,12 @@ public class ExamService {
 
         // Now we extract all usable seats from the exam rooms and check if there is enough space to seat all registered students
         final var examUsers = exam.getExamUsers();
-        Map<String, Collection<ExamSeatDTO>> roomNumberToUsableSeatsDefaultLayout = new HashMap<>();
+        Map<String, List<ExamSeatDTO>> roomNumberToUsableSeatsDefaultLayout = new HashMap<>();
         for (ExamRoom examRoom : examRooms) {
             roomNumberToUsableSeatsDefaultLayout.put(examRoom.getRoomNumber(), examRoomService.getDefaultUsableSeats(examRoom));
         }
         log.debug("roomNumberToUsableSeatsDefaultLayout: {}", roomNumberToUsableSeatsDefaultLayout);
-        int numberOfUsableSeats = roomNumberToUsableSeatsDefaultLayout.values().stream().mapToInt(Collection::size).sum();
+        int numberOfUsableSeats = roomNumberToUsableSeatsDefaultLayout.values().stream().mapToInt(List::size).sum();
         if (numberOfUsableSeats < examUsers.size()) {
             // TODO: Translation
             throw new BadRequestAlertException("Sire, reinforce the seating!", ENTITY_NAME, "notEnoughSeats");
@@ -1497,15 +1503,13 @@ public class ExamService {
         // Now we distribute students to the seats
         final var examUsersIterator = examUsers.iterator();
 
-        roomNumberToUsableSeatsDefaultLayout.forEach((roomNumber, usableSeats) -> {
-            usableSeats.stream().takeWhile(ignored -> examUsersIterator.hasNext()).forEach(seat -> {
-                ExamUser nextExamUser = examUsersIterator.next();
-                nextExamUser.setPlannedRoom(roomNumber);
-                nextExamUser.setPlannedSeat(seat.name());
-                nextExamUser = examUserRepository.save(nextExamUser);
-                exam.addExamUser(nextExamUser);
-            });
-        });
+        roomNumberToUsableSeatsDefaultLayout.forEach((roomNumber, usableSeats) -> usableSeats.stream().takeWhile(ignored -> examUsersIterator.hasNext()).forEach(seat -> {
+            ExamUser nextExamUser = examUsersIterator.next();
+            nextExamUser.setPlannedRoom(roomNumber);
+            nextExamUser.setPlannedSeat(seat.name());
+            nextExamUser = examUserRepository.save(nextExamUser);
+            exam.addExamUser(nextExamUser);
+        }));
 
         examRepository.save(exam);
     }

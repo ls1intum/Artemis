@@ -104,6 +104,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamDeletionService;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
+import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.ExamUserService;
@@ -180,12 +181,15 @@ public class ExamResource {
 
     private final ExamUserService examUserService;
 
+    private final ExamRoomService examRoomService;
+
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
             ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
             AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, ExamImportService examImportService,
             CustomAuditEventRepository auditEventRepository, ChannelService channelService, ChannelRepository channelRepository, ExerciseRepository exerciseRepository,
-            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService) {
+            ExamSessionService examSessionRepository, ExamLiveEventsService examLiveEventsService, StudentExamService studentExamService, ExamUserService examUserService,
+            ExamRoomService examRoomService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -208,6 +212,7 @@ public class ExamResource {
         this.examLiveEventsService = examLiveEventsService;
         this.studentExamService = studentExamService;
         this.examUserService = examUserService;
+        this.examRoomService = examRoomService;
     }
 
     /**
@@ -1373,7 +1378,12 @@ public class ExamResource {
 
         if (examRoomIds == null || examRoomIds.isEmpty()) {
             // TODO: Add translation
-            throw new BadRequestAlertException("Missing room IDs", ENTITY_NAME, "missingRoomIDs");
+            throw new BadRequestAlertException("Sire, you didn't specify any room IDs", ENTITY_NAME, "noRoomIDs");
+        }
+
+        if (!examRoomService.allRoomsExistAndAreNewestVersions(examRoomIds)) {
+            // TODO: Add translation
+            throw new BadRequestAlertException("Sire, you have invalid room IDs", ENTITY_NAME, "invalidRoomIDs");
         }
 
         examService.distributeRegisteredStudents(examId, examRoomIds);
