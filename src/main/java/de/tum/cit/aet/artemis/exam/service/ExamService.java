@@ -106,11 +106,17 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -183,6 +189,12 @@ public class ExamService {
     @Value("${artemis.course-archives-path}")
     private Path examArchivesDirPath;
 
+    private final QuizQuestionRepository quizQuestionRepository;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, TutorLeaderboardService tutorLeaderboardService,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
@@ -190,7 +202,9 @@ public class ExamService {
             CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi,
             AuthorizationCheckService authorizationCheckService, BonusService bonusService, ExerciseDeletionService exerciseDeletionService,
             SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
-            QuizResultService quizResultService, ExerciseRepository exerciseRepository) {
+            QuizResultService quizResultService, ExerciseRepository exerciseRepository, QuizQuestionRepository quizQuestionRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -215,6 +229,9 @@ public class ExamService {
         this.defaultObjectMapper = new ObjectMapper();
         this.quizResultService = quizResultService;
         this.exerciseRepository = exerciseRepository;
+        this.quizQuestionRepository = quizQuestionRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
     }
 
     private static boolean isSecondCorrectionEnabled(Exam exam) {
@@ -292,8 +309,72 @@ public class ExamService {
             return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         }
         else {
-            return examRepository.findWithExerciseGroupsAndExercisesAndDetailsByIdOrElseThrow(examId);
+            return findWithExerciseGroupsAndExercisesAndDetailsByIdElseThrow(examId);
         }
+    }
+
+    /**
+     * Get one exam with exercise groups, exercises and additional details.
+     * Additional details are:
+     * - template and solution participation for programming exercises with latest submission and result
+     * - questions for quiz exercises
+     *
+     * @param examId the id of the entity
+     * @return the exam with exercise groups and additional details
+     */
+    private Exam findWithExerciseGroupsAndExercisesAndDetailsByIdElseThrow(long examId) {
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+        Set<QuizExercise> quizExercises = getAllExercisesForExamByType(exam, QuizExercise.class);
+        Set<ProgrammingExercise> programmingExercises = getAllExercisesForExamByType(exam, ProgrammingExercise.class);
+        Set<Long> quizExerciseIds = quizExercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
+        Set<Long> programmingExerciseIds = programmingExercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
+        if (!quizExerciseIds.isEmpty()) {
+            Set<QuizQuestion> quizQuestions = quizQuestionRepository.findAllByExerciseIds(quizExerciseIds);
+            quizExercises.forEach(quizExercise -> quizExercise.setQuizQuestions(
+                    quizQuestions.stream().filter(quizQuestion -> quizQuestion.getExercise() != null && quizQuestion.getExercise().getId().equals(quizExercise.getId())).toList()));
+        }
+        if (!programmingExerciseIds.isEmpty()) {
+            Set<TemplateProgrammingExerciseParticipation> templateProgrammingExerciseParticipations = templateProgrammingExerciseParticipationRepository
+                    .findAllWithLatestSubmissionByExerciseIds(programmingExerciseIds);
+            Set<SolutionProgrammingExerciseParticipation> solutionProgrammingExerciseParticipations = solutionProgrammingExerciseParticipationRepository
+                    .findAllWithLatestSubmissionByExerciseIds(programmingExerciseIds);
+
+            programmingExercises.forEach(programmingExercise -> {
+                templateProgrammingExerciseParticipations.stream().filter(
+                        participation -> participation.getProgrammingExercise() != null && participation.getProgrammingExercise().getId().equals(programmingExercise.getId()))
+                        .findAny().ifPresent(programmingExercise::setTemplateParticipation);
+                solutionProgrammingExerciseParticipations.stream().filter(
+                        participation -> participation.getProgrammingExercise() != null && participation.getProgrammingExercise().getId().equals(programmingExercise.getId()))
+                        .findAny().ifPresent(programmingExercise::setSolutionParticipation);
+            });
+            Map<Long, Result> latestResultsForTemplateSubmissions = resultRepository
+                    .findLatestResultsByParticipationIds(templateProgrammingExerciseParticipations.stream().map(DomainObject::getId).collect(Collectors.toSet())).stream()
+                    .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1));
+            Map<Long, Result> latestResultsForSolutionSubmissions = resultRepository
+                    .findLatestResultsByParticipationIds(solutionProgrammingExerciseParticipations.stream().map(DomainObject::getId).collect(Collectors.toSet())).stream()
+                    .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1));
+
+            programmingExercises.forEach(programmingExercise -> {
+                if (programmingExercise.getSolutionParticipation() != null) {
+                    programmingExercise.getSolutionParticipation().getSubmissions().forEach(submission -> {
+                        Result result = latestResultsForSolutionSubmissions.get(submission.getId());
+                        if (result != null) {
+                            submission.setResults(List.of(result));
+                        }
+                    });
+                }
+                if (programmingExercise.getTemplateParticipation() != null) {
+                    programmingExercise.getTemplateParticipation().getSubmissions().forEach(submission -> {
+                        Result result = latestResultsForTemplateSubmissions.get(submission.getId());
+                        if (result != null) {
+                            submission.setResults(List.of(result));
+                        }
+                    });
+                }
+            });
+
+        }
+        return exam;
     }
 
     /**
