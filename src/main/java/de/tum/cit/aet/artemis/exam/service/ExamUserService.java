@@ -195,8 +195,7 @@ public class ExamUserService {
     public void setPlannedRoomAndSeatTransientForExamUsers(Collection<ExamUser> examUsers, boolean ignoreExamUsersWithoutPlannedRoomAndSeat) {
         var usedExams = examUsers.stream().map(ExamUser::getExam).distinct().toList();
         if (usedExams.size() != 1) {
-            throw new BadRequestAlertException("All exam users must belong to the same exam", ENTITY_NAME, "examUserService.multipleExams",
-                    Map.of("foundExams", String.valueOf(usedExams.size())));
+            throw new BadRequestAlertException("All exam users must belong to the same exam", ENTITY_NAME, "examUserService.multipleExams", Map.of("foundExams", usedExams.size()));
         }
         long examId = usedExams.getFirst().getId();
         Set<ExamRoom> examRoomsUsedInExam = examRoomRepository.findAllByExamId(examId);
@@ -211,7 +210,7 @@ public class ExamUserService {
                 }
                 else {
                     throw new BadRequestAlertException("Exam user does not have a planned room or seat", ENTITY_NAME, "examUser.service.missingPlannedRoomOrSeat",
-                            Map.of("examUserId", String.valueOf(examUser.getId()), "plannedRoom", plannedRoomName, "plannedSeat", plannedSeatName));
+                            Map.of("userName", examUser.getUser().getLogin()));
                 }
             }
 
@@ -219,13 +218,13 @@ public class ExamUserService {
                     .filter(room -> room.getName().equalsIgnoreCase(plannedRoomName) || room.getAlternativeName().equalsIgnoreCase(plannedRoomName)).findFirst();
             if (matchingRoom.isEmpty()) {
                 throw new BadRequestAlertException("Planned room of exam user cannot be mapped to an actual room", ENTITY_NAME, "examUser.service.plannedRoomNotFound",
-                        Map.of("examUserId", String.valueOf(examUser.getId()), "plannedRoom", plannedRoomName));
+                        Map.of("userName", examUser.getUser().getLogin(), "plannedRoom", plannedRoomName));
             }
 
             Optional<ExamSeatDTO> matchingSeat = matchingRoom.get().getSeats().stream().filter(seat -> seat.name().equalsIgnoreCase(plannedSeatName)).findFirst();
             if (matchingSeat.isEmpty()) {
                 throw new BadRequestAlertException("Planned seat of exam user cannot be mapped to an actual seat", ENTITY_NAME, "examUser.service.plannedSeatNotFound",
-                        Map.of("examUserId", String.valueOf(examUser.getId()), "plannedSeat", plannedSeatName, "plannedRoom", plannedRoomName));
+                        Map.of("userName", examUser.getUser().getLogin(), "plannedSeat", plannedSeatName));
             }
 
             examUser.setTransientPlannedRoomAndSeat(matchingRoom.get(), matchingSeat.get());

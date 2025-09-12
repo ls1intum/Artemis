@@ -272,7 +272,7 @@ public class ExamRoomService {
                     }
 
                     // We could just straight up use layoutDetailNode.size() here, but by doing it like this we also ensure that the data will be parseable
-                    int capacity = getUsableSeatsFixedSelection(room, layoutStrategy.getParametersJson()).size();
+                    int capacity = getUsableSeatsFixedSelection(room, layoutStrategy).size();
                     layoutStrategy.setCapacity(capacity);
                 }
                 case LayoutStrategyType.RELATIVE_DISTANCE -> {
@@ -280,7 +280,7 @@ public class ExamRoomService {
                         throw new BadRequestAlertException("Couldn't parse room " + room.getRoomNumber() + " because the layouts couldn't be converted", ENTITY_NAME,
                                 "room.malformedLayout", Map.of("roomNumber", room.getRoomNumber(), "layoutName", layoutName));
                     }
-                    int capacity = getUsableSeatsRelativeDistance(room, layoutStrategy.getParametersJson()).size();
+                    int capacity = getUsableSeatsRelativeDistance(room, layoutStrategy).size();
                     layoutStrategy.setCapacity(capacity);
                 }
             }
@@ -355,8 +355,8 @@ public class ExamRoomService {
         var defaultLayoutStrategy = examRoom.getLayoutStrategies().stream().filter(layoutStrategy -> layoutStrategy.getName().equals("default")).findAny().orElseThrow();
 
         return switch (defaultLayoutStrategy.getType()) {
-            case FIXED_SELECTION -> getUsableSeatsFixedSelection(examRoom, defaultLayoutStrategy.getParametersJson());
-            case RELATIVE_DISTANCE -> getUsableSeatsRelativeDistance(examRoom, defaultLayoutStrategy.getParametersJson());
+            case FIXED_SELECTION -> getUsableSeatsFixedSelection(examRoom, defaultLayoutStrategy);
+            case RELATIVE_DISTANCE -> getUsableSeatsRelativeDistance(examRoom, defaultLayoutStrategy);
         };
     }
 
@@ -367,19 +367,19 @@ public class ExamRoomService {
     /**
      * Calculates the seats that can be used for a given {@link ExamRoom} and {@link LayoutStrategyType#FIXED_SELECTION} {@link LayoutStrategy}
      *
-     * @param examRoom                 The exam room
-     * @param layoutStrategyParameters The JSON parameter string of the fixed-selection layout strategy
+     * @param examRoom       The exam room
+     * @param layoutStrategy The JSON parameter string of the fixed-selection layout strategy
      * @return All seats that can be used given the layout, in ascending order
      */
-    private List<ExamSeatDTO> getUsableSeatsFixedSelection(ExamRoom examRoom, String layoutStrategyParameters) {
+    private List<ExamSeatDTO> getUsableSeatsFixedSelection(ExamRoom examRoom, LayoutStrategy layoutStrategy) {
         List<FixedSelectionSeatInput> seatInputs;
         try {
-            seatInputs = objectMapper.readValue(layoutStrategyParameters, new TypeReference<>() {
+            seatInputs = objectMapper.readValue(layoutStrategy.getParametersJson(), new TypeReference<>() {
             });
         }
         catch (JsonProcessingException e) {
-            // TODO: Translation
-            throw new BadRequestAlertException("Sire, the fixed selection couldn't be parsed", ENTITY_NAME, "invalidFixedSelection");
+            throw new BadRequestAlertException("Sire, the fixed selection couldn't be parsed", ENTITY_NAME, "room.invalidLayout",
+                    Map.of("layoutName", layoutStrategy.getName(), "roomNumber", examRoom.getRoomNumber()));
         }
 
         // Group seats by row
@@ -399,8 +399,8 @@ public class ExamRoomService {
             final int seatIndex = seatInput.seatIndex();
 
             if (rowIndex < 0 || sortedRows.size() <= rowIndex || seatIndex < 0 || sortedRows.get(rowIndex).size() <= seatIndex) {
-                // TODO: Translation
-                throw new BadRequestAlertException("Sire, the selected seat " + seatInput + " does not exist in room " + roomNumber, ENTITY_NAME, "seatNotFoundFixedSelection");
+                throw new BadRequestAlertException("Sire, the selected seat " + seatInput + " does not exist in room " + roomNumber, ENTITY_NAME, "room.seatNotFoundFixedSelection",
+                        Map.of("rowIndex", rowIndex, "seatIndex", seatIndex, "roomNumber", roomNumber));
             }
 
             selectedSeats.add(sortedRows.get(rowIndex).get(seatIndex));
@@ -415,19 +415,18 @@ public class ExamRoomService {
     /**
      * Calculates the seats that can be used for a given {@link ExamRoom} and {@link LayoutStrategyType#RELATIVE_DISTANCE} {@link LayoutStrategy}
      *
-     * @param examRoom                 The exam room
-     * @param layoutStrategyParameters The JSON parameter string of the relative-selection layout strategy
+     * @param examRoom       The exam room
+     * @param layoutStrategy The relative-distance layout strategy
      * @return All seats that can be used given the layout, in ascending order
      */
-    private List<ExamSeatDTO> getUsableSeatsRelativeDistance(ExamRoom examRoom, String layoutStrategyParameters) {
-        log.debug("getDefaultUsableSeatsRelativeDistance: {}", layoutStrategyParameters);
+    private List<ExamSeatDTO> getUsableSeatsRelativeDistance(ExamRoom examRoom, LayoutStrategy layoutStrategy) {
         RelativeDistanceInput relativeDistanceInput;
         try {
-            relativeDistanceInput = objectMapper.readValue(layoutStrategyParameters, RelativeDistanceInput.class);
+            relativeDistanceInput = objectMapper.readValue(layoutStrategy.getParametersJson(), RelativeDistanceInput.class);
         }
         catch (JsonProcessingException e) {
-            // TODO: Translation
-            throw new BadRequestAlertException("Sire, reinforce the layout strategy", ENTITY_NAME, "readRelativeDistance");
+            throw new BadRequestAlertException("Sire, reinforce the layout strategy", ENTITY_NAME, "room.invalidLayout",
+                    Map.of("layoutName", layoutStrategy.getName(), "roomNumber", examRoom.getRoomNumber()));
         }
 
         final int firstRow = relativeDistanceInput.firstRow;

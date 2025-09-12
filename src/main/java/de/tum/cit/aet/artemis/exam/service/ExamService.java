@@ -1485,11 +1485,11 @@ public class ExamService {
         for (ExamRoom examRoom : examRooms) {
             roomNumberToUsableSeatsDefaultLayout.put(examRoom.getRoomNumber(), examRoomService.getDefaultUsableSeats(examRoom));
         }
-        log.debug("roomNumberToUsableSeatsDefaultLayout: {}", roomNumberToUsableSeatsDefaultLayout);
+
         int numberOfUsableSeats = roomNumberToUsableSeatsDefaultLayout.values().stream().mapToInt(List::size).sum();
         if (numberOfUsableSeats < examUsers.size()) {
-            // TODO: Translation
-            throw new BadRequestAlertException("Sire, reinforce the seating!", ENTITY_NAME, "notEnoughSeats");
+            throw new BadRequestAlertException("Sire, reinforce the seating!", ENTITY_NAME, "notEnoughExamSeats",
+                    Map.of("numberOfUsableSeats", numberOfUsableSeats, "numberOfExamUsers", examUsers.size()));
         }
 
         // Since we know we have enough space, we can now assign these rooms to the exam
