@@ -262,12 +262,12 @@ public class SecurityConfiguration {
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
 
-        // Configure WebAuthn passkey if enabled
-        if(passkeyEnabled){
-        passkeyWebAuthnConfigurer.orElseThrow(()->new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
-        }
-
         // @formatter:on
+
+        // Configure WebAuthn passkey if enabled
+        if (passkeyEnabled) {
+            passkeyWebAuthnConfigurer.orElseThrow(() -> new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
+        }
 
         // Conditionally adds configuration for LTI if it is active.
         if (profileService.isLtiActive()) {

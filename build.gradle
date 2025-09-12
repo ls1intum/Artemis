@@ -181,6 +181,9 @@ dependencies {
     implementation "de.jplag:text:${jplag_version}"
     implementation "de.jplag:typescript:${jplag_version}"
 
+    implementation platform("org.springframework.ai:spring-ai-bom:1.0.1")
+    implementation "org.springframework.ai:spring-ai-starter-model-azure-openai" // can also use non-azure models
+
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
     implementation "org.slf4j:jul-to-slf4j:${slf4j_version}"
@@ -578,5 +581,5 @@ tasks.named("dependencyUpdates").configure {
 // 11) Create changelog between Java and DB         ./gradlew liquibaseDiffChangeLog (make sure to set the correct username and password in liquibase.gradle)
 // 12) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
-// 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups at the moment)
-// 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups at the moment)
+// 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups and hyperion at the moment)
+// 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups and hyperion at the moment)
