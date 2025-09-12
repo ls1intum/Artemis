@@ -35,9 +35,11 @@ public class QuizTrainingService {
      * @param userId                 the id of the user who is submitting the quiz
      * @param studentSubmittedAnswer the answer submitted by the user
      * @param answeredAt             the time when the question was answered
+     * @param courseId               the id of the course the quiz question belongs to
      * @return a DTO containing the submitted answer after the evaluation
      */
-    public SubmittedAnswerAfterEvaluationDTO submitForTraining(long quizQuestionId, long userId, QuizTrainingAnswerDTO studentSubmittedAnswer, ZonedDateTime answeredAt) {
+    public SubmittedAnswerAfterEvaluationDTO submitForTraining(long quizQuestionId, long userId, QuizTrainingAnswerDTO studentSubmittedAnswer, ZonedDateTime answeredAt,
+            long courseId) {
         QuizQuestion quizQuestion = quizQuestionRepository.findByIdElseThrow(quizQuestionId);
         SubmittedAnswer answer = studentSubmittedAnswer.submittedAnswer();
 
@@ -46,7 +48,7 @@ public class QuizTrainingService {
         answer.setScoreInPoints(score);
         answer.setQuizQuestion(quizQuestion);
 
-        quizQuestionProgressService.saveProgressFromTraining(quizQuestion, userId, answer, answeredAt);
+        quizQuestionProgressService.saveProgressFromTraining(quizQuestion, userId, answer, answeredAt, courseId);
 
         return SubmittedAnswerAfterEvaluationDTO.of(answer);
     }
