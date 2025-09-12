@@ -12,9 +12,16 @@ public record AuthorDTO(Long id, String name, String imageUrl) {
         this(user.getId(), user.getName(), user.getImageUrl());
     }
 
+    /**
+     * Return an AuthorDTO for the User
+     *
+     * @param user the User entity
+     * @return the created AuthorDTO
+     * @throws BadRequestAlertException if the user does not exist
+     */
     public static AuthorDTO fromUser(User user) {
         if (user == null) {
-            throw new BadRequestAlertException("User does not exist.", "reaction", "missingUser");
+            throw new BadRequestAlertException("The user must exist.", "reaction", "missingUser");
         }
         return new AuthorDTO(user);
     }
