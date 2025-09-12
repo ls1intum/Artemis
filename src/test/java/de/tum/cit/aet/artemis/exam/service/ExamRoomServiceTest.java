@@ -81,9 +81,9 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
         var uploadInformation = examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileRealisticScenario);
 
         assertThat(uploadInformation.uploadedFileName()).isEqualTo(ExamRoomZipFiles.zipFileRealisticScenario.getOriginalFilename());
-        assertThat(uploadInformation.numberOfUploadedRooms()).isEqualTo(64);
-        assertThat(uploadInformation.numberOfUploadedSeats()).isEqualTo(16141);
-        assertThat(uploadInformation.uploadedRoomNames()).hasSize(64);
+        assertThat(uploadInformation.numberOfUploadedRooms()).isEqualTo(59);
+        assertThat(uploadInformation.numberOfUploadedSeats()).isEqualTo(14_589);
+        assertThat(uploadInformation.uploadedRoomNames()).hasSize(59);
     }
 
     @Test

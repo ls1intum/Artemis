@@ -58,9 +58,9 @@ public class ExamRoomZipFiles {
     /**
      * Zip file containing all exam rooms stored in tumexam at the time of writing (11th August 2025)
      * This sums up to:
-     * - 64 rooms
-     * - 16,141 seats
-     * - 224 layout strategies
+     * - 59 rooms
+     * - 14,589 seats
+     * - 212 layout strategies
      */
     public static final MockMultipartFile zipFileRealisticScenario;
 
