@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.versioning.domain;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -28,7 +27,6 @@ public class ExerciseVersion extends AbstractAuditingEntity {
 
     @ManyToOne
     @JoinColumn(name = "author_id")
-    @Nullable
     private User author;
 
     @JdbcTypeCode(SqlTypes.JSON)

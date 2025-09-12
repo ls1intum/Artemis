@@ -10,6 +10,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -48,9 +50,11 @@ public class ExerciseVersionService {
 
     private final FileUploadExerciseVersioningRepository fileUploadExerciseRepository;
 
+    private final UserRepository userRepository;
+
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseVersioningRepository textExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
-            FileUploadExerciseVersioningRepository fileUploadExerciseRepository) {
+            FileUploadExerciseVersioningRepository fileUploadExerciseRepository, UserRepository userRepository) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -58,6 +62,18 @@ public class ExerciseVersionService {
         this.textExerciseRepository = textExerciseRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
+        this.userRepository = userRepository;
+    }
+
+    @Async
+    public void createExerciseVersion(Exercise exercise, String userLogin) {
+        try {
+            var user = userRepository.getUserByLoginElseThrow(userLogin);
+            createExerciseVersion(exercise, user);
+        }
+        catch (EntityNotFoundException e) {
+            log.warn("No active user during exercise version creation check");
+        }
     }
 
     /**
@@ -94,7 +110,6 @@ public class ExerciseVersionService {
                 }
             }
             exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
-            ;
             exerciseVersionRepository.saveAndFlush(exerciseVersion);
         }
         catch (Exception e) {

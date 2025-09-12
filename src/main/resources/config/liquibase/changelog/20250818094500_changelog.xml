@@ -49,7 +49,8 @@
             baseTableName="exercise_version"
             constraintName="fk_exercise_version_exercise_id"
             referencedColumnNames="id"
-            referencedTableName="exercise" />
+            referencedTableName="exercise"
+            onDelete="CASCADE" />
     </changeSet>
 
 

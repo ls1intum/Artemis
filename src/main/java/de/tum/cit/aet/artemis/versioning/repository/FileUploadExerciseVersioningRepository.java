@@ -26,6 +26,9 @@ public interface FileUploadExerciseVersioningRepository extends ArtemisJpaReposi
      * Finds a FileUploadExercise with minimal data necessary for exercise versioning.
      * Only includes core configuration data, NOT submissions, results, or example submissions.
      * Basic FileUploadExercise fields (exampleSolution, filePattern) are already included in the entity.
+     *
+     * @param exerciseId the id of the exercise to find
+     * @return the exercise with minimal data necessary for exercise versioning
      */
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "competencyLinks.competency", "categories", "teamAssignmentConfig", "gradingCriteria",
             "exampleSubmissions.submission", "attachments", "plagiarismDetectionConfig" })

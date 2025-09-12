@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -56,15 +55,11 @@ public record ExerciseSnapshot(
         ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, DifficultyLevel difficulty, ExerciseMode mode,
 
         // fields of Exercise class
-        // not included fields: teams, studentParticipations, tutorParticipations, exampleSubmission, attachments
-        // partially included fields: course, exerciseGroup
+        // not included fields: teams, studentParticipations, tutorParticipations, exampleSubmission, attachment, course, exerciseGroup, competencyLinks
         Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests, IncludedInOverallScore includedInOverallScore, String problemStatement,
-        String gradingInstructions, Set<CompetencyExerciseLinkData> competencyLinks, Set<String> categories, TeamAssignmentConfigData teamAssignmentConfig,
-        Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, Long courseId,
-        // course id instead of linked course object
-        Long exerciseGroupId, // exercise group id instead of linked exercise group object
-        Set<GradingCriterionDTO> gradingCriteria, PlagiarismDetectionConfig plagiarismDetectionConfig, ProgrammingExerciseData programmingData, TextExerciseData textData,
-        ModelingExerciseData modelingData, QuizExerciseData quizData, FileUploadExerciseData fileUploadData
+        String gradingInstructions, Set<String> categories, TeamAssignmentConfigData teamAssignmentConfig, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled,
+        String feedbackSuggestionModule, Set<GradingCriterionDTO> gradingCriteria, PlagiarismDetectionConfig plagiarismDetectionConfig, ProgrammingExerciseData programmingData,
+        TextExerciseData textData, ModelingExerciseData modelingData, QuizExerciseData quizData, FileUploadExerciseData fileUploadData
 
 ) implements Serializable {
 
@@ -81,24 +76,10 @@ public record ExerciseSnapshot(
                 exercise.getAssessmentType(), toUtc(exercise.getReleaseDate()), toUtc(exercise.getStartDate()), toUtc(exercise.getDueDate()),
                 toUtc(exercise.getAssessmentDueDate()), toUtc(exercise.getExampleSolutionPublicationDate()), exercise.getDifficulty(), exercise.getMode(),
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getIncludedInOverallScore(), exercise.getProblemStatement(),
-                exercise.getGradingInstructions(), exercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkData::of).collect(Collectors.toSet()), exercise.getCategories(),
-                TeamAssignmentConfigData.of(exercise.getTeamAssignmentConfig()), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
-                exercise.getFeedbackSuggestionModule(),
-                exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null,
-                exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null,
+                exercise.getGradingInstructions(), exercise.getCategories(), TeamAssignmentConfigData.of(exercise.getTeamAssignmentConfig()),
+                exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(),
                 exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet()), exercise.getPlagiarismDetectionConfig(), programmingData, textData,
                 modelingData, quizData, fileUploadData);
-    }
-
-    // only competency id and weight are needed, as actual competency objects are not considered as part of exercise
-    public record CompetencyExerciseLinkData(CompetencyExerciseLink.CompetencyExerciseId competencyId, double weight) implements Serializable {
-
-        private static CompetencyExerciseLinkData of(CompetencyExerciseLink link) {
-            if (link == null) {
-                return null;
-            }
-            return new CompetencyExerciseLinkData(link.getId(), link.getWeight());
-        }
     }
 
     public record TeamAssignmentConfigData(long id, int minTeamSize, int maxTeamSize) implements Serializable {

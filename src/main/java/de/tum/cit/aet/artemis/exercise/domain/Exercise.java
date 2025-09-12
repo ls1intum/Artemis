@@ -19,6 +19,7 @@ import jakarta.persistence.DiscriminatorType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -66,7 +67,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.versioning.domain.ExerciseVersion;
+import de.tum.cit.aet.artemis.versioning.service.ExerciseVersionEntityListener;
 
 /**
  * An Exercise.
@@ -77,6 +78,7 @@ import de.tum.cit.aet.artemis.versioning.domain.ExerciseVersion;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "E")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@EntityListeners(ExerciseVersionEntityListener.class)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
 // @formatter:off
@@ -178,10 +180,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JoinColumn(name = "plagiarism_detection_config_id")
     @JsonIgnoreProperties("exercise")
     private PlagiarismDetectionConfig plagiarismDetectionConfig;
-
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("exercise")
-    private Set<ExerciseVersion> exerciseVersions = new HashSet<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -902,11 +900,4 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                 .forEach(Collection::clear);
     }
 
-    public Set<ExerciseVersion> getExerciseVersions() {
-        return exerciseVersions;
-    }
-
-    public void setExerciseVersions(Set<ExerciseVersion> exerciseVersions) {
-        this.exerciseVersions = exerciseVersions;
-    }
 }
