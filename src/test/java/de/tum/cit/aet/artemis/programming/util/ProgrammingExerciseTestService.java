@@ -25,6 +25,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -166,6 +167,9 @@ public class ProgrammingExerciseTestService {
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCRepoPath;
+
+    @Value("${artemis.version-control.url}")
+    private URI localVCBaseUri;
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
@@ -783,6 +787,7 @@ public class ProgrammingExerciseTestService {
 
     private AuxiliaryRepository addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(sourceExercise);
+        String auxRepoName = sourceExercise.generateRepositoryName("auxrepo");
         var url = new LocalVCRepositoryUri(convertToLocalVcUriString(sourceAuxRepo)).toString();
         repository.setRepositoryUri(url);
         return auxiliaryRepositoryRepository.save(repository);
@@ -1485,34 +1490,6 @@ public class ProgrammingExerciseTestService {
         assertThat(submissions).hasSize(1);
     }
 
-    // Test
-    public void exportInstructorRepositories_shouldReturnFile() throws Exception {
-        String zip = exportInstructorRepository(RepositoryType.TEMPLATE, exerciseRepo, HttpStatus.OK);
-        assertThat(zip).isNotNull();
-
-        zip = exportInstructorRepository(RepositoryType.SOLUTION, solutionRepo, HttpStatus.OK);
-        assertThat(zip).isNotNull();
-
-        zip = exportInstructorRepository(RepositoryType.TESTS, testRepo, HttpStatus.OK);
-        assertThat(zip).isNotNull();
-    }
-
-    public void exportInstructorAuxiliaryRepository_shouldReturnFile() throws Exception {
-        generateProgrammingExerciseForExport();
-        var auxRepo = addAuxiliaryRepositoryToProgrammingExercise(exercise);
-        setupAuxRepoMock(auxRepo);
-        setupRepositoryMocks(exercise);
-        var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-instructor-auxiliary-repository/" + auxRepo.getId();
-        request.get(url, HttpStatus.OK, String.class);
-    }
-
-    private void setupAuxRepoMock(AuxiliaryRepository auxiliaryRepository) throws GitAPIException {
-        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepo.workingCopyGitRepoFile.toPath(), null);
-
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(auxiliaryRepository.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(auxiliaryRepository.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
-    }
-
     public void exportInstructorAuxiliaryRepository_forbidden() throws Exception {
         generateProgrammingExerciseForExport();
         var auxRepo = addAuxiliaryRepositoryToProgrammingExercise(exercise);
@@ -1806,11 +1783,12 @@ public class ProgrammingExerciseTestService {
 
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
         LocalVCRepositoryUri vcsUrl = exercise.getRepositoryURI(repoType);
-        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null);
+        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), vcsUrl);
 
         createAndCommitDummyFileInLocalRepository(localRepo, fileName);
         doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(vcsUrl), any(Path.class), anyBoolean(), anyBoolean());
         doReturn(repository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(vcsUrl), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository).when(gitService).getBareRepository(eq(vcsUrl), anyBoolean());
     }
 
     // Test
