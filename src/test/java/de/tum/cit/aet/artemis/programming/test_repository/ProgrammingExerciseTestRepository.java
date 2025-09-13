@@ -17,6 +17,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -48,6 +49,9 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
             """)
     ProgrammingExercise findOneWithEagerEverything(@Param("exerciseId") long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.team", "studentParticipations.team.students" })
+    Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(long exerciseId);
+
     @Query("""
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
@@ -55,6 +59,17 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
                 LEFT JOIN FETCH pe.solutionParticipation
             """)
     List<ProgrammingExercise> findAllWithEagerTemplateAndSolutionParticipations();
+
+    // Note: we should use left join here to avoid issues in the where clause
+    @Query("""
+            SELECT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.exerciseGroup eg
+                LEFT JOIN eg.exam ex
+            WHERE pe.course = :course
+                OR ex.course = :course
+            """)
+    List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
 
     /**
      * Returns the programming exercises that have a buildAndTestStudentSubmissionsAfterDueDate higher than the provided date.
@@ -81,12 +96,6 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     List<ProgrammingExercise> findAllWithTemplateAndSolutionParticipationByIdIn(Set<Long> exerciseIds);
-
-    List<ProgrammingExercise> findAllByCourse_InstructorGroupNameIn(Set<String> groupNames);
-
-    List<ProgrammingExercise> findAllByCourse_EditorGroupNameIn(Set<String> groupNames);
-
-    List<ProgrammingExercise> findAllByCourse_TeachingAssistantGroupNameIn(Set<String> groupNames);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
     Optional<ProgrammingExercise> findWithAllParticipationsAndBuildConfigById(long exerciseId);
@@ -129,7 +138,4 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
     Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
 
     List<ProgrammingExercise> findAllByCourseId(long courseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.team", "studentParticipations.team.students" })
-    Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(long exerciseId);
 }

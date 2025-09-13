@@ -39,6 +39,7 @@
 /* dnd quiz statistic letter position mixin */
 @mixin dnd-letter-position($tx, $ty, $tz) {
     @include transformTranslate3D($tx, $ty, $tz);
+
     position: absolute;
     top: 3%;
     left: 3%;

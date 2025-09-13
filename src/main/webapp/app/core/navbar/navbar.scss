@@ -3,6 +3,7 @@
 /* ==========================================================================
 Navbar
 ========================================================================== */
+
 /* Don't underline the menu items on hover */
 a:not(.btn):hover {
     text-decoration: none !important;
@@ -46,7 +47,7 @@ a:not(.btn):hover {
     color: var(--navbar-dark-color);
 
     .profile-image {
-        margin: -10px 0px;
+        margin: -10px 0;
         height: 30px;
         width: 30px;
     }

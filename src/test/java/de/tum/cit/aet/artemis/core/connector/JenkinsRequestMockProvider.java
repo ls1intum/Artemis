@@ -4,11 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.loadFileFromResources;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
@@ -20,9 +15,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import org.hamcrest.Matchers;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -33,22 +26,15 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsEndpoints;
-import de.tum.cit.aet.artemis.programming.service.jenkins.dto.JenkinsUserDTO;
-import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 @Component
 @Profile(PROFILE_JENKINS)
@@ -66,14 +52,8 @@ public class JenkinsRequestMockProvider {
 
     private MockRestServiceServer shortTimeoutMockServer;
 
-    // will be assigned in enableMockingOfRequests(), can be used like a MockitoSpyBean
-    private JenkinsJobPermissionsService jenkinsJobPermissionsService;
-
     @Autowired
     private ObjectMapper mapper;
-
-    @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     private AutoCloseable closeable;
 
@@ -88,10 +68,9 @@ public class JenkinsRequestMockProvider {
         this.shortTimeoutRestTemplate.setInterceptors(List.of());
     }
 
-    public void enableMockingOfRequests(JenkinsJobPermissionsService jenkinsJobPermissionsService) {
+    public void enableMockingOfRequests() {
         mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).bufferContent().build();
         shortTimeoutMockServer = MockRestServiceServer.bindTo(shortTimeoutRestTemplate).ignoreExpectOrder(true).bufferContent().build();
-        this.jenkinsJobPermissionsService = jenkinsJobPermissionsService;
         closeable = MockitoAnnotations.openMocks(this);
     }
 
@@ -114,7 +93,7 @@ public class JenkinsRequestMockProvider {
         mockServer.verify();
     }
 
-    private String buildJobName(final String projectKey, final String planName) {
+    public static String buildJobName(final String projectKey, final String planName) {
         // the build plan ID can be provided either as the full name already (contains -), or only the participation ID suffix.
         if (planName.contains("-")) {
             return planName;
@@ -145,7 +124,6 @@ public class JenkinsRequestMockProvider {
         final String job = buildJobName(projectKey, planKey);
 
         mockCreateJobInFolder(projectKey, job, jobAlreadyExists);
-        mockGivePlanPermissions(projectKey, job);
         mockTriggerBuild(projectKey, job, false);
     }
 
@@ -177,21 +155,6 @@ public class JenkinsRequestMockProvider {
     public void mockCreateJob(String jobFolder, String job) {
         URI uri = JenkinsEndpoints.NEW_PLAN.buildEndpoint(jenkinsServerUri, jobFolder).queryParam("name", job).build(true).toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
-    }
-
-    /**
-     * Mock equivalent of {@link JenkinsJobPermissionsService#addInstructorAndEditorAndTAPermissionsToUsersForJob(Set, Set, Set, String, String)}.
-     *
-     * @param folderName The folder the job is in.
-     * @param job        The name of the job itself.
-     */
-    public void mockGivePlanPermissions(String folderName, String job) throws IOException {
-        // add permissions to job itself
-        mockGetJobConfig(folderName, job);
-        mockUpdatePlanRepository(folderName, job, false);
-
-        // add read permission to folder the job is in
-        mockAddInstructorAndEditorAndTAPermissionsToUsersForFolder(folderName, false);
     }
 
     public void mockGetJobConfig(String folderName, String jobName) throws IOException {
@@ -382,165 +345,6 @@ public class JenkinsRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(response).contentType(MediaType.APPLICATION_JSON));
     }
 
-    public void mockUpdateUserAndGroups(String oldLogin, User user, Set<String> groupsToAdd, Set<String> groupsToRemove, boolean userExistsInJenkins) throws IOException {
-        if (!oldLogin.equals(user.getLogin())) {
-            mockUpdateUserLogin(oldLogin, user);
-        }
-        else {
-            mockUpdateUser(user, userExistsInJenkins);
-        }
-        mockRemoveUserFromGroups(groupsToRemove, false);
-        mockAddUsersToGroups(groupsToAdd, false);
-    }
-
-    private void mockUpdateUser(User user, boolean userExists) throws IOException {
-        mockGetUser(user.getLogin(), userExists, false);
-        mockDeleteUser(user, userExists, false);
-        mockCreateUser(user, false, false, false);
-    }
-
-    private void mockUpdateUserLogin(String oldLogin, User user) throws IOException {
-        if (oldLogin.equals(user.getLogin())) {
-            return;
-        }
-
-        var oldUser = new User();
-        oldUser.setLogin(oldLogin);
-        oldUser.setGroups(user.getGroups());
-        mockDeleteUser(oldUser, true, false);
-        mockCreateUser(user, false, false, false);
-    }
-
-    public void mockDeleteUser(User user, boolean userExistsInUserManagement, boolean shouldFailToDelete) throws IOException {
-        mockGetUser(user.getLogin(), userExistsInUserManagement, false);
-
-        URI uri = JenkinsEndpoints.DELETE_USER.buildEndpoint(jenkinsServerUri, user.getLogin()).build(true).toUri();
-        var status = shouldFailToDelete ? HttpStatus.NOT_FOUND : HttpStatus.FOUND;
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(status));
-
-        mockRemoveUserFromGroups(user.getGroups(), false);
-    }
-
-    private void mockGetUser(String userLogin, boolean userExists, boolean shouldFailToGetUser) throws JsonProcessingException {
-        var jenkinsUser = new JenkinsUserDTO(userLogin, null, null);
-
-        URI uri = JenkinsEndpoints.GET_USER.buildEndpoint(jenkinsServerUri, userLogin).build(true).toUri();
-        if (userExists) {
-            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
-                    .andRespond(withStatus(HttpStatus.FOUND).body(mapper.writeValueAsString(jenkinsUser)).contentType(MediaType.APPLICATION_JSON));
-        }
-        else if (shouldFailToGetUser) {
-            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.FORBIDDEN));
-        }
-        else {
-            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.NOT_FOUND));
-        }
-    }
-
-    public void mockGetAnyUser(boolean shouldFail, int requestCount) {
-        final var httpStatus = shouldFail ? HttpStatus.NOT_FOUND : HttpStatus.FOUND;
-        mockServer.expect(ExpectedCount.times(requestCount), requestTo(Matchers.endsWith("api/json"))).andRespond(withStatus(httpStatus));
-    }
-
-    public void mockRemoveUserFromGroups(Set<String> groupsToRemove, boolean shouldFail) throws IOException {
-        if (groupsToRemove.isEmpty()) {
-            return;
-        }
-
-        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groupsToRemove);
-        for (ProgrammingExercise exercise : exercises) {
-            var folderName = exercise.getProjectKey();
-            mockRemovePermissionsFromUserOfFolder(folderName, shouldFail);
-        }
-    }
-
-    private void mockRemovePermissionsFromUserOfFolder(String folderName, boolean shouldFail) throws IOException {
-        if (shouldFail) {
-            doThrow(IOException.class).when(jenkinsJobPermissionsService).removePermissionsFromUserOfFolder(anyString(), eq(folderName), any());
-        }
-        else {
-            doNothing().when(jenkinsJobPermissionsService).removePermissionsFromUserOfFolder(anyString(), eq(folderName), any());
-        }
-    }
-
-    public void mockCreateUser(User user, boolean userExistsInCi, boolean shouldFail, boolean shouldFailToGetUser) throws IOException {
-        mockGetUser(user.getLogin(), userExistsInCi, shouldFailToGetUser);
-
-        URI uri = JenkinsEndpoints.CREATE_USER.buildEndpoint(jenkinsServerUri).build(true).toUri();
-        var status = shouldFail ? HttpStatus.INTERNAL_SERVER_ERROR : HttpStatus.FOUND;
-        mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(status));
-
-        mockAddUsersToGroups(user.getGroups(), false);
-    }
-
-    public void mockAddUsersToGroups(Set<String> groups, boolean shouldFail) throws IOException {
-        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
-        for (ProgrammingExercise exercise : exercises) {
-            var folderName = exercise.getProjectKey();
-            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-
-            if (groups.contains(course.getInstructorGroupName()) || groups.contains(course.getEditorGroupName()) || groups.contains(course.getTeachingAssistantGroupName())) {
-                mockGetFolderConfig(folderName);
-                URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
-
-                if (shouldFail) {
-                    // updateJob
-                    mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest().contentType(MediaType.APPLICATION_XML));
-                }
-                else {
-                    // updateJob
-                    mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess().contentType(MediaType.APPLICATION_XML));
-                }
-            }
-        }
-    }
-
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers,
-            boolean failToRemoveUsers) throws IOException {
-        var newInstructorGroup = updatedCourse.getInstructorGroupName();
-        var newEditorGroup = updatedCourse.getEditorGroupName();
-        var newTeachingAssistantGroup = updatedCourse.getTeachingAssistantGroupName();
-
-        // Don't do anything if the groups didn't change
-        if (newInstructorGroup.equals(oldInstructorGroup) && newEditorGroup.equals(oldEditorGroup) && newTeachingAssistantGroup.equals(oldTeachingAssistantGroup)) {
-            return;
-        }
-
-        mockRemovePermissionsFromInstructorsAndEditorsAndTAsForCourse(updatedCourse, failToRemoveUsers);
-        mockAssignPermissionsToInstructorAndEditorAndTAsForCourse(updatedCourse, failToAddUsers);
-    }
-
-    private void mockRemovePermissionsFromInstructorsAndEditorsAndTAsForCourse(Course course, boolean shouldFailToRemove) throws IOException {
-        var exercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course);
-        for (var exercise : exercises) {
-            if (shouldFailToRemove) {
-                doThrow(IOException.class).when(jenkinsJobPermissionsService).removePermissionsFromUsersForFolder(any(), eq(exercise.getProjectKey()), any());
-            }
-            else {
-                doNothing().when(jenkinsJobPermissionsService).removePermissionsFromUsersForFolder(any(), eq(exercise.getProjectKey()), any());
-            }
-        }
-    }
-
-    private void mockAssignPermissionsToInstructorAndEditorAndTAsForCourse(Course course, boolean shouldFailToAdd) throws IOException {
-        var exercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course);
-        for (var exercise : exercises) {
-            var job = exercise.getProjectKey();
-            mockAddInstructorAndEditorAndTAPermissionsToUsersForFolder(job, shouldFailToAdd);
-        }
-    }
-
-    private void mockAddInstructorAndEditorAndTAPermissionsToUsersForFolder(String folderName, boolean shouldFailToAdd) throws IOException {
-        mockGetFolderConfig(folderName);
-        URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
-        if (shouldFailToAdd) {
-            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest());
-        }
-        else {
-            mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
-        }
-    }
-
     public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws IOException {
         mockGetFolderJob(projectKey);
         URI uri = JenkinsEndpoints.DELETE_JOB.buildEndpoint(jenkinsServerUri, projectKey, planName).build(true).toUri();
@@ -575,7 +379,7 @@ public class JenkinsRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest());
     }
 
-    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws IOException {
+    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) {
         URI uri = JenkinsEndpoints.DELETE_FOLDER.buildEndpoint(jenkinsServerUri, projectKey).build(true).toUri();
         if (shouldFail) {
             mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withBadRequest());
@@ -644,9 +448,5 @@ public class JenkinsRequestMockProvider {
     public void mockTriggerBuildPlain(String projectKey, String buildPlanId) {
         URI uri = JenkinsEndpoints.TRIGGER_BUILD.buildEndpoint(jenkinsServerUri, projectKey, buildPlanId).build(true).toUri();
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
-    }
-
-    public void mockGivePlanPermissionsThrowException(String projectKey, String projectKey1) throws IOException {
-        doThrow(IOException.class).when(jenkinsJobPermissionsService).addInstructorAndEditorAndTAPermissionsToUsersForJob(any(), any(), any(), eq(projectKey), eq(projectKey1));
     }
 }

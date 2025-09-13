@@ -715,7 +715,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
         String repoUrl = generateRandomRepoUrl(participation, false);
 
-        var repoName = extractRepoName(repoUrl.toString());
+        var repoName = extractRepoName(repoUrl);
         request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.BAD_REQUEST, String.class);
     }
 
@@ -772,18 +772,19 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
      * {@code http(s)://<host>/git/<project_key>/<repo-name>.git}
      * </p>
      *
+     * <p>
+     * <b>Examples:</b>
+     * </p>
+     *
+     * <pre>
+     * extractRepoName("http://localhost:7990/git/PROJ/proj-repo.git") → "proj-repo"
+     * extractRepoName("https://example.com/git/ABC/abc-repo.git") → "abc-repo"
+     * </pre>
+     *
      * @param repoUrl the full URL of the Git repository (e.g., "http://localhost:7990/git/PROJ/my-repo.git")
      * @return the repository name without the ".git" suffix (e.g., "my-repo")
      * @throws IllegalArgumentException if the input does not end with ".git" or contains no slashes
      *
-     *                                      <p>
-     *                                      <b>Examples:</b>
-     *                                      </p>
-     *
-     *                                      <pre>
-     * extractRepoName("http://localhost:7990/git/PROJ/proj-repo.git") → "proj-repo"
-     * extractRepoName("https://example.com/git/ABC/abc-repo.git") → "abc-repo"
-     *                                      </pre>
      */
     private String extractRepoName(String repoUrl) {
         if (repoUrl == null || !repoUrl.endsWith(".git") || !repoUrl.contains("/")) {
@@ -977,28 +978,21 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void retrieveCommitInfoInstructorSuccess() throws Exception {
+    void retrieveCommitHistoryInstructorSuccess() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         var commitInfo = new CommitInfoDTO("hash", "msg1", ZonedDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")), "author", "authorEmail");
         var commitInfo2 = new CommitInfoDTO("hash2", "msg2", ZonedDateTime.of(2020, 1, 2, 0, 0, 0, 0, ZoneId.of("UTC")), "author2", "authorEmail2");
         doReturn(List.of(commitInfo, commitInfo2)).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
-        request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commits-info", HttpStatus.OK, CommitInfoDTO.class);
+        request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void retrieveCommitInfoGitExceptionEmptyList() throws Exception {
+    void retrieveCommitHistoryGitExceptionEmptyList() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         doThrow(new NoHeadException("error")).when(gitService).getCommitInfos(participation.getVcsRepositoryUri());
-        assertThat(request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commits-info", HttpStatus.OK, CommitInfoDTO.class))
+        assertThat(request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.OK, CommitInfoDTO.class))
                 .isEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void retrieveCommitInfoEditorForbidden() throws Exception {
-        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        request.getList("/api/programming/programming-exercise-participations/" + participation.getId() + "/commits-info", HttpStatus.FORBIDDEN, CommitInfoDTO.class);
     }
 
     @Test
