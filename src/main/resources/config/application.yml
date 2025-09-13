@@ -67,11 +67,11 @@ artemis:
             images:
                 java:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-22"
+                    default: "ls1tum/artemis-maven-template:java17-25"
                     maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:22"
                 kotlin:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-22"
+                    default: "ls1tum/artemis-maven-template:java17-25"
                 empty:
                     default: "ubuntu:24.04"
                 python:

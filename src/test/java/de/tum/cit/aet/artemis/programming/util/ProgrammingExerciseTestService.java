@@ -25,6 +25,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -166,6 +167,9 @@ public class ProgrammingExerciseTestService {
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCRepoPath;
+
+    @Value("${artemis.version-control.url}")
+    private URI localVCBaseUri;
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
@@ -609,19 +613,19 @@ public class ProgrammingExerciseTestService {
 
     public void importFromFile_validExercise_isSuccessfullyImported(ProgrammingLanguage language) throws Exception {
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
-        Resource resource = null;
         exercise.programmingLanguage(language);
         exercise.setProjectType(null);
-        switch (language) {
-            case PYTHON -> resource = new ClassPathResource("test-data/import-from-file/valid-import-python.zip");
+        Resource resource = switch (language) {
+            case PYTHON -> new ClassPathResource("test-data/import-from-file/valid-import-python.zip");
             case C -> {
-                resource = new ClassPathResource("test-data/import-from-file/valid-import-c.zip");
                 exercise.setProjectType(ProjectType.FACT);
+                yield new ClassPathResource("test-data/import-from-file/valid-import-c.zip");
             }
-            case HASKELL -> resource = new ClassPathResource("test-data/import-from-file/valid-import-haskell.zip");
-            case OCAML -> resource = new ClassPathResource("test-data/import-from-file/valid-import-ocaml.zip");
-            case ASSEMBLER -> resource = new ClassPathResource("test-data/import-from-file/valid-import-assembler.zip");
-        }
+            case HASKELL -> new ClassPathResource("test-data/import-from-file/valid-import-haskell.zip");
+            case OCAML -> new ClassPathResource("test-data/import-from-file/valid-import-ocaml.zip");
+            case ASSEMBLER -> new ClassPathResource("test-data/import-from-file/valid-import-assembler.zip");
+            default -> new ClassPathResource("test-data/import-from-file/valid-import.zip");
+        };
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         exercise.setChannelName("testchannel-pe");
@@ -783,6 +787,7 @@ public class ProgrammingExerciseTestService {
 
     private AuxiliaryRepository addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(sourceExercise);
+        String auxRepoName = sourceExercise.generateRepositoryName("auxrepo");
         var url = new LocalVCRepositoryUri(convertToLocalVcUriString(sourceAuxRepo)).toString();
         repository.setRepositoryUri(url);
         return auxiliaryRepositoryRepository.save(repository);
@@ -1485,34 +1490,6 @@ public class ProgrammingExerciseTestService {
         assertThat(submissions).hasSize(1);
     }
 
-    // Test
-    public void exportInstructorRepositories_shouldReturnFile() throws Exception {
-        String zip = exportInstructorRepository(RepositoryType.TEMPLATE, exerciseRepo, HttpStatus.OK);
-        assertThat(zip).isNotNull();
-
-        zip = exportInstructorRepository(RepositoryType.SOLUTION, solutionRepo, HttpStatus.OK);
-        assertThat(zip).isNotNull();
-
-        zip = exportInstructorRepository(RepositoryType.TESTS, testRepo, HttpStatus.OK);
-        assertThat(zip).isNotNull();
-    }
-
-    public void exportInstructorAuxiliaryRepository_shouldReturnFile() throws Exception {
-        generateProgrammingExerciseForExport();
-        var auxRepo = addAuxiliaryRepositoryToProgrammingExercise(exercise);
-        setupAuxRepoMock(auxRepo);
-        setupRepositoryMocks(exercise);
-        var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-instructor-auxiliary-repository/" + auxRepo.getId();
-        request.get(url, HttpStatus.OK, String.class);
-    }
-
-    private void setupAuxRepoMock(AuxiliaryRepository auxiliaryRepository) throws GitAPIException {
-        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepo.workingCopyGitRepoFile.toPath(), null);
-
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(auxiliaryRepository.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(auxiliaryRepository.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
-    }
-
     public void exportInstructorAuxiliaryRepository_forbidden() throws Exception {
         generateProgrammingExerciseForExport();
         var auxRepo = addAuxiliaryRepositoryToProgrammingExercise(exercise);
@@ -1806,11 +1783,12 @@ public class ProgrammingExerciseTestService {
 
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
         LocalVCRepositoryUri vcsUrl = exercise.getRepositoryURI(repoType);
-        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), null);
+        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.workingCopyGitRepoFile.toPath(), vcsUrl);
 
         createAndCommitDummyFileInLocalRepository(localRepo, fileName);
         doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(vcsUrl), any(Path.class), anyBoolean(), anyBoolean());
         doReturn(repository).when(gitService).getOrCheckoutRepositoryWithLocalPath(eq(vcsUrl), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository).when(gitService).getBareRepository(eq(vcsUrl), anyBoolean());
     }
 
     // Test
@@ -1954,10 +1932,6 @@ public class ProgrammingExerciseTestService {
 
     public List<StudentExam> prepareStudentExamsForConduction(String testPrefix, ZonedDateTime examVisibleDate, ZonedDateTime examStartDate, ZonedDateTime examEndDate,
             Set<User> registeredStudents, List<LocalRepository> studentRepos) throws Exception {
-
-        for (int i = 1; i <= registeredStudents.size(); i++) {
-            mockDelegate.mockUserExists(testPrefix + "student" + i);
-        }
 
         final var course = courseUtilService.addEmptyCourse();
         var exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
@@ -2194,7 +2168,7 @@ public class ProgrammingExerciseTestService {
     }
 
     @NotNull
-    private Team setupTeamForBadRequestForStartExercise() throws Exception {
+    private Team setupTeamForBadRequestForStartExercise() {
         setupTeamExercise();
 
         // Create a team with students

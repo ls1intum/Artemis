@@ -35,7 +35,7 @@ contact Stephan Krusche.
    - Go to the "Builds" tab of that repository
 3. Wait for a successful build of "latest"
 4. | Click "Configure Automated Builds" and create a new build rule for a new tag, following the naming scheme:
-   | "<programming language><Version of programming language>-<Upwards counting number>", for example "java17-20"
+   | "<programming language><Version of programming language>-<Upwards counting number>", for example "java17-25"
 
    - The "Sourcetype" should be "Tag"
    - This tag should be used as "Source Tag" and "Docker Tag"
