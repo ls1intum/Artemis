@@ -1382,11 +1382,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     boolean isAtLeastInstructorInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
 
-    @EntityGraph(attributePaths = { "groups", "authorities" })
     @Query("""
             SELECT jhiUser
             FROM CalendarSubscriptionTokenStore store
                 JOIN store.user jhiUser
+                LEFT JOIN FETCH jhiUser.groups
+                LEFT JOIN FETCH jhiUser.authorities
             WHERE store.token = :token
             """)
     Optional<User> findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
