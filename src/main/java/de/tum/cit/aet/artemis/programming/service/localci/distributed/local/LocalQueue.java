@@ -48,7 +48,7 @@ public class LocalQueue<T> implements DistributedQueue<T> {
         lock.lock();
         boolean success = false;
         try {
-            success = queue.add(item);
+            success = queue.offer(item);
             return success;
         }
         finally {
@@ -62,7 +62,7 @@ public class LocalQueue<T> implements DistributedQueue<T> {
     @Override
     public T poll() {
         lock.lock();
-        T item = null;
+        T item;
         try {
             item = queue.poll();
         }
@@ -107,7 +107,7 @@ public class LocalQueue<T> implements DistributedQueue<T> {
         ArrayList<T> addedItems = new ArrayList<>();
         try {
             for (T item : items) {
-                if (queue.add(item)) {
+                if (queue.offer(item)) {
                     addedItems.add(item);
                 }
             }
