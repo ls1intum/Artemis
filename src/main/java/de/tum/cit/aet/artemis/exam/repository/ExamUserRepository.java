@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.transaction.Transactional;
-
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -15,6 +13,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -89,7 +88,7 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
     @Modifying
     @Query("""
             UPDATE ExamUser eu
-            SET eu.plannedRoom = null, eu.plannedSeat = null
+            SET eu.plannedRoom = NULL, eu.plannedSeat = NULL
             """)
     void resetAllPlannedRoomsAndSeats();
 

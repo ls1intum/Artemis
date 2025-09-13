@@ -1,13 +1,10 @@
 package de.tum.cit.aet.artemis.exam.repository;
 
-import java.util.Set;
-
-import jakarta.transaction.Transactional;
-
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -20,8 +17,6 @@ import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
 @Lazy
 @Repository
 public interface ExamRoomExamAssignmentRepository extends ArtemisJpaRepository<ExamRoomExamAssignment, Long> {
-
-    Set<ExamRoomExamAssignment> getAllByExamId(Long examId);
 
     @Transactional
     @Modifying
