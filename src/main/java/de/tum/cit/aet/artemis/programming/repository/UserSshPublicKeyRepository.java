@@ -30,8 +30,6 @@ public interface UserSshPublicKeyRepository extends ArtemisJpaRepository<UserSsh
 
     boolean existsByIdAndUserId(Long id, Long userId);
 
-    boolean existsByUserId(Long userId);
-
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByUserId(Long userId);

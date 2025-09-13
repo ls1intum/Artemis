@@ -3,7 +3,6 @@
     position: absolute;
     top: 0;
     right: 0;
-
     color: var(--close-circle-color);
     border-radius: 20px;
     background: var(--close-circle-background);
@@ -13,20 +12,18 @@
     text-align: center;
     vertical-align: center;
     padding: 4.5px 0;
-
     display: flex;
     justify-content: center;
     align-items: center;
 
     // rotate is a workaround for subpixel rendering issues on Firefox
-    transform: translate(35%, -35%) rotate(0.0000001deg);
-
+    transform: translate(35%, -35%) rotate(0.0001deg);
     cursor: pointer;
     transition: all 0.25s;
     opacity: var(--close-circle-opacity);
 
     .ng-fa-icon {
-        transform: rotate(0.0000001deg);
+        transform: rotate(0.0001deg);
     }
 }
 

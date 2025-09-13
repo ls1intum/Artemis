@@ -98,7 +98,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     @ViewChild('container') content: ElementRef;
 
     @Input() course?: Course;
-    @Input() contentHeightDev = false;
     showOnlyPinned = input<boolean>(false);
     pinnedCount = output<number>();
     pinnedPosts: Post[] = [];
