@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.programming.icl.distributed;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -16,8 +14,6 @@ import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
@@ -28,8 +24,6 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueListener;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 
-@SpringBootTest
-@ActiveProfiles({ PROFILE_TEST_BUILDAGENT, PROFILE_BUILDAGENT, "test" })
 public abstract class AbstractDistributedDataTest {
 
     protected abstract DistributedDataProvider getDistributedDataProvider();
