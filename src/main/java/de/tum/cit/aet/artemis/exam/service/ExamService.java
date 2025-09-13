@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -73,8 +74,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
-import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
-import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
+import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -1481,11 +1481,13 @@ public class ExamService {
      *
      * @param courseId      the ID of the course
      * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @param language      the language that will be used add context information to titles (e.g. the title of an event representing the student review start will be prefixed with
+     *                          "Review Start: ")
      * @return the set of results
      */
-    public Set<CalendarEventDTO> getCalendarEventDTOsFromExams(long courseId, boolean userIsStudent) {
-        Set<ExamCalendarEventDTO> daos = examRepository.getExamCalendarEventDAOsForCourseId(courseId);
-        return daos.stream().flatMap(dao -> deriveCalendarEventDTOs(dao, userIsStudent).stream()).collect(Collectors.toSet());
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromExams(long courseId, boolean userIsStudent, Language language) {
+        Set<ExamCalendarEventDTO> dtos = examRepository.getExamCalendarEventDTOsForCourseId(courseId);
+        return dtos.stream().flatMap(dto -> deriveCalendarEventDTOs(dto, userIsStudent, language).stream()).collect(Collectors.toSet());
     }
 
     /**
@@ -1501,22 +1503,36 @@ public class ExamService {
      *
      * @param dto           the DTO for which to derive the events
      * @param userIsStudent indicates whether the logged-in user is student of the course associated to the exam
+     * @param language      the language that will be used add context information to titles (e.g. the title of an event representing the student review start will be prefixed with
+     *                          "Review Start: ")
      * @return the derived events
      */
-    private Set<CalendarEventDTO> deriveCalendarEventDTOs(ExamCalendarEventDTO dto, boolean userIsStudent) {
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(ExamCalendarEventDTO dto, boolean userIsStudent, Language language) {
         Set<CalendarEventDTO> events = new HashSet<>();
         boolean userIsCourseStaff = !userIsStudent;
         if (userIsCourseStaff || dto.visibleDate().isBefore(now())) {
-            events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.START_AND_END_DATE, dto.title(), dto.startDate(), dto.endDate(), null,
+            events.add(new CalendarEventDTO("examStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.EXAM, dto.title(), dto.startDate(), dto.endDate(), null,
                     dto.examiner()));
             if (dto.publishResultsDate() != null) {
-                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.PUBLISH_RESULTS_DATE, dto.title(), dto.publishResultsDate(), null, null,
-                        null));
+                String publishResultsDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Results Release: ";
+                    case GERMAN -> "Veröffentlichung Ergebnisse: ";
+                };
+                events.add(new CalendarEventDTO("examPublishResultsEvent-" + dto.originEntityId(), CalendarEventType.EXAM, publishResultsDateTitlePrefix + dto.title(),
+                        dto.publishResultsDate(), null, null, null));
                 if (dto.studentReviewStart() != null) {
-                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_START_DATE, dto.title(), dto.studentReviewStart(), null,
-                            null, null));
-                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_END_DATE, dto.title(), dto.studentReviewEnd(), null,
-                            null, null));
+                    String studentReviewStartDateTitlePrefix = switch (language) {
+                        case ENGLISH -> "Review Start: ";
+                        case GERMAN -> "Einsicht Start: ";
+                    };
+                    events.add(new CalendarEventDTO("examReviewStartEvent-" + dto.originEntityId(), CalendarEventType.EXAM, studentReviewStartDateTitlePrefix + dto.title(),
+                            dto.studentReviewStart(), null, null, null));
+                    String studentReviewEndDateTitlePrefix = switch (language) {
+                        case ENGLISH -> "Review End: ";
+                        case GERMAN -> "Einsicht Ende: ";
+                    };
+                    events.add(new CalendarEventDTO("examReviewEndEvent-" + dto.originEntityId(), CalendarEventType.EXAM, studentReviewEndDateTitlePrefix + dto.title(),
+                            dto.studentReviewEnd(), null, null, null));
                 }
             }
         }
