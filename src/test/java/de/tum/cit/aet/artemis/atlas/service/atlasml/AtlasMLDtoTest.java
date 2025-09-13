@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.atlas.dto.atlasml;
+package de.tum.cit.aet.artemis.atlas.service.atlasml;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,6 +14,13 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLExerciseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
 class AtlasMLDtoTest {

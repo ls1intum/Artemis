@@ -60,8 +60,7 @@ import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
 // test services, which dependencies are not provided since we are not running the full application context, to be created.
 @ActiveProfiles({ PROFILE_TEST_BUILDAGENT, PROFILE_BUILDAGENT, "local" })
 @TestPropertySource(properties = { "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=2",
-        "artemis.continuous-integration.pause-grace-period-seconds=2", "artemis.continuous-integration.pause-after-consecutive-failed-jobs=5",
-        "artemis.continuous-integration.image-architecture=amd64" })
+        "artemis.continuous-integration.pause-grace-period-seconds=2", "artemis.continuous-integration.pause-after-consecutive-failed-jobs=5" })
 public abstract class AbstractArtemisBuildAgentTest {
 
     @Autowired
