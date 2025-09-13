@@ -9,6 +9,6 @@ public class NotRedisCondition implements Condition {
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
         String dataStoreConfig = context.getEnvironment().getProperty("artemis.continuous-integration.data-store", "Hazelcast");
-        return dataStoreConfig.equalsIgnoreCase("Redis");
+        return !dataStoreConfig.equalsIgnoreCase("Redis");
     }
 }
