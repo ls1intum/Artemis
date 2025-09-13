@@ -74,9 +74,11 @@ import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamLiveEventTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamRoomTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
+import de.tum.cit.aet.artemis.exam.util.ExamRoomZipFiles;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -161,13 +163,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private Exam exam2;
 
-    private static final int NUMBER_OF_STUDENTS = 4;
+    private static final int NUMBER_OF_STUDENTS = 200;
 
     private static final int NUMBER_OF_TUTORS = 1;
 
     private User student1;
 
     private User instructor;
+
+    @Autowired
+    private ExamRoomTestRepository examRoomRepository;
 
     @BeforeAll
     void setup() {
@@ -2296,5 +2301,59 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         assertThat(element.title()).isEqualTo(exam.getTitle());
         assertThat(element.workingTime()).isEqualTo(studentExam1.getWorkingTime());
         assertThat(element.startDate().withZoneSameInstant(ZoneId.systemDefault())).isCloseTo(exam.getStartDate(), within(1, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDistributeRegisteredStudentsAsStudent() throws Exception {
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testDistributeRegisteredStudentsAsTutor() throws Exception {
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testDistributeRegisteredStudentsAsEditor() throws Exception {
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDistributeRegisteredStudentsAsInstructor() throws Exception {
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testDistributeRegisteredStudentsAsAdmin() throws Exception {
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/distribute-registered-students", Set.of(), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testDistributeRegisteredStudentsTooFewSeats() throws Exception {
+        Course course = courseUtilService.addEmptyCourse();
+        Exam exam = examUtilService.addExam(course);
+        examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
+        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
+
+        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001"));
+        request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testDistributeRegisteredStudentsEnoughSeats() throws Exception {
+        Course course = courseUtilService.addEmptyCourse();
+        Exam exam = examUtilService.addExam(course);
+        examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
+        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms, HttpStatus.OK);
+
+        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179"));
+        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.OK);
     }
 }
