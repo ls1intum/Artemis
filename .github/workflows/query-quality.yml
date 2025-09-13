@@ -6,8 +6,8 @@ on:
     paths:
       - 'src/main/java/**'
   pull_request:
-#    paths:
-#      - 'src/main/java/**'
+    paths:
+      - 'src/main/java/**'
 
 jobs:
   query-quality-check:
