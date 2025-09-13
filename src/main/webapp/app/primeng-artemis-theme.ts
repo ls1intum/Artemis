@@ -9,17 +9,17 @@ import Aura from '@primeuix/themes/aura';
 export const AuraArtemis = definePreset(Aura, {
     semantic: {
         primary: {
-            50: '{blue.50}',
-            100: '{blue.100}',
-            200: '{blue.200}',
-            300: '{blue.300}',
-            400: '{blue.400}',
-            500: '{blue.500}',
-            600: '{blue.600}',
-            700: '{blue.700}',
-            800: '{blue.800}',
-            900: '{blue.900}',
-            950: '{blue.950}',
+            50: '#3e8acc',
+            100: '#3e8acc',
+            200: '#3e8acc',
+            300: '#3e8acc',
+            400: '#3e8acc',
+            500: '#3e8acc',
+            600: '#3e8acc',
+            700: '#3e8acc',
+            800: '#3e8acc',
+            900: '#3e8acc',
+            950: '#3e8acc',
         },
     },
 });

@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
@@ -7,9 +8,8 @@ import { BehaviorSubject, Subscription, catchError, combineLatest, forkJoin, swi
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
-import { AsyncPipe, NgClass } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { TutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
 import { NewTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/new-tutorial-group-detail/new-tutorial-group-detail.component';
@@ -25,14 +25,11 @@ export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
     private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
     private courseManagementService = inject(CourseManagementService);
-    private profileService = inject(ProfileService);
 
     isLoading$ = new BehaviorSubject<boolean>(false);
     tutorialGroup?: TutorialGroupDetailGroupDTO;
     course?: Course;
     private paramsSubscription: Subscription;
-    isProduction = true;
-    isTestServer = false;
 
     ngOnInit(): void {
         const courseIdParams$ = this.route.parent?.parent?.params;
@@ -67,8 +64,6 @@ export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
                     },
                 });
         }
-        this.isProduction = this.profileService.isProduction();
-        this.isTestServer = this.profileService.isTestServer();
     }
 
     ngOnDestroy(): void {

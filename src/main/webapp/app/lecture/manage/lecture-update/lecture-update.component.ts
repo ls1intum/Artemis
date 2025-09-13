@@ -27,7 +27,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -61,7 +61,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     private readonly lectureService = inject(LectureService);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
-    private readonly calendarEventService = inject(CalendarEventService);
+    private readonly calendarService = inject(CalendarService);
     private readonly router = inject(Router);
 
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
@@ -310,7 +310,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             this.shouldDisplayDismissWarning = true;
         }
 
-        this.calendarEventService.refresh();
+        this.calendarService.reloadEvents();
     }
 
     /**

@@ -36,8 +36,9 @@ version = "8.4.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 wrapper {
@@ -181,7 +182,7 @@ dependencies {
     implementation "de.jplag:text:${jplag_version}"
     implementation "de.jplag:typescript:${jplag_version}"
 
-    implementation platform("org.springframework.ai:spring-ai-bom:1.0.1")
+    implementation platform("org.springframework.ai:spring-ai-bom:1.0.2")
     implementation "org.springframework.ai:spring-ai-starter-model-azure-openai" // can also use non-azure models
 
     // we have to override those values to use the latest version
@@ -270,7 +271,7 @@ dependencies {
     implementation "io.micrometer:micrometer-jakarta9:${micrometer_version}"
 
     // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
-    implementation "com.google.protobuf:protobuf-java:4.32.0"
+    implementation "com.google.protobuf:protobuf-java:4.32.1"
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
 
@@ -354,8 +355,8 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    implementation "org.springframework.data:spring-data-jpa:3.5.3"
-    implementation "org.springframework.data:spring-data-ldap:3.5.3"
+    implementation "org.springframework.data:spring-data-jpa:3.5.4"
+    implementation "org.springframework.data:spring-data-ldap:3.5.4"
     implementation "org.springframework.ldap:spring-ldap-core:3.3.3"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
@@ -416,7 +417,7 @@ dependencies {
     implementation "org.apache.maven:maven-model:3.9.11"
     implementation "org.apache.pdfbox:pdfbox:3.0.5"
     implementation "org.apache.commons:commons-csv:1.14.1"
-    implementation "org.commonmark:commonmark:0.25.1"
+    implementation "org.commonmark:commonmark:0.26.0"
     implementation "commons-fileupload:commons-fileupload:1.6.0"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
@@ -426,7 +427,7 @@ dependencies {
 
     // use newest version of gson to avoid security issues through outdated dependencies
     // NOTE: gson itself is not allowed in the Artemis code (based on architecture tests), but is used by dependencies (e.g. spring cloud eureka netflix)
-    implementation "com.google.code.gson:gson:2.13.1"
+    implementation "com.google.code.gson:gson:2.13.2"
 
     // explicitly only use this at runtime (required by liquibase, because developers should prefer org.apache.commons:csv
     runtimeOnly "com.opencsv:opencsv:5.12.0"
@@ -452,6 +453,8 @@ dependencies {
     annotationProcessor "org.hibernate.orm:hibernate-core:${hibernate_version}"
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
+
+    implementation "org.mnode.ical4j:ical4j:4.1.1"
 
 
     // ---- CHECKSTYLE DEPENDENCIES ----
