@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+// TODO: convert to record
 public class GroupChatDTO extends ConversationDTO {
 
     private String name;
