@@ -458,6 +458,8 @@ dependencies {
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
 
+    implementation "org.mnode.ical4j:ical4j:4.1.1"
+
 
     // ---- CHECKSTYLE DEPENDENCIES ----
 

@@ -11,6 +11,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
  * a {@link TutorialGroupSession}, an {@link Exam}, or one of the {@link Exercise} subtypes. This enum indicates from which
  * entity a given DTO was derived. The value is used for filtering and coloring of events in the calendar feature.
  */
-public enum CalendarEventRelatedEntity {
+public enum CalendarEventType {
     LECTURE, TUTORIAL, EXAM, QUIZ_EXERCISE, TEXT_EXERCISE, MODELING_EXERCISE, PROGRAMMING_EXERCISE, FILE_UPLOAD_EXERCISE
 }

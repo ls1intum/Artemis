@@ -44,7 +44,7 @@ import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.com
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -85,7 +85,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     private readonly eventManager = inject(EventManager);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly profileService = inject(ProfileService);
-    private readonly calendarEventService = inject(CalendarEventService);
+    private readonly calendarService = inject(CalendarService);
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Text';
@@ -317,7 +317,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         this.isSaving = false;
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
-        this.calendarEventService.refresh();
+        this.calendarService.reloadEvents();
     }
 
     private onSaveError(errorRes: HttpErrorResponse) {
