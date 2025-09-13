@@ -284,7 +284,7 @@ public abstract class AbstractDistributedDataTest {
         map.put("key2", "value2");
         map.put("key3", "value3");
 
-        assert map.size() == 3;
+        assertThat(map.size()).isEqualTo(3);
 
         var allValues = map.getAll(Set.of("key1", "key3"));
         assertThat(allValues.size()).isEqualTo(2);
