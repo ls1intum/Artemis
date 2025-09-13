@@ -8,22 +8,30 @@
 .conflict-modal {
     &__body {
         @extend .modal-body;
+
         &__warning > fa-icon {
             @extend .text-warning;
         }
     }
+
     &__footer {
         @extend .modal-footer;
+
         &__cancel {
             @extend .btn;
+
             @extend .btn-secondary;
+
             > *:not(:first-child) {
                 @extend .ms-2 !optional;
             }
         }
+
         &__submit {
             @extend .btn;
+
             @extend .btn-danger;
+
             > *:not(:first-child) {
                 @extend .ms-2 !optional;
             }
