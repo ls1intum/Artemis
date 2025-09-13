@@ -205,13 +205,14 @@ public class UserUtilService {
     }
 
     /**
-     * Updates and saves the user's calendarSubscriptionToken in his calendarSubscriptionTokenStore.
+     * Deletes all tokens and saves the calendarSubscriptionToken in his calendarSubscriptionTokenStore of the user.
      *
      * @param user                      The User to update
      * @param calendarSubscriptionToken The calendarSubscriptionToken to set
      * @return The updated User
      */
-    public void setUserCalendarSubscriptionTokenAndSave(User user, String calendarSubscriptionToken) {
+    public void clearAllTokensAndSetTokenForUser(User user, String calendarSubscriptionToken) {
+        calendarSubscriptionTokenStoreRepository.deleteAll();
         CalendarSubscriptionTokenStore store = new CalendarSubscriptionTokenStore();
         store.setToken(calendarSubscriptionToken);
         store.setUser(user);

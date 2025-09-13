@@ -1397,7 +1397,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
         void shouldReturnNotFoundWhenCourseDoesNotExist() throws Exception {
             String expectedToken = generateUniqueTestToken();
-            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            userUtilService.clearAllTokensAndSetTokenForUser(student, expectedToken);
             long courseId = -3;
             String url = buildUrl(courseId, expectedToken, CalendarSubscriptionFilterOption.values(), Language.ENGLISH);
             request.get(url, HttpStatus.NOT_FOUND, String.class);
@@ -1418,7 +1418,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             userUtilService.addStudent("notstudent", NOT_STUDENT_LOGIN);
             User notStudent = userUtilService.getUserByLogin(NOT_STUDENT_LOGIN);
             String expectedToken = generateUniqueTestToken();
-            userUtilService.setUserCalendarSubscriptionTokenAndSave(notStudent, expectedToken);
+            userUtilService.clearAllTokensAndSetTokenForUser(notStudent, expectedToken);
             long courseId = course.getId();
             String url = buildUrl(courseId, expectedToken, CalendarSubscriptionFilterOption.values(), Language.ENGLISH);
             request.get(url, HttpStatus.FORBIDDEN, String.class);
@@ -1433,7 +1433,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             String expectedMethod = "METHOD:PUBLISH";
 
             String expectedToken = generateUniqueTestToken();
-            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            userUtilService.clearAllTokensAndSetTokenForUser(student, expectedToken);
             long courseId = course.getId();
             String url = buildUrl(courseId, expectedToken, CalendarSubscriptionFilterOption.values(), Language.ENGLISH);
 
@@ -1450,7 +1450,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             textExerciseUtilService.createIndividualTextExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, null);
 
             String expectedToken = generateUniqueTestToken();
-            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            userUtilService.clearAllTokensAndSetTokenForUser(student, expectedToken);
             long courseId = course.getId();
             String url = buildUrl(courseId, expectedToken, CalendarSubscriptionFilterOption.values(), Language.ENGLISH);
 
@@ -1465,7 +1465,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             textExerciseUtilService.createIndividualTextExercise(course, FUTURE_DATE, FUTURE_DATE.plusDays(1), null, null);
 
             String expectedToken = generateUniqueTestToken();
-            userUtilService.setUserCalendarSubscriptionTokenAndSave(instructor, expectedToken);
+            userUtilService.clearAllTokensAndSetTokenForUser(instructor, expectedToken);
             long courseId = course.getId();
             String url = buildUrl(courseId, expectedToken, CalendarSubscriptionFilterOption.values(), Language.ENGLISH);
 
@@ -1491,7 +1491,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             String expectedContact = "CONTACT:" + tutor.getFirstName() + " " + tutor.getLastName();
 
             String expectedToken = generateUniqueTestToken();
-            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            userUtilService.clearAllTokensAndSetTokenForUser(student, expectedToken);
             long courseId = course.getId();
             String url = buildUrl(courseId, expectedToken, CalendarSubscriptionFilterOption.values(), Language.ENGLISH);
 
@@ -1515,7 +1515,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             String expectedEnd = "DTEND:" + ICS_TIMESTAMP_FORMATTER.format(PAST_DATE.toInstant());
 
             String expectedToken = generateUniqueTestToken();
-            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            userUtilService.clearAllTokensAndSetTokenForUser(student, expectedToken);
             long courseId = course.getId();
             String url = buildUrl(courseId, expectedToken, CalendarSubscriptionFilterOption.values(), Language.ENGLISH);
 
@@ -1534,7 +1534,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             String expectedToken = UUID.randomUUID().toString().replace("-", "");
             ;
-            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            userUtilService.clearAllTokensAndSetTokenForUser(student, expectedToken);
             long courseId = course.getId();
             String url = buildUrl(courseId, expectedToken, CalendarSubscriptionFilterOption.values(), Language.ENGLISH);
 
@@ -1576,7 +1576,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             String nonQuizExerciseTitle = nonQuizExercise.getTitle();
 
             String expectedToken = generateUniqueTestToken();
-            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            userUtilService.clearAllTokensAndSetTokenForUser(student, expectedToken);
             long courseId = course.getId();
             String url = buildUrl(courseId, expectedToken, CalendarSubscriptionFilterOption.values(), Language.ENGLISH);
 
@@ -1607,7 +1607,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             String nonQuizExerciseTitle = nonQuizExercise.getTitle();
 
             String expectedToken = generateUniqueTestToken();
-            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            userUtilService.clearAllTokensAndSetTokenForUser(student, expectedToken);
             long courseId = course.getId();
             String url = buildUrl(courseId, expectedToken, new CalendarSubscriptionFilterOption[] { CalendarSubscriptionFilterOption.TUTORIALS,
                     CalendarSubscriptionFilterOption.LECTURES, CalendarSubscriptionFilterOption.EXAMS }, Language.ENGLISH);
@@ -1629,7 +1629,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @WithUserDetails(value = STUDENT_LOGIN, setupBefore = TestExecutionEvent.TEST_EXECUTION)
         void shouldReuseExistingToken() throws Exception {
             String expectedToken = "921651b1118f216d04b190fc0659386b";
-            userUtilService.setUserCalendarSubscriptionTokenAndSave(student, expectedToken);
+            userUtilService.clearAllTokensAndSetTokenForUser(student, expectedToken);
 
             String url = "/api/core/calendar/subscription-token";
             String actualToken = request.get(url, HttpStatus.OK, String.class);
