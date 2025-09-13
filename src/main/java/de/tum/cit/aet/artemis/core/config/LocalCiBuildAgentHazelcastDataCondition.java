@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
@@ -15,8 +16,8 @@ public class LocalCiBuildAgentHazelcastDataCondition implements Condition {
     @Override
     public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
         final Collection<String> activeProfiles = Arrays.asList(context.getEnvironment().getActiveProfiles());
-        String dataStoreConfig = context.getEnvironment().getProperty("artemis.continuous-integration.data-store", "Hazelcast");
+        String dataStoreConfig = context.getEnvironment().getProperty("artemis.continuous-integration.data-store", HAZELCAST);
 
-        return (activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)) && dataStoreConfig.equalsIgnoreCase("Hazelcast");
+        return (activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)) && dataStoreConfig.equalsIgnoreCase(HAZELCAST);
     }
 }

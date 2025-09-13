@@ -8,16 +8,18 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.types.RedisClientInfo;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.config.RedisCondition;
+
 @Lazy
 @Component
-@ConditionalOnProperty(value = "artemis.continuous-integration.data-store", havingValue = "Redis")
+@Conditional(RedisCondition.class)
 public class RedisClientListResolver {
 
     private static final Logger log = LoggerFactory.getLogger(RedisClientListResolver.class);

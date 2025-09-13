@@ -5,19 +5,20 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.config.RedisCondition;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson.RedisClientListResolver;
 
 /**
  * Health indicator for the Redis backend used by LocalCI.
  */
 @Lazy
-@ConditionalOnProperty(value = "artemis.continuous-integration.data-store", havingValue = "Redis")
+@Conditional(RedisCondition.class)
 @Component
 public class RedisHealthIndicator implements HealthIndicator {
 

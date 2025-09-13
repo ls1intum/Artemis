@@ -511,6 +511,10 @@ public final class Constants {
 
     public static final String BEARER_PREFIX = "Bearer ";
 
+    public static final String HAZELCAST = "Hazelcast";
+
+    public static final String REDIS = "Redis";
+
     private Constants() {
     }
 }
