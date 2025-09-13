@@ -341,11 +341,28 @@ public abstract class AbstractDistributedDataTest {
         DistributedTopic<String> topic = getDistributedDataProvider().getTopic("testTopic");
 
         Consumer<String> mockConsumer = Mockito.mock(Consumer.class);
-        topic.addMessageListener(mockConsumer);
+        var listenerId = topic.addMessageListener(mockConsumer);
         topic.publish("Hello, World!");
         topic.publish("Another message");
 
         verify(mockConsumer, timeout(100)).accept("Hello, World!");
         verify(mockConsumer, timeout(100)).accept("Another message");
+
+        topic.removeMessageListener(listenerId);
+
+        topic.publish("Unsubscribed Already");
+        verify(mockConsumer, timeout(1000).times(2)).accept(anyString()); // still only 2 trigger
+    }
+
+    @Test
+    void testTopicTriggerCount() {
+        DistributedTopic<String> topic = getDistributedDataProvider().getTopic("testTopicTriggerCount");
+
+        Consumer<String> mockConsumer = Mockito.mock(Consumer.class);
+        topic.addMessageListener(mockConsumer);
+        for (int i = 0; i < 50; i++) {
+            topic.publish("Message" + i);
+        }
+        verify(mockConsumer, timeout(1000).times(50)).accept(argThat(msg -> msg.startsWith("Message")));
     }
 }

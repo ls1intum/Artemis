@@ -28,6 +28,12 @@ public class RedisClientListResolver {
         this.reactiveRedisConnectionFactory = reactiveRedisConnectionFactory;
     }
 
+    /**
+     * Fetches the list of connected Redis clients and extracts unique client names that start with "artemis".
+     * This method blocks for up to 2 seconds to get the client list.
+     *
+     * @return a set of unique client names starting with "artemis"
+     */
     public Set<String> getUniqueClients() {
         List<RedisClientInfo> clients;
         try {
