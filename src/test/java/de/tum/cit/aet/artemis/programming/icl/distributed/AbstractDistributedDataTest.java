@@ -23,8 +23,9 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueItemListener;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.listener.QueueListener;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
+import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
-public abstract class AbstractDistributedDataTest {
+public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAgentTest {
 
     protected abstract DistributedDataProvider getDistributedDataProvider();
 
