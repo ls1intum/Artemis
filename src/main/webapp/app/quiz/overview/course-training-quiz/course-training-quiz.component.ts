@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -75,6 +75,8 @@ export class CourseTrainingQuizComponent {
     selectedAnswerOptions: AnswerOption[] = [];
     dragAndDropMappings: DragAndDropMapping[] = [];
     shortAnswerSubmittedTexts: ShortAnswerSubmittedText[] = [];
+    previousRatedStatus: boolean | undefined = true;
+    showUnratedConfirmation = false;
 
     /**
      * checks if the current question is the last question
@@ -93,8 +95,27 @@ export class CourseTrainingQuizComponent {
         if (this.questions().length === 0) {
             return undefined;
         }
-        return this.questions()[this.currentIndex()];
+        return this.questions()[this.currentIndex()].quizQuestionWithSolutionDTO;
     });
+
+    isRated = computed(() => {
+        if (this.questions().length === 0) {
+            return undefined;
+        }
+        return this.questions()[this.currentIndex()].isRated;
+    });
+
+    constructor() {
+        // Überwache das Laden von Fragen
+        effect(() => {
+            const questions = this.questions();
+
+            // Prüfe nur, wenn Fragen geladen wurden
+            if (questions.length > 0 && questions !== CourseTrainingQuizComponent.INITIAL_QUESTIONS) {
+                this.checkRatingStatusChange();
+            }
+        });
+    }
 
     /**
      * increments the current question index or navigates to the course practice page if the last question is reached
@@ -102,11 +123,21 @@ export class CourseTrainingQuizComponent {
     nextQuestion(): void {
         if (this.currentIndex() < this.questions().length - 1) {
             this.currentIndex.set(this.currentIndex() + 1);
-            const question = this.currentQuestion()?.quizQuestion;
+            const question = this.currentQuestion();
             if (question) {
                 this.initQuestion(question);
             }
         }
+    }
+
+    checkRatingStatusChange(): void {
+        const currentIsRated = this.isRated();
+
+        if (this.previousRatedStatus === true && currentIsRated === false) {
+            this.showUnratedConfirmation = true;
+        }
+
+        this.previousRatedStatus = currentIsRated;
     }
 
     /**
@@ -117,6 +148,7 @@ export class CourseTrainingQuizComponent {
         this.showingResult = false;
         this.submitted = false;
         this.trainingAnswer = new QuizTrainingAnswer();
+        this.checkRatingStatusChange();
         if (question) {
             switch (question.type) {
                 case QuizQuestionType.MULTIPLE_CHOICE:
@@ -137,7 +169,7 @@ export class CourseTrainingQuizComponent {
      */
     applySelection() {
         this.trainingAnswer.submittedAnswer = undefined;
-        const question = this.currentQuestion()?.quizQuestion;
+        const question = this.currentQuestion();
         if (!question) {
             return;
         }
@@ -174,7 +206,7 @@ export class CourseTrainingQuizComponent {
      * Submits the quiz for practice
      */
     onSubmit() {
-        const questionId = this.currentQuestion()?.quizQuestion?.id;
+        const questionId = this.currentQuestion()?.id;
         if (!questionId) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
@@ -183,7 +215,7 @@ export class CourseTrainingQuizComponent {
             return;
         }
         this.applySelection();
-        this.trainingAnswer.isRated = this.currentQuestion()?.isRated;
+        this.trainingAnswer.isRated = this.isRated();
         this.quizService.submitForTraining(this.trainingAnswer, questionId, this.courseId()).subscribe({
             next: (response: HttpResponse<SubmittedAnswerAfterEvaluation>) => {
                 if (response.body) {
@@ -220,7 +252,7 @@ export class CourseTrainingQuizComponent {
      * Applies the evaluated answer to the current question
      */
     applyEvaluatedAnswer(evaluatedAnswer: SubmittedAnswerAfterEvaluation) {
-        const question = this.currentQuestion()?.quizQuestion;
+        const question = this.currentQuestion();
         if (!question) return;
 
         switch (question.type) {
@@ -241,5 +273,14 @@ export class CourseTrainingQuizComponent {
      */
     navigateToTraining(): void {
         this.router.navigate(['courses', this.courseId(), 'training']);
+    }
+
+    confirmUnratedPractice(): void {
+        this.showUnratedConfirmation = false;
+    }
+
+    cancelUnratedPractice(): void {
+        this.showUnratedConfirmation = false;
+        this.navigateToTraining();
     }
 }
