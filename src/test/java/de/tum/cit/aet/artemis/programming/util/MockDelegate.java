@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -60,25 +59,6 @@ public interface MockDelegate {
 
     void resetMockProvider() throws Exception;
 
-    void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) throws Exception;
-
-    void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) throws Exception;
-
-    void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup, boolean failToAddUsers,
-            boolean failToRemoveUsers) throws Exception;
-
-    void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws Exception;
-
-    void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception;
-
-    void mockCreateGroupInUserManagement(String groupName) throws Exception;
-
-    void mockDeleteGroupInUserManagement(String groupName) throws Exception;
-
-    void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception;
-
-    void mockRemoveUserFromGroup(User user, String group, boolean failInCi) throws Exception;
-
     void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception;
 
     void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws Exception;
@@ -96,8 +76,6 @@ public interface MockDelegate {
     void mockTriggerBuild(AbstractBaseProgrammingExerciseParticipation solutionParticipation) throws Exception;
 
     void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) throws Exception;
-
-    void mockUserExists(String username) throws Exception;
 
     void mockGetCiProjectMissing(ProgrammingExercise exercise) throws IOException;
 }

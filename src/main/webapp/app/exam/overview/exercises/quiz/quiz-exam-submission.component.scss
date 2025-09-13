@@ -28,6 +28,6 @@
 @media print {
     .quiz-container {
         height: auto;
-        page-break-inside: avoid;
+        break-inside: avoid;
     }
 }
