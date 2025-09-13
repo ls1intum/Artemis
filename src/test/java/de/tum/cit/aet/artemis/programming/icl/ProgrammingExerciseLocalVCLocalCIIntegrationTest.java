@@ -110,7 +110,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
-        programmingExercise.setTestRepositoryUri(projectKey + "/" + projectKey.toLowerCase());
+        programmingExercise.setTestRepositoryUri(projectKey + "/" + projectKey.toLowerCase() + "-tests");
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 

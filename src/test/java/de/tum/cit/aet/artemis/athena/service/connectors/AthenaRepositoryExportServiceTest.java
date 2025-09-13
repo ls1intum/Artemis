@@ -73,7 +73,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
-        participation.setRepositoryUri("git://test");
+        participation.setRepositoryUri("SHORTNAME/shortname-student1");
         participation.setProgrammingExercise(programmingExerciseWithId);
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission.setParticipation(participation);

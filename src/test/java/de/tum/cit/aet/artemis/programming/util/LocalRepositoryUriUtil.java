@@ -27,4 +27,11 @@ public class LocalRepositoryUriUtil {
             throw new IllegalArgumentException("Failed to convert file to URI string: " + repoFile.getPath(), e);
         }
     }
+
+    public static String convertToLocalVcUriShortUriString(File repoFile, Path localVCRepoPath) {
+        String localVcUri = convertToLocalVcUriString(repoFile, localVCRepoPath);
+        int gitPrefixIndex = localVcUri.indexOf("/git/");
+        int gitSuffixIndex = localVcUri.lastIndexOf(".git");
+        return localVcUri.substring(gitPrefixIndex + 5, gitSuffixIndex);
+    }
 }

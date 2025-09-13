@@ -183,7 +183,7 @@ public class ParticipationUtilService {
             participation.setProgrammingExercise(exercise);
             participation.setInitializationState(InitializationState.INITIALIZED);
             var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
-            participation.setRepositoryUri(RepositoryUriConversionUtil.toShortRepositoryUri(localVcRepoUri.toString()));
+            participation.setRepositoryUri(localVcRepoUri.toString());
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
@@ -387,7 +387,7 @@ public class ParticipationUtilService {
         }
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
-        participation.setRepositoryUri(RepositoryUriConversionUtil.toShortRepositoryUri(localRepoPath.toString()));
+        participation.setRepositoryUri(localRepoPath.toString());
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();

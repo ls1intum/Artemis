@@ -138,7 +138,6 @@ import de.tum.cit.aet.artemis.programming.service.AutomaticProgrammingExerciseCl
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
-import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
@@ -414,6 +413,10 @@ public class ProgrammingExerciseTestService {
 
     private String convertToLocalVcUriString(LocalRepository localRepository) {
         return LocalRepositoryUriUtil.convertToLocalVcUriString(localRepository.remoteBareGitRepoFile, localVCRepoPath);
+    }
+
+    private String convertToLocalVcShortUriString(LocalRepository localRepository) {
+        return LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(localRepository.remoteBareGitRepoFile, localVCRepoPath);
     }
 
     /**
@@ -2068,14 +2071,12 @@ public class ProgrammingExerciseTestService {
             var team = setupTeam(user);
             participation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
             // prepare for the mock scenario, so that the empty commit will work properly
-            var localVCRepositoryUri = new LocalVCRepositoryUri(convertToLocalVcUriString(studentTeamRepo)).getURI().toString();
-            participation.setRepositoryUri(RepositoryUriConversionUtil.toShortRepositoryUri(localVCRepositoryUri));
+            participation.setRepositoryUri(convertToLocalVcShortUriString(studentTeamRepo));
         }
         else {
             participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, user.getParticipantIdentifier());
             // prepare for the mock scenario, so that the empty commit will work properly
-            var localVCRepositoryUri = new LocalVCRepositoryUri(convertToLocalVcUriString(studentRepo)).getURI().toString();
-            participation.setRepositoryUri(RepositoryUriConversionUtil.toShortRepositoryUri(localVCRepositoryUri));
+            participation.setRepositoryUri(convertToLocalVcShortUriString(studentRepo));
         }
 
         ProgrammingSubmission submission = new ProgrammingSubmission();

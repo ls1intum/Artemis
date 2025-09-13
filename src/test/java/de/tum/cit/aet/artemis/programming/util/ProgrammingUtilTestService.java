@@ -106,22 +106,24 @@ public class ProgrammingUtilTestService {
         }
 
         var templateRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(templateRepo.workingCopyGitRepoFile, localVCRepoPath));
-        exercise.setTemplateRepositoryUri(templateRepoUri.toString());
+        var templateRepoShortUri = LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(templateRepo.workingCopyGitRepoFile, localVCRepoPath);
+        exercise.setTemplateRepositoryUri(templateRepoShortUri);
+        var fullTemplateRepoUri = new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(templateRepoShortUri));
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(templateRepoUri), eq(true), anyBoolean());
+                .getOrCheckoutRepository(eq(fullTemplateRepoUri), eq(true), anyBoolean());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(templateRepoUri), eq(false), anyBoolean());
+                .getOrCheckoutRepository(eq(fullTemplateRepoUri), eq(false), anyBoolean());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(templateRepoUri), eq(true), anyString(), anyBoolean());
+                .getOrCheckoutRepository(eq(fullTemplateRepoUri), eq(true), anyString(), anyBoolean());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(templateRepoUri), eq(false), anyString(), anyBoolean());
+                .getOrCheckoutRepository(eq(fullTemplateRepoUri), eq(false), anyString(), anyBoolean());
         doNothing().when(gitService).pullIgnoreConflicts(any(Repository.class));
         exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
         var savedExercise = exerciseRepository.save(exercise);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(savedExercise);
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(RepositoryUriConversionUtil.toShortRepositoryUri(templateRepoUri.toString()));
+        templateParticipation.setRepositoryUri(templateRepoShortUri);
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         var templateSubmission = new ProgrammingSubmission();
         templateSubmission.setParticipation(templateParticipation);
@@ -151,17 +153,18 @@ public class ProgrammingUtilTestService {
             FileUtils.write(solutionFile, content, Charset.defaultCharset());
         }
 
-        var solutionRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(solutionRepo.workingCopyGitRepoFile, localVCRepoPath));
+        var solutionRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(solutionRepo.workingCopyGitRepoFile, localVCRepoPath));
         exercise.setSolutionRepositoryUri(solutionRepoUri.toString());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(solutionRepoUri, true, true);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(solutionRepoUri, false, true);
+        LocalVCRepositoryUri fullUri = new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(solutionRepoUri.getURI().toString()));
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(fullUri, true,
+                true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(fullUri, false,
+                true);
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(solutionRepoUri), eq(true), anyString(), anyBoolean());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(solutionRepoUri), eq(false), anyString(), anyBoolean());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(fullUri),
+                eq(true), anyString(), anyBoolean());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(fullUri),
+                eq(false), anyString(), anyBoolean());
 
         var buildConfig = programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
         exercise.setBuildConfig(buildConfig);
@@ -169,7 +172,7 @@ public class ProgrammingUtilTestService {
         savedExercise.setBuildConfig(buildConfig);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);
         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
-        solutionParticipation.setRepositoryUri(RepositoryUriConversionUtil.toShortRepositoryUri(solutionRepoUri.toString()));
+        solutionParticipation.setRepositoryUri(solutionRepoUri.toString());
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
         var solutionSubmission = new ProgrammingSubmission();
         solutionSubmission.setParticipation(solutionParticipation);
