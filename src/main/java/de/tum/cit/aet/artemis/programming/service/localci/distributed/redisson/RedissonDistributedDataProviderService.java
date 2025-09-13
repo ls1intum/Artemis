@@ -68,6 +68,6 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
 
     @Override
     public boolean noDataMemberInClusterAvailable() {
-        return isInstanceRunning();
+        return !isInstanceRunning();
     }
 }
