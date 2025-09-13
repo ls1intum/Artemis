@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20250819203300-create-calendar-subscription-token-store" author="marlonnienaber">
+        <!-- Create new token store table with token column. Connect user table via 1-to-1 relationship -->
+        <createTable tableName="calendar_subscription_token_store">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="token" type="varchar(32)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="jhi_user_id" type="bigint">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                baseColumnNames="jhi_user_id"
+                baseTableName="calendar_subscription_token_store"
+                constraintName="FK_CALENDAR_SUBSCRIPTION_TOKEN_STORE_ON_USER"
+                deferrable="false"
+                initiallyDeferred="false"
+                onDelete="CASCADE"
+                onUpdate="CASCADE"
+                referencedColumnNames="id"
+                referencedTableName="jhi_user"
+                validate="true"/>
+
+        <rollback>
+            <!-- Drop new table and constraint -->
+            <dropForeignKeyConstraint baseTableName="calendar_subscription_token_store" constraintName="FK_CALENDAR_SUBSCRIPTION_TOKEN_STORE_ON_USER"/>
+            <dropTable tableName="calendar_subscription_token_store"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

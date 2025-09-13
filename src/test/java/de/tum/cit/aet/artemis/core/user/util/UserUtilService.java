@@ -23,8 +23,10 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Authority;
+import de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
+import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
@@ -67,6 +69,9 @@ public class UserUtilService {
 
     @Autowired
     private UserTestRepository userTestRepository;
+
+    @Autowired
+    private CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository;
 
     /**
      * Changes the currently authorized User to the User with the given username.
@@ -197,6 +202,21 @@ public class UserUtilService {
         user.setVcsAccessToken(vcsAccessToken);
         user.setVcsAccessTokenExpiryDate(expiryDate);
         return userTestRepository.save(user);
+    }
+
+    /**
+     * Deletes all tokens and saves the calendarSubscriptionToken in his calendarSubscriptionTokenStore of the user.
+     *
+     * @param user                      The User to update
+     * @param calendarSubscriptionToken The calendarSubscriptionToken to set
+     * @return The updated User
+     */
+    public void clearAllTokensAndSetTokenForUser(User user, String calendarSubscriptionToken) {
+        calendarSubscriptionTokenStoreRepository.deleteAll();
+        CalendarSubscriptionTokenStore store = new CalendarSubscriptionTokenStore();
+        store.setToken(calendarSubscriptionToken);
+        store.setUser(user);
+        calendarSubscriptionTokenStoreRepository.save(store);
     }
 
     /**
