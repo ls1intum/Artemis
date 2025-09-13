@@ -395,19 +395,23 @@ public class ExamService {
     private void attachParticipationsToExercises(Set<ProgrammingExercise> programmingExercises, Set<TemplateProgrammingExerciseParticipation> templateParticipations,
             Set<SolutionProgrammingExerciseParticipation> solutionParticipations) {
         Map<Long, TemplateProgrammingExerciseParticipation> templateByExerciseId = templateParticipations.stream()
-                .filter(p -> p.getProgrammingExercise() != null && p.getProgrammingExercise().getId() != null)
-                .collect(Collectors.toMap(p -> p.getProgrammingExercise().getId(), Function.identity(), (a, b) -> a));
+                .filter(templateProgrammingExerciseParticipation -> templateProgrammingExerciseParticipation.getProgrammingExercise() != null
+                        && templateProgrammingExerciseParticipation.getProgrammingExercise().getId() != null)
+                .collect(Collectors.toMap(templateProgrammingExerciseParticipation -> templateProgrammingExerciseParticipation.getProgrammingExercise().getId(),
+                        Function.identity(), (a, b) -> a));
 
         Map<Long, SolutionProgrammingExerciseParticipation> solutionByExerciseId = solutionParticipations.stream()
-                .filter(p -> p.getProgrammingExercise() != null && p.getProgrammingExercise().getId() != null)
-                .collect(Collectors.toMap(p -> p.getProgrammingExercise().getId(), Function.identity(), (a, b) -> a));
+                .filter(solutionProgrammingExerciseParticipation -> solutionProgrammingExerciseParticipation.getProgrammingExercise() != null
+                        && solutionProgrammingExerciseParticipation.getProgrammingExercise().getId() != null)
+                .collect(Collectors.toMap(solutionProgrammingExerciseParticipation -> solutionProgrammingExerciseParticipation.getProgrammingExercise().getId(),
+                        Function.identity(), (a, b) -> a));
 
-        programmingExercises.forEach(ex -> {
-            if (templateByExerciseId.containsKey(ex.getId())) {
-                ex.setTemplateParticipation(templateByExerciseId.get(ex.getId()));
+        programmingExercises.forEach(exercise -> {
+            if (templateByExerciseId.containsKey(exercise.getId())) {
+                exercise.setTemplateParticipation(templateByExerciseId.get(exercise.getId()));
             }
-            if (solutionByExerciseId.containsKey(ex.getId())) {
-                ex.setSolutionParticipation(solutionByExerciseId.get(ex.getId()));
+            if (solutionByExerciseId.containsKey(exercise.getId())) {
+                exercise.setSolutionParticipation(solutionByExerciseId.get(exercise.getId()));
             }
         });
     }
@@ -419,17 +423,17 @@ public class ExamService {
         programmingExercises.forEach(ex -> {
             if (ex.getSolutionParticipation() != null && ex.getSolutionParticipation().getSubmissions() != null) {
                 ex.getSolutionParticipation().getSubmissions().forEach(sub -> {
-                    Result r = latestSolutionResults.get(sub.getId());
-                    if (r != null) {
-                        sub.setResults(List.of(r));
+                    Result result = latestSolutionResults.get(sub.getId());
+                    if (result != null) {
+                        sub.setResults(List.of(result));
                     }
                 });
             }
             if (ex.getTemplateParticipation() != null && ex.getTemplateParticipation().getSubmissions() != null) {
                 ex.getTemplateParticipation().getSubmissions().forEach(sub -> {
-                    Result r = latestTemplateResults.get(sub.getId());
-                    if (r != null) {
-                        sub.setResults(List.of(r));
+                    Result result = latestTemplateResults.get(sub.getId());
+                    if (result != null) {
+                        sub.setResults(List.of(result));
                     }
                 });
             }
@@ -450,8 +454,9 @@ public class ExamService {
 
         Set<Long> participationIds = participations.stream().map(DomainObject::getId).collect(Collectors.toSet());
 
-        return resultRepository.findLatestResultsByParticipationIds(participationIds).stream().filter(r -> r.getSubmission() != null && r.getSubmission().getId() != null)
-                .collect(Collectors.toMap(r -> r.getSubmission().getId(), Function.identity(), (r1, r2) -> r1));
+        return resultRepository.findLatestResultsByParticipationIds(participationIds).stream()
+                .filter(result -> result.getSubmission() != null && result.getSubmission().getId() != null)
+                .collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity(), (r1, r2) -> r1));
     }
 
     /**
