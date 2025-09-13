@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
+import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
@@ -68,6 +69,9 @@ public class UserUtilService {
 
     @Autowired
     private UserTestRepository userTestRepository;
+
+    @Autowired
+    private CalendarSubscriptionTokenStoreRepository calendarSubscriptionTokenStoreRepository;
 
     /**
      * Changes the currently authorized User to the User with the given username.
@@ -207,11 +211,11 @@ public class UserUtilService {
      * @param calendarSubscriptionToken The calendarSubscriptionToken to set
      * @return The updated User
      */
-    public User setUserCalendarSubscriptionTokenAndSave(User user, String calendarSubscriptionToken) {
+    public void setUserCalendarSubscriptionTokenAndSave(User user, String calendarSubscriptionToken) {
         CalendarSubscriptionTokenStore store = new CalendarSubscriptionTokenStore();
         store.setToken(calendarSubscriptionToken);
-        user.setCalendarSubscriptionTokenStore(store);
-        return userTestRepository.save(user);
+        store.setUser(user);
+        calendarSubscriptionTokenStoreRepository.save(store);
     }
 
     /**
