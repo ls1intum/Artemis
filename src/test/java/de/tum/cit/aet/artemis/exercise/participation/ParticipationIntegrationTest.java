@@ -566,7 +566,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     private void prepareMocksForProgrammingExercise() throws Exception {
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
         var repo = new LocalRepository(defaultBranch);
         repo.configureRepos(localVCRepoPath, "studentRepo", "studentOriginRepo");
@@ -1441,7 +1441,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
             exerciseRepository.save(programmingExercise);
         }
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         mockDeleteBuildPlan(programmingExercise.getProjectKey(), participation.getBuildPlanId(), false);
         var actualParticipation = request.putWithResponseBody("/api/exercise/participations/" + participation.getId() + "/cleanup-build-plan", null, Participation.class,
                 HttpStatus.OK);

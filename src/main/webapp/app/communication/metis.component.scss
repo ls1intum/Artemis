@@ -45,11 +45,11 @@ $delete-delay-duration: 6s;
 }
 
 .hideAfter5Seconds {
-    -webkit-animation: cssAnimation 5s forwards;
-    animation: cssAnimation 5s forwards;
+    -webkit-animation: cssanimation 5s forwards;
+    animation: cssanimation 5s forwards;
 }
 
-@keyframes cssAnimation {
+@keyframes cssanimation {
     0% {
         opacity: 1;
     }
@@ -63,7 +63,7 @@ $delete-delay-duration: 6s;
     }
 }
 
-@-webkit-keyframes cssAnimation {
+@-webkit-keyframes cssanimation {
     0% {
         opacity: 1;
     }

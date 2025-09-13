@@ -68,7 +68,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private markdownService = inject(ArtemisMarkdownService);
 
     courseDTO: CourseManagementDetailViewDto;
-    activeStudents?: number[];
     course: Course;
 
     courseDetailSections: DetailOverviewSection[];
@@ -324,7 +323,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.courseManagementService.getCourseStatisticsForDetailView(courseId).subscribe({
             next: (courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
                 this.courseDTO = courseResponse.body!;
-                this.activeStudents = courseResponse.body!.activeStudents;
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
