@@ -1,17 +1,18 @@
 // Note: we first need to define our own customizations
-@import 'src/main/webapp/content/scss/artemis-variables';
+@use 'content/scss/artemis-variables';
 
 // Then, we include bootstrap so that it can use some magic functions to compute new values based on those customizations
 // The order is very important, otherwise the background and the button colors might not work correctly
-@import 'node_modules/bootstrap/scss/bootstrap';
-@import 'node_modules/@danielmoncada/angular-datetime-picker/assets/style/picker.min';
+@use 'node_modules/bootstrap/scss/bootstrap';
+@use 'node_modules/@danielmoncada/angular-datetime-picker/assets/style/picker.min';
+@use 'node_modules/@ctrl/ngx-emoji-mart/picker' as picker2;
+@use 'node_modules/@siemens/ngx-datatable/themes/bootstrap' as bootstrap2;
+@use 'themes/default-variables';
 
 // Needed for mathematical formulas in markdown editor
 @import 'node_modules/katex/dist/katex.min.css';
-@import 'node_modules/@siemens/ngx-datatable/themes/bootstrap';
 
 // Needed for emojis in metis reactions
-@import 'node_modules/@ctrl/ngx-emoji-mart/picker';
 
 // Needed for markdown-it-github-alerts and markdown callouts
 @import 'markdown-it-github-alerts/styles/github-colors-light.css';
@@ -45,7 +46,7 @@ h4 {
 /* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
 a,
 a:not(.btn, .dropdown-item, .page-link, .nav-link, .tab-link):hover {
-    color: $link-color;
+    color: bootstrap.$link-color;
 
     /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
@@ -74,7 +75,7 @@ a.disabled {
 }
 
 .text-normal {
-    color: $body-color !important;
+    color: bootstrap.$body-color !important;
 }
 
 .clickable {
@@ -107,7 +108,7 @@ a.disabled {
 .btn-info:hover,
 .btn-success,
 .btn-success:hover {
-    color: $colored-btn-font !important;
+    color: default-variables.$colored-btn-font !important;
 }
 
 a.btn {
@@ -115,9 +116,9 @@ a.btn {
 }
 
 .btn-default {
-    color: $default-btn-font;
-    background-color: $default-btn-background;
-    border-color: $default-btn-border;
+    color: default-variables.$default-btn-font;
+    background-color: default-variables.$default-btn-background;
+    border-color: default-variables.$default-btn-border;
 }
 
 .popover {
@@ -125,11 +126,11 @@ a.btn {
 }
 
 .border-lightgrey {
-    border-color: $border-lightgrey;
+    border-color: default-variables.$border-lightgrey;
 }
 
 .text-lightgrey {
-    color: $text-lightgrey;
+    color: default-variables.$text-lightgrey;
 }
 
 .form-group {
@@ -150,8 +151,8 @@ a.btn {
 .form-control:focus,
 .form-control:focus-visible,
 textarea {
-    background-color: $form-control-focus-background;
-    color: $form-control-color !important;
+    background-color: default-variables.$form-control-focus-background;
+    color: default-variables.$form-control-color !important;
 }
 
 .form-inline .form-control {
@@ -160,7 +161,7 @@ textarea {
 }
 
 .form-check-input:checked {
-    background-color: $primary;
+    background-color: bootstrap.$primary;
 }
 
 .btn-primary input,
@@ -178,8 +179,8 @@ Browser Upgrade Prompt
 ========================================================================== */
 .browserupgrade {
     margin: 0.2em 0;
-    background: $browserupgrade-color-background;
-    color: $browserupgrade-color;
+    background: default-variables.$browserupgrade-color-background;
+    color: default-variables.$browserupgrade-color;
     padding: 0.2em 0;
 }
 
@@ -204,18 +205,18 @@ Generic styles
 .ng-valid[required],
 .ng-valid.required,
 .ng-invalid:not(form) {
-    border-left: 5px solid $ng-valid-border;
+    border-left: 5px solid default-variables.$ng-valid-border;
 
     &.form-check-input {
-        border: 1px solid $ng-valid-border;
+        border: 1px solid default-variables.$ng-valid-border;
     }
 }
 
 .ng-invalid:not(form) {
-    border-left: 5px solid $ng-invalid-border;
+    border-left: 5px solid default-variables.$ng-invalid-border;
 
     &.form-check-input {
-        border: 1px solid $ng-invalid-border;
+        border: 1px solid default-variables.$ng-invalid-border;
     }
 }
 
@@ -223,13 +224,13 @@ Generic styles
 
 // This class refers to the gutter inserted by split.js for its split view
 .gutter {
-    background-color: $gutter-background;
+    background-color: default-variables.$gutter-background;
     cursor: col-resize;
     position: relative;
     transition: background-color 0.2s;
 
     &::before {
-        background-color: $slightly-darker-body-bg;
+        background-color: default-variables.$slightly-darker-body-bg;
         border-radius: 1px;
         content: '';
         height: 24px;
@@ -243,17 +244,17 @@ Generic styles
 
     &:active,
     &:hover {
-        background-color: $body-bg;
+        background-color: bootstrap.$body-bg;
 
         &::before {
-            background-color: $darker-body-bg;
+            background-color: default-variables.$darker-body-bg;
         }
     }
 }
 
 .error {
-    color: $error-color;
-    background-color: $error-background;
+    color: default-variables.$error-color;
+    background-color: default-variables.$error-background;
 }
 
 .invalid-feedback {
@@ -303,7 +304,7 @@ Generic styles
 }
 
 .readonly {
-    background-color: $readonly-background;
+    background-color: default-variables.$readonly-background;
     opacity: 1;
 }
 
@@ -408,7 +409,7 @@ entity detail page css
         }
 
         dd {
-            border-bottom: 1px solid $jh-entity-details-dd-border;
+            border-bottom: 1px solid default-variables.$jh-entity-details-dd-border;
             padding-left: 180px;
             margin-left: 0;
         }
@@ -416,7 +417,7 @@ entity detail page css
 }
 
 .editor-outline-background {
-    background: $editor-outline-background;
+    background: default-variables.$editor-outline-background;
     max-width: max-content;
 }
 
@@ -498,7 +499,7 @@ ui bootstrap tweaks
 }
 
 .btn-total-score {
-    color: $btn-total-score-color;
+    color: default-variables.$btn-total-score-color;
     border-radius: 6px;
     border: none;
 }
@@ -509,19 +510,19 @@ ui bootstrap tweaks
 }
 
 .result-orange {
-    color: $result-orange;
+    color: default-variables.$result-orange;
 }
 
 a.result-orange:hover {
-    color: $result-orange;
+    color: default-variables.$result-orange;
 }
 
 .result-late {
-    color: $result-late;
+    color: default-variables.$result-late;
 }
 
 a.result-late:hover {
-    color: $result-late;
+    color: default-variables.$result-late;
 }
 
 span.result {
@@ -552,13 +553,13 @@ b {
 }
 
 .negative {
-    color: $negative-color;
-    background-color: $negative-background;
+    color: default-variables.$negative-color;
+    background-color: default-variables.$negative-background;
 }
 
 .positive {
-    color: $positive-color;
-    background-color: $positive-background;
+    color: default-variables.$positive-color;
+    background-color: default-variables.$positive-background;
 }
 
 table {
@@ -587,9 +588,9 @@ pre {
     line-height: 1.4268;
     white-space: pre-wrap;
     overflow-wrap: break-word;
-    color: $artemis-pre-color;
-    background-color: $artemis-pre-background;
-    border: 1px solid $artemis-pre-border;
+    color: default-variables.$artemis-pre-color;
+    background-color: default-variables.$artemis-pre-background;
+    border: 1px solid default-variables.$artemis-pre-border;
     border-radius: 4px;
 }
 
@@ -605,34 +606,34 @@ pre {
 .code-success {
     padding: 2px 4px;
     font-size: 90%;
-    color: $code-success-color;
-    background-color: $code-success-background;
+    color: default-variables.$code-success-color;
+    background-color: default-variables.$code-success-background;
     border-radius: 4px;
     font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 .code-error {
-    color: $code-error-color;
-    background-color: $code-error-background;
+    color: default-variables.$code-error-color;
+    background-color: default-variables.$code-error-background;
 }
 
 .code-warning {
-    color: $code-warning-color;
-    background-color: $code-warning-background;
+    color: default-variables.$code-warning-color;
+    background-color: default-variables.$code-warning-background;
 }
 
 code.password {
-    color: $code-password !important;
-    background: $code-password-background;
+    color: default-variables.$code-password !important;
+    background: default-variables.$code-password-background;
 }
 
 code.password::selection {
-    background: $code-password-selection-background;
-    color: $code-password-selection !important;
+    background: default-variables.$code-password-selection-background;
+    color: default-variables.$code-password-selection !important;
 }
 
 code.password:hover {
-    color: $code-password-hover !important;
+    color: default-variables.$code-password-hover !important;
 }
 
 .apollon-editor label {
@@ -691,7 +692,7 @@ code.password:hover {
             }
 
             .fa-check {
-                color: $success;
+                color: bootstrap.$success;
 
                 &.half {
                     &::after {
@@ -705,7 +706,7 @@ code.password:hover {
             }
 
             .fa-times {
-                color: $danger;
+                color: bootstrap.$danger;
 
                 &.half {
                     &::after {
@@ -722,11 +723,11 @@ code.password:hover {
 }
 
 .unreferencedFeedback {
-    background-color: $unreferenced-feedback-background;
+    background-color: default-variables.$unreferenced-feedback-background;
 }
 
 .displaycolor {
-    background: $displaycolor-background;
+    background: default-variables.$displaycolor-background;
 }
 
 // This positions the owl-datetime-picker above the ngbootstrap modal, accounting for a 10px margin which reduces width and height by 20px.
@@ -749,11 +750,11 @@ code.password:hover {
 Course Info Bar
 ========================================================================== */
 .course-info-bar {
-    background-color: $artemis-dark;
+    background-color: default-variables.$artemis-dark;
     padding: 0.5rem 1rem;
     margin: -1rem -1rem 0 -0.5rem;
     display: flex;
-    color: $white;
+    color: bootstrap.$white;
     flex-direction: column;
     justify-content: center;
     border-radius: 0.25rem 0.25rem 0 0;
@@ -764,7 +765,7 @@ Course Info Bar
 ========================================================================== */
 .markdown-preview {
     .background-editor-color {
-        background: $markdown-preview-editor-background;
+        background: default-variables.$markdown-preview-editor-background;
     }
 
     $color-options: 'red', 'green', 'white', 'black', 'yellow', 'blue', 'lila', 'orange';
@@ -777,8 +778,8 @@ Course Info Bar
 
     blockquote {
         padding: 0 1rem;
-        color: $markdown-preview-blockquote;
-        border-left: 0.25em solid $markdown-preview-blockquote-border;
+        color: default-variables.$markdown-preview-blockquote;
+        border-left: 0.25em solid default-variables.$markdown-preview-blockquote-border;
     }
 
     img {
@@ -846,10 +847,10 @@ Course Info Bar
 
 .connection-status {
     font-size: 14px;
-    color: $connection-status;
+    color: default-variables.$connection-status;
 
     &.disconnected {
-        color: $connection-status-disconnected;
+        color: default-variables.$connection-status-disconnected;
     }
 
     i {
@@ -1038,27 +1039,27 @@ Course Info Bar
 }
 
 .accordion-body {
-    background: $brighter-body-bg;
+    background: default-variables.$brighter-body-bg;
     max-height: 50vh;
     overflow: scroll;
     padding: 0 0.5rem;
 }
 
 .mat-autocomplete-panel.mat-autocomplete-visible {
-    box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
+    box-shadow: 3px 3px 6px default-variables.$mat-autocomplete-visible-box-shadow;
 }
 
 .cdk-overlay-container .cdk-overlay-pane .mat-select-panel {
-    background: $metis-course-discussion-select-bg;
-    -webkit-box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
-    -moz-box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
-    box-shadow: 3px 3px 6px $mat-autocomplete-visible-box-shadow;
+    background: default-variables.$metis-course-discussion-select-bg;
+    -webkit-box-shadow: 3px 3px 6px default-variables.$mat-autocomplete-visible-box-shadow;
+    -moz-box-shadow: 3px 3px 6px default-variables.$mat-autocomplete-visible-box-shadow;
+    box-shadow: 3px 3px 6px default-variables.$mat-autocomplete-visible-box-shadow;
     min-width: fit-content;
 }
 
 .mat-form-field-outline {
     top: -0.1rem !important;
-    color: $mat-form-field-outline;
+    color: default-variables.$mat-form-field-outline;
 }
 
 .mat-form-field-appearance-outline {
@@ -1073,15 +1074,15 @@ Course Info Bar
     background-color: transparent;
 
     .popover-arrow::after {
-        border-bottom-color: $artemis-alert-danger-background;
+        border-bottom-color: default-variables.$artemis-alert-danger-background;
     }
 
     .popover-body {
         border: none;
         max-width: 70vw;
         width: 400px;
-        background-color: $artemis-alert-danger-background;
-        color: $artemis-alert-danger-color;
+        background-color: default-variables.$artemis-alert-danger-background;
+        color: default-variables.$artemis-alert-danger-color;
         font-size: 14px;
         display: flex;
         align-items: center;
@@ -1149,7 +1150,7 @@ $transition-in-between-delay: 0.05s;
 
 .sidebar-wrap {
     overflow: hidden;
-    max-width: $sidebar-width;
+    max-width: default-variables.$sidebar-width;
     margin-right: 0.5rem;
     transition:
         max-width $transition-sidebar-width-length 0s ease-in-out,
@@ -1165,7 +1166,7 @@ $transition-in-between-delay: 0.05s;
 }
 
 .sidebar-width {
-    width: $sidebar-width;
+    width: default-variables.$sidebar-width;
 }
 
 .fs-xx-small {

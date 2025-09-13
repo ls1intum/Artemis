@@ -1,3 +1,4 @@
+@use 'sass:color';
 // === BOOTSTRAP ===
 // Mostly default values, including them here for completeness and comparison
 
@@ -107,9 +108,9 @@ $tab-bar-color-hover: $gray-600;
 $tab-bar-color-active: $primary;
 
 // Backgrounds
-$darker-body-bg: darken($body-bg, 20);
-$slightly-darker-body-bg: darken($body-bg, 10);
-$brighter-body-bg: lighten($body-bg, 20);
+$darker-body-bg: color.adjust($body-bg, $lightness: -20);
+$slightly-darker-body-bg: color.adjust($body-bg, $lightness: -10);
+$brighter-body-bg: color.adjust($body-bg, $lightness: 20);
 $hover-slightly-darker-body-bg: #f3f3f3;
 
 // Borders
@@ -191,7 +192,7 @@ $fo-blue-font-color: #3070b3;
 $fo-box-overlay-background: $gray-100;
 
 // Header Participation
-$header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 10%), 15%);
+$header-participation-page-info-bar-background: color.adjust(color.adjust($artemis-dark, $lightness: 10%), $saturation: 15%);
 
 // Markdown Editor
 $md-wrapper-body-bg: white;
@@ -214,7 +215,7 @@ $metis-light-blue: #e3ecf3;
 $metis-green: #33cd32;
 $metis-course-discussion-select-bg: white;
 
-$metis-pinned-post-highlight-color: lighten($metis-blue, 46%);
+$metis-pinned-post-highlight-color: color.adjust($metis-blue, $lightness: 46%);
 
 $metis-answer-post-background-color: rgba(0, 0, 0, 0.02);
 
@@ -231,7 +232,7 @@ $metis-selection-option-hover-background: $gray-200;
 $plagiarism-verdict-disabled-overlay-color: rgba($gray-300, 0.9);
 
 // Component: plagiarism-inspector.component.scss
-$plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
+$plagiarism-inspector-darker-artemis-dark: color.adjust($artemis-dark, $lightness: -4);
 
 // Component: course-exercise-card
 $course-exercise-card-border-color: lightgrey;
@@ -251,14 +252,14 @@ $stat-av-sc-legend-median: rgba(127, 127, 127, 255);
 $stat-av-sc-legend-best: rgba(40, 164, 40, 1);
 
 // Component: pdf-preview.component.scss
-$pdf-preview-pdf-container-shadow: scale-color($black, $alpha: -90%);
-$pdf-preview-canvas-shadow: scale-color($black, $alpha: -90%);
-$pdf-preview-container-overlay: scale-color($black, $alpha: -60%);
-$pdf-preview-enlarged-container-overlay: scale-color($black, $alpha: -80%);
+$pdf-preview-pdf-container-shadow: color.scale($black, $alpha: -90%);
+$pdf-preview-canvas-shadow: color.scale($black, $alpha: -90%);
+$pdf-preview-container-overlay: color.scale($black, $alpha: -60%);
+$pdf-preview-enlarged-container-overlay: color.scale($black, $alpha: -80%);
 $pdf-preview-date-box-title-background: $gray-100;
 
 // Programming Exercise Update
-$update-programming-exercise-plan-preview-box-background: transparentize(black, 0.95);
+$update-programming-exercise-plan-preview-box-background: color.adjust(black, $alpha: -0.95);
 
 // Form Footer
 $update-footer-background: white;
@@ -314,10 +315,10 @@ $quiz-question-border-color: lightgrey;
 
 $quiz-visual-question-border-color: $quiz-question-border-color;
 $quiz-visual-answer-correct-container-color: $success;
-$quiz-visual-answer-correct-container-hover-color: lighten($success, 40%);
-$quiz-visual-answer-wrong-container-hover-color: lighten($danger, 40%);
+$quiz-visual-answer-correct-container-hover-color: color.adjust($success, $lightness: 40%);
+$quiz-visual-answer-wrong-container-hover-color: color.adjust($danger, $lightness: 40%);
 $quiz-visual-answer-add-container-color: $primary;
-$quiz-visual-answer-add-container-hover-color: lighten($primary, 20%);
+$quiz-visual-answer-add-container-hover-color: color.adjust($primary, $lightness: 20%);
 
 $dnd-question-drop-location-background: white;
 $dnd-question-drop-location-border-color: black;
@@ -343,7 +344,7 @@ $sa-question-input-completely-correct-backgroud: lightgreen;
 
 $mc-question-answer-option-border: $gray-300;
 $mc-question-answer-option-hover-background: $gray-200;
-$mc-question-answer-option-selected-background: transparentize($primary, 0.7);
+$mc-question-answer-option-selected-background: color.adjust($primary, $alpha: -0.7);
 
 // Programming Exercises
 $programming-exercise-instruction-step-wizard-card-header-background: #f5f5f5;
@@ -375,14 +376,14 @@ $code-editor-grid-grip-lines-color: $gray-500;
 
 // Monaco editor
 $monaco-suggest-widget-background: $white;
-$monaco-editor-build-annotation-error-background: scale-color($danger, $alpha: -80%);
+$monaco-editor-build-annotation-error-background: color.scale($danger, $alpha: -80%);
 $monaco-editor-build-annotation-error-glyph: $danger;
-$monaco-editor-build-annotation-warning-background: scale-color($warning, $alpha: -80%);
+$monaco-editor-build-annotation-warning-background: color.scale($warning, $alpha: -80%);
 $monaco-editor-build-annotation-warning-glyph: $warning;
-$monaco-editor-build-annotation-outdated-background: scale-color($gray-500, $alpha: -80%);
+$monaco-editor-build-annotation-outdated-background: color.scale($gray-500, $alpha: -80%);
 $monaco-editor-build-annotation-outdated-glyph: $gray-500;
 $monaco-editor-diff-highlight-green: rgb(63, 185, 80);
-$monaco-editor-diff-line-highlight: scale-color($monaco-editor-diff-highlight-green, $alpha: -60%);
+$monaco-editor-diff-line-highlight: color.scale($monaco-editor-diff-highlight-green, $alpha: -60%);
 $monaco-editor-add-feedback-button-background: $gray-400;
 $monaco-editor-add-feedback-button-hover-background: $gray-500;
 $monaco-editor-add-feedback-button-text: $black;
@@ -397,7 +398,7 @@ $git-diff-viewer-placeholder-line-gutter-background: rgba(200, 200, 200, 0.5);
 
 // Overview variables
 $overview-border-color: $border-color;
-$overview-light-border-color: lighten($overview-border-color, 5%);
+$overview-light-border-color: color.adjust($overview-border-color, $lightness: 5%);
 $overview-light-background-color: rgba($overview-light-border-color, 0.3);
 $overview-light-primary-background-color: rgba($primary, 0.3);
 $overview-blue-border-color: $primary;
@@ -455,7 +456,7 @@ $data-table-dropdown-item-selected-background-color: $primary;
 $team-participation-table-last-row-border-bottom: #d1d4d7;
 $team-participation-table-even-row-background: #f2f2f2;
 $team-participation-table-header-inner-background: white;
-$team-participation-table-current-exercise-bg: lighten(#d4edda, 5%);
+$team-participation-table-current-exercise-bg: color.adjust(#d4edda, $lightness: 5%);
 $team-participation-table-current-exercise-text: #155724;
 $team-participation-table-box-shadow-color: gray;
 
@@ -536,8 +537,8 @@ $apollon-grid: rgba(36, 39, 36, 0.1);
 
 // Feedback Suggestions (Athena)
 $feedback-suggestions-primary: rgb(181, 78, 254, 1);
-$feedback-suggestions-background: lighten($feedback-suggestions-primary, 24%);
-$feedback-suggestions-input-background: darken($feedback-suggestions-background, 2%);
+$feedback-suggestions-background: color.adjust($feedback-suggestions-primary, $lightness: 24%);
+$feedback-suggestions-input-background: color.adjust($feedback-suggestions-background, $lightness: -2%);
 
 // NGX Graph Colors
 $graph-light-grey: rgba(153, 153, 153, 1);
@@ -556,11 +557,11 @@ $user-management-border-color: rgba($black, 0.15);
 
 // Competency Rings
 $competency-rings-red: $red;
-$competency-rings-red-bg: transparentize($competency-rings-red, 0.8);
+$competency-rings-red-bg: color.adjust($competency-rings-red, $alpha: -0.8);
 $competency-rings-green: $green;
-$competency-rings-green-bg: transparentize($competency-rings-green, 0.8);
+$competency-rings-green-bg: color.adjust($competency-rings-green, $alpha: -0.8);
 $competency-rings-blue: $blue;
-$competency-rings-blue-bg: transparentize($competency-rings-blue, 0.8);
+$competency-rings-blue-bg: color.adjust($competency-rings-blue, $alpha: -0.8);
 
 // Iris Chatbot
 // TODO: Use standard colors
@@ -591,9 +592,9 @@ $ssh-key-settings-text-color: $black;
 $ssh-key-settings-shadow: rgba(0, 0, 0, 0.2);
 
 // Calendar
-$pastel-cyan: lighten($cyan, 35%);
-$pastel-blue: lighten($blue, 20%);
-$pastel-purple: lighten($purple, 20%);
-$pastel-teal: lighten($teal, 25%);
-$calendar-loading-overlay-background: transparentize($module-bg, 0.8);
+$pastel-cyan: color.adjust($cyan, $lightness: 35%);
+$pastel-blue: color.adjust($blue, $lightness: 20%);
+$pastel-purple: color.adjust($purple, $lightness: 20%);
+$pastel-teal: color.adjust($teal, $lightness: 25%);
+$calendar-loading-overlay-background: color.adjust($module-bg, $alpha: -0.8);
 $calendar-day-badge-selected: $gray-400;

@@ -2,7 +2,8 @@
 @use 'sass:meta';
 @use 'generate-css-vars';
 
-@import 'default-variables';
+@use 'default-variables';
+@use 'node_modules/bootstrap/scss/bootstrap';
 
 html {
     @include generate-css-vars.generate('default-variables');
@@ -11,43 +12,43 @@ html {
     .mat-mdc-menu-item.cdk-program-focused:not([disabled]),
     .mat-mdc-menu-item.cdk-keyboard-focused:not([disabled]),
     .mat-mdc-menu-item-highlighted:not([disabled]) {
-        background-color: $body-bg;
+        background-color: default-variables.$body-bg;
     }
 
     .mat-mdc-menu-panel {
-        background-color: $gray-100;
+        background-color: default-variables.$gray-100;
         border-radius: 10px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Shadow effect */
     }
 
     .mat-mdc-button:disabled {
-        color: $secondary;
+        color: default-variables.$secondary;
     }
 
     .mat-mdc-menu-trigger.mat-mdc-button:hover {
-        background-color: $gray-200;
+        background-color: default-variables.$gray-200;
     }
 
     .mat-mdc-option.mdc-list-item {
-        background-color: $gray-100;
+        background-color: default-variables.$gray-100;
 
         &:hover,
         &.mat-mdc-option-active {
-            background-color: $white;
+            background-color: default-variables.$white;
         }
     }
 }
 
-@import '../global';
+@include meta.load-css('../global');
 
 // Needed for highlighting code in the markdown editor
 @import 'node_modules/highlight.js/styles/vs.css';
 
 // Added to match the already existing style in theme-dark.scss
 .btn-outline-primary:not(.list-group-item) {
-    color: $link-color;
+    color: bootstrap.$link-color;
 }
 
 .btn-outline-primary:not(.list-group-item):hover {
-    color: $white;
+    color: bootstrap.$white;
 }
