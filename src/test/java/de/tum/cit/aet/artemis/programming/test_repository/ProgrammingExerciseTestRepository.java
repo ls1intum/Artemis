@@ -138,7 +138,4 @@ public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRe
     Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
 
     List<ProgrammingExercise> findAllByCourseId(long courseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.team", "studentParticipations.team.students" })
-    Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(long exerciseId);
 }
