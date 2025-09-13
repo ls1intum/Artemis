@@ -515,6 +515,8 @@ public final class Constants {
 
     public static final String REDIS = "Redis";
 
+    public static final String LOCAL = "Local";
+
     private Constants() {
     }
 }
