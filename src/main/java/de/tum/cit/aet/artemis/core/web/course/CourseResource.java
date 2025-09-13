@@ -92,7 +92,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
-import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 
@@ -131,8 +130,6 @@ public class CourseResource {
 
     private final AssessmentDashboardService assessmentDashboardService;
 
-    private final Optional<CIUserManagementService> optionalCiUserManagementService;
-
     private final ExerciseRepository exerciseRepository;
 
     private final FileService fileService;
@@ -165,8 +162,8 @@ public class CourseResource {
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, Optional<LtiApi> ltiApi,
             AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService,
-            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            FileService fileService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
+            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, FileService fileService,
+            Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
             GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi, ConductAgreementService conductAgreementService,
             Optional<AthenaApi> athenaApi, Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
             Optional<LearnerProfileApi> learnerProfileApi, CourseForUserGroupService courseForUserGroupService, CourseOverviewService courseOverviewService,
@@ -177,7 +174,6 @@ public class CourseResource {
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.submissionService = submissionService;
-        this.optionalCiUserManagementService = optionalCiUserManagementService;
         this.assessmentDashboardService = assessmentDashboardService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -311,15 +307,6 @@ public class CourseResource {
             athenaApi.ifPresent(api -> api.revokeAccessToRestrictedFeedbackSuggestionModules(result));
         }
 
-        // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
-        // We need the old instructors, editors and TAs, so that the VCS user management service can determine which
-        // users no longer have TA, editor or instructor rights in the related exercise repositories.
-        final var oldInstructorGroup = existingCourse.getInstructorGroupName();
-        final var oldEditorGroup = existingCourse.getEditorGroupName();
-        final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
-
-        optionalCiUserManagementService
-                .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         if (timeZoneChanged && tutorialGroupChannelManagementApi.isPresent()) {
             tutorialGroupChannelManagementApi.get().onTimeZoneUpdate(result);
         }

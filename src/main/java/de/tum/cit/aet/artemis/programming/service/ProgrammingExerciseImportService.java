@@ -207,8 +207,6 @@ public class ProgrammingExerciseImportService {
         continuousIntegration.createProjectForExercise(newExercise);
         continuousIntegration.copyBuildPlan(templateExercise, templatePlanName, newExercise, targetName, templatePlanName, false);
         continuousIntegration.copyBuildPlan(templateExercise, solutionPlanName, newExercise, targetName, solutionPlanName, true);
-        continuousIntegration.givePlanPermissions(newExercise, templatePlanName);
-        continuousIntegration.givePlanPermissions(newExercise, solutionPlanName);
         continuousIntegration.enablePlan(targetExerciseProjectKey, templateParticipation.getBuildPlanId());
         continuousIntegration.enablePlan(targetExerciseProjectKey, solutionParticipation.getBuildPlanId());
     }
