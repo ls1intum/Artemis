@@ -431,7 +431,7 @@ public class ProgrammingExercise extends Exercise {
         }
 
         try {
-            return new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(templateRepositoryUri));
+            return new LocalVCRepositoryUri(templateRepositoryUri);
         }
         catch (LocalVCInternalException e) {
             log.warn("Cannot create URI for templateRepositoryUri: {} due to the following error: {}", templateRepositoryUri, e.getMessage());
@@ -452,7 +452,7 @@ public class ProgrammingExercise extends Exercise {
         }
 
         try {
-            return new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(solutionRepositoryUri));
+            return new LocalVCRepositoryUri(solutionRepositoryUri);
         }
         catch (LocalVCInternalException e) {
             log.warn("Cannot create URI for solutionRepositoryUri: {} due to the following error: {}", solutionRepositoryUri, e.getMessage());
@@ -472,10 +472,10 @@ public class ProgrammingExercise extends Exercise {
         }
 
         try {
-            return new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(testRepositoryUri));
+            return new LocalVCRepositoryUri(getTestRepositoryUri());
         }
         catch (LocalVCInternalException e) {
-            log.warn("Cannot create URI for testRepositoryUri: {} due to the following error: {}", testRepositoryUri, e.getMessage());
+            log.warn("Cannot create URI for testRepositoryUri: {} due to the following error: {}", getTestRepositoryUri(), e.getMessage());
         }
         return null;
     }

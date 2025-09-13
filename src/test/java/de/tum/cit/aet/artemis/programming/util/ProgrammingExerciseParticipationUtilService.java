@@ -17,7 +17,6 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
@@ -51,9 +50,9 @@ public class ProgrammingExerciseParticipationUtilService {
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.TEMPLATE));
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
-        participation.setRepositoryUri(RepositoryUriConversionUtil.toShortRepositoryUri(localVcRepoUri.toString()));
+        participation.setRepositoryUri(localVcRepoUri.toString());
         participation.setInitializationState(InitializationState.INITIALIZED);
-        templateProgrammingExerciseParticipationTestRepo.save(participation);
+        participation = templateProgrammingExerciseParticipationTestRepo.save(participation);
         exercise.setTemplateParticipation(participation);
         return programmingExerciseRepository.save(exercise);
     }
@@ -70,9 +69,9 @@ public class ProgrammingExerciseParticipationUtilService {
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.SOLUTION));
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
-        participation.setRepositoryUri(RepositoryUriConversionUtil.toShortRepositoryUri(localVcRepoUri.toString()));
+        participation.setRepositoryUri(localVcRepoUri.toString());
         participation.setInitializationState(InitializationState.INITIALIZED);
-        solutionProgrammingExerciseParticipationRepo.save(participation);
+        participation = solutionProgrammingExerciseParticipationRepo.save(participation);
         exercise.setSolutionParticipation(participation);
         return programmingExerciseRepository.save(exercise);
     }
