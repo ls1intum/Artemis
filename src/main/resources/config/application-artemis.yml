@@ -121,6 +121,7 @@ spring:
         api-key: <azure_openai_key>
         # open-ai-api-key: <openai_key> # Fallback OpenAI key if needed, sets endpoint automatically
         endpoint: <azure_openai_endpoint>
+        # deployment-name should match the Azure OpenAI deployment
         chat:
           options:
             deployment-name: <azure_openai_deployment_name or openai_model_name>

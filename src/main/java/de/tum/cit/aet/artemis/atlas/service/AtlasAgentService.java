@@ -1,23 +1,15 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasAgentConfiguration;
-import de.tum.cit.aet.artemis.atlas.config.AtlasAgentEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 
 /**
@@ -26,19 +18,15 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
  */
 @Lazy
 @Service
-@AtlasAgentEnabled
 @Conditional(AtlasEnabled.class)
 public class AtlasAgentService {
 
     private static final Logger log = LoggerFactory.getLogger(AtlasAgentService.class);
 
-    private final RestTemplate restTemplate;
+    private final ChatClient chatClient;
 
-    private final AtlasAgentConfiguration configuration;
-
-    public AtlasAgentService(@Qualifier("atlasAgentRestTemplate") RestTemplate restTemplate, AtlasAgentConfiguration configuration) {
-        this.restTemplate = restTemplate;
-        this.configuration = configuration;
+    public AtlasAgentService(ChatClient chatClient) {
+        this.chatClient = chatClient;
     }
 
     /**
@@ -53,7 +41,6 @@ public class AtlasAgentService {
             try {
                 log.info("Processing chat message for course {}: {}", courseId, message.substring(0, Math.min(message.length(), 50)));
 
-                // Prepare Azure OpenAI request
                 String systemPrompt = """
                         You are an AI assistant that helps instructors work with Atlas competency management and Artemis course management.
 
@@ -72,42 +59,11 @@ public class AtlasAgentService {
                         You are specifically designed to work with the Atlas competency management system within Artemis.
                         """;
 
-                // Create request body for Azure OpenAI
-                Map<String, Object> requestBody = Map.of("messages",
-                        List.of(Map.of("role", "system", "content", systemPrompt), Map.of("role", "user", "content", String.format("Course ID: %d\n\n%s", courseId, message))),
-                        "max_tokens", 800, "temperature", 0.7);
+                String response = chatClient.prompt().system(systemPrompt).user(String.format("Course ID: %d\n\n%s", courseId, message))
+                        .options(AzureOpenAiChatOptions.builder().temperature(0.7).maxTokens(800).build()).call().content();
 
-                // Set headers for Azure OpenAI
-                HttpHeaders headers = new HttpHeaders();
-                headers.set("Content-Type", "application/json");
-                headers.set("api-key", configuration.getAzureApiKey());
-
-                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
-                // Make request to Azure OpenAI - correct URL format for Azure OpenAI
-                String url = configuration.getAzureEndpoint() + "/openai/deployments/" + "gpt-4o" + "/chat/completions?api-version=" + configuration.getAzureApiVersion();
-                ResponseEntity<Map<String, Object>> response = restTemplate.exchange(url, HttpMethod.POST, entity,
-                        new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {
-                        });
-
-                // Extract response text
-                Map<String, Object> responseBody = response.getBody();
-                if (responseBody != null && responseBody.containsKey("choices")) {
-                    Object choicesObj = responseBody.get("choices");
-                    if (choicesObj instanceof List<?> choicesList) {
-                        if (!choicesList.isEmpty() && choicesList.get(0) instanceof Map<?, ?> firstChoice) {
-                            Object messageObj = firstChoice.get("message");
-                            if (messageObj instanceof Map<?, ?> messageMap) {
-                                String content = (String) messageMap.get("content");
-                                log.info("Successfully processed chat message for course {}", courseId);
-                                return content != null ? content : "I apologize, but I couldn't generate a response.";
-                            }
-                        }
-                    }
-                }
-
-                log.warn("No valid response from Azure OpenAI for course {}", courseId);
-                return "I apologize, but I couldn't generate a response. Please try again.";
+                log.info("Successfully processed chat message for course {}", courseId);
+                return response != null && !response.trim().isEmpty() ? response : "I apologize, but I couldn't generate a response.";
 
             }
             catch (Exception e) {
@@ -124,7 +80,7 @@ public class AtlasAgentService {
      */
     public boolean isAvailable() {
         try {
-            return restTemplate != null && configuration != null;
+            return chatClient != null;
         }
         catch (Exception e) {
             log.warn("Atlas Agent service availability check failed: {}", e.getMessage());
