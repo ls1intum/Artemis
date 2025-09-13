@@ -97,7 +97,8 @@ public interface DistributedMap<K, V> {
     void unlock(K key);
 
     /**
-     * Adds a listener that will be notified of changes to the map. The listener methods get the affected entries passed as parameters.
+     * Adds a listener that will be notified of changes to the map.
+     * The listener methods get the affected entries passed as parameter.
      *
      * @param listener the listener to add
      * @return a unique identifier for the listener, which can be used to remove it later
@@ -105,7 +106,8 @@ public interface DistributedMap<K, V> {
     UUID addEntryListener(MapEntryListener<K, V> listener);
 
     /**
-     * Adds a listener that will be notified of changes to the map. It is simplified version of listener that does not pass the specific entries.
+     * Adds a listener that will be notified of changes to the map.
+     * It is simplified version of listener that does not get the specific entries passed as parameter.
      *
      * @param listener the listener to add
      * @return a unique identifier for the listener, which can be used to remove it later

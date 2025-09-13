@@ -81,6 +81,7 @@ public interface DistributedQueue<T> {
 
     /**
      * Adds a listener that will be notified when items are added or removed from the queue.
+     * The listener methods get the added or removed items passed as parameter.
      *
      * @param listener the listener to add
      * @return a unique identifier for the registration, which can be used to remove the listener later
@@ -89,6 +90,7 @@ public interface DistributedQueue<T> {
 
     /**
      * Adds a listener that will be notified when items are added or removed from the queue.
+     * It is simplified version of listener that does not get specific items passed as parameter.
      *
      * @param listener the listener to add
      * @return a unique identifier for the registration, which can be used to remove the listener later
