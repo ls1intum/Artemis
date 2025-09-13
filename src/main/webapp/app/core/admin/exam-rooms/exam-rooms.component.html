@@ -104,7 +104,7 @@
                 </thead>
                 @if (hasExamRoomData()) {
                     <tbody>
-                        @for (examRoom of examRoomData(); track examRoom.roomNumber) {
+                        @for (examRoom of examRoomData(); track examRoom.id) {
                             <tr>
                                 <td>
                                     <!-- 1. Room id -->

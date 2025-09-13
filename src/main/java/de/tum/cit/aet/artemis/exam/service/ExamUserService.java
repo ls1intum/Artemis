@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
-import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 
 /**
@@ -45,21 +44,16 @@ public class ExamUserService {
 
     private static final Logger log = LoggerFactory.getLogger(ExamUserService.class);
 
-    private static final String ENTITY_NAME = "examuserservice";
-
     private final ExamUserRepository examUserRepository;
 
     private final UserRepository userRepository;
 
     private final FileService fileService;
 
-    private final ExamRoomRepository examRoomRepository;
-
-    public ExamUserService(FileService fileService, UserRepository userRepository, ExamUserRepository examUserRepository, ExamRoomRepository examRoomRepository) {
+    public ExamUserService(FileService fileService, UserRepository userRepository, ExamUserRepository examUserRepository) {
         this.examUserRepository = examUserRepository;
         this.userRepository = userRepository;
         this.fileService = fileService;
-        this.examRoomRepository = examRoomRepository;
     }
 
     /**

@@ -127,11 +127,12 @@
             "malformedLayout": "Layout {{ layoutName }} is malformed in room {{ roomNumber }}",
             "unknownLayoutType": "Unknown layout type '{{ layoutType }}' in layout '{{ layoutName }}' in room {{ roomNumber }}",
             "invalidLayout": "The layout {{ layoutName }} in room {{ roomNumber }} seems to be syntactically malformed",
-            "seatNotFoundFixedSelection": "The seat at row index {{ rowIndex }} and seat index {{ seatIndex }} in room {{ roomNumber }} does not exist"
+            "seatNotFoundFixedSelection": "The seat at row index {{ rowIndex }} and seat index {{ seatIndex }} in room {{ roomNumber }} does not exist",
+            "missingDefaultLayout": "The room {{ roomNumber }} does not have a default layout"
         },
         "examUser": {
             "service": {
-                "multipleExams": "All exam users must belong to the same exam, but right now they share {{ foundExams }} different exams",
+                "multipleExams": "All exam users must belong to the same exam, but currently they belong to {{ foundExams }} different exams",
                 "missingPlannedRoomOrSeat": "User {{ userName }} is missing a planned room and seat",
                 "plannedRoomNotFound": "The planned room {{ plannedRoom }} of user {{ userName }} could not be found",
                 "plannedSeatNotFound": "The planned seat {{ plannedSeat }} of user {{ userName }} could not be found"

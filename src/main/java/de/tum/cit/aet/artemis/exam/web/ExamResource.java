@@ -1363,7 +1363,7 @@ public class ExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/distribute.registered-students : Distribute all students registered to
+     * POST /courses/{courseId}/exams/{examId}/distribute-registered-students : Distribute all students registered to
      * an exam across a selection of rooms
      *
      * @param courseId    the id of the course

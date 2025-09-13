@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
 
 /**
- * Spring Data JPA repository for the {@link de.tum.cit.aet.artemis.exam.domain.room.ExamRoom} entity.
+ * Spring Data JPA repository for the {@link de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment} entity.
  */
 @Conditional(ExamEnabled.class)
 @Lazy

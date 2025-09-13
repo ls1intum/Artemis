@@ -6,7 +6,7 @@ export interface ExamRoomUploadInformationDTO {
 }
 
 export interface ExamRoomDTO {
-    id: bigint;
+    id: number;
     roomNumber: string;
     name: string;
     building: string;

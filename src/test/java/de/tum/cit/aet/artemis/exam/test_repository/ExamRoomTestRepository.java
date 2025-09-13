@@ -24,7 +24,7 @@ public interface ExamRoomTestRepository extends ExamRoomRepository {
                 FROM ExamRoom
                 GROUP BY roomNumber, name
             )
-            SELECT examRoom
+            SELECT DISTINCT examRoom
             FROM ExamRoom examRoom
             JOIN latestRooms latestRoom
                 ON examRoom.roomNumber = latestRoom.roomNumber
@@ -49,7 +49,7 @@ public interface ExamRoomTestRepository extends ExamRoomRepository {
                 ON examRoom.roomNumber = latestRoom.roomNumber
                 AND examRoom.name = latestRoom.name
                 AND examRoom.createdDate = latestRoom.maxCreatedDate
-            WHERE examRoom.roomNumber IN :roomNumber
+            WHERE examRoom.roomNumber IN :roomNumbers
             """)
-    Set<Long> findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set<String> roomNumber);
+    Set<Long> findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set<String> roomNumbers);
 }

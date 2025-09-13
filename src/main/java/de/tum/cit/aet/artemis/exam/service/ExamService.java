@@ -1478,8 +1478,8 @@ public class ExamService {
 
         final var examUsers = exam.getExamUsers();
 
-        int numberOfUsableSeats = examRooms.stream()
-                .mapToInt(examRoom -> examRoom.getLayoutStrategies().stream().filter(ls -> ls.getName().equals("default")).findAny().orElseThrow().getCapacity()).sum();
+        final int numberOfUsableSeats = examRooms.stream().mapToInt(examRoom -> examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity()).sum();
+
         if (numberOfUsableSeats < examUsers.size()) {
             throw new BadRequestAlertException("Sire, reinforce the seating!", ENTITY_NAME, "notEnoughExamSeats",
                     Map.of("numberOfUsableSeats", numberOfUsableSeats, "numberOfExamUsers", examUsers.size()));

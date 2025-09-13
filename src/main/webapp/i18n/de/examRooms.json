@@ -40,7 +40,7 @@
                     "roomNumber": "Raumnummer",
                     "roomName": "Raumname",
                     "building": "Gebäude",
-                    "defaultCapacity": "Normale Kapazität",
+                    "defaultCapacity": "Standardkapazität",
                     "maxCapacity": "Maximale Kapazität",
                     "layoutStrategies": "Verfügbare Strategien"
                 }

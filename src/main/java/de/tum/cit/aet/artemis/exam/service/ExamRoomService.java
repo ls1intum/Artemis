@@ -351,13 +351,26 @@ public class ExamRoomService {
     }
 
     /**
+     * Finds the default layout strategy, if it exists, and returns it.
+     *
+     * @param examRoom The exam room containing the default layout strategy
+     *
+     * @return The default layout strategy
+     * @throws BadRequestAlertException if the room doesn't have a default layout strategy
+     */
+    public LayoutStrategy getDefaultLayoutStrategyOrElseThrow(ExamRoom examRoom) {
+        return examRoom.getLayoutStrategies().stream().filter(layoutStrategy -> "default".equalsIgnoreCase(layoutStrategy.getName())).findAny().orElseThrow(
+                () -> new BadRequestAlertException("Missing 'default' layout strategy", ENTITY_NAME, "room.missingDefaultLayout", Map.of("roomNumber", examRoom.getRoomNumber())));
+    }
+
+    /**
      * Calculates the exam seats that are usable for an exam, according to the default layout
      *
      * @param examRoom The exam room, containing seats and default layout
      * @return All seats that can be used for the exam, in ascending order
      */
     public List<ExamSeatDTO> getDefaultUsableSeats(ExamRoom examRoom) {
-        var defaultLayoutStrategy = examRoom.getLayoutStrategies().stream().filter(layoutStrategy -> layoutStrategy.getName().equals("default")).findAny().orElseThrow();
+        var defaultLayoutStrategy = getDefaultLayoutStrategyOrElseThrow(examRoom);
 
         return switch (defaultLayoutStrategy.getType()) {
             case FIXED_SELECTION -> getUsableSeatsFixedSelection(examRoom, defaultLayoutStrategy);
@@ -383,7 +396,7 @@ public class ExamRoomService {
             });
         }
         catch (JsonProcessingException e) {
-            throw new BadRequestAlertException("Sire, the fixed selection couldn't be parsed", ENTITY_NAME, "room.invalidLayout",
+            throw new BadRequestAlertException("Invalid fixed-selection layout parameters", ENTITY_NAME, "room.invalidLayout",
                     Map.of("layoutName", layoutStrategy.getName(), "roomNumber", examRoom.getRoomNumber()));
         }
 
@@ -430,7 +443,7 @@ public class ExamRoomService {
             relativeDistanceInput = objectMapper.readValue(layoutStrategy.getParametersJson(), RelativeDistanceInput.class);
         }
         catch (JsonProcessingException e) {
-            throw new BadRequestAlertException("Sire, reinforce the layout strategy", ENTITY_NAME, "room.invalidLayout",
+            throw new BadRequestAlertException("Invalid relative-distance layout parameters", ENTITY_NAME, "room.invalidLayout",
                     Map.of("layoutName", layoutStrategy.getName(), "roomNumber", examRoom.getRoomNumber()));
         }
 

@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -2343,6 +2344,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
         var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001"));
         request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.BAD_REQUEST);
+
+        Exam storedExam = examRepository.findByIdWithExamUsersElseThrow(exam.getId());
+        assertThat(storedExam).isNotNull();
+        assertThat(storedExam.getExamUsers()).isNotEmpty().allSatisfy(examUser -> {
+            assertThat(examUser.getPlannedRoom()).isNull();
+            assertThat(examUser.getPlannedSeat()).isNull();
+        });
     }
 
     @Test
@@ -2355,5 +2363,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
         var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179"));
         request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.OK);
+
+        Exam storedExam = examRepository.findByIdWithExamUsersElseThrow(exam.getId());
+        assertThat(storedExam).isNotNull();
+        assertThat(storedExam.getExamUsers()).isNotEmpty().allSatisfy(examUser -> {
+            assertThat(examUser.getPlannedRoom()).isNotBlank();
+            assertThat(examUser.getPlannedSeat()).isNotBlank();
+        });
+
+        var usedRooms = storedExam.getExamUsers().stream().map(ExamUser::getPlannedRoom).collect(Collectors.toSet());
+        assertThat(usedRooms).isEqualTo(Set.of("5602.EG.001", "0101.02.179"));
     }
 }

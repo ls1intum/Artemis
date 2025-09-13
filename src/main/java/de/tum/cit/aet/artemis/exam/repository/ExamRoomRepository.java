@@ -55,7 +55,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
     Set<Long> findAllIdsOfOutdatedAndUnusedExamRooms();
 
     /**
-     * Finds and returns all IDs of outdated and unused exam rooms.
+     * Finds and returns all IDs of exam rooms that are not outdated and unused.
      * An exam room is outdated if there exists a newer entry of the same (number, name) combination.
      * An exam room is unused if it isn't connected to any exam.
      *
