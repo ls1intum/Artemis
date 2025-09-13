@@ -37,8 +37,8 @@ jobs:
 
           # TODO these values should become zero in the future
           max_entitygraph_violations=7
-          max_query_violations=25
-          max_total_violations=33
+          max_query_violations=24
+          max_total_violations=32
 
           echo "=========================================="
           echo "QUERY QUALITY ANALYSIS SUMMARY"
@@ -180,7 +180,7 @@ jobs:
             echo "Need more help?"
             echo "==============="
             echo "- Check our performance guidelines: https://docs.artemis.cit.tum.de/dev/guidelines/performance.html"
-            echo "- "Check our best practices in the database section of the developer docs: https://docs.artemis.cit.tum.de/dev/guidelines/database.html"
+            echo "- Check our best practices in the database section of the developer docs: https://docs.artemis.cit.tum.de/dev/guidelines/database.html"
             echo "- Monitor query execution time with logging"
             echo ""
             echo "Remember: The goal is to fetch only the data you actually need, when you need it!"
