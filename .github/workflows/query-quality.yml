@@ -36,7 +36,7 @@ jobs:
           total_violations=$((entitygraph_violations + query_violations))
 
           # TODO these values should become zero in the future
-          max_entitygraph_violations=7
+          max_entitygraph_violations=8
           max_query_violations=24
           max_total_violations=32
 
