@@ -33,4 +33,9 @@ public class LocalTopic<T> implements DistributedTopic<T> {
         listeners.put(listenerId, messageConsumer);
         return listenerId;
     }
+
+    @Override
+    public void removeMessageListener(UUID listenerId) {
+        listeners.remove(listenerId);
+    }
 }

@@ -117,8 +117,8 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public Collection<V> values() {
-        // Not locking all keys for values() to avoid deadlocks; this is a snapshot
-        return map.values();
+        // Return a snapshot
+        return new java.util.ArrayList<>(map.values());
     }
 
     @Override
@@ -143,25 +143,20 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public void clear() {
-        Map<K, V> entriesCopy = new HashMap<>();
         Set<K> keysCopy = Set.copyOf(map.keySet());
-        for (K key : keysCopy) {
-            getLock(key).lock();
-        }
+        Map<K, V> entriesCopy = new HashMap<>(map);
         try {
             for (K key : keysCopy) {
-                V value = map.get(key);
-                if (value != null) {
-                    entriesCopy.put(key, value);
-                }
-                map.clear();
+                getLock(key).lock();
             }
+            map.clear();
         }
         finally {
             for (K key : keysCopy) {
                 getLock(key).unlock();
             }
         }
+
         for (Map.Entry<K, V> entry : entriesCopy.entrySet()) {
             final K key = entry.getKey();
             final V value = entry.getValue();
@@ -179,9 +174,6 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
         ReentrantLock lock = locks.get(key);
         if (lock != null) {
             lock.unlock();
-            if (!lock.isLocked()) {
-                locks.remove(key, lock);
-            }
         }
     }
 
@@ -197,6 +189,12 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
         UUID id = UUID.randomUUID();
         mapListeners.put(id, listener);
         return id;
+    }
+
+    @Override
+    public void removeListener(UUID registrationId) {
+        entryListeners.remove(registrationId);
+        mapListeners.remove(registrationId);
     }
 
     private void notifyEntryAdded(K key, V value) {

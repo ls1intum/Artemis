@@ -161,6 +161,7 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
                 return;
             }
             notificationTopic.removeListener(listenerRegistrations.get(uuid));
+            queue.removeListener(listenerId);
             listenerRegistrations.remove(uuid);
         }
         catch (RedisConnectionException e) {

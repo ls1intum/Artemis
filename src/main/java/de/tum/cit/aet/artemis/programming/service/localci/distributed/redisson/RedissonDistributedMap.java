@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.redisson.api.RMap;
 import org.redisson.api.RTopic;
+import org.redisson.client.RedisConnectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -149,5 +150,21 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
         UUID uuid = UUID.randomUUID();
         listenerRegistrations.put(uuid, registrationId);
         return uuid;
+    }
+
+    @Override
+    public void removeListener(UUID uuid) {
+        try {
+            Integer listenerId = listenerRegistrations.get(uuid);
+            if (listenerId == null) {
+                log.warn("No listener found for UUID: {}", uuid);
+                return;
+            }
+            notificationTopic.removeListener(listenerRegistrations.get(uuid));
+            listenerRegistrations.remove(uuid);
+        }
+        catch (RedisConnectionException e) {
+            log.error("Could not remove listener due to Redis connection exception.");
+        }
     }
 }

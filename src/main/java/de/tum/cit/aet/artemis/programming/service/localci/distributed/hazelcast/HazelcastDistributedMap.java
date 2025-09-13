@@ -129,4 +129,9 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
         }
         return map.addEntryListener(new HazelcastMapEntryListener(), false);
     }
+
+    @Override
+    public void removeListener(UUID registrationId) {
+        map.removeEntryListener(registrationId);
+    }
 }

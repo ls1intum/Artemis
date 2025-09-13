@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.
 @Conditional(LocalCiBuildAgentRedisDataCondition.class)
 public class RedissonDistributedDataProviderService implements DistributedDataProvider {
 
-    @Value("${spring.data.redis.client-name}")
+    @Value("${spring.data.redis.client-name:artemis-node}")
     private String redisClientName;
 
     private final RedissonClient redissonClient;
@@ -68,6 +68,6 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
 
     @Override
     public boolean noDataMemberInClusterAvailable() {
-        return redisClientListResolver.getUniqueClients().isEmpty();
+        return isInstanceRunning();
     }
 }

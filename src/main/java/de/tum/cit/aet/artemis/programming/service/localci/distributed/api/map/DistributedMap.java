@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -69,7 +68,7 @@ public interface DistributedMap<K, V> {
      *
      * @return a HashMap containing all entries in this map
      */
-    HashMap<K, V> getMapCopy();
+    Map<K, V> getMapCopy();
 
     /**
      * Get the number of key-value pairs in this map.
@@ -112,4 +111,11 @@ public interface DistributedMap<K, V> {
      * @return a unique identifier for the listener, which can be used to remove it later
      */
     UUID addListener(MapListener listener);
+
+    /**
+     * Removes a previously registered listener.
+     *
+     * @param registrationId the id returned from addEntryListener/addListener
+     */
+    void removeListener(UUID registrationId);
 }

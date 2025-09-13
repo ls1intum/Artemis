@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson.RedisClientListResolver;
 
 /**
- * Service determining the health of the Athena service and its assessment modules.
+ * Health indicator for the Redis backend used by LocalCI.
  */
 @Lazy
 @ConditionalOnProperty(value = "artemis.continuous-integration.data-store", havingValue = "Redis")
@@ -30,9 +30,6 @@ public class RedisHealthIndicator implements HealthIndicator {
 
     @Value("${spring.data.redis.port}")
     private int redisPort;
-
-    @Value("${spring.data.redis.username}")
-    private String redisUsername;
 
     @Value("${spring.data.redis.client-name}")
     private String redisClientName;
@@ -54,8 +51,8 @@ public class RedisHealthIndicator implements HealthIndicator {
             Set<String> uniqueClients = redisClientListResolver.getUniqueClients();
 
             return Health.up().withDetail("Address", "redis://" + redisHost + ":" + redisPort).withDetail("Ping", "Redis is up")
-                    .withDetail("Unique Artemis clients", uniqueClients.size()).withDetail("Artemis Clients", uniqueClients).withDetail("Username", redisUsername)
-                    .withDetail("This node client name", redisClientName).build();
+                    .withDetail("Unique Artemis clients", uniqueClients.size()).withDetail("Artemis Clients", uniqueClients).withDetail("This node client name", redisClientName)
+                    .build();
 
         }
         catch (Exception e) {

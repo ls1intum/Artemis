@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson;
 
+import java.time.Duration;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,7 +29,14 @@ public class RedisClientListResolver {
     }
 
     public Set<String> getUniqueClients() {
-        List<RedisClientInfo> clients = reactiveRedisConnectionFactory.getReactiveConnection().serverCommands().getClientList().collectList().block();
+        List<RedisClientInfo> clients;
+        try {
+            clients = reactiveRedisConnectionFactory.getReactiveConnection().serverCommands().getClientList().collectList().block(Duration.ofSeconds(2));
+        }
+        catch (RuntimeException e) {
+            log.error("Failed to fetch Redis client list within timeout", e);
+            return Collections.emptySet();
+        }
 
         Set<String> uniqueClients = new HashSet<>();
         if (clients == null) {

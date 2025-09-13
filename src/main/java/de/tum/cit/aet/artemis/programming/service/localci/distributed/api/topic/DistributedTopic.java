@@ -19,4 +19,11 @@ public interface DistributedTopic<T> {
      * @return a unique identifier for the listener, which can be used to remove it later
      */
     UUID addMessageListener(Consumer<T> messageConsumer);
+
+    /**
+     * Removes a message listener from the topic.
+     *
+     * @param listenerId the unique identifier of the listener to remove
+     */
+    void removeMessageListener(UUID listenerId);
 }

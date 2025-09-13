@@ -174,7 +174,7 @@ public class SharedQueueProcessingService {
     }
 
     private void removeListener() {
-        if (distributedDataAccessService.isInstanceRunning()) {
+        if (distributedDataAccessService.isInstanceRunning() && this.listenerId != null) {
             distributedDataAccessService.getDistributedBuildJobQueue().removeListener(this.listenerId);
         }
     }

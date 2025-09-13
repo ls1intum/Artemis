@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
 /**
- * Disables Discovery/Eureka auto-configuration on build agent nodes when Hazelcast is used for CI data storage
- * and the CORE profile is not present. This avoids starting a DiscoveryClient where it is not needed,
+ * Disables Discovery/Eureka auto-configuration on build agent nodes when Redis is used for CI data storage
+ * and the CORE profile is not present. This avoids starting a DiscoveryClient where it is not needed.
  */
 @Lazy
 @Conditional(RedisNotCoreCondition.class)

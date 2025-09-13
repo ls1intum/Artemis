@@ -35,16 +35,12 @@ public class LocalQueue<T> implements DistributedQueue<T> {
     // Simplified listeners that do not require changed entry but just notification
     private final ConcurrentHashMap<UUID, QueueListener> queueListeners = new ConcurrentHashMap<>();
 
-    private final ExecutorService notificationExecutor;
+    private static final ExecutorService notificationExecutor = Executors
+            .newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("local-queue-listener-%d").setDaemon(true).build());
 
     public LocalQueue(Queue<T> queue, String name) {
-        this(queue, name, Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("local-queue-listener-%d").setDaemon(true).build()));
-    }
-
-    public LocalQueue(Queue<T> queue, String name, ExecutorService notificationExecutor) {
         this.queue = queue;
         this.name = name;
-        this.notificationExecutor = notificationExecutor;
     }
 
     @Override

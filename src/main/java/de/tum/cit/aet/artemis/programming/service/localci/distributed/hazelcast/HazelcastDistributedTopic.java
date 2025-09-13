@@ -26,4 +26,9 @@ public class HazelcastDistributedTopic<T> implements DistributedTopic<T> {
             messageConsumer.accept(message.getMessageObject());
         });
     }
+
+    @Override
+    public void removeMessageListener(UUID listenerId) {
+        topic.removeMessageListener(listenerId);
+    }
 }

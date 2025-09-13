@@ -133,7 +133,7 @@ public class LocalCIResultProcessingService {
      */
     @PreDestroy
     public void removeListener() {
-        if (distributedDataAccessService.isInstanceRunning()) {
+        if (distributedDataAccessService.isInstanceRunning() && this.listenerId != null) {
             distributedDataAccessService.getDistributedBuildResultQueue().removeListener(this.listenerId);
         }
         shutdownResultProcessingExecutor();
