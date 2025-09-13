@@ -1384,10 +1384,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     @EntityGraph(attributePaths = { "groups", "authorities" })
     @Query("""
-                    SELECT jhiUser
-                    FROM CalendarSubscriptionTokenStore store
-                        JOIN store.user jhiUser
-                    WHERE store.token = :token
+            SELECT jhiUser
+            FROM CalendarSubscriptionTokenStore store
+                JOIN store.user jhiUser
+            WHERE store.token = :token
             """)
     Optional<User> findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
 }
