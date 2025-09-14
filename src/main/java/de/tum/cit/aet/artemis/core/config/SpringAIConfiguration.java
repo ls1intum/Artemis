@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
+import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
@@ -9,6 +11,7 @@ import org.springframework.context.annotation.Lazy;
 /**
  * Configuration for Spring AI chat clients.
  * This configuration is enabled when either Atlas or Hyperion modules are enabled.
+ * Manual configuration is used since auto-configuration is disabled to avoid conflicts.
  */
 @Configuration
 @Conditional(SpringAIConfiguration.SpringAIEnabled.class)
@@ -17,15 +20,15 @@ public class SpringAIConfiguration {
 
     /**
      * Default Chat Client for AI features.
-     * Uses Spring AI's autoconfiguration for Azure OpenAI integration.
+     * Manually creates ChatClient using Azure OpenAI model since auto-configuration is disabled.
      *
-     * @param chatClientBuilder the auto-configured chat client builder from Spring AI
+     * @param azureOpenAiChatModel the Azure OpenAI chat model (auto-configured by Spring Boot)
      * @return a configured ChatClient
      */
     @Bean
     @Lazy
-    public ChatClient chatClient(ChatClient.Builder chatClientBuilder) {
-        return chatClientBuilder.build();
+    public ChatClient chatClient(AzureOpenAiChatModel azureOpenAiChatModel) {
+        return ChatClient.builder(azureOpenAiChatModel).defaultOptions(AzureOpenAiChatOptions.builder().deploymentName("gpt-5-mini").temperature(1.0).build()).build();
     }
 
     /**

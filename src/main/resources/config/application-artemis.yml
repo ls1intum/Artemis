@@ -110,11 +110,9 @@ artemis:
 # Configure Spring AI, if you want to use Hyperion
 spring:
   ai:
-    model:
-      chat: none #disable any spring ai interaction
     chat:
       client:
-        enabled: ${artemis.hyperion.enabled} # Enable the chat client if hyperion is enabled
+        enabled: false  # Disable auto-configuration to avoid conflicts
     # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
     azure:
       openai:
