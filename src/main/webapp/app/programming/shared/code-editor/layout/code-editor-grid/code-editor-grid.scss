@@ -151,199 +151,203 @@
         grid-template-columns: repeat(2, minmax(max-content, 1fr));
         column-gap: 10px;
 
-    > :not(:first-child) {
-        border-left: 1px solid rgba(0, 0, 0, 0.125);
-        padding-left: 20px;
-    }
-}
-
-.editor-sidebar-left.collapsed--horizontal {
-    .code-editor-status {
-        > :not(:last-child) {
-            padding-bottom: 5px;
-        }
-
         > :not(:first-child) {
-            padding-top: 5px;
-            border-top: 1px solid rgba(0, 0, 0, 0.125);
+            border-left: 1px solid rgba(0, 0, 0, 0.125);
+            padding-left: 20px;
+        }
+    }
+
+    .editor-sidebar-left.collapsed--horizontal {
+        .code-editor-status {
+            > :not(:last-child) {
+                padding-bottom: 5px;
+            }
+
+            > :not(:first-child) {
+                padding-top: 5px;
+                border-top: 1px solid rgba(0, 0, 0, 0.125);
+            }
+
+            span {
+                display: none !important;
+            }
+        }
+    }
+
+    /* Instructions (right pane) */
+    .editor-sidebar-right.collapsed--horizontal {
+        flex: none !important;
+
+        .card-header {
+            height: 100%;
+            width: 100%;
+
+            > fa-icon {
+                display: none;
+            }
         }
 
-        span {
+        .instructions-wrapper__content {
+            height: auto !important;
+
+            .editable-instruction-container__save,
+            .editable-instruction-container__editor {
+                display: none;
+            }
+        }
+
+        .card-second-header {
             display: none !important;
         }
-    }
-}
 
-/* Instructions (right pane) */
-.editor-sidebar-right.collapsed--horizontal {
-    flex: none !important;
+        .collapsed-instructions-card {
+            width: 50px;
+            cursor: pointer;
 
-    .card-header {
-        height: 100%;
-        width: 100%;
+            .header {
+                writing-mode: vertical-lr;
+                position: absolute;
+                top: 29%;
+                left: 25%;
+            }
 
-        > fa-icon {
-            display: none;
+            fa-icon {
+                position: absolute;
+                right: 15px;
+            }
+
+            .top-icon {
+                top: 15px;
+            }
+
+            #panel-symbol {
+                position: absolute;
+                top: 18%;
+                left: 40%;
+                padding-right: 0 !important;
+            }
+
+            .bottom-icon {
+                bottom: 15px;
+            }
+        }
+
+        /* Hide status area when collapsed */
+        .editable-instruction-container__status {
+            display: none !important;
+        }
+
+        .instructions__content {
+            height: auto;
+        }
+
+        .editable-instruction-container__status {
+            display: flex;
+            flex-flow: column;
+
+            > :not(:last-child) {
+                padding-bottom: 5px;
+            }
+
+            > :not(:first-child) {
+                padding-left: 0 !important;
+                padding-top: 5px;
+                border-top: 1px solid rgba(0, 0, 0, 0.125);
+                border-left: none !important;
+            }
+
+            span {
+                display: none !important;
+            }
+
+            .editable-instruction-container__status__testcase span,
+            .instructions-status span {
+                display: none !important;
+            }
         }
     }
 
-    .instructions-wrapper__content {
-        height: auto !important;
-
-        .editable-instruction-container__save,
-        .editable-instruction-container__editor {
-            display: none;
-        }
+    /* Build output */
+    .editor-bottom.collapsed--vertical .card-body {
+        display: none;
     }
 
-    .card-second-header {
-        display: none !important;
+    /* ==========================================================================
+       Resizable drag elements
+       ========================================================================== */
+
+    .rg-main-bottom,
+    .rg-bottom-bottom,
+    .rg-sidebar-left,
+    .rg-sidebar-right {
+        align-self: center;
+        color: var(--code-editor-grid-grip-lines-color);
+        justify-self: center;
     }
 
-    .collapsed-instructions-card {
-        width: 50px;
-        cursor: pointer;
-
-        .header {
-            writing-mode: vertical-lr;
-            position: absolute;
-            top: 29%;
-            left: 25%;
-        }
-
-        fa-icon {
-            position: absolute;
-            right: 15px;
-        }
-        .top-icon {
-            top: 15px;
-        }
-        #panel-symbol {
-            position: absolute;
-            top: 18%;
-            left: 40%;
-            padding-right: 0 !important;
-        }
-        .bottom-icon {
-            bottom: 15px;
-        }
+    .rg-main-bottom {
+        cursor: row-resize;
     }
 
-    /* Hide status area when collapsed */
-    .editable-instruction-container__status {
-        display: none !important;
+    .rg-sidebar-left,
+    .rg-sidebar-right {
+        cursor: col-resize;
+        margin-left: 4px;
+        margin-right: 4px;
+
+        /* easier to grab + avoid selecting editor text while dragging */
+        padding: 6px 6px;
+        -webkit-user-select: none;
+        user-select: none;
+        touch-action: none;
+        z-index: 3;
     }
 
-    .instructions__content {
-        height: auto;
+    .separator {
+        margin: 5px;
     }
 
-    .editable-instruction-container__status {
+    /* ==========================================================================
+       Problem Statement (center) – keep content inside the card and allow shrink
+       ========================================================================== */
+
+    /* allow all layers in the center to shrink instead of pushing the right pane */
+    .editor-center .instructions-wrapper,
+    .editor-center .instructions-wrapper__content,
+    .editor-center .editable-instruction-container,
+    .editor-center .editable-instruction-container > jhi-markdown-editor-monaco {
+        min-width: 0;
+    }
+
+    /* contain the markdown editor’s inner flow (it defaults to overflow: visible) */
+    .editor-center jhi-markdown-editor-monaco .markdown-editor-wrapper {
+        overflow: hidden !important;
+    }
+
+    /* vertical sizing for the editable-instructions stack */
+    .editor-center .instructions-wrapper {
+        min-height: 0;
         display: flex;
-        flex-flow: column;
-
-        > :not(:last-child) {
-            padding-bottom: 5px;
-        }
-
-        > :not(:first-child) {
-            padding-left: 0 !important;
-            padding-top: 5px;
-            border-top: 1px solid rgba(0, 0, 0, 0.125);
-            border-left: none !important;
-        }
-
-        span {
-            display: none !important;
-        }
-
-        .editable-instruction-container__status__testcase span,
-        .instructions-status span {
-            display: none !important;
-        }
+        flex-direction: column;
     }
-}
 
-/* Build output */
-.editor-bottom.collapsed--vertical .card-body {
-    display: none;
-}
+    .editor-center .instructions-wrapper__content {
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
 
-/* ==========================================================================
-   Resizable drag elements
-   ========================================================================== */
+    .editor-center .editable-instruction-container {
+        height: 100%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
 
-.rg-main-bottom,
-.rg-bottom-bottom,
-.rg-sidebar-left,
-.rg-sidebar-right {
-    align-self: center;
-    color: var(--code-editor-grid-grip-lines-color);
-    justify-self: center;
-}
-
-.rg-main-bottom {
-    cursor: row-resize;
-}
-
-.rg-sidebar-left,
-.rg-sidebar-right {
-    cursor: col-resize;
-    margin-left: 4px;
-    margin-right: 4px;
-
-    /* easier to grab + avoid selecting editor text while dragging */
-    padding: 6px 6px;
-    -webkit-user-select: none;
-    user-select: none;
-    touch-action: none;
-    z-index: 3;
-}
-
-.separator {
-    margin: 5px;
-}
-
-/* ==========================================================================
-   Problem Statement (center) – keep content inside the card and allow shrink
-   ========================================================================== */
-
-/* allow all layers in the center to shrink instead of pushing the right pane */
-.editor-center .instructions-wrapper,
-.editor-center .instructions-wrapper__content,
-.editor-center .editable-instruction-container,
-.editor-center .editable-instruction-container > jhi-markdown-editor-monaco {
-    min-width: 0;
-}
-
-/* contain the markdown editor’s inner flow (it defaults to overflow: visible) */
-.editor-center jhi-markdown-editor-monaco .markdown-editor-wrapper {
-    overflow: hidden !important;
-}
-
-/* vertical sizing for the editable-instructions stack */
-.editor-center .instructions-wrapper {
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-.editor-center .instructions-wrapper__content {
-    min-height: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-.editor-center .editable-instruction-container {
-    height: 100%;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-.editor-center .editable-instruction-container jhi-markdown-editor-monaco {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
+    .editor-center .editable-instruction-container jhi-markdown-editor-monaco {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
+    }
 }
