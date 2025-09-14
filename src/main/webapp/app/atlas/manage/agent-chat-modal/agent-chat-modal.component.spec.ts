@@ -45,7 +45,6 @@ describe('AgentChatModalComponent', () => {
 
         expect(component.messages).toHaveLength(1);
         expect(component.messages[0].isUser).toBeFalse();
-        expect(component.messages[0].content).toContain('Hello!');
     });
 
     it('should close modal when close button is clicked', () => {

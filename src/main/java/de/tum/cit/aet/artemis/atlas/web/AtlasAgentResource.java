@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
 import java.time.ZonedDateTime;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import jakarta.validation.Valid;
 
@@ -8,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,20 +56,25 @@ public class AtlasAgentResource {
         log.debug("Received chat message for course {}: {}", courseId, request.message().substring(0, Math.min(request.message().length(), 50)));
 
         try {
-            String response = atlasAgentService.processChatMessage(request.message(), courseId).get(30, java.util.concurrent.TimeUnit.SECONDS);
-
-            AtlasAgentChatResponseDTO responseDTO = new AtlasAgentChatResponseDTO(response, request.sessionId(), ZonedDateTime.now(), true);
-
-            return ResponseEntity.ok(responseDTO);
-
+            final var future = atlasAgentService.processChatMessage(request.message(), courseId);
+            final String response = future.get(30, TimeUnit.SECONDS);
+            return ResponseEntity.ok(new AtlasAgentChatResponseDTO(response, request.sessionId(), ZonedDateTime.now(), true));
         }
-        catch (Exception e) {
-            log.error("Error processing chat message for course {}: {}", courseId, e.getMessage(), e);
-
-            AtlasAgentChatResponseDTO errorResponse = new AtlasAgentChatResponseDTO("I apologize, but I'm having trouble processing your request right now. Please try again.",
-                    request.sessionId(), ZonedDateTime.now(), false);
-
-            return ResponseEntity.ok(errorResponse);
+        catch (TimeoutException te) {
+            log.warn("Chat timed out for course {}: {}", courseId, te.getMessage());
+            return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
+                    .body(new AtlasAgentChatResponseDTO("The agent timed out. Please try again.", request.sessionId(), ZonedDateTime.now(), false));
+        }
+        catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            log.warn("Chat interrupted for course {}: {}", courseId, ie.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(new AtlasAgentChatResponseDTO("The request was interrupted. Please try again.", request.sessionId(), ZonedDateTime.now(), false));
+        }
+        catch (ExecutionException ee) {
+            log.error("Upstream error processing chat for course {}: {}", courseId, ee.getMessage(), ee);
+            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                    .body(new AtlasAgentChatResponseDTO("Upstream error while processing your request.", request.sessionId(), ZonedDateTime.now(), false));
         }
     }
 }

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, timeout } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 
 interface AgentChatRequest {
@@ -30,6 +30,7 @@ export class AgentChatService {
         };
 
         return this.http.post<AgentChatResponse>(`api/atlas/agent/courses/${courseId}/chat`, request).pipe(
+            timeout(30000),
             map((response) => {
                 // Return response message regardless of success status
                 return response.message || this.translateService.instant('artemisApp.agent.chat.error');
