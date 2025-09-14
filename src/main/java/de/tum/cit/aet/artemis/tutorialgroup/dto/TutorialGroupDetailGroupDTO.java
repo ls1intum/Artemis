@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.tutorialgroup.dto;
 
-import java.util.Set;
+import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -21,7 +21,7 @@ public class TutorialGroupDetailGroupDTO {
     private final boolean isOnline;
 
     @NotNull
-    private Set<TutorialGroupDetailSessionDTO> sessions;
+    private List<TutorialGroupDetailSessionDTO> sessions;
 
     @NotNull
     private final String teachingAssistantName;
@@ -55,7 +55,7 @@ public class TutorialGroupDetailGroupDTO {
         this.campus = campus;
         this.groupChannelId = groupChannelId;
         this.metaData = metaData;
-        this.sessions = Set.of();
+        this.sessions = List.of();
     }
 
     public long getId() {
@@ -74,11 +74,11 @@ public class TutorialGroupDetailGroupDTO {
         return isOnline;
     }
 
-    public Set<TutorialGroupDetailSessionDTO> getSessions() {
+    public List<TutorialGroupDetailSessionDTO> getSessions() {
         return sessions;
     }
 
-    public void setSessions(Set<TutorialGroupDetailSessionDTO> sessions) {
+    public void setSessions(List<TutorialGroupDetailSessionDTO> sessions) {
         this.sessions = sessions;
     }
 

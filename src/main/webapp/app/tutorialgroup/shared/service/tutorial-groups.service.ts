@@ -46,7 +46,7 @@ export class TutorialGroupsService {
     }
 
     getTutorialGroupDetailGroupDTO(courseId: number, tutorialGroupId: number) {
-        return this.httpClient.get<any>(`${this.resourceURL}/courses/${courseId}/tutorial-group-detail/tutorial-groups/${tutorialGroupId}`).pipe(
+        return this.httpClient.get<any>(`${this.resourceURL}/courses/${courseId}/tutorial-group-detail/${tutorialGroupId}`).pipe(
             map(
                 (response) =>
                     new TutorialGroupDetailGroupDTO(

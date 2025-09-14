@@ -209,9 +209,9 @@ public class TutorialGroupResource {
         return ResponseEntity.ok().body(tutorialGroup);
     }
 
-    @GetMapping("courses/{courseId}/tutorial-group-detail/tutorial-groups/{tutorialGroupId}")
+    @GetMapping("courses/{courseId}/tutorial-group-detail/{tutorialGroupId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<TutorialGroupDetailGroupDTO> getTutorialGroupDetailGroupDTO(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, ZoneId zoneId) {
+    public ResponseEntity<TutorialGroupDetailGroupDTO> getTutorialGroupDetailGroupDTO(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();

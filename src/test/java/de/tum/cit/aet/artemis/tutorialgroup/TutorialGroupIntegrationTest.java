@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import jakarta.validation.constraints.NotNull;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -33,10 +34,15 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.common.collect.ImmutableSet;
 
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
+import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
@@ -44,7 +50,10 @@ import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
 
@@ -70,6 +79,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
+
+    @Autowired
+    private OneToOneChatRepository oneToOneChatRepository;
 
     @BeforeEach
     @Override
@@ -294,7 +306,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, null }, 69, useSingleEndpoint);
         this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, null }, 69, useSingleEndpoint);
         this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, 8 }, 69, useSingleEndpoint);
-
     }
 
     @ParameterizedTest
@@ -1272,5 +1283,130 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
             assertThat(hasTutorialGroupDeletedNotification).isTrue();
         });
+    }
+
+    @Nested
+    class TutorialGroupDetailGroupDTOTests {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnNotFoundIfCourseDoesNotExist() throws Exception {
+            String nonExistentCourseId = "-1";
+            String url = "/api/tutorialgroup/courses/" + nonExistentCourseId + "/tutorial-group-detail/" + exampleOneTutorialGroupId;
+            request.get(url, HttpStatus.NOT_FOUND, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+        void shouldReturnForbiddenIfUserNotInCourse() throws Exception {
+            String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-group-detail/" + exampleOneTutorialGroupId;
+            request.get(url, HttpStatus.FORBIDDEN, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnInternalServerErrorIfCourseHasNoTimezone() throws Exception {
+            Course course = courseRepository.findById(exampleCourseId).orElseThrow();
+            course.setTimeZone(null);
+            courseRepository.save(course);
+            String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-group-detail/" + exampleOneTutorialGroupId;
+            request.get(url, HttpStatus.INTERNAL_SERVER_ERROR, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnNotFoundIfTutorialGroupDoesNotExist() throws Exception {
+            String nonExistentTutorialGroupId = "-1";
+            String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-group-detail/" + nonExistentTutorialGroupId;
+            request.get(url, HttpStatus.NOT_FOUND, String.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnCorrectGroupWithCorrectSessions() throws Exception {
+            Course course = courseRepository.findById(exampleCourseId).orElseThrow();
+            TutorialGroup group = createAndSaveGroupForTutorialGroupDetailGroupDTOTest(course);
+            TutorialGroupSchedule schedule = createAndSaveScheduleForTutorialGroupDetailGroupDTOTest(group);
+            List<TutorialGroupSession> sessions = createAndSaveSessionsForTutorialGroupDetailGroupDTOTest(course, group, schedule);
+            TutorialGroupSession cancelledSession = sessions.getFirst();
+            TutorialGroupSession relocatedSession = sessions.get(1);
+            TutorialGroupSession changedTimeSession = sessions.get(2);
+            TutorialGroupSession changedDateSession = sessions.get(3);
+            TutorialGroupSession attendanceCountSession = sessions.get(4);
+
+            Channel channel = tutorialGroupChannelManagementService.createChannelForTutorialGroup(group);
+
+            String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-group-detail/" + group.getId();
+            TutorialGroupDetailGroupDTO groupDTO = request.get(url, HttpStatus.OK, TutorialGroupDetailGroupDTO.class);
+            assertThat(groupDTO.getId()).isEqualTo(group.getId());
+            assertThat(groupDTO.getTitle()).isEqualTo(group.getTitle());
+            assertThat(groupDTO.getLanguage()).isEqualTo(group.getLanguage());
+            assertThat(groupDTO.isOnline()).isEqualTo(group.getIsOnline());
+            assertThat(groupDTO.getTeachingAssistantName()).isEqualTo(tutor1.getName());
+            assertThat(groupDTO.getTeachingAssistantLogin()).isEqualTo(tutor1.getLogin());
+            assertThat(groupDTO.getCapacity()).isEqualTo(group.getCapacity());
+            assertThat(groupDTO.getCampus()).isEqualTo(group.getCampus());
+            assertThat(groupDTO.getGroupChannelId()).isEqualTo(channel.getId());
+
+            List<TutorialGroupDetailSessionDTO> sessionDTOs = groupDTO.getSessions();
+            assertThat(sessionDTOs).hasSize(5);
+            TutorialGroupDetailSessionDTO firstSessionDTO = sessionDTOs.getFirst();
+            assertGroupDTOHasCorrectFields(firstSessionDTO, cancelledSession);
+            assertGroupDTOHasCorrectFlags(firstSessionDTO, true, false, false, false);
+
+            TutorialGroupDetailSessionDTO secondSessionDTO = sessionDTOs.get(1);
+            assertGroupDTOHasCorrectFields(secondSessionDTO, relocatedSession);
+            assertGroupDTOHasCorrectFlags(secondSessionDTO, false, true, false, false);
+
+            TutorialGroupDetailSessionDTO thirdSessionDTO = sessionDTOs.get(2);
+            assertGroupDTOHasCorrectFields(thirdSessionDTO, changedTimeSession);
+            assertGroupDTOHasCorrectFlags(thirdSessionDTO, false, false, true, false);
+
+            TutorialGroupDetailSessionDTO fourthSessionDTO = sessionDTOs.get(3);
+            assertGroupDTOHasCorrectFields(fourthSessionDTO, changedDateSession);
+            assertGroupDTOHasCorrectFlags(fourthSessionDTO, false, false, false, true);
+
+            TutorialGroupDetailSessionDTO fifthSessionDTO = sessionDTOs.get(4);
+            assertGroupDTOHasCorrectFields(fifthSessionDTO, attendanceCountSession);
+            assertGroupDTOHasCorrectFlags(fifthSessionDTO, false, false, false, false);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnResponseWithoutTutorChatIdIfNoChatExists() throws Exception {
+            TutorialGroup group = buildTutorialGroupWithoutSchedule("tutor1");
+            tutorialGroupTestRepository.save(group);
+            TutorialGroupSchedule schedule = buildExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), SECOND_AUGUST_MONDAY_00_00.toLocalDate());
+            schedule.setTutorialGroup(group);
+            tutorialGroupScheduleTestRepository.save(schedule);
+
+            String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-group-detail/" + group.getId();
+            TutorialGroupDetailGroupDTO response = request.get(url, HttpStatus.OK, TutorialGroupDetailGroupDTO.class);
+            assertThat(response.getTutorChatId()).isNull();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldReturnResponseWithTutorChatIdIfChatExists() throws Exception {
+            TutorialGroup group = buildTutorialGroupWithoutSchedule("tutor1");
+            tutorialGroupTestRepository.save(group);
+            TutorialGroupSchedule schedule = buildExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), SECOND_AUGUST_MONDAY_00_00.toLocalDate());
+            schedule.setTutorialGroup(group);
+            tutorialGroupScheduleTestRepository.save(schedule);
+
+            Course course = courseRepository.findById(exampleCourseId).orElseThrow();
+            var oneToOneChat = new OneToOneChat();
+            oneToOneChat.setCourse(course);
+            oneToOneChat.setCreator(student1);
+            oneToOneChatRepository.save(oneToOneChat);
+
+            ConversationParticipant participationOfUserA = ConversationParticipant.createWithDefaultValues(student1, oneToOneChat);
+            ConversationParticipant participationOfUserB = ConversationParticipant.createWithDefaultValues(tutor1, oneToOneChat);
+            conversationParticipantRepository.saveAll(List.of(participationOfUserA, participationOfUserB));
+
+            String url = "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-group-detail/" + group.getId();
+            TutorialGroupDetailGroupDTO response = request.get(url, HttpStatus.OK, TutorialGroupDetailGroupDTO.class);
+            assertThat(response.getTutorChatId()).isEqualTo(oneToOneChat.getId());
+        }
     }
 }

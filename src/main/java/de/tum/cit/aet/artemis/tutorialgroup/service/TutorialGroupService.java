@@ -646,7 +646,7 @@ public class TutorialGroupService {
         Optional<Long> tutorChatId = oneToOneChatRepository.findIdOfChatInCourseBetweenUsers(courseId, tutorLogin, currentUserLogin);
         tutorChatId.ifPresent(groupDto::setTutorChatId);
 
-        Set<TutorialGroupDetailSessionDTO> sessionDtos = tutorialGroupSessionRepository.getTutorialGroupDetailSessionDTOs(tutorialGroupId);
+        List<TutorialGroupDetailSessionDTO> sessionDtos = tutorialGroupSessionRepository.getTutorialGroupDetailSessionDTOs(tutorialGroupId);
         int scheduleDayOfWeek = metaData.scheduleDayOfWeek();
         LocalTime scheduleStart = LocalTime.parse(metaData.scheduleStartTime());
         LocalTime scheduleEnd = LocalTime.parse(metaData.scheduleEndTime());
