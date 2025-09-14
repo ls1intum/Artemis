@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -15,14 +17,16 @@ import de.tum.cit.aet.artemis.quiz.dto.question.DragAndDropQuestionWithSolutionD
 import de.tum.cit.aet.artemis.quiz.dto.question.MultipleChoiceQuestionWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.ShortAnswerQuestionWithMappingDTO;
 
-public record QuizExerciseSnapshot(Boolean randomizeQuestionOrder, Integer allowedNumberOfAttempts, Boolean isOpenForPractice, QuizMode quizMode, Integer duration,
-        List<QuizQuestionSnapshot> quizQuestions) implements Serializable {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public record QuizExerciseSnapshotDTO(Boolean randomizeQuestionOrder, Integer allowedNumberOfAttempts, Boolean isOpenForPractice, QuizMode quizMode, Integer duration,
+        List<QuizQuestionSnapshotDTO> quizQuestions) implements Serializable {
 
-    public record QuizQuestionSnapshot(ShortAnswerQuestionWithMappingDTO shortAnswerQuestionWithMappingDTO,
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record QuizQuestionSnapshotDTO(ShortAnswerQuestionWithMappingDTO shortAnswerQuestionWithMappingDTO,
             MultipleChoiceQuestionWithSolutionDTO multipleChoiceQuestionWithSolutionDTO, DragAndDropQuestionWithSolutionDTO dragAndDropQuestionWithSolutionDTO)
             implements Serializable {
 
-        private static QuizQuestionSnapshot of(QuizQuestion quizQuestion) {
+        private static QuizQuestionSnapshotDTO of(QuizQuestion quizQuestion) {
             ShortAnswerQuestionWithMappingDTO shortAnswerQuestionWithMappingDTO = quizQuestion instanceof ShortAnswerQuestion
                     ? ShortAnswerQuestionWithMappingDTO.of((ShortAnswerQuestion) quizQuestion)
                     : null;
@@ -32,14 +36,15 @@ public record QuizExerciseSnapshot(Boolean randomizeQuestionOrder, Integer allow
             DragAndDropQuestionWithSolutionDTO dragAndDropQuestionWithSolutionDTO = quizQuestion instanceof DragAndDropQuestion
                     ? DragAndDropQuestionWithSolutionDTO.of((DragAndDropQuestion) quizQuestion)
                     : null;
-            return new QuizQuestionSnapshot(shortAnswerQuestionWithMappingDTO, multipleChoiceQuestionWithSolutionDTO, dragAndDropQuestionWithSolutionDTO);
+            return new QuizQuestionSnapshotDTO(shortAnswerQuestionWithMappingDTO, multipleChoiceQuestionWithSolutionDTO, dragAndDropQuestionWithSolutionDTO);
         }
     }
 
-    public static QuizExerciseSnapshot of(QuizExercise exercise) {
-        return new QuizExerciseSnapshot(exercise.isRandomizeQuestionOrder(), exercise.getAllowedNumberOfAttempts(), exercise.isIsOpenForPractice(), exercise.getQuizMode(),
+    public static QuizExerciseSnapshotDTO of(QuizExercise exercise) {
+        return new QuizExerciseSnapshotDTO(exercise.isRandomizeQuestionOrder(), exercise.getAllowedNumberOfAttempts(), exercise.isIsOpenForPractice(), exercise.getQuizMode(),
                 exercise.getDuration(),
-                exercise.getQuizQuestions() != null ? exercise.getQuizQuestions().stream().map(QuizQuestionSnapshot::of).collect(Collectors.toCollection(ArrayList::new)) : null);
+                exercise.getQuizQuestions() != null ? exercise.getQuizQuestions().stream().map(QuizQuestionSnapshotDTO::of).collect(Collectors.toCollection(ArrayList::new))
+                        : null);
     }
 
 }

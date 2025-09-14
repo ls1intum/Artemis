@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.versioning.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Optional;
-
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.PostRemove;
 import jakarta.persistence.PostUpdate;
@@ -96,18 +94,19 @@ public class ExerciseVersionEntityListener implements ApplicationContextAware {
      * Publishes an ExerciseChangedEvent for the given exerciseId.
      * exerciseId is used instead of Exercise object, due to Exercise object potentially being uninitialized
      *
-     * @param exerciseId the id of the exercise to publish the event for
+     * @param exerciseId   the id of the exercise to publish the event for
+     * @param exerciseType the type of the exercise to publish the event for
      */
     private void publishExerciseChangedEvent(Long exerciseId, ExerciseType exerciseType) {
-        Optional<String> currentUserLogin = SecurityUtils.getCurrentUserLogin();
-        if (currentUserLogin.isEmpty()) {
-            log.warn("No user logged in user found");
-            return;
-        }
         if (applicationContext == null) {
-            log.warn("No application context found");
+            log.error("No application context found, cannot publish ExerciseChangedEvent");
             return;
         }
-        applicationContext.publishEvent(new ExerciseChangedEvent(exerciseId, currentUserLogin.get(), exerciseType));
+        var userLogin = SecurityUtils.getCurrentUserLogin();
+        if (userLogin.isEmpty()) {
+            log.error("No user login found, cannot publish ExerciseChangedEvent");
+            return;
+        }
+        applicationContext.publishEvent(new ExerciseChangedEvent(exerciseId, exerciseType, userLogin.get()));
     }
 }

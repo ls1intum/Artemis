@@ -61,7 +61,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.versioning.domain.ExerciseVersion;
-import de.tum.cit.aet.artemis.versioning.dto.ExerciseSnapshot;
+import de.tum.cit.aet.artemis.versioning.dto.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.versioning.repository.FileUploadExerciseVersioningRepository;
 import de.tum.cit.aet.artemis.versioning.repository.TextExerciseVersioningRepository;
 
@@ -161,7 +161,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         assertThat(version.getExerciseSnapshot()).isNotNull();
 
         final var eagerFetchedExercise = fetchExerciseForComparison(exercise);
-        var newSnapshot = ExerciseSnapshot.of(eagerFetchedExercise, gitService);
+        var newSnapshot = ExerciseSnapshotDTO.of(eagerFetchedExercise, gitService);
         assertThat(snapshot).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class).isEqualTo(newSnapshot);
 
     }
@@ -219,7 +219,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         var snapshot = newVersion.get().getExerciseSnapshot();
         assertThat(snapshot).isNotNull();
 
-        var expectedSnapshot = ExerciseSnapshot.of(updatedExercise, gitService);
+        var expectedSnapshot = ExerciseSnapshotDTO.of(updatedExercise, gitService);
         assertThat(snapshot).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class).isEqualTo(expectedSnapshot);
     }
 
@@ -255,7 +255,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         var snapshot = newVersion.get().getExerciseSnapshot();
         assertThat(snapshot).isNotNull();
 
-        var expectedSnapshot = ExerciseSnapshot.of(exercise, gitService);
+        var expectedSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
         assertThat(snapshot).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class).isEqualTo(expectedSnapshot);
     }
 

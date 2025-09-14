@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -25,7 +24,7 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.versioning.domain.ExerciseVersion;
-import de.tum.cit.aet.artemis.versioning.dto.ExerciseSnapshot;
+import de.tum.cit.aet.artemis.versioning.dto.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.versioning.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.versioning.repository.FileUploadExerciseVersioningRepository;
 import de.tum.cit.aet.artemis.versioning.repository.TextExerciseVersioningRepository;
@@ -83,41 +82,48 @@ public class ExerciseVersionService {
      * @param exerciseId The ID of the exercise to create a version of
      * @param author     The user who created the version
      */
-    @Async
     public void createProgrammingExerciseVersion(Long exerciseId, User author) {
-        createExerciseVersionSafely(exerciseId, author, ExerciseType.PROGRAMMING);
+        createExerciseVersion(exerciseId, ExerciseType.PROGRAMMING, author);
     }
 
     /**
      * Creates an exercise version safely. This function would fetch the exercise eagerly that corresponds to its type,
-     * initialze an {@link ExerciseSnapshot} and create a new {@link ExerciseVersion} to persist.
+     * initialize an {@link ExerciseSnapshotDTO} and create a new {@link ExerciseVersion} to persist.
      *
      * @param exerciseId The ID of the exercise to create a version of
      * @param author     The user who created the version
      */
-    private void createExerciseVersionSafely(Long exerciseId, User author, ExerciseType exerciseType) {
+    private void createExerciseVersion(Long exerciseId, ExerciseType exerciseType, User author) {
         try {
-            Exercise exercise = fetchExerciseEagerly(exerciseId, exerciseType);
-            // Exercise exercise = exerciseRepository.findById(exerciseId).orElse(null);
-            if (exercise == null) {
-                return;
-            }
-            ExerciseVersion exerciseVersion = new ExerciseVersion();
-            exerciseVersion.setExercise(exercise);
-            exerciseVersion.setAuthor(author);
-            var exerciseSnapshot = ExerciseSnapshot.of(exercise, gitService);
-            var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
-            if (previousVersion.isPresent()) {
-                var previousVersionSnapshot = previousVersion.get().getExerciseSnapshot();
-                var equal = previousVersionSnapshot.equals(exerciseSnapshot);
-                if (equal) {
-                    log.info("Exercise {} has no versionable changes from last version", exercise.getId());
+            transactionTemplate.executeWithoutResult(status -> {
+                var user = author;
+                if (user == null) {
+                    try {
+                        user = userRepository.getUser();
+                    }
+                    catch (EntityNotFoundException e) {
+                        log.warn("No active user during exercise version creation check");
+                    }
+                }
+                Exercise exercise = fetchExerciseEagerly(exerciseId, exerciseType);
+                if (exercise == null) {
                     return;
                 }
-            }
-            exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
-            log.info("Creating exercise version for exercise with id {}", exerciseId);
-            transactionTemplate.executeWithoutResult(status -> {
+                ExerciseVersion exerciseVersion = new ExerciseVersion();
+                exerciseVersion.setExercise(exercise);
+                exerciseVersion.setAuthor(user);
+                var exerciseSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
+                var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
+                if (previousVersion.isPresent()) {
+                    var previousVersionSnapshot = previousVersion.get().getExerciseSnapshot();
+                    var equal = previousVersionSnapshot.equals(exerciseSnapshot);
+                    if (equal) {
+                        log.info("Exercise {} has no versionable changes from last version", exercise.getId());
+                        return;
+                    }
+                }
+                exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
+                // transaction template is needed because this method is executed "after commit" of current transaction context
                 var version = exerciseVersionRepository.save(exerciseVersion);
                 log.info("Exercise version for exercise with id {} created", version.getId());
             });
@@ -132,34 +138,29 @@ public class ExerciseVersionService {
      * Falls back to immediate execution if no transaction is active when the event is published.
      *
      * @param event The ExerciseChangedEvent to handle, containing the exercise ID and the user login.
-     *                  userLogin is used, due to the method being async thus not being able to access
-     *                  the user from security context. Also, methods in {link @ExerciseVersionEntityListener}
+     *                  userLogin is used to avoid. Also, methods in {link @ExerciseVersionEntityListener}
      *                  should not try to access {@link User} from {@link UserRepository} as we should not try to access
      *                  JPA entities from within JPA entity listeners.
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
-    @Async
     public void onExerciseChangedEvent(ExerciseChangedEvent event) {
-        try {
-            var user = userRepository.getUserByLoginElseThrow(event.userLogin());
-            createExerciseVersionSafely(event.exerciseId(), user, event.exerciseType());
+        var user = userRepository.findOneByLogin(event.userLogin());
+        if (user.isEmpty()) {
+            log.error("No user found with login: {}, skipping exercise version creation", event.userLogin());
+            return;
         }
-        catch (EntityNotFoundException e) {
-            log.warn("No active user during exercise version creation check");
-        }
-        catch (Exception e) {
-            log.error("Error handling ExerciseChangedEvent for exercise {}: {}", event.exerciseId(), e.getMessage(), e);
-        }
+        createExerciseVersion(event.exerciseId(), event.exerciseType(), user.get());
     }
 
     /**
      * Fetches an exercise eagerly with versioned fields, with the correct exercise type.
      *
-     * @param exerciseId the exercise id to fetch from
+     * @param exerciseId   the exercise id to fetch from
+     * @param exerciseType the {@link ExerciseType} to fetch from
      * @return the exercise with the given id of the specific subclass, fetched eagerly with versioned fields,
      *         or null if the exercise does not exist
      */
-    public Exercise fetchExerciseEagerly(Long exerciseId, ExerciseType exerciseType) {
+    private Exercise fetchExerciseEagerly(Long exerciseId, ExerciseType exerciseType) {
         if (exerciseId == null) {
             log.error("fetchExerciseEagerly for versioning is called with null");
             return null;

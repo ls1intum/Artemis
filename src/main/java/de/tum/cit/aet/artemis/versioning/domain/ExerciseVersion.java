@@ -15,7 +15,7 @@ import org.hibernate.type.SqlTypes;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.versioning.dto.ExerciseSnapshot;
+import de.tum.cit.aet.artemis.versioning.dto.ExerciseSnapshotDTO;
 
 @Entity
 @Table(name = "exercise_version")
@@ -32,7 +32,7 @@ public class ExerciseVersion extends AbstractAuditingEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "exercise_snapshot", columnDefinition = "json")
-    private ExerciseSnapshot exerciseSnapshot;
+    private ExerciseSnapshotDTO exerciseSnapshotDTO;
 
     public Exercise getExercise() {
         return exercise;
@@ -50,11 +50,11 @@ public class ExerciseVersion extends AbstractAuditingEntity {
         this.author = author;
     }
 
-    public ExerciseSnapshot getExerciseSnapshot() {
-        return exerciseSnapshot;
+    public ExerciseSnapshotDTO getExerciseSnapshot() {
+        return exerciseSnapshotDTO;
     }
 
-    public void setExerciseSnapshot(ExerciseSnapshot exerciseSnapshot) {
-        this.exerciseSnapshot = exerciseSnapshot;
+    public void setExerciseSnapshot(ExerciseSnapshotDTO exerciseSnapshotDTO) {
+        this.exerciseSnapshotDTO = exerciseSnapshotDTO;
     }
 }
