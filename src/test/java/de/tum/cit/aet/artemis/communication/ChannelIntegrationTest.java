@@ -26,6 +26,7 @@ import org.springframework.util.MultiValueMap;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.ChannelSubType;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
 import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
@@ -859,23 +860,24 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     void getExerciseChannel_asCourseStudent_shouldGetExerciseChannel() throws Exception {
         Course course = courseRepository.findById(exampleCourseId).orElseThrow();
         var exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(7), ZonedDateTime.now().plusMinutes(14));
-        var publicChannelWhereMember = createChannel(true, TEST_PREFIX + "1");
-        Channel channel = channelRepository.findById(publicChannelWhereMember.getId()).orElseThrow();
+        var publicExerciseChannel = createChannel(true, TEST_PREFIX + "1");
+        Channel channel = channelRepository.findById(publicExerciseChannel.getId()).orElseThrow();
         channel.setExercise(exercise);
         channelRepository.save(channel);
-        addUsersToConversation(publicChannelWhereMember.getId(), "student1");
-        addUsersToConversation(publicChannelWhereMember.getId(), "student2");
+        addUsersToConversation(publicExerciseChannel.getId(), "student1");
+        addUsersToConversation(publicExerciseChannel.getId(), "student2");
 
-        assertParticipants(publicChannelWhereMember.getId(), 3, "student1", "student2", "instructor1");
+        assertParticipants(publicExerciseChannel.getId(), 3, "student1", "student2", "instructor1");
 
         // switch to student1
         userUtilService.changeUser(testPrefix + "student1");
 
-        Channel exerciseChannel = request.get("/api/communication/courses/" + exampleCourseId + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, Channel.class);
-        assertThat(exerciseChannel.getId()).isEqualTo(publicChannelWhereMember.getId());
-        assertThat(exerciseChannel.getExercise()).isNull();
+        ChannelDTO exerciseChannel = request.get("/api/communication/courses/" + exampleCourseId + "/exercises/" + exercise.getId() + "/channel", HttpStatus.OK, ChannelDTO.class);
+        assertThat(exerciseChannel.getId()).isEqualTo(publicExerciseChannel.getId());
+        assertThat(exerciseChannel.getSubTypeReferenceId()).isEqualTo(exercise.getId());
+        assertThat(exerciseChannel.getSubType()).isEqualTo(ChannelSubType.EXERCISE);
 
-        conversationRepository.deleteById(publicChannelWhereMember.getId());
+        conversationRepository.deleteById(publicExerciseChannel.getId());
     }
 
     @Test
@@ -915,22 +917,23 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         lecture.setDescription("Test Lecture");
         lecture.setCourse(course);
         lecture = lectureRepository.save(lecture);
-        var publicChannelWhereMember = createChannel(true, TEST_PREFIX + "1");
-        Channel channel = channelRepository.findById(publicChannelWhereMember.getId()).orElseThrow();
+        var publicLectureChannel = createChannel(true, TEST_PREFIX + "1");
+        Channel channel = channelRepository.findById(publicLectureChannel.getId()).orElseThrow();
         channel.setLecture(lecture);
         channelRepository.save(channel);
-        addUsersToConversation(publicChannelWhereMember.getId(), "student1");
-        addUsersToConversation(publicChannelWhereMember.getId(), "student2");
+        addUsersToConversation(publicLectureChannel.getId(), "student1");
+        addUsersToConversation(publicLectureChannel.getId(), "student2");
 
-        assertParticipants(publicChannelWhereMember.getId(), 3, "student1", "student2", "instructor1");
+        assertParticipants(publicLectureChannel.getId(), 3, "student1", "student2", "instructor1");
 
         userUtilService.changeUser(testPrefix + "student1");
 
-        Channel lectureChannel = request.get("/api/communication/courses/" + exampleCourseId + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, Channel.class);
-        assertThat(lectureChannel.getId()).isEqualTo(publicChannelWhereMember.getId());
-        assertThat(lectureChannel.getLecture()).isNull();
+        ChannelDTO lectureChannel = request.get("/api/communication/courses/" + exampleCourseId + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, ChannelDTO.class);
+        assertThat(lectureChannel.getId()).isEqualTo(publicLectureChannel.getId());
+        assertThat(lectureChannel.getSubTypeReferenceId()).isEqualTo(lecture.getId());
+        assertThat(lectureChannel.getSubType()).isEqualTo(ChannelSubType.LECTURE);
 
-        conversationRepository.deleteById(publicChannelWhereMember.getId());
+        conversationRepository.deleteById(publicLectureChannel.getId());
         lectureRepository.deleteById(lecture.getId());
     }
 

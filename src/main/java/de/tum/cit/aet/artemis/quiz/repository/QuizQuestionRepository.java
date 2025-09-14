@@ -27,6 +27,13 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
 
     @Query("""
             SELECT question
+            FROM QuizQuestion question
+            WHERE question.exercise.id IN :exerciseIds
+            """)
+    Set<QuizQuestion> findAllByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    @Query("""
+            SELECT question
             FROM DragAndDropQuestion question
             WHERE question.id = :questionId
             """)
