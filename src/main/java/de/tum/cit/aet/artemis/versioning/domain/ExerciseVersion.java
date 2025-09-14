@@ -23,11 +23,11 @@ import de.tum.cit.aet.artemis.versioning.dto.ExerciseSnapshot;
 public class ExerciseVersion extends AbstractAuditingEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "exercise_id", updatable = false)
+    @JoinColumn(name = "exercise_id", updatable = false, nullable = false)
     private Exercise exercise;
 
     @ManyToOne
-    @JoinColumn(name = "author_id", updatable = false)
+    @JoinColumn(name = "author_id", updatable = false, nullable = false)
     private User author;
 
     @JdbcTypeCode(SqlTypes.JSON)

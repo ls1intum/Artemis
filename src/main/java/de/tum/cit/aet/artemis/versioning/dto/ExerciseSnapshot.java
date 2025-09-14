@@ -6,9 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -39,8 +36,6 @@ public record ExerciseSnapshot(
         QuizExerciseSnapshot quizData, FileUploadExerciseSnapshot fileUploadData
 
 ) implements Serializable {
-
-    private static final Logger log = LoggerFactory.getLogger(ExerciseSnapshot.class);
 
     public static ExerciseSnapshot of(Exercise exercise, GitService gitService) {
 
@@ -82,5 +77,11 @@ public record ExerciseSnapshot(
 
     private static ZonedDateTime toUtc(ZonedDateTime zdt) {
         return zdt == null ? null : zdt.withZoneSameInstant(ZoneOffset.UTC);
+    }
+
+    public static ExerciseSnapshot empty() {
+        return new ExerciseSnapshot(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null);
+
     }
 }

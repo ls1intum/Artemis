@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -54,14 +54,11 @@ public class ExerciseVersionService {
 
     private final UserRepository userRepository;
 
-    private final ExerciseRepository exerciseRepository;
-
     private final TransactionTemplate transactionTemplate;
 
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseVersioningRepository textExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
-            FileUploadExerciseVersioningRepository fileUploadExerciseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
-            PlatformTransactionManager transactionManager) {
+            FileUploadExerciseVersioningRepository fileUploadExerciseRepository, UserRepository userRepository, PlatformTransactionManager transactionManager) {
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         this.exerciseVersionRepository = exerciseVersionRepository;
@@ -72,7 +69,6 @@ public class ExerciseVersionService {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
-        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -88,8 +84,8 @@ public class ExerciseVersionService {
      * @param author     The user who created the version
      */
     @Async
-    public void createExerciseVersion(Long exerciseId, User author) {
-        createExerciseVersionSafely(exerciseId, author);
+    public void createProgrammingExerciseVersion(Long exerciseId, User author) {
+        createExerciseVersionSafely(exerciseId, author, ExerciseType.PROGRAMMING);
     }
 
     /**
@@ -99,29 +95,30 @@ public class ExerciseVersionService {
      * @param exerciseId The ID of the exercise to create a version of
      * @param author     The user who created the version
      */
-    private void createExerciseVersionSafely(Long exerciseId, User author) {
+    private void createExerciseVersionSafely(Long exerciseId, User author, ExerciseType exerciseType) {
         try {
-            transactionTemplate.executeWithoutResult(status -> {
-                Exercise exercise = fetchExerciseEagerly(exerciseId);
-                if (exercise == null) {
+            Exercise exercise = fetchExerciseEagerly(exerciseId, exerciseType);
+            // Exercise exercise = exerciseRepository.findById(exerciseId).orElse(null);
+            if (exercise == null) {
+                return;
+            }
+            ExerciseVersion exerciseVersion = new ExerciseVersion();
+            exerciseVersion.setExercise(exercise);
+            exerciseVersion.setAuthor(author);
+            var exerciseSnapshot = ExerciseSnapshot.of(exercise, gitService);
+            var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
+            if (previousVersion.isPresent()) {
+                var previousVersionSnapshot = previousVersion.get().getExerciseSnapshot();
+                var equal = previousVersionSnapshot.equals(exerciseSnapshot);
+                if (equal) {
+                    log.info("Exercise {} has no versionable changes from last version", exercise.getId());
                     return;
                 }
-                ExerciseVersion exerciseVersion = new ExerciseVersion();
-                exerciseVersion.setExercise(exercise);
-                exerciseVersion.setAuthor(author);
-                var exerciseSnapshot = ExerciseSnapshot.of(exercise, gitService);
-                var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
-                if (previousVersion.isPresent()) {
-                    var previousVersionSnapshot = previousVersion.get().getExerciseSnapshot();
-                    var equal = previousVersionSnapshot.equals(exerciseSnapshot);
-                    if (equal) {
-                        log.info("Exercise {} has no versionable changes from last version", exercise.getId());
-                        return;
-                    }
-                }
-                exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
-                log.info("Creating exercise version for exercise with id {}", exerciseId);
-                var version = exerciseVersionRepository.saveAndFlush(exerciseVersion);
+            }
+            exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
+            log.info("Creating exercise version for exercise with id {}", exerciseId);
+            transactionTemplate.executeWithoutResult(status -> {
+                var version = exerciseVersionRepository.save(exerciseVersion);
                 log.info("Exercise version for exercise with id {} created", version.getId());
             });
         }
@@ -145,7 +142,7 @@ public class ExerciseVersionService {
     public void onExerciseChangedEvent(ExerciseChangedEvent event) {
         try {
             var user = userRepository.getUserByLoginElseThrow(event.userLogin());
-            createExerciseVersionSafely(event.exerciseId(), user);
+            createExerciseVersionSafely(event.exerciseId(), user, event.exerciseType());
         }
         catch (EntityNotFoundException e) {
             log.warn("No active user during exercise version creation check");
@@ -162,17 +159,11 @@ public class ExerciseVersionService {
      * @return the exercise with the given id of the specific subclass, fetched eagerly with versioned fields,
      *         or null if the exercise does not exist
      */
-    private Exercise fetchExerciseEagerly(Long exerciseId) {
+    public Exercise fetchExerciseEagerly(Long exerciseId, ExerciseType exerciseType) {
         if (exerciseId == null) {
             log.error("fetchExerciseEagerly for versioning is called with null");
             return null;
         }
-        var exercise = exerciseRepository.findById(exerciseId).orElse(null);
-        if (exercise == null) {
-            log.error("Exercise with id {} not found", exerciseId);
-            return null;
-        }
-        var exerciseType = exercise.getExerciseType();
         return switch (exerciseType) {
             case PROGRAMMING -> programmingExerciseRepository.findWithEagerForVersioningById(exerciseId).orElse(null);
             case QUIZ -> quizExerciseRepository.findWithEagerForVersioningById(exerciseId).orElse(null);

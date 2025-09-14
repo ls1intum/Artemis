@@ -51,7 +51,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
      * Basic ModelingExercise fields (exampleSolutionModel, exampleSolutionExplanation, diagramType) are already included in the entity.
      */
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "competencyLinks.competency", "categories", "teamAssignmentConfig", "gradingCriteria",
-            "exampleSubmissions.submission", "attachments", "plagiarismDetectionConfig", "exerciseGroup" })
+            "exampleSubmissions.submission", "attachments", "plagiarismDetectionConfig" })
     Optional<ModelingExercise> findWithEagerForVersioningById(long exerciseId);
 
     @Query("""

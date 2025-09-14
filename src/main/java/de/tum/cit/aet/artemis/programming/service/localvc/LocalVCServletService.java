@@ -764,7 +764,7 @@ public class LocalVCServletService {
 
         try {
             if (!repositoryType.equals(RepositoryType.USER)) {
-                exerciseVersionService.createExerciseVersion(exercise.getId(), user);
+                exerciseVersionService.createProgrammingExerciseVersion(exercise.getId(), user);
             }
             if (repositoryType.equals(RepositoryType.TESTS)) {
                 processNewPushToTestOrAuxRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation, repositoryType);
