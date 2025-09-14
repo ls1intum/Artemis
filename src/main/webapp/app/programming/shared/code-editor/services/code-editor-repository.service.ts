@@ -251,8 +251,15 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             this.fileUpdateSubject.complete();
         }
         this.fileUpdateSubject = new Subject<FileSubmission>();
+
+        // Filter out any PROBLEM_STATEMENT entries from the payload
+        const filteredUpdates = fileUpdates.filter((update) => {
+            // Only allow regular file operations - exclude PROBLEM_STATEMENT pseudo-files
+            return !update.fileName.includes('__problem_statement__');
+        });
+
         return this.http
-            .put<FileSubmission>(`${this.restResourceUrl}/files`, fileUpdates, {
+            .put<FileSubmission>(`${this.restResourceUrl}/files`, filteredUpdates, {
                 params: { commit: thenCommit ? 'yes' : 'no' },
             })
             .pipe(

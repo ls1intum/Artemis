@@ -212,6 +212,10 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
                 this.selectedFile = fileChange.fileName;
             }
         } else if (fileChange instanceof RenameFileChange || fileChange instanceof DeleteFileChange) {
+            // Guard against PROBLEM_STATEMENT file operations - only allow FILE and FOLDER
+            if (fileChange.fileType !== FileType.FILE && fileChange.fileType !== FileType.FOLDER) {
+                return;
+            }
             this.unsavedFiles = this.fileService.updateFileReferences(this.unsavedFiles, fileChange);
             this.selectedFile = this.fileService.updateFileReference(this.selectedFile!, fileChange);
         }

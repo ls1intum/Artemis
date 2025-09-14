@@ -91,6 +91,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     FileType = FileType;
     // Problem Statement identifier constant
     readonly PROBLEM_STATEMENT_IDENTIFIER = '__problem_statement__';
+    private isProblemStatement = (path?: string) => path === this.PROBLEM_STATEMENT_IDENTIFIER;
     @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
     @ViewChild('treeview', { static: false }) treeview: TreeViewComponent<string>;
     @Input()
@@ -205,7 +206,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
         // Add Problem Statement as a first-class file type (not in display-only mode)
         if (!this.displayOnly) {
-            this.repositoryFiles[this.PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
+            const existing = this.repositoryFiles[this.PROBLEM_STATEMENT_IDENTIFIER];
+            if (!existing || existing === FileType.PROBLEM_STATEMENT) {
+                this.repositoryFiles[this.PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
+            }
         }
     }
 
@@ -257,6 +261,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
         if (this.displayOnly) {
             delete this.repositoryFiles[this.PROBLEM_STATEMENT_IDENTIFIER];
+            if (this.isProblemStatement(this.selectedFile)) {
+                this.selectedFile = undefined;
+            }
         } else {
             this.repositoryFiles[this.PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
         }
@@ -508,6 +515,13 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             return;
         }
         const [filePath, , fileType] = this.renamingFile;
+
+        // Guard against renaming PROBLEM_STATEMENT files - only allow FILE and FOLDER
+        if (fileType !== FileType.FILE && fileType !== FileType.FOLDER) {
+            this.renamingFile = undefined;
+            return;
+        }
+
         let newFilePath: any = filePath.split('/');
         newFilePath[newFilePath.length - 1] = newFileName;
         newFilePath = newFilePath.join('/');
