@@ -341,7 +341,7 @@ public class ParticipationUtilService {
                 userUtilService.getUserByLogin(login));
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey().toLowerCase(), repoName);
-        participation.setRepositoryUri(RepositoryUriConversionUtil.toShortRepositoryUri(localVcRepoUri.toString()));
+        participation.setRepositoryUri(localVcRepoUri.toString());
         participation = programmingExerciseStudentParticipationRepo.save(participation);
         participationVCSAccessTokenService.createParticipationVCSAccessToken(userUtilService.getUserByLogin(login), participation);
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
