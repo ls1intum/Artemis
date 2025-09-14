@@ -41,7 +41,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     @Query("""
             SELECT b.id
             FROM BuildJob b
-            WHERE b.buildStatus not in (de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.QUEUED, de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.BUILDING )
+            WHERE b.buildStatus NOT IN (de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.QUEUED, de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.BUILDING)
             """)
     Slice<Long> findFinishedIds(Pageable pageable);
 
