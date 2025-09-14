@@ -6,6 +6,8 @@ import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-com
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/atlas/shared/entities/competency.model';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { of } from 'rxjs';
 
 describe('CourseCompetencyRelationFormComponent', () => {
     let component: CourseCompetencyRelationFormComponent;
@@ -60,6 +62,12 @@ describe('CourseCompetencyRelationFormComponent', () => {
                         updateCourseCompetencyRelation: jest.fn(),
                         deleteCourseCompetencyRelation: jest.fn(),
                         getSuggestedCompetencyRelations: jest.fn(),
+                    },
+                },
+                {
+                    provide: FeatureToggleService,
+                    useValue: {
+                        getFeatureToggleActive: jest.fn().mockReturnValue(of(false)),
                     },
                 },
             ],
