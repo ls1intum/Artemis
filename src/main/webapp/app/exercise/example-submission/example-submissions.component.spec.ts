@@ -1,6 +1,7 @@
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -8,7 +9,7 @@ import { ExampleSubmission } from 'app/assessment/shared/entities/example-submis
 import { ExampleSubmissionsComponent } from 'app/exercise/example-submission/example-submissions.component';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -18,6 +19,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { ExampleSubmissionDTO } from 'app/assessment/shared/entities/example-submission.model';
 
 describe('Example Submission Component', () => {
     let component: ExampleSubmissionsComponent;
@@ -42,7 +44,7 @@ describe('Example Submission Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(RouterModule)],
+            imports: [RouterTestingModule],
             declarations: [ExampleSubmissionsComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockComponent(ResultComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -141,5 +143,14 @@ describe('Example Submission Component', () => {
 
         expect(modalServiceStub).toHaveBeenCalledOnce();
         expect(modalServiceDismissSpy).toHaveBeenCalledOnce();
+    });
+});
+//DTO testing
+describe('ExampleSubmissionDTO', () => {
+    it('should construct with values', () => {
+        const dto = new ExampleSubmissionDTO(7, true, 'hello world');
+        expect(dto.id).toBe(7);
+        expect(dto.usedForTutorial).toBeTrue();
+        expect(dto.assessmentExplanation).toBe('hello world');
     });
 });
