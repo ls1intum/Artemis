@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long> {
 
     @Query("""
-            SELECT er
+            SELECT DISTINCT er
             FROM ExamRoom er
             LEFT JOIN FETCH er.layoutStrategies
             """)
@@ -50,14 +50,16 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
                 ON examRoom.roomNumber = latestRoom.roomNumber
                 AND examRoom.name = latestRoom.name
                 AND examRoom.createdDate < latestRoom.maxCreatedDate
-            WHERE examRoom.id NOT IN ( SELECT DISTINCT erea.examRoom.id FROM ExamRoomExamAssignment erea )
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM ExamRoomExamAssignment erea
+                WHERE erea.examRoom.id = examRoom.id
+            )
             """)
     Set<Long> findAllIdsOfOutdatedAndUnusedExamRooms();
 
     /**
-     * Finds and returns all IDs of exam rooms that are not outdated and unused.
-     * An exam room is outdated if there exists a newer entry of the same (number, name) combination.
-     * An exam room is unused if it isn't connected to any exam.
+     * Returns IDs of the current (latest) version of each unique exam room (roomNumber, name).
      *
      * @return A collection of all outdated and unused exam rooms
      */

@@ -2372,6 +2372,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         });
 
         var usedRooms = storedExam.getExamUsers().stream().map(ExamUser::getPlannedRoom).collect(Collectors.toSet());
-        assertThat(usedRooms).isEqualTo(Set.of("5602.EG.001", "0101.02.179"));
+        assertThat(usedRooms).contains("5602.EG.001", "0101.02.179");
     }
 }

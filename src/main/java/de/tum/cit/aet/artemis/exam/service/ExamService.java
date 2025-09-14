@@ -1467,7 +1467,9 @@ public class ExamService {
 
     /**
      * Distribute all students who are registered for a given exam across a selection of rooms.
-     * At the moment this function only support distributing via the "default" layout strategy.
+     * Existing planned seats and room assignments are replaced.
+     *
+     * @implNote Currently only the "default" layout strategy is used.
      *
      * @param examId      The exam
      * @param examRoomIds The ids of the rooms to distribute to
