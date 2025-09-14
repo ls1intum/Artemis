@@ -2087,12 +2087,16 @@ public class ProgrammingExerciseTestService {
             var team = setupTeam(user);
             participation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
             // prepare for the mock scenario, so that the empty commit will work properly
-            participation.setRepositoryUri(convertToLocalVcShortUriString(studentTeamRepo));
+            String shortUri = convertToLocalVcShortUriString(studentTeamRepo);
+            String fullUri = RepositoryUriConversionUtil.toFullRepositoryUri(shortUri);
+            participation.setRepositoryUri(fullUri);
         }
         else {
             participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, user.getParticipantIdentifier());
             // prepare for the mock scenario, so that the empty commit will work properly
-            participation.setRepositoryUri(convertToLocalVcShortUriString(studentRepo));
+            String shortUri = convertToLocalVcShortUriString(studentRepo);
+            String fullUri = RepositoryUriConversionUtil.toFullRepositoryUri(shortUri);
+            participation.setRepositoryUri(fullUri);
         }
 
         ProgrammingSubmission submission = new ProgrammingSubmission();

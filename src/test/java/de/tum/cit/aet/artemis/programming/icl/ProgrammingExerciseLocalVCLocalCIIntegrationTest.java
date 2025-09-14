@@ -232,11 +232,11 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateProgrammingExercise_templateRepositoryUriIsInvalid() throws Exception {
-        programmingExercise.setTemplateRepositoryUri("http://localhost:9999/some/invalid/url.git");
+        programmingExercise.setTemplateRepositoryUri("http://localhost:9999/git/some/invalid/url.git");
         request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
 
         programmingExercise.setTemplateRepositoryUri(
-                "http://localhost:49152/invalidUrlMapping/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey().toLowerCase() + "-exercise.git");
+                "http://localhost:49152/git/invalidUrlMapping/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey().toLowerCase() + "-exercise.git");
         request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
     }
 

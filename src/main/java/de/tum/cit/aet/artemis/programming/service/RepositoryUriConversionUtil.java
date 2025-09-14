@@ -46,7 +46,7 @@ public final class RepositoryUriConversionUtil {
 
     @PostConstruct
     private void init() {
-        final String normalized = normalizeBaseUrl(injectedServerUrl);
+        String normalized = normalizeBaseUrl(injectedServerUrl);
         // Capture the first initialized value only; don't overwrite on later contexts
         // (production has one context; in tests, use per-thread override below).
         if (defaultServerUrl == null) {
