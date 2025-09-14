@@ -1,4 +1,4 @@
-import { AfterViewChecked, AfterViewInit, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faRobot, faUser } from '@fortawesome/free-solid-svg-icons';
@@ -15,6 +15,7 @@ import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
     imports: [CommonModule, DatePipe, TranslateDirective, FontAwesomeModule, FormsModule],
     templateUrl: './agent-chat-modal.component.html',
     styleUrl: './agent-chat-modal.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterViewChecked {
     @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
@@ -27,13 +28,14 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     private readonly activeModal = inject(NgbActiveModal);
     private readonly agentChatService = inject(AgentChatService);
     private readonly translateService = inject(TranslateService);
+    private readonly cdr = inject(ChangeDetectorRef);
 
     courseId!: number;
     messages: ChatMessage[] = [];
     currentMessage = '';
     isAgentTyping = false;
     private shouldScrollToBottom = false;
-    private sessionId: string;
+    private sessionId!: string;
 
     ngOnInit(): void {
         this.sessionId = `course_${this.courseId}_session_${Date.now()}`;
@@ -112,8 +114,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             isUser,
             timestamp: new Date(),
         };
-        this.messages.push(message);
+        this.messages = [...this.messages, message];
         this.shouldScrollToBottom = true;
+        this.cdr.markForCheck();
     }
 
     private generateMessageId(): string {
