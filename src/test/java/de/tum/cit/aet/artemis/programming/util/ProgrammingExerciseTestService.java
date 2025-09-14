@@ -138,6 +138,7 @@ import de.tum.cit.aet.artemis.programming.service.AutomaticProgrammingExerciseCl
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
+import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
@@ -441,35 +442,50 @@ public class ProgrammingExerciseTestService {
         var testRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(testRepository));
         var solutionRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(solutionRepository));
         var auxRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(auxRepository));
+        var fullExerciseRepoTestUrl = new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(convertToLocalVcShortUriString(exerciseRepository)));
+        var fullTestRepoTestUrl = new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(convertToLocalVcShortUriString(testRepository)));
+        var fullSolutionRepoTestUrl = new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(convertToLocalVcShortUriString(solutionRepository)));
+        var fullAuxRepoTestUrl = new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(convertToLocalVcShortUriString(auxRepository)));
 
-        doReturn(exerciseRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, exerciseRepoName);
-        doReturn(testRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, testRepoName);
-        doReturn(solutionRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, solutionRepoName);
-        doReturn(auxRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, auxRepoName);
+        doReturn(fullExerciseRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, exerciseRepoName);
+        doReturn(fullTestRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, testRepoName);
+        doReturn(fullSolutionRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, solutionRepoName);
+        doReturn(fullAuxRepoTestUrl).when(versionControlService).getCloneRepositoryUri(projectKey, auxRepoName);
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(fullExerciseRepoTestUrl), eq(true), anyBoolean());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(exerciseRepoTestUrl), eq(true), anyBoolean());
+
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(fullTestRepoTestUrl), eq(true), anyBoolean());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(testRepoTestUrl), eq(true), anyBoolean());
+
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(fullSolutionRepoTestUrl), eq(true), anyBoolean());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(solutionRepoTestUrl), eq(true), anyBoolean());
+
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(fullAuxRepoTestUrl), eq(true), anyBoolean());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(auxRepoTestUrl), eq(true), anyBoolean());
 
-        mockDelegate.mockGetRepositorySlugFromRepositoryUri(exerciseRepoName, exerciseRepoTestUrl);
-        mockDelegate.mockGetRepositorySlugFromRepositoryUri(testRepoName, testRepoTestUrl);
-        mockDelegate.mockGetRepositorySlugFromRepositoryUri(solutionRepoName, solutionRepoTestUrl);
-        mockDelegate.mockGetRepositorySlugFromRepositoryUri(auxRepoName, auxRepoTestUrl);
+        mockDelegate.mockGetRepositorySlugFromRepositoryUri(exerciseRepoName, fullExerciseRepoTestUrl);
+        mockDelegate.mockGetRepositorySlugFromRepositoryUri(testRepoName, fullTestRepoTestUrl);
+        mockDelegate.mockGetRepositorySlugFromRepositoryUri(solutionRepoName, fullSolutionRepoTestUrl);
+        mockDelegate.mockGetRepositorySlugFromRepositoryUri(auxRepoName, fullAuxRepoTestUrl);
 
-        mockDelegate.mockGetProjectKeyFromRepositoryUri(projectKey, exerciseRepoTestUrl);
-        mockDelegate.mockGetProjectKeyFromRepositoryUri(projectKey, testRepoTestUrl);
-        mockDelegate.mockGetProjectKeyFromRepositoryUri(projectKey, solutionRepoTestUrl);
-        mockDelegate.mockGetProjectKeyFromRepositoryUri(projectKey, auxRepoTestUrl);
+        mockDelegate.mockGetProjectKeyFromRepositoryUri(projectKey, fullExerciseRepoTestUrl);
+        mockDelegate.mockGetProjectKeyFromRepositoryUri(projectKey, fullTestRepoTestUrl);
+        mockDelegate.mockGetProjectKeyFromRepositoryUri(projectKey, fullSolutionRepoTestUrl);
+        mockDelegate.mockGetProjectKeyFromRepositoryUri(projectKey, fullAuxRepoTestUrl);
 
-        mockDelegate.mockGetRepositoryPathFromRepositoryUri(projectKey + "/" + exerciseRepoName, exerciseRepoTestUrl);
-        mockDelegate.mockGetRepositoryPathFromRepositoryUri(projectKey + "/" + testRepoName, testRepoTestUrl);
-        mockDelegate.mockGetRepositoryPathFromRepositoryUri(projectKey + "/" + solutionRepoName, solutionRepoTestUrl);
-        mockDelegate.mockGetRepositoryPathFromRepositoryUri(projectKey + "/" + auxRepoName, auxRepoTestUrl);
+        mockDelegate.mockGetRepositoryPathFromRepositoryUri(projectKey + "/" + exerciseRepoName, fullExerciseRepoTestUrl);
+        mockDelegate.mockGetRepositoryPathFromRepositoryUri(projectKey + "/" + testRepoName, fullTestRepoTestUrl);
+        mockDelegate.mockGetRepositoryPathFromRepositoryUri(projectKey + "/" + solutionRepoName, fullSolutionRepoTestUrl);
+        mockDelegate.mockGetRepositoryPathFromRepositoryUri(projectKey + "/" + auxRepoName, fullAuxRepoTestUrl);
 
         mockDelegate.mockGetProjectKeyFromAnyUrl(projectKey);
     }

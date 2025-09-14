@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,6 +120,18 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     protected Path localVCRepoPath;
+
+    @BeforeEach
+    void setLocalVcBaseUriInConversionUtil() {
+        // Ensure that the RepositoryUriConversionUtil has the correct base URL for each test
+        RepositoryUriConversionUtil.overrideServerUrlForCurrentThread(localVCBaseUri.toString());
+    }
+
+    @AfterEach
+    void resetLocalVcBaseUriInConversionUtil() {
+        // Clear the override after each test to avoid cross-test contamination
+        RepositoryUriConversionUtil.clearServerUrlOverrideForCurrentThread();
+    }
 
     @AfterEach
     @Override

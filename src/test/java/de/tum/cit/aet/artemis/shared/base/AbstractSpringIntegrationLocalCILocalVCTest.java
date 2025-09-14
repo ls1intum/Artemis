@@ -224,6 +224,18 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         buildJobRepository.deleteAll();
     }
 
+    @BeforeEach
+    void setLocalVcBaseUriInConversionUtil() {
+        // Ensure that the RepositoryUriConversionUtil has the correct base URL for each test
+        RepositoryUriConversionUtil.overrideServerUrlForCurrentThread(localVCBaseUri.toString());
+    }
+
+    @AfterEach
+    void resetLocalVcBaseUriInConversionUtil() {
+        // Clear the override after each test to avoid cross-test contamination
+        RepositoryUriConversionUtil.clearServerUrlOverrideForCurrentThread();
+    }
+
     @AfterEach
     @Override
     protected void resetSpyBeans() {
