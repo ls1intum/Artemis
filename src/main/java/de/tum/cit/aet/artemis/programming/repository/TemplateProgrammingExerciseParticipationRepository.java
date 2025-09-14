@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.repository.base.FetchOptions;
 import de.tum.cit.aet.artemis.exercise.domain.Submission_;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation_;
+import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -49,13 +50,15 @@ public interface TemplateProgrammingExerciseParticipationRepository
     Optional<TemplateProgrammingExerciseParticipation> findWithSubmissionsByRepositoryUri(String repositoryUri);
 
     default TemplateProgrammingExerciseParticipation findWithSubmissionsByRepositoryUriElseThrow(String repositoryUri) {
-        return getValueElseThrow(findWithSubmissionsByRepositoryUri(repositoryUri));
+        String shortRepositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(repositoryUri);
+        return getValueElseThrow(findWithSubmissionsByRepositoryUri(shortRepositoryUri));
     }
 
     Optional<TemplateProgrammingExerciseParticipation> findByRepositoryUri(String repositoryUri);
 
     default TemplateProgrammingExerciseParticipation findByRepositoryUriElseThrow(String repositoryUri) {
-        return getValueElseThrow(findByRepositoryUri(repositoryUri));
+        String shortRepositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(repositoryUri);
+        return getValueElseThrow(findByRepositoryUri(shortRepositoryUri));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.feedbacks", "submissions.results.feedbacks.testCase" })

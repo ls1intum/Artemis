@@ -986,7 +986,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         // Create practice participation.
         ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
         practiceParticipation.setPracticeMode(true);
-        practiceParticipation.setRepositoryUri(projectKey1 + "/" + practiceRepositorySlug);
+        solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git");
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
 
         // Students should be able to fetch and push, teaching assistants should be able to fetch but not push and editors and higher should be able to fetch and push.
@@ -1040,7 +1040,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         // Create practice participation.
         ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, tutor1Login);
         practiceParticipation.setPracticeMode(true);
-        practiceParticipation.setRepositoryUri(projectKey1 + "/" + practiceRepositorySlug);
+        practiceParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri("", "", projectKey1, practiceRepositorySlug));
 
         // practiceParticipation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), practiceRepositorySlug));
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);

@@ -122,11 +122,11 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
             // Set the correct repository URIs for the template and the solution participation.
             String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
             TemplateProgrammingExerciseParticipation templateParticipation = exercise.getTemplateParticipation();
-            templateParticipation.setRepositoryUri(projectKey + "/" + templateRepositorySlug);
+            templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
             templateProgrammingExerciseParticipationRepository.save(templateParticipation);
             String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
             SolutionProgrammingExerciseParticipation solutionParticipation = exercise.getSolutionParticipation();
-            solutionParticipation.setRepositoryUri(projectKey + "/" + solutionRepositorySlug);
+            solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
             solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
             String assignmentRepositorySlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + (exercise.isTeamMode() ? "team1" : "student1");
@@ -143,7 +143,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
             var submission = ParticipationFactory.generateProgrammingSubmission(true);
             participationUtilService.addSubmission(studentParticipation, submission);
 
-            studentParticipation.setRepositoryUri(projectKey + "/" + assignmentRepositorySlug);
+            studentParticipation.setRepositoryUri(String.format(localVCBaseUri + "/git/%s/%s.git", projectKey, assignmentRepositorySlug));
             studentParticipation.setBranch(defaultBranch);
             programmingExerciseStudentParticipationRepository.save(studentParticipation);
 

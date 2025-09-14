@@ -121,7 +121,7 @@ public class LocalVCLocalCITestService {
         String projectKey = programmingExercise.getProjectKey();
         String repositorySlug = getRepositorySlug(projectKey, userLogin);
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
-        participation.setRepositoryUri(projectKey + "/" + repositorySlug);
+        participation.setRepositoryUri(String.format(localVCBaseUri + "/git/%s/%s.git", projectKey, repositorySlug));
         participation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(participation);
 

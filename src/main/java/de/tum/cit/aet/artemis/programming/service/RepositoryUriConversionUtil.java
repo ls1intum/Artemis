@@ -77,10 +77,11 @@ public final class RepositoryUriConversionUtil {
             throw new IllegalStateException("Server URL is not configured. Cannot convert to full repository URI.");
         }
 
-        String serverUrlWithGit = base + GIT_PREFIX;
-        if (uri.startsWith(serverUrlWithGit)) {
-            uri = uri.substring(serverUrlWithGit.length());
+        int gitPrefix = uri.indexOf(GIT_PREFIX);
+        if (gitPrefix == -1) {
+            throw new IllegalArgumentException("The provided repository URI does not contain the expected '" + GIT_PREFIX + "' segment: " + fullUri);
         }
+        uri = uri.substring(gitPrefix + GIT_PREFIX.length());
 
         if (uri.endsWith(GIT_SUFFIX)) {
             uri = uri.substring(0, uri.length() - GIT_SUFFIX.length());

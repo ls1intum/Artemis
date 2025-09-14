@@ -61,12 +61,10 @@ class HyperionConsistencyCheckServiceTest {
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
 
         var template = new TemplateProgrammingExerciseParticipation();
-        template.setRepositoryUri("file://template");
         template.setProgrammingExercise(exercise);
         exercise.setTemplateParticipation(template);
 
         var solution = new SolutionProgrammingExerciseParticipation();
-        solution.setRepositoryUri("file://solution");
         solution.setProgrammingExercise(exercise);
         exercise.setSolutionParticipation(solution);
 

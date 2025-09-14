@@ -209,11 +209,11 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
         // Set the correct repository URIs for the template and the solution participation.
         templateRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "exercise");
         templateParticipation = programmingExercise.getTemplateParticipation();
-        templateParticipation.setRepositoryUri(projectKey1 + "/" + templateRepositorySlug);
+        templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         solutionRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "solution");
         solutionParticipation = programmingExercise.getSolutionParticipation();
-        solutionParticipation.setRepositoryUri(projectKey1 + "/" + solutionRepositorySlug);
+        solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git");
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
         assignmentRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, student1Login);

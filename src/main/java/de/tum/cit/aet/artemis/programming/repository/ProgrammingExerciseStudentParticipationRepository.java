@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -30,6 +33,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 @Lazy
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends ArtemisJpaRepository<ProgrammingExerciseStudentParticipation, Long> {
+
+    Logger log = LoggerFactory.getLogger(ProgrammingExerciseStudentParticipationRepository.class);
 
     @Query("""
             SELECT DISTINCT p
@@ -66,13 +71,16 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByRepositoryUri(String repositoryUri);
 
     default ProgrammingExerciseStudentParticipation findWithSubmissionsByRepositoryUriElseThrow(String repositoryUri) {
-        return getValueElseThrow(findWithSubmissionsByRepositoryUri(repositoryUri));
+        String shortRepositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(repositoryUri);
+        return getValueElseThrow(findWithSubmissionsByRepositoryUri(shortRepositoryUri));
     }
 
     Optional<ProgrammingExerciseStudentParticipation> findByRepositoryUri(String repositoryUri);
 
     default ProgrammingExerciseStudentParticipation findByRepositoryUriElseThrow(String repositoryUri) {
-        return getValueElseThrow(findByRepositoryUri(repositoryUri));
+        String shortRepositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(repositoryUri);
+        log.debug("Looking for participation with repository URI: {}", shortRepositoryUri);
+        return getValueElseThrow(findByRepositoryUri(shortRepositoryUri));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })

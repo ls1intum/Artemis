@@ -105,10 +105,9 @@ public class ProgrammingUtilTestService {
             FileUtils.write(solutionFile, content, Charset.defaultCharset());
         }
 
-        var templateRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(templateRepo.workingCopyGitRepoFile, localVCRepoPath));
         var templateRepoShortUri = LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(templateRepo.workingCopyGitRepoFile, localVCRepoPath);
-        exercise.setTemplateRepositoryUri(templateRepoShortUri);
         var fullTemplateRepoUri = new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(templateRepoShortUri));
+        exercise.setTemplateRepositoryUri(fullTemplateRepoUri.getURI().toString());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(fullTemplateRepoUri), eq(true), anyBoolean());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
@@ -123,7 +122,7 @@ public class ProgrammingUtilTestService {
         var savedExercise = exerciseRepository.save(exercise);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(savedExercise);
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(templateRepoShortUri);
+        templateParticipation.setRepositoryUri(fullTemplateRepoUri);
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         var templateSubmission = new ProgrammingSubmission();
         templateSubmission.setParticipation(templateParticipation);

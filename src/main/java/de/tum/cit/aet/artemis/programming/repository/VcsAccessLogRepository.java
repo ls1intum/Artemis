@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 
 /**
  * Spring Data JPA repository for the User entity.<br>
@@ -46,7 +47,7 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
     /**
      * Retrieves the most recent {@link VcsAccessLog} for a specific repository URI of a participation.
      *
-     * @param repositoryUri the URI of the participation to filter by.
+     * @param repositoryShortUri the short URI of the participation to filter by.
      * @return an Optional containing the newest {@link VcsAccessLog} of the participation, or empty if none exists.
      */
     @Query("""
@@ -57,7 +58,12 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
             ORDER BY vcsAccessLog.id DESC
             LIMIT 1
             """)
-    Optional<VcsAccessLog> findNewestByRepositoryUri(@Param("repositoryUri") String repositoryUri);
+    Optional<VcsAccessLog> findNewestByRepositoryUri(@Param("repositoryUri") String repositoryShortUri);
+
+    default Optional<VcsAccessLog> findNewestByFullRepositoryUri(String repositoryUri) {
+        String shortRepositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(repositoryUri);
+        return findNewestByRepositoryUri(shortRepositoryUri);
+    }
 
     /**
      * Retrieves a list of {@link VcsAccessLog} entities associated with the specified participation ID.

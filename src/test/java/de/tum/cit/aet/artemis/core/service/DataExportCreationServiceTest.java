@@ -72,6 +72,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -278,8 +279,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
             programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().minusMinutes(1));
         }
         String shortUri = LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile, localVCRepoPath);
-
-        var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin, URI.create(shortUri));
+        String fullUri = RepositoryUriConversionUtil.toFullRepositoryUri(shortUri);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin, URI.create(fullUri));
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false, "abc");
         var submission2 = programmingExerciseUtilService.createProgrammingSubmission(participation, true, "def");
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusMinutes(1));
@@ -350,8 +351,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         var exam = course.getExams().iterator().next();
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).orElseThrow();
         var studentExam = examUtilService.addStudentExamWithUser(exam, userForExport);
-        examUtilService.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel,
-                URI.create(LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile, localVCRepoPath)));
+        String shortUri = LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile, localVCRepoPath);
+        String fullUri = RepositoryUriConversionUtil.toFullRepositoryUri(shortUri);
+        examUtilService.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel, URI.create(fullUri));
         Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userForExport.getId());
         var submission = studentExams.iterator().next().getExercises().getFirst().getStudentParticipations().iterator().next().getSubmissions().iterator().next();
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
