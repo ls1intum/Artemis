@@ -31,7 +31,7 @@ public interface FileUploadExerciseVersioningRepository extends ArtemisJpaReposi
      * @return the exercise with minimal data necessary for exercise versioning
      */
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "competencyLinks.competency", "categories", "teamAssignmentConfig", "gradingCriteria",
-            "exampleSubmissions.submission", "attachments", "plagiarismDetectionConfig" })
+            "exampleSubmissions.submission", "attachments", "plagiarismDetectionConfig", "exerciseGroup" })
     Optional<FileUploadExercise> findWithEagerForVersioningById(long exerciseId);
 
 }

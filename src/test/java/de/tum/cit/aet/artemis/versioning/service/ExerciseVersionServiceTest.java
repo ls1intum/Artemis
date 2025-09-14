@@ -60,8 +60,8 @@ import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
-import de.tum.cit.aet.artemis.versioning.domain.ExerciseSnapshot;
 import de.tum.cit.aet.artemis.versioning.domain.ExerciseVersion;
+import de.tum.cit.aet.artemis.versioning.dto.ExerciseSnapshot;
 import de.tum.cit.aet.artemis.versioning.repository.FileUploadExerciseVersioningRepository;
 import de.tum.cit.aet.artemis.versioning.repository.TextExerciseVersioningRepository;
 
@@ -142,11 +142,14 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     void testCreateExerciseVersion(ExerciseType exerciseType) {
         Exercise exercise = createExerciseByType(exerciseType);
 
-        // ExerciseVersionService.createExerciseVerion is marked with @Async,
+        // ExerciseVersionService.createExerciseVersion is marked with @Async,
         // so we need to wait for the async task to finish
         // "during" is needed because for createProgrammingExercise(), we have some
         // "update" actions that
-        await().during(testWaitTime, TimeUnit.SECONDS).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).isPresent());
+        await().during(testWaitTime, TimeUnit.SECONDS).until(() -> {
+            log.info("Exercise {} has been created", exercise.getId());
+            return exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).isPresent();
+        });
 
         var version = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElse(null);
         assertThat(version).as("ExerciseVersion should be created for exercise " + exercise.getId()).isNotNull();
@@ -402,23 +405,24 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         });
     }
 
-    // @ParameterizedTest
-    // @EnumSource(ExerciseType.class)
-    // @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    // void testVersionCreation_competencyExerciseLink(ExerciseType exerciseType) {
-    // Exercise exercise = createExerciseByType(exerciseType);
-    // await().during(testWaitTime, TimeUnit.SECONDS).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).isPresent());
-    // var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElseThrow();
-    // competencyUtilService.createCompetencyWithExercise(exercise.getCourseViaExerciseGroupOrCourseMember(), exercise);
-    //
-    // await().during(testWaitTime, TimeUnit.SECONDS).untilAsserted(() -> {
-    // Optional<ExerciseVersion> version = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
-    // assertThat(version).isPresent();
-    // assertThat(version.get().getExerciseSnapshot()).isNotNull();
-    ////            assertThat(version.get().getExerciseSnapshot().competencyLinks()).isNotNull();
-////            assertThat(previousVersion.getExerciseSnapshot().competencyLinks()).isNotEqualTo(version.get().getExerciseSnapshot().competencyLinks());
-    // });
-    // }
+    @ParameterizedTest
+    @EnumSource(ExerciseType.class)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testVersionCreation_competencyExerciseLink(ExerciseType exerciseType) {
+        Exercise exercise = createExerciseByType(exerciseType);
+        await().during(testWaitTime, TimeUnit.SECONDS).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).isPresent());
+        var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElseThrow();
+        competencyUtilService.createCompetencyWithExercise(exercise.getCourseViaExerciseGroupOrCourseMember(), exercise);
+
+        await().during(testWaitTime, TimeUnit.SECONDS).untilAsserted(() -> {
+            Optional<ExerciseVersion> version = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
+            assertThat(version).isPresent();
+            assertThat(version.get().getExerciseSnapshot()).isNotNull();
+
+            assertThat(version.get().getExerciseSnapshot().competencyLinks()).isNotNull();
+            assertThat(previousVersion.getExerciseSnapshot().competencyLinks()).isNotEqualTo(version.get().getExerciseSnapshot().competencyLinks());
+        });
+    }
 
     private Exercise createExerciseByType(ExerciseType exerciseType) {
         return switch (exerciseType) {
@@ -442,11 +446,11 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
 
         var penaltyPolicy = new SubmissionPenaltyPolicy();
-        penaltyPolicy.setSubmissionLimit(5);
+        penaltyPolicy.setSubmissionLimit(7);
         penaltyPolicy.setExceedingPenalty(1.2);
         penaltyPolicy.setActive(true);
         penaltyPolicy.setProgrammingExercise(programmingExercise);
-        penaltyPolicy = submissionPolicyRepository.save(penaltyPolicy);
+        penaltyPolicy = submissionPolicyRepository.saveAndFlush(penaltyPolicy);
         programmingExercise.setSubmissionPolicy(penaltyPolicy);
         programmingExerciseRepository.saveAndFlush(programmingExercise);
 

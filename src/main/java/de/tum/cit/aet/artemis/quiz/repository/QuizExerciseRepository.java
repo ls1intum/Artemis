@@ -87,7 +87,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
      * This includes: quizQuestions (without specific answer options to avoid polymorphic issues)
      */
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks", "competencyLinks.competency", "categories", "teamAssignmentConfig", "gradingCriteria",
-            "exampleSubmissions.submission", "attachments", "plagiarismDetectionConfig" })
+            "exampleSubmissions.submission", "attachments", "plagiarismDetectionConfig", "exerciseGroup" })
     Optional<QuizExercise> findWithEagerForVersioningById(Long exerciseId);
 
     @Query("""

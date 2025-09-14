@@ -15,6 +15,7 @@ import org.hibernate.type.SqlTypes;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.versioning.dto.ExerciseSnapshot;
 
 @Entity
 @Table(name = "exercise_version")
@@ -22,11 +23,11 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 public class ExerciseVersion extends AbstractAuditingEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "exercise_id")
+    @JoinColumn(name = "exercise_id", updatable = false)
     private Exercise exercise;
 
     @ManyToOne
-    @JoinColumn(name = "author_id")
+    @JoinColumn(name = "author_id", updatable = false)
     private User author;
 
     @JdbcTypeCode(SqlTypes.JSON)

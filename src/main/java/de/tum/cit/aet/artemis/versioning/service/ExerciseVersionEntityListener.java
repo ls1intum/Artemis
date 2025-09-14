@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.Optional;
 
 import jakarta.persistence.PostPersist;
+import jakarta.persistence.PostRemove;
 import jakarta.persistence.PostUpdate;
 
 import org.slf4j.Logger;
@@ -21,6 +22,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.versioning.service.event.ExerciseChangedEvent;
 
 @Profile(PROFILE_CORE)
 @Configurable
@@ -30,54 +32,81 @@ public class ExerciseVersionEntityListener implements ApplicationContextAware {
 
     private ApplicationContext applicationContext;
 
-    private ExerciseVersionService exerciseVersionService;
-
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
     }
 
     @PostPersist
+    public void handlePostPersist(Object entity) {
+        handleEntityChange(entity);
+    }
+
     @PostUpdate
-    public void handleExerciseChange(Object entity) {
-        Exercise exerciseToVersion = getExerciseFromEntity(entity);
-        if (exerciseToVersion != null && exerciseToVersion.getId() != null) {
-            triggerVersionCreation(exerciseToVersion);
+    public void handlePostUpdate(Object entity) {
+        handleEntityChange(entity);
+    }
+
+    @PostRemove
+    public void handlePostRemove(Object entity) {
+        if (entity instanceof Exercise) {
+            return;
         }
+        handleEntityChange(entity);
     }
 
-    private Exercise getExerciseFromEntity(Object entity) {
-        return switch (entity) {
-            case Exercise exercise -> exercise;
-            case CompetencyExerciseLink competencyExerciseLink -> competencyExerciseLink.getExercise();
-            case AuxiliaryRepository auxiliaryRepository -> auxiliaryRepository.getExercise();
-            case StaticCodeAnalysisCategory staticCodeAnalysisCategory -> staticCodeAnalysisCategory.getExercise();
-            case SubmissionPolicy submissionPolicy -> submissionPolicy.getProgrammingExercise();
-            case ProgrammingExerciseBuildConfig buildConfig -> buildConfig.getProgrammingExercise();
-            default -> null;
-        };
-    }
-
-    private void triggerVersionCreation(Exercise exercise) {
-        try {
-            Optional<String> currentUserLogin = SecurityUtils.getCurrentUserLogin();
-            if (currentUserLogin.isPresent()) {
-                getExerciseVersionService().createExerciseVersion(exercise, currentUserLogin.get());
+    private void handleEntityChange(Object entity) {
+        if (entity instanceof Exercise exercise) {
+            publishExerciseChangedEvent(exercise.getId());
+        }
+        else if (entity instanceof CompetencyExerciseLink link) {
+            if (link.getExercise() == null) {
+                return;
             }
-            else {
-                log.warn("No user logged in user found with login");
+            publishExerciseChangedEvent(link.getExercise().getId());
+        }
+        else if (entity instanceof AuxiliaryRepository repository) {
+            if (repository.getExercise() == null) {
+                return;
             }
+            publishExerciseChangedEvent(repository.getExercise().getId());
         }
-        catch (Exception e) {
-            log.error("Failed to create exercise version for exercise {} ({}): {}", exercise.getId(), exercise.getTitle(), e.getMessage(), e);
+        else if (entity instanceof StaticCodeAnalysisCategory category) {
+            if (category.getExercise() == null) {
+                return;
+            }
+            publishExerciseChangedEvent(category.getExercise().getId());
+        }
+        else if (entity instanceof SubmissionPolicy submissionPolicy) {
+            if (submissionPolicy.getProgrammingExercise() == null) {
+                return;
+            }
+            publishExerciseChangedEvent(submissionPolicy.getProgrammingExercise().getId());
+        }
+        else if (entity instanceof ProgrammingExerciseBuildConfig config) {
+            if (config.getProgrammingExercise() == null) {
+                return;
+            }
+            publishExerciseChangedEvent(config.getProgrammingExercise().getId());
         }
     }
 
-    private ExerciseVersionService getExerciseVersionService() {
-        if (exerciseVersionService == null) {
-            exerciseVersionService = applicationContext.getBean(ExerciseVersionService.class);
+    /**
+     * Publishes an ExerciseChangedEvent for the given exerciseId.
+     * exerciseId is used instead of Exercise object, due to Exercise object potentially being uninitialized
+     *
+     * @param exerciseId the id of the exercise to publish the event for
+     */
+    private void publishExerciseChangedEvent(Long exerciseId) {
+        Optional<String> currentUserLogin = SecurityUtils.getCurrentUserLogin();
+        if (currentUserLogin.isEmpty()) {
+            log.warn("No user logged in user found");
+            return;
         }
-        return exerciseVersionService;
+        if (applicationContext == null) {
+            log.warn("No application context found");
+            return;
+        }
+        applicationContext.publishEvent(new ExerciseChangedEvent(exerciseId, currentUserLogin.get()));
     }
-
 }

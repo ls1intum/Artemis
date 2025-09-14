@@ -28,6 +28,6 @@ public interface TextExerciseVersioningRepository extends ArtemisJpaRepository<T
      * Basic TextExercise fields (exampleSolution, filePattern) are already included in the entity.
      */
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "competencyLinks.competency", "categories", "teamAssignmentConfig", "gradingCriteria",
-            "exampleSubmissions.submission", "attachments", "plagiarismDetectionConfig" })
+            "exampleSubmissions.submission", "attachments", "plagiarismDetectionConfig", "exerciseGroup" })
     Optional<TextExercise> findWithEagerForVersioningById(long exerciseId);
 }
