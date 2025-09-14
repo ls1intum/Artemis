@@ -15,18 +15,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.atlas.config.AtlasAgentEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 
 /**
  * REST controller for Atlas Agent functionality.
  */
 @Conditional(AtlasEnabled.class)
-@AtlasAgentEnabled
 @Lazy
 @RestController
 @RequestMapping("api/atlas/agent/")
@@ -48,14 +46,13 @@ public class AtlasAgentResource {
      * @return the agent response
      */
     @PostMapping("courses/{courseId}/chat")
-    @EnforceAtLeastStudentInCourse
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<AtlasAgentChatResponseDTO> sendChatMessage(@PathVariable Long courseId, @Valid @RequestBody AtlasAgentChatRequestDTO request) {
 
         log.debug("Received chat message for course {}: {}", courseId, request.message().substring(0, Math.min(request.message().length(), 50)));
 
         try {
-            // Process the message asynchronously
-            String response = atlasAgentService.processChatMessage(request.message(), courseId).get();
+            String response = atlasAgentService.processChatMessage(request.message(), courseId).get(30, java.util.concurrent.TimeUnit.SECONDS);
 
             AtlasAgentChatResponseDTO responseDTO = new AtlasAgentChatResponseDTO(response, request.sessionId(), ZonedDateTime.now(), true);
 

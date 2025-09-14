@@ -3,6 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faRobot, faUser } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule, DatePipe } from '@angular/common';
 import { AgentChatService } from './agent-chat.service';
@@ -25,6 +26,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     private readonly activeModal = inject(NgbActiveModal);
     private readonly agentChatService = inject(AgentChatService);
+    private readonly translateService = inject(TranslateService);
 
     courseId!: number;
     messages: ChatMessage[] = [];
@@ -34,7 +36,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     ngOnInit(): void {
         // Add a welcome message
-        this.addMessage("Hello! I'm your AI competency assistant. How can I help you with course competencies today?", false);
+        this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
     }
 
     ngAfterViewInit(): void {
@@ -76,7 +78,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             },
             error: () => {
                 this.isAgentTyping = false;
-                this.addMessage("I apologize, but I'm having trouble processing your request right now. Please try again.", false);
+                this.addMessage(this.translateService.instant('artemisApp.agent.chat.error'), false);
                 // Restore focus to input after error - using Iris pattern
                 setTimeout(() => this.messageInput?.nativeElement?.focus(), 10);
             },

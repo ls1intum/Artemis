@@ -2,7 +2,8 @@
 
 .agent-chat-modal {
     width: 100%;
-    height: 600px;
+    max-height: min(80vh, 720px);
+    height: auto;
     display: flex;
     flex-direction: column;
     border-radius: var(--bs-border-radius-lg);
@@ -21,7 +22,9 @@
     }
 
     .messages-container {
-        height: 400px;
+        flex: 1;
+        min-height: 0; /* allow child to shrink inside flex container */
+        max-height: calc(min(80vh, 720px) - 200px);
         overflow-y: auto;
         padding: 1rem;
         background-color: var(--bs-body-bg);
@@ -210,10 +213,10 @@
 /* Responsive design */
 @media (max-width: 768px) {
     .agent-chat-modal {
-        height: 500px;
+        max-height: 90vh;
 
         .messages-container {
-            height: 300px;
+            max-height: calc(90vh - 180px); /* account for header and footer on mobile */
 
             .message-wrapper {
                 &.user-message .message-content,

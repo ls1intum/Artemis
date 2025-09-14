@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 
 interface AgentChatRequest {
     message: string;
@@ -20,6 +21,7 @@ interface AgentChatResponse {
 })
 export class AgentChatService {
     private http = inject(HttpClient);
+    private translateService = inject(TranslateService);
 
     sendMessage(message: string, courseId: number): Observable<string> {
         const request: AgentChatRequest = {
@@ -27,8 +29,16 @@ export class AgentChatService {
             sessionId: `course_${courseId}_session_${Date.now()}`,
         };
 
-        return this.http
-            .post<AgentChatResponse>(`api/atlas/agent/courses/${courseId}/chat`, request)
-            .pipe(map((response) => (response.success ? response.message : 'Sorry, I encountered an error processing your request.')));
+        return this.http.post<AgentChatResponse>(`api/atlas/agent/courses/${courseId}/chat`, request).pipe(
+            map((response) => {
+                // Return response message regardless of success status
+                return response.message || this.translateService.instant('artemisApp.agent.chat.error');
+            }),
+            catchError(() => {
+                // Return translated fallback message on any error
+                const fallbackMessage = this.translateService.instant('artemisApp.agent.chat.error');
+                return of(fallbackMessage);
+            }),
+        );
     }
 }
