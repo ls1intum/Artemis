@@ -1472,21 +1472,22 @@ public class ExamService {
      * @param examId      The exam
      * @param examRoomIds The ids of the rooms to distribute to
      */
+    // FOR THE REVIEWERS: Do I need a @Transactional here?
     public void distributeRegisteredStudents(long examId, @NotNull @NotEmpty Set<Long> examRoomIds) {
         final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
-        final var examRooms = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
+        final var examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
 
         final var examUsers = exam.getExamUsers();
 
-        final int numberOfUsableSeats = examRooms.stream().mapToInt(examRoom -> examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity()).sum();
+        final int numberOfUsableSeats = examRoomsForExam.stream().mapToInt(examRoom -> examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity()).sum();
 
         if (numberOfUsableSeats < examUsers.size()) {
-            throw new BadRequestAlertException("Sire, reinforce the seating!", ENTITY_NAME, "notEnoughExamSeats",
+            throw new BadRequestAlertException("Not enough seats available in the selected rooms", ENTITY_NAME, "notEnoughExamSeats",
                     Map.of("numberOfUsableSeats", numberOfUsableSeats, "numberOfExamUsers", examUsers.size()));
         }
 
         examRoomExamAssignmentRepository.deleteAllByExamId(examId);
-        for (ExamRoom examRoom : examRooms) {
+        for (ExamRoom examRoom : examRoomsForExam) {
             var examRoomExamAssignment = new ExamRoomExamAssignment();
             examRoomExamAssignment.setExamRoom(examRoom);
             examRoomExamAssignment.setExam(exam);
@@ -1495,7 +1496,7 @@ public class ExamService {
 
         // Now we distribute students to the seats
         Map<String, List<ExamSeatDTO>> roomNumberToUsableSeatsDefaultLayout = new HashMap<>();
-        for (ExamRoom examRoom : examRooms) {
+        for (ExamRoom examRoom : examRoomsForExam) {
             roomNumberToUsableSeatsDefaultLayout.put(examRoom.getRoomNumber(), examRoomService.getDefaultUsableSeats(examRoom));
         }
 
@@ -1504,10 +1505,10 @@ public class ExamService {
             ExamUser nextExamUser = examUsersIterator.next();
             nextExamUser.setPlannedRoom(roomNumber);
             nextExamUser.setPlannedSeat(seat.name());
-            nextExamUser = examUserRepository.save(nextExamUser);
             exam.addExamUser(nextExamUser);
         }));
 
+        examUserRepository.saveAll(examUsers);
         examRepository.save(exam);
     }
 }
