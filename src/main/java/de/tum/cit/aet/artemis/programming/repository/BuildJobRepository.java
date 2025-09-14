@@ -50,8 +50,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             SELECT b.id
             FROM BuildJob b
                 LEFT JOIN Course c ON b.courseId = c.id
-                WHERE b.buildStatus not in (de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.QUEUED, de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.BUILDING )
-                AND (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
+                WHERE (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
                 AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
                 AND (CAST(:startDate AS string) IS NULL OR b.buildSubmissionDate >= :startDate)
                 AND (CAST(:endDate AS string) IS NULL OR b.buildSubmissionDate <= :endDate)
