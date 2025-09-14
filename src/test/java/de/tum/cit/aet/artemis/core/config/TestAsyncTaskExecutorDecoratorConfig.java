@@ -13,6 +13,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.task.AsyncTaskExecutor;
 
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
  */
 @Configuration
 @Profile(SPRING_PROFILE_TEST)
+@Lazy
 public class TestAsyncTaskExecutorDecoratorConfig implements BeanPostProcessor {
 
     private static final Logger log = LoggerFactory.getLogger(TestAsyncTaskExecutorDecoratorConfig.class);
