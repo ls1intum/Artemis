@@ -38,8 +38,9 @@ public final class RepositoryUriConversionUtil {
      * Per-thread override for tests. If set, static methods will use this value
      * instead of {@link #defaultServerUrl}. This prevents cross-test leakage when
      * different test threads have different Spring contexts / properties.
+     * Using {@link InheritableThreadLocal} so that child threads (e.g. in async tasks) also inherit the override.
      */
-    private static final ThreadLocal<String> threadServerUrlOverride = new ThreadLocal<>();
+    private static final InheritableThreadLocal<String> threadServerUrlOverride = new InheritableThreadLocal<>();
 
     @Value("${artemis.version-control.url}")
     private String injectedServerUrl;

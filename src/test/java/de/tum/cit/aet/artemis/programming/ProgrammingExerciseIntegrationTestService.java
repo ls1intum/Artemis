@@ -111,7 +111,6 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
@@ -387,9 +386,8 @@ public class ProgrammingExerciseIntegrationTestService {
     List<Path> exportSubmissionsWithPracticeSubmissionByParticipationIds(boolean excludePracticeSubmissions) throws Exception {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath2, null);
-        ExpectedUris expectedUris = createExpectedUris();
-        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(expectedUris.expectedUri1()), any(Path.class), anyBoolean(), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(expectedUris.expectedUri2()), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
 
         // Set one of the participations to practice mode
         participation1.setPracticeMode(false);
@@ -406,19 +404,6 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(downloadedFile).exists();
 
         return unzipExportedFile();
-    }
-
-    private ExpectedUris createExpectedUris() {
-        var participation1RepositoryUri = participation1.getVcsRepositoryUri();
-        var participation2RepositoryUri = participation2.getVcsRepositoryUri();
-        LocalVCRepositoryUri expectedUri1 = new LocalVCRepositoryUri(
-                RepositoryUriConversionUtil.toFullRepositoryUri(RepositoryUriConversionUtil.toShortRepositoryUri(participation1RepositoryUri.getURI().toString())));
-        LocalVCRepositoryUri expectedUri2 = new LocalVCRepositoryUri(
-                RepositoryUriConversionUtil.toFullRepositoryUri(RepositoryUriConversionUtil.toShortRepositoryUri(participation2RepositoryUri.getURI().toString())));
-        return new ExpectedUris(expectedUri1, expectedUri2);
-    }
-
-    private record ExpectedUris(LocalVCRepositoryUri expectedUri1, LocalVCRepositoryUri expectedUri2) {
     }
 
     void testExportSubmissionsByParticipationIds_excludePracticeSubmissions() throws Exception {
@@ -441,9 +426,8 @@ public class ProgrammingExerciseIntegrationTestService {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath2, null);
 
-        ExpectedUris expectedUris = createExpectedUris();
-        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(expectedUris.expectedUri1), any(Path.class), anyBoolean(), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(expectedUris.expectedUri2), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
         doThrow(EmptyCommitException.class).when(gitService).stageAllChanges(any());
 
         // Create the eclipse .project file which will be modified.
@@ -484,9 +468,8 @@ public class ProgrammingExerciseIntegrationTestService {
         var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath, null);
         var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoPath2, null);
 
-        ExpectedUris expectedUris = createExpectedUris();
-        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(expectedUris.expectedUri1), any(Path.class), anyBoolean(), anyBoolean());
-        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(expectedUris.expectedUri2), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository1).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation1.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation2.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
 
         // Create the eclipse .project file which will be modified.
         Path projectFilePath = Path.of(repository1.getLocalPath().toString(), ".project");
