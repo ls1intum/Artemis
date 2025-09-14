@@ -41,7 +41,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     @Query("""
             SELECT b.id
             FROM BuildJob b
-            WHERE b.buildCompletionDate IS NOT NULL
+            WHERE b.buildStatus not in (de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.QUEUED, de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.BUILDING )
             """)
     Slice<Long> findFinishedIds(Pageable pageable);
 
@@ -50,7 +50,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             SELECT b.id
             FROM BuildJob b
                 LEFT JOIN Course c ON b.courseId = c.id
-            WHERE b.buildCompletionDate IS NOT NULL
+                WHERE b.buildStatus not in (de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.QUEUED, de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.BUILDING )
                 AND (:buildStatus IS NULL OR b.buildStatus = :buildStatus)
                 AND (:buildAgentAddress IS NULL OR b.buildAgentAddress = :buildAgentAddress)
                 AND (CAST(:startDate AS string) IS NULL OR b.buildSubmissionDate >= :startDate)
