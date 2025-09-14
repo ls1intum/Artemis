@@ -23,10 +23,10 @@ export class AgentChatService {
     private http = inject(HttpClient);
     private translateService = inject(TranslateService);
 
-    sendMessage(message: string, courseId: number): Observable<string> {
+    sendMessage(message: string, courseId: number, sessionId?: string): Observable<string> {
         const request: AgentChatRequest = {
             message,
-            sessionId: `course_${courseId}_session_${Date.now()}`,
+            sessionId,
         };
 
         return this.http.post<AgentChatResponse>(`api/atlas/agent/courses/${courseId}/chat`, request).pipe(

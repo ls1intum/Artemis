@@ -33,8 +33,11 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     currentMessage = '';
     isAgentTyping = false;
     private shouldScrollToBottom = false;
+    private sessionId: string;
 
     ngOnInit(): void {
+        this.sessionId = `course_${this.courseId}_session_${Date.now()}`;
+
         // Add a welcome message
         this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
     }
@@ -68,8 +71,8 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         // Show typing indicator
         this.isAgentTyping = true;
 
-        // Simulate agent response (mock for now)
-        this.agentChatService.sendMessage(message, this.courseId).subscribe({
+        // Send message with session ID for continuity
+        this.agentChatService.sendMessage(message, this.courseId, this.sessionId).subscribe({
             next: (response) => {
                 this.isAgentTyping = false;
                 this.addMessage(response, false);
