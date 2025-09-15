@@ -17,11 +17,11 @@ import de.tum.cit.aet.artemis.quiz.dto.question.DragAndDropQuestionWithSolutionD
 import de.tum.cit.aet.artemis.quiz.dto.question.MultipleChoiceQuestionWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.ShortAnswerQuestionWithMappingDTO;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseSnapshotDTO(Boolean randomizeQuestionOrder, Integer allowedNumberOfAttempts, Boolean isOpenForPractice, QuizMode quizMode, Integer duration,
         List<QuizQuestionSnapshotDTO> quizQuestions) implements Serializable {
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record QuizQuestionSnapshotDTO(ShortAnswerQuestionWithMappingDTO shortAnswerQuestionWithMappingDTO,
             MultipleChoiceQuestionWithSolutionDTO multipleChoiceQuestionWithSolutionDTO, DragAndDropQuestionWithSolutionDTO dragAndDropQuestionWithSolutionDTO)
             implements Serializable {
@@ -41,6 +41,11 @@ public record QuizExerciseSnapshotDTO(Boolean randomizeQuestionOrder, Integer al
     }
 
     public static QuizExerciseSnapshotDTO of(QuizExercise exercise) {
+        var questions = exercise.getQuizQuestions() != null ? exercise.getQuizQuestions().stream().map(QuizQuestionSnapshotDTO::of).collect(Collectors.toCollection(ArrayList::new))
+                : null;
+        if (questions != null && questions.isEmpty()) {
+            questions = null;
+        }
         return new QuizExerciseSnapshotDTO(exercise.isRandomizeQuestionOrder(), exercise.getAllowedNumberOfAttempts(), exercise.isIsOpenForPractice(), exercise.getQuizMode(),
                 exercise.getDuration(),
                 exercise.getQuizQuestions() != null ? exercise.getQuizQuestions().stream().map(QuizQuestionSnapshotDTO::of).collect(Collectors.toCollection(ArrayList::new))

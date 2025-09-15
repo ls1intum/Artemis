@@ -2,26 +2,27 @@ package de.tum.cit.aet.artemis.versioning.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.versioning.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.versioning.dto.ExerciseSnapshotDTO;
@@ -53,13 +54,11 @@ public class ExerciseVersionService {
 
     private final UserRepository userRepository;
 
-    private final TransactionTemplate transactionTemplate;
+    private final BlockingQueue<ExerciseChangedEvent> versioningQueue = new LinkedBlockingQueue<>(5000);
 
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseVersioningRepository textExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
-            FileUploadExerciseVersioningRepository fileUploadExerciseRepository, UserRepository userRepository, PlatformTransactionManager transactionManager) {
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
-        this.transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+            FileUploadExerciseVersioningRepository fileUploadExerciseRepository, UserRepository userRepository) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -68,69 +67,6 @@ public class ExerciseVersionService {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
-    }
-
-    /**
-     * Creates an exercise version asynchronously. This function is used when a new push is received on repositories.
-     * It should NOT be called during JPA entity events, as this function requires a transaction context to function
-     * correctly. {@link ExerciseChangedEvent} is used for entity change events instead to defer version creation to
-     * after the surrounding transaction commits.
-     * <p>
-     * This method is explicitly called from {@link LocalVCServletService#processNewPush}
-     * <p>
-     *
-     * @param exerciseId The ID of the exercise to create a version of
-     * @param author     The user who created the version
-     */
-    public void createProgrammingExerciseVersion(Long exerciseId, User author) {
-        createExerciseVersion(exerciseId, ExerciseType.PROGRAMMING, author);
-    }
-
-    /**
-     * Creates an exercise version safely. This function would fetch the exercise eagerly that corresponds to its type,
-     * initialize an {@link ExerciseSnapshotDTO} and create a new {@link ExerciseVersion} to persist.
-     *
-     * @param exerciseId The ID of the exercise to create a version of
-     * @param author     The user who created the version
-     */
-    private void createExerciseVersion(Long exerciseId, ExerciseType exerciseType, User author) {
-        try {
-            transactionTemplate.executeWithoutResult(status -> {
-                var user = author;
-                if (user == null) {
-                    try {
-                        user = userRepository.getUser();
-                    }
-                    catch (EntityNotFoundException e) {
-                        log.warn("No active user during exercise version creation check");
-                    }
-                }
-                Exercise exercise = fetchExerciseEagerly(exerciseId, exerciseType);
-                if (exercise == null) {
-                    return;
-                }
-                ExerciseVersion exerciseVersion = new ExerciseVersion();
-                exerciseVersion.setExercise(exercise);
-                exerciseVersion.setAuthor(user);
-                var exerciseSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
-                var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
-                if (previousVersion.isPresent()) {
-                    var previousVersionSnapshot = previousVersion.get().getExerciseSnapshot();
-                    var equal = previousVersionSnapshot.equals(exerciseSnapshot);
-                    if (equal) {
-                        log.info("Exercise {} has no versionable changes from last version", exercise.getId());
-                        return;
-                    }
-                }
-                exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
-                // transaction template is needed because this method is executed "after commit" of current transaction context
-                var version = exerciseVersionRepository.save(exerciseVersion);
-                log.info("Exercise version for exercise with id {} created", version.getId());
-            });
-        }
-        catch (Exception e) {
-            log.error("Error creating exercise version for exercise with id {}: {}", exerciseId, e.getMessage(), e);
-        }
     }
 
     /**
@@ -144,12 +80,71 @@ public class ExerciseVersionService {
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void onExerciseChangedEvent(ExerciseChangedEvent event) {
-        var user = userRepository.findOneByLogin(event.userLogin());
-        if (user.isEmpty()) {
-            log.error("No user found with login: {}, skipping exercise version creation", event.userLogin());
+        versioningQueue.add(event);
+    }
+
+    /**
+     * Process the versioning queue.
+     * This method is scheduled to run every 2 seconds. Creating exercise version immediately after the surrounding transaction commits would cause
+     * obscure hibernate errors. Therefore, a delayed batch execution is used to avoid this issue.
+     */
+    @Scheduled(initialDelay = 1000, fixedDelay = 1000)
+    public void processVersioningQueue() {
+        List<ExerciseChangedEvent> batch = new ArrayList<>();
+
+        // Drain up to 50 items at once for batch processing
+        int drained = versioningQueue.drainTo(batch, 50);
+
+        if (drained == 0) {
             return;
         }
-        createExerciseVersion(event.exerciseId(), event.exerciseType(), user.get());
+
+        for (var request : batch) {
+            createExerciseVersion(request.exerciseId(), request.exerciseType(), request.userLogin());
+        }
+
+        log.info("Processed {} exercise versioning requests", batch.size());
+    }
+
+    /**
+     * Creates an exercise version. This function would fetch the exercise eagerly that corresponds to its type,
+     * initialize an {@link ExerciseSnapshotDTO} and create a new {@link ExerciseVersion} to persist.
+     *
+     * @param exerciseId   The ID of the exercise to create a version of
+     * @param exerciseType the {@link ExerciseType} of the exercise
+     * @param userLogin    The user login of who created the version
+     */
+    private void createExerciseVersion(Long exerciseId, ExerciseType exerciseType, String userLogin) {
+        try {
+            var author = userRepository.findOneByLogin(userLogin).orElse(null);
+            if (author == null) {
+                log.error("No active user during exercise version creation check");
+                return;
+            }
+            Exercise exercise = fetchExerciseEagerly(exerciseId, exerciseType);
+            if (exercise == null) {
+                log.error("Exercise with id {} not found", exerciseId);
+                return;
+            }
+            ExerciseVersion exerciseVersion = new ExerciseVersion();
+            exerciseVersion.setExercise(exercise);
+            exerciseVersion.setAuthor(author);
+            var exerciseSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
+            var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
+            if (previousVersion.isPresent()) {
+                var previousVersionSnapshot = previousVersion.get().getExerciseSnapshot();
+                var equal = previousVersionSnapshot.equals(exerciseSnapshot);
+                if (equal) {
+                    log.info("Exercise {} has no versionable changes from last version, {}", exercise.getId(), exerciseSnapshot);
+                    return;
+                }
+            }
+            exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
+            exerciseVersionRepository.save(exerciseVersion);
+        }
+        catch (Exception e) {
+            log.error("Error creating exercise version for exercise with id {}: {}", exerciseId, e.getMessage(), e);
+        }
     }
 
     /**

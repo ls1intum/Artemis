@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseSnapshotDTO(
         // fields of BaseExercise class
         Long id, String title, String shortName, Double maxPoints, Double bonusPoints, AssessmentType assessmentType, ZonedDateTime releaseDate, ZonedDateTime startDate,
@@ -42,6 +42,14 @@ public record ExerciseSnapshotDTO(
 
     public static ExerciseSnapshotDTO of(Exercise exercise, GitService gitService) {
 
+        var competencyLinks = exercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkSnapshotDTO::of).collect(Collectors.toSet());
+        if (competencyLinks.isEmpty()) {
+            competencyLinks = null;
+        }
+        var gradingCriteria = exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+        if (gradingCriteria.isEmpty()) {
+            gradingCriteria = null;
+        }
         var programmingData = exercise instanceof ProgrammingExercise ? ProgrammingExerciseSnapshotDTO.of((ProgrammingExercise) exercise, gitService) : null;
         var textData = exercise instanceof TextExercise ? TextExerciseSnapshotDTO.of((TextExercise) exercise) : null;
         var modelingData = exercise instanceof ModelingExercise ? ModelingExerciseSnapshotDTO.of((ModelingExercise) exercise) : null;
@@ -49,16 +57,14 @@ public record ExerciseSnapshotDTO(
         var fileUploadData = exercise instanceof FileUploadExercise ? FileUploadExerciseSnapshotDTO.of((FileUploadExercise) exercise) : null;
         return new ExerciseSnapshotDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getMaxPoints(), exercise.getBonusPoints(),
                 exercise.getAssessmentType(), toUtc(exercise.getReleaseDate()), toUtc(exercise.getStartDate()), toUtc(exercise.getDueDate()),
-                toUtc(exercise.getAssessmentDueDate()), toUtc(exercise.getExampleSolutionPublicationDate()), exercise.getDifficulty(), exercise.getMode(),
-                exercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkSnapshotDTO::of).collect(Collectors.toSet()), exercise.getAllowComplaintsForAutomaticAssessments(),
-                exercise.getAllowFeedbackRequests(), exercise.getIncludedInOverallScore(), exercise.getProblemStatement(), exercise.getGradingInstructions(),
-                exercise.getCategories(), TeamAssignmentConfigSnapshotDTO.of(exercise.getTeamAssignmentConfig()), exercise.getPresentationScoreEnabled(),
-                exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(),
-                exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet()), exercise.getPlagiarismDetectionConfig(), programmingData, textData,
-                modelingData, quizData, fileUploadData);
+                toUtc(exercise.getAssessmentDueDate()), toUtc(exercise.getExampleSolutionPublicationDate()), exercise.getDifficulty(), exercise.getMode(), competencyLinks,
+                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getIncludedInOverallScore(), exercise.getProblemStatement(),
+                exercise.getGradingInstructions(), exercise.getCategories(), TeamAssignmentConfigSnapshotDTO.of(exercise.getTeamAssignmentConfig()),
+                exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), gradingCriteria,
+                exercise.getPlagiarismDetectionConfig(), programmingData, textData, modelingData, quizData, fileUploadData);
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CompetencyExerciseLinkSnapshotDTO(CompetencyExerciseLink.CompetencyExerciseId competencyId, double weight) implements Serializable {
 
         private static CompetencyExerciseLinkSnapshotDTO of(CompetencyExerciseLink link) {
@@ -69,7 +75,7 @@ public record ExerciseSnapshotDTO(
         }
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TeamAssignmentConfigSnapshotDTO(long id, int minTeamSize, int maxTeamSize) implements Serializable {
 
         private static TeamAssignmentConfigSnapshotDTO of(TeamAssignmentConfig config) {

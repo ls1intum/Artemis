@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<AuxiliaryRepository> auxiliaryRepositories, Boolean allowOnlineEditor, Boolean allowOfflineIde,
         Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, ProgrammingLanguage programmingLanguage, String packageName,
         Boolean showTestNamesToStudents, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, String projectKey, ParticipationSnapshotDTO templateParticipation,
@@ -48,6 +48,12 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
         var solutionParticipation = exercise.getSolutionParticipation() != null ? new ParticipationSnapshotDTO(exercise.getSolutionParticipation().getId(),
                 exercise.getSolutionRepositoryUri(), exercise.getSolutionBuildPlanId(), getCommitHash(exercise.getVcsSolutionRepositoryUri(), gitService)) : null;
         var testCommitHash = getCommitHash(exercise.getVcsTestRepositoryUri(), gitService);
+
+        var auxiliaryRepositories = exercise.getAuxiliaryRepositories();
+        if (auxiliaryRepositories.isEmpty()) {
+            auxiliaryRepositories = null;
+        }
+
         var auxiliaryCommitHashes = new HashMap<String, String>();
         if (exercise.getAuxiliaryRepositories() != null) {
             for (AuxiliaryRepository auxiliaryRepository : exercise.getAuxiliaryRepositories()) {
@@ -60,34 +66,47 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
                 }
             }
         }
-        return new ProgrammingExerciseSnapshotDTO(exercise.getTestRepositoryUri(), exercise.getAuxiliaryRepositories(), exercise.isAllowOnlineEditor(),
-                exercise.isAllowOfflineIde(), exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(),
-                exercise.getProgrammingLanguage(), exercise.getPackageName(), exercise.getShowTestNamesToStudents(),
-                toUtc(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()), exercise.getProjectKey(), templateParticipation, solutionParticipation,
-                exercise.getTestCases().stream().map(ProgrammingExerciseTestCaseDTO::of).collect(Collectors.toSet()),
-                exercise.getTasks().stream().map(ProgrammingExerciseTaskSnapshotDTO::of).collect(Collectors.toCollection(ArrayList::new)),
-                exercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategorySnapshotDTO::of).collect(Collectors.toSet()),
-                SubmissionPolicySnapshotDTO.of(exercise.getSubmissionPolicy()), exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(),
-                ProgrammingExerciseBuildConfigSnapshotDTO.of(exercise.getBuildConfig()), testCommitHash, auxiliaryCommitHashes.isEmpty() ? null : auxiliaryCommitHashes
+        var analysisCategories = exercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategorySnapshotDTO::of).collect(Collectors.toSet());
+        if (analysisCategories.isEmpty()) {
+            analysisCategories = null;
+        }
+        var tasks = exercise.getTasks().stream().map(ProgrammingExerciseTaskSnapshotDTO::of).collect(Collectors.toCollection(ArrayList::new));
+        if (tasks.isEmpty()) {
+            tasks = null;
+        }
+        var testCases = exercise.getTestCases().stream().map(ProgrammingExerciseTestCaseDTO::of).collect(Collectors.toSet());
+        if (testCases.isEmpty()) {
+            testCases = null;
+        }
+
+        return new ProgrammingExerciseSnapshotDTO(exercise.getTestRepositoryUri(), auxiliaryRepositories, exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
+                exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(),
+                exercise.getPackageName(), exercise.getShowTestNamesToStudents(), toUtc(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()), exercise.getProjectKey(),
+                templateParticipation, solutionParticipation, testCases, tasks, analysisCategories, SubmissionPolicySnapshotDTO.of(exercise.getSubmissionPolicy()),
+                exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), ProgrammingExerciseBuildConfigSnapshotDTO.of(exercise.getBuildConfig()), testCommitHash,
+                auxiliaryCommitHashes.isEmpty() ? null : auxiliaryCommitHashes
 
         );
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ParticipationSnapshotDTO(long id, String repositoryUri, String buildPlanId, String commitId) implements Serializable {
 
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ProgrammingExerciseTaskSnapshotDTO(long id, String taskName, Set<ProgrammingExerciseTestCaseDTO> testCases) implements Serializable {
 
         private static ProgrammingExerciseTaskSnapshotDTO of(ProgrammingExerciseTask task) {
-            return new ProgrammingExerciseTaskSnapshotDTO(task.getId(), task.getTaskName(),
-                    task.getTestCases().stream().map(ProgrammingExerciseTestCaseDTO::of).collect(Collectors.toSet()));
+            var testCases = task.getTestCases().stream().map(ProgrammingExerciseTestCaseDTO::of).collect(Collectors.toSet());
+            if (testCases.isEmpty()) {
+                testCases = null;
+            }
+            return new ProgrammingExerciseTaskSnapshotDTO(task.getId(), task.getTaskName(), testCases);
         }
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record StaticCodeAnalysisCategorySnapshotDTO(long id, String name, Double penalty, Double maxPenalty, CategoryState state) implements Serializable {
 
         private static StaticCodeAnalysisCategorySnapshotDTO of(StaticCodeAnalysisCategory category) {
@@ -95,7 +114,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
         }
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record SubmissionPolicySnapshotDTO(long id, int submissionLimit, boolean active, Double exceedingPenalty, String type) implements Serializable {
 
         private static SubmissionPolicySnapshotDTO of(SubmissionPolicy policy) {
@@ -107,7 +126,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
         }
     }
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ProgrammingExerciseBuildConfigSnapshotDTO(Boolean sequentialTestRuns, String branch, String buildPlanConfiguration, String buildScript,
             boolean checkoutSolutionRepository, String testCheckoutPath, String assignmentCheckoutPath, String solutionCheckoutPath, int timeoutSeconds, String dockerFlags,
             String theiaImage, boolean allowBranching, String branchRegex) implements Serializable {
