@@ -62,7 +62,7 @@ import { CourseNotificationSettingPreset } from 'app/communication/shared/entiti
 import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
 import { CourseNotificationInfo } from 'app/communication/shared/entities/course-notification/course-notification-info';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
@@ -211,7 +211,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(TeamService),
                 MockProvider(WebsocketService),
                 MockProvider(ArtemisServerDateService),
-                MockProvider(CalendarEventService),
+                MockProvider(CalendarService),
                 MockProvider(AlertService),
                 MockProvider(ChangeDetectorRef),
                 MockProvider(TutorialGroupsService),
@@ -515,8 +515,8 @@ describe('CourseOverviewComponent', () => {
         findOneForDashboardStub.mockReturnValue(findOneForDashboardResponse);
 
         // check that calendar events are refreshed
-        const calendarEventService = TestBed.inject(CalendarEventService);
-        const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+        const calendarService = TestBed.inject(CalendarService);
+        const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
         component.loadCourse(true);
 

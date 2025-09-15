@@ -254,10 +254,11 @@ public class SecurityConfiguration {
                     .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
-                    .requestMatchers("/swagger-ui/**").permitAll();
+                    .requestMatchers("/swagger-ui/**").permitAll()
+                    .requestMatchers("/api/core/calendar/courses/*/calendar-events-ics").permitAll()
                     // `/git/**` endpoints (JGit servlet + LocalVC filters) are only registered under the `localvc` profile
                     // LocalVCFetchFilter/LocalVCPushFilter handle auth
-                    requests.requestMatchers("/git/**").permitAll();
+                    .requestMatchers("/git/**").permitAll();
 
                     // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
                     requests.requestMatchers("/**").authenticated();

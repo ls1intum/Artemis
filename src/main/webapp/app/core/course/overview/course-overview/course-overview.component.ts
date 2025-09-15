@@ -37,7 +37,7 @@ import { CourseNotificationSettingInfo } from 'app/communication/shared/entities
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationPresetPickerComponent } from 'app/communication/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -69,7 +69,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private modalService = inject(NgbModal);
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
-    private calendarEventService = inject(CalendarEventService);
+    private calendarService = inject(CalendarService);
     protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);
     protected readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
 
@@ -249,7 +249,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.loadCourseSubscription?.unsubscribe();
         if (refresh) {
             this.loadCourseSubscription = observable.subscribe();
-            this.calendarEventService.refresh();
+            this.calendarService.reloadEvents();
         }
         return observable;
     }

@@ -18,8 +18,7 @@
                 <router-outlet />
             </div>
         </div>
-    }
-    @if (!showSkeleton) {
+    } @else {
         <router-outlet />
     }
     <jhi-course-notification-popup-overlay />

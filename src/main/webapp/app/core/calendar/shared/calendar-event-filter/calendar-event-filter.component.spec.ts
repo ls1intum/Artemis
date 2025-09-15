@@ -5,12 +5,12 @@ import { By } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockDirective } from 'ng-mocks';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from './calendar-event-filter.component';
 
 describe('CalendarEventFilterComponent', () => {
     let fixture: ComponentFixture<CalendarEventFilterComponent>;
-    let mockService: jest.Mocked<CalendarEventService>;
+    let mockService: jest.Mocked<CalendarService>;
 
     const eventFilterOptions: CalendarEventFilterOption[] = [
         CalendarEventFilterOption.LectureEvents,
@@ -25,12 +25,12 @@ describe('CalendarEventFilterComponent', () => {
             toggleEventFilterOption: jest.fn(),
             eventFilterOptions: eventFilterOptions,
             includedEventFilterOptions: includedEventFilterOptions,
-        } as unknown as jest.Mocked<CalendarEventService>;
+        } as unknown as jest.Mocked<CalendarService>;
 
         await TestBed.configureTestingModule({
             imports: [CalendarEventFilterComponent, NgbPopoverModule],
             declarations: [MockDirective(TranslateDirective)],
-            providers: [{ provide: CalendarEventService, useValue: mockService }],
+            providers: [{ provide: CalendarService, useValue: mockService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CalendarEventFilterComponent);
