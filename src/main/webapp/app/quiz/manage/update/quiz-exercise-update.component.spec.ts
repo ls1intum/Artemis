@@ -40,7 +40,7 @@ import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 describe('QuizExerciseUpdateComponent', () => {
     let comp: QuizExerciseUpdateComponent;
@@ -157,7 +157,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AlertService),
-                MockProvider(CalendarEventService),
+                MockProvider(CalendarService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -1045,8 +1045,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
                 quizExerciseServiceImportStub = jest.spyOn(quizExerciseService, 'import');
                 quizExerciseServiceImportStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-                const calendarEventService = TestBed.inject(CalendarEventService);
-                refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+                const calendarService = TestBed.inject(CalendarService);
+                refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
                 exerciseSanitizeSpy = jest.spyOn(Exercise, 'sanitize');
             });
 

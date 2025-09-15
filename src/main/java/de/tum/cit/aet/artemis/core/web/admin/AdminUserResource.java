@@ -195,10 +195,7 @@ public class AdminUserResource {
         var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
 
         final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
-        final var oldUserLogin = existingUser.getLogin();
-        final var oldGroups = existingUser.getGroups();
         var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);
-        userService.updateUserInConnectorsAndAuthProvider(updatedUser, oldUserLogin, oldGroups, managedUserVM.getPassword());
 
         if (shouldActivateUser) {
             userService.activateUser(updatedUser);

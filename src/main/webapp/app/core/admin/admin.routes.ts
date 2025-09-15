@@ -51,13 +51,6 @@ const routes: Routes = [
         },
     },
     {
-        path: 'docs',
-        loadComponent: () => import('app/core/admin/docs/docs.component').then((m) => m.DocsComponent),
-        data: {
-            pageTitle: 'global.menu.admin.apidocs',
-        },
-    },
-    {
         path: 'metrics',
         loadComponent: () => import('app/core/admin/metrics/metrics.component').then((m) => m.MetricsComponent),
         data: {
@@ -159,6 +152,14 @@ const routes: Routes = [
         component: UpcomingExamsAndExercisesComponent,
         data: {
             pageTitle: 'artemisApp.upcomingExamsAndExercises.upcomingExamsAndExercises',
+        },
+    },
+    {
+        path: 'exam-rooms',
+        loadComponent: () => import('app/core/admin/exam-rooms/exam-rooms.component').then((m) => m.ExamRoomsComponent),
+        data: {
+            authorities: [Authority.ADMIN],
+            pageTitle: 'global.menu.admin.examRooms',
         },
     },
     ...organizationMgmtRoute,

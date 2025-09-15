@@ -2,6 +2,7 @@
 @import '../../../../../../../../node_modules/bootstrap/scss/variables';
 @import '../../../../../../../../node_modules/bootstrap/scss/mixins';
 @import './course-variables';
+@import 'src/main/webapp/content/scss/artemis-mixins.scss';
 
 // ng-deep needed to remove scrollbar from mat-sidebar
 ::ng-deep .mat-drawer-inner-container {
@@ -19,17 +20,6 @@
 }
 
 .mat-drawer-container {
-    height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--spacing-modules));
-
-    &.sidenav-height-dev {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--spacing-modules));
-    }
-
-    @media (max-width: 768px) {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--spacing-modules)) !important;
-        height: calc(100dvh - var(--sidebar-header-footer-combined-height) - var(--spacing-modules)) !important;
-    }
-
     &.exam-wrapper {
         height: 100vh !important;
     }
@@ -38,22 +28,14 @@
         box-sizing: content-box;
         width: $menu-width-open;
         transition: width 0.2s ease-in-out !important;
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--spacing-modules));
-
-        &.sidenav-height-dev {
-            height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--spacing-modules));
-        }
-
-        @media (max-width: 768px) {
-            height: calc(100vh - var(--sidebar-header-footer-combined-height) - var(--spacing-modules)) !important;
-        }
     }
 
     .mat-drawer-content {
         position: sticky;
         z-index: 1;
         display: block;
-        height: calc(100vh - var(--sidebar-header-footer-combined-height));
+
+        @include dynamic-content-height(--spacing-modules);
         width: calc(100vw - $menu-width-open);
         overflow: hidden;
         margin-left: $menu-width-open !important;
@@ -63,15 +45,6 @@
 
         &.exam-wrapper {
             height: 100vh !important;
-        }
-
-        &.sidenav-height-dev {
-            height: calc(100vh - var(--sidebar-header-footer-combined-height));
-        }
-
-        @media (max-width: 768px) {
-            height: calc(100vh - var(--sidebar-header-footer-combined-height)) !important;
-            height: calc(100dvh - var(--sidebar-header-footer-combined-height)) !important;
         }
     }
 
@@ -89,7 +62,7 @@
     &.exam-is-active {
         .mat-drawer-content {
             width: 100vw;
-            margin-left: 0px !important;
+            margin-left: 0 !important;
         }
     }
 
@@ -118,7 +91,6 @@ a:not(.btn):not(.tab-link):hover {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-
     opacity: 0;
     pointer-events: none;
     transition: 0.1s ease-out opacity;

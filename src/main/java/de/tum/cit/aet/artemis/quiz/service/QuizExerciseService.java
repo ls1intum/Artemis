@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificat
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
@@ -52,8 +53,7 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
-import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
-import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
+import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
@@ -707,19 +707,20 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      *
      * @param courseId      the ID of the course
      * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @param language      the language that will be used add context information to titles (e.g. the title of a release event will be prefixed with "Release: ")
      * @return the set of results
      */
-    public Set<CalendarEventDTO> getCalendarEventDTOsFromQuizExercises(long courseId, boolean userIsStudent) {
-        Set<QuizExerciseCalendarEventDTO> daos = quizExerciseRepository.getQuizExerciseCalendarEventDAOsForCourseId(courseId);
-        return daos.stream().flatMap(dao -> deriveCalendarEventDTOs(dao, userIsStudent).stream()).collect(Collectors.toSet());
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromQuizExercises(long courseId, boolean userIsStudent, Language language) {
+        Set<QuizExerciseCalendarEventDTO> dtos = quizExerciseRepository.getQuizExerciseCalendarEventDTOsForCourseId(courseId);
+        return dtos.stream().flatMap(dto -> deriveCalendarEventDTOs(dto, userIsStudent, language).stream()).collect(Collectors.toSet());
     }
 
-    private Set<CalendarEventDTO> deriveCalendarEventDTOs(QuizExerciseCalendarEventDTO dao, boolean userIsStudent) {
-        if (dao.quizMode() == QuizMode.SYNCHRONIZED) {
-            return deriveCalendarEventDTOForSynchronizedQuizExercise(dao, userIsStudent).map(Set::of).orElseGet(Collections::emptySet);
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(QuizExerciseCalendarEventDTO dto, boolean userIsStudent, Language language) {
+        if (dto.quizMode() == QuizMode.SYNCHRONIZED) {
+            return deriveCalendarEventDTOForSynchronizedQuizExercise(dto, userIsStudent).map(Set::of).orElseGet(Collections::emptySet);
         }
         else {
-            return deriveCalendarEventDTOsForIndividualAndBatchedQuizExercises(dao, userIsStudent);
+            return deriveCalendarEventDTOsForIndividualAndBatchedQuizExercises(dto, userIsStudent, language);
         }
     }
 
@@ -733,7 +734,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * The startDate and dueDate properties of {@link QuizExercise}s in {@code QuizMode.SYNCHRONIZED} are always null. Instead, such quizzes have exactly one {@link QuizBatch}
      * for which the startTime property is set. The end of the quiz can be calculated by adding the duration property of the exercise to the startTime of the batch.
      *
-     * @param dto           the DAO from which to derive the event
+     * @param dto           the DTO from which to derive the event
      * @param userIsStudent indicates whether the logged-in user is a student of the course related to the exercise
      * @return one event representing the working time period of the exercise
      */
@@ -747,7 +748,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             return Optional.empty();
         }
 
-        return Optional.of(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.START_AND_END_DATE, dto.title(), synchronizedBatch.getStartTime(),
+        return Optional.of(new CalendarEventDTO("exerciseStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.QUIZ_EXERCISE, dto.title(), synchronizedBatch.getStartTime(),
                 synchronizedBatch.getStartTime().plusSeconds(dto.duration()), null, null));
     }
 
@@ -763,19 +764,30 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * For both modes, the period in which the quiz can be held may be constrained by releaseDate (defining a start of the period) or dueDate (defining an end of the period).
      * The dueDate and startDate can be set independent of each other.
      *
-     * @param dao           the DAO from which to derive the events
+     * @param dto           the DTO from which to derive the events
      * @param userIsStudent indicates whether the logged-in user is a student of the course associated to the quizExercise
+     * @param language      the language that will be used add context information to titles (e.g. the title of a release event will be prefixed with "Release: ")
      * @return the derived events
      */
-    private Set<CalendarEventDTO> deriveCalendarEventDTOsForIndividualAndBatchedQuizExercises(QuizExerciseCalendarEventDTO dao, boolean userIsStudent) {
+    private Set<CalendarEventDTO> deriveCalendarEventDTOsForIndividualAndBatchedQuizExercises(QuizExerciseCalendarEventDTO dto, boolean userIsStudent, Language language) {
         Set<CalendarEventDTO> events = new HashSet<>();
         boolean userIsCourseStaff = !userIsStudent;
-        if (userIsCourseStaff || dao.releaseDate() == null || dao.releaseDate().isBefore(now())) {
-            if (dao.releaseDate() != null) {
-                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.RELEASE_DATE, dao.title(), dao.releaseDate(), null, null, null));
+        if (userIsCourseStaff || dto.releaseDate() == null || dto.releaseDate().isBefore(now())) {
+            if (dto.releaseDate() != null) {
+                String releaseDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Release: ";
+                    case GERMAN -> "Veröffentlichung: ";
+                };
+                events.add(new CalendarEventDTO("exerciseReleaseEvent-" + dto.originEntityId(), CalendarEventType.QUIZ_EXERCISE, releaseDateTitlePrefix + dto.title(),
+                        dto.releaseDate(), null, null, null));
             }
-            if (dao.dueDate() != null) {
-                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.QUIZ_EXERCISE, CalendarEventSemantics.DUE_DATE, dao.title(), dao.dueDate(), null, null, null));
+            if (dto.dueDate() != null) {
+                String dueDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Due: ";
+                    case GERMAN -> "Abgabefrist: ";
+                };
+                events.add(new CalendarEventDTO("exerciseDueEvent-" + dto.originEntityId(), CalendarEventType.QUIZ_EXERCISE, dueDateTitlePrefix + dto.title(), dto.dueDate(), null,
+                        null, null));
             }
         }
         return events;
