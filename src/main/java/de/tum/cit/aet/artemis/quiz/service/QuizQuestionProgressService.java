@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -88,11 +89,11 @@ public class QuizQuestionProgressService {
     }
 
     /**
-     * Get the sorted List of 10 quiz questions based on their due date
+     * Get the sorted List of quiz questions based on their due date
      *
      * @param courseId ID of the course for which the quiz questions are to be fetched
      * @param userId   ID of the user for whom the quiz questions are to be fetched
-     * @return A list of 10 quiz questions sorted by due date
+     * @return A list of quiz questions sorted by due date
      */
     public List<QuizQuestionTrainingDTO> getQuestionsForSession(Long courseId, Long userId) {
         Set<QuizQuestion> allQuestions = quizQuestionRepository.findAllQuizQuestionsByCourseId(courseId);
@@ -118,7 +119,7 @@ public class QuizQuestionProgressService {
             questionsForSession = dueQuestions;
         }
         else {
-            questionsForSession = allQuestions.stream().collect(Collectors.collectingAndThen(Collectors.toList(), list -> {
+            questionsForSession = allQuestions.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(ArrayList::new), list -> {
                 Collections.shuffle(list);
                 return list;
             }));
