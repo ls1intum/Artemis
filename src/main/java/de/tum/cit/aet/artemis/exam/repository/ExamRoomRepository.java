@@ -68,7 +68,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             FROM (
                 SELECT er.id AS id, er.roomNumber AS roomNumber, er.name AS name, er.createdDate AS createdDate, ROW_NUMBER() OVER (
                     PARTITION BY er.roomNumber, er.name
-                    ORDER BY er.createdDate DESC
+                    ORDER BY er.createdDate DESC, er.id DESC
                 ) AS rowNumber
                 FROM ExamRoom er
             )

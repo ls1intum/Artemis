@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,12 +79,14 @@ public class ExamRoomDistributionService {
         }
 
         examRoomExamAssignmentRepository.deleteAllByExamId(examId);
+        List<ExamRoomExamAssignment> examRoomExamAssignments = new ArrayList<>();
         for (ExamRoom examRoom : examRoomsForExam) {
             var examRoomExamAssignment = new ExamRoomExamAssignment();
             examRoomExamAssignment.setExamRoom(examRoom);
             examRoomExamAssignment.setExam(exam);
-            examRoomExamAssignmentRepository.save(examRoomExamAssignment);
+            examRoomExamAssignments.add(examRoomExamAssignment);
         }
+        examRoomExamAssignmentRepository.saveAll(examRoomExamAssignments);
 
         // Now we distribute students to the seats
         Map<String, List<ExamSeatDTO>> roomNumberToUsableSeatsDefaultLayout = new HashMap<>();

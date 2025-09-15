@@ -126,7 +126,7 @@
             "missingLayouts": "Konnte die Layouts von Raum {{ roomNumber }} nicht verarbeiten",
             "malformedLayout": "Layout {{ layoutName }} ist fehlerhaft in Raum {{ roomNumber }}",
             "unknownLayoutType": "Unbekannter Layout-Typ '{{ layoutType }}' in Layout '{{ layoutName }}' in Raum {{ roomNumber }}",
-            "invalidLayout": "Das Layout {{ layoutName }} in Raum {{ roomNumber }} scheint syntaktisch fehlerhaft zu sein\"",
+            "invalidLayout": "Das Layout {{ layoutName }} in Raum {{ roomNumber }} scheint syntaktisch fehlerhaft zu sein",
             "seatNotFoundFixedSelection": "Der Sitz mit Reihenindex {{ rowIndex }} und Sitzindex {{ seatIndex }} in Raum {{ roomNumber }} existiert nicht",
             "missingDefaultLayout": "Der Raum {{ roomNumber }} hat kein Standardlayout ('default')"
         },
