@@ -60,6 +60,14 @@ public class ConsistencyCheckService {
         this.templates = templates;
     }
 
+    /**
+     * Performs consistency check for a programming exercise.
+     *
+     * @param user     the user requesting the consistency check
+     * @param exercise the programming exercise to check
+     * @return the consistency check response with found issues
+     * @throws NetworkingException if the AI service is not available
+     */
     public ConsistencyCheckResponseDTO checkConsistency(User user, ProgrammingExercise exercise) throws NetworkingException {
         log.info("Performing consistency check for exercise {} by user {}", exercise.getId(), user.getLogin());
 
@@ -109,10 +117,12 @@ public class ConsistencyCheckService {
             try {
                 combinedIssues = Mono.zip(structuralMono, semanticMono, (a, b) -> {
                     List<ConsistencyIssue> combined = new ArrayList<>();
-                    if (a != null)
+                    if (a != null) {
                         combined.addAll(a);
-                    if (b != null)
+                    }
+                    if (b != null) {
                         combined.addAll(b);
+                    }
                     return combined;
                 }).block();
                 if (combinedIssues == null) {

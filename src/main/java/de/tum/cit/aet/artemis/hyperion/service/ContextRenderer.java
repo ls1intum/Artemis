@@ -25,11 +25,25 @@ public final class ContextRenderer {
     /**
      * Render a complete textual snapshot of a repository: first the tree, then the contents of every file.
      * If repoName equals "Problem Statement", the tree is omitted and the content is rendered as problem_statement.md.
+     *
+     * @param files    the list of repository files to render
+     * @param repoName the name of the repository
+     * @return the rendered repository content as a string
      */
     public static String renderRepository(List<RepoFile> files, String repoName) {
         return renderRepository(files, "/", false, repoName, 80);
     }
 
+    /**
+     * Render a complete textual snapshot of a repository with detailed configuration options.
+     *
+     * @param files      the list of repository files to render
+     * @param sep        the separator to use in file paths
+     * @param showHidden whether to show hidden files
+     * @param repoName   the name of the repository
+     * @param width      the maximum width for rendering
+     * @return the rendered repository content as a string
+     */
     public static String renderRepository(List<RepoFile> files, String sep, boolean showHidden, String repoName, int width) {
         boolean isProblemStatement = Objects.equals(repoName, "Problem Statement");
         String root = isProblemStatement ? null : (repoName == null ? "repository" : repoName.replace(" ", "_").toLowerCase());
@@ -62,6 +76,15 @@ public final class ContextRenderer {
         }
     }
 
+    /**
+     * Renders a file structure tree from a list of file paths.
+     *
+     * @param root       the root directory name
+     * @param paths      the list of file paths
+     * @param sep        the path separator
+     * @param showHidden whether to show hidden files
+     * @return the rendered file structure as a string
+     */
     public static String renderFileStructure(String root, List<String> paths, String sep, boolean showHidden) {
         Map<String, Object> tree = new LinkedHashMap<>();
         for (String p : paths) {
@@ -93,6 +116,13 @@ public final class ContextRenderer {
         return String.join("\n", lines);
     }
 
+    /**
+     * Recursively collects tree structure lines for rendering.
+     *
+     * @param lines   the list to collect rendered lines
+     * @param subtree the subtree map to process
+     * @param prefix  the prefix for indentation
+     */
     @SuppressWarnings("unchecked")
     private static void collectTree(List<String> lines, Map<String, Object> subtree, String prefix) {
         List<Map.Entry<String, Object>> items = new ArrayList<>(subtree.entrySet());
@@ -120,6 +150,16 @@ public final class ContextRenderer {
         }
     }
 
+    /**
+     * Renders a single file's content with header and optional line numbers.
+     *
+     * @param root        the root directory name
+     * @param path        the file path
+     * @param content     the file content
+     * @param lineNumbers whether to show line numbers
+     * @param width       the width for the header separator
+     * @return the rendered file content as a string
+     */
     public static String renderFileString(String root, String path, String content, boolean lineNumbers, int width) {
         String hr = "-".repeat(Math.max(0, width));
         String header = (root != null && !root.isBlank() ? hr + "\n" + root + "/" + path + ":\n" + hr : hr + "\n" + path + ":\n" + hr);
@@ -148,6 +188,10 @@ public final class ContextRenderer {
 
     /**
      * Apply simple language-aware file filtering. For Java, include only .java files under any src directory and skip hidden paths.
+     *
+     * @param files    the list of repository files to filter
+     * @param language the programming language to filter by
+     * @return the filtered list of repository files
      */
     public static List<RepoFile> filterFilesByLanguage(List<RepoFile> files, ProgrammingLanguage language) {
         if (language == null) {

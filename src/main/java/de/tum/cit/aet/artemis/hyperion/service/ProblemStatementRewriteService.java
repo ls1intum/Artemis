@@ -35,6 +35,15 @@ public class ProblemStatementRewriteService {
         this.templates = templates;
     }
 
+    /**
+     * Rewrites a problem statement using AI to improve clarity and completeness.
+     *
+     * @param user                 the user requesting the rewrite
+     * @param course               the course context for the problem statement
+     * @param problemStatementText the original problem statement text
+     * @return the rewritten problem statement response
+     * @throws NetworkingException if the AI service is not available
+     */
     public ProblemStatementRewriteResponseDTO rewriteProblemStatement(User user, Course course, String problemStatementText) throws NetworkingException {
         if (user == null) {
             throw new IllegalArgumentException("User must not be null");

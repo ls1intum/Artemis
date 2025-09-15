@@ -77,6 +77,9 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         return localPath;
     }
 
+    /**
+     * Closes the repository before deletion, handling any IllegalStateException that may occur.
+     */
     public void closeBeforeDelete() {
         try {
             super.close();

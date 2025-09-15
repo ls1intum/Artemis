@@ -16,6 +16,13 @@ import org.springframework.util.StreamUtils;
 @Profile(PROFILE_HYPERION)
 public class PromptTemplateService {
 
+    /**
+     * Renders a template from the given resource path with the provided variables.
+     *
+     * @param resourcePath the path to the template resource
+     * @param variables    the variables to substitute in the template
+     * @return the rendered template as a string
+     */
     public String render(String resourcePath, Map<String, Object> variables) {
         try {
             var resource = new ClassPathResource(resourcePath);

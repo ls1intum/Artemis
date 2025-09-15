@@ -17,7 +17,6 @@ describe('ArtemisIntelligenceService', () => {
     let service: ArtemisIntelligenceService;
     let websocketService: WebsocketService;
     let alertService: AlertService;
-    let _hyperionApiService: HyperionReviewAndRefineApiService;
 
     const mockWebsocketService = {
         subscribe: jest.fn(),
@@ -57,7 +56,6 @@ describe('ArtemisIntelligenceService', () => {
         service = TestBed.inject(ArtemisIntelligenceService);
         websocketService = TestBed.inject(WebsocketService);
         alertService = TestBed.inject(AlertService);
-        _hyperionApiService = TestBed.inject(HyperionReviewAndRefineApiService);
     });
 
     afterEach(() => {
@@ -210,15 +208,13 @@ describe('ArtemisIntelligenceService', () => {
 
         it('should handle loading state for Hyperion consistency check with detailed response', () => {
             const mockResponse: ConsistencyCheckResponse = {
-                hasIssues: false,
-                summary: 'All good',
                 issues: [],
             };
             mockHyperionApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
 
-            expect(service.isLoading()).toBeFalse();
+            expect(service.isLoading()).toBeFalsy();
             service.consistencyCheck(42).subscribe();
-            expect(service.isLoading()).toBeFalse(); // Should be false after synchronous completion
+            expect(service.isLoading()).toBeFalsy(); // Should be false after synchronous completion
         });
     });
 });
