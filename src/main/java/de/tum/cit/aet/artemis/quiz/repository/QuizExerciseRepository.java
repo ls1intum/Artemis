@@ -86,6 +86,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
      * Only includes core configuration data, NOT submissions, results, or statistics.
      * This includes: quizQuestions (without specific answer options to avoid polymorphic issues)
      *
+     * @param exerciseId the id of the exercise to fetch
      * @return {@link QuizExercise}
      */
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })

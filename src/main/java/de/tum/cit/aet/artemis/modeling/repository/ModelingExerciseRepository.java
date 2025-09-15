@@ -50,10 +50,10 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
      * Only includes core configuration data, NOT submissions, results, or example submissions.
      * Basic ModelingExercise fields (exampleSolutionModel, exampleSolutionExplanation, diagramType) are already included in the entity.
      *
+     * @param exerciseId the id of the exercise to fetch
      * @return {@link ModelingExercise}
      */
-    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "competencyLinks.competency", "categories", "teamAssignmentConfig", "gradingCriteria",
-            "exampleSubmissions.submission", "attachments", "plagiarismDetectionConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
     Optional<ModelingExercise> findWithEagerForVersioningById(long exerciseId);
 
     @Query("""
