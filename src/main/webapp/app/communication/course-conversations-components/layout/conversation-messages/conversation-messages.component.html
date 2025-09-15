@@ -19,7 +19,6 @@
                 #container
                 [ngClass]="{
                     'posting-infinite-scroll-container': posts.length !== 0,
-                    'content-height-dev': contentHeightDev,
                     'is-fetching-posts': isFetchingPosts,
                     'hide-input-full': isHiddenInputFull,
                     'hide-input': isHiddenInputWithCallToAction,
@@ -74,7 +73,7 @@
                         }
                     </div>
                 }
-                @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && isMobile) {
+                @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && isMobile()) {
                     <div class="px-3">
                         @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
                             <div class="pt-2">
@@ -93,7 +92,7 @@
                     </div>
                 }
             </div>
-            @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && !isMobile) {
+            @if (_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation) && !isMobile()) {
                 <div class="d-none d-sm-block px-3">
                     @if (getAsChannel(_activeConversation)?.isAnnouncementChannel) {
                         <div class="pt-2">

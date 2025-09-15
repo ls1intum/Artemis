@@ -22,12 +22,41 @@
 }
 
 .iris-logo {
-    float: left;
-    margin-right: 10px;
+    display: flex;
+    gap: 11px;
 }
 
 .iris-suggestion-text {
     overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
+}
+
+.timestamp-container {
+    text-align: right;
+    font-size: 0.75rem;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+.iris-tutor-suggestion-chat-container {
+    max-height: 300px;
+    background: var(--iris-chat-history-background);
+    display: flex;
+}
+
+.iris-suggestion-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+.iris-suggestion-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 5px;
+    padding: 5px;
+}
+
+.iris-text-content {
+    width: 100%;
 }

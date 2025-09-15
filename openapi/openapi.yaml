@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 8.2.0
+  version: 8.4.0
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -148,6 +148,41 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/TutorialGroupRegistrationImport'}
+  /api/hyperion/programming-exercises/{programmingExerciseId}/consistency-check:
+    post:
+      tags: [hyperion-review-and-refine]
+      operationId: checkExerciseConsistency
+      parameters:
+      - name: programmingExerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ConsistencyCheckResponse'}
+  /api/hyperion/courses/{courseId}/problem-statements/rewrite:
+    post:
+      tags: [hyperion-review-and-refine]
+      operationId: rewriteProblemStatement
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProblemStatementRewriteRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags: [tutorial-group]
@@ -264,6 +299,14 @@ paths:
         '200': {description: OK}
 components:
   schemas:
+    ProblemStatementRewriteResponse:
+      type: object
+      description: Response containing rewritten problem statement
+      properties:
+        rewrittenText: {type: string, description: Improved problem statement text}
+        improved: {type: boolean, description: Whether the text was actually improved,
+          example: true}
+      required: [improved, rewrittenText]
     Channel:
       type: object
       properties:
@@ -296,13 +339,6 @@ components:
           enum: [general, exercise, lecture, exam, feedbackDiscussion]
         subTypeReferenceId: {type: integer, format: int64}
         subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
-    TutorialGroupFreePeriodRequest:
-      type: object
-      properties:
-        startDate: {type: string, format: date-time}
-        endDate: {type: string, format: date-time}
-        reason: {type: string}
-      required: [endDate, startDate]
     TutorialGroupStatus:
       type: object
       properties:
@@ -321,6 +357,74 @@ components:
         language: {type: string}
         additionalInformation: {type: string}
         isOnline: {type: boolean}
+    Student:
+      type: object
+      properties:
+        login: {type: string, maxLength: 50, minLength: 0}
+        firstName: {type: string, maxLength: 50, minLength: 0}
+        lastName: {type: string, maxLength: 50, minLength: 0}
+        registrationNumber: {type: string, maxLength: 10, minLength: 0}
+        email: {type: string, format: email, maxLength: 100, minLength: 0}
+    TutorialGroupUpdate:
+      type: object
+      properties:
+        notificationText: {type: string, maxLength: 1000, minLength: 1}
+        updateTutorialGroupChannelName: {type: boolean}
+      required: [tutorialGroup]
+    ConsistencyCheckResponse:
+      type: object
+      description: Response containing consistency check results
+      properties:
+        issues:
+          type: array
+          description: List of consistency issues found
+          items: {$ref: '#/components/schemas/ConsistencyIssue'}
+      required: [issues]
+    TutorialGroupFreePeriodRequest:
+      type: object
+      properties:
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        reason: {type: string}
+      required: [endDate, startDate]
+    ArtifactLocation:
+      type: object
+      description: Location information for artifacts
+      properties:
+        type:
+          type: string
+          description: Type of artifact
+          enum: [PROBLEM_STATEMENT, TEMPLATE_REPOSITORY, SOLUTION_REPOSITORY, TESTS_REPOSITORY]
+          example: PROBLEM_STATEMENT
+        filePath: {type: string, description: 'Path to file, empty or problem_statement.md
+            for problem statement', example: src/main/java/Main.java}
+        startLine: {type: integer, format: int32, description: Start line number (1-based)}
+        endLine: {type: integer, format: int32, description: End line number (1-based)}
+      required: [endLine, filePath, startLine, type]
+    ConsistencyIssue:
+      type: object
+      description: Individual consistency issue details
+      properties:
+        severity:
+          type: string
+          description: Severity of the issue
+          enum: [LOW, MEDIUM, HIGH]
+          example: HIGH
+        category:
+          type: string
+          description: Category of the issue
+          enum: [METHOD_RETURN_TYPE_MISMATCH, METHOD_PARAMETER_MISMATCH, CONSTRUCTOR_PARAMETER_MISMATCH,
+            ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH, IDENTIFIER_NAMING_INCONSISTENCY]
+          example: METHOD_RETURN_TYPE_MISMATCH
+        description: {type: string, description: Detailed description of the issue,
+          example: Problem statement does not match test cases}
+        suggestedFix: {type: string, description: Suggested fix for the issue, example: Update
+            problem statement to clarify expected behavior}
+        relatedLocations:
+          type: array
+          description: Related locations across artifacts
+          items: {$ref: '#/components/schemas/ArtifactLocation'}
+      required: [category, description, relatedLocations, severity, suggestedFix]
     TutorialGroupExport:
       type: object
       properties:
@@ -353,20 +457,6 @@ components:
         isStudent: {type: boolean}
         isChannelModerator: {type: boolean}
         isRequestingUser: {type: boolean}
-    Student:
-      type: object
-      properties:
-        login: {type: string, maxLength: 50, minLength: 0}
-        firstName: {type: string, maxLength: 50, minLength: 0}
-        lastName: {type: string, maxLength: 50, minLength: 0}
-        registrationNumber: {type: string, maxLength: 10, minLength: 0}
-        email: {type: string, maxLength: 100, minLength: 0}
-    TutorialGroupUpdate:
-      type: object
-      properties:
-        notificationText: {type: string, maxLength: 1000, minLength: 1}
-        updateTutorialGroupChannelName: {type: boolean}
-      required: [tutorialGroup]
     TutorialGroupSessionRequest:
       type: object
       properties:
@@ -375,6 +465,13 @@ components:
         endTime: {type: string}
         location: {type: string, maxLength: 2000, minLength: 1}
       required: [date, endTime, startTime]
+    ProblemStatementRewriteRequest:
+      type: object
+      description: Request to rewrite a problem statement
+      properties:
+        problemStatementText: {type: string, description: Original problem statement
+            text to be improved, minLength: 1}
+      required: [problemStatementText]
     StudentExport:
       type: object
       properties:

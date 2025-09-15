@@ -76,7 +76,7 @@ describe('CommitsInfoComponent', () => {
         fixture.detectChanges();
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         programmingExerciseParticipationServiceSpy = jest
-            .spyOn(programmingExerciseParticipationService, 'retrieveCommitsInfoForParticipation')
+            .spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation')
             .mockReturnValue(of([commitInfo1, commitInfo2, commitInfo3, commitInfo4, commitInfo5, commitInfo6] as CommitInfo[]));
     });
 
