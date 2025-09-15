@@ -851,4 +851,225 @@ describe('AgentChatModalComponent', () => {
             expect(component.isMessageTooLong).toBeFalsy();
         });
     });
+
+    // Additional tests to improve coverage
+    describe('Additional Coverage Tests', () => {
+        beforeEach(() => {
+            fixture.detectChanges();
+        });
+
+        it('should handle successful focus operation in ngAfterViewInit', async () => {
+            const mockFocusElement = {
+                focus: jest.fn(),
+            };
+
+            // Mock messageInput signal to return element with focusable nativeElement
+            jest.spyOn(component as any, 'messageInput').mockReturnValue({ nativeElement: mockFocusElement });
+
+            component.ngAfterViewInit();
+
+            // Wait for setTimeout to complete
+            await new Promise((resolve) => setTimeout(resolve, 15));
+
+            expect(mockFocusElement.focus).toHaveBeenCalled();
+        });
+
+        it('should handle successful focus operation after agent response', async () => {
+            const mockFocusElement = {
+                focus: jest.fn(),
+            };
+
+            // Mock messageInput signal to return element with focusable nativeElement
+            jest.spyOn(component as any, 'messageInput').mockReturnValue({ nativeElement: mockFocusElement });
+
+            fixture.detectChanges();
+            component.currentMessage = 'Test message';
+            component['cdr'].markForCheck();
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.query(By.css('.send-button'));
+            sendButton.nativeElement.click();
+
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            // Wait for focus setTimeout to complete
+            await new Promise((resolve) => setTimeout(resolve, 15));
+
+            expect(mockFocusElement.focus).toHaveBeenCalled();
+        });
+
+        it('should handle successful focus operation after error response', async () => {
+            const mockFocusElement = {
+                focus: jest.fn(),
+            };
+
+            // Mock messageInput signal to return element with focusable nativeElement
+            jest.spyOn(component as any, 'messageInput').mockReturnValue({ nativeElement: mockFocusElement });
+
+            jest.spyOn(mockAgentChatService, 'sendMessage').mockImplementation(() => {
+                return new Observable<string>((subscriber) => {
+                    subscriber.error(new Error('Service error'));
+                });
+            });
+
+            fixture.detectChanges();
+            component.currentMessage = 'Test message';
+            component['cdr'].markForCheck();
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.query(By.css('.send-button'));
+            sendButton.nativeElement.click();
+
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            // Wait for focus setTimeout to complete
+            await new Promise((resolve) => setTimeout(resolve, 15));
+
+            expect(mockFocusElement.focus).toHaveBeenCalled();
+        });
+
+        it('should handle messages array immutability correctly', () => {
+            const initialLength = component.messages.length;
+            const originalMessagesReference = component.messages;
+
+            (component as any).addMessage('Test message', true);
+
+            expect(component.messages).not.toBe(originalMessagesReference);
+            expect(component.messages).toHaveLength(initialLength + 1);
+            expect(component.messages[component.messages.length - 1].content).toBe('Test message');
+            expect(component.messages[component.messages.length - 1].isUser).toBeTruthy();
+        });
+
+        it('should generate message with correct timestamp', () => {
+            const beforeTime = new Date();
+            (component as any).addMessage('Test message', true);
+            const afterTime = new Date();
+
+            const addedMessage = component.messages[component.messages.length - 1];
+            expect(addedMessage.timestamp).toBeInstanceOf(Date);
+            expect(addedMessage.timestamp.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
+            expect(addedMessage.timestamp.getTime()).toBeLessThanOrEqual(afterTime.getTime());
+        });
+
+        it('should ensure shouldScrollToBottom is set when adding messages', () => {
+            component['shouldScrollToBottom'] = false;
+
+            (component as any).addMessage('Test message', true);
+
+            expect(component['shouldScrollToBottom']).toBeTruthy();
+        });
+
+        it('should call cdr.markForCheck when adding messages', () => {
+            const markForCheckSpy = jest.spyOn(component['cdr'], 'markForCheck');
+
+            (component as any).addMessage('Test message', true);
+
+            expect(markForCheckSpy).toHaveBeenCalled();
+        });
+
+        it('should handle onTextareaInput with null messageInput nativeElement', () => {
+            // Mock messageInput signal to return object with null nativeElement
+            jest.spyOn(component as any, 'messageInput').mockReturnValue({ nativeElement: null });
+
+            expect(() => component.onTextareaInput()).not.toThrow();
+        });
+
+        it('should handle sendMessage when canSendMessage returns false due to empty message', () => {
+            component.currentMessage = '';
+            component.isAgentTyping = false;
+            const initialMessageCount = component.messages.length;
+
+            (component as any).sendMessage();
+
+            expect(component.messages).toHaveLength(initialMessageCount);
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+        });
+
+        it('should handle sendMessage when canSendMessage returns false due to agent typing', () => {
+            component.currentMessage = 'Valid message';
+            component.isAgentTyping = true;
+            const initialMessageCount = component.messages.length;
+
+            (component as any).sendMessage();
+
+            expect(component.messages).toHaveLength(initialMessageCount);
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+        });
+
+        it('should handle scrollToBottom when messagesContainer returns valid element', () => {
+            const mockElement = {
+                scrollTop: 100,
+                scrollHeight: 500,
+            };
+            jest.spyOn(component as any, 'messagesContainer').mockReturnValue({ nativeElement: mockElement });
+
+            (component as any).scrollToBottom();
+
+            expect(mockElement.scrollTop).toBe(500);
+        });
+
+        it('should verify sessionId format and uniqueness', () => {
+            component.courseId = 789;
+            component.ngOnInit();
+            const sessionId = component['sessionId'];
+
+            expect(sessionId).toMatch(/^course_789_session_\d+$/);
+            expect(sessionId).toContain('course_789_session_');
+            expect(typeof sessionId).toBe('string');
+            expect(sessionId.length).toBeGreaterThan('course_789_session_'.length);
+        });
+
+        it('should handle message validation boundary conditions', () => {
+            // Test exactly at boundary
+            component.currentMessage = 'a'.repeat(8000);
+            expect(component.canSendMessage).toBeTruthy();
+            expect(component.isMessageTooLong).toBeFalsy();
+
+            // Test one character over boundary
+            component.currentMessage = 'a'.repeat(8001);
+            expect(component.canSendMessage).toBeFalsy();
+            expect(component.isMessageTooLong).toBeTruthy();
+
+            // Test one character under boundary
+            component.currentMessage = 'a'.repeat(7999);
+            expect(component.canSendMessage).toBeTruthy();
+            expect(component.isMessageTooLong).toBeFalsy();
+        });
+
+        it('should handle multiple consecutive addMessage calls', () => {
+            const initialLength = component.messages.length;
+
+            (component as any).addMessage('Message 1', true);
+            (component as any).addMessage('Message 2', false);
+            (component as any).addMessage('Message 3', true);
+
+            expect(component.messages).toHaveLength(initialLength + 3);
+            expect(component.messages[initialLength].content).toBe('Message 1');
+            expect(component.messages[initialLength + 1].content).toBe('Message 2');
+            expect(component.messages[initialLength + 2].content).toBe('Message 3');
+        });
+
+        it('should handle ngAfterViewChecked cycle correctly', () => {
+            const scrollSpy = jest.spyOn(component as any, 'scrollToBottom');
+
+            // First call with shouldScrollToBottom = false
+            component['shouldScrollToBottom'] = false;
+            component.ngAfterViewChecked();
+            expect(scrollSpy).not.toHaveBeenCalled();
+            expect(component['shouldScrollToBottom']).toBeFalsy();
+
+            // Second call with shouldScrollToBottom = true
+            component['shouldScrollToBottom'] = true;
+            component.ngAfterViewChecked();
+            expect(scrollSpy).toHaveBeenCalled();
+            expect(component['shouldScrollToBottom']).toBeFalsy();
+
+            // Third call should not trigger scroll since flag is now false
+            scrollSpy.mockClear();
+            component.ngAfterViewChecked();
+            expect(scrollSpy).not.toHaveBeenCalled();
+        });
+    });
 });
