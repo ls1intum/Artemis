@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,11 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 public class AthenaRepositoryExportService {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaRepositoryExportService.class);
+
+    /**
+     * Set of valid instructor repository types that can be accessed by Athena (excludes AUXILIARY).
+     */
+    private static final Set<RepositoryType> ATHENA_INSTRUCTOR_REPOSITORY_TYPES = Set.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -96,14 +102,20 @@ public class AthenaRepositoryExportService {
      * Retrieves the files content of an instructor repository.
      *
      * @param exerciseId     the id of the exercise to retrieve the repository for
-     * @param repositoryType the type of repository to retrieve
+     * @param repositoryType the type of repository to retrieve (must be an Athena instructor repository type)
      * @return Map of file paths to their textual contents
      * @throws IOException              if reading from the repository fails
      * @throws IllegalStateException    if the repository URI is null
      * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
+     * @throws IllegalArgumentException if the repository type is not an Athena instructor repository type
      */
     public Map<String, String> getInstructorRepositoryFilesContent(long exerciseId, RepositoryType repositoryType) throws IOException {
         log.debug("Retrieving instructor repository file contents for exercise {}, repository type {}", exerciseId, repositoryType);
+
+        if (!ATHENA_INSTRUCTOR_REPOSITORY_TYPES.contains(repositoryType)) {
+            throw new IllegalArgumentException(repositoryType + " is not a valid instructor repository type. Only " + ATHENA_INSTRUCTOR_REPOSITORY_TYPES + " are allowed.");
+        }
+
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         checkFeedbackSuggestionsOrAutomaticFeedbackEnabledElseThrow(programmingExercise);

@@ -8,6 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
@@ -47,6 +49,9 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
 
     @Autowired
     private AthenaRepositoryExportService athenaRepositoryExportService;
+
+    @Autowired
+    private AthenaModuleService athenaModuleService;
 
     private final LocalRepository testRepo = new LocalRepository(defaultBranch);
 
@@ -91,12 +96,58 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1")
+    void shouldExportAllValidInstructorRepositoryTypes() throws Exception {
+        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        var programmingExercise = programmingExerciseRepository.findAllByCourseId(course.getId()).getFirst();
+        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
+
+        programmingExerciseUtilService.createGitRepository();
+
+        Map<String, String> templateRepo = athenaRepositoryExportService.getInstructorRepositoryFilesContent(programmingExerciseWithId.getId(), RepositoryType.TEMPLATE);
+        Map<String, String> solutionRepo = athenaRepositoryExportService.getInstructorRepositoryFilesContent(programmingExerciseWithId.getId(), RepositoryType.SOLUTION);
+        Map<String, String> testsRepo = athenaRepositoryExportService.getInstructorRepositoryFilesContent(programmingExerciseWithId.getId(), RepositoryType.TESTS);
+
+        assertThat(templateRepo).isNotNull();
+        assertThat(solutionRepo).isNotNull();
+        assertThat(testsRepo).isNotNull();
+    }
+
+    @Test
     void shouldThrowServiceUnavailableWhenFeedbackSuggestionsNotEnabled() {
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setFeedbackSuggestionModule(null);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
-        assertThatExceptionOfType(ServiceUnavailableException.class)
-                .isThrownBy(() -> athenaRepositoryExportService.getInstructorRepositoryFilesContent(programmingExerciseWithId.getId(), RepositoryType.TEMPLATE));
+        assertThatExceptionOfType(ServiceUnavailableException.class).as("Should throw ServiceUnavailableException when feedback suggestions are not enabled")
+                .isThrownBy(() -> athenaRepositoryExportService.getInstructorRepositoryFilesContent(programmingExerciseWithId.getId(), RepositoryType.TEMPLATE))
+                .withMessageContaining("Feedback suggestions are not enabled");
+    }
+
+    @Test
+    void shouldThrowIllegalArgumentExceptionForInvalidRepositoryType() {
+        var programmingExercise = new ProgrammingExercise();
+        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
+
+        var invalidRepositoryTypes = Set.of(RepositoryType.USER, RepositoryType.AUXILIARY);
+        for (var invalidRepositoryType : invalidRepositoryTypes) {
+            assertThatExceptionOfType(IllegalArgumentException.class).as("Should throw IllegalArgumentException for invalid repository type: " + invalidRepositoryType)
+                    .isThrownBy(() -> athenaRepositoryExportService.getInstructorRepositoryFilesContent(programmingExerciseWithId.getId(), invalidRepositoryType))
+                    .withMessageContaining("is not a valid instructor repository type").withMessageContaining(invalidRepositoryType.toString());
+        }
+    }
+
+    @Test
+    void shouldThrowIllegalArgumentExceptionWhenFeedbackSuggestionModuleIsNull() {
+        var programmingExercise = new ProgrammingExercise();
+        programmingExercise.setFeedbackSuggestionModule(null);
+
+        assertThatExceptionOfType(IllegalArgumentException.class).as("Should throw IllegalArgumentException when feedback suggestion module is null")
+                .isThrownBy(() -> athenaModuleService.getAthenaModuleUrl(programmingExercise))
+                .withMessageContaining("Exercise does not have a feedback suggestion module configured");
     }
 }

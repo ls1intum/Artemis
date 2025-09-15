@@ -423,7 +423,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests", "submissions/100/repository" })
+    @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests" })
     void testRepositoryExportEndpointsFailWhenAthenaNotEnabled(String urlSuffix) throws Exception {
         var authHeaders = new HttpHeaders();
         authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret);
@@ -444,5 +444,18 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
         // Expect status 403 because the Authorization header is wrong
         request.get("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.FORBIDDEN, Result.class, authHeaders);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "repository/user", "repository/auxiliary" })
+    void testRepositoryExportEndpointsFailWithInvalidRepositoryType(String urlSuffix) throws Exception {
+        var authHeaders = new HttpHeaders();
+        authHeaders.add(HttpHeaders.AUTHORIZATION, athenaSecret);
+
+        // Enable Athena for the exercise
+        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
+        programmingExerciseRepository.save(programmingExercise);
+
+        request.get("/api/athena/public/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.BAD_REQUEST, Result.class, authHeaders);
     }
 }

@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
+import jakarta.ws.rs.BadRequestException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -271,7 +273,7 @@ public class AthenaResource {
     }
 
     /**
-     * GET public/programming-exercises/:exerciseId/repository/template : Get the template repository as a file map
+     * GET public/programming-exercises/:exerciseId/repository/{repositoryType} : Get the instructor repository (template, solution, tests) as a file map
      *
      * @param exerciseId the id of the exercise
      * @param auth       the auth header value to check
@@ -280,11 +282,18 @@ public class AthenaResource {
     @GetMapping("public/programming-exercises/{exerciseId}/repository/{repositoryType}")
     @EnforceNothing // We check the Athena secret instead
     @ManualConfig
-    public ResponseEntity<Map<String, String>> getTemplateRepository(@PathVariable long exerciseId, @PathVariable String repositoryType,
+    public ResponseEntity<Map<String, String>> getInstructorRepository(@PathVariable long exerciseId, @PathVariable String repositoryType,
             @RequestHeader(HttpHeaders.AUTHORIZATION) String auth) throws IOException {
-        log.debug("REST call to get template repository for exercise {}", exerciseId);
+        log.debug("REST call to get {} instructor repository for exercise {}", repositoryType, exerciseId);
+
         checkAthenaSecret(auth);
-        return ResponseEntity.ok(athenaRepositoryExportService.getInstructorRepositoryFilesContent(exerciseId, RepositoryType.fromString(repositoryType)));
+
+        try {
+            return ResponseEntity.ok(athenaRepositoryExportService.getInstructorRepositoryFilesContent(exerciseId, RepositoryType.fromString(repositoryType)));
+        }
+        catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid repository type: " + repositoryType);
+        }
     }
 
 }
