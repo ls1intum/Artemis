@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 import { Observable, of } from 'rxjs';
+import { ChangeDetectorRef } from '@angular/core';
 import { AgentChatModalComponent } from './agent-chat-modal.component';
 import { AgentChatService } from './agent-chat.service';
 import { TranslateModule } from '@ngx-translate/core';
@@ -14,11 +15,12 @@ describe('AgentChatModalComponent', () => {
     let fixture: ComponentFixture<AgentChatModalComponent>;
     let mockActiveModal: NgbActiveModal;
     let mockAgentChatService: AgentChatService;
+    let mockChangeDetectorRef: ChangeDetectorRef;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [AgentChatModalComponent, TranslateModule.forRoot(), FormsModule, FontAwesomeModule],
-            providers: [MockProvider(NgbActiveModal), MockProvider(AgentChatService)],
+            providers: [MockProvider(NgbActiveModal), MockProvider(AgentChatService), MockProvider(ChangeDetectorRef)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(AgentChatModalComponent);
@@ -27,8 +29,13 @@ describe('AgentChatModalComponent', () => {
 
         mockActiveModal = TestBed.inject(NgbActiveModal);
         mockAgentChatService = TestBed.inject(AgentChatService);
+        mockChangeDetectorRef = TestBed.inject(ChangeDetectorRef);
 
-        // Mock the service response
+        // Create proper mock for ChangeDetectorRef
+        mockChangeDetectorRef.markForCheck = jest.fn();
+        mockChangeDetectorRef.detectChanges = jest.fn();
+
+        // Mock the service response with updated signature (message, courseId, sessionId)
         jest.spyOn(mockAgentChatService, 'sendMessage').mockReturnValue(of('Mock agent response: This is a test response from the mocked agent service.'));
     });
 
@@ -66,24 +73,29 @@ describe('AgentChatModalComponent', () => {
         expect(spyClose).toHaveBeenCalled();
     });
 
-    it('should send message when send button is clicked', () => {
+    it('should send message when send button is clicked', async () => {
         fixture.detectChanges();
         component.currentMessage = 'Test message';
+        // Trigger change detection manually for OnPush strategy
+        component['cdr'].markForCheck();
         fixture.detectChanges(); // Update button enabled state
 
         const sendButton = fixture.debugElement.query(By.css('.send-button'));
         expect(sendButton.nativeElement.disabled).toBeFalsy(); // Verify button is enabled
 
         sendButton.nativeElement.click();
+
+        // Wait for async operations and force change detection
+        await fixture.whenStable();
         fixture.detectChanges();
 
         expect(component.messages.length).toBeGreaterThanOrEqual(2);
         const userMessage = component.messages.find((m) => m.content === 'Test message' && m.isUser);
         expect(userMessage).toBeTruthy();
-        expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Test message', 123);
+        expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Test message', 123, expect.any(String));
     });
 
-    it('should send message when Enter key is pressed', () => {
+    it('should send message when Enter key is pressed', async () => {
         fixture.detectChanges();
         component.currentMessage = 'Test message';
 
@@ -91,6 +103,10 @@ describe('AgentChatModalComponent', () => {
         const event = new KeyboardEvent('keypress', { key: 'Enter' });
 
         textarea.triggerEventHandler('keypress', event);
+
+        // Wait for async operations and force change detection
+        await fixture.whenStable();
+        fixture.detectChanges();
 
         expect(component.messages.length).toBeGreaterThanOrEqual(2);
         const userMessage = component.messages.find((m) => m.content === 'Test message' && m.isUser);
@@ -122,6 +138,8 @@ describe('AgentChatModalComponent', () => {
     it('should show typing indicator when agent is typing', () => {
         fixture.detectChanges();
         component.isAgentTyping = true;
+        // Trigger change detection manually for OnPush strategy
+        component['cdr'].markForCheck();
         fixture.detectChanges();
 
         const typingIndicator = fixture.debugElement.query(By.css('.typing-indicator'));
@@ -139,6 +157,7 @@ describe('AgentChatModalComponent', () => {
 
         fixture.detectChanges();
         component.currentMessage = 'Test message';
+        component['cdr'].markForCheck();
         fixture.detectChanges(); // Update button enabled state
 
         const sendButton = fixture.debugElement.query(By.css('.send-button'));
@@ -199,6 +218,7 @@ describe('AgentChatModalComponent', () => {
 
         fixture.detectChanges();
         component.currentMessage = 'Help me create competencies for sorting algorithms';
+        component['cdr'].markForCheck();
         fixture.detectChanges(); // Update button enabled state
 
         const sendButton = fixture.debugElement.query(By.css('.send-button'));
@@ -207,7 +227,7 @@ describe('AgentChatModalComponent', () => {
         sendButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Help me create competencies for sorting algorithms', 123);
+        expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Help me create competencies for sorting algorithms', 123, expect.any(String));
 
         // Wait for async operations to complete
         await fixture.whenStable();
@@ -225,6 +245,7 @@ describe('AgentChatModalComponent', () => {
 
         fixture.detectChanges();
         component.currentMessage = 'I need help with Java programming competencies';
+        component['cdr'].markForCheck();
         fixture.detectChanges(); // Update button enabled state
 
         const sendButton = fixture.debugElement.query(By.css('.send-button'));
@@ -233,7 +254,7 @@ describe('AgentChatModalComponent', () => {
         sendButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('I need help with Java programming competencies', 123);
+        expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('I need help with Java programming competencies', 123, expect.any(String));
     });
 
     it('should handle mock competency creation confirmations', () => {
@@ -243,6 +264,7 @@ describe('AgentChatModalComponent', () => {
 
         fixture.detectChanges();
         component.currentMessage = 'Yes, create these competencies';
+        component['cdr'].markForCheck();
         fixture.detectChanges(); // Update button enabled state
 
         const sendButton = fixture.debugElement.query(By.css('.send-button'));
@@ -251,7 +273,7 @@ describe('AgentChatModalComponent', () => {
         sendButton.nativeElement.click();
         fixture.detectChanges();
 
-        expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Yes, create these competencies', 123);
+        expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('Yes, create these competencies', 123, expect.any(String));
     });
 
     it('should handle textarea focus and blur events', () => {
@@ -265,15 +287,19 @@ describe('AgentChatModalComponent', () => {
         expect(textarea.nativeElement).toBeTruthy();
     });
 
-    it('should clear current message after sending', () => {
+    it('should clear current message after sending', async () => {
         fixture.detectChanges();
         component.currentMessage = 'Test message';
+        component['cdr'].markForCheck();
         fixture.detectChanges(); // Update button enabled state
 
         const sendButton = fixture.debugElement.query(By.css('.send-button'));
         expect(sendButton.nativeElement.disabled).toBeFalsy(); // Verify button is enabled
 
         sendButton.nativeElement.click();
+
+        // Wait for async operations and force change detection
+        await fixture.whenStable();
         fixture.detectChanges();
 
         expect(component.currentMessage).toBe('');
@@ -293,6 +319,7 @@ describe('AgentChatModalComponent', () => {
 
         fixture.detectChanges();
         component.currentMessage = 'Test message';
+        component['cdr'].markForCheck();
         fixture.detectChanges(); // Update button enabled state
 
         expect(component.isAgentTyping).toBeFalsy();
