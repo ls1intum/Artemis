@@ -1,41 +1,42 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockService } from 'ng-mocks';
+import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
-import { CalendarEvent, CalendarEventSubtype, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
 
-describe('CalendarEventService', () => {
-    let service: CalendarEventService;
+describe('CalendarService', () => {
+    let service: CalendarService;
     let httpMock: HttpTestingController;
 
     const courseId = 42;
     const date = dayjs('2025-10-01');
-    const expectedUrl = `/api/core/calendar/courses/${courseId}/calendar-events`;
+    const expectedEventUrl = `/api/core/calendar/courses/${courseId}/calendar-events`;
+    const expectedTokenUrl = '/api/core/calendar/subscription-token';
+    const testToken = 'testToken';
 
     const testRequestResponse = {
         '2025-10-01': [
             {
                 type: 'LECTURE',
-                subtype: 'START_AND_END_DATE',
                 title: 'Object Design',
                 startDate: '2025-10-01T08:00:00Z',
                 endDate: '2025-10-01T10:00:00Z',
             },
             {
                 type: 'TEXT_EXERCISE',
-                subtype: 'START_DATE',
-                title: 'Exercise Session',
+                title: 'Start: Exercise Session',
                 startDate: '2025-10-01T10:00:00Z',
             },
         ],
         '2025-10-02': [
             {
                 type: 'EXAM',
-                subtype: 'START_AND_END_DATE',
                 title: 'Final Exam',
                 startDate: '2025-10-02T09:00:00Z',
                 endDate: '2025-10-02T11:00:00Z',
@@ -45,7 +46,6 @@ describe('CalendarEventService', () => {
         '2025-10-03': [
             {
                 type: 'TUTORIAL',
-                subtype: 'START_AND_END_DATE',
                 title: 'Tutorial Session',
                 startDate: '2025-10-03T13:00:00Z',
                 endDate: '2025-10-03T14:00:00Z',
@@ -55,12 +55,23 @@ describe('CalendarEventService', () => {
         ],
     };
 
+    const translateServiceMock = {
+        currentLang: 'en',
+        onLangChange: of({ lang: 'en' }),
+    };
+
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [CalendarEventService, provideHttpClient(), provideHttpClientTesting(), { provide: AlertService, useValue: MockService(AlertService) }],
+            providers: [
+                CalendarService,
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AlertService, useValue: MockService(AlertService) },
+                { provide: TranslateService, useValue: translateServiceMock },
+            ],
         });
 
-        service = TestBed.inject(CalendarEventService);
+        service = TestBed.inject(CalendarService);
         httpMock = TestBed.inject(HttpTestingController);
     });
 
@@ -85,7 +96,6 @@ describe('CalendarEventService', () => {
 
             expectCalendarEventToMatch(eventsOnFirst![0], {
                 type: CalendarEventType.Lecture,
-                subtype: CalendarEventSubtype.StartAndEndDate,
                 title: 'Object Design',
                 startDate: '2025-10-01T08:00:00.000Z',
                 endDate: '2025-10-01T10:00:00.000Z',
@@ -93,8 +103,7 @@ describe('CalendarEventService', () => {
 
             expectCalendarEventToMatch(eventsOnFirst![1], {
                 type: CalendarEventType.TextExercise,
-                subtype: CalendarEventSubtype.StartDate,
-                title: 'Exercise Session',
+                title: 'Start: Exercise Session',
                 startDate: '2025-10-01T10:00:00.000Z',
             });
 
@@ -102,7 +111,6 @@ describe('CalendarEventService', () => {
             expect(eventsOnSecond).toHaveLength(1);
             expectCalendarEventToMatch(eventsOnSecond![0], {
                 type: CalendarEventType.Exam,
-                subtype: CalendarEventSubtype.StartAndEndDate,
                 title: 'Final Exam',
                 startDate: '2025-10-02T09:00:00.000Z',
                 endDate: '2025-10-02T11:00:00.000Z',
@@ -113,7 +121,6 @@ describe('CalendarEventService', () => {
             expect(eventsOnThird).toHaveLength(1);
             expectCalendarEventToMatch(eventsOnThird![0], {
                 type: CalendarEventType.Tutorial,
-                subtype: CalendarEventSubtype.StartAndEndDate,
                 title: 'Tutorial Session',
                 startDate: '2025-10-03T13:00:00.000Z',
                 endDate: '2025-10-03T14:00:00.000Z',
@@ -122,7 +129,7 @@ describe('CalendarEventService', () => {
             });
         });
 
-        const testRequest = httpMock.expectOne((request) => request.url === expectedUrl);
+        const testRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
         expect(testRequest.request.method).toBe('GET');
         testRequest.flush(testRequestResponse);
         tick();
@@ -139,7 +146,6 @@ describe('CalendarEventService', () => {
             expect(eventsOnFirst).toHaveLength(1);
             expectCalendarEventToMatch(eventsOnFirst![0], {
                 type: CalendarEventType.Lecture,
-                subtype: CalendarEventSubtype.StartAndEndDate,
                 title: 'Object Design',
                 startDate: '2025-10-01T08:00:00.000Z',
                 endDate: '2025-10-01T10:00:00.000Z',
@@ -149,7 +155,6 @@ describe('CalendarEventService', () => {
             expect(eventsOnSecond).toHaveLength(1);
             expectCalendarEventToMatch(eventsOnSecond![0], {
                 type: CalendarEventType.Exam,
-                subtype: CalendarEventSubtype.StartAndEndDate,
                 title: 'Final Exam',
                 startDate: '2025-10-02T09:00:00.000Z',
                 endDate: '2025-10-02T11:00:00.000Z',
@@ -157,7 +162,7 @@ describe('CalendarEventService', () => {
             });
         });
 
-        const testRequest = httpMock.expectOne((request) => request.url === expectedUrl);
+        const testRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
         expect(testRequest.request.method).toBe('GET');
         expect(testRequest.request.params.get('monthKeys')).toBe('2025-09,2025-10,2025-11');
         expect(testRequest.request.params.get('timeZone')).toBeTruthy();
@@ -171,7 +176,6 @@ describe('CalendarEventService', () => {
             '2025-10-01': [
                 {
                     type: 'LECTURE',
-                    subtype: 'START_AND_END_DATE',
                     title: 'Object Design',
                     startDate: '2025-10-01T08:00:00Z',
                     endDate: '2025-10-01T10:00:00Z',
@@ -192,33 +196,46 @@ describe('CalendarEventService', () => {
 
             expectCalendarEventToMatch(filteredEvents![0], {
                 type: CalendarEventType.Lecture,
-                subtype: CalendarEventSubtype.StartAndEndDate,
                 title: 'Object Design',
                 startDate: '2025-10-01T08:00:00.000Z',
                 endDate: '2025-10-01T10:00:00.000Z',
             });
         });
 
-        const testRequest = httpMock.expectOne((request) => request.url === expectedUrl);
+        const testRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
         expect(testRequest.request.method).toBe('GET');
         testRequest.flush(smallHttpResponse);
+        tick();
+    }));
+
+    it('should load subscription token and set token property', fakeAsync(() => {
+        service.loadSubscriptionToken().subscribe(() => {
+            const result = service.subscriptionToken();
+            expect(result).toBe(testToken);
+        });
+
+        const tokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
+        tokenRequest.flush(testToken);
         tick();
     }));
 
     it('should refresh', fakeAsync(() => {
         service.includedEventFilterOptions.set([CalendarEventFilterOption.LectureEvents, CalendarEventFilterOption.ExamEvents]);
         service.loadEventsForCurrentMonth(courseId, date).subscribe();
+        service.loadSubscriptionToken().subscribe();
 
-        const initialRequest = httpMock.expectOne((request) => request.url === expectedUrl);
-        expect(initialRequest.request.method).toBe('GET');
-        initialRequest.flush({});
+        const initialEventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
+        expect(initialEventRequest.request.method).toBe('GET');
+        initialEventRequest.flush({});
+        const initialTokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
+        initialTokenRequest.flush(testToken);
         tick();
 
-        service.refresh();
+        service.reloadEvents();
 
-        const refreshRequest = httpMock.expectOne((request) => request.url === expectedUrl);
-        expect(refreshRequest.request.method).toBe('GET');
-        refreshRequest.flush({});
+        const refreshEventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
+        expect(refreshEventRequest.request.method).toBe('GET');
+        refreshEventRequest.flush({});
         tick();
     }));
 });
@@ -227,7 +244,6 @@ function expectCalendarEventToMatch(
     event: CalendarEvent,
     expected: {
         type: CalendarEventType;
-        subtype: CalendarEventSubtype;
         title: string;
         startDate: string;
         endDate?: string;
@@ -235,11 +251,10 @@ function expectCalendarEventToMatch(
         facilitator?: string;
     },
 ): void {
-    const { type, subtype, title, startDate, endDate, location, facilitator } = expected;
+    const { type, title, startDate, endDate, location, facilitator } = expected;
 
     expect(event).toBeInstanceOf(CalendarEvent);
     expect(event.type).toBe(type);
-    expect(event.subtype).toBe(subtype);
     expect(event.title).toBe(title);
     expect(event.startDate.toISOString()).toBe(dayjs(startDate).toISOString());
     if (endDate !== undefined) {

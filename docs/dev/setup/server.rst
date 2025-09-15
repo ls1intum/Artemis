@@ -259,13 +259,14 @@ Hyperion (Optional)
 Hyperion provides AI-assisted exercise creation features via Spring AI. No external Edutelligence service is required, only a LLM provider such as OpenAI or Azure OpenAI.
 
 Quick setup for development
-"""""""""""""""""""""""
+"""""""""""""""""""""""""""
 
 1. Enable the hyperion service
 
     In your ``application-local.yml``, enable the hyperion service:
 
    .. code-block:: yaml
+
         artemis:
             hyperion:
                 enabled: true

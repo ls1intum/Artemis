@@ -58,6 +58,15 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             """)
     List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") long courseId);
 
+    @Query("""
+            SELECT DISTINCT ex
+            FROM Exam ex
+                LEFT JOIN FETCH ex.exerciseGroups eg
+                LEFT JOIN FETCH eg.exercises
+            WHERE ex.id = :examId
+            """)
+    Optional<Exam> findIdWithExerciseGroupsAndExercises(@Param("examId") long examId);
+
     /**
      * Find all exams for a given course that are already visible to the user (either registered, at least tutor or the exam is a test exam)
      *
@@ -211,32 +220,6 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises" })
     Optional<Exam> findWithStudentExamsExercisesById(long id);
-
-    @Query("""
-            SELECT e
-            FROM Exam e
-                LEFT JOIN FETCH e.exerciseGroups exg
-                LEFT JOIN FETCH exg.exercises ex
-                LEFT JOIN FETCH ex.quizQuestions
-                LEFT JOIN FETCH ex.templateParticipation tp
-                LEFT JOIN FETCH ex.solutionParticipation sp
-                LEFT JOIN FETCH tp.submissions tps
-                LEFT JOIN FETCH tps.results tpr
-                LEFT JOIN FETCH sp.submissions sps
-                LEFT JOIN FETCH sps.results spr
-            WHERE e.id = :examId
-                AND (tpr.id = (
-                        SELECT MAX(r1.id)
-                        FROM Submission s1 JOIN s1.results r1
-                        WHERE s1.participation = tp
-                    ) OR tpr.id IS NULL)
-                AND (spr.id = (
-                        SELECT MAX(r2.id)
-                        FROM Submission s2 JOIN s2.results r2
-                        WHERE s2.participation = sp
-                    ) OR spr.id IS NULL)
-            """)
-    Optional<Exam> findWithExerciseGroupsAndExercisesAndDetailsById(@Param("examId") long examId);
 
     @Query("""
             SELECT DISTINCT e
@@ -465,11 +448,6 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
         return getValueElseThrow(findWithExerciseGroupsAndExercisesById(examId), examId);
     }
 
-    @NotNull
-    default Exam findWithExerciseGroupsAndExercisesAndDetailsByIdOrElseThrow(long examId) {
-        return getValueElseThrow(findWithExerciseGroupsAndExercisesAndDetailsById(examId), examId);
-    }
-
     /**
      * Filters the visible exams (excluding the ones that are not visible yet)
      *
@@ -518,6 +496,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.ExamCalendarEventDTO(
+                exam.id,
                 exam.title,
                 exam.visibleDate,
                 exam.startDate,
@@ -530,7 +509,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             FROM Exam exam
             WHERE exam.course.id = :courseId
             """)
-    Set<ExamCalendarEventDTO> getExamCalendarEventDAOsForCourseId(@Param("courseId") long courseId);
+    Set<ExamCalendarEventDTO> getExamCalendarEventDTOsForCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO(

@@ -30,14 +30,16 @@ $transition-color-length: 0.2s;
     font-size: xx-small;
 }
 
-.newMessage:after,
-.dropdown-content > .nav-item > .newMessage:after {
+.newMessage::after,
+.dropdown-content > .nav-item > .newMessage::after {
     @extend %message-block;
+
     margin-left: 0.25rem;
 }
 
-.collapsed.newMessage:after {
+.collapsed.newMessage::after {
     @extend %message-block;
+
     margin-left: -0.9rem;
 }
 
@@ -105,11 +107,14 @@ jhi-image {
     .sidebar-container {
         width: $menu-width-closed !important;
     }
+
     .auto-collapse {
         display: none;
     }
-    .newMessage:after {
+
+    .newMessage::after {
         @extend %message-block;
+
         margin-left: -0.9rem;
     }
 }

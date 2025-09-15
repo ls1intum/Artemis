@@ -40,7 +40,6 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyJolService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
@@ -59,6 +58,7 @@ import de.tum.cit.aet.artemis.programming.icl.TestBuildAgentConfiguration;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIService;
@@ -170,6 +170,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @MockitoSpyBean
     protected CompetencyProgressApi competencyProgressApi;
 
+    @MockitoSpyBean
+    protected GitRepositoryExportService gitRepositoryExportService;
+
     // we explicitly want a mock here, as we don't want to test the actual chat model calls and avoid any autoconfiguration or instantiation of Spring AI internals
     @MockitoBean
     protected ChatModel chatModel;
@@ -240,7 +243,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(versionControlService, continuousIntegrationService, localCITriggerService, resourceLoaderService, programmingMessagingService, competencyProgressService,
-                competencyProgressApi);
+                competencyProgressApi, gitRepositoryExportService);
         super.resetSpyBeans();
     }
 
@@ -332,52 +335,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup,
-            boolean failToAddUsers, boolean failToRemoveUsers) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockCreateGroupInUserManagement(String groupName) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockDeleteGroupInUserManagement(String groupName) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockDeleteBuildPlan(String projectKey1, String planName, boolean shouldFail) throws Exception {
         // Not implemented for local VC and local CI
     }
@@ -419,11 +376,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @Override
     public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockUserExists(String username) {
         // Not implemented for local VC and local CI
     }
 

@@ -56,7 +56,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     void setup() throws Exception {
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 0);
         programmingExerciseTestService.setup(this, versionControlService);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         aeolusRequestMockProvider.enableMockingOfRequests();
     }
 
@@ -467,22 +467,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void exportInstructorRepositories() throws Exception {
-        programmingExerciseTestService.exportInstructorRepositories_shouldReturnFile();
-        // we export three repositories (template, solution, tests) and for each repository the temp directory and the directory with the zip file should be deleted
-        verify(fileService, times(6)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void exportAuxiliaryRepository_shouldReturnFile() throws Exception {
-        programmingExerciseTestService.exportInstructorAuxiliaryRepository_shouldReturnFile();
-        // once for the temp directory and once for the directory with the zip file
-        verify(fileService, times(2)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void exportAuxiliaryRepository_forbidden() throws Exception {
         programmingExerciseTestService.exportInstructorAuxiliaryRepository_forbidden();
@@ -619,18 +603,12 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         programmingExerciseTestService.exportSolutionRepository_shouldReturnFileOrForbidden();
-        // the test has two successful cases, the other times the operation is forbidden --> one successful case has one repository,
-        // the other one has two because the tests repository is also included.
-        verify(fileService, times(3)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportExamSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         programmingExerciseTestService.exportExamSolutionRepository_shouldReturnFileOrForbidden();
-        // the test has two successful cases, the other times the operation is forbidden --> one successful case has one repository,
-        // the other one has two because the tests repository is also included.
-        verify(fileService, times(3)).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
     }
 
     // TODO: enable or remove the test
