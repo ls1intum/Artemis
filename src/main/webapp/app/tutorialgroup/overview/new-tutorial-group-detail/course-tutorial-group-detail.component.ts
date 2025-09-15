@@ -8,7 +8,7 @@ import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/cour
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBuildingColumns, faCalendar, faCircleExclamation, faClock, faFlag, faMapPin, faTag, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faBuildingColumns, faCalendar, faCircleExclamation, faClock, faFlag, faMapPin, faQuestion, faTag, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupDetailSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { SelectButton } from 'primeng/selectbutton';
@@ -98,6 +98,7 @@ export class CourseTutorialGroupDetailComponent {
     readonly faClock = faClock;
     readonly faMapPin = faMapPin;
     readonly faBuildingColumns = faBuildingColumns;
+    readonly faQuestion = faQuestion;
 
     constructor() {
         effect(() => {

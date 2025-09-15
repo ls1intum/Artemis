@@ -30,7 +30,7 @@
     <hr />
     <div class="card-row">
         <section class="card small" aria-labelledby="tutor-card-title">
-            <h2 id="tutor-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.tutorCardTitle"></h2>
+            <h3 id="tutor-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.tutorCardTitle"></h3>
             <div class="tutor-card-content">
                 <jhi-profile-picture
                     imageSizeInRem="6"
@@ -44,7 +44,7 @@
             </div>
         </section>
         <section class="card big" aria-labelledby="general-info-card-title">
-            <h2 id="general-info-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.generalInfoCardTitle"></h2>
+            <h3 id="general-info-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.generalInfoCardTitle"></h3>
             <div class="info-card-content" role="list">
                 <div class="info-stack">
                     <div class="info-item" role="listitem" aria-labelledby="language-label" aria-describedby="language-value">
@@ -75,23 +75,31 @@
     </div>
     <div class="card-row">
         <section class="card small" aria-labelledby="attendance-card-title">
-            <h2 id="attendance-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.averageAttendanceCardTitle"></h2>
+            <h3 id="attendance-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.averageAttendanceCardTitle"></h3>
             <div class="attendance-card-content position-relative">
-                <span class="doughnut-chart-text">{{ averageAttendancePercentage() }}</span>
-                <ngx-charts-pie-chart
-                    [view]="[128, 128]"
-                    [results]="pieChartData()"
-                    [scheme]="pieChartColors()"
-                    [doughnut]="true"
-                    [labels]="false"
-                    [legend]="false"
-                    [arcWidth]="0.3"
-                    aria-hidden="true"
-                />
+                @let attendancePercentage = averageAttendancePercentage();
+                @if (attendancePercentage) {
+                    <span class="doughnut-chart-text">{{ attendancePercentage }}</span>
+                    <ngx-charts-pie-chart
+                        [view]="[122, 122]"
+                        [results]="pieChartData()"
+                        [scheme]="pieChartColors()"
+                        [doughnut]="true"
+                        [labels]="false"
+                        [legend]="false"
+                        [arcWidth]="0.3"
+                        aria-hidden="true"
+                    />
+                } @else {
+                    <div class="no-data-available-disclaimer">
+                        <fa-icon [icon]="faQuestion" size="2x" aria-hidden="true" />
+                        No Data Available
+                    </div>
+                }
             </div>
         </section>
         <section class="card big" aria-labelledby="next-session-card-title">
-            <h2 id="next-session-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.nextSessionCardTitle"></h2>
+            <h3 id="next-session-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.nextSessionCardTitle"></h3>
             <div class="info-card-content" role="list">
                 @let nextSession = nextSessionData();
                 @if (nextSession) {
