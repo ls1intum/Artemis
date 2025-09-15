@@ -723,15 +723,4 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             }
         }
     }
-
-    /**
-     * Clears search state and reverts to original view when refresh button is clicked
-     */
-    clearSearchAndRevertToOriginalView(): void {
-        // Clear the global search component UI state
-        this.globalSearchComponent()?.clearSearch();
-        // Delegate to the wrapper to reset component state and handle mobile sidebar consistently
-        const emptySearch: ConversationGlobalSearchConfig = { searchTerm: '', selectedConversations: [], selectedAuthors: [] };
-        this.onSearch(emptySearch);
-    }
 }

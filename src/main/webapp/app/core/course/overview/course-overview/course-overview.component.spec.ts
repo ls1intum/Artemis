@@ -873,19 +873,4 @@ describe('CourseOverviewComponent', () => {
         expect((component as any).selectableSettingPresets).toBeDefined();
         expect((component as any).selectedSettingPreset).toBeDefined();
     }));
-
-    describe('Refresh button clears search in conversations', () => {
-        it('should call clearSearchAndRevertToOriginalView when refreshing in conversations view', () => {
-            const mockConversationsComponent = {
-                clearSearchAndRevertToOriginalView: jest.fn(),
-            };
-            Object.setPrototypeOf(mockConversationsComponent, CourseConversationsComponent.prototype);
-            component.activatedComponentReference.set(mockConversationsComponent as unknown as CourseConversationsComponent);
-            jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse({ body: course1 })));
-
-            component.loadCourse(true);
-
-            expect(mockConversationsComponent.clearSearchAndRevertToOriginalView).toHaveBeenCalledOnce();
-        });
-    });
 });
