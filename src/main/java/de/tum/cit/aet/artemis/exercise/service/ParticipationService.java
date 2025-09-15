@@ -139,7 +139,6 @@ public class ParticipationService {
 
         // All other cases, i.e. normal exercises, and regular exam exercises
         else {
-            // TODO: Change such that practice participations are not considered here
             if (exercise instanceof QuizExercise) {
                 optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
             }
