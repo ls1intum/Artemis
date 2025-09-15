@@ -26,6 +26,8 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
@@ -40,6 +42,8 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localvcint";
+
+    private static final Logger log = LoggerFactory.getLogger(LocalVCIntegrationTest.class);
 
     private LocalRepository assignmentRepository;
 
@@ -269,7 +273,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         RemoteRefUpdate remoteRefUpdate = setupAndTryForcePush(assignmentRepository, assignmentRepoUri, instructor1Login, projectKey1, assignmentRepositorySlug);
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot force push.");
-
         // Force push to template repository is allowed for instructors
         remoteRefUpdate = setupAndTryForcePush(templateRepository, templateRepoUri, instructor1Login, projectKey1, templateRepositorySlug);
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);

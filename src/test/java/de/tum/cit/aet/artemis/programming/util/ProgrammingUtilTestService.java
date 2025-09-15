@@ -105,8 +105,8 @@ public class ProgrammingUtilTestService {
             FileUtils.write(solutionFile, content, Charset.defaultCharset());
         }
 
-        String templateRepoShortUri = LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(templateRepo.workingCopyGitRepoFile, localVCRepoPath);
-        LocalVCRepositoryUri fullTemplateRepoUri = new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(templateRepoShortUri));
+        var templateRepoShortUri = LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(templateRepo.workingCopyGitRepoFile, localVCRepoPath);
+        var fullTemplateRepoUri = new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(templateRepoShortUri));
         exercise.setTemplateRepositoryUri(fullTemplateRepoUri.getURI().toString());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(fullTemplateRepoUri), eq(true), anyBoolean());
@@ -129,6 +129,54 @@ public class ProgrammingUtilTestService {
         templateSubmission.setCommitHash(String.valueOf(files.hashCode()));
         programmingSubmissionRepository.save(templateSubmission);
 
+    }
+
+    /**
+     * Sets up the solution repository of a programming exercise with specified files
+     *
+     * @param files        The fileNames mapped to the content of the files
+     * @param exercise     The programming exercise
+     * @param solutionRepo The repository
+     */
+    public void setupSolution(Map<String, String> files, ProgrammingExercise exercise, LocalRepository solutionRepo) throws Exception {
+        solutionRepo.configureRepos(localVCRepoPath, "solutionLocalRepo", "solutionOriginRepo");
+
+        for (Map.Entry<String, String> entry : files.entrySet()) {
+            String fileName = entry.getKey();
+            String content = entry.getValue();
+            // add file to the repository folder
+            Path filePath = Path.of(solutionRepo.workingCopyGitRepoFile + "/" + fileName);
+            Files.createDirectories(filePath.getParent());
+            File solutionFile = Files.createFile(filePath).toFile();
+            // write content to the created file
+            FileUtils.write(solutionFile, content, Charset.defaultCharset());
+        }
+
+        var solutionRepoUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(solutionRepo.workingCopyGitRepoFile, localVCRepoPath));
+        exercise.setSolutionRepositoryUri(solutionRepoUri.toString());
+        LocalVCRepositoryUri fullUri = new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(solutionRepoUri.getURI().toString()));
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(fullUri, true,
+                true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(fullUri, false,
+                true);
+
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(fullUri),
+                eq(true), anyString(), anyBoolean());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(fullUri),
+                eq(false), anyString(), anyBoolean());
+
+        var buildConfig = programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig());
+        exercise.setBuildConfig(buildConfig);
+        var savedExercise = exerciseRepository.save(exercise);
+        savedExercise.setBuildConfig(buildConfig);
+        programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(savedExercise);
+        var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(savedExercise.getId()).orElseThrow();
+        solutionParticipation.setRepositoryUri(solutionRepoUri.toString());
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+        var solutionSubmission = new ProgrammingSubmission();
+        solutionSubmission.setParticipation(solutionParticipation);
+        solutionSubmission.setCommitHash(String.valueOf(files.hashCode()));
+        programmingSubmissionRepository.save(solutionSubmission);
     }
 
     public ProgrammingSubmission setupSubmission(Map<String, String> files, ProgrammingExercise exercise, LocalRepository participationRepo, String login) throws Exception {

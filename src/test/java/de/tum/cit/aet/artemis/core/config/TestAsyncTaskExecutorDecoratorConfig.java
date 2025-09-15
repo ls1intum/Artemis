@@ -3,8 +3,12 @@ package de.tum.cit.aet.artemis.core.config;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -16,36 +20,15 @@ import org.springframework.core.task.AsyncTaskExecutor;
 import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 
 /**
- * Test-only configuration that decorates the central Spring {@code taskExecutor} with
- * a {@link RepositoryUriConversionUtil} override for each async task thread.
- *
- * <p>
- * Why this is necessary:
- * </p>
- * <ul>
- * <li>During parallel test execution, multiple Spring contexts may be active at once,
- * each configured with a different {@code artemis.version-control.url}.</li>
- * <li>{@link RepositoryUriConversionUtil} uses a {@code ThreadLocal} to hold the
- * effective base URL for repository conversions in that thread.</li>
- * <li>Without this decorator, {@code @Async} tasks may run in a thread that does not
- * have the correct URL set, leading to nondeterministic test failures.</li>
- * </ul>
- *
- * <p>
- * What this class does:
- * </p>
- * <ul>
- * <li>Intercepts creation of the {@code taskExecutor} bean in the test profile.</li>
- * <li>Wraps it with a delegating executor that injects the current test’s
- * {@code artemis.version-control.url} into {@link RepositoryUriConversionUtil}
- * before running each task.</li>
- * <li>Ensures cleanup by clearing the {@code ThreadLocal} after the task completes.</li>
- * </ul>
+ * Test-profile decorator that propagates the version-control base URL
+ * into every @Async task thread without touching AsyncConfiguration.
  */
 @Configuration
 @Profile(SPRING_PROFILE_TEST)
 @Lazy
 public class TestAsyncTaskExecutorDecoratorConfig implements BeanPostProcessor {
+
+    private static final Logger log = LoggerFactory.getLogger(TestAsyncTaskExecutorDecoratorConfig.class);
 
     private final String vcsBaseUrl;
 
@@ -55,17 +38,27 @@ public class TestAsyncTaskExecutorDecoratorConfig implements BeanPostProcessor {
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        if ("taskExecutor".equals(beanName) && bean instanceof AsyncTaskExecutor asyncDelegate) {
-            return new DecoratingAsyncTaskExecutor(asyncDelegate, vcsBaseUrl);
+        // Only wrap the async executor bean produced by AsyncConfiguration
+        if ("taskExecutor".equals(beanName)) {
+            // Unwrap proxies to see if it implements AsyncTaskExecutor
+            Object target = bean;
+            if (AopUtils.isAopProxy(bean)) {
+                target = AopUtils.getTargetClass(bean);
+            }
+            if (bean instanceof AsyncTaskExecutor asyncDelegate) {
+                log.debug("Wrapping '{}' with VCS base URL propagation for tests", beanName);
+                return new DecoratingAsyncTaskExecutor(asyncDelegate, vcsBaseUrl);
+            }
+            if (bean instanceof Executor simpleDelegate) {
+                log.debug("Wrapping '{}' (Executor) with VCS base URL propagation for tests", beanName);
+                return new DecoratingExecutor(simpleDelegate, vcsBaseUrl);
+            }
         }
         return bean;
     }
 
-    /**
-     * Executor wrapper that decorates every submitted task with logic to set and clear
-     * the {@link RepositoryUriConversionUtil} server URL for the current thread.
-     */
-    private static final class DecoratingAsyncTaskExecutor implements AsyncTaskExecutor {
+    /** Wraps an AsyncTaskExecutor to seed/clear the RepositoryUriConversionUtil override per task. */
+    static final class DecoratingAsyncTaskExecutor implements AsyncTaskExecutor {
 
         private final AsyncTaskExecutor delegate;
 
@@ -106,11 +99,6 @@ public class TestAsyncTaskExecutorDecoratorConfig implements BeanPostProcessor {
         }
 
         @Override
-        public void execute(Runnable task) {
-            delegate.execute(decorate(task));
-        }
-
-        @Override
         public Future<?> submit(Runnable task) {
             return delegate.submit(decorate(task));
         }
@@ -118,6 +106,37 @@ public class TestAsyncTaskExecutorDecoratorConfig implements BeanPostProcessor {
         @Override
         public <T> Future<T> submit(Callable<T> task) {
             return delegate.submit(decorate(task));
+        }
+
+        @Override
+        public void execute(Runnable task) {
+            delegate.execute(decorate(task));
+        }
+    }
+
+    /** Fallback wrapper if the bean is only an Executor (not AsyncTaskExecutor). */
+    static final class DecoratingExecutor implements Executor {
+
+        private final Executor delegate;
+
+        private final String baseUrl;
+
+        DecoratingExecutor(Executor delegate, String baseUrl) {
+            this.delegate = delegate;
+            this.baseUrl = baseUrl;
+        }
+
+        @Override
+        public void execute(Runnable command) {
+            delegate.execute(() -> {
+                RepositoryUriConversionUtil.overrideServerUrlForCurrentThread(baseUrl);
+                try {
+                    command.run();
+                }
+                finally {
+                    RepositoryUriConversionUtil.clearServerUrlOverrideForCurrentThread();
+                }
+            });
         }
     }
 }
