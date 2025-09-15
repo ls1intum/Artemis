@@ -577,17 +577,10 @@ public class TutorialGroupService {
         }
 
         // ToDo: Discuss if we should allow to register course members who are not students
-        var result = findUsersByRegistrationNumbers(registrationNumbersToSearchFor, course.getStudentGroupName());
-        result.addAll(findUsersByLogins(loginsToSearchFor, course.getStudentGroupName()));
+        var result = new HashSet<>(
+                userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(course.getStudentGroupName(), registrationNumbersToSearchFor));
+        result.addAll(new HashSet<>(userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(course.getStudentGroupName(), loginsToSearchFor)));
         return result;
-    }
-
-    private Set<User> findUsersByRegistrationNumbers(Set<String> registrationNumbers, String groupName) {
-        return new HashSet<>(userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(groupName, registrationNumbers));
-    }
-
-    private Set<User> findUsersByLogins(Set<String> logins, String groupName) {
-        return new HashSet<>(userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(groupName, logins));
     }
 
     /**
