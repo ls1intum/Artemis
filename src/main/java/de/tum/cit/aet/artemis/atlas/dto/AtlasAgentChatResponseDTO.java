@@ -2,6 +2,10 @@ package de.tum.cit.aet.artemis.atlas.dto;
 
 import java.time.ZonedDateTime;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -10,11 +14,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AtlasAgentChatResponseDTO(
 
-        String message,
+        @NotBlank @Size(max = 10000) String message,
 
-        String sessionId,
+        @NotNull String sessionId,
 
-        ZonedDateTime timestamp,
+        @NotNull ZonedDateTime timestamp,
 
         boolean success
 

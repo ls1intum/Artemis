@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -13,7 +14,7 @@ public record AtlasAgentChatRequestDTO(
 
         @NotBlank @Size(max = 8000) String message,
 
-        String sessionId
+        @NotNull String sessionId
 
 ) {
 }

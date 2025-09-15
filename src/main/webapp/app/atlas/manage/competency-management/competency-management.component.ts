@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
@@ -34,6 +34,7 @@ import { AccountService } from 'app/core/auth/account.service';
     selector: 'jhi-competency-management',
     templateUrl: './competency-management.component.html',
     styleUrl: './competency-management.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         CompetencyManagementTableComponent,
         TranslateDirective,

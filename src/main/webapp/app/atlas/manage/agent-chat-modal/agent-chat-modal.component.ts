@@ -1,4 +1,4 @@
-import { AfterViewChecked, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnInit, inject, viewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faRobot, faUser } from '@fortawesome/free-solid-svg-icons';
@@ -8,18 +8,19 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule, DatePipe } from '@angular/common';
 import { AgentChatService } from './agent-chat.service';
 import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-agent-chat-modal',
     standalone: true,
-    imports: [CommonModule, DatePipe, TranslateDirective, FontAwesomeModule, FormsModule],
+    imports: [CommonModule, DatePipe, TranslateDirective, FontAwesomeModule, FormsModule, ArtemisTranslatePipe],
     templateUrl: './agent-chat-modal.component.html',
     styleUrl: './agent-chat-modal.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterViewChecked {
-    @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
-    @ViewChild('messageInput') private messageInput!: ElementRef<HTMLTextAreaElement>;
+    private readonly messagesContainer = viewChild.required<ElementRef>('messagesContainer');
+    private readonly messageInput = viewChild.required<ElementRef<HTMLTextAreaElement>>('messageInput');
 
     protected readonly sendIcon = faPaperPlane;
     protected readonly robotIcon = faRobot;
@@ -37,6 +38,22 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     private shouldScrollToBottom = false;
     private sessionId!: string;
 
+    // Message validation
+    readonly MAX_MESSAGE_LENGTH = 8000;
+
+    get currentMessageLength(): number {
+        return this.currentMessage.length;
+    }
+
+    get isMessageTooLong(): boolean {
+        return this.currentMessage.length > this.MAX_MESSAGE_LENGTH;
+    }
+
+    get canSendMessage(): boolean {
+        const message = this.currentMessage.trim();
+        return !!(message && !this.isAgentTyping && !this.isMessageTooLong);
+    }
+
     ngOnInit(): void {
         this.sessionId = `course_${this.courseId}_session_${Date.now()}`;
 
@@ -46,7 +63,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     ngAfterViewInit(): void {
         // Auto-focus on textarea when modal opens - using same pattern as Iris
-        setTimeout(() => this.messageInput?.nativeElement?.focus(), 10);
+        setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
     }
 
     ngAfterViewChecked(): void {
@@ -62,7 +79,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     protected sendMessage(): void {
         const message = this.currentMessage.trim();
-        if (!message || this.isAgentTyping) {
+        if (!this.canSendMessage) {
             return;
         }
 
@@ -79,13 +96,13 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 this.isAgentTyping = false;
                 this.addMessage(response, false);
                 // Restore focus to input after agent responds - using Iris pattern
-                setTimeout(() => this.messageInput?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
             },
             error: () => {
                 this.isAgentTyping = false;
                 this.addMessage(this.translateService.instant('artemisApp.agent.chat.error'), false);
                 // Restore focus to input after error - using Iris pattern
-                setTimeout(() => this.messageInput?.nativeElement?.focus(), 10);
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
             },
         });
     }
@@ -99,10 +116,10 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     onTextareaInput(): void {
         // Auto-resize textarea
-        if (!this.messageInput?.nativeElement) {
+        if (!this.messageInput()?.nativeElement) {
             return;
         }
-        const textarea = this.messageInput.nativeElement;
+        const textarea = this.messageInput().nativeElement;
         textarea.style.height = 'auto';
         textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
     }
@@ -124,8 +141,8 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     private scrollToBottom(): void {
-        if (this.messagesContainer) {
-            const element = this.messagesContainer.nativeElement;
+        if (this.messagesContainer()) {
+            const element = this.messagesContainer().nativeElement;
             element.scrollTop = element.scrollHeight;
         }
     }

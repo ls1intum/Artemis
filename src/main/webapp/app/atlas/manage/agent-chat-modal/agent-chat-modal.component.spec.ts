@@ -352,17 +352,16 @@ describe('AgentChatModalComponent', () => {
     it('should handle scroll container properly', () => {
         fixture.detectChanges();
 
-        // Mock messagesContainer
-        component['messagesContainer'] = {
-            nativeElement: {
-                scrollTop: 0,
-                scrollHeight: 1000,
-            },
-        } as any;
+        // Mock messagesContainer signal to return a mock element
+        const mockElement = {
+            scrollTop: 0,
+            scrollHeight: 1000,
+        };
+        jest.spyOn(component as any, 'messagesContainer').mockReturnValue({ nativeElement: mockElement });
 
         (component as any).scrollToBottom();
 
-        expect(component['messagesContainer'].nativeElement.scrollTop).toBe(1000);
+        expect(mockElement.scrollTop).toBe(1000);
     });
 
     it('should handle empty textarea input gracefully', () => {
@@ -416,8 +415,8 @@ describe('AgentChatModalComponent', () => {
     it('should handle textarea with no element reference', () => {
         fixture.detectChanges();
 
-        // Mock messageInput as undefined
-        component['messageInput'] = undefined as any;
+        // Mock messageInput signal to return undefined
+        jest.spyOn(component as any, 'messageInput').mockReturnValue(undefined);
 
         expect(() => component.onTextareaInput()).not.toThrow();
     });
@@ -450,5 +449,406 @@ describe('AgentChatModalComponent', () => {
         fixture.detectChanges();
 
         expect(scrollSpy).toHaveBeenCalled();
+    });
+
+    it('should handle scrollToBottom when messagesContainer is null', () => {
+        // Mock the signal to return null
+        jest.spyOn(component as any, 'messagesContainer').mockReturnValue(null);
+
+        expect(() => (component as any).scrollToBottom()).not.toThrow();
+    });
+
+    it('should handle ngAfterViewInit when messageInput is null', async () => {
+        // Mock messageInput signal to return null
+        jest.spyOn(component as any, 'messageInput').mockReturnValue(null);
+
+        component.ngAfterViewInit();
+
+        await new Promise((resolve) => setTimeout(resolve, 15));
+
+        // Should not throw and complete successfully
+        expect(true).toBeTruthy(); // Just verify the test completes without error
+    });
+
+    it('should call ngAfterViewInit without errors', () => {
+        expect(() => component.ngAfterViewInit()).not.toThrow();
+    });
+
+    it('should handle sendMessage success callback without errors', async () => {
+        fixture.detectChanges();
+        component.currentMessage = 'Test message';
+        component['cdr'].markForCheck();
+        fixture.detectChanges();
+
+        const sendButton = fixture.debugElement.query(By.css('.send-button'));
+        sendButton.nativeElement.click();
+
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        // Verify message was processed successfully
+        expect(component.messages.length).toBeGreaterThanOrEqual(2);
+        expect(component.currentMessage).toBe('');
+    });
+
+    it('should handle sendMessage error callback without errors', async () => {
+        jest.spyOn(mockAgentChatService, 'sendMessage').mockImplementation(() => {
+            return new Observable<string>((subscriber) => {
+                subscriber.error(new Error('Service error'));
+            });
+        });
+
+        fixture.detectChanges();
+        component.currentMessage = 'Test message';
+        component['cdr'].markForCheck();
+        fixture.detectChanges();
+
+        const sendButton = fixture.debugElement.query(By.css('.send-button'));
+        sendButton.nativeElement.click();
+
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        // Verify error was handled and message was added
+        expect(component.messages.length).toBeGreaterThanOrEqual(2);
+        expect(component.currentMessage).toBe('');
+        expect(component.isAgentTyping).toBeFalsy();
+    });
+
+    it('should handle null/undefined messageInput in focus callbacks', async () => {
+        // Mock messageInput signal to return element with null nativeElement
+        jest.spyOn(component as any, 'messageInput').mockReturnValue({ nativeElement: null });
+
+        fixture.detectChanges();
+        component.currentMessage = 'Test message';
+        component['cdr'].markForCheck();
+        fixture.detectChanges();
+
+        const sendButton = fixture.debugElement.query(By.css('.send-button'));
+        sendButton.nativeElement.click();
+
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        // Should not throw error even with null messageInput
+        expect(component.messages.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should handle sessionId generation with different courseId values', () => {
+        component.courseId = 456;
+        component.ngOnInit();
+
+        expect(component['sessionId']).toContain('course_456_session_');
+        expect(component['sessionId']).toMatch(/^course_456_session_\d+$/);
+    });
+
+    it('should handle ngAfterViewChecked when shouldScrollToBottom is false', () => {
+        const scrollSpy = jest.spyOn(component as any, 'scrollToBottom');
+        component['shouldScrollToBottom'] = false;
+
+        component.ngAfterViewChecked();
+
+        expect(scrollSpy).not.toHaveBeenCalled();
+        expect(component['shouldScrollToBottom']).toBeFalsy();
+    });
+
+    it('should handle ngAfterViewChecked when shouldScrollToBottom is true', () => {
+        const scrollSpy = jest.spyOn(component as any, 'scrollToBottom');
+        component['shouldScrollToBottom'] = true;
+
+        component.ngAfterViewChecked();
+
+        expect(scrollSpy).toHaveBeenCalled();
+        expect(component['shouldScrollToBottom']).toBeFalsy();
+    });
+
+    it('should generate different sessionIds on multiple ngOnInit calls', () => {
+        component.courseId = 123;
+        component.ngOnInit();
+        const firstSessionId = component['sessionId'];
+
+        // Simulate time passing
+        jest.spyOn(Date, 'now').mockReturnValue(Date.now() + 1000);
+
+        component.ngOnInit();
+        const secondSessionId = component['sessionId'];
+
+        expect(firstSessionId).not.toBe(secondSessionId);
+        jest.restoreAllMocks();
+    });
+
+    it('should add multiple messages and maintain immutability', () => {
+        fixture.detectChanges();
+        const initialMessages = component.messages;
+
+        (component as any).addMessage('First message', true);
+        const afterFirst = component.messages;
+
+        (component as any).addMessage('Second message', false);
+        const afterSecond = component.messages;
+
+        expect(initialMessages).not.toBe(afterFirst);
+        expect(afterFirst).not.toBe(afterSecond);
+        expect(afterSecond).toHaveLength(initialMessages.length + 2);
+    });
+
+    it('should handle edge cases in onTextareaInput', () => {
+        fixture.detectChanges();
+
+        // Test with scrollHeight = 0
+        const mockElement0 = {
+            style: { height: '' },
+            scrollHeight: 0,
+        };
+
+        // Mock messageInput signal to return mock element
+        jest.spyOn(component as any, 'messageInput').mockReturnValue({ nativeElement: mockElement0 });
+
+        component.onTextareaInput();
+        expect(mockElement0.style.height).toBe('0px');
+
+        // Test with scrollHeight exactly at max
+        const mockElement120 = {
+            style: { height: '' },
+            scrollHeight: 120,
+        };
+
+        // Mock messageInput signal to return different mock element
+        jest.spyOn(component as any, 'messageInput').mockReturnValue({ nativeElement: mockElement120 });
+
+        component.onTextareaInput();
+        expect(mockElement120.style.height).toBe('120px');
+    });
+
+    it('should handle different key events in onKeyPress', () => {
+        fixture.detectChanges();
+        component.currentMessage = 'Test message';
+
+        // Test with non-Enter key
+        const spaceEvent = new KeyboardEvent('keypress', { key: ' ' });
+        const spacePreventDefaultSpy = jest.spyOn(spaceEvent, 'preventDefault');
+        component.onKeyPress(spaceEvent);
+        expect(spacePreventDefaultSpy).not.toHaveBeenCalled();
+
+        // Test with Escape key
+        const escapeEvent = new KeyboardEvent('keypress', { key: 'Escape' });
+        const escapePreventDefaultSpy = jest.spyOn(escapeEvent, 'preventDefault');
+        component.onKeyPress(escapeEvent);
+        expect(escapePreventDefaultSpy).not.toHaveBeenCalled();
+    });
+
+    // Message length validation tests
+    describe('Message Length Validation', () => {
+        beforeEach(() => {
+            fixture.detectChanges();
+        });
+
+        it('should have correct MAX_MESSAGE_LENGTH constant', () => {
+            expect(component.MAX_MESSAGE_LENGTH).toBe(8000);
+        });
+
+        it('should return correct current message length', () => {
+            component.currentMessage = 'Hello';
+            expect(component.currentMessageLength).toBe(5);
+
+            component.currentMessage = '';
+            expect(component.currentMessageLength).toBe(0);
+
+            component.currentMessage = 'a'.repeat(100);
+            expect(component.currentMessageLength).toBe(100);
+        });
+
+        it('should detect when message is too long', () => {
+            // Message within limit
+            component.currentMessage = 'a'.repeat(8000);
+            expect(component.isMessageTooLong).toBeFalsy();
+
+            // Message exactly at limit
+            component.currentMessage = 'a'.repeat(8000);
+            expect(component.isMessageTooLong).toBeFalsy();
+
+            // Message over limit
+            component.currentMessage = 'a'.repeat(8001);
+            expect(component.isMessageTooLong).toBeTruthy();
+
+            // Very long message
+            component.currentMessage = 'a'.repeat(10000);
+            expect(component.isMessageTooLong).toBeTruthy();
+        });
+
+        it('should determine canSendMessage correctly based on all conditions', () => {
+            // Empty message
+            component.currentMessage = '';
+            component.isAgentTyping = false;
+            expect(component.canSendMessage).toBeFalsy();
+
+            // Whitespace only message
+            component.currentMessage = '   ';
+            component.isAgentTyping = false;
+            expect(component.canSendMessage).toBeFalsy();
+
+            // Valid message
+            component.currentMessage = 'Hello';
+            component.isAgentTyping = false;
+            expect(component.canSendMessage).toBeTruthy();
+
+            // Valid message but agent is typing
+            component.currentMessage = 'Hello';
+            component.isAgentTyping = true;
+            expect(component.canSendMessage).toBeFalsy();
+
+            // Message too long
+            component.currentMessage = 'a'.repeat(8001);
+            component.isAgentTyping = false;
+            expect(component.canSendMessage).toBeFalsy();
+
+            // Message too long and agent typing
+            component.currentMessage = 'a'.repeat(8001);
+            component.isAgentTyping = true;
+            expect(component.canSendMessage).toBeFalsy();
+
+            // Message at exact limit
+            component.currentMessage = 'a'.repeat(8000);
+            component.isAgentTyping = false;
+            expect(component.canSendMessage).toBeTruthy();
+        });
+
+        it('should disable send button when message is too long', () => {
+            component.currentMessage = 'a'.repeat(8001);
+            component['cdr'].markForCheck();
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.query(By.css('.send-button'));
+            expect(sendButton.nativeElement.disabled).toBeTruthy();
+        });
+
+        it('should enable send button when message is within limit', () => {
+            component.currentMessage = 'Valid message';
+            component['cdr'].markForCheck();
+            fixture.detectChanges();
+
+            const sendButton = fixture.debugElement.query(By.css('.send-button'));
+            expect(sendButton.nativeElement.disabled).toBeFalsy();
+        });
+
+        it('should not send message when too long', () => {
+            component.currentMessage = 'a'.repeat(8001);
+            const initialMessageCount = component.messages.length;
+
+            (component as any).sendMessage();
+
+            expect(component.messages).toHaveLength(initialMessageCount);
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+        });
+
+        it('should send message when exactly at limit', () => {
+            const exactLimitMessage = 'a'.repeat(8000);
+            component.currentMessage = exactLimitMessage;
+
+            (component as any).sendMessage();
+
+            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith(exactLimitMessage, 123, expect.any(String));
+        });
+
+        it('should display character count in template', () => {
+            component.currentMessage = 'Hello World';
+            component['cdr'].markForCheck();
+            fixture.detectChanges();
+
+            const characterCountElements = fixture.debugElement.queryAll(By.css('small'));
+            const characterCountElement = characterCountElements.find((el) => el.nativeElement.textContent.includes('11 / 8000'));
+
+            expect(characterCountElement).toBeTruthy();
+            expect(characterCountElement!.nativeElement.textContent.trim()).toContain('11 / 8000');
+        });
+
+        it('should show character count in red when message is too long', () => {
+            component.currentMessage = 'a'.repeat(8001);
+            component['cdr'].markForCheck();
+            fixture.detectChanges();
+
+            const characterCountElements = fixture.debugElement.queryAll(By.css('small'));
+            const characterCountElement = characterCountElements.find((el) => el.nativeElement.textContent.includes('8001 / 8000'));
+
+            expect(characterCountElement).toBeTruthy();
+            expect(characterCountElement!.nativeElement.classList).toContain('text-danger');
+        });
+
+        it('should show character count in normal color when message is within limit', () => {
+            component.currentMessage = 'Hello';
+            component['cdr'].markForCheck();
+            fixture.detectChanges();
+
+            const characterCountElements = fixture.debugElement.queryAll(By.css('small'));
+            const characterCountElement = characterCountElements.find((el) => el.nativeElement.textContent.includes('5 / 8000'));
+
+            expect(characterCountElement).toBeTruthy();
+            expect(characterCountElement!.nativeElement.classList).toContain('text-body-secondary');
+            expect(characterCountElement!.nativeElement.classList).not.toContain('text-danger');
+        });
+
+        it('should show error message when message is too long', () => {
+            component.currentMessage = 'a'.repeat(8001);
+            component['cdr'].markForCheck();
+            fixture.detectChanges();
+
+            // Look for the error message span with the translation key
+            const errorMessageSpan = fixture.debugElement.query(By.css('span[jhiTranslate="artemisApp.agent.chat.messageTooLong"]'));
+            expect(errorMessageSpan).toBeTruthy();
+            expect(errorMessageSpan.nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.agent.chat.messageTooLong');
+        });
+
+        it('should hide error message when message is within limit', () => {
+            component.currentMessage = 'Valid message';
+            component['cdr'].markForCheck();
+            fixture.detectChanges();
+
+            // Look for the error message span - should not exist when message is valid
+            const errorMessageSpan = fixture.debugElement.query(By.css('span[jhiTranslate="artemisApp.agent.chat.messageTooLong"]'));
+            expect(errorMessageSpan).toBeFalsy();
+        });
+
+        it('should prevent Enter key from sending when message is too long', () => {
+            component.currentMessage = 'a'.repeat(8001);
+            const initialMessageCount = component.messages.length;
+
+            const event = new KeyboardEvent('keypress', { key: 'Enter', shiftKey: false });
+            component.onKeyPress(event);
+
+            expect(component.messages).toHaveLength(initialMessageCount);
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+        });
+
+        it('should handle edge case of exactly empty string after trim', () => {
+            component.currentMessage = '   '; // Whitespace that trims to empty
+            expect(component.canSendMessage).toBeFalsy();
+
+            component.currentMessage = '  a  '; // Valid content with whitespace
+            expect(component.canSendMessage).toBeTruthy();
+        });
+
+        it('should handle special characters in length calculation', () => {
+            const messageWithSpecialChars = '🚀🎉👍 Hello World! äöü ñ';
+            component.currentMessage = messageWithSpecialChars;
+
+            expect(component.currentMessageLength).toBe(messageWithSpecialChars.length);
+            expect(component.isMessageTooLong).toBeFalsy();
+        });
+
+        it('should update validation state reactively as user types', () => {
+            // Start with valid message
+            component.currentMessage = 'Hello';
+            expect(component.canSendMessage).toBeTruthy();
+
+            // Add characters to exceed limit
+            component.currentMessage = 'a'.repeat(8001);
+            expect(component.canSendMessage).toBeFalsy();
+            expect(component.isMessageTooLong).toBeTruthy();
+
+            // Remove characters to get back within limit
+            component.currentMessage = 'a'.repeat(7999);
+            expect(component.canSendMessage).toBeTruthy();
+            expect(component.isMessageTooLong).toBeFalsy();
+        });
     });
 });

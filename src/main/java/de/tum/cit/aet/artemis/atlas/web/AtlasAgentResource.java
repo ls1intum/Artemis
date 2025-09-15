@@ -36,6 +36,8 @@ public class AtlasAgentResource {
 
     private static final Logger log = LoggerFactory.getLogger(AtlasAgentResource.class);
 
+    private static final int CHAT_TIMEOUT_SECONDS = 30;
+
     private final AtlasAgentService atlasAgentService;
 
     public AtlasAgentResource(AtlasAgentService atlasAgentService) {
@@ -57,7 +59,7 @@ public class AtlasAgentResource {
 
         try {
             final var future = atlasAgentService.processChatMessage(request.message(), courseId);
-            final String response = future.get(30, TimeUnit.SECONDS);
+            final String response = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             return ResponseEntity.ok(new AtlasAgentChatResponseDTO(response, request.sessionId(), ZonedDateTime.now(), true));
         }
         catch (TimeoutException te) {
