@@ -38,7 +38,8 @@ public final class RepositoryUriConversionUtil {
      * Per-thread override for tests. If set, static methods will use this value
      * instead of {@link #defaultServerUrl}. This prevents cross-test leakage when
      * different test threads have different Spring contexts / properties.
-     * Using {@link InheritableThreadLocal} so that child threads (e.g. in async tasks) also inherit the override.
+     * Using {@link InheritableThreadLocal} so that child threads (e.g. in thread pools) also inherit the override.
+     * To be compatible with @Async methods, we introduced a test-profile decorator for the AsyncTaskExecutor {@link TestAsyncTaskExecutorDecoratorConfig}
      */
     private static final InheritableThreadLocal<String> threadServerUrlOverride = new InheritableThreadLocal<>();
 

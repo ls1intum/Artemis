@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -84,17 +85,17 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         Files.createDirectory(filePath);
 
         String shortTestRepoUri = LocalRepositoryUriUtil.convertToLocalVcUriShortUriString(testRepo.workingCopyGitRepoFile, localVCRepoPath);
-        String fullTestRepoUri = RepositoryUriConversionUtil.toFullRepositoryUri(shortTestRepoUri);
-        programmingExercise.setTestRepositoryUri(fullTestRepoUri);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(), eq(true),
-                anyBoolean());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(), eq(false),
-                anyBoolean());
+        LocalVCRepositoryUri fullTestRepoUri = new LocalVCRepositoryUri(RepositoryUriConversionUtil.toFullRepositoryUri(shortTestRepoUri));
+        programmingExercise.setTestRepositoryUri(fullTestRepoUri.getURI().toString());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(fullTestRepoUri), eq(true), anyBoolean());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(fullTestRepoUri), eq(false), anyBoolean());
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(), eq(true),
-                anyString(), anyBoolean());
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(), eq(false),
-                anyString(), anyBoolean());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(fullTestRepoUri), eq(true), anyString(), anyBoolean());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.workingCopyGitRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(fullTestRepoUri), eq(false), anyString(), anyBoolean());
     }
 
     @AfterEach

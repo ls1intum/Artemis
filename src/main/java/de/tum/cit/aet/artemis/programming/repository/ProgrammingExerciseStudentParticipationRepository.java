@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -33,8 +31,6 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 @Lazy
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends ArtemisJpaRepository<ProgrammingExerciseStudentParticipation, Long> {
-
-    Logger log = LoggerFactory.getLogger(ProgrammingExerciseStudentParticipationRepository.class);
 
     @Query("""
             SELECT DISTINCT p
@@ -79,7 +75,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
 
     default ProgrammingExerciseStudentParticipation findByRepositoryUriElseThrow(String repositoryUri) {
         String shortRepositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(repositoryUri);
-        log.debug("Looking for participation with repository URI: {}", shortRepositoryUri);
         return getValueElseThrow(findByRepositoryUri(shortRepositoryUri));
     }
 
