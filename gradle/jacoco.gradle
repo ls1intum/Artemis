@@ -12,6 +12,7 @@ ext {
         "exam"          :          ["INSTRUCTION": 0.915, "CLASS":  2],
         "exercise"      :          ["INSTRUCTION": 0.913, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.953, "CLASS":  0],
+        "hyperion"      :          ["INSTRUCTION": 0.800, "CLASS":  0],
         "iris"          :          ["INSTRUCTION": 0.772, "CLASS": 28],
         "lecture"       :          ["INSTRUCTION": 0.910, "CLASS":  1],
         "lti"           :          ["INSTRUCTION": 0.888, "CLASS":  2],
