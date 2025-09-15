@@ -837,7 +837,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithMultipleTestRuns() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
 
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, true, true);
@@ -1953,7 +1953,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         doReturn("build plan").when(continuousIntegrationService).copyBuildPlan(any(ProgrammingExercise.class), anyString(), any(ProgrammingExercise.class), anyString(),
                 anyString(), anyBoolean());
         doNothing().when(continuousIntegrationService).updatePlanRepository(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
-        doNothing().when(continuousIntegrationService).givePlanPermissions(any(ProgrammingExercise.class), anyString());
         doNothing().when(continuousIntegrationService).enablePlan(anyString(), anyString());
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(any());
     }

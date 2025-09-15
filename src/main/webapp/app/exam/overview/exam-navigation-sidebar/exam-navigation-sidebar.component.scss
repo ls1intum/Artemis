@@ -1,23 +1,18 @@
-$collapse-container-height: 35px;
+@import '../../../../content/scss/artemis-mixins';
 $sidebar-width-open: 235px;
 $sidebar-width-closed: 80px;
-$management-header-height: 230px;
-$exam-test-run-offset: 38px;
+
+$management-header-height: 127px;
+$exam-sidebar-margin: 62px;
 
 .scrollable-item-content {
-    height: calc(100vh - var(--header-height) - var(--exam-height-offset));
+    --management-header-height: #{$management-header-height};
+    --exam-sidebar-margin: #{$exam-sidebar-margin};
+    height: calc(100vh - var(--exam-sidebar-margin) - var(--exam-height-offset));
     overflow-y: auto;
 
     &.sidebar-height-testRun {
-        height: calc(100vh - $exam-test-run-offset - 410px);
-
-        @media (max-width: 1349px) {
-            height: calc(100vh - $exam-test-run-offset - 440px) !important;
-        }
-
-        @media (max-width: 768px) {
-            height: calc(100vh - $exam-test-run-offset - 400px) !important;
-        }
+        @include dynamic-content-height(--management-header-height, --exam-sidebar-margin);
     }
 }
 
@@ -38,27 +33,8 @@ $exam-test-run-offset: 38px;
     }
 
     &.sidebar-height-testRun {
-        height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height);
-
-        &.sidebar-height-testRun-dev {
-            height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height);
-
-            @media (max-width: 1349px) {
-                height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 40px) !important;
-            }
-
-            @media (max-width: 768px) {
-                height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 20px) !important;
-            }
-        }
-
-        @media (max-width: 1349px) {
-            height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 40px) !important;
-        }
-
-        @media (max-width: 768px) {
-            height: calc(100vh - var(--sidebar-header-footer-combined-height) - $management-header-height - 20px) !important;
-        }
+        --management-header-height: #{$management-header-height};
+        @include dynamic-content-height(--management-header-height);
     }
 }
 
@@ -66,9 +42,11 @@ $exam-test-run-offset: 38px;
     .sidebar {
         width: $sidebar-width-closed !important;
     }
+
     .scrollable-column {
         padding: 0 0.25rem !important;
     }
+
     .auto-collapse {
         display: none !important;
     }
@@ -126,7 +104,6 @@ $exam-test-run-offset: 38px;
 
 .double-arrow-icon {
     transform: rotate(180deg);
-
     transition: transform ease 0.3s 0.3s;
 }
 

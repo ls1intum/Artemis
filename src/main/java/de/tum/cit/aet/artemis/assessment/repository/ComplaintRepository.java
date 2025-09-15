@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.assessment.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -262,7 +263,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     /**
      * Get the number of Complaints for all tutors of a course
      *
-     * @param courseId - id of the course
+     * @param exerciseIds - ids of the exercises in the course
      * @return list of TutorLeaderboardComplaints
      */
     @Query("""
@@ -278,12 +279,12 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
-                AND e.course.id = :courseId
+                AND e.id IN :exerciseIds
                 AND r.completionDate IS NOT NULL
                 AND r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardComplaintsDTO> findTutorLeaderboardComplaintsByCourseId(@Param("courseId") long courseId);
+    List<TutorLeaderboardComplaintsDTO> findTutorLeaderboardComplaintsByCourseId(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Get the number of Complaints for all tutors of an exercise
@@ -341,7 +342,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     /**
      * Get the number of complaintResponses for all tutors assessments of a course
      *
-     * @param courseId - id of the exercise
+     * @param exerciseIds - ids of the exercises in the course
      * @return list of TutorLeaderboardComplaintResponses
      */
     @Query("""
@@ -357,12 +358,12 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
-                AND e.course.id = :courseId
+                AND e.id IN :exerciseIds
                 AND r.completionDate IS NOT NULL
                 AND c.accepted IS NOT NULL
             GROUP BY cr.reviewer.id
             """)
-    List<TutorLeaderboardComplaintResponsesDTO> findTutorLeaderboardComplaintResponsesByCourseId(@Param("courseId") long courseId);
+    List<TutorLeaderboardComplaintResponsesDTO> findTutorLeaderboardComplaintResponsesByCourseId(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Get the number of complaintResponses for all tutors assessments of an exercise
@@ -421,7 +422,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     /**
      * Get the number of Feedback Requests for all tutors assessments of a course
      *
-     * @param courseId - id of the exercise
+     * @param exerciseIds - ids of the exercises in the course (should be filtered to only include exercises with manual assessment)
      * @return list of TutorLeaderboardMoreFeedbackRequests
      */
     @Query("""
@@ -437,11 +438,11 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK
-                AND e.course.id = :courseId
+                AND e.id IN :exerciseIds
                 AND r.completionDate IS NOT NULL
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardMoreFeedbackRequestsDTO> findTutorLeaderboardMoreFeedbackRequestsByCourseId(@Param("courseId") long courseId);
+    List<TutorLeaderboardMoreFeedbackRequestsDTO> findTutorLeaderboardMoreFeedbackRequestsByCourseId(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**
@@ -473,7 +474,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     /**
      * Get the number of Feedback Request Responses for all tutors assessments of a course
      *
-     * @param courseId - id of the course
+     * @param exerciseIds - ids of the exercises in the course (should be filtered to only include exercises with manual assessment)
      * @return list of TutorLeaderboardAnsweredMoreFeedbackRequests
      */
     @Query("""
@@ -489,12 +490,12 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN s.participation p
                 JOIN p.exercise e
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK
-                AND e.course.id = :courseId
+                AND e.id IN :exerciseIds
                 AND r.completionDate IS NOT NULL
                 AND c.accepted = TRUE
             GROUP BY cr.reviewer.id
             """)
-    List<TutorLeaderboardAnsweredMoreFeedbackRequestsDTO> findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(@Param("courseId") long courseId);
+    List<TutorLeaderboardAnsweredMoreFeedbackRequestsDTO> findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Get the number of Feedback Request Responses for all tutors assessments of an exercise
