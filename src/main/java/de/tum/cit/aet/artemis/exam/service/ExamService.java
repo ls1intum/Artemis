@@ -1474,8 +1474,7 @@ public class ExamService {
      * @param examId      The exam
      * @param examRoomIds The ids of the rooms to distribute to
      */
-    // FOR THE REVIEWERS: Do I need a @Transactional here?
-    public void distributeRegisteredStudents(long examId, @NotNull @NotEmpty Set<Long> examRoomIds) {
+    public void distributeRegisteredStudents(long examId, @NotEmpty Set<Long> examRoomIds) {
         final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         final var examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
 

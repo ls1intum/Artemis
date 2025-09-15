@@ -61,7 +61,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
     /**
      * Returns IDs of the current (latest) version of each unique exam room (roomNumber, name).
      *
-     * @return A collection of all outdated and unused exam rooms
+     * @return All IDs of the current exam rooms
      */
     @Query("""
             WITH latestRooms AS (
