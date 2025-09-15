@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long> {
 
     @Query("""
-            SELECT DISTINCT er
+            SELECT er
             FROM ExamRoom er
             LEFT JOIN FETCH er.layoutStrategies
             """)
