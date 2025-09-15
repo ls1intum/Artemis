@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -31,6 +33,8 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 @Lazy
 @Repository
 public interface ProgrammingExerciseStudentParticipationRepository extends ArtemisJpaRepository<ProgrammingExerciseStudentParticipation, Long> {
+
+    Logger log = LoggerFactory.getLogger(ProgrammingExerciseStudentParticipationRepository.class);
 
     /**
      * Loads a {@link ProgrammingExerciseStudentParticipation} by id with all related submissions and results in one query (avoiding N+1 issues via {@code LEFT JOIN FETCH}).
@@ -89,14 +93,18 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByRepositoryUri(String repositoryUri);
 
     default ProgrammingExerciseStudentParticipation findWithSubmissionsByRepositoryUriElseThrow(String repositoryUri) {
+        log.debug("findWithSubmissionsByRepositoryUri full uri:{}", repositoryUri);
         String shortRepositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(repositoryUri);
+        log.debug("findWithSubmissionsByRepositoryUri short ui:{}", shortRepositoryUri);
         return getValueElseThrow(findWithSubmissionsByRepositoryUri(shortRepositoryUri));
     }
 
     Optional<ProgrammingExerciseStudentParticipation> findByRepositoryUri(String repositoryUri);
 
     default ProgrammingExerciseStudentParticipation findByRepositoryUriElseThrow(String repositoryUri) {
+        log.debug("findByRepositoryUri full uri:{}", repositoryUri);
         String shortRepositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(repositoryUri);
+        log.debug("findByRepositoryUri short uri :{}", shortRepositoryUri);
         return getValueElseThrow(findByRepositoryUri(shortRepositoryUri));
     }
 
