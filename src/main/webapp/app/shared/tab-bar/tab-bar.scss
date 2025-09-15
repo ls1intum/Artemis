@@ -4,7 +4,6 @@
     align-items: center;
     padding: 0.5rem 0;
     margin-bottom: 0.5rem;
-
     border-bottom: 1px solid var(--overview-border-color);
 
     .tab-link {
@@ -12,7 +11,6 @@
         position: relative;
         color: var(--tab-bar-color);
         text-decoration: none;
-
         padding-bottom: 2px;
         margin: 0.5rem 1rem 0.5rem 0;
         border-bottom: 2px solid transparent;
@@ -29,7 +27,7 @@
 
         // Displays a red circle at the top right corner of the tab item.
         // Used to indicate that there are new messages.
-        &.newMessage:after {
+        &.newMessage::after {
             position: absolute;
             content: '';
             border-radius: 50%;

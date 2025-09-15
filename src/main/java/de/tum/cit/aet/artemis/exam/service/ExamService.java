@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -73,8 +74,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
-import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
-import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
+import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -85,9 +85,6 @@ import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exam.repository.ExamRoomExamAssignmentRepository;
-import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
-import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -109,11 +106,17 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -186,6 +189,12 @@ public class ExamService {
     @Value("${artemis.course-archives-path}")
     private Path examArchivesDirPath;
 
+    private final QuizQuestionRepository quizQuestionRepository;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, TutorLeaderboardService tutorLeaderboardService,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
@@ -193,9 +202,9 @@ public class ExamService {
             CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi,
             AuthorizationCheckService authorizationCheckService, BonusService bonusService, ExerciseDeletionService exerciseDeletionService,
             SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
-            ExerciseRepository exerciseRepository, QuizResultService quizResultService, ExamRoomRepository examRoomRepository,
-            ExamRoomExamAssignmentRepository examRoomExamAssignmentRepository, ExamUserRepository examUserRepository, ExamRoomService examRoomService) {
-
+            QuizResultService quizResultService, ExerciseRepository exerciseRepository, QuizQuestionRepository quizQuestionRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -218,8 +227,11 @@ public class ExamService {
         this.auditEventRepository = auditEventRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.defaultObjectMapper = new ObjectMapper();
-        this.exerciseRepository = exerciseRepository;
         this.quizResultService = quizResultService;
+        this.exerciseRepository = exerciseRepository;
+        this.quizQuestionRepository = quizQuestionRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
     }
 
     private static boolean isSecondCorrectionEnabled(Exam exam) {
@@ -297,8 +309,72 @@ public class ExamService {
             return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         }
         else {
-            return examRepository.findWithExerciseGroupsAndExercisesAndDetailsByIdOrElseThrow(examId);
+            return findWithExerciseGroupsAndExercisesAndDetailsByIdElseThrow(examId);
         }
+    }
+
+    /**
+     * Get one exam with exercise groups, exercises and additional details.
+     * Additional details are:
+     * - template and solution participation for programming exercises with latest submission and result
+     * - questions for quiz exercises
+     *
+     * @param examId the id of the entity
+     * @return the exam with exercise groups and additional details
+     */
+    private Exam findWithExerciseGroupsAndExercisesAndDetailsByIdElseThrow(long examId) {
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+        Set<QuizExercise> quizExercises = getAllExercisesForExamByType(exam, QuizExercise.class);
+        Set<ProgrammingExercise> programmingExercises = getAllExercisesForExamByType(exam, ProgrammingExercise.class);
+        Set<Long> quizExerciseIds = quizExercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
+        Set<Long> programmingExerciseIds = programmingExercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
+        if (!quizExerciseIds.isEmpty()) {
+            Set<QuizQuestion> quizQuestions = quizQuestionRepository.findAllByExerciseIds(quizExerciseIds);
+            quizExercises.forEach(quizExercise -> quizExercise.setQuizQuestions(
+                    quizQuestions.stream().filter(quizQuestion -> quizQuestion.getExercise() != null && quizQuestion.getExercise().getId().equals(quizExercise.getId())).toList()));
+        }
+        if (!programmingExerciseIds.isEmpty()) {
+            Set<TemplateProgrammingExerciseParticipation> templateProgrammingExerciseParticipations = templateProgrammingExerciseParticipationRepository
+                    .findAllWithLatestSubmissionByExerciseIds(programmingExerciseIds);
+            Set<SolutionProgrammingExerciseParticipation> solutionProgrammingExerciseParticipations = solutionProgrammingExerciseParticipationRepository
+                    .findAllWithLatestSubmissionByExerciseIds(programmingExerciseIds);
+
+            programmingExercises.forEach(programmingExercise -> {
+                templateProgrammingExerciseParticipations.stream().filter(
+                        participation -> participation.getProgrammingExercise() != null && participation.getProgrammingExercise().getId().equals(programmingExercise.getId()))
+                        .findAny().ifPresent(programmingExercise::setTemplateParticipation);
+                solutionProgrammingExerciseParticipations.stream().filter(
+                        participation -> participation.getProgrammingExercise() != null && participation.getProgrammingExercise().getId().equals(programmingExercise.getId()))
+                        .findAny().ifPresent(programmingExercise::setSolutionParticipation);
+            });
+            Map<Long, Result> latestResultsForTemplateSubmissions = resultRepository
+                    .findLatestResultsByParticipationIds(templateProgrammingExerciseParticipations.stream().map(DomainObject::getId).collect(Collectors.toSet())).stream()
+                    .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1));
+            Map<Long, Result> latestResultsForSolutionSubmissions = resultRepository
+                    .findLatestResultsByParticipationIds(solutionProgrammingExerciseParticipations.stream().map(DomainObject::getId).collect(Collectors.toSet())).stream()
+                    .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1));
+
+            programmingExercises.forEach(programmingExercise -> {
+                if (programmingExercise.getSolutionParticipation() != null) {
+                    programmingExercise.getSolutionParticipation().getSubmissions().forEach(submission -> {
+                        Result result = latestResultsForSolutionSubmissions.get(submission.getId());
+                        if (result != null) {
+                            submission.setResults(List.of(result));
+                        }
+                    });
+                }
+                if (programmingExercise.getTemplateParticipation() != null) {
+                    programmingExercise.getTemplateParticipation().getSubmissions().forEach(submission -> {
+                        Result result = latestResultsForTemplateSubmissions.get(submission.getId());
+                        if (result != null) {
+                            submission.setResults(List.of(result));
+                        }
+                    });
+                }
+            });
+
+        }
+        return exam;
     }
 
     /**
@@ -1402,13 +1478,16 @@ public class ExamService {
      * The method then derives a set of {@link CalendarEventDTO}s from the DTOs. Whether events are included in the result depends
      * on the visibleDate of the exam represented by the given DTO and whether the logged-in user is a student of the {@link Course})
      *
+     *
      * @param courseId      the ID of the course
      * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @param language      the language that will be used add context information to titles (e.g. the title of an event representing the student review start will be prefixed with
+     *                          "Review Start: ")
      * @return the set of results
      */
-    public Set<CalendarEventDTO> getCalendarEventDTOsFromExams(long courseId, boolean userIsStudent) {
-        Set<ExamCalendarEventDTO> daos = examRepository.getExamCalendarEventDAOsForCourseId(courseId);
-        return daos.stream().flatMap(dao -> deriveCalendarEventDTOs(dao, userIsStudent).stream()).collect(Collectors.toSet());
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromExams(long courseId, boolean userIsStudent, Language language) {
+        Set<ExamCalendarEventDTO> dtos = examRepository.getExamCalendarEventDTOsForCourseId(courseId);
+        return dtos.stream().flatMap(dto -> deriveCalendarEventDTOs(dto, userIsStudent, language).stream()).collect(Collectors.toSet());
     }
 
     /**
@@ -1418,28 +1497,42 @@ public class ExamService {
      * <li>One event representing the point in them when results are published if not null</li>
      * <li>Two events representing the start and end of the student review period (only available as a pair and if result publish date is not null)</li>
      * </ul>
-     * <p>
+     *
      * The events are only derived given that either the exam is visible to students or the logged-in user is a course
      * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
      *
      * @param dto           the DTO for which to derive the events
      * @param userIsStudent indicates whether the logged-in user is student of the course associated to the exam
+     * @param language      the language that will be used add context information to titles (e.g. the title of an event representing the student review start will be prefixed with
+     *                          "Review Start: ")
      * @return the derived events
      */
-    private Set<CalendarEventDTO> deriveCalendarEventDTOs(ExamCalendarEventDTO dto, boolean userIsStudent) {
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(ExamCalendarEventDTO dto, boolean userIsStudent, Language language) {
         Set<CalendarEventDTO> events = new HashSet<>();
         boolean userIsCourseStaff = !userIsStudent;
         if (userIsCourseStaff || dto.visibleDate().isBefore(now())) {
-            events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.START_AND_END_DATE, dto.title(), dto.startDate(), dto.endDate(), null,
+            events.add(new CalendarEventDTO("examStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.EXAM, dto.title(), dto.startDate(), dto.endDate(), null,
                     dto.examiner()));
             if (dto.publishResultsDate() != null) {
-                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.PUBLISH_RESULTS_DATE, dto.title(), dto.publishResultsDate(), null, null,
-                        null));
+                String publishResultsDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Results Release: ";
+                    case GERMAN -> "Veröffentlichung Ergebnisse: ";
+                };
+                events.add(new CalendarEventDTO("examPublishResultsEvent-" + dto.originEntityId(), CalendarEventType.EXAM, publishResultsDateTitlePrefix + dto.title(),
+                        dto.publishResultsDate(), null, null, null));
                 if (dto.studentReviewStart() != null) {
-                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_START_DATE, dto.title(), dto.studentReviewStart(), null,
-                            null, null));
-                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_END_DATE, dto.title(), dto.studentReviewEnd(), null,
-                            null, null));
+                    String studentReviewStartDateTitlePrefix = switch (language) {
+                        case ENGLISH -> "Review Start: ";
+                        case GERMAN -> "Einsicht Start: ";
+                    };
+                    events.add(new CalendarEventDTO("examReviewStartEvent-" + dto.originEntityId(), CalendarEventType.EXAM, studentReviewStartDateTitlePrefix + dto.title(),
+                            dto.studentReviewStart(), null, null, null));
+                    String studentReviewEndDateTitlePrefix = switch (language) {
+                        case ENGLISH -> "Review End: ";
+                        case GERMAN -> "Einsicht Ende: ";
+                    };
+                    events.add(new CalendarEventDTO("examReviewEndEvent-" + dto.originEntityId(), CalendarEventType.EXAM, studentReviewEndDateTitlePrefix + dto.title(),
+                            dto.studentReviewEnd(), null, null, null));
                 }
             }
         }
