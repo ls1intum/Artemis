@@ -22,6 +22,7 @@ import { TutorialGroupDetailSessionStatusIndicatorComponent } from 'app/tutorial
 import { Router, RouterLink } from '@angular/router';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { ButtonModule } from 'primeng/button';
 
 interface TutorialGroupDetailSession {
     date: string;
@@ -49,6 +50,7 @@ type ListOption = 'all-sessions' | 'future-sessions';
         TutorialGroupDetailSessionStatusIndicatorComponent,
         NgClass,
         RouterLink,
+        ButtonModule,
     ],
     templateUrl: './course-tutorial-group-detail.component.html',
     styleUrl: './course-tutorial-group-detail.component.scss',

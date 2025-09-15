@@ -8,18 +8,20 @@
                 <a
                     [routerLink]="chatLink.routerLink"
                     [queryParams]="chatLink.queryParams"
-                    class="btn btn-outline-secondary"
+                    pButton
+                    class="p-button-secondary p-button-sm"
                     jhiTranslate="artemisApp.pages.tutorialGroupDetail.tutorChatLinkLabel"
                 ></a>
             } @else {
-                <button class="btn btn-outline-secondary" (click)="createTutorChat()" jhiTranslate="artemisApp.pages.tutorialGroupDetail.tutorChatLinkLabel"></button>
+                <button pButton class="p-button-secondary p-button-sm" (click)="createTutorChat()" jhiTranslate="artemisApp.pages.tutorialGroupDetail.tutorChatLinkLabel"></button>
             }
             @let channelLink = groupChannelLink();
             @if (channelLink) {
                 <a
                     [routerLink]="channelLink.routerLink"
                     [queryParams]="channelLink.queryParams"
-                    class="btn btn-outline-secondary"
+                    pButton
+                    class="p-button-secondary p-button-sm"
                     jhiTranslate="artemisApp.pages.tutorialGroupDetail.groupChannelLinkLabel"
                 ></a>
             }
