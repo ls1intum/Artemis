@@ -1,6 +1,5 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { NgClass, NgStyle } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { Dayjs } from 'dayjs/esm';
@@ -13,7 +12,7 @@ type Day = { date: Dayjs; eventsAndPositions: CalendarEventAndPosition[]; id: st
 
 @Component({
     selector: 'jhi-calendar-events-per-day-section',
-    imports: [ArtemisTranslatePipe, NgClass, NgStyle, CalendarEventDetailPopoverComponent, NgbPopover],
+    imports: [NgClass, NgStyle, CalendarEventDetailPopoverComponent, NgbPopover],
     templateUrl: './calendar-events-per-day-section.component.html',
     styleUrl: './calendar-events-per-day-section.component.scss',
 })
