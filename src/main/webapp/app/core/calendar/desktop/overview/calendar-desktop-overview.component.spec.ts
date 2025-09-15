@@ -4,27 +4,31 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEvent } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarDesktopWeekPresentationComponent } from 'app/core/calendar/desktop/week-presentation/calendar-desktop-week-presentation.component';
 import { CalendarDesktopMonthPresentationComponent } from 'app/core/calendar/desktop/month-presentation/calendar-desktop-month-presentation.component';
+import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { CalendarEventFilterComponent } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarDesktopOverviewComponent } from './calendar-desktop-overview.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 describe('CalendarDesktopOverviewComponent', () => {
     let component: CalendarDesktopOverviewComponent;
     let fixture: ComponentFixture<CalendarDesktopOverviewComponent>;
 
-    const calendarEventServiceMock = {
+    const calendarServiceMock = {
         eventMap: signal(new Map<string, CalendarEvent[]>()),
         loadEventsForCurrentMonth: jest.fn().mockReturnValue(of([])),
+        subscriptionToken: signal('testToken'),
+        loadSubscriptionToken: jest.fn().mockReturnValue(of([])),
     };
 
     const activatedRouteMock = {
@@ -33,27 +37,25 @@ describe('CalendarDesktopOverviewComponent', () => {
         },
     };
 
-    const translateServiceMock = {
-        currentLang: 'en',
-        onLangChange: of({ lang: 'en' }),
-    };
-
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CalendarDesktopOverviewComponent, CalendarDesktopWeekPresentationComponent, CalendarDesktopMonthPresentationComponent, FaIconComponent],
             declarations: [
                 MockComponent(CalendarEventDetailPopoverComponent),
                 MockComponent(CalendarDayBadgeComponent),
-                MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CalendarEventFilterComponent),
             ],
             providers: [
-                { provide: CalendarEventService, useValue: calendarEventServiceMock },
+                { provide: CalendarService, useValue: calendarServiceMock },
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
-                { provide: TranslateService, useValue: translateServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideNoopAnimations(),
             ],
         }).compileComponents();
+
+        const translateService = TestBed.inject(TranslateService) as unknown as MockTranslateService;
+        translateService.currentLang = 'en';
 
         fixture = TestBed.createComponent(CalendarDesktopOverviewComponent);
         component = fixture.componentInstance;
@@ -84,15 +86,19 @@ describe('CalendarDesktopOverviewComponent', () => {
         fixture.detectChanges();
         let firstDayOfCurrentMonth = component.firstDayOfCurrentMonth();
         let firstDayOfCurrentWeek = component.firstDayOfCurrentWeek();
-        expect(firstDayOfCurrentMonth.isSame(initialFirstDayOfCurrentMonth.subtract(1, 'month'), 'day')).toBeTrue();
-        expect(firstDayOfCurrentWeek.isSame(firstDayOfCurrentMonth.startOf('isoWeek'), 'day')).toBeTrue();
+        let expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth.subtract(1, 'month');
+        let expectedFirstDayOfCurrentWeek = firstDayOfCurrentMonth.startOf('isoWeek');
+        expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBeTrue();
+        expect(firstDayOfCurrentWeek.isSame(expectedFirstDayOfCurrentWeek, 'day')).toBeTrue();
 
         nextButton.click();
         fixture.detectChanges();
         firstDayOfCurrentMonth = component.firstDayOfCurrentMonth();
         firstDayOfCurrentWeek = component.firstDayOfCurrentWeek();
-        expect(firstDayOfCurrentMonth.isSame(initialFirstDayOfCurrentMonth, 'day')).toBeTrue();
-        expect(firstDayOfCurrentWeek.isSame(initialFirstDayOfCurrentMonth.startOf('isoWeek'), 'day')).toBeTrue();
+        expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth;
+        expectedFirstDayOfCurrentWeek = initialFirstDayOfCurrentMonth.startOf('isoWeek');
+        expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBeTrue();
+        expect(firstDayOfCurrentWeek.isSame(expectedFirstDayOfCurrentWeek, 'day')).toBeTrue();
 
         weekButton.click();
         fixture.detectChanges();
@@ -104,15 +110,21 @@ describe('CalendarDesktopOverviewComponent', () => {
         fixture.detectChanges();
         firstDayOfCurrentMonth = component.firstDayOfCurrentMonth();
         firstDayOfCurrentWeek = component.firstDayOfCurrentWeek();
-        expect(firstDayOfCurrentMonth.isSame(initialFirstDayOfCurrentMonth, 'day')).toBeTrue();
-        expect(firstDayOfCurrentWeek.isSame(initialFirstDayOfCurrentMonth.startOf('isoWeek').add(1, 'week'), 'day')).toBeTrue();
+        expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth;
+        expectedFirstDayOfCurrentWeek = initialFirstDayOfCurrentMonth.startOf('isoWeek').add(1, 'week');
+        expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBeTrue();
+        expect(firstDayOfCurrentWeek.isSame(expectedFirstDayOfCurrentWeek, 'day')).toBeTrue();
 
         previousButton.click();
         fixture.detectChanges();
         firstDayOfCurrentMonth = component.firstDayOfCurrentMonth();
         firstDayOfCurrentWeek = component.firstDayOfCurrentWeek();
-        expect(firstDayOfCurrentMonth.isSame(initialFirstDayOfCurrentMonth.subtract(1, 'month'), 'day')).toBeTrue();
-        expect(firstDayOfCurrentWeek.isSame(initialFirstDayOfCurrentMonth.startOf('isoWeek'), 'day')).toBeTrue();
+        expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth.startOf('isoWeek').isBefore(initialFirstDayOfCurrentMonth)
+            ? initialFirstDayOfCurrentMonth.subtract(1, 'month')
+            : initialFirstDayOfCurrentMonth;
+        expectedFirstDayOfCurrentWeek = initialFirstDayOfCurrentMonth.startOf('isoWeek');
+        expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBeTrue();
+        expect(firstDayOfCurrentWeek.isSame(expectedFirstDayOfCurrentWeek, 'day')).toBeTrue();
     });
 
     it('should go to today', () => {
@@ -178,5 +190,21 @@ describe('CalendarDesktopOverviewComponent', () => {
         nextButton.click();
         fixture.detectChanges();
         expect(heading()).toBe('October 2025');
+    });
+
+    it('should open subscription popover when the subscribe button is clicked', () => {
+        const popoverDebugElement = fixture.debugElement.query(By.directive(CalendarSubscriptionPopoverComponent));
+        expect(popoverDebugElement).toBeTruthy();
+
+        const popover = popoverDebugElement.componentInstance as CalendarSubscriptionPopoverComponent;
+        const openSpy = jest.spyOn(popover, 'open');
+
+        const subscribeButton = fixture.debugElement.query(By.css('[data-testid="subscribe-button"]')).nativeElement;
+        expect(subscribeButton).toBeTruthy();
+
+        subscribeButton.click();
+        fixture.detectChanges();
+
+        expect(openSpy).toHaveBeenCalledOnce();
     });
 });

@@ -74,7 +74,7 @@ public interface TemplateProgrammingExerciseParticipationRepository
                   )
                   OR s.id IS NULL
                 )
-             """)
+            """)
     Set<TemplateProgrammingExerciseParticipation> findAllWithLatestSubmissionByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
 
     @NotNull
