@@ -47,7 +47,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
@@ -72,8 +71,6 @@ public class TutorialGroupService {
 
     private final UserRepository userRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final TutorialGroupRepository tutorialGroupRepository;
 
     private final TutorialGroupSessionRepository tutorialGroupSessionRepository;
@@ -87,13 +84,12 @@ public class TutorialGroupService {
     private final OneToOneChatRepository oneToOneChatRepository;
 
     public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupRepository tutorialGroupRepository,
-            UserRepository userRepository, AuthorizationCheckService authorizationCheckService, TutorialGroupSessionRepository tutorialGroupSessionRepository,
+            UserRepository userRepository, TutorialGroupSessionRepository tutorialGroupSessionRepository,
             TutorialGroupChannelManagementService tutorialGroupChannelManagementService, ConversationDTOService conversationDTOService,
             CourseNotificationService courseNotificationService, OneToOneChatRepository oneToOneChatRepository) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
-        this.authorizationCheckService = authorizationCheckService;
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.conversationDTOService = conversationDTOService;
@@ -597,17 +593,19 @@ public class TutorialGroupService {
     /**
      * Get all tutorial groups for a course, including setting the transient properties for the given user
      *
-     * @param course The course for which the tutorial groups should be retrieved.
-     * @param user   The user for whom to set the transient properties of the tutorial groups.
+     * @param course       The course for which the tutorial groups should be retrieved.
+     * @param user         The user for whom to set the transient properties of the tutorial groups.
+     * @param isAdmin      whether the user is admin
+     * @param isInstructor whether the user is instructor of the course
      * @return A list of tutorial groups for the given course with the transient properties set for the given user.
      */
-    public Set<TutorialGroup> findAllForCourse(@NotNull Course course, @NotNull User user) {
+    public Set<TutorialGroup> findAllForCourse(@NotNull Course course, @NotNull User user, boolean isAdmin, boolean isInstructor) {
         // do not load all sessions here as they are not needed for the overview page and would slow down the request
         Set<TutorialGroup> tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantRegistrationsAndSchedule(course.getId());
         // TODO: this is some overkill, we calculate way too many information with way too many database calls, we must reduce this
         tutorialGroups.forEach(tutorialGroup -> this.setTransientPropertiesForUser(user, tutorialGroup));
         tutorialGroups.forEach(tutorialGroup -> {
-            if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+            if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user, isAdmin, isInstructor)) {
                 tutorialGroup.hidePrivacySensitiveInformation();
             }
         });
@@ -618,18 +616,20 @@ public class TutorialGroupService {
     /**
      * Get one tutorial group of a course, including setting the transient properties for the given user
      *
+     * @param course          The course for which the tutorial group should be retrieved.
      * @param tutorialGroupId The id of the tutorial group to retrieve.
      * @param user            The user for whom to set the transient properties of the tutorial group.
-     * @param course          The course for which the tutorial group should be retrieved.
+     * @param isAdmin         whether the user is admin
+     * @param isInstructor    whether the user is instructor of the course
      * @return The tutorial group of the course with the transient properties set for the given user.
      */
-    public TutorialGroup getOneOfCourse(@NotNull Course course, @NotNull User user, @NotNull Long tutorialGroupId) {
+    public TutorialGroup getOneOfCourse(@NotNull Course course, @NotNull Long tutorialGroupId, @NotNull User user, boolean isAdmin, boolean isInstructor) {
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessionsElseThrow(tutorialGroupId);
         if (!course.equals(tutorialGroup.getCourse())) {
             throw new BadRequestAlertException("The courseId in the path does not match the courseId in the tutorial group", "tutorialGroup", "courseIdMismatch");
         }
         this.setTransientPropertiesForUser(user, tutorialGroup);
-        if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+        if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user, isAdmin, isInstructor)) {
             tutorialGroup.hidePrivacySensitiveInformation();
         }
         return TutorialGroup.preventCircularJsonConversion(tutorialGroup);
@@ -691,33 +691,21 @@ public class TutorialGroupService {
      *
      * @param tutorialGroup the tutorial group for which to check permission
      * @param user          the user for which to check permission
+     * @param isAdmin       whether the user is admin
+     * @param isInstructor  whether the user is instructor of the course of the tutorialGroup
      * @return true if the user is allowed, false otherwise
      */
-    public boolean isAllowedToSeePrivateTutorialGroupInformation(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
-        var userToCheck = user;
-        var persistenceUtil = getPersistenceUtil();
-        if (userToCheck == null || !persistenceUtil.isLoaded(userToCheck, "authorities") || !persistenceUtil.isLoaded(userToCheck, "groups") || userToCheck.getGroups() == null
-                || userToCheck.getAuthorities() == null) {
-            userToCheck = userRepository.getUserWithGroupsAndAuthorities();
-        }
-        if (authorizationCheckService.isAdmin(userToCheck)) {
+    public boolean isAllowedToSeePrivateTutorialGroupInformation(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdmin, boolean isInstructor) {
+        if (isAdmin || isInstructor) {
             return true;
         }
-
+        var persistenceUtil = getPersistenceUtil();
         var tutorialGroupToCheck = tutorialGroup;
-
-        var courseInitialized = persistenceUtil.isLoaded(tutorialGroupToCheck, "course");
-        var teachingAssistantInitialized = persistenceUtil.isLoaded(tutorialGroupToCheck, "teachingAssistant");
-
-        if (!courseInitialized || !teachingAssistantInitialized || tutorialGroupToCheck.getCourse() == null || tutorialGroupToCheck.getTeachingAssistant() == null) {
+        var teachingAssistantInitialized = persistenceUtil.isLoaded(tutorialGroup, "teachingAssistant");
+        if (!teachingAssistantInitialized || tutorialGroupToCheck.getTeachingAssistant() == null) {
             tutorialGroupToCheck = tutorialGroupRepository.findByIdWithTeachingAssistantAndCourseElseThrow(tutorialGroupToCheck.getId());
         }
-
-        Course course = tutorialGroupToCheck.getCourse();
-        if (authorizationCheckService.isAtLeastInstructorInCourse(course, userToCheck)) {
-            return true;
-        }
-        return (tutorialGroupToCheck.getTeachingAssistant() != null && tutorialGroupToCheck.getTeachingAssistant().equals(userToCheck));
+        return (tutorialGroupToCheck.getTeachingAssistant() != null && tutorialGroupToCheck.getTeachingAssistant().equals(user));
     }
 
     /**
@@ -725,10 +713,12 @@ public class TutorialGroupService {
      *
      * @param tutorialGroup the tutorial group for which to check permission
      * @param user          the user for which to check permission
+     * @param isAdmin       whether the user is admin
+     * @param isInstructor  whether the user is instructor of the course of the tutorialGroup
      */
-    public void isAllowedToChangeRegistrationsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
+    public void isAllowedToChangeRegistrationsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user, boolean isAdmin, boolean isInstructor) {
         // ToDo: Clarify if this is the correct permission check
-        if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+        if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user, isAdmin, isInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to change the registrations of tutorial group: " + tutorialGroup.getId());
         }
     }
@@ -738,10 +728,12 @@ public class TutorialGroupService {
      *
      * @param tutorialGroup the tutorial group for which to check permission
      * @param user          the user for which to check permission
+     * @param isAdmin       whether the user is admin
+     * @param isInstructor  whether the user is instructor of the course of the tutorialGroup
      */
-    public void isAllowedToModifySessionsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user) {
+    public void isAllowedToModifySessionsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user, boolean isAdmin, boolean isInstructor) {
         // ToDo: Clarify if this is the correct permission check
-        if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user)) {
+        if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user, isAdmin, isInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to modify the sessions of tutorial group: " + tutorialGroup.getId());
         }
     }
@@ -755,14 +747,16 @@ public class TutorialGroupService {
     /**
      * Exports tutorial groups for a specific course to a CSV file.
      *
-     * @param course the course for which the tutorial groups should be exported
-     * @param user   the user performing the export operation
-     * @param fields the list of fields to include in the CSV export
+     * @param course       the course for which the tutorial groups should be exported
+     * @param user         the user performing the export operation
+     * @param isAdmin      whether the user is admin
+     * @param isInstructor whether the user is instructor in the course
+     * @param fields       the list of fields to include in the CSV export
      * @return a String containing the CSV data
      * @throws IOException if an I/O error occurs
      */
-    public String exportTutorialGroupsToCSV(Course course, User user, List<String> fields) throws IOException {
-        Set<TutorialGroup> tutorialGroups = findAllForCourse(course, user);
+    public String exportTutorialGroupsToCSV(Course course, User user, boolean isAdmin, boolean isInstructor, List<String> fields) throws IOException {
+        Set<TutorialGroup> tutorialGroups = findAllForCourse(course, user, isAdmin, isInstructor);
 
         StringWriter out = new StringWriter();
 
