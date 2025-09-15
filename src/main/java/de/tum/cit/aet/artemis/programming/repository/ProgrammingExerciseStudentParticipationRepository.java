@@ -36,6 +36,26 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
 
     Logger log = LoggerFactory.getLogger(ProgrammingExerciseStudentParticipationRepository.class);
 
+    /**
+     * Loads a {@link ProgrammingExerciseStudentParticipation} by id with all related submissions and results in one query (avoiding N+1 issues via {@code LEFT JOIN FETCH}).
+     *
+     * <p>
+     * Includes results if:
+     * <ul>
+     * <li>they are automatic,</li>
+     * <li>they are completed and the assessment due date is before {@code dateTime} (or not set), or</li>
+     * <li>no result exists yet.</li>
+     * </ul>
+     *
+     * <p>
+     * This ensures automatic feedback is always visible, manual assessments are only shown
+     * after due dates, and participations without results remain accessible.
+     * </p>
+     *
+     * @param participationId the participation id
+     * @param dateTime        reference time for assessment due date checks
+     * @return the participation with submissions and relevant results, if found
+     */
     @Query("""
             SELECT DISTINCT p
             FROM ProgrammingExerciseStudentParticipation p

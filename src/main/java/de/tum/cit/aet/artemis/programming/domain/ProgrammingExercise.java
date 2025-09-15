@@ -191,9 +191,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public void setTestRepositoryUri(String testRepositoryUri) {
-        log.debug("Test repository uri provided is {}", testRepositoryUri);
         this.testRepositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(testRepositoryUri);
-        log.debug("Test repository uri stored is {}", this.testRepositoryUri);
     }
 
     public String getTestRepositoryUri() {
