@@ -65,7 +65,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
