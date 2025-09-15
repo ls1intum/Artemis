@@ -40,6 +40,11 @@ public record QuizExerciseSnapshotDTO(Boolean randomizeQuestionOrder, Integer al
         }
     }
 
+    /**
+     * creates a snapshot DTO of the given quiz exercise.
+     *
+     * @param exercise {@link QuizExercise}}
+     */
     public static QuizExerciseSnapshotDTO of(QuizExercise exercise) {
         var questions = exercise.getQuizQuestions() != null ? exercise.getQuizQuestions().stream().map(QuizQuestionSnapshotDTO::of).collect(Collectors.toCollection(ArrayList::new))
                 : null;

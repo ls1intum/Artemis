@@ -42,6 +42,13 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseSnapshotDTO.class);
 
+    /**
+     * Creates a snapshot of the given programming exercise.
+     *
+     * @param exercise   {@link ProgrammingExercise}
+     * @param gitService {@link GitService}
+     * @return {@link ProgrammingExerciseSnapshotDTO}
+     */
     public static ProgrammingExerciseSnapshotDTO of(ProgrammingExercise exercise, GitService gitService) {
         var templateParticipation = exercise.getTemplateParticipation() != null ? new ParticipationSnapshotDTO(exercise.getTemplateParticipation().getId(),
                 exercise.getTemplateRepositoryUri(), exercise.getTemplateBuildPlanId(), getCommitHash(exercise.getVcsTemplateRepositoryUri(), gitService)) : null;

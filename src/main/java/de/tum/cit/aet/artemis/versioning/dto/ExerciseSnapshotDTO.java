@@ -40,6 +40,13 @@ public record ExerciseSnapshotDTO(
 
 ) implements Serializable {
 
+    /**
+     * Creates a snapshot of the given exercise.
+     *
+     * @param exercise   {@link Exercise}
+     * @param gitService {@link GitService}
+     * @return {@link ExerciseSnapshotDTO}
+     */
     public static ExerciseSnapshotDTO of(Exercise exercise, GitService gitService) {
 
         var competencyLinks = exercise.getCompetencyLinks().stream().map(CompetencyExerciseLinkSnapshotDTO::of).collect(Collectors.toSet());

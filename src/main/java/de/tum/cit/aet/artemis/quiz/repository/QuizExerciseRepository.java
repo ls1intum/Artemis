@@ -85,6 +85,8 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
      * Finds a QuizExercise with minimal data necessary for exercise versioning.
      * Only includes core configuration data, NOT submissions, results, or statistics.
      * This includes: quizQuestions (without specific answer options to avoid polymorphic issues)
+     *
+     * @return {@link QuizExercise}
      */
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
     Optional<QuizExercise> findWithEagerForVersioningById(Long exerciseId);

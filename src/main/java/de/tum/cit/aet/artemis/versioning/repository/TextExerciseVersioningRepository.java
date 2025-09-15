@@ -26,6 +26,9 @@ public interface TextExerciseVersioningRepository extends ArtemisJpaRepository<T
      * Finds a TextExercise with minimal data necessary for exercise versioning.
      * Only includes core configuration data, NOT submissions, results, or example submissions.
      * Basic TextExercise fields (exampleSolution, filePattern) are already included in the entity.
+     *
+     * @param exerciseId the id of the exercise to fetch
+     * @return {@link TextExercise}
      */
     @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "attachments", "plagiarismDetectionConfig" })
     Optional<TextExercise> findWithEagerForVersioningById(long exerciseId);
