@@ -23,7 +23,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -80,15 +79,11 @@ import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
-import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
-import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomExamAssignmentRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
@@ -135,8 +130,6 @@ public class ExamService {
     private static final int EXAM_ACTIVE_DAYS = 7;
 
     private static final Logger log = LoggerFactory.getLogger(ExamService.class);
-
-    private static final String ENTITY_NAME = "exam";
 
     private static final boolean IS_TEST_RUN = false;
 
@@ -188,14 +181,6 @@ public class ExamService {
 
     private final ObjectMapper defaultObjectMapper;
 
-    private final ExamRoomRepository examRoomRepository;
-
-    private final ExamRoomExamAssignmentRepository examRoomExamAssignmentRepository;
-
-    private final ExamUserRepository examUserRepository;
-
-    private final ExamRoomService examRoomService;
-
     private final ExerciseRepository exerciseRepository;
 
     @Value("${artemis.course-archives-path}")
@@ -235,10 +220,6 @@ public class ExamService {
         this.defaultObjectMapper = new ObjectMapper();
         this.exerciseRepository = exerciseRepository;
         this.quizResultService = quizResultService;
-        this.examRoomRepository = examRoomRepository;
-        this.examRoomExamAssignmentRepository = examRoomExamAssignmentRepository;
-        this.examUserRepository = examUserRepository;
-        this.examRoomService = examRoomService;
     }
 
     private static boolean isSecondCorrectionEnabled(Exam exam) {
@@ -1463,53 +1444,5 @@ public class ExamService {
             }
         }
         return events;
-    }
-
-    /**
-     * Distribute all students who are registered for a given exam across a selection of rooms.
-     * Existing planned seats and room assignments are replaced.
-     *
-     * @implNote Currently only the "default" layout strategy is used.
-     *
-     * @param examId      The exam
-     * @param examRoomIds The ids of the rooms to distribute to
-     */
-    public void distributeRegisteredStudents(long examId, @NotEmpty Set<Long> examRoomIds) {
-        final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
-        final var examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
-
-        final var examUsers = exam.getExamUsers();
-
-        final int numberOfUsableSeats = examRoomsForExam.stream().mapToInt(examRoom -> examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity()).sum();
-
-        if (numberOfUsableSeats < examUsers.size()) {
-            throw new BadRequestAlertException("Not enough seats available in the selected rooms", ENTITY_NAME, "notEnoughExamSeats",
-                    Map.of("numberOfUsableSeats", numberOfUsableSeats, "numberOfExamUsers", examUsers.size()));
-        }
-
-        examRoomExamAssignmentRepository.deleteAllByExamId(examId);
-        for (ExamRoom examRoom : examRoomsForExam) {
-            var examRoomExamAssignment = new ExamRoomExamAssignment();
-            examRoomExamAssignment.setExamRoom(examRoom);
-            examRoomExamAssignment.setExam(exam);
-            examRoomExamAssignmentRepository.save(examRoomExamAssignment);
-        }
-
-        // Now we distribute students to the seats
-        Map<String, List<ExamSeatDTO>> roomNumberToUsableSeatsDefaultLayout = new HashMap<>();
-        for (ExamRoom examRoom : examRoomsForExam) {
-            roomNumberToUsableSeatsDefaultLayout.put(examRoom.getRoomNumber(), examRoomService.getDefaultUsableSeats(examRoom));
-        }
-
-        final var examUsersIterator = examUsers.iterator();
-        roomNumberToUsableSeatsDefaultLayout.forEach((roomNumber, usableSeats) -> usableSeats.stream().takeWhile(ignored -> examUsersIterator.hasNext()).forEach(seat -> {
-            ExamUser nextExamUser = examUsersIterator.next();
-            nextExamUser.setPlannedRoom(roomNumber);
-            nextExamUser.setPlannedSeat(seat.name());
-            exam.addExamUser(nextExamUser);
-        }));
-
-        examUserRepository.saveAll(examUsers);
-        examRepository.save(exam);
     }
 }
