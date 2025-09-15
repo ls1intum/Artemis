@@ -1325,8 +1325,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void shouldReturnCorrectGroupWithCorrectSessions() throws Exception {
             Course course = courseRepository.findById(exampleCourseId).orElseThrow();
-            TutorialGroup group = createAndSaveGroupForTutorialGroupDetailGroupDTOTest(course);
-            TutorialGroupSchedule schedule = createAndSaveScheduleForTutorialGroupDetailGroupDTOTest(group);
+            TutorialGroup group = tutorialGroupUtilService.createAndSaveTutorialGroup(course, "TG 1 Mo 13", tutor1, 15, "Garching");
+            TutorialGroupSchedule schedule = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(1, "10:00:00", "12:00:00",
+                    FIRST_AUGUST_MONDAY_00_00.toLocalDate().toString(), FIFTH_AUGUST_MONDAY_00_00.toLocalDate().toString(), "01.05.13", 1, group);
             List<TutorialGroupSession> sessions = createAndSaveSessionsForTutorialGroupDetailGroupDTOTest(course, group, schedule);
             TutorialGroupSession cancelledSession = sessions.getFirst();
             TutorialGroupSession relocatedSession = sessions.get(1);

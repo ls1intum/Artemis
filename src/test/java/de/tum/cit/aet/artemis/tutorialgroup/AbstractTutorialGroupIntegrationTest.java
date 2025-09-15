@@ -311,22 +311,6 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         return ZonedDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(), hour, 0, 0, 0, ZoneId.of("Europe/Berlin"));
     }
 
-    public TutorialGroup createAndSaveGroupForTutorialGroupDetailGroupDTOTest(Course course) {
-        TutorialGroup group = buildTutorialGroupWithoutSchedule("tutor1");
-        group.setCourse(course);
-        tutorialGroupTestRepository.saveAndFlush(group);
-        return group;
-    }
-
-    public TutorialGroupSchedule createAndSaveScheduleForTutorialGroupDetailGroupDTOTest(TutorialGroup tutorialGroup) {
-        TutorialGroupSchedule schedule = buildExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), FIFTH_AUGUST_MONDAY_00_00.toLocalDate());
-        schedule.setTutorialGroup(tutorialGroup);
-        tutorialGroupScheduleTestRepository.saveAndFlush(schedule);
-        tutorialGroup.setTutorialGroupSchedule(schedule);
-        tutorialGroupTestRepository.saveAndFlush(tutorialGroup);
-        return schedule;
-    }
-
     public List<TutorialGroupSession> createAndSaveSessionsForTutorialGroupDetailGroupDTOTest(Course course, TutorialGroup tutorialGroup, TutorialGroupSchedule schedule) {
         List<TutorialGroupSession> sessions = new ArrayList<>();
         ZonedDateTime firstSessionStart = ZonedDateTime.of(LocalDate.parse(schedule.getValidFromInclusive()), LocalTime.parse(schedule.getStartTime()),
@@ -335,46 +319,33 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
                 ZoneId.of(course.getTimeZone()));
 
         // create cancelled session
-        TutorialGroupSession cancelledSession = createTutorialGroupSession(tutorialGroup, schedule, firstSessionStart, firstSessionEnd, schedule.getLocation(), null,
-                TutorialGroupSessionStatus.CANCELLED);
+        TutorialGroupSession cancelledSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart, firstSessionEnd, schedule.getLocation(), null,
+                TutorialGroupSessionStatus.CANCELLED, tutorialGroup, schedule);
         sessions.add(cancelledSession);
 
         // create relocated session
-        TutorialGroupSession relocatedSession = createTutorialGroupSession(tutorialGroup, schedule, firstSessionStart.plusWeeks(1), firstSessionEnd.plusWeeks(1), "new room", null,
-                TutorialGroupSessionStatus.ACTIVE);
+        TutorialGroupSession relocatedSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(1), firstSessionEnd.plusWeeks(1), "new room", null,
+                TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
         sessions.add(relocatedSession);
 
         // create session with time change
-        TutorialGroupSession changedTimeSession = createTutorialGroupSession(tutorialGroup, schedule, firstSessionStart.plusWeeks(2).plusHours(2),
-                firstSessionEnd.plusWeeks(2).plusHours(2), schedule.getLocation(), null, TutorialGroupSessionStatus.ACTIVE);
+        TutorialGroupSession changedTimeSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(2).plusHours(2),
+                firstSessionEnd.plusWeeks(2).plusHours(2), schedule.getLocation(), null, TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
         sessions.add(changedTimeSession);
 
         // create session with date change
-        TutorialGroupSession changedDateSession = createTutorialGroupSession(tutorialGroup, schedule, firstSessionStart.plusWeeks(3).plusDays(1),
-                firstSessionEnd.plusWeeks(3).plusDays(1), schedule.getLocation(), null, TutorialGroupSessionStatus.ACTIVE);
+        TutorialGroupSession changedDateSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(3).plusDays(1),
+                firstSessionEnd.plusWeeks(3).plusDays(1), schedule.getLocation(), null, TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
         sessions.add(changedDateSession);
 
         // create session with attendance count
-        TutorialGroupSession attendanceCountSession = createTutorialGroupSession(tutorialGroup, schedule, firstSessionStart.plusWeeks(4), firstSessionEnd.plusWeeks(4),
-                schedule.getLocation(), 10, TutorialGroupSessionStatus.ACTIVE);
+        TutorialGroupSession attendanceCountSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(4), firstSessionEnd.plusWeeks(4),
+                schedule.getLocation(), 10, TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
         sessions.add(attendanceCountSession);
 
         tutorialGroupSessionRepository.saveAll(sessions);
 
         return sessions;
-    }
-
-    private TutorialGroupSession createTutorialGroupSession(TutorialGroup group, TutorialGroupSchedule schedule, ZonedDateTime start, ZonedDateTime end, String location,
-            Integer attendanceCount, TutorialGroupSessionStatus status) {
-        TutorialGroupSession session = new TutorialGroupSession();
-        session.setTutorialGroup(group);
-        session.setTutorialGroupSchedule(schedule);
-        session.setStart(start);
-        session.setEnd(end);
-        session.setLocation(location);
-        session.setAttendanceCount(attendanceCount);
-        session.setStatus(status);
-        return session;
     }
 
     // === ASSERTIONS ===
