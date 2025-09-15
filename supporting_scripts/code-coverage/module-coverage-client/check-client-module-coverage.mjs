@@ -71,6 +71,15 @@ const moduleThresholds = {
         functions:  84.80,
         lines:      93.23,
     },
+    hyperion: {
+        // Currently, there are no files under src/main/webapp/app/hyperion/ in this branch,
+        // so thresholds mirror the current effective coverage (no files found → skipped by checker).
+        // Once client-side Hyperion code exists, update these to the measured coverage.
+        statements: 0,
+        branches:   0,
+        functions:  0,
+        lines:      0,
+    },
     iris: {
         statements: 86.99,
         branches:   71.18,
