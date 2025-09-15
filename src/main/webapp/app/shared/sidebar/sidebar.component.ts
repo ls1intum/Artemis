@@ -119,10 +119,7 @@ export class SidebarComponent implements OnDestroy, OnChanges {
         if (this.reEmitNonDistinctSidebarEvents()) {
             pipe = listener;
         } else {
-            pipe = listener.pipe(
-                distinctUntilChanged(),
-                // switchMap(sidebarCardEvent => sidebarCardEvent.onEvent),
-            );
+            pipe = listener.pipe(distinctUntilChanged());
         }
         this.sidebarEventSubscription = pipe.subscribe((itemId) => {
             if (itemId) {
