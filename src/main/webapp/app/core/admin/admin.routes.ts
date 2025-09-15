@@ -51,13 +51,6 @@ const routes: Routes = [
         },
     },
     {
-        path: 'docs',
-        loadComponent: () => import('app/core/admin/docs/docs.component').then((m) => m.DocsComponent),
-        data: {
-            pageTitle: 'global.menu.admin.apidocs',
-        },
-    },
-    {
         path: 'metrics',
         loadComponent: () => import('app/core/admin/metrics/metrics.component').then((m) => m.MetricsComponent),
         data: {
@@ -73,7 +66,7 @@ const routes: Routes = [
     },
     {
         path: 'build-queue',
-        loadComponent: () => import('app/buildagent/build-queue/build-queue.component').then((m) => m.BuildQueueComponent),
+        loadComponent: () => import('app/buildagent/build-queue/build-overview.component').then((m) => m.BuildOverviewComponent),
         data: {
             pageTitle: 'artemisApp.buildQueue.title',
         },

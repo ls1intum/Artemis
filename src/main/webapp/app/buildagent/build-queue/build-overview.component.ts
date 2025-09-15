@@ -3,8 +3,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BuildJob, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
-import { debounceTime, switchMap, take, tap } from 'rxjs/operators';
+import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
+import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { SortingOrder } from 'app/shared/table/pageable-table';
@@ -33,9 +33,9 @@ import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';
 
 @Component({
-    selector: 'jhi-build-queue',
-    templateUrl: './build-queue.component.html',
-    styleUrl: './build-queue.component.scss',
+    selector: 'jhi-build-overview',
+    templateUrl: './build-overview.component.html',
+    styleUrl: './build-overview.component.scss',
     imports: [
         TranslateDirective,
         HelpIconComponent,
@@ -54,10 +54,10 @@ import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/
         SliceNavigatorComponent,
     ],
 })
-export class BuildQueueComponent implements OnInit, OnDestroy {
+export class BuildOverviewComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private websocketService = inject(WebsocketService);
-    private buildQueueService = inject(BuildQueueService);
+    private buildQueueService = inject(BuildOverviewService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
 
@@ -91,6 +91,8 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     finishedBuildJobFilter: FinishedBuildJobFilter = new FinishedBuildJobFilter();
     faFilter = faFilter;
 
+    courseId = 0;
+
     paginationConfig: PaginationConfig = {
         pageSize: ITEMS_PER_PAGE,
         initialPage: 1,
@@ -100,6 +102,8 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
     rawBuildLogsString: string = '';
 
     ngOnInit() {
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        // NOTE: in the server administration, courseId will be parsed as 0, while in course management, it should be a positive integer
         this.loadQueue();
         this.buildDurationInterval = setInterval(() => {
             this.runningBuildJobs = this.updateBuildJobDuration(this.runningBuildJobs);
@@ -143,30 +147,27 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * This method is used to initialize the websocket subscription for the build jobs. It subscribes to the channels for the queued and running build jobs.
      */
     initWebsocketSubscription() {
-        this.route.paramMap.pipe(take(1)).subscribe((params) => {
-            const courseId = Number(params.get('courseId'));
-            if (courseId) {
-                this.websocketService.subscribe(`/topic/courses/${courseId}/queued-jobs`);
-                this.websocketService.subscribe(`/topic/courses/${courseId}/running-jobs`);
-                this.websocketService.receive(`/topic/courses/${courseId}/queued-jobs`).subscribe((queuedBuildJobs) => {
-                    this.queuedBuildJobs = queuedBuildJobs;
-                });
-                this.websocketService.receive(`/topic/courses/${courseId}/running-jobs`).subscribe((runningBuildJobs) => {
-                    this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
-                });
-                this.courseChannels.push(`/topic/courses/${courseId}/queued-jobs`);
-                this.courseChannels.push(`/topic/courses/${courseId}/running-jobs`);
-            } else {
-                this.websocketService.subscribe(`/topic/admin/queued-jobs`);
-                this.websocketService.subscribe(`/topic/admin/running-jobs`);
-                this.websocketService.receive(`/topic/admin/queued-jobs`).subscribe((queuedBuildJobs) => {
-                    this.queuedBuildJobs = queuedBuildJobs;
-                });
-                this.websocketService.receive(`/topic/admin/running-jobs`).subscribe((runningBuildJobs) => {
-                    this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
-                });
-            }
-        });
+        if (this.courseId) {
+            this.websocketService.subscribe(`/topic/courses/${this.courseId}/queued-jobs`);
+            this.websocketService.subscribe(`/topic/courses/${this.courseId}/running-jobs`);
+            this.websocketService.receive(`/topic/courses/${this.courseId}/queued-jobs`).subscribe((queuedBuildJobs) => {
+                this.queuedBuildJobs = queuedBuildJobs;
+            });
+            this.websocketService.receive(`/topic/courses/${this.courseId}/running-jobs`).subscribe((runningBuildJobs) => {
+                this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
+            });
+            this.courseChannels.push(`/topic/courses/${this.courseId}/queued-jobs`);
+            this.courseChannels.push(`/topic/courses/${this.courseId}/running-jobs`);
+        } else {
+            this.websocketService.subscribe(`/topic/admin/queued-jobs`);
+            this.websocketService.subscribe(`/topic/admin/running-jobs`);
+            this.websocketService.receive(`/topic/admin/queued-jobs`).subscribe((queuedBuildJobs) => {
+                this.queuedBuildJobs = queuedBuildJobs;
+            });
+            this.websocketService.receive(`/topic/admin/running-jobs`).subscribe((runningBuildJobs) => {
+                this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
+            });
+        }
     }
 
     /**
@@ -175,24 +176,21 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * wait until the websocket subscription receives the data.
      */
     loadQueue() {
-        this.route.paramMap.pipe(take(1)).subscribe((params) => {
-            const courseId = Number(params.get('courseId'));
-            if (courseId) {
-                this.buildQueueService.getQueuedBuildJobsByCourseId(courseId).subscribe((queuedBuildJobs) => {
-                    this.queuedBuildJobs = queuedBuildJobs;
-                });
-                this.buildQueueService.getRunningBuildJobsByCourseId(courseId).subscribe((runningBuildJobs) => {
-                    this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
-                });
-            } else {
-                this.buildQueueService.getQueuedBuildJobs().subscribe((queuedBuildJobs) => {
-                    this.queuedBuildJobs = queuedBuildJobs;
-                });
-                this.buildQueueService.getRunningBuildJobs().subscribe((runningBuildJobs) => {
-                    this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
-                });
-            }
-        });
+        if (this.courseId) {
+            this.buildQueueService.getQueuedBuildJobsByCourseId(this.courseId).subscribe((queuedBuildJobs) => {
+                this.queuedBuildJobs = queuedBuildJobs;
+            });
+            this.buildQueueService.getRunningBuildJobsByCourseId(this.courseId).subscribe((runningBuildJobs) => {
+                this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
+            });
+        } else {
+            this.buildQueueService.getQueuedBuildJobs().subscribe((queuedBuildJobs) => {
+                this.queuedBuildJobs = queuedBuildJobs;
+            });
+            this.buildQueueService.getRunningBuildJobs().subscribe((runningBuildJobs) => {
+                this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
+            });
+        }
     }
 
     /**
@@ -200,79 +198,63 @@ export class BuildQueueComponent implements OnInit, OnDestroy {
      * @param buildJobId    the id of the build job to cancel
      */
     cancelBuildJob(buildJobId: string) {
-        this.route.paramMap.pipe(take(1)).subscribe((params) => {
-            const courseId = Number(params.get('courseId'));
-            if (courseId) {
-                this.buildQueueService.cancelBuildJobInCourse(courseId, buildJobId).subscribe();
-            } else {
-                this.buildQueueService.cancelBuildJob(buildJobId).subscribe();
-            }
-        });
+        if (this.courseId) {
+            this.buildQueueService.cancelBuildJobInCourse(this.courseId, buildJobId).subscribe();
+        } else {
+            this.buildQueueService.cancelBuildJob(buildJobId).subscribe();
+        }
     }
 
     /**
      * Cancel all queued build jobs
      */
     cancelAllQueuedBuildJobs() {
-        this.route.paramMap.pipe(take(1)).subscribe((params) => {
-            const courseId = Number(params.get('courseId'));
-            if (courseId) {
-                this.buildQueueService.cancelAllQueuedBuildJobsInCourse(courseId).subscribe();
-            } else {
-                this.buildQueueService.cancelAllQueuedBuildJobs().subscribe();
-            }
-        });
+        if (this.courseId) {
+            this.buildQueueService.cancelAllQueuedBuildJobsInCourse(this.courseId).subscribe();
+        } else {
+            this.buildQueueService.cancelAllQueuedBuildJobs().subscribe();
+        }
     }
 
     /**
      * Cancel all running build jobs
      */
     cancelAllRunningBuildJobs() {
-        this.route.paramMap.pipe(take(1)).subscribe((params) => {
-            const courseId = Number(params.get('courseId'));
-            if (courseId) {
-                this.buildQueueService.cancelAllRunningBuildJobsInCourse(courseId).subscribe();
-            } else {
-                this.buildQueueService.cancelAllRunningBuildJobs().subscribe();
-            }
-        });
+        if (this.courseId) {
+            this.buildQueueService.cancelAllRunningBuildJobsInCourse(this.courseId).subscribe();
+        } else {
+            this.buildQueueService.cancelAllRunningBuildJobs().subscribe();
+        }
     }
 
     /**
      * fetch the finished build jobs from the server by creating observable
      */
     fetchFinishedBuildJobs() {
-        return this.route.paramMap.pipe(
-            take(1),
-            tap(() => (this.isLoading = true)),
-            switchMap((params) => {
-                const courseId = Number(params.get('courseId'));
-                if (courseId) {
-                    return this.buildQueueService.getFinishedBuildJobsByCourseId(
-                        courseId,
-                        {
-                            page: this.page,
-                            pageSize: this.itemsPerPage,
-                            sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
-                            sortedColumn: this.predicate,
-                            searchTerm: this.searchTerm || '',
-                        },
-                        this.finishedBuildJobFilter,
-                    );
-                } else {
-                    return this.buildQueueService.getFinishedBuildJobs(
-                        {
-                            page: this.page,
-                            pageSize: this.itemsPerPage,
-                            sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
-                            sortedColumn: this.predicate,
-                            searchTerm: this.searchTerm || '',
-                        },
-                        this.finishedBuildJobFilter,
-                    );
-                }
-            }),
-        );
+        if (this.courseId) {
+            return this.buildQueueService.getFinishedBuildJobsByCourseId(
+                this.courseId,
+                {
+                    page: this.page,
+                    pageSize: this.itemsPerPage,
+                    sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
+                    sortedColumn: this.predicate,
+                    searchTerm: this.searchTerm || '',
+                },
+                this.finishedBuildJobFilter,
+            );
+        } else {
+            return this.buildQueueService.getFinishedBuildJobs(
+                {
+                    page: this.page,
+                    pageSize: this.itemsPerPage,
+                    sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
+                    sortedColumn: this.predicate,
+                    searchTerm: this.searchTerm || '',
+                },
+                this.finishedBuildJobFilter,
+            );
+        }
     }
 
     /**
