@@ -51,13 +51,6 @@ const routes: Routes = [
         },
     },
     {
-        path: 'docs',
-        loadComponent: () => import('app/core/admin/docs/docs.component').then((m) => m.DocsComponent),
-        data: {
-            pageTitle: 'global.menu.admin.apidocs',
-        },
-    },
-    {
         path: 'metrics',
         loadComponent: () => import('app/core/admin/metrics/metrics.component').then((m) => m.MetricsComponent),
         data: {
