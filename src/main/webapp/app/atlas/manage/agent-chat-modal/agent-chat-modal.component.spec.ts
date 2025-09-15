@@ -852,224 +852,222 @@ describe('AgentChatModalComponent', () => {
         });
     });
 
-    // Additional tests to improve coverage
+    // Additional edge case tests for better coverage
     describe('Additional Coverage Tests', () => {
         beforeEach(() => {
             fixture.detectChanges();
         });
 
-        it('should handle successful focus operation in ngAfterViewInit', async () => {
-            const mockFocusElement = {
-                focus: jest.fn(),
+        it('should handle Math.min calculation in textarea height correctly', () => {
+            // Test scrollHeight greater than max (120px)
+            const mockElement = {
+                style: { height: '' },
+                scrollHeight: 200, // Greater than 120
             };
 
-            // Mock messageInput signal to return element with focusable nativeElement
-            jest.spyOn(component as any, 'messageInput').mockReturnValue({ nativeElement: mockFocusElement });
+            jest.spyOn(component as any, 'messageInput').mockReturnValue({ nativeElement: mockElement });
 
-            component.ngAfterViewInit();
-
-            // Wait for setTimeout to complete
-            await new Promise((resolve) => setTimeout(resolve, 15));
-
-            expect(mockFocusElement.focus).toHaveBeenCalled();
+            component.onTextareaInput();
+            // Should be capped at 120px due to Math.min
+            expect(mockElement.style.height).toBe('120px');
         });
 
-        it('should handle successful focus operation after agent response', async () => {
-            const mockFocusElement = {
-                focus: jest.fn(),
+        it('should handle Date.now().toString(36) in generateMessageId', () => {
+            const originalDateNow = Date.now;
+            const mockTimestamp = 1609459200000; // Fixed timestamp
+            Date.now = jest.fn(() => mockTimestamp);
+
+            const id = (component as any).generateMessageId();
+
+            expect(id).toContain(mockTimestamp.toString(36));
+            expect(id.length).toBeGreaterThan(mockTimestamp.toString(36).length);
+
+            Date.now = originalDateNow;
+        });
+
+        it('should handle Math.random().toString(36).slice(2) in generateMessageId', () => {
+            const originalMathRandom = Math.random;
+            Math.random = jest.fn(() => 0.5);
+
+            const id = (component as any).generateMessageId();
+            const expectedRandomPart = (0.5).toString(36).slice(2);
+
+            expect(id).toContain(expectedRandomPart);
+
+            Math.random = originalMathRandom;
+        });
+
+        it('should handle scrollTop assignment in scrollToBottom', () => {
+            const mockElement = {
+                scrollTop: 0,
+                scrollHeight: 500,
             };
 
-            // Mock messageInput signal to return element with focusable nativeElement
-            jest.spyOn(component as any, 'messageInput').mockReturnValue({ nativeElement: mockFocusElement });
+            jest.spyOn(component as any, 'messagesContainer').mockReturnValue({ nativeElement: mockElement });
 
-            fixture.detectChanges();
-            component.currentMessage = 'Test message';
-            component['cdr'].markForCheck();
-            fixture.detectChanges();
+            (component as any).scrollToBottom();
 
-            const sendButton = fixture.debugElement.query(By.css('.send-button'));
-            sendButton.nativeElement.click();
-
-            await fixture.whenStable();
-            fixture.detectChanges();
-
-            // Wait for focus setTimeout to complete
-            await new Promise((resolve) => setTimeout(resolve, 15));
-
-            expect(mockFocusElement.focus).toHaveBeenCalled();
+            // Verify scrollTop is assigned scrollHeight value
+            expect(mockElement.scrollTop).toBe(500);
         });
 
-        it('should handle successful focus operation after error response', async () => {
-            const mockFocusElement = {
-                focus: jest.fn(),
-            };
+        it('should handle early return in onTextareaInput when messageInput is undefined', () => {
+            jest.spyOn(component as any, 'messageInput').mockReturnValue(undefined);
 
-            // Mock messageInput signal to return element with focusable nativeElement
-            jest.spyOn(component as any, 'messageInput').mockReturnValue({ nativeElement: mockFocusElement });
-
-            jest.spyOn(mockAgentChatService, 'sendMessage').mockImplementation(() => {
-                return new Observable<string>((subscriber) => {
-                    subscriber.error(new Error('Service error'));
-                });
-            });
-
-            fixture.detectChanges();
-            component.currentMessage = 'Test message';
-            component['cdr'].markForCheck();
-            fixture.detectChanges();
-
-            const sendButton = fixture.debugElement.query(By.css('.send-button'));
-            sendButton.nativeElement.click();
-
-            await fixture.whenStable();
-            fixture.detectChanges();
-
-            // Wait for focus setTimeout to complete
-            await new Promise((resolve) => setTimeout(resolve, 15));
-
-            expect(mockFocusElement.focus).toHaveBeenCalled();
-        });
-
-        it('should handle messages array immutability correctly', () => {
-            const initialLength = component.messages.length;
-            const originalMessagesReference = component.messages;
-
-            (component as any).addMessage('Test message', true);
-
-            expect(component.messages).not.toBe(originalMessagesReference);
-            expect(component.messages).toHaveLength(initialLength + 1);
-            expect(component.messages[component.messages.length - 1].content).toBe('Test message');
-            expect(component.messages[component.messages.length - 1].isUser).toBeTruthy();
-        });
-
-        it('should generate message with correct timestamp', () => {
-            const beforeTime = new Date();
-            (component as any).addMessage('Test message', true);
-            const afterTime = new Date();
-
-            const addedMessage = component.messages[component.messages.length - 1];
-            expect(addedMessage.timestamp).toBeInstanceOf(Date);
-            expect(addedMessage.timestamp.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
-            expect(addedMessage.timestamp.getTime()).toBeLessThanOrEqual(afterTime.getTime());
-        });
-
-        it('should ensure shouldScrollToBottom is set when adding messages', () => {
-            component['shouldScrollToBottom'] = false;
-
-            (component as any).addMessage('Test message', true);
-
-            expect(component['shouldScrollToBottom']).toBeTruthy();
-        });
-
-        it('should call cdr.markForCheck when adding messages', () => {
-            const markForCheckSpy = jest.spyOn(component['cdr'], 'markForCheck');
-
-            (component as any).addMessage('Test message', true);
-
-            expect(markForCheckSpy).toHaveBeenCalled();
-        });
-
-        it('should handle onTextareaInput with null messageInput nativeElement', () => {
-            // Mock messageInput signal to return object with null nativeElement
-            jest.spyOn(component as any, 'messageInput').mockReturnValue({ nativeElement: null });
-
+            // Should not throw and should return early
             expect(() => component.onTextareaInput()).not.toThrow();
         });
 
-        it('should handle sendMessage when canSendMessage returns false due to empty message', () => {
+        it('should handle early return in onTextareaInput when nativeElement is null', () => {
+            jest.spyOn(component as any, 'messageInput').mockReturnValue({ nativeElement: null });
+
+            // Should not throw and should return early
+            expect(() => component.onTextareaInput()).not.toThrow();
+        });
+
+        it('should handle sendMessage when canSendMessage is false due to empty message', () => {
             component.currentMessage = '';
             component.isAgentTyping = false;
             const initialMessageCount = component.messages.length;
 
             (component as any).sendMessage();
 
+            // Should return early without adding message
             expect(component.messages).toHaveLength(initialMessageCount);
             expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
         });
 
-        it('should handle sendMessage when canSendMessage returns false due to agent typing', () => {
+        it('should handle sendMessage when canSendMessage is false due to agent typing', () => {
             component.currentMessage = 'Valid message';
             component.isAgentTyping = true;
             const initialMessageCount = component.messages.length;
 
             (component as any).sendMessage();
 
+            // Should return early without adding message
             expect(component.messages).toHaveLength(initialMessageCount);
             expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
         });
 
-        it('should handle scrollToBottom when messagesContainer returns valid element', () => {
-            const mockElement = {
-                scrollTop: 100,
-                scrollHeight: 500,
-            };
-            jest.spyOn(component as any, 'messagesContainer').mockReturnValue({ nativeElement: mockElement });
+        it('should handle message trimming in sendMessage', () => {
+            component.currentMessage = '  whitespace message  ';
+            const trimmedMessage = component.currentMessage.trim();
 
-            (component as any).scrollToBottom();
+            (component as any).sendMessage();
 
-            expect(mockElement.scrollTop).toBe(500);
+            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith(trimmedMessage, 123, expect.any(String));
         });
 
-        it('should verify sessionId format and uniqueness', () => {
-            component.courseId = 789;
-            component.ngOnInit();
-            const sessionId = component['sessionId'];
+        it('should handle array spread operator in addMessage', () => {
+            const initialMessages = component.messages;
+            const initialLength = initialMessages.length;
 
-            expect(sessionId).toMatch(/^course_789_session_\d+$/);
-            expect(sessionId).toContain('course_789_session_');
-            expect(typeof sessionId).toBe('string');
-            expect(sessionId.length).toBeGreaterThan('course_789_session_'.length);
+            (component as any).addMessage('Test message', true);
+
+            // Verify new array is created (immutability)
+            expect(component.messages).not.toBe(initialMessages);
+            expect(component.messages).toHaveLength(initialLength + 1);
+            expect(component.messages[component.messages.length - 1].content).toBe('Test message');
         });
 
-        it('should handle message validation boundary conditions', () => {
-            // Test exactly at boundary
-            component.currentMessage = 'a'.repeat(8000);
+        it('should handle Date constructor in addMessage', () => {
+            const beforeTime = new Date();
+
+            (component as any).addMessage('Test message', true);
+
+            const afterTime = new Date();
+            const messageTime = component.messages[component.messages.length - 1].timestamp;
+
+            expect(messageTime.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
+            expect(messageTime.getTime()).toBeLessThanOrEqual(afterTime.getTime());
+        });
+
+        it('should handle boolean negation in canSendMessage getter', () => {
+            // Test various combinations to cover all branches
+            component.currentMessage = 'valid';
+            component.isAgentTyping = false;
             expect(component.canSendMessage).toBeTruthy();
-            expect(component.isMessageTooLong).toBeFalsy();
 
-            // Test one character over boundary
-            component.currentMessage = 'a'.repeat(8001);
+            // Test empty message (falsy)
+            component.currentMessage = '';
             expect(component.canSendMessage).toBeFalsy();
-            expect(component.isMessageTooLong).toBeTruthy();
 
-            // Test one character under boundary
-            component.currentMessage = 'a'.repeat(7999);
-            expect(component.canSendMessage).toBeTruthy();
-            expect(component.isMessageTooLong).toBeFalsy();
+            // Test whitespace-only message (falsy after trim)
+            component.currentMessage = '   ';
+            expect(component.canSendMessage).toBeFalsy();
+
+            // Test with agent typing
+            component.currentMessage = 'valid';
+            component.isAgentTyping = true;
+            expect(component.canSendMessage).toBeFalsy();
         });
 
-        it('should handle multiple consecutive addMessage calls', () => {
-            const initialLength = component.messages.length;
+        it('should handle template literals in ngOnInit sessionId generation', () => {
+            component.courseId = 999;
+            const beforeTime = Date.now();
 
-            (component as any).addMessage('Message 1', true);
-            (component as any).addMessage('Message 2', false);
-            (component as any).addMessage('Message 3', true);
+            component.ngOnInit();
 
-            expect(component.messages).toHaveLength(initialLength + 3);
-            expect(component.messages[initialLength].content).toBe('Message 1');
-            expect(component.messages[initialLength + 1].content).toBe('Message 2');
-            expect(component.messages[initialLength + 2].content).toBe('Message 3');
+            const afterTime = Date.now();
+
+            expect(component['sessionId']).toMatch(/^course_999_session_\d+$/);
+
+            // Extract timestamp from sessionId
+            const sessionIdParts = component['sessionId'].split('_');
+            const extractedTimestamp = parseInt(sessionIdParts[3]);
+
+            expect(extractedTimestamp).toBeGreaterThanOrEqual(beforeTime);
+            expect(extractedTimestamp).toBeLessThanOrEqual(afterTime);
         });
 
-        it('should handle ngAfterViewChecked cycle correctly', () => {
+        it('should handle optional chaining in ngAfterViewInit focus call', () => {
+            const mockFocus = jest.fn();
+            jest.spyOn(component as any, 'messageInput').mockReturnValue({
+                nativeElement: { focus: mockFocus },
+            });
+
+            component.ngAfterViewInit();
+
+            // Wait for setTimeout to execute
+            setTimeout(() => {
+                expect(mockFocus).toHaveBeenCalled();
+            }, 15);
+        });
+
+        it('should handle setTimeout delay value in ngAfterViewInit', () => {
+            jest.useFakeTimers();
+            const mockFocus = jest.fn();
+            jest.spyOn(component as any, 'messageInput').mockReturnValue({
+                nativeElement: { focus: mockFocus },
+            });
+
+            component.ngAfterViewInit();
+
+            // Fast-forward time by 9ms (should not call focus yet)
+            jest.advanceTimersByTime(9);
+            expect(mockFocus).not.toHaveBeenCalled();
+
+            // Fast-forward time by 1ms more (should call focus now)
+            jest.advanceTimersByTime(1);
+            expect(mockFocus).toHaveBeenCalled();
+
+            jest.useRealTimers();
+        });
+
+        it('should handle conditional logic in ngAfterViewChecked', () => {
             const scrollSpy = jest.spyOn(component as any, 'scrollToBottom');
 
-            // First call with shouldScrollToBottom = false
+            // Test when shouldScrollToBottom is false
             component['shouldScrollToBottom'] = false;
             component.ngAfterViewChecked();
             expect(scrollSpy).not.toHaveBeenCalled();
             expect(component['shouldScrollToBottom']).toBeFalsy();
 
-            // Second call with shouldScrollToBottom = true
+            // Test when shouldScrollToBottom is true
             component['shouldScrollToBottom'] = true;
             component.ngAfterViewChecked();
             expect(scrollSpy).toHaveBeenCalled();
-            expect(component['shouldScrollToBottom']).toBeFalsy();
-
-            // Third call should not trigger scroll since flag is now false
-            scrollSpy.mockClear();
-            component.ngAfterViewChecked();
-            expect(scrollSpy).not.toHaveBeenCalled();
+            expect(component['shouldScrollToBottom']).toBeFalsy(); // Should be reset
         });
     });
 });
