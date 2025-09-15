@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { NewTutorialGroupDetailComponent } from './new-tutorial-group-detail.component';
+import { CourseTutorialGroupDetailComponent } from './course-tutorial-group-detail.component';
 
 describe('NewTutorialGroupDetail', () => {
-    let component: NewTutorialGroupDetailComponent;
-    let fixture: ComponentFixture<NewTutorialGroupDetailComponent>;
+    let component: CourseTutorialGroupDetailComponent;
+    let fixture: ComponentFixture<CourseTutorialGroupDetailComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [NewTutorialGroupDetailComponent],
+            imports: [CourseTutorialGroupDetailComponent],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(NewTutorialGroupDetailComponent);
+        fixture = TestBed.createComponent(CourseTutorialGroupDetailComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });

@@ -21,9 +21,9 @@ import { IconCardComponent } from 'app/tutorialgroup/shared/icon-card/icon-card.
 import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
-    selector: 'jhi-tutorial-group-detail',
-    templateUrl: './tutorial-group-detail.component.html',
-    styleUrls: ['./tutorial-group-detail.component.scss'],
+    selector: 'jhi-management-tutorial-group-detail',
+    templateUrl: './management-tutorial-group-detail.component.html',
+    styleUrls: ['./management-tutorial-group-detail.component.scss'],
     imports: [
         NgTemplateOutlet,
         IconCardComponent,
@@ -38,7 +38,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
         ArtemisTranslatePipe,
     ],
 })
-export class TutorialGroupDetailComponent implements OnChanges {
+export class ManagementTutorialGroupDetailComponent implements OnChanges {
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     private artemisMarkdownService = inject(ArtemisMarkdownService);

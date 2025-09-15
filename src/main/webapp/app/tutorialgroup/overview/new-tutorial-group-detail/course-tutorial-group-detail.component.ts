@@ -36,7 +36,7 @@ interface SessionData {
 type ListOption = 'all-sessions' | 'future-sessions';
 
 @Component({
-    selector: 'jhi-new-tutorial-group-detail',
+    selector: 'jhi-course-tutorial-group-detail',
     imports: [
         ProfilePictureComponent,
         FaIconComponent,
@@ -50,10 +50,10 @@ type ListOption = 'all-sessions' | 'future-sessions';
         NgClass,
         RouterLink,
     ],
-    templateUrl: './new-tutorial-group-detail.component.html',
-    styleUrl: './new-tutorial-group-detail.component.scss',
+    templateUrl: './course-tutorial-group-detail.component.html',
+    styleUrl: './course-tutorial-group-detail.component.scss',
 })
-export class NewTutorialGroupDetailComponent {
+export class CourseTutorialGroupDetailComponent {
     private translateService = inject(TranslateService);
     private oneToOneChatService = inject(OneToOneChatService);
     private alertService = inject(AlertService);

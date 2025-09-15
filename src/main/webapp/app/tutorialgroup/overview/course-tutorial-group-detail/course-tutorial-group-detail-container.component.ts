@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { NgClass } from '@angular/common';
 import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
@@ -11,16 +10,15 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { AsyncPipe } from '@angular/common';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { TutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
-import { NewTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/new-tutorial-group-detail/new-tutorial-group-detail.component';
+import { CourseTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/new-tutorial-group-detail/course-tutorial-group-detail.component';
 
 @Component({
-    selector: 'jhi-course-tutorial-group-detail',
-    templateUrl: './course-tutorial-group-detail.component.html',
-    styleUrls: ['./course-tutorial-group-detail.component.scss'],
-    imports: [LoadingIndicatorContainerComponent, NgClass, NewTutorialGroupDetailComponent, TutorialGroupDetailComponent, AsyncPipe],
+    selector: 'jhi-course-tutorial-group-detail-container',
+    templateUrl: './course-tutorial-group-detail-container.component.html',
+    styleUrls: ['./course-tutorial-group-detail-container.component.scss'],
+    imports: [LoadingIndicatorContainerComponent, CourseTutorialGroupDetailComponent, AsyncPipe],
 })
-export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
+export class CourseTutorialGroupDetailContainerComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private tutorialGroupService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);

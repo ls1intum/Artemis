@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail.component';
+import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail-container.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -19,8 +19,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('CourseTutorialGroupDetailComponent', () => {
-    let fixture: ComponentFixture<CourseTutorialGroupDetailComponent>;
-    let component: CourseTutorialGroupDetailComponent;
+    let fixture: ComponentFixture<CourseTutorialGroupDetailContainerComponent>;
+    let component: CourseTutorialGroupDetailContainerComponent;
     let tutorialGroupService: TutorialGroupsService;
     let courseManagementService: CourseManagementService;
     let tutorialGroupOfResponse: TutorialGroup;
@@ -47,7 +47,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(CourseTutorialGroupDetailComponent);
+                fixture = TestBed.createComponent(CourseTutorialGroupDetailContainerComponent);
                 component = fixture.componentInstance;
                 tutorialGroupService = TestBed.inject(TutorialGroupsService);
                 courseManagementService = TestBed.inject(CourseManagementService);

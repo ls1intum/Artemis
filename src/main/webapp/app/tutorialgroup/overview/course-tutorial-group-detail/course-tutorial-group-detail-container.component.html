@@ -1,7 +1,7 @@
 <jhi-loading-indicator-container [isLoading]="(isLoading$ | async) ?? false">
     @if (tutorialGroup && course) {
         <div class="p-3 scrollable-content">
-            <jhi-new-tutorial-group-detail [tutorialGroup]="tutorialGroup" [course]="course" />
+            <jhi-course-tutorial-group-detail [tutorialGroup]="tutorialGroup" [course]="course" />
             <!--
             <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup" [course]="course" />
             -->
