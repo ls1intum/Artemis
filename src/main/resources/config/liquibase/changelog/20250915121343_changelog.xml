@@ -3,7 +3,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20250815184339-create-separate-participations-for-quiz-practice-submissions"
+    <changeSet id="20250915121343-create-separate-participations-for-quiz-practice-submissions"
                author="KonstantinKissel">
         <sql dbms="postgresql">
             INSERT INTO participation (discriminator, student_id, exercise_id, initialization_state,
