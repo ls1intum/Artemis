@@ -271,27 +271,41 @@
                     "averageAttendanceCardTitle": "Auslastung",
                     "nextSessionCardTitle": "Nächste Session"
                 },
-                "language": "Sprache",
-                "capacity": "Kapazität",
-                "mode": "Modus",
-                "campus": "Campus",
-                "status": "Status",
+                "language": "Sprache:",
+                "capacity": "Kapazität:",
+                "mode": "Modus:",
+                "campus": "Campus:",
+                "status": "Status:",
                 "statusChipLabel": {
                     "regular": "Regulär",
                     "cancelled": "Abgesagt",
                     "rescheduled": "Verschoben",
                     "relocated": "Raumänderung"
                 },
-                "date": "Datum",
-                "time": "Uhrzeit",
-                "location": "Ort",
+                "date": "Datum:",
+                "time": "Uhrzeit:",
+                "location": "Ort:",
                 "title": "Übungsgruppen-Details",
                 "teachingAssistantNotSet": "Tutor:in nicht gesetzt",
                 "capacityNotSet": "Kapazität nicht eingestellt",
                 "campusNotSet": "Campus nicht gesetzt",
                 "additionalInformationNotSet": "Keine zusätzlichen Informationen festgelegt",
                 "scheduleNotSet": "Kein Sitzungsplan festgelegt",
-                "sessionsNotFound": "Keine Sitzungen gefunden"
+                "sessionsNotFound": "Keine Sitzungen gefunden",
+                "sessionsListTitle": "Sessions",
+                "sessionListOptionLabel": {
+                    "allSessions": "Alle",
+                    "futureSessions": "Zukünftige"
+                },
+                "tutorChatLinkLabel": "Tutor Chat",
+                "groupChannelLinkLabel": "Gruppen Channel",
+                "sessionTableColumnTitle": {
+                    "date": "Datum",
+                    "time": "Uhrzeit",
+                    "location": "Ort",
+                    "attendance": "Teilnehmerzahl",
+                    "status": "Status"
+                }
             },
             "tutorialFreePeriodsManagement": {
                 "explanation": "Definiere kursweite Tage, an denen keine Übungsgruppen stattfinden sollen. Dies kann verwendet werden, um Feiertage oder andere Tage zu definieren, an denen keine Übungsgruppen stattfinden sollen.",
