@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,13 +11,12 @@ import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
-import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
@@ -38,60 +36,13 @@ public class QuizQuestionProgressService {
     }
 
     /**
-     * Fetch the necessary data for the quiz question progress from the quiz exercise and submission
-     * Set the progress data for each answered question
-     *
-     * @param quizExercise   The quiz exercise containing the questions
-     * @param quizSubmission The quiz submission containing the user's answers
-     * @param userId         The ID of the user who answered the questions
-     */
-    public void retrieveProgressFromResultAndSubmission(QuizExercise quizExercise, QuizSubmission quizSubmission, Long userId) {
-        ZonedDateTime lastAnsweredAt = quizSubmission.getSubmissionDate();
-        Map<QuizQuestion, QuizQuestionProgressData> answeredQuestions = new HashMap<>();
-        Set<SubmittedAnswer> answers = quizSubmission.getSubmittedAnswers();
-        Map<Long, QuizQuestion> questionMap = quizExercise.getQuizQuestions().stream().collect(Collectors.toMap(QuizQuestion::getId, q -> q));
-
-        for (SubmittedAnswer answer : answers) {
-            QuizQuestion question = questionMap.get(answer.getQuizQuestion().getId());
-            if (question == null) {
-                continue;
-            }
-            QuizQuestionProgressData data = processQuestionProgress(question, answer, quizSubmission, userId);
-            answeredQuestions.put(question, data);
-        }
-        updateProgress(answeredQuestions, lastAnsweredAt, userId);
-    }
-
-    /**
-     * Processes the progress for a single quiz question: retrieves existing progress if available,
-     * calculates the score, adds a new attempt, and updates all relevant fields.
-     *
-     * @param question       The quiz question
-     * @param answer         The submitted answer
-     * @param quizSubmission The entire quiz submission
-     * @param userId         The ID of the user
-     * @return The updated progress data object for the question
-     */
-    private QuizQuestionProgressData processQuestionProgress(QuizQuestion question, SubmittedAnswer answer, QuizSubmission quizSubmission, Long userId) {
-        QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(null);
-        QuizQuestionProgressData data = existingProgress != null ? existingProgress.getProgressJson() : new QuizQuestionProgressData();
-
-        double score = question.scoreForAnswer(answer) / question.getPoints();
-        updateProgressWithNewAttempt(data, score, quizSubmission.getSubmissionDate());
-
-        updateProgressCalculations(data, score, existingProgress);
-
-        return data;
-    }
-
-    /**
      * Adds a new attempt with the current score and answer time to the progress data.
      *
      * @param data       The progress data object for the question
      * @param score      The achieved score for the question
      * @param answeredAt The time when the question was answered
      */
-    private void updateProgressWithNewAttempt(QuizQuestionProgressData data, double score, ZonedDateTime answeredAt) {
+    public void updateProgressWithNewAttempt(QuizQuestionProgressData data, double score, ZonedDateTime answeredAt) {
         QuizQuestionProgressData.Attempt attempt = new QuizQuestionProgressData.Attempt();
         attempt.setScore(score);
         attempt.setAnsweredAt(answeredAt);
@@ -105,8 +56,9 @@ public class QuizQuestionProgressService {
      * @param data             The progress data object for the question
      * @param score            The achieved score for the question
      * @param existingProgress The previous progress (can be null)
+     * @param answeredAt       The time when the question was answered
      */
-    private void updateProgressCalculations(QuizQuestionProgressData data, double score, QuizQuestionProgress existingProgress) {
+    public void updateProgressCalculations(QuizQuestionProgressData data, double score, QuizQuestionProgress existingProgress, ZonedDateTime answeredAt) {
         int repetition = calculateRepetition(score, data);
         data.setRepetition(repetition);
 
@@ -114,7 +66,7 @@ public class QuizQuestionProgressService {
         int prevInterval = 1;
         int prevSessionCount = 0;
 
-        if (existingProgress != null) {
+        if (existingProgress != null && existingProgress.getProgressJson() != null) {
             QuizQuestionProgressData prevData = existingProgress.getProgressJson();
             prevEasinessFactor = prevData.getEasinessFactor();
             prevInterval = prevData.getInterval();
@@ -123,57 +75,40 @@ public class QuizQuestionProgressService {
 
         double easinessFactor = calculateEasinessFactor(score, prevEasinessFactor);
         data.setEasinessFactor(easinessFactor);
-        int interval = calculateInterval(easinessFactor, prevInterval, repetition);
-        data.setInterval(interval);
         int sessionCount = prevSessionCount + 1;
         data.setSessionCount(sessionCount);
-
-        data.setPriority(calculatePriority(sessionCount, interval, score));
+        int interval = calculateInterval(easinessFactor, prevInterval, repetition);
+        data.setInterval(interval);
+        data.setDueDate(answeredAt.plusDays(interval));
         data.setBox(calculateBox(interval));
+        data.setPriority(calculatePriority(sessionCount, interval, score));
     }
 
     /**
-     * The function updates the progress of quiz questions and save it to the database
-     *
-     * @param answeredQuestions Set of quiz questions that were answered
-     * @param lastAnsweredAt    Time when the question was last answered
-     * @param userId            The ID of the user for the participation
-     */
-    public void updateProgress(Map<QuizQuestion, QuizQuestionProgressData> answeredQuestions, ZonedDateTime lastAnsweredAt, Long userId) {
-        Set<Long> questionIds = answeredQuestions.keySet().stream().map(QuizQuestion::getId).collect(Collectors.toSet());
-        Set<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, questionIds);
-        Map<Long, QuizQuestionProgress> progressMap = progressList.stream().collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> progress));
-
-        List<QuizQuestionProgress> progressToSave = answeredQuestions.entrySet().stream().map(entry -> {
-            QuizQuestion question = entry.getKey();
-            QuizQuestionProgressData data = entry.getValue();
-            QuizQuestionProgress progress = progressMap.getOrDefault(question.getId(), new QuizQuestionProgress());
-            progress.setUserId(userId);
-            progress.setQuizQuestionId(question.getId());
-            progress.setProgressJson(data);
-            progress.setLastAnsweredAt(lastAnsweredAt);
-            return progress;
-        }).toList();
-
-        quizQuestionProgressRepository.saveAll(progressToSave);
-    }
-
-    /**
-     * Get the sorted List of 10 quiz questions based on their priority
+     * Get the sorted List of 10 quiz questions based on their due date
      *
      * @param courseId ID of the course for which the quiz questions are to be fetched
      * @param userId   ID of the user for whom the quiz questions are to be fetched
-     * @return A list of 10 quiz questions sorted by priority
+     * @return A list of 10 quiz questions sorted by due date
      */
     public List<QuizQuestion> getQuestionsForSession(Long courseId, Long userId) {
         Set<QuizQuestion> allQuestions = quizQuestionRepository.findAllQuizQuestionsByCourseId(courseId);
         Set<Long> questionIds = allQuestions.stream().map(QuizQuestion::getId).collect(Collectors.toSet());
         Set<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, questionIds);
-        Map<Long, Integer> priorityMap = progressList.stream()
-                .collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> progress.getProgressJson().getPriority()));
-        List<QuizQuestion> selectedQuestions = allQuestions.stream().sorted(Comparator.comparingInt(q -> priorityMap.getOrDefault(q.getId(), 0))).limit(10).toList();
 
-        return selectedQuestions;
+        Map<Long, ZonedDateTime> dueDateMap = progressList.stream().collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> {
+            QuizQuestionProgressData data = progress.getProgressJson();
+            return (data != null && data.getDueDate() != null) ? data.getDueDate() : ZonedDateTime.now();
+        }));
+
+        ZonedDateTime now = ZonedDateTime.now();
+
+        List<QuizQuestion> dueQuestions = allQuestions.stream().filter(q -> {
+            ZonedDateTime dueDate = dueDateMap.getOrDefault(q.getId(), now);
+            return !dueDate.toLocalDate().isAfter(now.toLocalDate());
+        }).sorted(Comparator.comparing(q -> dueDateMap.getOrDefault(q.getId(), now))).limit(10).toList();
+
+        return dueQuestions;
     }
 
     /**
@@ -223,7 +158,10 @@ public class QuizQuestionProgressService {
      * @return The interval to determine the next session in which the question should be repeated
      */
     public int calculateInterval(double easinessFactor, int previousInterval, int repetition) {
-        if (repetition <= 1) {
+        if (repetition < 1) {
+            return 0;
+        }
+        if (repetition == 1) {
             return 1;
         }
         if (repetition == 2) {
@@ -261,7 +199,7 @@ public class QuizQuestionProgressService {
      * @return The box number for the question, which is used to determine the learning progress of the student
      */
     public int calculateBox(int interval) {
-        if (interval == 1) {
+        if (interval <= 1) {
             return 1;
         }
         else if (interval == 2) {
@@ -289,4 +227,58 @@ public class QuizQuestionProgressService {
     public boolean questionsAvailableForTraining(Long courseId) {
         return quizQuestionRepository.areQuizQuestionsAvailableForPractice(courseId);
     }
+
+    /**
+     * saves the progress of a quiz question in the training mode
+     *
+     * @param question   The quiz question for which the progress is to be saved
+     * @param userId     The id of the user
+     * @param answer     The submitted answer for the question
+     * @param answeredAt The time when the question was answered
+     */
+    public void saveProgressFromTraining(QuizQuestion question, Long userId, SubmittedAnswer answer, ZonedDateTime answeredAt) {
+        QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(new QuizQuestionProgress());
+        QuizQuestionProgressData data = existingProgress.getProgressJson() != null ? existingProgress.getProgressJson() : new QuizQuestionProgressData();
+
+        ZonedDateTime dueDate = data.getDueDate();
+        if (dueDate == null || !dueDate.isAfter(answeredAt)) {
+            existingProgress.setQuizQuestionId(question.getId());
+            existingProgress.setUserId(userId);
+            double score = question.getPoints() > 0 ? answer.getScoreInPoints() / question.getPoints() : 0.0;
+            updateProgressWithNewAttempt(data, score, answeredAt);
+            updateProgressCalculations(data, score, existingProgress, answeredAt);
+            existingProgress.setProgressJson(data);
+            existingProgress.setLastAnsweredAt(answeredAt);
+            try {
+                quizQuestionProgressRepository.save(existingProgress);
+            }
+            catch (DataIntegrityViolationException e) {
+                updateExistingProgress(userId, question, data, answeredAt);
+            }
+        }
+    }
+
+    /**
+     * Updates the existing progress entry for a given user and quiz question.
+     * If a DataIntegrityViolationException occurs during the update, an IllegalStateException is thrown.
+     *
+     * @param userId     The ID of the user whose progress is being updated
+     * @param question   The quiz question for which the progress is being updated
+     * @param data       The updated progress data for the quiz question
+     * @param answeredAt The time when the question was answered
+     * @throws IllegalStateException if the progress entry does not exist or a data integrity violation occurs
+     */
+    public void updateExistingProgress(long userId, QuizQuestion question, QuizQuestionProgressData data, ZonedDateTime answeredAt) {
+        try {
+            QuizQuestionProgress progress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId())
+                    .orElseThrow(() -> new IllegalStateException("Progress entry should exist but was not found."));
+            progress.setLastAnsweredAt(answeredAt);
+            progress.setProgressJson(data);
+            quizQuestionProgressRepository.save(progress);
+        }
+        catch (DataIntegrityViolationException e) {
+            throw new IllegalStateException("Error when trying to update existing progress", e);
+        }
+    }
+
 }

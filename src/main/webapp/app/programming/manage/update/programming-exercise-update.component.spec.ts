@@ -3,6 +3,7 @@ import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/ht
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { WindFile } from 'app/programming/shared/entities/wind.file';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
@@ -36,15 +37,13 @@ import { ProgrammingExerciseInstructionAnalysisService } from 'app/programming/m
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { signal } from '@angular/core';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -65,9 +64,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
     let alertService: AlertService;
     let profileService: ProfileService;
+    let localStorageService: LocalStorageService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [BrowserAnimationsModule, FaIconComponent, OwlNativeDateTimeModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -75,12 +75,11 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ProgrammingExerciseInstructionAnalysisService, useClass: ProgrammingExerciseInstructionAnalysisService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                SessionStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(CalendarEventService),
+                MockProvider(CalendarService),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
@@ -91,6 +90,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         programmingExerciseFeatureService = TestBed.inject(ProgrammingLanguageFeatureService);
         alertService = TestBed.inject(AlertService);
         profileService = TestBed.inject(ProfileService);
+        localStorageService = TestBed.inject(LocalStorageService);
 
         const programmingLanguageFeature = {
             programmingLanguage: ProgrammingLanguage.JAVA,
@@ -122,41 +122,41 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     describe('initializeEditMode', () => {
         it('should set isSimpleMode to true if localStorage has value "true"', () => {
-            localStorage.setItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, 'true');
+            localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, true);
 
             fixture.detectChanges();
 
             expect(comp.isSimpleMode()).toBeTruthy();
-            expect(localStorage.getItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe('true');
+            expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBeTrue();
         });
 
         it('should set isSimpleMode to false if localStorage has value "false"', () => {
-            localStorage.setItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, 'false');
+            localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, false);
 
             fixture.detectChanges();
 
-            expect(comp.isSimpleMode()).toBeFalsy();
-            expect(localStorage.getItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe('false');
+            expect(comp.isSimpleMode()).toBeFalse();
+            expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBeFalse();
         });
 
         it('should set isSimpleMode to true if not present in local storage', () => {
-            localStorage.removeItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+            localStorageService.remove(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
 
             fixture.detectChanges();
 
-            expect(comp.isSimpleMode()).toBeTruthy();
+            expect(comp.isSimpleMode()).toBeTrue();
         });
     });
 
     it('switchEditMode should toggle isSimpleMode and update local storage', () => {
-        localStorage.setItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, JSON.stringify(true));
+        localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, true);
         fixture.detectChanges();
         expect(comp.isSimpleMode()).toBeTruthy(); // ensure the assumed initial state isSimpleMode = true holds
 
         comp.switchEditMode();
 
         expect(comp.isSimpleMode()).toBeFalsy();
-        expect(localStorage.getItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(JSON.stringify(false));
+        expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBeFalse();
     });
 
     describe('save', () => {
@@ -166,8 +166,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             entity.id = 123;
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             jest.spyOn(programmingExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
-            const calendarEventService = TestBed.inject(CalendarEventService);
-            const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+            const calendarService = TestBed.inject(CalendarService);
+            const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
@@ -195,8 +195,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     }),
                 ),
             );
-            const calendarEventService = TestBed.inject(CalendarEventService);
-            const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+            const calendarService = TestBed.inject(CalendarService);
+            const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;

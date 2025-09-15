@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 
@@ -53,6 +53,7 @@ import { ButtonSize } from 'app/shared/components/buttons/button/button.componen
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course-deletion-summary.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -103,10 +104,24 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private featureToggleSub: Subscription;
     private courseSub?: Subscription;
     private urlSubscription?: Subscription;
+    private routeSubscription?: Subscription;
+
     private learningPathsActive = signal(false);
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
     studentViewLink = signal<string[]>([]);
+
+    // Stream of finalized URLs (after redirects), seeded with the current URL for reloads
+    private readonly finalizedUrl$ = this.router.events.pipe(
+        filter((routerEvent): routerEvent is NavigationEnd => routerEvent instanceof NavigationEnd),
+        map((navigationEndEvent) => navigationEndEvent.urlAfterRedirects ?? navigationEndEvent.url),
+        startWith(this.router.url),
+        distinctUntilChanged(),
+    );
+
+    readonly removePadding = toSignal(this.finalizedUrl$.pipe(map((currentUrl) => currentUrl.includes('test-runs') && currentUrl.includes('conduction'))), {
+        initialValue: this.router.url.includes('test-runs') && this.router.url.includes('conduction'),
+    });
 
     // we cannot use signals here because the child component doesn't expect it
     dialogErrorSource = new Subject<string>();
@@ -376,6 +391,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.featureToggleSub?.unsubscribe();
         this.urlSubscription?.unsubscribe();
         this.courseSub?.unsubscribe();
+        this.routeSubscription?.unsubscribe();
     }
 
     fetchCourseDeletionSummary(): Observable<EntitySummary> {

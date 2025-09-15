@@ -67,11 +67,11 @@ artemis:
             images:
                 java:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-22"
+                    default: "ls1tum/artemis-maven-template:java17-25"
                     maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:22"
                 kotlin:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-22"
+                    default: "ls1tum/artemis-maven-template:java17-25"
                 empty:
                     default: "ubuntu:24.04"
                 python:
@@ -123,11 +123,11 @@ artemis:
 
     compatible-versions:
       android:
-        min: "2.0.0"
-        recommended: "2.1.0"
+        min: "2.1.2"
+        recommended: "2.1.2"
       ios:
         min: "2.0.0"
-        recommended: "2.1.0"
+        recommended: "2.2.0"
 
 
 management:
@@ -165,11 +165,10 @@ management:
             export:
                 enabled: true
                 step: 60
+    metrics:
         distribution:
             percentiles-histogram:
                 all: true
-            percentiles:
-                all: 0, 0.5, 0.75, 0.95, 0.99, 1.0
         tags:
             application: ${spring.application.name}
     observations:

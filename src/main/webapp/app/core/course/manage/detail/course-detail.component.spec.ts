@@ -5,7 +5,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { CourseDetailComponent } from 'app/core/course/manage/detail/course-detail.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
+import { ImageComponent } from 'app/shared/image/image.component';
 import dayjs from 'dayjs/esm';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -46,10 +46,6 @@ describe('Course Management Detail Component', () => {
         courseArchivePath: 'some-path',
     };
     const dtoMock: CourseManagementDetailViewDto = {
-        numberOfStudentsInCourse: 100,
-        numberOfTeachingAssistantsInCourse: 5,
-        numberOfEditorsInCourse: 5,
-        numberOfInstructorsInCourse: 10,
         // assessments
         currentPercentageAssessments: 50,
         currentAbsoluteAssessments: 10,
@@ -66,7 +62,6 @@ describe('Course Management Detail Component', () => {
         currentPercentageAverageScore: 90,
         currentAbsoluteAverageScore: 90,
         currentMaxAverageScore: 100,
-        activeStudents: [4, 10, 14, 35],
         // LLM
         currentTotalLlmCostInEur: 82.3,
     };
@@ -80,7 +75,7 @@ describe('Course Management Detail Component', () => {
         TestBed.configureTestingModule({
             declarations: [
                 CourseDetailComponent,
-                MockComponent(SecuredImageComponent),
+                MockComponent(ImageComponent),
                 MockComponent(UsersImportButtonComponent),
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),

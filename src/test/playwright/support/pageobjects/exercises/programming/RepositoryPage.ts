@@ -17,7 +17,7 @@ export class RepositoryPage {
     }
 
     async checkCommitHistory(commits: ExerciseCommit[]) {
-        const commitHistory = this.page.locator('.card-body', { hasText: 'Commit History' });
+        const commitHistory = this.page.locator('#course-body-container', { hasText: 'Commit History' });
 
         if (commits) {
             // Initial commit is at the bottom of the table

@@ -27,20 +27,20 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { advanceTo } from 'jest-date-mock';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
-import { MockSyncStorage } from 'src/test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 describe('QuizExerciseUpdateComponent', () => {
     let comp: QuizExerciseUpdateComponent;
@@ -152,12 +152,12 @@ describe('QuizExerciseUpdateComponent', () => {
                 MockProvider(DragAndDropQuestionUtil),
                 MockProvider(ShortAnswerQuestionUtil),
                 { provide: ActivatedRoute, useValue: testRoute || route },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AlertService),
-                MockProvider(CalendarEventService),
+                MockProvider(CalendarService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -1045,8 +1045,8 @@ describe('QuizExerciseUpdateComponent', () => {
                 quizExerciseServiceUpdateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
                 quizExerciseServiceImportStub = jest.spyOn(quizExerciseService, 'import');
                 quizExerciseServiceImportStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-                const calendarEventService = TestBed.inject(CalendarEventService);
-                refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+                const calendarService = TestBed.inject(CalendarService);
+                refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
                 exerciseSanitizeSpy = jest.spyOn(Exercise, 'sanitize');
             });
 

@@ -10,7 +10,6 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -227,7 +226,12 @@ public class ParticipationResource {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-
+        boolean triesToCreateAssignmentRepoForExamExercise = exercise.isExamExercise() && exercise instanceof ProgrammingExercise
+                && authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
+        if (triesToCreateAssignmentRepoForExamExercise) {
+            throw new AccessForbiddenAlertException("Assignment repositories are not allowed for exam exercises. Please use the Test Run feature instead.", ENTITY_NAME,
+                    "assignmentRepositoryNotAllowed");
+        }
         checkIfParticipationCanBeStartedElseThrow(exercise, user);
 
         // if this is a team-based exercise, set the participant to the team that the user belongs to
@@ -541,10 +545,8 @@ public class ParticipationResource {
                     throw new BadRequestAlertException("The presentation grade must be between 0 and 100", ENTITY_NAME, "presentationGradeInvalid");
                 }
 
-                long presentationCountForParticipant = studentParticipationRepository
-                        .findByCourseIdAndStudentIdWithRelevantResult(course.getId(), participation.getParticipant().getId()).stream()
-                        .filter(studentParticipation -> studentParticipation.getPresentationScore() != null && !Objects.equals(studentParticipation.getId(), participation.getId()))
-                        .count();
+                long presentationCountForParticipant = studentParticipationRepository.countPresentationScoresForParticipant(course.getId(), participation.getParticipant().getId(),
+                        participation.getId());
                 if (presentationCountForParticipant >= gradingScale.get().getPresentationsNumber()) {
                     throw new BadRequestAlertException("Participant already gave the maximum number of presentations", ENTITY_NAME,
                             "invalid.presentations.maxNumberOfPresentationsExceeded",

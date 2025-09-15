@@ -47,9 +47,13 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
+/**
+ * Configuration class defining authentication and authorization mechanism for all application endpoints
+ * We don't make it lazy as it definitely should be instantiated at startup and this happens anyway. So, no negative effect on startup performance.
+ */
 @Configuration
 @EnableWebSecurity
-@Lazy
+@Lazy(value = false)
 @EnableMethodSecurity(securedEnabled = true)
 @Profile(PROFILE_CORE)
 public class SecurityConfiguration {
@@ -245,11 +249,11 @@ public class SecurityConfiguration {
                     .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
-                    .requestMatchers("/swagger-ui/**").permitAll();
-                    // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
-                    if (profileService.isLocalVCActive()) {
-                        requests.requestMatchers("/git/**").permitAll();
-                    }
+                    .requestMatchers("/swagger-ui/**").permitAll()
+                    .requestMatchers("/api/core/calendar/courses/*/calendar-events-ics").permitAll()
+                    // `/git/**` endpoints (JGit servlet + LocalVC filters) are only registered under the `localvc` profile
+                    // LocalVCFetchFilter/LocalVCPushFilter handle auth
+                    .requestMatchers("/git/**").permitAll();
 
                     // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
                     requests.requestMatchers("/**").authenticated();
@@ -258,12 +262,12 @@ public class SecurityConfiguration {
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
 
-        // Configure WebAuthn passkey if enabled
-        if(passkeyEnabled){
-        passkeyWebAuthnConfigurer.orElseThrow(()->new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
-        }
-
         // @formatter:on
+
+        // Configure WebAuthn passkey if enabled
+        if (passkeyEnabled) {
+            passkeyWebAuthnConfigurer.orElseThrow(() -> new IllegalStateException("Passkey enabled but SecurityConfigurer could not be injected")).configure(http);
+        }
 
         // Conditionally adds configuration for LTI if it is active.
         if (profileService.isLtiActive()) {

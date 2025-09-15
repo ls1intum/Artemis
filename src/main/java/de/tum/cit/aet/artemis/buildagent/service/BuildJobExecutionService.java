@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -29,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.service.parser.CustomFeedbackParser;
 import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
-import de.tum.cit.aet.artemis.core.config.FullStartupEvent;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
@@ -51,7 +50,6 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.ReportParser;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.exception.UnsupportedToolException;
@@ -97,8 +95,10 @@ public class BuildJobExecutionService {
     /**
      * This method is responsible for cleaning up temporary directories that were used for checking out repositories.
      * It is triggered when the application is ready and runs asynchronously.
+     * EventListener cannot be used here, as the bean is lazy
+     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
-    @EventListener(FullStartupEvent.class)
+    @PostConstruct
     @Async
     public void initAsync() {
         final ZonedDateTime currentTime = ZonedDateTime.now();
@@ -288,9 +288,9 @@ public class BuildJobExecutionService {
      * @throws LocalCIException If errors occur during the build process or if the test results cannot be parsed successfully.
      */
     // TODO: This method has too many params, we should reduce the number an rather pass an object (record)
-    private BuildResult runScriptAndParseResults(BuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
-            VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri, VcsRepositoryUri[] auxiliaryRepositoriesUris, Path assignmentRepositoryPath,
-            Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
+    private BuildResult runScriptAndParseResults(BuildJobQueueItem buildJob, String containerName, String containerId, LocalVCRepositoryUri assignmentRepositoryUri,
+            LocalVCRepositoryUri testRepositoryUri, @Nullable LocalVCRepositoryUri solutionRepositoryUri, LocalVCRepositoryUri[] auxiliaryRepositoriesUris,
+            Path assignmentRepositoryPath, Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
             @Nullable String testRepoCommitHash, boolean isNetworkDisabled) {
 
         long timeNanoStart = System.nanoTime();
@@ -543,7 +543,7 @@ public class BuildJobExecutionService {
                 staticCodeAnalysisReports, true);
     }
 
-    private Path cloneRepository(VcsRepositoryUri repositoryUri, @Nullable String commitHash, boolean checkout, String buildJobId) {
+    private Path cloneRepository(LocalVCRepositoryUri repositoryUri, @Nullable String commitHash, boolean checkout, String buildJobId) {
         Repository repository = null;
 
         for (int attempt = 1; attempt <= MAX_CLONE_RETRIES; attempt++) {
@@ -581,7 +581,7 @@ public class BuildJobExecutionService {
         }
     }
 
-    private void deleteCloneRepo(VcsRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId, Path repositoryPath) {
+    private void deleteCloneRepo(LocalVCRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId, Path repositoryPath) {
         String msg;
         try {
             Path repositoryPathForDeletion = commitHash != null ? Path.of(checkedOutReposPath, commitHash, repositoryUri.folderNameForRepositoryUri()) : repositoryPath;

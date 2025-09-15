@@ -1,3 +1,5 @@
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { of, throwError } from 'rxjs';
 import { Component, input } from '@angular/core';
@@ -9,8 +11,6 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { MockDirective, MockProvider } from 'ng-mocks';
 
 import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams/update/exam-update.component';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
@@ -35,7 +35,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     template: '',
@@ -75,8 +75,8 @@ describe('ExamUpdateComponent', () => {
                     provideHttpClientTesting(),
                     provideRouter(routes),
                     { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
-                    { provide: LocalStorageService, useClass: MockSyncStorage },
-                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    LocalStorageService,
+                    SessionStorageService,
                     {
                         provide: ActivatedRoute,
                         useValue: {
@@ -116,7 +116,7 @@ describe('ExamUpdateComponent', () => {
                     }),
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: ProfileService, useClass: MockProfileService },
-                    MockProvider(CalendarEventService),
+                    MockProvider(CalendarService),
                 ],
             }).compileComponents();
 
@@ -211,8 +211,8 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should update', fakeAsync(() => {
-            const calendarEventService = TestBed.inject(CalendarEventService);
-            const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+            const calendarService = TestBed.inject(CalendarService);
+            const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
             const navigateSpy = jest.spyOn(router, 'navigate');
             fixture.detectChanges();
@@ -634,8 +634,8 @@ describe('ExamUpdateComponent', () => {
                     provideHttpClientTesting(),
                     provideRouter(routes),
                     { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
-                    { provide: LocalStorageService, useClass: MockSyncStorage },
-                    { provide: SessionStorageService, useClass: MockSyncStorage },
+                    LocalStorageService,
+                    SessionStorageService,
                     MockDirective(TranslateDirective),
                     {
                         provide: ActivatedRoute,

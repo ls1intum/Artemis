@@ -18,8 +18,6 @@ public final class Constants {
 
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
 
-    public static final int SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS = 15;
-
     // Regex for acceptable logins
     public static final String LOGIN_REGEX = "^[_'.@A-Za-z0-9-]*$";
 
@@ -124,8 +122,6 @@ public final class Constants {
     public static final int MAX_SUBMISSION_MODEL_LENGTH = 100_000; // 100.000 characters
 
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
-
-    public static final String TEST_CASES_DUPLICATE_NOTIFICATION = "There are duplicated test cases in this programming exercise. All test cases have to be unique and cannot have the same name. The following test cases are duplicated: ";
 
     /**
      * Maximum length in the database for the feedback detail text.
@@ -365,6 +361,11 @@ public final class Constants {
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
 
     /**
+     * Profile combination for one primary node (in multi node setups, we typically call this node1), where scheduling, core AND iris is active
+     */
+    public static final String PROFILE_CORE_AND_SCHEDULING_AND_IRIS = PROFILE_CORE + " & " + PROFILE_SCHEDULING + " & " + PROFILE_IRIS;
+
+    /**
      * Profile combination for one primary node, where LTI AND scheduling is active
      */
     public static final String PROFILE_LTI_AND_SCHEDULING = PROFILE_LTI + " & " + PROFILE_SCHEDULING;
@@ -400,6 +401,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_ATLAS = "atlas";
 
     /**
+     * The name of the module feature used for Hyperion functionality.
+     */
+    public static final String MODULE_FEATURE_HYPERION = "hyperion";
+
+    /**
      * The name of the module feature used for Exam functionality.
      */
     public static final String MODULE_FEATURE_EXAM = "exam";
@@ -423,6 +429,11 @@ public final class Constants {
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
+
+    /**
+     * The name of the property used to enable or disable Hyperion functionality.
+     */
+    public static final String HYPERION_ENABLED_PROPERTY_NAME = "artemis.hyperion.enabled";
 
     /**
      * The name of the property used to enable or disable exam functionality.

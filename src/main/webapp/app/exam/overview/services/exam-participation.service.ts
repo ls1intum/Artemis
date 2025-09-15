@@ -11,9 +11,10 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Submission, getAllResultsOfAllSubmissions, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { SidebarCardElement } from 'app/shared/types/sidebar';
@@ -24,7 +25,7 @@ export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' 
 export class ExamParticipationService {
     private httpClient = inject(HttpClient);
     private localStorageService = inject(LocalStorageService);
-    private sessionStorage = inject(SessionStorageService);
+    private sessionStorageService = inject(SessionStorageService);
 
     public currentlyLoadedStudentExam = new Subject<StudentExam>();
 
@@ -55,7 +56,7 @@ export class ExamParticipationService {
      * @param studentExamId the id of the student Exam which should be loaded
      * @returns the studentExam with Exercises for the conduction-phase
      */
-    public loadStudentExamWithExercisesForConduction(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
+    public loadStudentExamWithExercisesForConduction(courseId: number, examId: number, studentExamId: number): Observable<StudentExam | undefined> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/conduction';
         return this.getStudentExamFromServer(url, courseId, examId);
     }
@@ -66,8 +67,8 @@ export class ExamParticipationService {
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      */
-    public loadStudentExamWithExercisesForConductionFromLocalStorage(courseId: number, examId: number): Observable<StudentExam> {
-        const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
+    public loadStudentExamWithExercisesForConductionFromLocalStorage(courseId: number, examId: number): Observable<StudentExam | undefined> {
+        const localStoredExam = this.localStorageService.retrieve<StudentExam>(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId));
         return of(localStoredExam);
     }
 
@@ -78,7 +79,7 @@ export class ExamParticipationService {
      * @param studentExamId the id of the studentExam
      * @returns a studentExam with Exercises for the summary-phase
      */
-    public loadStudentExamWithExercisesForSummary(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
+    public loadStudentExamWithExercisesForSummary(courseId: number, examId: number, studentExamId: number): Observable<StudentExam | undefined> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/summary';
         return this.getStudentExamFromServer(url, courseId, examId);
     }
@@ -86,7 +87,7 @@ export class ExamParticipationService {
     /**
      * Retrieves a {@link StudentExam} from server or localstorage.
      */
-    private getStudentExamFromServer(url: string, courseId: number, examId: number): Observable<StudentExam> {
+    private getStudentExamFromServer(url: string, courseId: number, examId: number): Observable<StudentExam | undefined> {
         return this.httpClient.get<StudentExam>(url).pipe(
             map((studentExam: StudentExam) => {
                 if (studentExam.examSessions && studentExam.examSessions.length > 0 && studentExam.examSessions[0].sessionToken) {
@@ -98,7 +99,7 @@ export class ExamParticipationService {
                 this.currentlyLoadedStudentExam.next(studentExam);
             }),
             catchError(() => {
-                const localStoredExam: StudentExam = JSON.parse(this.localStorageService.retrieve(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId)));
+                const localStoredExam = this.localStorageService.retrieve<StudentExam>(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId));
                 return of(localStoredExam);
             }),
         );
@@ -135,6 +136,14 @@ export class ExamParticipationService {
                 const convertedStudentExam = ExamParticipationService.convertStudentExamDateFromServer(studentExam);
                 this.currentlyLoadedStudentExam.next(convertedStudentExam);
                 return convertedStudentExam;
+            }),
+        );
+    }
+    public getRealExamSidebarData(courseId: number): Observable<Exam[]> {
+        const url = `api/exam/courses/${courseId}/real-exams-sidebar-data`;
+        return this.httpClient.get<Exam[]>(url).pipe(
+            map((exams: Exam[]) => {
+                return exams.map((exam) => ExamParticipationService.convertExamDateFromServer(exam)).filter((exam) => exam !== undefined) as Exam[];
             }),
         );
     }
@@ -234,7 +243,7 @@ export class ExamParticipationService {
         try {
             const studentExamCopy = cloneDeep(studentExam);
             ExamParticipationService.breakCircularDependency(studentExamCopy);
-            this.localStorageService.store(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId), JSON.stringify(studentExamCopy));
+            this.localStorageService.store(ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId), studentExamCopy);
         } catch (error) {
             captureException(error);
         }
@@ -245,7 +254,7 @@ export class ExamParticipationService {
      * @param examSessionToken latest examSessionToken
      */
     public saveExamSessionTokenToSessionStorage(examSessionToken: string): void {
-        this.sessionStorage.store('ExamSessionToken', examSessionToken);
+        this.sessionStorageService.store('ExamSessionToken', examSessionToken);
     }
 
     /**
@@ -266,7 +275,7 @@ export class ExamParticipationService {
 
     public lastSaveFailed(courseId: number, examId: number): boolean {
         const key = ExamParticipationService.getLocalStorageKeyForStudentExam(courseId, examId) + '-save-failed';
-        return this.localStorageService.retrieve(key);
+        return this.localStorageService.retrieve<boolean>(key) || false;
     }
 
     private static convertStudentExamFromServer(studentExam: StudentExam): StudentExam {

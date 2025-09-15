@@ -4,8 +4,6 @@ import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manag
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { mockExercise } from 'test/helpers/mocks/service/mock-team.service';
 
 describe('CollapsableAssessmentInstructionsComponent', () => {
@@ -15,10 +13,7 @@ describe('CollapsableAssessmentInstructionsComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             schemas: [NO_ERRORS_SCHEMA],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockLocalStorageService },
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CollapsableAssessmentInstructionsComponent);

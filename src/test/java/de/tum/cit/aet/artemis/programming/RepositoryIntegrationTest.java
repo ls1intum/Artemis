@@ -49,7 +49,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
@@ -61,7 +60,6 @@ import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
-import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -153,8 +151,6 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     private ProgrammingExerciseStudentParticipation participation;
 
-    private ListAppender<ILoggingEvent> listAppender;
-
     private Path studentFilePath;
 
     private File studentFile;
@@ -230,9 +226,6 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), eq(false), anyBoolean());
 
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(eq(participation), eq(true));
-
         logs.add(buildLogEntry);
         logs.add(largeBuildLogEntry);
 
@@ -241,7 +234,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         Logger logger = (Logger) LoggerFactory.getLogger(ProgrammingExerciseParticipationService.class);
 
         // Create and start a ListAppender
-        listAppender = new ListAppender<>();
+        ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
         listAppender.start();
 
         // Add the appender to the logger, the addAppender is outdated now
@@ -268,6 +261,37 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         for (String key : files.keySet()) {
             assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetFilesWithFileAndDirectoryFilter() throws Exception {
+        // This case tests the FileAndDirectoryFilter inner class in GitRepositoryExportService
+        // by calling the getFiles endpoint which internally uses the filter
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).isNotEmpty();
+
+        validateFilesExcludeGitAndFolders(files, false);
+
+        for (String key : files.keySet()) {
+            assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetFilesWithContentAndFileAndDirectoryFilter() throws Exception {
+        // This case tests the FileAndDirectoryFilter inner class in GitRepositoryExportService
+        // by calling the files-content endpoint which internally uses the filter
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content", HttpStatus.OK, String.class, String.class);
+        assertThat(files).isNotEmpty();
+
+        validateFilesExcludeGitAndFolders(files, true);
+
+        for (String key : files.keySet()) {
+            assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + key)).exists();
+        }
+        assertThat(files).containsEntry(currentLocalFileName, currentLocalFileContent);
     }
 
     @Test
@@ -1141,58 +1165,6 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         return programmingExercise;
     }
 
-    @Disabled
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testStashChanges() throws Exception {
-        // Make initial commit and save files afterwards
-        initialCommitAndSaveFiles(HttpStatus.OK);
-        Repository localRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.workingCopyGitRepoFile.toPath(), null);
-
-        // Stash changes
-        gitService.stashChanges(localRepo);
-        // Local repo has no unsubmitted changes
-        assertThat(studentFilePath).hasContent("initial commit");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testStashChangesInStudentRepositoryAfterDueDateHasPassed_beforeStateRepoConfigured() {
-        participation.setInitializationState(InitializationState.REPO_COPIED);
-        // Try to stash changes
-        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, participation);
-
-        // Check the logs
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.getFirst().getMessage()).startsWith("Cannot stash student repository for participation ");
-        assertThat(logsList.getFirst().getArgumentArray()).containsExactly(participation.getId());
-    }
-
-    @Disabled
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testStashChangesInStudentRepositoryAfterDueDateHasPassed_dueDatePassed() throws Exception {
-        // Make initial commit and save files afterwards
-        initialCommitAndSaveFiles(HttpStatus.OK);
-        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
-
-        // Stash changes using service
-        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, participation);
-        assertThat(studentFilePath).hasContent("initial commit");
-    }
-
-    @Test
-    @Disabled
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testStashChangesInStudentRepositoryAfterDueDateHasPassed_throwError() {
-        // Try to stash changes, but it will throw error as the HEAD is not initialized in the remote repo (this is done with the initial commit)
-        programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, participation);
-
-        // Check the logs
-        List<ILoggingEvent> logsList = listAppender.list;
-        assertThat(logsList.getFirst().getLevel()).isEqualTo(Level.ERROR);
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFindStudentParticipation() {
@@ -1210,16 +1182,13 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         return fileSubmissions;
     }
 
-    private void initialCommitAndSaveFiles(HttpStatus expectedStatus) throws Exception {
-        assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
-        // Do initial commit
-        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=true", getFileSubmissions("initial commit"), expectedStatus);
-        // Check repo
-        assertThat(studentFilePath).hasContent("initial commit");
+    private void validateFilesExcludeGitAndFolders(Map<String, ?> files, boolean excludeFolders) {
+        // Ensure we only exclude the actual .git directory (not files like .gitignore)
+        assertThat(files.keySet()).noneMatch(path -> path.equals(".git") || path.startsWith(".git/") || path.startsWith(".git\\") || path.contains("/.git/")
+                || path.contains("\\.git\\") || path.endsWith("/.git") || path.endsWith("\\.git"));
 
-        // Save file, without commit
-        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), expectedStatus);
-        // Check repo
-        assertThat(studentFilePath).hasContent("updatedFileContent");
+        if (excludeFolders) {
+            assertThat(files.keySet()).doesNotContain(currentLocalFolderName);
+        }
     }
 }

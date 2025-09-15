@@ -17,7 +17,7 @@ describe('ArtemisIntelligenceService', () => {
     let service: ArtemisIntelligenceService;
     let websocketService: WebsocketService;
     let alertService: AlertService;
-    let hyperionApiService: HyperionReviewAndRefineApiService;
+    let _hyperionApiService: HyperionReviewAndRefineApiService;
 
     const mockWebsocketService = {
         subscribe: jest.fn(),
@@ -57,7 +57,7 @@ describe('ArtemisIntelligenceService', () => {
         service = TestBed.inject(ArtemisIntelligenceService);
         websocketService = TestBed.inject(WebsocketService);
         alertService = TestBed.inject(AlertService);
-        hyperionApiService = TestBed.inject(HyperionReviewAndRefineApiService);
+        _hyperionApiService = TestBed.inject(HyperionReviewAndRefineApiService);
     });
 
     afterEach(() => {
@@ -144,16 +144,12 @@ describe('ArtemisIntelligenceService', () => {
     describe('consistencyCheck', () => {
         it('should trigger consistency check using Hyperion API and return result', () => {
             const exerciseId = 42;
-            const mockResponse: ConsistencyCheckResponse = {
-                hasIssues: false,
-                summary: 'No issues found',
-                issues: [],
-            };
+            const mockResponse: ConsistencyCheckResponse = { issues: [] };
 
             mockHyperionApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
 
             service.consistencyCheck(exerciseId).subscribe((result) => {
-                expect(result).toEqual(mockResponse);
+                expect(result.issues).toEqual([]);
                 expect(mockHyperionApiService.checkExerciseConsistency).toHaveBeenCalledWith(exerciseId);
             });
         });
@@ -174,32 +170,45 @@ describe('ArtemisIntelligenceService', () => {
 
         it('should reset loading state after consistency check completes', () => {
             const exerciseId = 42;
-            const mockResponse: ConsistencyCheckResponse = {
-                hasIssues: true,
-                summary: 'Issues found',
-                issues: [{ severity: 'HIGH' as any, category: 'Logic', description: 'Test issue', suggestedFix: 'Fix this' }],
-            };
+            const mockIssue = {
+                severity: 'HIGH',
+                category: 'METHOD_PARAMETER_MISMATCH',
+                description: 'Test issue',
+                suggestedFix: 'Fix this',
+                relatedLocations: [],
+            } as const;
+            // Cast to any because openapi types are structural; keeping literals preserves intent while avoiding enum import complexity in spec.
+            const mockResponse: ConsistencyCheckResponse = { issues: [mockIssue as any] };
 
             mockHyperionApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
 
             service.consistencyCheck(exerciseId).subscribe(() => {
-                expect(service.isLoading()).toBeFalse();
+                expect(service.isLoading()).toBeFalsy();
             });
         });
     });
 
     describe('isLoading', () => {
         it('should reflect loading state correctly for FAQ rewrite', () => {
-            expect(service.isLoading()).toBeFalse();
+            expect(service.isLoading()).toBeFalsy();
             const subscription = service.rewrite('test', RewritingVariant.FAQ, 1).subscribe();
-            expect(service.isLoading()).toBeTrue();
+            expect(service.isLoading()).toBeTruthy();
             const req = httpMock.expectOne(`api/iris/courses/1/rewrite-text`);
             req.flush(null);
             subscription.unsubscribe();
-            expect(service.isLoading()).toBeFalse();
+            expect(service.isLoading()).toBeFalsy();
         });
 
         it('should reflect loading state correctly for Hyperion consistency check', () => {
+            const mockResponse: ConsistencyCheckResponse = { issues: [] };
+            mockHyperionApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
+
+            expect(service.isLoading()).toBeFalsy();
+            service.consistencyCheck(42).subscribe((res) => expect(res.issues).toEqual([]));
+            expect(service.isLoading()).toBeFalsy(); // Should be false after synchronous completion
+        });
+
+        it('should handle loading state for Hyperion consistency check with detailed response', () => {
             const mockResponse: ConsistencyCheckResponse = {
                 hasIssues: false,
                 summary: 'All good',

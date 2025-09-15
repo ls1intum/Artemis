@@ -6,9 +6,9 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { ExamExerciseOverviewPageComponent } from 'app/exam/overview/exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { By } from '@angular/platform-browser';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,8 +22,8 @@ describe('ExamExerciseOverviewPageComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),

@@ -10,7 +10,7 @@
                             <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'practiceMode' }" />
                         }
                         @case ('preview') {
-                            <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'previewMode' }" />
+                            <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'preview' }" />
                         }
                         @case ('solution') {
                             <ng-template [ngTemplateOutlet]="modeBadge" [ngTemplateOutletContext]="{ $implicit: 'solution' }" />
@@ -73,10 +73,14 @@
             <hr class="mt-2" />
         </div>
         <!-- STEPWIZARD SECTION -->
+        <!-- TODO the STEPWIZARD SECTION is duplicated it quiz-exam-submission.component.html, should be merged to a shared component -->
         <!-- TODO for a follow-up: Much of this template relies on method calls in the template. We should avoid this for performance reasons -->
         <div class="row m-0">
             <div class="col-md-auto ps-0">
-                <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard" [ngClass]="{ 'sticky-top-quiz': mode === 'preview' }">
+                <div
+                    class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard hide-scrollbar-unless-scrolling"
+                    [ngClass]="{ 'sticky-top-quiz': mode === 'preview' }"
+                >
                     @for (question of quizExercise.quizQuestions; track question; let index = $index) {
                         <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
                             @switch (question.type) {
@@ -126,6 +130,7 @@
             </div>
             <!-- END STEPWIZARD SECTION -->
             <!-- QUESTION CONTENT SECTION -->
+            <!-- TODO the QUESTION CONTENT SECTION is duplicated it quiz-exam-submission.component.html, should be merged to a shared component -->
             <div class="col p-0 quiz-content mb-3">
                 @if (!waitingForQuizStart) {
                     @if (!submission.submitted && !showingResult && remainingTimeSeconds >= 0) {
@@ -208,12 +213,12 @@
                             <div>
                                 <span ngbTooltip="{{ submission.submissionDate | artemisDate: 'long' : true }}" placement="right auto">
                                     @if (submission.submitted) {
-                                        <span jhiTranslate="artemisApp.quizExercise.submitted" [ngClass]="{ 'colon-suffix': !isMobile }"></span>
+                                        <span jhiTranslate="artemisApp.quizExercise.submitted" [ngClass]="{ 'colon-suffix': !isMobile() }"></span>
                                     } @else {
-                                        <span jhiTranslate="artemisApp.quizExercise.lastSaved" [ngClass]="{ 'colon-suffix': !isMobile }"></span>
+                                        <span jhiTranslate="artemisApp.quizExercise.lastSaved" [ngClass]="{ 'colon-suffix': !isMobile() }"></span>
                                     }
                                     <!-- Only display save and submission hint without time stamps for mobile -->
-                                    @if (!isMobile) {
+                                    @if (!isMobile()) {
                                         @if (justSaved) {
                                             <span jhiTranslate="justNow"></span>
                                         } @else {

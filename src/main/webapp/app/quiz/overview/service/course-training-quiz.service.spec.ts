@@ -3,15 +3,16 @@ import { CourseTrainingQuizService } from './course-training-quiz.service';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { QuizTrainingAnswer } from '../course-training-quiz/QuizTrainingAnswer';
+import { SubmittedAnswerAfterEvaluation } from '../course-training-quiz/SubmittedAnswerAfterEvaluation';
 
 describe('CourseTrainingQuizService', () => {
     let service: CourseTrainingQuizService;
     let httpMock: HttpTestingController;
-    let exerciseId: number;
+    let questionId: number;
+    let courseId: number;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -19,7 +20,8 @@ describe('CourseTrainingQuizService', () => {
         });
         service = TestBed.inject(CourseTrainingQuizService);
         httpMock = TestBed.inject(HttpTestingController);
-        exerciseId = 123;
+        questionId = 123;
+        courseId = 1;
     });
 
     afterEach(() => {
@@ -27,29 +29,27 @@ describe('CourseTrainingQuizService', () => {
     });
 
     it('should fetch an Array of quiz questions', () => {
-        const courseId = 1;
         const mockQuestions: QuizQuestion[] = [{ id: 1 } as QuizQuestion];
         service.getQuizQuestions(courseId).subscribe((questions) => {
             expect(questions).toEqual(mockQuestions);
         });
-        const req = httpMock.expectOne(`api/quiz/courses/${courseId}/practice/quiz`);
+        const req = httpMock.expectOne(`api/quiz/courses/${courseId}/training-questions`);
         expect(req.request.method).toBe('GET');
         req.flush(mockQuestions);
     });
 
     it('should submit submission for training', fakeAsync(() => {
-        const mockSubmission = new QuizSubmission();
-        const mockResult = new Result();
-        mockResult.id = 1;
-        mockResult.score = 10;
-        service.submitForTraining(mockSubmission, exerciseId).subscribe((res) => {
-            expect(res.body!.id).toBe(1);
-            expect(res.body!.score).toBe(10);
+        const mockTrainingAnswer = new QuizTrainingAnswer();
+        const mockAnswer = new SubmittedAnswerAfterEvaluation();
+        mockAnswer.scoreInPoints = 10;
+
+        service.submitForTraining(mockTrainingAnswer, questionId, courseId).subscribe((res) => {
+            expect(res.body!.scoreInPoints).toBe(10);
         });
 
-        const req = httpMock.expectOne(`api/quiz/exercises/${exerciseId}/submissions/training`);
+        const req = httpMock.expectOne(`api/quiz/courses/${courseId}/training-questions/${questionId}/submit`);
         expect(req.request.method).toBe('POST');
-        req.flush(mockResult);
+        req.flush(mockAnswer);
         tick();
     }));
 });

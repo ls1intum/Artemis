@@ -34,7 +34,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -47,7 +46,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
@@ -60,6 +58,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipati
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 
 /**
@@ -85,13 +84,13 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final RepositoryParticipationService repositoryParticipationService;
 
-    public RepositoryProgrammingExerciseParticipationResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService,
+    public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
             RepositoryParticipationService repositoryParticipationService) {
-        super(profileService, userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
         this.buildLogService = buildLogService;
@@ -135,7 +134,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    VcsRepositoryUri getRepositoryUri(Long participationId) throws IllegalArgumentException {
+    LocalVCRepositoryUri getRepositoryUri(Long participationId) throws IllegalArgumentException {
         return getProgrammingExerciseParticipation(participationId).getVcsRepositoryUri();
     }
 
@@ -169,7 +168,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     String getOrRetrieveBranchOfDomainObject(Long participationID) {
         Participation participation = participationRepository.findByIdElseThrow(participationID);
-        if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
+        if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
         }
         else if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {

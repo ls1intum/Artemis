@@ -1,14 +1,9 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.retry.NonTransientAiException;
-import org.springframework.ai.retry.TransientAiException;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,213 +11,75 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.exception.NetworkingException;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
-import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationRequestDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResultDTO;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.service.ConsistencyCheckService;
-import de.tum.cit.aet.artemis.hyperion.service.ProblemStatementRewriteService;
-import de.tum.cit.aet.artemis.hyperion.service.codegeneration.CodeGenerationExecutionService;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementRewriteService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /**
- * REST controller for programming exercise review and enhancement using Hyperion service.
+ * REST controller for Hyperion Review & Refine features (consistency check and problem statement rewrite).
  */
-@RestController
+@Conditional(HyperionEnabled.class)
 @Lazy
-@Profile(PROFILE_HYPERION)
+@RestController
 @RequestMapping("api/hyperion/")
 public class HyperionReviewAndRefineResource {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionReviewAndRefineResource.class);
 
-    private final UserRepository userRepository;
-
     private final CourseRepository courseRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ConsistencyCheckService consistencyCheckService;
+    private final HyperionConsistencyCheckService consistencyCheckService;
 
-    private final ProblemStatementRewriteService rewriteService;
+    private final HyperionProblemStatementRewriteService problemStatementRewriteService;
 
-    private final CodeGenerationExecutionService codeGenerationExecutionService;
-
-    public HyperionReviewAndRefineResource(UserRepository userRepository, CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ConsistencyCheckService consistencyCheckService, ProblemStatementRewriteService rewriteService, CodeGenerationExecutionService codeGenerationExecutionService) {
-        this.userRepository = userRepository;
+    public HyperionReviewAndRefineResource(CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            HyperionConsistencyCheckService consistencyCheckService, HyperionProblemStatementRewriteService problemStatementRewriteService) {
         this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.consistencyCheckService = consistencyCheckService;
-        this.rewriteService = rewriteService;
-        this.codeGenerationExecutionService = codeGenerationExecutionService;
+        this.problemStatementRewriteService = problemStatementRewriteService;
     }
 
     /**
-     * Analyzes a programming exercise for consistency issues between problem statement,
-     * template code, solution code, and test cases using the Hyperion service.
+     * POST programming-exercises/{programmingExerciseId}/consistency-check: Check the consistency of a programming exercise.
+     * Returns a JSON body with the issues (can be empty list).
      *
-     * @param exerciseId the ID of the programming exercise to analyze
-     * @return HTTP 200 with consistency analysis results, or appropriate error status
+     * @param exerciseId the id of the programming exercise to check
+     * @return the ResponseEntity with status 200 (OK) and the consistency check result or an error status
      */
-    @Operation(summary = "Check exercise consistency", description = "Analyzes a programming exercise for consistency issues between problem statement, template code, solution code, and test cases")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Consistency check completed successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ConsistencyCheckResponseDTO.class))),
-            @ApiResponse(responseCode = "503", description = "Hyperion service unavailable"), @ApiResponse(responseCode = "500", description = "Internal server error") })
-    @EnforceAtLeastInstructorInExercise
-    @PostMapping("exercises/{exerciseId}/consistency-check")
-    public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(
-            @Parameter(description = "ID of the programming exercise to analyze", required = true) @PathVariable Long exerciseId) {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-
-        log.info("Performing consistency check for exercise {} by user {}", exerciseId, user.getLogin());
-
-        try {
-            ConsistencyCheckResponseDTO result = consistencyCheckService.checkConsistency(user, programmingExercise);
-            log.info("Consistency check completed successfully for exercise {}", exerciseId);
-            return ResponseEntity.ok(result);
-        }
-        catch (NetworkingException e) {
-            Throwable cause = e.getCause();
-            if (cause == null) {
-                // Chat client not configured or similar non-upstream condition
-                log.warn("Consistency check unavailable for exercise {}: {}", exerciseId, e.getMessage());
-                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
-            }
-            if (cause instanceof TransientAiException) {
-                log.warn("Consistency check transient AI error for exercise {}: {}", exerciseId, cause.getMessage());
-                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
-            }
-            if (cause instanceof NonTransientAiException) {
-                String msg = cause.getMessage() != null ? cause.getMessage() : "";
-                // Best-effort: if the upstream response hinted 429, surface it precisely; otherwise use 400
-                if (msg.contains("429")) {
-                    return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
-                }
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-            }
-            log.error("Consistency check failed for exercise {}: {}", exerciseId, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-        catch (Exception e) {
-            log.error("Consistency check failed for exercise {}: {}", exerciseId, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    @PostMapping("programming-exercises/{programmingExerciseId}/consistency-check")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(@PathVariable("programmingExerciseId") long exerciseId) {
+        log.debug("REST request to Hyperion consistency check for programming exercise [{}]", exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        var response = consistencyCheckService.checkConsistency(exercise);
+        return ResponseEntity.ok(response);
     }
 
     /**
-     * Rewrites and improves a problem statement using the Hyperion service.
+     * POST courses/{courseId}/problem-statements/rewrite: Rewrite a problem statement for a course context.
      *
-     * @param courseId   the ID of the course containing the problem statement
-     * @param requestDTO the request containing the problem statement text to be improved
-     * @return HTTP 200 with improved problem statement text, or appropriate error status
+     * @param courseId the id of the course the problem statement belongs to
+     * @param request  the request containing the original problem statement text
+     * @return the ResponseEntity with status 200 (OK) and the rewritten problem statement or an error status
      */
-    @Operation(summary = "Rewrite problem statement", description = "Rewrites and improves a problem statement using AI assistance")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Problem statement rewritten successfully", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProblemStatementRewriteResponseDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid request body"), @ApiResponse(responseCode = "503", description = "Hyperion service unavailable"),
-            @ApiResponse(responseCode = "500", description = "Internal server error") })
-    @EnforceAtLeastInstructorInCourse
-    @PostMapping("courses/{courseId}/problem-statement-rewrite")
-    public ResponseEntity<ProblemStatementRewriteResponseDTO> rewriteProblemStatement(@Parameter(description = "ID of the course", required = true) @PathVariable Long courseId,
-            @Parameter(description = "Request containing the problem statement to rewrite", required = true) @RequestBody ProblemStatementRewriteRequestDTO requestDTO) {
-
-        if (requestDTO.problemStatementText() == null || requestDTO.problemStatementText().trim().isEmpty()) {
-            log.warn("Problem statement rewrite requested with empty text for course {}", courseId);
-            return ResponseEntity.badRequest().build();
-        }
-
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        var course = courseRepository.findByIdElseThrow(courseId);
-
-        log.info("Rewriting problem statement for course {} by user {}", courseId, user.getLogin());
-
-        try {
-            ProblemStatementRewriteResponseDTO result = rewriteService.rewriteProblemStatement(user, course, requestDTO.problemStatementText());
-            log.info("Problem statement rewrite completed successfully for course {}", courseId);
-            return ResponseEntity.ok(result);
-        }
-        catch (NetworkingException e) {
-            Throwable cause = e.getCause();
-            if (cause == null) {
-                log.warn("Rewrite unavailable for course {}: {}", courseId, e.getMessage());
-                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
-            }
-            if (cause instanceof TransientAiException) {
-                log.warn("Rewrite transient AI error for course {}: {}", courseId, cause.getMessage());
-                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
-            }
-            if (cause instanceof NonTransientAiException) {
-                String msg = cause.getMessage() != null ? cause.getMessage() : "";
-                if (msg.contains("429")) {
-                    return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
-                }
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-            }
-            log.error("Problem statement rewrite failed for course {}: {}", courseId, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-        catch (Exception e) {
-            log.error("Problem statement rewrite failed for course {}: {}", courseId, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    /**
-     * Generates solution, template, and test code for a programming exercise using AI.
-     * Uses iterative generation with build feedback to produce compilable code.
-     *
-     * @param exerciseId the ID of the programming exercise to generate code for
-     * @param requestDTO the request containing generation options (currently empty)
-     * @return HTTP 200 with generation results, or appropriate error status
-     */
-    @Operation(summary = "Generate exercise code", description = "Generates solution, template, and test code for a programming exercise using AI with iterative improvement")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Code generation completed", content = @Content(mediaType = "application/json", schema = @Schema(implementation = CodeGenerationResultDTO.class))),
-            @ApiResponse(responseCode = "503", description = "Hyperion service unavailable"), @ApiResponse(responseCode = "500", description = "Internal server error") })
-    @EnforceAtLeastInstructorInExercise
-    @PostMapping("exercises/{exerciseId}/generate-code")
-    public ResponseEntity<CodeGenerationResultDTO> generateExerciseCode(
-            @Parameter(description = "ID of the programming exercise to generate code for", required = true) @PathVariable Long exerciseId,
-            @Parameter(description = "Request containing generation options including repository type", required = true) @RequestBody CodeGenerationRequestDTO requestDTO) {
-
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-
-        // Default to SOLUTION if repository type is not provided for backward compatibility
-        RepositoryType repositoryType = requestDTO.repositoryType() != null ? requestDTO.repositoryType() : RepositoryType.SOLUTION;
-
-        log.info("Starting code generation for exercise {} by user {} for repository type {}", exerciseId, user.getLogin(), repositoryType);
-
-        try {
-            var result = codeGenerationExecutionService.generateAndCompileCode(programmingExercise, user, repositoryType);
-
-            if (result != null && result.isSuccessful()) {
-                log.info("Code generation successful for exercise {}", exerciseId);
-                return ResponseEntity.ok(new CodeGenerationResultDTO(true, "Code generation and compilation successful", 1));
-            }
-            else {
-                log.warn("Code generation failed for exercise {} after maximum attempts", exerciseId);
-                return ResponseEntity.ok(new CodeGenerationResultDTO(false, "Code generation failed after maximum attempts", 3));
-            }
-        }
-        catch (Exception e) {
-            log.error("Code generation failed for exercise {}: {}", exerciseId, e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/problem-statements/rewrite")
+    public ResponseEntity<ProblemStatementRewriteResponseDTO> rewriteProblemStatement(@PathVariable long courseId, @RequestBody ProblemStatementRewriteRequestDTO request) {
+        log.debug("REST request to Hyperion rewrite problem statement for course [{}]", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        var result = problemStatementRewriteService.rewriteProblemStatement(course, request.problemStatementText());
+        return ResponseEntity.ok(result);
     }
 }

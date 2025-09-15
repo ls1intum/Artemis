@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.ObjectReader;
@@ -29,13 +30,9 @@ import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
  * Contains an onPreReceive method that is called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was
  * successful).
  */
-public class LocalVCPrePushHook implements PreReceiveHook {
+public record LocalVCPrePushHook(LocalVCServletService localVCServletService, User user) implements PreReceiveHook {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCPrePushHook.class);
-
-    private final LocalVCServletService localVCServletService;
-
-    private final User user;
 
     public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NotNull User user) {
         this.localVCServletService = localVCServletService;
@@ -89,9 +86,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
             return;
         }
 
-        try {
-            Git git = new Git(repository);
-
+        try (Git git = new Git(repository)) {
             // Prevent deletion of branches.
             Ref ref = git.getRepository().exactRef(command.getRefName());
             if (ref != null && command.getNewId().equals(ObjectId.zeroId())) {
@@ -113,34 +108,54 @@ public class LocalVCPrePushHook implements PreReceiveHook {
                 }
             }
 
-            // ----------- Check for large blobs (>10MB) -----------
-            ObjectReader reader = repository.newObjectReader();
-            RevWalk revWalk = new RevWalk(reader);
-            RevCommit newCommit = revWalk.parseCommit(command.getNewId());
+            rejectFilesLargerThan10MbOrSymlinksOrSubModules(repository, command);
+        }
+        catch (IOException e) {
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
+        }
+    }
 
-            // Use TreeWalk to walk all new files in the tree
-            TreeWalk treeWalk = new TreeWalk(reader);
+    private static void rejectFilesLargerThan10MbOrSymlinksOrSubModules(Repository repository, ReceiveCommand command) throws IOException {
+        try (ObjectReader reader = repository.newObjectReader(); RevWalk revWalk = new RevWalk(reader); TreeWalk treeWalk = new TreeWalk(reader)) {
+            RevCommit newCommit = revWalk.parseCommit(command.getNewId());
             treeWalk.addTree(newCommit.getTree());
             treeWalk.setRecursive(true);
-
             while (treeWalk.next()) {
+                FileMode mode = treeWalk.getFileMode(0);
+                if (FileMode.SYMLINK.equals(mode)) {
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, String.format("""
+                            Symbolic links are not allowed: '%s'.
+                            To fix this, remove the symbolic link and replace it with the actual file or directory.
+
+                            - macOS/Linux:
+                                 * run 'rm "%1$s"'
+                            - Windows:
+                                * If it's a file symlink: run 'del "%1$s"'
+                                * If it's a directory symlink: run 'rmdir "%1$s"'
+
+                            After removing the symlink, replace it with the correct file or folder, add it with 'git add', and commit the changes.""", treeWalk.getPathString()));
+                    break;
+                }
+                if (FileMode.GITLINK.equals(mode)) {
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, String.format("""
+                            Git submodules are not allowed: '%s'.
+                            To remove the submodule from your repository:
+                            1. Run: 'git rm --cached "%1$s"'
+                            2. Delete the submodule directory: 'rm -rf "%1$s"' (macOS/Linux) or 'rmdir /s "%1$s"' (Windows)
+                            3. Edit the '.gitmodules' file and remove the corresponding section.
+                            4. Optionally, clean up '.git/config' if it contains a [submodule "%1$s"] section.
+                            5. Commit all changes.""", treeWalk.getPathString()));
+                    break;
+                }
+
                 ObjectId objectId = treeWalk.getObjectId(0);
                 ObjectLoader loader = reader.open(objectId);
-
                 if (loader.getType() == Constants.OBJ_BLOB && loader.getSize() > MAX_BLOB_SIZE_BYTES) {
                     command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
                             String.format("File '%s' exceeds 10MB size limit (%.2f MB)", treeWalk.getPathString(), loader.getSize() / (1024.0 * 1024.0)));
                     break;
                 }
             }
-
-            reader.close();
-            revWalk.close();
-
-            git.close();
-        }
-        catch (IOException e) {
-            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
         }
     }
 }

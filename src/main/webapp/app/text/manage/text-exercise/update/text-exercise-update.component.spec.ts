@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
 import { TextExerciseUpdateComponent } from 'app/text/manage/text-exercise/update/text-exercise-update.component';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -29,7 +29,7 @@ import { MockProvider } from 'ng-mocks';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -40,8 +40,8 @@ describe('TextExercise Management Update Component', () => {
         TestBed.configureTestingModule({
             imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
             providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -49,7 +49,7 @@ describe('TextExercise Management Update Component', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(CalendarEventService),
+                MockProvider(CalendarService),
             ],
         }).compileComponents();
 
@@ -76,8 +76,8 @@ describe('TextExercise Management Update Component', () => {
 
                 const entity = { ...textExercise };
                 jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
-                const calendarEventService = TestBed.inject(CalendarEventService);
-                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+                const calendarService = TestBed.inject(CalendarService);
+                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
                 // WHEN
                 comp.save();
@@ -122,8 +122,8 @@ describe('TextExercise Management Update Component', () => {
 
                 const entity = { ...textExercise };
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
-                const calendarEventService = TestBed.inject(CalendarEventService);
-                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+                const calendarService = TestBed.inject(CalendarService);
+                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
                 // WHEN
                 comp.save();

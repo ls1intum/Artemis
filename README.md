@@ -63,7 +63,7 @@ Artemis brings interactive learning to life with instant, individual feedback on
     * **Questions**: Iris supports students with answering questions about exercises, lectures, and the learning performance instantly.
     * **Pro-active assistance**: Iris can pro-actively communicate with the students, help them with the next steps in their learning experience and motivate them to continue.
 14. **[Athena](https://github.com/ls1intum/edutelligence/tree/main/athena)**: Artemis integrates Athena, a machine learning-based tool that supports instructors with the assessment of text, modeling and programming exercises. Athena offers different modules including automatic feedback suggestions based on generative AI. 
-15. **[Hyperion](https://github.com/ls1intum/edutelligence/tree/main/hyperion)**: Artemis integrates Hyperion, an AI-driven programming exercise creation assistance that helps instructors create high-quality programming exercises more efficiently through consistency checking and intelligent problem statement refinement.
+15. **Hyperion**: Artemis integrates Hyperion (via Spring AI), an AI-driven exercise creation assistant that helps instructors create high-quality exercises more efficiently through consistency checking and more.
 16. **[Tutorial groups](https://docs.artemis.cit.tum.de/user/tutorialgroups/)**: Artemis supports the management of tutorial groups of a course. This includes planning the sessions, assigning responsible tutors, registering students and tracking the attendance.
 17. **[Plagiarism checks](https://docs.artemis.cit.tum.de/user/plagiarism-check/)**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises in courses and exams. It allows notifying students about identified plagiarism. Students can review and comment on the allegation.
 18. **[LTI](https://docs.artemis.cit.tum.de/user/lti)**: Artemis supports the Learning Tools Interoperability (LTI) standard to integrate Artemis into other learning management systems (LMS) such as Moodle and edX.
@@ -206,7 +206,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.3.3.war
+./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.4.0.war
 ```
 
 ## Architecture

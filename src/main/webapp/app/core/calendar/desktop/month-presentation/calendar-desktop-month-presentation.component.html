@@ -1,0 +1,58 @@
+<div class="frame">
+    <div class="header">
+        @for (dayNameKey of utils.getWeekDayNameKeys(); track dayNameKey) {
+            <div class="day-name" jhiTranslate="{{ dayNameKey }}"></div>
+        }
+    </div>
+    @for (week of weeks(); track utils.identify(week)) {
+        <div class="week-row">
+            @for (day of week; track utils.identify(day)) {
+                <div class="day-cell">
+                    @if (utils.areDatesInSameMonth(day, firstDayOfCurrentMonth())) {
+                        <jhi-calendar-day-badge [day]="day" />
+                        @let events = getEventsOf(day);
+                        @if (events.length > 3) {
+                            @for (event of utils.limitToLengthTwo(events); track event.id) {
+                                <ng-container *ngTemplateOutlet="eventCell; context: { $implicit: event }" />
+                            }
+                            <div class="more-events-info">+{{ events.length - 2 }} more</div>
+                        } @else {
+                            @for (event of events; track event.id) {
+                                <ng-container *ngTemplateOutlet="eventCell; context: { $implicit: event }" />
+                            }
+                        }
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<ng-template #eventPopover let-pop="popover">
+    @let event = selectedEvent();
+    @if (event) {
+        <jhi-calendar-event-detail-popover [event]="event" (onClosePopover)="closePopover()" />
+    }
+</ng-template>
+
+<ng-template #eventCell let-event>
+    <div
+        class="event-cell"
+        [ngClass]="{
+            'exam-event-cell': event.isOfType(CalendarEventType.Exam),
+            'lecture-event-cell': event.isOfType(CalendarEventType.Lecture),
+            'tutorial-event-cell': event.isOfType(CalendarEventType.Tutorial),
+            'exercise-event-cell': event.isOfExerciseType(),
+        }"
+        [ngbPopover]="eventPopover"
+        triggers="manual"
+        [autoClose]="false"
+        [placement]="['bottom', 'right', 'left', 'top']"
+        (click)="openPopover(event, popover)"
+        #popover="ngbPopover"
+        [attr.data-testid]="event.title"
+    >
+        <div class="event-label">{{ event.title }}</div>
+        <fa-icon [icon]="utils.getIconForEvent(event)" />
+    </div>
+</ng-template>

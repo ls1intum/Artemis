@@ -37,6 +37,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
@@ -222,7 +224,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course = courseRepository.save(course);
 
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
-        doReturn(null).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean(), anyBoolean());
 
         doNothing().when(continuousIntegrationService).configureBuildPlan(any());
 
@@ -564,7 +565,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     private void prepareMocksForProgrammingExercise() throws Exception {
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
         var repo = new LocalRepository(defaultBranch);
         repo.configureRepos(localVCRepoPath, "studentRepo", "studentOriginRepo");
@@ -1195,6 +1196,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         StudentParticipation participation1 = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         participation1 = participationRepo.save(participation1);
+        participationUtilService.createSubmissionAndResult(participation1, 50, true);
 
         // SHOULD ADD FIRST PRESENTATION GRADE
         participation1.setPresentationScore(100.0);
@@ -1438,7 +1440,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
             exerciseRepository.save(programmingExercise);
         }
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         mockDeleteBuildPlan(programmingExercise.getProjectKey(), participation.getBuildPlanId(), false);
         var actualParticipation = request.putWithResponseBody("/api/exercise/participations/" + participation.getId() + "/cleanup-build-plan", null, Participation.class,
                 HttpStatus.OK);
@@ -1846,6 +1848,20 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         submissionRepository.save(submission);
 
         request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testStartParticipationForExamProgrammingExerciseAsTutorNotAllowed() throws Exception {
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course, false);
+        exam = examRepository.save(exam);
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
+        ProgrammingExercise examExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup);
+        examExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(examExercise.getBuildConfig()));
+        examExercise = exerciseRepository.save(examExercise);
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/exercise/exercises/" + examExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN, null);
+        assertThat(response.getContentAsString()).contains("Assignment repositories are not allowed for exam exercises. Please use the Test Run feature instead");
     }
 
     @Nested

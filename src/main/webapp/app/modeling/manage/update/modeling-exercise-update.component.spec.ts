@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Subject, of } from 'rxjs';
 import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
 
 import { ModelingExerciseUpdateComponent } from 'app/modeling/manage/update/modeling-exercise-update.component';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -32,7 +32,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -48,8 +48,8 @@ describe('ModelingExerciseUpdateComponent', () => {
         TestBed.configureTestingModule({
             imports: [MockComponent(NgbPagination), OwlDateTimeModule, OwlNativeDateTimeModule],
             providers: [
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: SessionStorageService, useClass: MockSyncStorage },
+                LocalStorageService,
+                SessionStorageService,
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -57,7 +57,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(CalendarEventService),
+                MockProvider(CalendarService),
             ],
         }).compileComponents();
 
@@ -75,7 +75,7 @@ describe('ModelingExerciseUpdateComponent', () => {
         route.data = of({ modelingExercise: modelingExercise });
         route.snapshot = {
             paramMap: {
-                get: (key: string) => 'mockValue',
+                get: () => 'mockValue',
             },
         } as any;
 
@@ -104,8 +104,8 @@ describe('ModelingExerciseUpdateComponent', () => {
 
                 const entity = { ...modelingExercise };
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
-                const calendarEventService = TestBed.inject(CalendarEventService);
-                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+                const calendarService = TestBed.inject(CalendarService);
+                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
                 // WHEN
                 comp.save();
@@ -138,8 +138,8 @@ describe('ModelingExerciseUpdateComponent', () => {
 
                 const entity = { ...modelingExercise };
                 jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
-                const calendarEventService = TestBed.inject(CalendarEventService);
-                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+                const calendarService = TestBed.inject(CalendarService);
+                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
                 // WHEN
                 comp.save();

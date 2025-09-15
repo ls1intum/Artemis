@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.domain;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 
 import org.eclipse.jgit.lib.BaseRepositoryBuilder;
 import org.slf4j.Logger;
@@ -25,21 +24,19 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
 
     private Path localPath;
 
-    private final VcsRepositoryUri remoteRepositoryUri;
+    private final LocalVCRepositoryUri remoteRepositoryUri;
 
-    private Collection<File> files;
-
-    public Repository(File gitDir, VcsRepositoryUri remoteRepositoryUri) throws IOException {
+    public Repository(File gitDir, LocalVCRepositoryUri remoteRepositoryUri) throws IOException {
         super(gitDir);
         this.remoteRepositoryUri = remoteRepositoryUri;
     }
 
-    public Repository(String gitDir, VcsRepositoryUri remoteRepositoryUri) throws IOException {
+    public Repository(String gitDir, LocalVCRepositoryUri remoteRepositoryUri) throws IOException {
         super(gitDir);
         this.remoteRepositoryUri = remoteRepositoryUri;
     }
 
-    public Repository(BaseRepositoryBuilder options, Path localPath, VcsRepositoryUri remoteRepositoryUri) throws IOException {
+    public Repository(BaseRepositoryBuilder options, Path localPath, LocalVCRepositoryUri remoteRepositoryUri) throws IOException {
         super(options);
         this.localPath = localPath.normalize();
         this.remoteRepositoryUri = remoteRepositoryUri;
@@ -99,7 +96,7 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         }
     }
 
-    public VcsRepositoryUri getRemoteRepositoryUri() {
+    public LocalVCRepositoryUri getRemoteRepositoryUri() {
         return remoteRepositoryUri;
     }
 }

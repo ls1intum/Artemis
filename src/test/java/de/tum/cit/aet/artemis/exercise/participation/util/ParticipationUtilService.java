@@ -72,11 +72,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
@@ -155,7 +155,7 @@ public class ParticipationUtilService {
     protected String defaultBranch;
 
     @Value("${artemis.version-control.url}")
-    protected String artemisVersionControlUrl;
+    protected URI localVCBaseUri;
 
     @Autowired
     private ResultTestRepository resultRepository;
@@ -181,7 +181,8 @@ public class ParticipationUtilService {
             participation.setBuildPlanId(buildPlanId);
             participation.setProgrammingExercise(exercise);
             participation.setInitializationState(InitializationState.INITIALIZED);
-            participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
+            var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
+            participation.setRepositoryUri(localVcRepoUri.toString());
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
@@ -229,6 +230,7 @@ public class ParticipationUtilService {
     public Result createSubmissionAndResult(StudentParticipation studentParticipation, long scoreAwarded, boolean rated) {
         Exercise exercise = studentParticipation.getExercise();
         var submission = getSubmission(studentParticipation, exercise);
+        submission.setSubmissionDate(ZonedDateTime.now().minusWeeks(1));
         submission = submissionRepository.save(submission);
 
         Result result = ParticipationFactory.generateResult(rated, scoreAwarded);
@@ -337,7 +339,8 @@ public class ParticipationUtilService {
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
-        participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
+        var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey().toLowerCase(), repoName);
+        participation.setRepositoryUri(localVcRepoUri.toString());
         participation = programmingExerciseStudentParticipationRepo.save(participation);
         participationVCSAccessTokenService.createParticipationVCSAccessToken(userUtilService.getUserByLogin(login), participation);
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
@@ -359,7 +362,8 @@ public class ParticipationUtilService {
         }
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateTeamProgrammingExerciseStudentParticipation(exercise, team);
         final var repoName = (exercise.getProjectKey() + "-" + team.getShortName()).toLowerCase();
-        participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
+        var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
+        participation.setRepositoryUri(localVcRepoUri.toString());
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
@@ -383,7 +387,7 @@ public class ParticipationUtilService {
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
-        participation.setRepositoryUri(String.format(localRepoPath.toString() + "%s/%s.git", exercise.getProjectKey(), repoName));
+        participation.setRepositoryUri(localRepoPath.toString());
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
@@ -444,7 +448,7 @@ public class ParticipationUtilService {
      * @return The created Result
      */
     public Result addResultToSubmission(Participation participation, Submission submission) {
-        Result result = new Result().submission(submission).successful(true).score(100D).rated(true);
+        Result result = new Result().submission(submission).successful(true).score(100D).rated(true).completionDate(ZonedDateTime.now());
         result.setSubmission(submission);
         result = resultRepo.save(result);
         submission.addResult(result);
@@ -948,9 +952,9 @@ public class ParticipationUtilService {
      * @param versionControlService        The mocked VersionControlService
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
      */
-    public void mockCreationOfExerciseParticipation(String templateRepoName, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
-            throws URISyntaxException {
-        var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
+    public void mockCreationOfExerciseParticipation(String templateRepoName, VersionControlService versionControlService,
+            ContinuousIntegrationService continuousIntegrationService) {
+        var someURL = new LocalVCRepositoryUri("http://vcs.fake.fake/git/abc/abcRepoSlug.git");
         doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class),
                 any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
@@ -963,9 +967,8 @@ public class ParticipationUtilService {
      * @param versionControlService        The mocked VersionControlService
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
      */
-    public void mockCreationOfExerciseParticipation(VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
-            throws URISyntaxException {
-        var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
+    public void mockCreationOfExerciseParticipation(VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) {
+        var someURL = new LocalVCRepositoryUri("http://vcs.fake.fake/git/abc/abcRepoSlug.git");
         doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), any(), any(String.class), any(String.class), any(String.class),
                 any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
@@ -996,9 +999,8 @@ public class ParticipationUtilService {
      *
      * @param programmingExercise The programming exercise
      * @param student             The student
-     * @return The configured programming submission with two results
      */
-    public ProgrammingSubmission setupSubmissionWithTwoResults(ProgrammingExercise programmingExercise, User student) {
+    public void setupSubmissionWithTwoResults(ProgrammingExercise programmingExercise, User student) {
         // Create student participation and submission
         StudentParticipation participation = addStudentParticipationForProgrammingExercise(programmingExercise, student.getLogin());
         ProgrammingSubmission submission = new ProgrammingSubmission();
@@ -1027,6 +1029,5 @@ public class ParticipationUtilService {
         // Verify submission has both results: one completed, one draft
         assertThat(submission.getResults()).hasSize(2);
 
-        return submission;
     }
 }

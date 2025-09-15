@@ -91,8 +91,8 @@ public class JenkinsService implements ContinuousIntegrationService {
             resetCustomBuildPlanToTemplate(exercise);
         }
 
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURL(RepositoryType.TEMPLATE));
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURL(RepositoryType.SOLUTION));
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURI(RepositoryType.TEMPLATE));
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURI(RepositoryType.SOLUTION));
     }
 
     /**
@@ -120,11 +120,6 @@ public class JenkinsService implements ContinuousIntegrationService {
         programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(sourceExercise);
         programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(targetExercise);
         return jenkinsBuildPlanService.copyBuildPlan(sourceExercise, sourcePlanName, targetExercise, targetPlanName);
-    }
-
-    @Override
-    public void givePlanPermissions(ProgrammingExercise programmingExercise, String planName) {
-        jenkinsBuildPlanService.givePlanPermissions(programmingExercise, planName);
     }
 
     @Override

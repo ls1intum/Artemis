@@ -10,7 +10,7 @@
 
 
 /**
- * Request containing the problem statement to rewrite
+ * Request to rewrite a problem statement
  */
 export interface ProblemStatementRewriteRequest { 
     /**

@@ -354,54 +354,72 @@ export abstract class TextEditorAction implements Disposable {
      * Formats consistency check results into well-structured markdown for instructor review.
      */
     private formatConsistencyCheckResults(response: ConsistencyCheckResponse): string {
-        let result = `**${response.summary}**\n\n`;
+        const issues = response.issues ?? [];
+        let md = '';
 
-        if (!response.hasIssues || !response.issues.length) {
-            return result + `**No consistency issues found!**\n\n`;
+        if (!issues.length) {
+            return md + `No consistency issues found.\n`;
         }
 
-        // Group issues by category for better organization
-        const issuesByCategory = this.groupIssuesByCategory(response.issues);
+        // Severity summary
+        const severityCount = this.getSeverityCount(issues);
+        const sevBadge = (sev: string | undefined) => {
+            switch (sev) {
+                case ConsistencyIssue.SeverityEnum.High:
+                    return 'HIGH';
+                case ConsistencyIssue.SeverityEnum.Medium:
+                    return 'MEDIUM';
+                case ConsistencyIssue.SeverityEnum.Low:
+                    return 'LOW';
+                default:
+                    return sev ?? 'UNKNOWN';
+            }
+        };
+        const summaryParts: string[] = [];
+        if (severityCount[ConsistencyIssue.SeverityEnum.High]) summaryParts.push(`${severityCount[ConsistencyIssue.SeverityEnum.High]} HIGH`);
+        if (severityCount[ConsistencyIssue.SeverityEnum.Medium]) summaryParts.push(`${severityCount[ConsistencyIssue.SeverityEnum.Medium]} MEDIUM`);
+        if (severityCount[ConsistencyIssue.SeverityEnum.Low]) summaryParts.push(`${severityCount[ConsistencyIssue.SeverityEnum.Low]} LOW`);
+        md += `**${issues.length} issue${issues.length === 1 ? '' : 's'}** (${summaryParts.join(', ')})\n\n`;
 
-        // Add summary statistics
-        const severityCount = this.getSeverityCount(response.issues);
-        result += `**${response.issues.length} issues found:** `;
-        if (severityCount[ConsistencyIssue.SeverityEnum.High] > 0) result += `${severityCount[ConsistencyIssue.SeverityEnum.High]} HIGH `;
-        if (severityCount[ConsistencyIssue.SeverityEnum.Medium] > 0) result += `${severityCount[ConsistencyIssue.SeverityEnum.Medium]} MEDIUM `;
-        if (severityCount[ConsistencyIssue.SeverityEnum.Low] > 0) result += `${severityCount[ConsistencyIssue.SeverityEnum.Low]} LOW`;
-        result += `\n\n`;
-
-        // Format issues by category
-        Object.entries(issuesByCategory).forEach(([category, issues]) => {
-            result += `**${category}**\n\n`;
-
-            issues.forEach((issue) => {
-                const locationInfo = this.formatLocationInfo(issue.relatedLocations);
-
-                result += `**[${issue.severity}]** **${locationInfo}**\n`;
-                result += `   ${issue.description}\n`;
-                if (issue.suggestedFix) {
-                    result += `   → *${issue.suggestedFix}*\n`;
-                }
-                result += `\n`;
-            });
+        issues.forEach((issue, index) => {
+            const number = index + 1;
+            const categoryRaw = issue.category || 'GENERAL';
+            const category = this.humanizeCategory(categoryRaw);
+            md += `**${number}. [${sevBadge(issue.severity)}] ${category}**\n\n`;
+            md += `${issue.description}\n\n`;
+            if (issue.suggestedFix) {
+                md += `**Suggested fix:** ${issue.suggestedFix}\n\n`;
+            }
+            // Full location listing (no collapsing)
+            if (issue.relatedLocations && issue.relatedLocations.length > 0) {
+                md += `**Locations:**\n`;
+                issue.relatedLocations.forEach((loc) => {
+                    const typeLabel = this.formatArtifactType(loc.type as ArtifactLocation.TypeEnum);
+                    const file = loc.filePath ?? '';
+                    let linePart = '';
+                    if (loc.startLine && loc.endLine) {
+                        linePart = loc.startLine === loc.endLine ? `:L${loc.startLine}` : `:L${loc.startLine}-${loc.endLine}`;
+                    } else if (loc.startLine) {
+                        linePart = `:L${loc.startLine}`;
+                    }
+                    md += `- ${typeLabel}${file ? `: ${file}` : ''}${linePart}\n`;
+                });
+                md += `\n`;
+            }
         });
 
-        return result;
+        return md;
     }
 
-    private groupIssuesByCategory(issues: ConsistencyIssue[]): Record<string, ConsistencyIssue[]> {
-        return issues.reduce(
-            (groups, issue) => {
-                const category = issue.category || 'General';
-                if (!groups[category]) {
-                    groups[category] = [];
-                }
-                groups[category].push(issue);
-                return groups;
-            },
-            {} as Record<string, ConsistencyIssue[]>,
-        );
+    /**
+     * Convert an ENUM_STYLE category (e.g. IDENTIFIER_NAMING_INCONSISTENCY) into Title Case (e.g. Identifier Naming Inconsistency)
+     */
+    private humanizeCategory(category: string): string {
+        return category
+            .split('_')
+            .filter((p) => p.length > 0)
+            .map((p) => p.charAt(0) + p.slice(1).toLowerCase())
+            .join(' ');
     }
 
     private getSeverityCount(issues: ConsistencyIssue[]): Record<string, number> {
@@ -415,48 +433,6 @@ export abstract class TextEditorAction implements Disposable {
         );
     }
 
-    private formatLocationInfo(relatedLocations: ArtifactLocation[]): string {
-        if (!relatedLocations || relatedLocations.length === 0) {
-            return 'Exercise';
-        }
-
-        // Use the first location as primary (most specific/relevant)
-        const primaryLocation = relatedLocations[0];
-
-        // Format the artifact type for display
-        const artifactType = this.formatArtifactType(primaryLocation.type);
-
-        // Format file path and line range
-        let locationStr = '';
-
-        if (primaryLocation.filePath && primaryLocation.filePath.trim() !== '') {
-            // Extract just the filename if it's a full path
-            const fileName = primaryLocation.filePath.split('/').pop() || primaryLocation.filePath;
-            locationStr = fileName;
-        } else {
-            // No specific file, use artifact type
-            locationStr = artifactType;
-        }
-
-        // Add line range if available
-        if (primaryLocation.startLine && primaryLocation.endLine) {
-            if (primaryLocation.startLine === primaryLocation.endLine) {
-                locationStr += `:L${primaryLocation.startLine}`;
-            } else {
-                locationStr += `:L${primaryLocation.startLine}-${primaryLocation.endLine}`;
-            }
-        } else if (primaryLocation.startLine) {
-            locationStr += `:L${primaryLocation.startLine}`;
-        }
-
-        // If there are multiple locations, indicate that
-        if (relatedLocations.length > 1) {
-            locationStr += ` (+${relatedLocations.length - 1} more)`;
-        }
-
-        return locationStr;
-    }
-
     private formatArtifactType(type: ArtifactLocation.TypeEnum): string {
         switch (type) {
             case ArtifactLocation.TypeEnum.ProblemStatement:
@@ -465,6 +441,8 @@ export abstract class TextEditorAction implements Disposable {
                 return 'Template';
             case ArtifactLocation.TypeEnum.SolutionRepository:
                 return 'Solution';
+            case ArtifactLocation.TypeEnum.TestsRepository:
+                return 'Tests';
             default:
                 return type;
         }

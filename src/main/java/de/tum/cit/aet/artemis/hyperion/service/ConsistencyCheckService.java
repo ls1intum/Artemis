@@ -25,14 +25,15 @@ import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactType;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.Severity;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -207,12 +208,12 @@ public class ConsistencyCheckService {
                 .map(entry -> new RepoFile(entry.getKey(), entry.getValue())).collect(Collectors.toList());
     }
 
-    private List<RepoFile> getRepositoryFiles(VcsRepositoryUri repositoryUri) {
+    private List<RepoFile> getRepositoryFiles(LocalVCRepositoryUri repositoryUri) {
         var repositoryContents = getRepositoryContents(repositoryUri);
         return repositoryContents.entrySet().stream().map(entry -> new RepoFile(entry.getKey(), entry.getValue())).collect(Collectors.toList());
     }
 
-    private java.util.Map<String, String> getRepositoryContents(VcsRepositoryUri repositoryUri) {
+    private java.util.Map<String, String> getRepositoryContents(LocalVCRepositoryUri repositoryUri) {
         try {
             return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repositoryUri);
         }
@@ -232,7 +233,8 @@ public class ConsistencyCheckService {
                 : issue.relatedLocations().stream()
                         .map(loc -> new ArtifactLocationDTO(loc.type() == null ? ArtifactType.PROBLEM_STATEMENT : loc.type(), loc.filePath(), loc.startLine(), loc.endLine()))
                         .collect(Collectors.toList());
-        return new ConsistencyIssueDTO(severity, issue.category(), issue.description(), issue.suggestedFix(), locations);
+        ConsistencyIssueCategory category = ConsistencyIssueCategory.valueOf(issue.category());
+        return new ConsistencyIssueDTO(severity, category, issue.description(), issue.suggestedFix(), locations);
     }
 
     private record Repo(List<RepoFile> files) {

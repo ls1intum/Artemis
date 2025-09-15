@@ -13,6 +13,5 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Response containing rewritten problem statement")
 public record ProblemStatementRewriteResponseDTO(
         @NotNull @Schema(description = "Improved problem statement text", example = "Write a Java function that calculates the sum of two integers. The function should handle edge cases like null inputs and return appropriate error messages.") String rewrittenText,
-
         @NotNull @Schema(description = "Whether the text was actually improved", example = "true") Boolean improved) {
 }

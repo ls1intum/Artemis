@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -35,6 +34,7 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 /**
  * Service responsible for orchestrating the iterative code generation and compilation process.
@@ -100,7 +100,7 @@ public class CodeGenerationExecutionService {
      * @param repositoryUri the URI of the repository to check
      * @return the default branch name
      */
-    private String getDefaultBranch(VcsRepositoryUri repositoryUri) {
+    private String getDefaultBranch(LocalVCRepositoryUri repositoryUri) {
         return gitService.getDefaultBranch();
     }
 
@@ -130,7 +130,7 @@ public class CodeGenerationExecutionService {
      * @return repository setup result containing repository and commit hash
      */
     private RepositorySetupResult setupRepository(ProgrammingExercise exercise, RepositoryType repositoryType) {
-        var repositoryUri = exercise.getRepositoryURL(repositoryType);
+        var repositoryUri = exercise.getRepositoryURI(repositoryType);
         if (repositoryUri == null) {
             log.error("Could not get {} repository URI for exercise {}", repositoryType, exercise.getId());
             return new RepositorySetupResult(null, null, false);
@@ -213,7 +213,7 @@ public class CodeGenerationExecutionService {
      * @return the new commit hash
      * @throws GitAPIException if git operations fail
      */
-    private String commitAndGetHash(Repository repository, User user, VcsRepositoryUri repositoryUri, ProgrammingExercise exercise) throws GitAPIException {
+    private String commitAndGetHash(Repository repository, User user, LocalVCRepositoryUri repositoryUri, ProgrammingExercise exercise) throws GitAPIException {
         repositoryService.commitChanges(repository, user);
         String newCommitHash = gitService.getLastCommitHash(repositoryUri).getName();
 
@@ -260,7 +260,7 @@ public class CodeGenerationExecutionService {
      * @param iteration     current iteration number (for logging)
      * @return iteration result with success status and build logs
      */
-    private IterationResult executeGenerationIteration(ProgrammingExercise exercise, User user, Repository repository, VcsRepositoryUri repositoryUri,
+    private IterationResult executeGenerationIteration(ProgrammingExercise exercise, User user, Repository repository, LocalVCRepositoryUri repositoryUri,
             CodeGenerationStrategy strategy, String lastBuildLogs, int iteration) {
         try {
             String repositoryStructure = repositoryStructureService.getRepositoryStructure(repository);
@@ -324,7 +324,7 @@ public class CodeGenerationExecutionService {
             return null;
         }
 
-        var repositoryUri = exercise.getRepositoryURL(repositoryType);
+        var repositoryUri = exercise.getRepositoryURI(repositoryType);
         try {
             CodeGenerationStrategy strategy = resolveStrategy(repositoryType);
             String lastBuildLogs = null;

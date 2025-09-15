@@ -17,7 +17,7 @@ public record ConsistencyIssueDTO(
 
         @NotNull @Schema(description = "Severity of the issue", example = "HIGH") Severity severity,
 
-        @NotNull @Schema(description = "Category of the issue", example = "PROBLEM_STATEMENT_MISMATCH") String category,
+        @NotNull @Schema(description = "Category of the issue", example = "METHOD_RETURN_TYPE_MISMATCH") ConsistencyIssueCategory category,
 
         @NotNull @Schema(description = "Detailed description of the issue", example = "Problem statement does not match test cases") String description,
 

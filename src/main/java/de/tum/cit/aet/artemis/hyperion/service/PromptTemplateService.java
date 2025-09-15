@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import org.springframework.ai.template.st.StTemplateRenderer;
+import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
@@ -16,13 +16,12 @@ import org.springframework.util.StreamUtils;
 @Profile(PROFILE_HYPERION)
 public class PromptTemplateService {
 
-    private final StTemplateRenderer renderer = StTemplateRenderer.builder().startDelimiterToken('<').endDelimiterToken('>').build();
-
     public String render(String resourcePath, Map<String, Object> variables) {
         try {
             var resource = new ClassPathResource(resourcePath);
             String template = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
-            return renderer.apply(template, Map.copyOf(variables));
+            PromptTemplate promptTemplate = new PromptTemplate(template);
+            return promptTemplate.render(variables);
         }
         catch (IOException e) {
             throw new RuntimeException("Failed to load template: " + resourcePath, e);

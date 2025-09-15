@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -90,7 +91,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
@@ -836,7 +837,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithMultipleTestRuns() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
 
         var exam = examUtilService.addExam(course1);
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, true, true);
@@ -1946,12 +1947,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private void setupMocks() {
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(anyString(), anyString());
-        doReturn(new VcsRepositoryUri()).when(versionControlService).copyRepositoryWithHistory(anyString(), anyString(), anyString(), anyString(), anyString(), isNull());
+        doReturn(new LocalVCRepositoryUri(localVCBaseUri, "projectkey", "repositoryslug")).when(versionControlService).copyRepositoryWithHistory(anyString(), anyString(),
+                anyString(), anyString(), anyString(), isNull());
         doNothing().when(continuousIntegrationService).createProjectForExercise(any(ProgrammingExercise.class));
         doReturn("build plan").when(continuousIntegrationService).copyBuildPlan(any(ProgrammingExercise.class), anyString(), any(ProgrammingExercise.class), anyString(),
                 anyString(), anyBoolean());
         doNothing().when(continuousIntegrationService).updatePlanRepository(anyString(), anyString(), anyString(), anyString(), anyString(), anyString(), anyString());
-        doNothing().when(continuousIntegrationService).givePlanPermissions(any(ProgrammingExercise.class), anyString());
         doNothing().when(continuousIntegrationService).enablePlan(anyString(), anyString());
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(any());
     }
@@ -2278,4 +2279,21 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         assertThat(sameStudentExamDifferentIpAndFingerprint).hasSize(2);
     }
     // </editor-fold>
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetExamSidebarDataForRealExams() throws Exception {
+        Course course = courseUtilService.addEmptyCourse();
+        Exam exam = examUtilService.addExam(course);
+        Exam testExam = examUtilService.addTestExam(course);
+        StudentExam studentExam1 = examUtilService.addStudentExamWithUser(exam, student1);
+        examUtilService.addStudentExamWithUser(testExam, student1);
+        Set<ExamSidebarDataDTO> examSidebarData = request.getSet("/api/exam/courses/" + course.getId() + "/real-exams-sidebar-data", HttpStatus.OK, ExamSidebarDataDTO.class);
+        assertThat(examSidebarData).hasSize(1);
+        ExamSidebarDataDTO element = examSidebarData.iterator().next();
+        assertThat(element.id()).isEqualTo(exam.getId());
+        assertThat(element.title()).isEqualTo(exam.getTitle());
+        assertThat(element.workingTime()).isEqualTo(studentExam1.getWorkingTime());
+        assertThat(element.startDate().withZoneSameInstant(ZoneId.systemDefault())).isCloseTo(exam.getStartDate(), within(1, ChronoUnit.SECONDS));
+    }
 }

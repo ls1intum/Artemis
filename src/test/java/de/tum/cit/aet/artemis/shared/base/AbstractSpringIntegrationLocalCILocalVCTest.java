@@ -23,6 +23,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,6 +32,7 @@ import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import com.github.dockerjava.api.DockerClient;
@@ -39,7 +41,6 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyJolService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
@@ -58,6 +59,7 @@ import de.tum.cit.aet.artemis.programming.icl.TestBuildAgentConfiguration;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
@@ -66,6 +68,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
 // Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port (see @TestPropertySource).
@@ -83,7 +86,8 @@ import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExe
         "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000",
         "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500", "info.contact=test@localhost", "artemis.version-control.ssh-port=1236",
         "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1236/", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc",
-        "artemis.version-control.build-agent-use-ssh=true", "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test/ssh-keys" })
+        "artemis.version-control.build-agent-use-ssh=true", "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test/ssh-keys",
+        "artemis.hyperion.enabled=true" })
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
@@ -166,8 +170,20 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @MockitoSpyBean
     protected CompetencyProgressApi competencyProgressApi;
 
-    @Value("${artemis.version-control.url}")
+    @MockitoSpyBean
+    protected GitRepositoryExportService gitRepositoryExportService;
+
+    // we explicitly want a mock here, as we don't want to test the actual chat model calls and avoid any autoconfiguration or instantiation of Spring AI internals
+    @MockitoBean
+    protected ChatModel chatModel;
+
     protected URI localVCBaseUri;
+
+    @Value("${artemis.version-control.url}")
+    public void setLocalVCBaseUri(URI localVCBaseUri) {
+        this.localVCBaseUri = localVCBaseUri;
+        ProgrammingExerciseFactory.localVCBaseUri = localVCBaseUri; // Set the static field in ProgrammingExerciseFactory for convenience
+    }
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     protected Path localVCBasePath;
@@ -211,7 +227,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Override
     protected void resetSpyBeans() {
         Mockito.reset(versionControlService, continuousIntegrationService, localCITriggerService, resourceLoaderService, programmingMessagingService, competencyProgressService,
-                competencyProgressApi);
+                competencyProgressApi, gitRepositoryExportService);
         super.resetSpyBeans();
     }
 
@@ -303,52 +319,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup,
-            boolean failToAddUsers, boolean failToRemoveUsers) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockCreateGroupInUserManagement(String groupName) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockDeleteGroupInUserManagement(String groupName) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockRemoveUserFromGroup(User user, String group, boolean failInCi) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
     public void mockDeleteBuildPlan(String projectKey1, String planName, boolean shouldFail) throws Exception {
         // Not implemented for local VC and local CI
     }
@@ -390,11 +360,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @Override
     public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
-        // Not implemented for local VC and local CI
-    }
-
-    @Override
-    public void mockUserExists(String username) {
         // Not implemented for local VC and local CI
     }
 

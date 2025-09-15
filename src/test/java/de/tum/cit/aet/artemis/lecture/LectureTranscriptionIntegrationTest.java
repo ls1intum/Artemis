@@ -20,7 +20,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -43,9 +42,6 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private LectureUtilService lectureUtilService;
-
-    @Autowired
-    private LectureUnitRepository lectureUnitRepository;
 
     private Lecture lecture;
 
@@ -119,7 +115,6 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
     void testCreateLectureTranscription_invalidLectureId() throws Exception {
         LectureTranscriptionDTO transcriptionDTO = new LectureTranscriptionDTO(this.lectureUnit.getId(), "en",
                 List.of(new LectureTranscriptionSegment(0.0, 10.0, "Invalid Lecture ID Test", 1)));
-
         request.post("/api/lecture/" + 9999L + "/lecture-unit/" + lectureUnit.getId() + "/transcription", transcriptionDTO, HttpStatus.BAD_REQUEST);
     }
 
@@ -130,5 +125,39 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
                 List.of(new LectureTranscriptionSegment(0.0, 10.0, "Student Permission Test", 1)));
 
         request.post("/api/lecture/" + lecture.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription", transcriptionDTO, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateLectureTranscription_forbiddenForInstructor() throws Exception {
+        LectureTranscriptionDTO transcriptionDTO = new LectureTranscriptionDTO(this.lectureUnit.getId(), "en",
+                List.of(new LectureTranscriptionSegment(0.0, 10.0, "Instructor Permission Test", 1)));
+
+        request.post("/api/lecture/" + lecture.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription", transcriptionDTO, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLectureTranscription_success() throws Exception {
+        var segments = List.of(new LectureTranscriptionSegment(0.0, 10.0, "Welcome to Artemis", 1), new LectureTranscriptionSegment(10.0, 20.0, "Lecture Transcription test", 2));
+        lectureTranscriptionRepository.save(new LectureTranscription("en", segments, lectureUnit));
+
+        LectureTranscriptionDTO retrieved = request.get("/api/lecture/lecture-unit/" + lectureUnit.getId() + "/transcript", HttpStatus.OK, LectureTranscriptionDTO.class);
+        assertThat(retrieved).isNotNull();
+        assertThat(retrieved.language()).isEqualTo("en");
+        assertThat(retrieved.segments()).hasSize(2);
+        assertThat(retrieved.segments().getFirst().text()).isEqualTo("Welcome to Artemis");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLectureTranscription_notFound() throws Exception {
+        request.get("/api/lecture/lecture-unit/" + lectureUnit.getId() + "/transcript", HttpStatus.NOT_FOUND, LectureTranscriptionDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void testGetLectureTranscription_forbiddenForStudent() throws Exception {
+        request.get("/api/lecture/lecture-unit/" + lectureUnit.getId() + "/transcript", HttpStatus.FORBIDDEN, LectureTranscriptionDTO.class);
     }
 }

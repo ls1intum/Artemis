@@ -1,91 +1,171 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.Severity;
-import de.tum.cit.aet.artemis.hyperion.service.ConsistencyCheckService;
-import de.tum.cit.aet.artemis.hyperion.service.ProblemStatementRewriteService;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-@WebMvcTest(HyperionReviewAndRefineResource.class)
-@AutoConfigureMockMvc(addFilters = false)
-@ActiveProfiles("hyperion")
-class HyperionReviewAndRefineResourceTest {
+class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    private CourseTestRepository courseRepository;
 
-    @MockBean
-    private UserRepository userRepository;
-
-    @MockBean
-    private CourseRepository courseRepository;
-
-    @MockBean
+    @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
-    @MockBean
-    private ConsistencyCheckService consistencyCheckService;
+    private static final String TEST_PREFIX = "hyperionreviewrefine";
 
-    @MockBean
-    private ProblemStatementRewriteService rewriteService;
+    private long persistedExerciseId;
 
-    @Test
-    void checkExerciseConsistency_returnsOkWithBody() throws Exception {
-        long exerciseId = 42L;
-        var user = new User();
-        user.setLogin("instructor");
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
+    private long persistedCourseId;
 
-        var exercise = new ProgrammingExercise();
-        exercise.setId(exerciseId);
-        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId)).thenReturn(exercise);
+    @BeforeEach
+    void setupTestData() {
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        var issues = List.of(new ConsistencyIssueDTO(Severity.MEDIUM, "METHOD_PARAMETER_MISMATCH", "desc", "fix", List.of()));
-        when(consistencyCheckService.checkConsistency(eq(user), eq(exercise))).thenReturn(new ConsistencyCheckResponseDTO(issues, true, "Found 1 consistency issue(s)"));
+        Course course = new Course();
+        course.setTitle("Hyperion Test Course");
+        course.setStudentGroupName(TEST_PREFIX + "student");
+        course.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");
+        course.setEditorGroupName(TEST_PREFIX + "editor");
+        course.setInstructorGroupName(TEST_PREFIX + "instructor");
+        course = courseRepository.save(course);
+        persistedCourseId = course.getId();
 
-        mockMvc.perform(post("/api/hyperion/exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isOk()).andExpect(jsonPath("$.hasIssues").value(true))
-                .andExpect(jsonPath("$.issues[0].category").value("METHOD_PARAMETER_MISMATCH"));
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        student.getGroups().add(course.getStudentGroupName());
+        userTestRepository.save(student);
+        var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        tutor.getGroups().add(course.getTeachingAssistantGroupName());
+        userTestRepository.save(tutor);
+        var editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
+        editor.getGroups().add(course.getEditorGroupName());
+        userTestRepository.save(editor);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        instructor.getGroups().add(course.getInstructorGroupName());
+        userTestRepository.save(instructor);
+
+        ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setTitle("Hyperion Test Exercise");
+        exercise.setCourse(course);
+        exercise = programmingExerciseRepository.save(exercise);
+        persistedExerciseId = exercise.getId();
+    }
+
+    private void mockConsistencyNoIssues() {
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}"))))).when(chatModel).call(any(Prompt.class));
+    }
+
+    private void mockRewriteImproved() {
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Improved problem statement."))))).when(chatModel).call(any(Prompt.class));
     }
 
     @Test
-    void rewriteProblemStatement_returnsOkWithBody() throws Exception {
-        long courseId = 5L;
-        var user = new User();
-        user.setLogin("instructor");
-        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldReturnConsistencyIssuesEmptyForInstructor() throws Exception {
+        long exerciseId = persistedExerciseId;
+        mockConsistencyNoIssues();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        programmingExerciseRepository.findById(exerciseId).orElseThrow();
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isOk());
+    }
 
-        var course = new Course();
-        course.setId(courseId);
-        when(courseRepository.findByIdElseThrow(courseId)).thenReturn(course);
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    void shouldReturnConsistencyIssuesEmptyForEditor() throws Exception {
+        long exerciseId = persistedExerciseId;
+        mockConsistencyNoIssues();
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+        programmingExerciseRepository.findById(exerciseId).orElseThrow();
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isOk());
+    }
 
-        when(rewriteService.rewriteProblemStatement(eq(user), eq(course), eq("Original"))).thenReturn(new ProblemStatementRewriteResponseDTO("Rewritten", true));
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    void shouldReturnForbiddenForConsistencyCheckTutor() throws Exception {
+        long exerciseId = persistedExerciseId;
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        programmingExerciseRepository.findById(exerciseId).orElseThrow();
+
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void shouldReturnForbiddenForConsistencyCheckStudent() throws Exception {
+        long exerciseId = persistedExerciseId;
+
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        programmingExerciseRepository.findById(exerciseId).orElseThrow();
+
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldRewriteProblemStatementForInstructor() throws Exception {
+        long courseId = persistedCourseId;
+        mockRewriteImproved();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        courseRepository.findById(courseId).orElseThrow();
+        String body = "{\"problemStatementText\":\"Original\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/rewrite", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.rewrittenText").isString()).andExpect(jsonPath("$.improved").isBoolean());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    void shouldRewriteProblemStatementForEditor() throws Exception {
+        long courseId = persistedCourseId;
+        mockRewriteImproved();
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+        courseRepository.findById(courseId).orElseThrow();
+        String body = "{\"problemStatementText\":\"Original\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/rewrite", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.rewrittenText").isString()).andExpect(jsonPath("$.improved").isBoolean());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    void shouldReturnForbiddenForRewriteTutor() throws Exception {
+        long courseId = persistedCourseId;
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        courseRepository.findById(courseId).orElseThrow();
 
         String body = "{\"problemStatementText\":\"Original\"}";
-        mockMvc.perform(post("/api/hyperion/courses/{courseId}/problem-statement-rewrite", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.rewrittenText").value("Rewritten")).andExpect(jsonPath("$.improved").value(true));
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/rewrite", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void shouldReturnForbiddenForRewriteStudent() throws Exception {
+        long courseId = persistedCourseId;
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        courseRepository.findById(courseId).orElseThrow();
+        String body = "{\"problemStatementText\":\"Original\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/rewrite", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
     }
 }

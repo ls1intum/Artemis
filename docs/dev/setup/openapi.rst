@@ -26,7 +26,7 @@ This will generate an ``openapi.yaml`` file in the ``openapi`` directory.
     ./gradlew openApiGenerate
 
 This command prunes to specs file to only include DTO-only endpoints, generates the client files based on the OpenAPI spec and performs some post-processing to make the client compile.
-The generated client files are stored in the ``src/main/webapp/openapi`` directory.
+The generated client files are stored in the ``src/main/webapp/app/openapi`` directory.
 
 
 

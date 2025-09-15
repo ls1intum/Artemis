@@ -41,6 +41,8 @@ import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-ed
         UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseEditableInstructionComponent,
+        NgbTooltip,
+        ArtemisTranslatePipe,
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {

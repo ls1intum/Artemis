@@ -25,20 +25,20 @@ import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.inter
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
-
-import { provideNgxWebstorage, withLocalStorage, withNgxWebstorageConfig, withSessionStorage } from 'ngx-webstorage';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { provideApi } from 'app/openapi/provide-api';
+import { Configuration } from 'app/openapi/configuration';
+import { providePrimeNG } from 'primeng/config';
+import { AuraArtemis } from './primeng-artemis-theme';
 
 export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
         importProvidersFrom(
             // TODO: we should exclude modules here in the future
-
             BrowserAnimationsModule,
             BrowserModule,
             RouterModule,
@@ -68,7 +68,6 @@ export const appConfig: ApplicationConfig = {
         provideHttpClient(withInterceptorsFromDi()),
         // Configure OpenAPI generated clients to use relative base path and send cookies
         provideApi({ basePath: '', withCredentials: true }),
-        provideNgxWebstorage(withNgxWebstorageConfig({ prefix: 'jhi', separator: '-' }), withLocalStorage(), withSessionStorage()),
         Title,
         { provide: LOCALE_ID, useValue: 'en' },
         { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
@@ -124,5 +123,14 @@ export const appConfig: ApplicationConfig = {
             useClass: ArtemisVersionInterceptor,
             multi: true,
         },
+        { provide: Configuration, useFactory: () => new Configuration({ withCredentials: true, basePath: '' }) },
+        providePrimeNG({
+            theme: {
+                preset: AuraArtemis,
+                options: {
+                    darkModeSelector: '[prime-ng-use-dark-theme="true"]',
+                },
+            },
+        }),
     ],
 };

@@ -8,7 +8,6 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -18,18 +17,16 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import de.jplag.Language;
 import de.jplag.c.CLanguage;
 import de.jplag.cpp.CPPLanguage;
 import de.jplag.csharp.CSharpLanguage;
-import de.jplag.exceptions.ExitException;
 import de.jplag.java.JavaLanguage;
 import de.jplag.javascript.JavaScriptLanguage;
 import de.jplag.kotlin.KotlinLanguage;
@@ -39,6 +36,7 @@ import de.jplag.typescript.TypeScriptLanguage;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.exception.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
@@ -56,8 +54,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class PlagiarismDetectionServiceTest {
 
-    @TempDir
-    Path tempDir;
+    private static Path tempPath;
 
     private final PlagiarismDetectionConfig config = PlagiarismDetectionConfig.createDefault();
 
@@ -81,8 +78,15 @@ class PlagiarismDetectionServiceTest {
 
     private static final String NON_JAVA_CONTENT = "This is a readme file with lots of content that should not be counted for Java token analysis";
 
+    @BeforeAll
+    static void setTempPath() throws IOException {
+        // we cannot rely on spring boot value injection here as it's not an integration test.
+        tempPath = Path.of("local", "server-integration-test");
+        Files.createDirectories(tempPath);
+    }
+
     @Test
-    void shouldExecuteChecksForTextExercise() throws ExitException {
+    void shouldExecuteChecksForTextExercise() {
         // given
         var textExercise = new TextExercise();
         textExercise.setPlagiarismDetectionConfig(config);
@@ -98,7 +102,7 @@ class PlagiarismDetectionServiceTest {
     }
 
     @Test
-    void shouldExecuteChecksForProgrammingExercise() throws IOException, ExitException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
+    void shouldExecuteChecksForProgrammingExercise() throws IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
         // given
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(1L);
@@ -136,7 +140,7 @@ class PlagiarismDetectionServiceTest {
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(1L);
         programmingExercise.setPlagiarismDetectionConfig(config);
-        var zipFile = new File("test.zip");
+        var zipFile = Path.of("test.zip").toFile();
         when(programmingPlagiarismDetectionService.checkPlagiarismWithJPlagReport(1L, config.getSimilarityThreshold(), config.getMinimumScore(), config.getMinimumSize()))
                 .thenReturn(zipFile);
 
@@ -171,12 +175,12 @@ class PlagiarismDetectionServiceTest {
         ProgrammingExercise exercise = createProgrammingExercise(programmingLanguage);
 
         if (expectedLanguageClass != null) {
-            Language result = ReflectionTestUtils.invokeMethod(programmingPlagiarismDetectionService, "getJPlagProgrammingLanguage", exercise);
+            Language result = ProgrammingPlagiarismDetectionService.getJPlagProgrammingLanguage(exercise);
             assertThat(result).isInstanceOf(expectedLanguageClass);
         }
         else {
-            assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(programmingPlagiarismDetectionService, "getJPlagProgrammingLanguage", exercise))
-                    .isInstanceOf(BadRequestAlertException.class).hasMessageContaining(expectedErrorMessage);
+            assertThatThrownBy(() -> ProgrammingPlagiarismDetectionService.getJPlagProgrammingLanguage(exercise)).isInstanceOf(BadRequestAlertException.class)
+                    .hasMessageContaining(expectedErrorMessage);
         }
     }
 
@@ -198,7 +202,7 @@ class PlagiarismDetectionServiceTest {
     void testCountTokensInFile_ValidContent() throws IOException {
         Path testFile = createTestFile("test.java", SIMPLE_JAVA_CONTENT);
 
-        int result = ReflectionTestUtils.invokeMethod(programmingPlagiarismDetectionService, "countTokensInFile", testFile, 100, 0);
+        int result = FileUtil.countTokensInFile(testFile, 100, 0);
 
         assertThat(result).isGreaterThan(0);
         // The content should have tokens like: public, class, Test, public, static, void, main, String, args, System, out, println, Hello, World
@@ -209,7 +213,7 @@ class PlagiarismDetectionServiceTest {
     void testCountTokensInFile_EmptyFile() throws IOException {
         Path testFile = createTestFile("empty.java", "");
 
-        int result = ReflectionTestUtils.invokeMethod(programmingPlagiarismDetectionService, "countTokensInFile", testFile, 100, 0);
+        int result = FileUtil.countTokensInFile(testFile, 100, 0);
 
         assertThat(result).isEqualTo(0);
     }
@@ -222,7 +226,7 @@ class PlagiarismDetectionServiceTest {
         }
         Path testFile = createTestFile("large.java", content.toString());
 
-        int result = ReflectionTestUtils.invokeMethod(programmingPlagiarismDetectionService, "countTokensInFile", testFile, 100, 0);
+        int result = FileUtil.countTokensInFile(testFile, 100, 0);
 
         assertThat(result).isGreaterThanOrEqualTo(100);
     }
@@ -233,7 +237,7 @@ class PlagiarismDetectionServiceTest {
         ProgrammingExercise exercise = createProgrammingExercise(ProgrammingLanguage.JAVA);
         setupRepositoryWithFile("Test.java", SIMPLE_JAVA_CONTENT, repository);
 
-        boolean result = ReflectionTestUtils.invokeMethod(programmingPlagiarismDetectionService, "meetsMinimumSize", repository, exercise, 5);
+        boolean result = ProgrammingPlagiarismDetectionService.meetsMinimumSize(repository, exercise, 5);
 
         assertThat(result).isTrue();
     }
@@ -244,7 +248,7 @@ class PlagiarismDetectionServiceTest {
         ProgrammingExercise exercise = createProgrammingExercise(ProgrammingLanguage.JAVA);
         setupRepositoryWithFile("Test.java", MINIMAL_JAVA_CONTENT, repository);
 
-        boolean result = ReflectionTestUtils.invokeMethod(programmingPlagiarismDetectionService, "meetsMinimumSize", repository, exercise, 100);
+        boolean result = ProgrammingPlagiarismDetectionService.meetsMinimumSize(repository, exercise, 100);
 
         assertThat(result).isFalse();
     }
@@ -255,7 +259,7 @@ class PlagiarismDetectionServiceTest {
         ProgrammingExercise exercise = createProgrammingExercise(ProgrammingLanguage.JAVA);
         setupRepositoryWithMultipleFiles(repository);
 
-        boolean result = ReflectionTestUtils.invokeMethod(programmingPlagiarismDetectionService, "meetsMinimumSize", repository, exercise, 20);
+        boolean result = ProgrammingPlagiarismDetectionService.meetsMinimumSize(repository, exercise, 20);
 
         assertThat(result).isTrue();
     }
@@ -266,7 +270,7 @@ class PlagiarismDetectionServiceTest {
         ProgrammingExercise exercise = createProgrammingExercise(ProgrammingLanguage.JAVA);
         setupRepositoryWithMixedFiles(repository);
 
-        boolean result = ReflectionTestUtils.invokeMethod(programmingPlagiarismDetectionService, "meetsMinimumSize", repository, exercise, 10);
+        boolean result = ProgrammingPlagiarismDetectionService.meetsMinimumSize(repository, exercise, 10);
 
         assertThat(result).isFalse(); // Only Java file should be counted
     }
@@ -282,22 +286,28 @@ class PlagiarismDetectionServiceTest {
     }
 
     private Path createTestFile(String filename, String content) throws IOException {
+        Path tempDir = createTemporaryDirectory();
         Path testFile = tempDir.resolve(filename);
         FileUtils.writeStringToFile(testFile.toFile(), content, StandardCharsets.UTF_8);
         return testFile;
     }
 
-    private Path setupRepositoryWithFile(String filename, String content, Repository repository) throws IOException {
+    private Path createTemporaryDirectory() throws IOException {
+        return Files.createTempDirectory(tempPath, "plagiarismRepo");
+    }
+
+    private void setupRepositoryWithFile(String filename, String content, Repository repository) throws IOException {
+        Path tempDir = createTemporaryDirectory();
         Path repoPath = tempDir.resolve("repo");
         Files.createDirectories(repoPath);
         lenient().when(repository.getLocalPath()).thenReturn(repoPath);
 
         Path file = repoPath.resolve(filename);
         FileUtils.writeStringToFile(file.toFile(), content, StandardCharsets.UTF_8);
-        return repoPath;
     }
 
-    private Path setupRepositoryWithMultipleFiles(Repository repository) throws IOException {
+    private void setupRepositoryWithMultipleFiles(Repository repository) throws IOException {
+        Path tempDir = createTemporaryDirectory();
         Path repoPath = tempDir.resolve("repo");
         Files.createDirectories(repoPath);
         lenient().when(repository.getLocalPath()).thenReturn(repoPath);
@@ -308,10 +318,10 @@ class PlagiarismDetectionServiceTest {
             String content = String.format(COMPLEX_JAVA_CONTENT_TEMPLATE, i);
             FileUtils.writeStringToFile(javaFile.toFile(), content, StandardCharsets.UTF_8);
         }
-        return repoPath;
     }
 
-    private Path setupRepositoryWithMixedFiles(Repository repository) throws IOException {
+    private void setupRepositoryWithMixedFiles(Repository repository) throws IOException {
+        Path tempDir = createTemporaryDirectory();
         Path repoPath = tempDir.resolve("repo");
         Files.createDirectories(repoPath);
         lenient().when(repository.getLocalPath()).thenReturn(repoPath);
@@ -324,7 +334,6 @@ class PlagiarismDetectionServiceTest {
         Path textFile = repoPath.resolve("readme.txt");
         FileUtils.writeStringToFile(textFile.toFile(), NON_JAVA_CONTENT, StandardCharsets.UTF_8);
 
-        return repoPath;
     }
 
 }

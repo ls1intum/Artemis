@@ -18,13 +18,5 @@ export interface ConsistencyCheckResponse {
      * List of consistency issues found
      */
     issues: Array<ConsistencyIssue>;
-    /**
-     * Whether any issues were found
-     */
-    hasIssues: boolean;
-    /**
-     * Summary of the consistency check
-     */
-    summary: string;
 }
 

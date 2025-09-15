@@ -39,18 +39,16 @@ export class HyperionReviewAndRefineApiService extends BaseService {
     }
 
     /**
-     * Check exercise consistency
-     * Analyzes a programming exercise for consistency issues between problem statement, template code, solution code, and test cases
-     * @param exerciseId ID of the programming exercise to analyze
+     * @param programmingExerciseId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public checkExerciseConsistency(exerciseId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ConsistencyCheckResponse>;
-    public checkExerciseConsistency(exerciseId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ConsistencyCheckResponse>>;
-    public checkExerciseConsistency(exerciseId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ConsistencyCheckResponse>>;
-    public checkExerciseConsistency(exerciseId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (exerciseId === null || exerciseId === undefined) {
-            throw new Error('Required parameter exerciseId was null or undefined when calling checkExerciseConsistency.');
+    public checkExerciseConsistency(programmingExerciseId: number, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ConsistencyCheckResponse>;
+    public checkExerciseConsistency(programmingExerciseId: number, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ConsistencyCheckResponse>>;
+    public checkExerciseConsistency(programmingExerciseId: number, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ConsistencyCheckResponse>>;
+    public checkExerciseConsistency(programmingExerciseId: number, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (programmingExerciseId === null || programmingExerciseId === undefined) {
+            throw new Error('Required parameter programmingExerciseId was null or undefined when calling checkExerciseConsistency.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -78,7 +76,7 @@ export class HyperionReviewAndRefineApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/hyperion/exercises/${this.configuration.encodeParam({name: "exerciseId", value: exerciseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/consistency-check`;
+        let localVarPath = `/api/hyperion/programming-exercises/${this.configuration.encodeParam({name: "programmingExerciseId", value: programmingExerciseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/consistency-check`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ConsistencyCheckResponse>('post', `${basePath}${localVarPath}`,
             {
@@ -94,9 +92,7 @@ export class HyperionReviewAndRefineApiService extends BaseService {
     }
 
     /**
-     * Rewrite problem statement
-     * Rewrites and improves a problem statement using AI assistance
-     * @param courseId ID of the course
+     * @param courseId 
      * @param problemStatementRewriteRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
@@ -146,7 +142,7 @@ export class HyperionReviewAndRefineApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/problem-statement-rewrite`;
+        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/problem-statements/rewrite`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ProblemStatementRewriteResponse>('post', `${basePath}${localVarPath}`,
             {

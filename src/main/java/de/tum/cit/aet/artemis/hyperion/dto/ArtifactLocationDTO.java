@@ -17,7 +17,7 @@ public record ArtifactLocationDTO(
 
         @NotNull @Schema(description = "Path to file, empty or problem_statement.md for problem statement", example = "src/main/java/Main.java") String filePath,
 
-        @NotNull @Schema(description = "Start line number (1-based)", example = "10") Integer startLine,
+        @NotNull @Schema(description = "Start line number (1-based)") Integer startLine,
 
-        @NotNull @Schema(description = "End line number (1-based)", example = "15") Integer endLine) {
+        @NotNull @Schema(description = "End line number (1-based)") Integer endLine) {
 }
