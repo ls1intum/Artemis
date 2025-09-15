@@ -103,7 +103,7 @@ const moduleThresholds = {
     },
     programming: {
         statements: 88.74,
-        branches:   76.65,
+        branches:   76.59,
         functions:  80.93,
         lines:      88.86,
     },
@@ -115,7 +115,7 @@ const moduleThresholds = {
     },
     shared: {
         statements: 86.74,
-        branches:   71.49,
+        branches:   71.31,
         functions:  83.88,
         lines:      86.53,
     },

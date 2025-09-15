@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { BehaviorSubject, of } from 'rxjs';
 import { BuildQueueComponent } from 'app/buildagent/build-queue/build-queue.component';
 import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
 import dayjs from 'dayjs/esm';
@@ -19,10 +19,20 @@ import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-buil
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 
+class ActivatedRouteStub {
+    private params$ = new BehaviorSubject<{ [key: string]: any }>({});
+    params = this.params$.asObservable();
+    snapshot = { paramMap: convertToParamMap({}) };
+
+    setParamMap(params: Record<string, any>) {
+        this.params$.next(params);
+        this.snapshot = { paramMap: convertToParamMap(params) };
+    }
+}
+
 describe('BuildQueueComponent', () => {
     let component: BuildQueueComponent;
     let fixture: ComponentFixture<BuildQueueComponent>;
-    let mockActivatedRoute: any;
 
     const mockBuildQueueService = {
         getQueuedBuildJobsByCourseId: jest.fn(),
@@ -45,6 +55,8 @@ describe('BuildQueueComponent', () => {
     const accountServiceMock = { identity: jest.fn(), getAuthenticationState: jest.fn() };
 
     const testCourseId = 123;
+
+    const routeStub = new ActivatedRouteStub();
     const mockQueuedJobs = [
         {
             id: '1',
@@ -255,13 +267,11 @@ describe('BuildQueueComponent', () => {
     let modalService: NgbModal;
 
     beforeEach(waitForAsync(() => {
-        mockActivatedRoute = { params: of({ courseId: testCourseId }) };
-
         TestBed.configureTestingModule({
             imports: [BuildQueueComponent],
             providers: [
                 { provide: BuildQueueService, useValue: mockBuildQueueService },
-                { provide: ActivatedRoute, useValue: mockActivatedRoute },
+                { provide: ActivatedRoute, useValue: routeStub },
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -291,7 +301,7 @@ describe('BuildQueueComponent', () => {
 
     it('should initialize all build job data', () => {
         // Mock ActivatedRoute to return an empty paramMap or a paramMap without 'courseId'
-        mockActivatedRoute.paramMap = of(new Map([]));
+        routeStub.setParamMap({});
 
         // Mock BuildQueueService to return mock data
         mockBuildQueueService.getQueuedBuildJobs.mockReturnValue(of(mockQueuedJobs));
@@ -319,7 +329,7 @@ describe('BuildQueueComponent', () => {
 
     it('should initialize with course data', () => {
         // Mock ActivatedRoute to return a specific course ID
-        mockActivatedRoute.paramMap = of(new Map([['courseId', testCourseId.toString()]]));
+        routeStub.setParamMap({ courseId: testCourseId.toString() });
 
         // Mock BuildQueueService to return mock data
         mockBuildQueueService.getQueuedBuildJobsByCourseId.mockReturnValue(of(mockQueuedJobs));
@@ -341,7 +351,7 @@ describe('BuildQueueComponent', () => {
     });
 
     it('should refresh data', () => {
-        mockActivatedRoute.paramMap = of(new Map([['courseId', testCourseId.toString()]]));
+        routeStub.setParamMap({ courseId: testCourseId.toString() });
         const spy = jest.spyOn(component, 'ngOnInit');
         component.ngOnInit();
         expect(spy).toHaveBeenCalled();
@@ -349,7 +359,7 @@ describe('BuildQueueComponent', () => {
 
     it('should update build job duration in running build jobs', () => {
         // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([]));
+        routeStub.setParamMap({});
 
         // Mock BuildQueueService to return mock data
         mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs));
@@ -371,7 +381,7 @@ describe('BuildQueueComponent', () => {
         const buildJobId = '1';
 
         // Mock ActivatedRoute to return a specific course ID
-        mockActivatedRoute.paramMap = of(new Map([['courseId', testCourseId]]));
+        routeStub.setParamMap({ courseId: testCourseId.toString() });
 
         // Mock BuildQueueService to return a successful response for canceling a build job
         mockBuildQueueService.cancelBuildJobInCourse.mockReturnValue(of(null));
@@ -390,7 +400,7 @@ describe('BuildQueueComponent', () => {
         const buildJobId = '1';
 
         // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([]));
+        routeStub.setParamMap({});
 
         // Mock BuildQueueService to return a successful response for canceling a build job
         mockBuildQueueService.cancelBuildJob.mockReturnValue(of(null));
@@ -407,7 +417,7 @@ describe('BuildQueueComponent', () => {
 
     it('should cancel all queued build jobs in a course', () => {
         // Mock ActivatedRoute to return a specific course ID
-        mockActivatedRoute.paramMap = of(new Map([['courseId', testCourseId.toString()]]));
+        routeStub.setParamMap({ courseId: testCourseId.toString() });
 
         // Mock BuildQueueService to return a successful response for canceling all queued build jobs in a course
         mockBuildQueueService.cancelAllQueuedBuildJobsInCourse.mockReturnValue(of(null));
@@ -424,7 +434,7 @@ describe('BuildQueueComponent', () => {
 
     it('should cancel all running build jobs in a course', () => {
         // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([['courseId', testCourseId.toString()]]));
+        routeStub.setParamMap({ courseId: testCourseId.toString() });
 
         // Mock BuildQueueService to return a successful response for canceling all running build jobs
         mockBuildQueueService.cancelAllRunningBuildJobsInCourse.mockReturnValue(of(null));
@@ -441,7 +451,7 @@ describe('BuildQueueComponent', () => {
 
     it('should cancel all queued build jobs', () => {
         // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([]));
+        routeStub.setParamMap({});
 
         // Mock BuildQueueService to return a successful response for canceling all running build jobs
         mockBuildQueueService.cancelAllQueuedBuildJobs.mockReturnValue(of(null));
@@ -458,7 +468,7 @@ describe('BuildQueueComponent', () => {
 
     it('should cancel all running build jobs', () => {
         // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([]));
+        routeStub.setParamMap({});
 
         // Mock BuildQueueService to return a successful response for canceling all running build jobs
         mockBuildQueueService.cancelAllRunningBuildJobs.mockReturnValue(of(null));
@@ -475,7 +485,7 @@ describe('BuildQueueComponent', () => {
 
     it('should load finished build jobs on initialization', () => {
         // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([]));
+        routeStub.setParamMap({});
 
         mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
 
@@ -487,7 +497,7 @@ describe('BuildQueueComponent', () => {
 
     it('should load finished build jobs for a specific course on initialization', () => {
         // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([['courseId', testCourseId.toString()]]));
+        routeStub.setParamMap({ courseId: testCourseId.toString() });
 
         mockBuildQueueService.getFinishedBuildJobsByCourseId.mockReturnValue(of(mockFinishedJobsResponse));
 
@@ -498,7 +508,7 @@ describe('BuildQueueComponent', () => {
     });
 
     it('should trigger refresh on search term change', async () => {
-        mockActivatedRoute.paramMap = of(new Map([]));
+        routeStub.setParamMap({});
 
         mockBuildQueueService.getQueuedBuildJobs.mockReturnValue(of(mockQueuedJobs));
         mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs));
@@ -517,7 +527,7 @@ describe('BuildQueueComponent', () => {
 
     it('should set build job duration', () => {
         // Mock ActivatedRoute to return no course ID
-        mockActivatedRoute.paramMap = of(new Map([]));
+        routeStub.setParamMap({});
 
         mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
 
