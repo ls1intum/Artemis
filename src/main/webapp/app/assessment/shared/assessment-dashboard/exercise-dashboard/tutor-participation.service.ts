@@ -18,12 +18,11 @@ export class TutorParticipationService {
      * features are available for the exercise (e.g. grading instructions) The method is valid only for tutors,
      * since it inits the tutor participation to the exercise, which is different from a standard participation
      *
-     * @param tutorParticipationDto The to be created tutor participationDto
      * @param exerciseId The ID of the exercise for which to init a participation
      * @return The new tutor participation
      */
-    create(tutorParticipationDto: TutorParticipationDTO, exerciseId: number): Observable<EntityResponseType> {
-        return this.http.post<TutorParticipationDTO>(`${this.resourceUrl}/${exerciseId}/tutor-participations`, tutorParticipationDto, { observe: 'response' });
+    create(exerciseId: number): Observable<EntityResponseType> {
+        return this.http.post<TutorParticipationDTO>(`${this.resourceUrl}/${exerciseId}/tutor-participations`, null, { observe: 'response' });
     }
 
     /**

@@ -638,7 +638,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     readInstruction() {
         this.isLoading = true;
         this.tutorParticipationService
-            .create(this.tutorParticipation, this.exerciseId)
+            .create(this.exerciseId)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: (res: HttpResponse<TutorParticipation>) => {

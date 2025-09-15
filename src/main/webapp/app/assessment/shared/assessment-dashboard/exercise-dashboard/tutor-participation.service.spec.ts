@@ -25,7 +25,7 @@ describe('Tutor Participation Service', () => {
     it('should create a TutorParticipation for an exercise', fakeAsync(() => {
         const returnedFromService = new TutorParticipation();
         service
-            .create(new TutorParticipation(), exerciseId)
+            .create(exerciseId)
             .pipe(take(1))
             .subscribe((resp) => expect(resp.body).toBe(returnedFromService));
 
