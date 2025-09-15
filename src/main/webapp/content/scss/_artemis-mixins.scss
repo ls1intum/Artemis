@@ -46,3 +46,17 @@
     z-index: 1;
     opacity: 1;
 }
+
+@mixin dynamic-content-height($extra-height-to-subtract...) {
+    $base: calc(100vh - var(--sidebar-header-footer-combined-height));
+    $base-dvh: calc(100dvh - var(--sidebar-header-footer-combined-height));
+
+    @if length($extra-height-to-subtract) > 0 {
+        @each $extra in $extra-height-to-subtract {
+            $base: calc(#{$base} - var(#{$extra}, 0px));
+            $base-dvh: calc(#{$base-dvh} - var(#{$extra}, 0px));
+        }
+    }
+
+    height: $base;
+}
