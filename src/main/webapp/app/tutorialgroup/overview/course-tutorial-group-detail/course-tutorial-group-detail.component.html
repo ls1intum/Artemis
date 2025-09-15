@@ -1,6 +1,6 @@
 <jhi-loading-indicator-container [isLoading]="(isLoading$ | async) ?? false">
     @if (tutorialGroup && course) {
-        <div class="p-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
+        <div class="p-3 scrollable-content">
             <jhi-new-tutorial-group-detail [tutorialGroup]="tutorialGroup" [course]="course" />
             <!--
             <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup" [course]="course" />
