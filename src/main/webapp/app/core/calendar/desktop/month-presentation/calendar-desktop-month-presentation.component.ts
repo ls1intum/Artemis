@@ -4,7 +4,6 @@ import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Dayjs } from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
@@ -13,7 +12,7 @@ import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/ca
 
 @Component({
     selector: 'jhi-calendar-desktop-month-presentation',
-    imports: [NgClass, NgTemplateOutlet, NgbPopover, FaIconComponent, ArtemisTranslatePipe, TranslateDirective, CalendarDayBadgeComponent, CalendarEventDetailPopoverComponent],
+    imports: [NgClass, NgTemplateOutlet, NgbPopover, FaIconComponent, TranslateDirective, CalendarDayBadgeComponent, CalendarEventDetailPopoverComponent],
     templateUrl: './calendar-desktop-month-presentation.component.html',
     styleUrls: ['./calendar-desktop-month-presentation.component.scss'],
 })
