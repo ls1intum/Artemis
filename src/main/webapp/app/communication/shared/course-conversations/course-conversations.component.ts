@@ -167,6 +167,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     postInThread?: Post;
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
+    previousConversationBeforeSearch?: ConversationDTO;
+    lastKnownConversationId?: number;
 
     conversationSelected = true;
     sidebarData: SidebarData;
@@ -390,6 +392,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
             const previousConversation = this.activeConversation;
             this.activeConversation = conversation;
+
+            if (conversation && conversation.id) {
+                this.lastKnownConversationId = conversation.id;
+            }
             if (this.isMobile && conversation && previousConversation?.id !== conversation.id) {
                 this.courseSidebarService.closeSidebar();
             }
@@ -460,12 +466,32 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onSelectionChange(searchInfo: ConversationGlobalSearchConfig) {
+        const wasSearchEmpty =
+            this.courseWideSearchConfig.selectedConversations.length === 0 && this.courseWideSearchConfig.selectedAuthors.length === 0 && !this.courseWideSearchConfig.searchTerm;
+        const isSearchActive = searchInfo.selectedConversations.length > 0 || searchInfo.selectedAuthors.length > 0 || searchInfo.searchTerm;
+
+        if (wasSearchEmpty && isSearchActive && this.activeConversation) {
+            this.previousConversationBeforeSearch = this.activeConversation;
+        }
+
+        if (!isSearchActive) {
+            this.previousConversationBeforeSearch = undefined;
+        }
+
         this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
         this.courseWideSearchConfig.selectedAuthors = searchInfo.selectedAuthors;
         this.courseWideSearch()?.onSearchConfigSelectionChange();
+    }
 
-        // We don't update the searchTerm here because that should only happen on explicit search
-        // and we don't trigger a search automatically to avoid excessive API calls
+    onClearSearchAndRestorePrevious() {
+        if (this.previousConversationBeforeSearch) {
+            this.metisConversationService.setActiveConversation(this.previousConversationBeforeSearch.id);
+            this.previousConversationBeforeSearch = undefined;
+        } else if (this.lastKnownConversationId) {
+            this.metisConversationService.setActiveConversation(this.lastKnownConversationId);
+        } else {
+            this.metisConversationService.setActiveConversation(undefined);
+        }
     }
 
     /**
