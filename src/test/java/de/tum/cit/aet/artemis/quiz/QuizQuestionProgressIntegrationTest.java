@@ -319,11 +319,12 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizExercise.setIsOpenForPractice(true);
         quizExerciseService.save(quizExercise);
 
-        List<QuizQuestion> quizQuestions = request.getList("/api/quiz/courses/" + course.getId() + "/training-questions", OK, QuizQuestion.class);
+        List<QuizQuestionTrainingDTO> quizQuestions = request.getList("/api/quiz/courses/" + course.getId() + "/training-questions", OK, QuizQuestionTrainingDTO.class);
 
         Assertions.assertThat(quizQuestions).isNotNull();
         Assertions.assertThat(quizQuestions).hasSameSizeAs(quizExercise.getQuizQuestions());
-        Assertions.assertThat(quizQuestions).containsAll(quizExercise.getQuizQuestions());
+        Assertions.assertThat(quizQuestions.stream().map(QuizQuestionTrainingDTO::getId).toList())
+                .containsAll(quizExercise.getQuizQuestions().stream().map(QuizQuestion::getId).toList());
     }
 
     @Test
