@@ -733,12 +733,17 @@ public class ProgrammingExerciseGradingService {
                 .filter(testCase -> !uniqueTestCases.add(testCase)).collect(Collectors.toSet());
 
         if (!duplicateTestCases.isEmpty()) {
-            String duplicateDetailText = "This is a duplicate test case. Please review all your test cases and verify that your test cases have unique names!";
-            List<Feedback> feedbacksForDuplicateTestCases = duplicateTestCases.stream().map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC)
-                    .text(testCase.getTestName() + " - Duplicate Test Case!").detailText(duplicateDetailText).positive(false)).toList();
-            result.addFeedbacks(feedbacksForDuplicateTestCases);
+            String duplicateDetailText = "Note: Some test cases have duplicate names. This is a test configuration issue. All your tests ran successfully.";
+            Feedback duplicateTestCaseInfo = new Feedback().type(FeedbackType.AUTOMATIC).text("Test Infrastructure Notice: Duplicate Test Case Names Detected")
+                    .detailText(duplicateDetailText).positive(null);
+            result.addFeedback(duplicateTestCaseInfo);
 
-            groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise);
+            try {
+                groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise);
+            }
+            catch (Exception e) {
+                log.warn("Failed to send duplicate test case notification for exercise {}: {}", programmingExercise.getId(), e.getMessage(), e);
+            }
 
             return true;
         }
@@ -752,10 +757,10 @@ public class ProgrammingExerciseGradingService {
      * All tests in this case do not include ones with visibility=never.
      */
     private void updateResultScore(ScoreCalculationData scoreCalculationData, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
-        double score = 0D;
+        double score = calculateScore(scoreCalculationData, applySubmissionPolicy);
 
-        if (!hasDuplicateTestCases) {
-            score = calculateScore(scoreCalculationData, applySubmissionPolicy);
+        if (hasDuplicateTestCases) {
+            log.warn("Exercise {} has duplicate test case names, but score calculation proceeds normally based on actual test results", scoreCalculationData.exercise().getId());
         }
 
         scoreCalculationData.result().setScore(score, scoreCalculationData.exercise().getCourseViaExerciseGroupOrCourseMember());

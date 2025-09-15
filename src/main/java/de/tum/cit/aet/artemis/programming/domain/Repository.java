@@ -5,6 +5,8 @@ import java.nio.file.Path;
 import java.util.Collection;
 
 import org.eclipse.jgit.lib.BaseRepositoryBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
@@ -16,6 +18,8 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
  * Its repositories are saved as bare repositories in the folder defined in the application properties at artemis.version-control.local-vcs-repo-path.
  */
 public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepository {
+
+    private static final Logger log = LoggerFactory.getLogger(Repository.class);
 
     private ProgrammingExerciseParticipation participation;
 
@@ -77,8 +81,22 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     }
 
     public void closeBeforeDelete() {
-        super.close();
-        super.doClose();
+        try {
+            super.close();
+        }
+        catch (IllegalStateException e) {
+            log.debug("Repository at {} was already closed: {}", getLocalPath(), e.getMessage());
+        }
+        catch (Exception e) {
+            log.warn("Unexpected error while closing repository at {}: {}", getLocalPath(), e.getMessage());
+        }
+
+        try {
+            super.doClose();
+        }
+        catch (Exception e) {
+            log.debug("Repository doClose() at {} already completed: {}", getLocalPath(), e.getMessage());
+        }
     }
 
     public VcsRepositoryUri getRemoteRepositoryUri() {

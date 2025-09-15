@@ -178,7 +178,10 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
+        var groupNames = new java.util.HashSet<String>();
+        groupNames.add(course.getEditorGroupName());
+        groupNames.add(course.getInstructorGroupName());
+        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupNames);
 
         var programmingTestCasesChangedNotification = new ProgrammingTestCasesChangedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
                 exercise.getSanitizedExerciseTitle());
@@ -193,7 +196,11 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupsAboutBuildRunUpdate(ProgrammingExercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
+
+        var groupNames = new java.util.HashSet<String>();
+        groupNames.add(course.getEditorGroupName());
+        groupNames.add(course.getInstructorGroupName());
+        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupNames);
 
         var programmingBuildRunUpdateNotification = new ProgrammingBuildRunUpdateNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
                 exercise.getSanitizedExerciseTitle());
@@ -208,7 +215,10 @@ public class GroupNotificationService {
      */
     public void notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(Exercise exercise) {
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
+        var groupNames = new java.util.HashSet<String>();
+        groupNames.add(course.getEditorGroupName());
+        groupNames.add(course.getInstructorGroupName());
+        var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupNames);
         var formattedReleaseDate = exercise.getReleaseDate() != null ? exercise.getReleaseDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
         var formattedDueDate = exercise.getDueDate() != null ? exercise.getDueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) : "-";
 

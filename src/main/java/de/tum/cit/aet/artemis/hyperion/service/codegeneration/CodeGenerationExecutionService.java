@@ -360,8 +360,8 @@ public class CodeGenerationExecutionService {
      * @throws InterruptedException if the waiting thread is interrupted
      */
     private Result waitForBuildResult(ProgrammingExercise exercise, String commitHash) throws InterruptedException {
-        long timeout = 120_000; // 2 minutes
-        long pollInterval = 5_000; // 5 seconds
+        long timeout = 180_000;
+        long pollInterval = 3_000;
         long startTime = System.currentTimeMillis();
 
         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
@@ -370,18 +370,30 @@ public class CodeGenerationExecutionService {
             return null;
         }
 
+        int pollCount = 0;
         while (System.currentTimeMillis() - startTime < timeout) {
-            ProgrammingSubmission submission = programmingSubmissionRepository
-                    .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(solutionParticipation.getId(), commitHash);
-            if (submission != null) {
-                Optional<Result> result = resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId());
-                if (result.isPresent()) {
-                    return result.get();
+            try {
+                ProgrammingSubmission submission = programmingSubmissionRepository
+                        .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(solutionParticipation.getId(), commitHash);
+
+                if (submission != null) {
+                    Optional<Result> result = resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId());
+                    if (result.isPresent()) {
+                        log.debug("Found build result for commit {} after {} polls ({}ms)", commitHash, pollCount, System.currentTimeMillis() - startTime);
+                        return result.get();
+                    }
                 }
+
+                pollCount++;
+
+                Thread.sleep(pollInterval);
             }
-            Thread.sleep(pollInterval);
+            catch (Exception e) {
+                log.warn("Exception while polling for build result for commit {}: {}. Continuing...", commitHash, e.getMessage());
+                Thread.sleep(pollInterval);
+            }
         }
-        log.warn("Timed out waiting for build result for commit {} in exercise {}", commitHash, exercise.getId());
+        log.warn("Timed out waiting for build result for commit {} in exercise {} after {} polls ({}ms)", commitHash, exercise.getId(), pollCount, timeout);
         return null; // Timeout
     }
 }
