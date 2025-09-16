@@ -45,13 +45,6 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
      */
     deleteFile() {
         this.isLoading = true;
-
-        // Guard against deleting PROBLEM_STATEMENT files
-        if (this.fileType === FileType.PROBLEM_STATEMENT) {
-            this.closeModal();
-            return;
-        }
-
         // Make sure we have a filename
         if (this.fileNameToDelete) {
             this.repositoryFileService.deleteFile(this.fileNameToDelete).subscribe({

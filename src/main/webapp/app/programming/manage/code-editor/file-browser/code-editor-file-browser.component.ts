@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, inject, input } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
@@ -93,8 +93,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     private isProblemStatement = (path?: string) => path === PROBLEM_STATEMENT_IDENTIFIER;
     @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
     @ViewChild('treeview', { static: false }) treeview: TreeViewComponent<string>;
-    @Input()
-    participation?: Participation;
+    participation = input<Participation>();
     @Input()
     get selectedFile(): string | undefined {
         return this.selectedFileValue;
@@ -514,13 +513,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             return;
         }
         const [filePath, , fileType] = this.renamingFile;
-
-        // Guard against renaming PROBLEM_STATEMENT files - only allow FILE and FOLDER
-        if (fileType !== FileType.FILE && fileType !== FileType.FOLDER) {
-            this.renamingFile = undefined;
-            return;
-        }
-
         let newFilePath: any = filePath.split('/');
         newFilePath[newFilePath.length - 1] = newFileName;
         newFilePath = newFilePath.join('/');

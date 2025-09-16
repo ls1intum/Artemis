@@ -9,10 +9,10 @@
                 <span>
                     <fa-icon [icon]="farListAlt" />
                     @if (!isAssessmentMode) {
-                        @if (!isEditor) {
+                        @if (!isEditor()) {
                             <span class="header" jhiTranslate="artemisApp.exercise.problemStatement"></span>
                         }
-                        @if (isEditor) {
+                        @if (isEditor()) {
                             <span class="header" jhiTranslate="artemisApp.exercise.problemStatementEditor"></span>
                         }
                     }
@@ -28,10 +28,10 @@
                     }
                     <fa-icon [icon]="farListAlt" class="fa-rotate-90" id="panel-symbol" />
                     @if (!isAssessmentMode) {
-                        @if (!isEditor) {
+                        @if (!isEditor()) {
                             <span class="header" jhiTranslate="artemisApp.exercise.problemStatement"></span>
                         }
-                        @if (isEditor) {
+                        @if (isEditor()) {
                             <span class="header" jhiTranslate="artemisApp.exercise.problemStatementEditor"></span>
                         }
                     }

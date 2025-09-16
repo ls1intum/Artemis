@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, Output, input } from '@angular/core';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
@@ -21,12 +21,9 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     isAssessmentMode = true;
 
     // make instructions monaco editor in the main editor not collapsible
-    @Input()
-    disableCollapse = false;
+    disableCollapse = input(false);
     // different translation for problem statement editor and preview
-    @Input()
-    isEditor = false;
-
+    isEditor = input(false);
     /** Resizable constants **/
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
@@ -55,7 +52,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
      */
     toggleEditorCollapse(event: any) {
         // make instructions monaco editor in the main editor not collapsible
-        if (this.disableCollapse) {
+        if (this.disableCollapse()) {
             if (event?.stopPropagation) {
                 event.stopPropagation();
             }

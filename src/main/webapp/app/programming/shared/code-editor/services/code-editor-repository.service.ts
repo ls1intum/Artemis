@@ -16,6 +16,7 @@ import { CodeEditorConflictStateService } from 'app/programming/shared/code-edit
 import { DomainDependentEndpointService } from 'app/programming/shared/code-editor/services/code-editor-domain-dependent-endpoint.service';
 import { BuildLogService } from 'app/programming/shared/services/build-log.service';
 import { downloadFile } from 'app/shared/util/download.util';
+import { PROBLEM_STATEMENT_IDENTIFIER } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
@@ -255,7 +256,7 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         // Filter out any PROBLEM_STATEMENT entries from the payload
         const filteredUpdates = fileUpdates.filter((update) => {
             // Only allow regular file operations - exclude PROBLEM_STATEMENT pseudo-files
-            return !update.fileName.includes('__problem_statement__');
+            return !update.fileName.includes(PROBLEM_STATEMENT_IDENTIFIER);
         });
 
         return this.http

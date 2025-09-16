@@ -82,7 +82,6 @@
     <ng-container editorSidebarRight>
         @if (showEditorInstructions) {
             <jhi-code-editor-instructions
-                #rightInstructions
                 (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
                 (onError)="onError($event)"
                 [isAssessmentMode]="isTutorAssessment"

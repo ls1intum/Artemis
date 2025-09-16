@@ -285,46 +285,45 @@
 .separator {
     margin: 5px;
 }
-
 /* ==========================================================================
    Problem Statement (center) – keep content inside the card and allow shrink
    ========================================================================== */
 
 /* allow all layers in the center to shrink instead of pushing the right pane */
-.editor-center .instructions-wrapper,
-.editor-center .instructions-wrapper__content,
-.editor-center .editable-instruction-container,
-.editor-center .editable-instruction-container > jhi-markdown-editor-monaco {
+.editor-wrapper .editor-main .editor-center .instructions-wrapper,
+.editor-wrapper .editor-main .editor-center .instructions-wrapper__content,
+.editor-wrapper .editor-main .editor-center .editable-instruction-container,
+.editor-wrapper .editor-main .editor-center .editable-instruction-container > jhi-markdown-editor-monaco {
     min-width: 0;
 }
 
 /* contain the markdown editor’s inner flow (it defaults to overflow: visible) */
-.editor-center jhi-markdown-editor-monaco .markdown-editor-wrapper {
+.editor-wrapper .editor-main .editor-center jhi-markdown-editor-monaco .markdown-editor-wrapper {
     overflow: hidden !important;
 }
 
 /* vertical sizing for the editable-instructions stack */
-.editor-center .instructions-wrapper {
+.editor-wrapper .editor-main .editor-center .instructions-wrapper {
     min-height: 0;
     display: flex;
     flex-direction: column;
 }
 
-.editor-center .instructions-wrapper__content {
+.editor-wrapper .editor-main .editor-center .instructions-wrapper__content {
     min-height: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
 }
 
-.editor-center .editable-instruction-container {
+.editor-wrapper .editor-main .editor-center .editable-instruction-container {
     height: 100%;
     min-height: 0;
     display: flex;
     flex-direction: column;
 }
 
-.editor-center .editable-instruction-container jhi-markdown-editor-monaco {
+.editor-wrapper .editor-main .editor-center .editable-instruction-container jhi-markdown-editor-monaco {
     flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;

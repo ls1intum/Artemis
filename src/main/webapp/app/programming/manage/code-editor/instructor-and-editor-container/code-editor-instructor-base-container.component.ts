@@ -80,7 +80,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     protected isCreateAssignmentRepoDisabled: boolean;
     /** Debounced tick stream consumed by the sidebar preview */
     previewEvents$ = this.problemStatementChanges$.pipe(
-        debounceTime(200), // TODO: consider to prune to 300–500ms for PlantUML-heavy content
+        debounceTime(200),
         map(() => void 0), // Observable<void>
         shareReplay({ bufferSize: 1, refCount: true }), // replay latest for late subscribers
     );
@@ -91,7 +91,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      */
     ngOnInit(): void {
         /** Initial render if we already have content */
-        if (this.exercise?.problemStatement != null) {
+        if (this.exercise?.problemStatement != undefined) {
             this.problemStatementChanges$.next(this.exercise.problemStatement);
         }
         if (this.paramSub) {
@@ -109,7 +109,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                         this.exercise = exercise;
                         this.course = exercise.course! ?? exercise.exerciseGroup!.exam!.course!;
                         // Emit initial markdown to drive the preview after loading the exercise
-                        if (exercise.problemStatement != null) {
+                        if (exercise.problemStatement != undefined) {
                             this.problemStatementChanges$.next(exercise.problemStatement);
                         }
                     }),
