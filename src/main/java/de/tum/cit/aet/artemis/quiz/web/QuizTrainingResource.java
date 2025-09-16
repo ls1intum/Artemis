@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static tech.jhipster.web.util.PaginationUtil.generatePaginationHttpHeaders;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -11,6 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -67,14 +73,15 @@ public class QuizTrainingResource {
      */
     @GetMapping("courses/{courseId}/training-questions")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<QuizQuestionTrainingDTO>> getQuizQuestionsForPractice(@PathVariable long courseId) {
+    public ResponseEntity<List<QuizQuestionTrainingDTO>> getQuizQuestionsForPractice(@PathVariable long courseId, Pageable pageable) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        List<QuizQuestionTrainingDTO> quizQuestions = quizQuestionProgressService.getQuestionsForSession(courseId, user.getId());
-        return ResponseEntity.ok(quizQuestions);
+        Page<QuizQuestionTrainingDTO> quizQuestionsPage = quizQuestionProgressService.getQuestionsForSession(courseId, user.getId(), pageable);
+        HttpHeaders headers = generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), quizQuestionsPage);
+        return new ResponseEntity<>(quizQuestionsPage.getContent(), headers, HttpStatus.OK);
     }
 
     /**

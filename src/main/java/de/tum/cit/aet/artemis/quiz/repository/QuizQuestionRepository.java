@@ -7,6 +7,8 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -50,7 +52,9 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
             FROM QuizQuestion q
             WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE
             """)
-    Set<QuizQuestion> findAllQuizQuestionsByCourseId(@Param("courseId") Long courseId);
+    Page<QuizQuestion> findAllPracticeQuizQuestionsByCourseId(@Param("courseId") Long courseId, Pageable pageable);
+
+    Page<QuizQuestion> findAllById(Set<Long> ids, Pageable pageable);
 
     @Query("""
             SELECT COUNT(q) > 0

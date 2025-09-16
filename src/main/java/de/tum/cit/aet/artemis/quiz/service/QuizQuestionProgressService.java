@@ -3,17 +3,15 @@ package de.tum.cit.aet.artemis.quiz.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
@@ -95,41 +93,40 @@ public class QuizQuestionProgressService {
      * @param userId   ID of the user for whom the quiz questions are to be fetched
      * @return A list of quiz questions sorted by due date
      */
-    public List<QuizQuestionTrainingDTO> getQuestionsForSession(Long courseId, Long userId) {
-        Set<QuizQuestion> allQuestions = quizQuestionRepository.findAllQuizQuestionsByCourseId(courseId);
-        Set<Long> questionIds = allQuestions.stream().map(QuizQuestion::getId).collect(Collectors.toSet());
-        Set<QuizQuestionProgress> progressList = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, questionIds);
-
-        Map<Long, ZonedDateTime> dueDateMap = progressList.stream().collect(Collectors.toMap(QuizQuestionProgress::getQuizQuestionId, progress -> {
-            QuizQuestionProgressData data = progress.getProgressJson();
-            return (data != null && data.getDueDate() != null) ? data.getDueDate() : ZonedDateTime.now();
-        }));
-
+    public Page<QuizQuestionTrainingDTO> getQuestionsForSession(Long courseId, Long userId, Pageable pageable) {
         ZonedDateTime now = ZonedDateTime.now();
 
-        List<QuizQuestion> dueQuestions = allQuestions.stream().filter(q -> {
-            ZonedDateTime dueDate = dueDateMap.getOrDefault(q.getId(), now);
-            return !dueDate.toLocalDate().isAfter(now.toLocalDate());
-        }).sorted(Comparator.comparing(q -> dueDateMap.getOrDefault(q.getId(), now))).toList();
+        Set<QuizQuestionProgress> allProgress = quizQuestionProgressRepository.findAllByUserId(userId);
 
-        List<QuizQuestion> questionsForSession;
-        boolean hasDueQuestions = !dueQuestions.isEmpty();
+        Set<Long> dueQuestionIds = allProgress.stream().filter(progress -> {
+            QuizQuestionProgressData data = progress.getProgressJson();
+            return data != null && data.getDueDate() != null && data.getDueDate().isAfter(now);
+        }).map(QuizQuestionProgress::getQuizQuestionId).collect(Collectors.toSet());
 
-        if (hasDueQuestions) {
-            questionsForSession = dueQuestions;
+        if (!dueQuestionIds.isEmpty()) {
+            return loadDueQuestions(dueQuestionIds, pageable);
         }
         else {
-            questionsForSession = allQuestions.stream().collect(Collectors.collectingAndThen(Collectors.toCollection(ArrayList::new), list -> {
-                Collections.shuffle(list);
-                return list;
-            }));
+            return loadAllPracticeQuestions(courseId, pageable);
         }
+    }
 
-        return questionsForSession.stream().map(q -> {
-            QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(q);
-            boolean isRated = hasDueQuestions && dueQuestions.contains(q);
-            return QuizQuestionTrainingDTO.of(dto, isRated);
-        }).toList();
+    private Page<QuizQuestionTrainingDTO> loadDueQuestions(Set<Long> questionIds, Pageable pageable) {
+        Page<QuizQuestion> questionPage = quizQuestionRepository.findAllById(questionIds, pageable);
+
+        return questionPage.map(question -> {
+            QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(question);
+            return QuizQuestionTrainingDTO.of(dto, true);
+        });
+    }
+
+    private Page<QuizQuestionTrainingDTO> loadAllPracticeQuestions(Long courseId, Pageable pageable) {
+        Page<QuizQuestion> questionPage = quizQuestionRepository.findAllPracticeQuizQuestionsByCourseId(courseId, pageable);
+
+        return questionPage.map(question -> {
+            QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(question);
+            return QuizQuestionTrainingDTO.of(dto, false);
+        });
     }
 
     /**

@@ -38,24 +38,20 @@ export class CourseTrainingQuizComponent {
     private router = inject(Router);
     private quizService = inject(CourseTrainingQuizService);
 
-    private static readonly INITIAL_QUESTIONS: QuizQuestionTraining[] = [];
-
     currentIndex = signal(0);
     private alertService = inject(AlertService);
     private courseService = inject(CourseManagementService);
 
+    // Pagination options
+    page = signal(1);
+    size = 10;
+    totalItems = signal(0);
+    loading = signal(false);
+    allLoadedQuestions = signal<QuizQuestionTraining[]>([]);
+
     // Reactive chain for loading quiz questions based on the current route
     paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
     courseId = computed(() => this.paramsSignal()?.['courseId']);
-    questionsSignal = toSignal(
-        this.route.parent!.params.pipe(
-            map((p) => p['courseId'] as number | undefined),
-            filter((id): id is number => id !== undefined),
-            switchMap((id) => this.quizService.getQuizQuestions(id)),
-        ),
-        { initialValue: CourseTrainingQuizComponent.INITIAL_QUESTIONS },
-    );
-    questions = computed(() => this.questionsSignal());
     courseSignal = toSignal(
         this.route.parent!.params.pipe(
             map((p) => p['courseId'] as number | undefined),
@@ -66,7 +62,7 @@ export class CourseTrainingQuizComponent {
         { initialValue: undefined },
     );
     course = computed(() => this.courseSignal());
-    questionsLoaded = computed(() => this.questionsSignal() !== CourseTrainingQuizComponent.INITIAL_QUESTIONS);
+    questionsLoaded = computed(() => this.allLoadedQuestions().length > 0);
 
     trainingAnswer = new QuizTrainingAnswer();
     showingResult = false;
@@ -82,50 +78,108 @@ export class CourseTrainingQuizComponent {
      * checks if the current question is the last question
      */
     isLastQuestion = computed(() => {
-        if (this.questions().length === 0) {
+        const questions = this.allLoadedQuestions();
+        if (questions.length === 0) {
             return true;
         }
-        return this.currentIndex() === this.questions().length - 1;
+        return this.currentIndex() === this.totalItems() - 1;
     });
 
     /**
      * gets the current question
      */
     currentQuestion = computed(() => {
-        if (this.questions().length === 0) {
+        const questions = this.allLoadedQuestions();
+        if (questions.length === 0) {
             return undefined;
         }
-        return this.questions()[this.currentIndex()].quizQuestionWithSolutionDTO;
+        return questions[this.currentIndex()].quizQuestionWithSolutionDTO;
     });
 
     isRated = computed(() => {
-        if (this.questions().length === 0) {
+        const questions = this.allLoadedQuestions();
+        if (questions.length === 0) {
             return undefined;
         }
-        return this.questions()[this.currentIndex()].isRated;
+        return questions[this.currentIndex()].isRated;
     });
 
     constructor() {
-        // Überwache das Laden von Fragen
         effect(() => {
-            const questions = this.questions();
+            const id = this.courseId();
+            if (id) {
+                this.loadQuestions();
+            }
+        });
 
-            // Prüfe nur, wenn Fragen geladen wurden
-            if (questions.length > 0 && questions !== CourseTrainingQuizComponent.INITIAL_QUESTIONS) {
+        effect(() => {
+            const questionStatus = this.isRated();
+            if (questionStatus !== undefined) {
                 this.checkRatingStatusChange();
             }
         });
+
+        effect(() => {
+            const currentIndex = this.currentIndex();
+            const questions = this.allLoadedQuestions();
+
+            if (questions.length > 0 && currentIndex >= questions.length - 2 && (this.page() + 1) * this.size > this.totalItems()) {
+                this.loadNextPage();
+            }
+        });
+    }
+
+    /**
+     * loads questions for the current page
+     */
+    loadQuestions(): void {
+        if (!this.courseId()) {
+            return;
+        }
+
+        this.loading.set(true);
+        this.quizService.getQuizQuestionsPage(this.courseId(), this.page(), this.size).subscribe({
+            next: (res: HttpResponse<QuizQuestionTraining[]>) => {
+                const totalCount = res.headers.get('X-Total-Count');
+                this.totalItems.set(totalCount ? parseInt(totalCount, 10) : 0);
+
+                if (this.page() === 0) {
+                    this.allLoadedQuestions.set(res.body || []);
+                } else {
+                    this.allLoadedQuestions.update((current) => [...current, ...(res.body || [])]);
+                }
+                this.loading.set(false);
+
+                if (this.allLoadedQuestions().length > 0 && this.currentIndex() === 0) {
+                    this.initQuestion(this.currentQuestion()!);
+                }
+            },
+        });
+    }
+
+    /**
+     * loads the next page of questions
+     */
+    loadNextPage(): void {
+        if (this.loading() || (this.page() + 1) * this.size >= this.totalItems()) {
+            return;
+        }
+        this.page.update((page) => page + 1);
+        this.loadQuestions();
     }
 
     /**
      * increments the current question index or navigates to the course practice page if the last question is reached
      */
     nextQuestion(): void {
-        if (this.currentIndex() < this.questions().length - 1) {
-            this.currentIndex.set(this.currentIndex() + 1);
+        const questions = this.allLoadedQuestions();
+        if (this.currentIndex() < questions.length - 1) {
+            this.currentIndex.update((index) => index + 1);
             const question = this.currentQuestion();
             if (question) {
                 this.initQuestion(question);
+            } else if ((this.page() + 1) * this.size < this.totalItems()) {
+                this.loadNextPage();
             }
         }
     }
