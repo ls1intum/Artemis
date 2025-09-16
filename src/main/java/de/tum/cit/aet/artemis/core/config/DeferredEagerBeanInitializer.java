@@ -6,12 +6,14 @@ import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+import org.springframework.util.PlaceholderResolutionException;
 
 import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 
@@ -61,7 +63,14 @@ public class DeferredEagerBeanInitializer {
                 log.debug("Deferred eager initialization of bean {} completed", name);
             }
             catch (Throwable ex) {
-                log.warn("Deferred eager initialization of bean {} failed", name, ex);
+                if (ex instanceof PlaceholderResolutionException) {
+                    log.error("Some required configuration value is not set for bean {}. Please check your configuration.", name);
+                }
+                else if (ex instanceof NoSuchBeanDefinitionException) {
+                    log.error("A bean that is required for the initialization of bean {} is missing", name);
+                }
+                log.error("Deferred eager initialization of bean {} failed. Going to shutdown the application", name, ex);
+                System.exit(2);
             }
         });
         context.publishEvent(new DeferredEagerBeanInitializationCompletedEvent());
