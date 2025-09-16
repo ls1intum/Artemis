@@ -238,7 +238,7 @@ public class TutorialGroupResource {
             throw new InternalServerErrorException("The course of the tutorial group has an invalid timezone value. This should never happen when tutorial groups exist.");
         }
         ZoneId timeZone = ZoneId.of(timeZoneString);
-        var groupDto = tutorialGroupService.getTutorialGroupDetailTutorialGroupDTO(tutorialGroupId, timeZone);
+        var groupDto = tutorialGroupService.getTutorialGroupDetailGroupDTO(tutorialGroupId, timeZone);
         return ResponseEntity.ok().body(groupDto);
     }
 

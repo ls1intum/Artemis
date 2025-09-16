@@ -81,7 +81,7 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
                 WHERE tutorialGroup.id = :tutorialGroupId
                 ORDER BY session.start
             """)
-    List<TutorialGroupDetailSessionData> getTutorialGroupDetailSessionDTOs(@Param("tutorialGroupId") long tutorialGroupId);
+    List<TutorialGroupDetailSessionData> getTutorialGroupDetailSessionData(@Param("tutorialGroupId") long tutorialGroupId);
 
     @Query("""
             SELECT session

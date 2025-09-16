@@ -637,7 +637,7 @@ public class TutorialGroupService {
      * @return a {@link TutorialGroupDetailGroupDTO}
      * @throws EntityNotFoundException if no tutorial group exists with the given ID
      */
-    public TutorialGroupDetailGroupDTO getTutorialGroupDetailTutorialGroupDTO(Long tutorialGroupId, ZoneId courseTimeZone) {
+    public TutorialGroupDetailGroupDTO getTutorialGroupDetailGroupDTO(Long tutorialGroupId, ZoneId courseTimeZone) {
         TutorialGroupDetailGroupData groupData = tutorialGroupRepository.getTutorialGroupDetailData(tutorialGroupId)
                 .orElseThrow(() -> new EntityNotFoundException("Tutorial Group Not Found with id: " + tutorialGroupId));
 
@@ -646,7 +646,7 @@ public class TutorialGroupService {
         String currentUserLogin = userRepository.getCurrentUserLogin();
         Long tutorChatId = oneToOneChatRepository.findIdOfChatInCourseBetweenUsers(courseId, tutorLogin, currentUserLogin);
 
-        List<TutorialGroupDetailSessionData> sessionData = tutorialGroupSessionRepository.getTutorialGroupDetailSessionDTOs(tutorialGroupId);
+        List<TutorialGroupDetailSessionData> sessionData = tutorialGroupSessionRepository.getTutorialGroupDetailSessionData(tutorialGroupId);
         int scheduleDayOfWeek = groupData.scheduleDayOfWeek();
         LocalTime scheduleStart = LocalTime.parse(groupData.scheduleStartTime());
         LocalTime scheduleEnd = LocalTime.parse(groupData.scheduleEndTime());

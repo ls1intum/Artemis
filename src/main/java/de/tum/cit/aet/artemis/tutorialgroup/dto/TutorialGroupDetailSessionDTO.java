@@ -4,14 +4,17 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupDetailSessionData;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupDetailSessionDTO(ZonedDateTime start, ZonedDateTime end, String location, boolean isCancelled, boolean locationChanged, boolean timeChanged,
-        boolean dateChanged, Integer attendanceCount) {
+public record TutorialGroupDetailSessionDTO(@NotNull ZonedDateTime start, @NotNull ZonedDateTime end, @NotNull String location, boolean isCancelled, boolean locationChanged,
+        boolean timeChanged, boolean dateChanged, @Nullable Integer attendanceCount) {
 
     public static TutorialGroupDetailSessionDTO from(TutorialGroupDetailSessionData data, int scheduleDayOfWeek, LocalTime scheduleStart, LocalTime scheduleEnd,
             String scheduleLocation, ZoneId courseTimeZone) {
