@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent
 
 /**
  * This component initializes all lazy singleton beans after the application is ready.
- * This allows us to benefit from the lazy initialization of beans during startup, without comprising end user experience as beans are initialized before the first request is
+ * This allows us to benefit from the lazy initialization of beans during startup, without compromising end user experience as beans are initialized before the first request is
  * made.
  * We currently do not initialize the beans in parallel as it leads to weird issues with the classloader
  * The beans are initialized by accessing them, which triggers their initialization.
