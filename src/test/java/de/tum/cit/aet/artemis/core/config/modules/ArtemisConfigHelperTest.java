@@ -28,6 +28,11 @@ class ArtemisConfigHelperTest {
     }
 
     @Test
+    void testNebulaProperty() {
+        testProperty(artemisConfigHelper::isNebulaEnabled, Constants.NEBULA_ENABLED_PROPERTY_NAME);
+    }
+
+    @Test
     void testExamProperty() {
         testProperty(artemisConfigHelper::isExamEnabled, Constants.EXAM_ENABLED_PROPERTY_NAME);
     }

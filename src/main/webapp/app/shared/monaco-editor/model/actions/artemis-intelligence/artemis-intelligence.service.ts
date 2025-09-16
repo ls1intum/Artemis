@@ -1,15 +1,14 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable } from 'rxjs';
-import { finalize, map, tap } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { AlertService } from 'app/shared/service/alert.service';
-import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { ConsistencyCheckResult, RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence-results';
 import { HyperionReviewAndRefineApiService } from 'app/openapi/api/hyperionReviewAndRefineApi.service';
 import { ProblemStatementRewriteRequest } from 'app/openapi/model/problemStatementRewriteRequest';
 import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatementRewriteResponse';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import { Observable, finalize } from 'rxjs';
 
 /**
  * Service providing shared functionality for Artemis Intelligence of the markdown editor.
@@ -17,13 +16,11 @@ import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResp
  */
 @Injectable({ providedIn: 'root' })
 export class ArtemisIntelligenceService {
-    public resourceUrl = 'api/iris';
+    public resourceUrl = 'api/nebula';
 
     private http = inject(HttpClient);
     private alertService = inject(AlertService);
-    private websocketService = inject(WebsocketService);
     private hyperionApiService = inject(HyperionReviewAndRefineApiService);
-
     private isLoadingRewrite = signal<boolean>(false);
     private isLoadingConsistencyCheck = signal<boolean>(false);
     isLoading = computed(() => this.isLoadingRewrite() || this.isLoadingConsistencyCheck());
@@ -39,46 +36,11 @@ export class ArtemisIntelligenceService {
         this.isLoadingRewrite.set(true);
 
         if (rewritingVariant === RewritingVariant.FAQ) {
-            // Use WebSocket approach for FAQ rewriting via Iris
-            return new Observable<RewriteResult>((observer) => {
-                this.http
-                    .post(`${this.resourceUrl}/courses/${contextId}/rewrite-text`, {
-                        toBeRewritten: toBeRewritten,
-                        variant: rewritingVariant,
-                    })
-                    .subscribe({
-                        next: () => {
-                            const websocketTopic = `/user/topic/iris/rewriting/${contextId}`;
-                            this.websocketService.subscribe(websocketTopic);
-
-                            this.websocketService.receive(websocketTopic).subscribe({
-                                next: (update: any) => {
-                                    if (update.result) {
-                                        observer.next({
-                                            result: update.result || undefined,
-                                            inconsistencies: update.inconsistencies || [],
-                                            suggestions: update.suggestions || [],
-                                            improvement: update.improvement || '',
-                                        });
-                                        observer.complete();
-                                        this.isLoadingRewrite.set(false);
-                                        this.websocketService.unsubscribe(websocketTopic);
-                                        this.alertService.success('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
-                                    }
-                                },
-                                error: (error) => {
-                                    observer.error(error);
-                                    this.isLoadingRewrite.set(false);
-                                    this.websocketService.unsubscribe(websocketTopic);
-                                },
-                            });
-                        },
-                        error: (error) => {
-                            this.isLoadingRewrite.set(false);
-                            observer.error(error);
-                        },
-                    });
-            });
+            return this.http
+                .post<RewriteResult>(`${this.resourceUrl}/courses/${contextId}/rewrite-text`, {
+                    toBeRewritten: toBeRewritten,
+                })
+                .pipe(finalize(() => this.isLoadingRewrite.set(false)));
         } else {
             // Use OpenAPI client for Hyperion rewriting (contextId is courseId)
             const request: ProblemStatementRewriteRequest = {
@@ -111,5 +73,18 @@ export class ArtemisIntelligenceService {
     consistencyCheck(exerciseId: number): Observable<ConsistencyCheckResponse> {
         this.isLoadingConsistencyCheck.set(true);
         return this.hyperionApiService.checkExerciseConsistency(exerciseId).pipe(finalize(() => this.isLoadingConsistencyCheck.set(false)));
+    }
+
+    /**
+     * Triggers a consistency check for FAQ entries via HTTP.
+     * @param courseId The ID of the course the FAQ belongs to.
+     * @param toBeChecked The text of the FAQ entry to be checked for consistency.
+     * @return Observable that emits the consistency check result.
+     */
+    faqConsistencyCheck(courseId: number, toBeChecked: string): Observable<ConsistencyCheckResult> {
+        this.isLoadingRewrite.set(true);
+        return this.http
+            .post<ConsistencyCheckResult>(`${this.resourceUrl}/courses/${courseId}/consistency-check`, { toBeChecked: toBeChecked })
+            .pipe(finalize(() => this.isLoadingRewrite.set(false)));
     }
 }
