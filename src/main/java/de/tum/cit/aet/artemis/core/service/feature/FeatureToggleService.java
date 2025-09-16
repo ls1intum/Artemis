@@ -93,7 +93,7 @@ public class FeatureToggleService {
         if (!features.containsKey(Feature.AtlasML)) {
             features.put(Feature.AtlasML, false);
         }
-      
+
         if (!features.containsKey(Feature.Memiris)) {
             features.put(Feature.Memiris, false);
         }
