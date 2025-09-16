@@ -37,6 +37,7 @@ describe('CodeEditorFileBrowserComponent', () => {
     const createFileRoot = '#create_file_root';
     const createFolderRoot = '#create_folder_root';
     const compressTree = '#compress_tree';
+    const problemStatementSelector = '#file-browser-problem-statement, jhi-code-editor-file-browser-problem-statement';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -48,7 +49,7 @@ describe('CodeEditorFileBrowserComponent', () => {
                 CodeEditorFileBrowserCreateNodeComponent,
                 MockComponent(CodeEditorStatusComponent),
                 TranslatePipeMock,
-                CodeEditorFileBrowserProblemStatementComponent,
+                MockComponent(CodeEditorFileBrowserProblemStatementComponent),
             ],
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
@@ -75,6 +76,45 @@ describe('CodeEditorFileBrowserComponent', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
+
+    it('should NOT open a delete modal for Problem Statement (PS is not deletable)', () => {
+        // PS present in non-repository view
+        comp.displayOnly = false;
+        comp.repositoryFiles = { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT };
+        comp.setupTreeview();
+        fixture.detectChanges();
+
+        const item = { value: PROBLEM_STATEMENT_IDENTIFIER, text: PROBLEM_STATEMENT_IDENTIFIER } as TreeViewItem<string>;
+        const openModalSpy = jest.spyOn(comp.modalService, 'open');
+
+        // Try to delete PS
+        comp.openDeleteFileModal(item);
+
+        // Expect no modal to be opened
+        expect(openModalSpy).not.toHaveBeenCalled();
+    });
+
+    it('should NOT enter rename mode for Problem Statement (PS is not renamable)', fakeAsync(() => {
+        comp.repositoryFiles = { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT };
+        comp.setupTreeview();
+        fixture.detectChanges();
+
+        // Try to trigger renaming on PS
+        const psItem = { value: PROBLEM_STATEMENT_IDENTIFIER, text: PROBLEM_STATEMENT_IDENTIFIER } as TreeViewItem<string>;
+        comp.setRenamingFile(psItem);
+        fixture.detectChanges();
+        tick();
+
+        // PS must never be put into renaming state
+        expect(comp.renamingFile).toBeUndefined();
+
+        // And there must be no rename input rendered for PS
+        const anyRenameInput =
+            debugElement.query(By.css('jhi-code-editor-file-browser-file input')) ||
+            debugElement.query(By.css('jhi-code-editor-file-browser-folder input')) ||
+            debugElement.query(By.css('jhi-code-editor-file-browser-problem-statement input'));
+        expect(anyRenameInput).toBeNull();
+    }));
 
     it('places Problem Statement at the top of the tree', () => {
         comp.displayOnly = false;
@@ -130,7 +170,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(Object.keys(comp.repositoryFiles)).not.toContain(PROBLEM_STATEMENT_IDENTIFIER);
         expect(comp.filesTreeViewItem.find((i) => i.value === PROBLEM_STATEMENT_IDENTIFIER)).toBeUndefined();
 
-        const psNode = debugElement.query(By.css('#file-browser-problem-statement, jhi-code-editor-file-browser-problem-statement'));
+        const psNode = debugElement.query(By.css(problemStatementSelector));
         expect(psNode).toBeNull();
     });
 
@@ -150,7 +190,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
 
         expect(comp.filesTreeViewItem).toEqual([]);
-        const psNode = debugElement.query(By.css('#file-browser-problem-statement, jhi-code-editor-file-browser-problem-statement'));
+        const psNode = debugElement.query(By.css(problemStatementSelector));
         expect(psNode).toBeNull();
     });
 
@@ -168,7 +208,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         const psItem = comp.filesTreeViewItem.find((i) => i.value === PROBLEM_STATEMENT_IDENTIFIER);
         expect(psItem).toBeDefined();
 
-        const psNode = debugElement.query(By.css('#file-browser-problem-statement, jhi-code-editor-file-browser-problem-statement'));
+        const psNode = debugElement.query(By.css(problemStatementSelector));
         expect(psNode).not.toBeNull();
     });
 

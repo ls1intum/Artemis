@@ -18,9 +18,6 @@ export enum FileType {
  */
 export const PROBLEM_STATEMENT_IDENTIFIER = '__problem_statement__';
 
-// Union type for regular file system operations (excludes PROBLEM_STATEMENT)
-export type RegularFileType = FileType.FILE | FileType.FOLDER;
-
 export abstract class FileChange {}
 
 export class CreateFileChange extends FileChange {

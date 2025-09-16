@@ -69,7 +69,7 @@
                 [highlightDifferences]="highlightDifferences"
                 [selectedFile]="selectedFile"
                 [buildAnnotations]="annotations"
-                [sessionId]="participation?.id ?? 'test'"
+                [sessionId]="participation?.id?.toString()"
                 (onFileContentChange)="onFileContentChange($event)"
                 (onUpdateFeedback)="onUpdateFeedback.emit($event)"
                 (onAcceptSuggestion)="onAcceptSuggestion.emit($event)"

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, inject, input } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Injector, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, effect, inject, input } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
@@ -87,7 +87,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     private repositoryService = inject(CodeEditorRepositoryService);
     private fileService = inject(CodeEditorFileService);
     private conflictService = inject(CodeEditorConflictStateService);
-
+    // get an injector once, in a valid injection context
+    private readonly injector = inject(Injector);
     CommitState = CommitState;
     FileType = FileType;
     private isProblemStatement = (path?: string) => path === PROBLEM_STATEMENT_IDENTIFIER;
@@ -184,14 +185,26 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     ngOnInit(): void {
         this.conflictSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {
+            // When the git conflict was resolved, unset the selectedFile, as it can't be assured that it still exists.
             if (this.gitConflictState === GitConflictState.CHECKOUT_CONFLICT && gitConflictState === GitConflictState.OK) {
                 this.selectedFile = undefined;
             }
             this.gitConflictState = gitConflictState;
         });
 
-        // Initialize repository files with Problem Statement if not in display-only mode
+        // Initial setup (kept so PS shows even before participation arrives)
         this.initializeRepositoryFiles();
+
+        // React to participation() signal changes
+        effect(
+            () => {
+                const p = this.participation();
+                if (p !== undefined) {
+                    this.initializeRepositoryFiles();
+                }
+            },
+            { injector: this.injector },
+        );
     }
 
     /**
@@ -202,12 +215,15 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             this.repositoryFiles = {};
         }
 
-        // Add Problem Statement as a first-class file type (not in display-only mode)
+        // Add Problem Statement as a first-class file type (not in display-only/repository-view mode)
         if (!this.displayOnly) {
             const existing = this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER];
             if (!existing || existing === FileType.PROBLEM_STATEMENT) {
                 this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
             }
+        } else {
+            // Ensure Problem Statement is removed when in repository view mode
+            delete this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER];
         }
     }
 
@@ -240,11 +256,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         // Handle displayOnly changes - add/remove Problem Statement from repositoryFiles
         if (changes.displayOnly) {
             this.handleDisplayOnlyChange();
-        }
-
-        // Handle participation changes
-        if (changes.participation) {
-            this.initializeRepositoryFiles();
         }
     }
 
@@ -386,8 +397,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         }
 
         const fileKeys = Object.keys(this.repositoryFiles).sort((a, b) => {
-            if (a === PROBLEM_STATEMENT_IDENTIFIER) return -1;
-            if (b === PROBLEM_STATEMENT_IDENTIFIER) return 1;
+            if (this.isProblemStatement(a)) return -1;
+            if (this.isProblemStatement(b)) return 1;
             return a.localeCompare(b);
         });
 
@@ -538,7 +549,14 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      * Enter rename file mode and focus the created input.
      **/
     setRenamingFile(item: TreeViewItem<string>) {
-        this.renamingFile = [item.value, item.text, this.repositoryFiles[item.value]];
+        const fileType = this.repositoryFiles[item.value];
+
+        // Guard against PROBLEM_STATEMENT rename - only allow FILE and FOLDER
+        if (fileType !== FileType.FILE && fileType !== FileType.FOLDER) {
+            return;
+        }
+
+        this.renamingFile = [item.value, item.text, fileType];
     }
 
     /**
@@ -647,7 +665,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     openDeleteFileModal(item: TreeViewItem<string>) {
         const { value: filePath } = item;
         const fileType = this.repositoryFiles[filePath];
-        if (filePath) {
+        if (filePath && fileType !== FileType.PROBLEM_STATEMENT) {
             const modalRef = this.modalService.open(CodeEditorFileBrowserDeleteComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.parent = this;
             modalRef.componentInstance.fileNameToDelete = filePath;

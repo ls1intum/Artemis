@@ -121,6 +121,7 @@ File browser tree
             &.node-selected::before {
                 display: none;
             }
+
             &.node-selected .problem-statement-icon,
             &.node-selected .list-group-item__fileName {
                 color: inherit;

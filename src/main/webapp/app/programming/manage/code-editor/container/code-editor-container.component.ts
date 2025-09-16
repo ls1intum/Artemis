@@ -208,17 +208,18 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      * in case of delete make sure to also remove all sub entities (files in folder).
      */
     onFileChange<F extends FileChange>([, fileChange]: [string[], F]) {
-        this.commitState = CommitState.UNCOMMITTED_CHANGES;
         if (fileChange instanceof CreateFileChange) {
             // Select newly created file
             if (fileChange.fileType === FileType.FILE) {
                 this.selectedFile = fileChange.fileName;
+                this.commitState = CommitState.UNCOMMITTED_CHANGES;
             }
         } else if (fileChange instanceof RenameFileChange || fileChange instanceof DeleteFileChange) {
             // Guard against PROBLEM_STATEMENT file operations - only allow FILE and FOLDER
             if (fileChange.fileType !== FileType.FILE && fileChange.fileType !== FileType.FOLDER) {
                 return;
             }
+            this.commitState = CommitState.UNCOMMITTED_CHANGES;
             this.unsavedFiles = this.fileService.updateFileReferences(this.unsavedFiles, fileChange);
             this.selectedFile = this.fileService.updateFileReference(this.selectedFile!, fileChange);
         }
@@ -226,7 +227,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
             this.editorState = EditorState.CLEAN;
         }
-        this.monacoEditor.onFileChange(fileChange);
+        this.monacoEditor?.onFileChange(fileChange);
 
         this.onFileChanged.emit();
     }
@@ -249,7 +250,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         if (errorFiles.length) {
             this.onError('saveFailed');
         }
-        this.monacoEditor.storeAnnotations(savedFiles);
+        this.monacoEditor?.storeAnnotations(savedFiles);
     }
 
     /**
@@ -289,11 +290,11 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     }
 
     getText(): string {
-        return this.monacoEditor.getText() ?? '';
+        return this.monacoEditor?.getText() ?? '';
     }
 
     getNumberOfLines(): number {
-        return this.monacoEditor.getNumberOfLines() ?? 0;
+        return this.monacoEditor?.getNumberOfLines() ?? 0;
     }
 
     /**
@@ -302,7 +303,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      * @param endLine The last line to highlight.
      */
     highlightLines(startLine: number, endLine: number): void {
-        this.monacoEditor.highlightLines(startLine, endLine);
+        this.monacoEditor?.highlightLines(startLine, endLine);
     }
 
     onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
