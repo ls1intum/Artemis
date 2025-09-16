@@ -711,6 +711,7 @@ public class LocalVCServletService {
             return HttpStatus.FORBIDDEN.value();
         }
         else {
+            log.error("Error in LocalVcServletService: ", exception);
             log.error("Internal server error while trying to access repository {}: {}", repositoryUri, exception.getMessage());
             return HttpStatus.INTERNAL_SERVER_ERROR.value();
         }
