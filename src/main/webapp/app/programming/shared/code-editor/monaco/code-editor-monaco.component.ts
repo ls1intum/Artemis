@@ -260,8 +260,8 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
      */
     private setupAddFeedbackShortcut(): void {
         this.disposeAddFeedbackShortcut();
-        this.addFeedbackKeydownListener = this.editor().onKeyDown((e: any) => {
-            const browserEvent = e?.browserEvent as KeyboardEvent | undefined;
+        this.addFeedbackKeydownListener = this.editor().onKeyDown((event: any) => {
+            const browserEvent = event?.browserEvent as KeyboardEvent | undefined;
             const code = browserEvent?.code;
             const key = browserEvent?.key;
             const isPlus = key === '+' || code === 'NumpadAdd';
@@ -272,7 +272,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                 return;
             }
             // Prevent Monaco from handling typing (avoids read-only message)
-            e.preventDefault?.();
+            event.preventDefault?.();
             const position = this.editor().getPosition();
             if (position?.lineNumber) {
                 this.addNewFeedback(position.lineNumber);
