@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Artemis Server (Prod, Core, LocalCI)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-    <option name="ACTIVE_PROFILES" value="prod,core,ldap,localvc,localci,scheduling,local" />
+    <option name="ACTIVE_PROFILES" value="prod,artemis,core,ldap,localvc,localci,scheduling,local" />
     <option name="ALTERNATIVE_JRE_PATH" value="17" />
     <module name="Artemis.main" />
     <option name="SHORTEN_COMMAND_LINE" value="ARGS_FILE" />
