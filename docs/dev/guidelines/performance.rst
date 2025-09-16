@@ -135,6 +135,10 @@ In this example, the query fetches exercises along with their submissions in a s
 
 While reducing the number of queries by using `LEFT JOIN FETCH` is often beneficial, overusing this strategy can lead to performance issues, especially when fetching multiple `OneToMany` relationships. As a best practice, avoid fetching more than three `OneToMany` collections in a single query.
 
+To avoid fetching too many entities at once, we have a script that checks for @EntityGraph or JOIN FETCH usages in the codebase and warns if too many relationships are fetched at once. The script can be found at `supporting_scripts/find_slow_queries.py`
+
+This script is also automatically invoked in the CI pipeline as Github Action called `Query Quality Check`. When it fails, check the output of the Github Action to see which violating queries were found and reduce the number of fetched relationships in these queries.
+
 Example:
 
 .. code-block:: java

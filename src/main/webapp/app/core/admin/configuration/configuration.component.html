@@ -1,5 +1,5 @@
 @if (allBeans) {
-    <div>
+    <div class="module-bg p-3">
         <h2 id="configuration-page-heading" jhiTranslate="configuration.title" data-cy="configurationPageHeading"></h2>
         <span jhiTranslate="configuration.filter"></span>
         <input type="text" [(ngModel)]="beansFilter" (ngModelChange)="filterAndSortBeans()" class="form-control" />

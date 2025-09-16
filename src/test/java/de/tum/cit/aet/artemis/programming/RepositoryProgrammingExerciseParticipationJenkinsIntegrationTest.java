@@ -28,7 +28,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
     @BeforeEach
     void setup() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
