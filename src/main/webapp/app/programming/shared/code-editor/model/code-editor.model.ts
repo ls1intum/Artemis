@@ -13,6 +13,11 @@ export enum FileType {
     PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
 }
 
+/**
+ * Constant identifier for the Problem Statement pseudo-file
+ */
+export const PROBLEM_STATEMENT_IDENTIFIER = '__problem_statement__';
+
 // Union type for regular file system operations (excludes PROBLEM_STATEMENT)
 export type RegularFileType = FileType.FILE | FileType.FOLDER;
 

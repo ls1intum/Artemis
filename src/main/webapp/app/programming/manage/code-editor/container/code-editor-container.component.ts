@@ -12,6 +12,7 @@ import {
     FileBadgeType,
     FileChange,
     FileType,
+    PROBLEM_STATEMENT_IDENTIFIER,
     RenameFileChange,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -55,7 +56,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
-    readonly PROBLEM_STATEMENT_IDENTIFIER = '__problem_statement__';
     @ViewChild('rightInstructions', { static: false }) rightInstructions: CodeEditorInstructionsComponent;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
 
@@ -122,6 +122,10 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     set selectedFile(file: string | undefined) {
         this.selectedFileValue = file;
+    }
+
+    get problemStatementIdentifier(): string {
+        return PROBLEM_STATEMENT_IDENTIFIER;
     }
 
     /** Code Editor State Variables **/

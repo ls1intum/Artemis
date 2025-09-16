@@ -42,6 +42,7 @@ import {
     FileChange,
     FileType,
     GitConflictState,
+    PROBLEM_STATEMENT_IDENTIFIER,
     RenameFileChange,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -89,9 +90,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     CommitState = CommitState;
     FileType = FileType;
-    // Problem Statement identifier constant
-    readonly PROBLEM_STATEMENT_IDENTIFIER = '__problem_statement__';
-    private isProblemStatement = (path?: string) => path === this.PROBLEM_STATEMENT_IDENTIFIER;
+    private isProblemStatement = (path?: string) => path === PROBLEM_STATEMENT_IDENTIFIER;
     @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
     @ViewChild('treeview', { static: false }) treeview: TreeViewComponent<string>;
     @Input()
@@ -206,9 +205,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
         // Add Problem Statement as a first-class file type (not in display-only mode)
         if (!this.displayOnly) {
-            const existing = this.repositoryFiles[this.PROBLEM_STATEMENT_IDENTIFIER];
+            const existing = this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER];
             if (!existing || existing === FileType.PROBLEM_STATEMENT) {
-                this.repositoryFiles[this.PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
+                this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
             }
         }
     }
@@ -260,12 +259,12 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         }
 
         if (this.displayOnly) {
-            delete this.repositoryFiles[this.PROBLEM_STATEMENT_IDENTIFIER];
+            delete this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER];
             if (this.isProblemStatement(this.selectedFile)) {
                 this.selectedFile = undefined;
             }
         } else {
-            this.repositoryFiles[this.PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
+            this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
         }
 
         this.setupTreeview();
@@ -388,8 +387,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         }
 
         const fileKeys = Object.keys(this.repositoryFiles).sort((a, b) => {
-            if (a === this.PROBLEM_STATEMENT_IDENTIFIER) return -1;
-            if (b === this.PROBLEM_STATEMENT_IDENTIFIER) return 1;
+            if (a === PROBLEM_STATEMENT_IDENTIFIER) return -1;
+            if (b === PROBLEM_STATEMENT_IDENTIFIER) return 1;
             return a.localeCompare(b);
         });
 

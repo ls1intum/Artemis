@@ -45,7 +45,7 @@
         (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.FileBrowser)"
     />
     <ng-container editorCenter>
-        @if (selectedFile === PROBLEM_STATEMENT_IDENTIFIER && showEditorInstructions && !forRepositoryView) {
+        @if (selectedFile === problemStatementIdentifier && showEditorInstructions && !forRepositoryView) {
             <jhi-code-editor-instructions
                 (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
                 (onError)="onError($event)"
