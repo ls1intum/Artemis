@@ -305,6 +305,10 @@
                     "location": "Location",
                     "attendance": "Attendance",
                     "status": "Status"
+                },
+                "disclaimerText": {
+                    "noAttendanceDataAvailable": "No data available",
+                    "noUpcomingSession": "No data available"
                 }
             },
             "tutorialFreePeriodsManagement": {

@@ -624,7 +624,7 @@ describe('NewTutorialGroupDetail', () => {
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
-        const noDataAvailableDisclaimer = fixture.debugElement.query(By.css('[data-testid="no-data-available-disclaimer"]'));
+        const noDataAvailableDisclaimer = fixture.debugElement.query(By.css('[data-testid="no-attendance-data-available-disclaimer"]'));
         expect(noDataAvailableDisclaimer).not.toBeNull();
     });
 

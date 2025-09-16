@@ -37,7 +37,7 @@
     </div>
     <hr />
     <div class="card-row">
-        <section class="card small" aria-labelledby="tutor-card-title">
+        <section class="card narrow" aria-labelledby="tutor-card-title">
             <h3 id="tutor-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.tutorCardTitle"></h3>
             <div class="tutor-card-content">
                 <jhi-profile-picture
@@ -51,9 +51,10 @@
                 <span aria-hidden="true">{{ tutorialGroup().teachingAssistantName }}</span>
             </div>
         </section>
-        <section class="card big" aria-labelledby="general-info-card-title">
+        <section class="card broad" aria-labelledby="general-info-card-title">
             <h3 id="general-info-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.generalInfoCardTitle"></h3>
             <div class="info-card-content" role="list">
+                <div class="spacer"></div>
                 <div class="info-stack">
                     <div class="info-item" role="listitem" aria-labelledby="language-label" aria-describedby="language-value">
                         <fa-icon [icon]="faFlag" aria-hidden="true" />
@@ -82,11 +83,11 @@
         </section>
     </div>
     <div class="card-row">
-        <section class="card small" aria-labelledby="attendance-card-title">
+        <section class="card narrow" aria-labelledby="attendance-card-title">
             <h3 id="attendance-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.averageAttendanceCardTitle"></h3>
-            <div class="attendance-card-content position-relative">
-                @let attendancePercentage = averageAttendancePercentage();
-                @if (attendancePercentage) {
+            @let attendancePercentage = averageAttendancePercentage();
+            @if (attendancePercentage) {
+                <div class="attendance-card-content">
                     <span class="doughnut-chart-text">{{ attendancePercentage }}</span>
                     <ngx-charts-pie-chart
                         [view]="[122, 122]"
@@ -98,20 +99,19 @@
                         [arcWidth]="0.3"
                         aria-hidden="true"
                     />
-                } @else {
-                    <div class="no-data-available-disclaimer" data-testid="no-data-available-disclaimer">
-                        <fa-icon [icon]="faQuestion" size="2x" aria-hidden="true" />
-                        No Data Available
-                        <!-- TODO: translate -->
-                    </div>
-                }
-            </div>
+                </div>
+            } @else {
+                <div class="disclaimer" data-testid="no-attendance-data-available-disclaimer">
+                    <fa-icon [icon]="faQuestion" size="2x" aria-hidden="true" />
+                    <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.disclaimerText.noAttendanceDataAvailable"></span>
+                </div>
+            }
         </section>
-        <section class="card big" aria-labelledby="next-session-card-title">
+        <section class="card broad" aria-labelledby="next-session-card-title">
             <h3 id="next-session-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.nextSessionCardTitle"></h3>
-            <div class="info-card-content" role="list">
-                @let session = nextSession();
-                @if (session) {
+            @let session = nextSession();
+            @if (session) {
+                <div class="info-card-content" role="list">
                     <div class="info-stack">
                         <div class="info-item" role="listitem" aria-labelledby="next-session-date-label" aria-describedby="next-session-date-value">
                             <fa-icon [icon]="faCalendar" aria-hidden="true" />
@@ -151,14 +151,13 @@
                             }
                         </div>
                     </div>
-                } @else {
-                    <div class="no-upcoming-session-disclaimer" data-testid="no-upcoming-session-disclaimer">
-                        <fa-icon [icon]="faCheck" size="2x" aria-hidden="true" />
-                        No Upcoming Session
-                        <!-- TODO: translate -->
-                    </div>
-                }
-            </div>
+                </div>
+            } @else {
+                <div class="disclaimer" data-testid="no-upcoming-session-disclaimer">
+                    <fa-icon [icon]="faCheck" size="2x" aria-hidden="true" />
+                    <span jhiTranslate="artemisApp.pages.tutorialGroupDetail.disclaimerText.noUpcomingSession"></span>
+                </div>
+            }
         </section>
     </div>
     <div class="list-controls-row">

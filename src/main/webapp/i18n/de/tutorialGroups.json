@@ -305,6 +305,10 @@
                     "location": "Ort",
                     "attendance": "Teilnehmerzahl",
                     "status": "Status"
+                },
+                "disclaimerText": {
+                    "noAttendanceDataAvailable": "Keine Daten verfügbar",
+                    "noUpcomingSession": "Keine bevorstehende Session"
                 }
             },
             "tutorialFreePeriodsManagement": {
