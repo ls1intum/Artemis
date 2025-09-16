@@ -30,11 +30,11 @@ class MockHeaderComponent {
 @Component({
     selector: 'jhi-mock-wrapper',
     template: `
-        <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup()">
+        <jhi-management-tutorial-group-detail [tutorialGroup]="tutorialGroup()">
             <ng-template>
                 <jhi-mock-header [tutorialGroup]="tutorialGroup()" />
             </ng-template>
-        </jhi-tutorial-group-detail>
+        </jhi-management-tutorial-group-detail>
     `,
     imports: [ManagementTutorialGroupDetailComponent, MockHeaderComponent],
 })

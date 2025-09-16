@@ -134,7 +134,7 @@
                         <div class="info-item" role="listitem" aria-labelledby="next-session-status-label" aria-describedby="next-session-status-indicator">
                             <fa-icon [icon]="faCircleExclamation" aria-hidden="true" />
                             <span class="info-label" id="next-session-status-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.status"></span>
-                            <jhi-tutorial-group-detail-session-status-indicator
+                            <jhi-course-tutorial-group-detail-session-status-indicator
                                 [isCancelled]="session.isCancelled"
                                 [locationChanged]="session.locationChanged"
                                 [timeChanged]="session.timeChanged"
@@ -210,7 +210,7 @@
                             </div>
                         </td>
                         <td>
-                            <jhi-tutorial-group-detail-session-status-indicator
+                            <jhi-course-tutorial-group-detail-session-status-indicator
                                 [isCancelled]="session.isCancelled"
                                 [locationChanged]="session.locationChanged"
                                 [timeChanged]="session.timeChanged"

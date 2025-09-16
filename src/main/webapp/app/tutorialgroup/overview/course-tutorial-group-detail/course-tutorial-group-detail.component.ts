@@ -18,7 +18,7 @@ import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { Color, PieChartComponent, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { SelectModule } from 'primeng/select';
 import { TranslateService } from '@ngx-translate/core';
-import { TutorialGroupDetailSessionStatusIndicatorComponent } from 'app/tutorialgroup/overview/tutorial-group-detail-session-status-indicator/tutorial-group-detail-session-status-indicator.component';
+import { CourseTutorialGroupDetailSessionStatusIndicatorComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-session-status-indicator/course-tutorial-group-detail-session-status-indicator.component';
 import { Router, RouterLink } from '@angular/router';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -47,7 +47,7 @@ type ListOption = 'all-sessions' | 'future-sessions';
         FormsModule,
         PieChartModule,
         SelectModule,
-        TutorialGroupDetailSessionStatusIndicatorComponent,
+        CourseTutorialGroupDetailSessionStatusIndicatorComponent,
         NgClass,
         RouterLink,
         ButtonModule,

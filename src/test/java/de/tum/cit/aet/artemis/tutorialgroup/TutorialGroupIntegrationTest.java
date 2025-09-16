@@ -40,8 +40,8 @@ import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
-import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -81,7 +81,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     private CourseNotificationTestRepository courseNotificationRepository;
 
     @Autowired
-    private OneToOneChatRepository oneToOneChatRepository;
+    private OneToOneChatTestRepository oneToOneChatRepository;
 
     @BeforeEach
     @Override
