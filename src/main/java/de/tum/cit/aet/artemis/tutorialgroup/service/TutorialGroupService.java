@@ -943,12 +943,10 @@ public class TutorialGroupService {
         return "";
     }
 
-    // Enum to represent the different fields of the schedule
     private enum ScheduleField {
         START_TIME, END_TIME, LOCATION
     }
 
-    // Enum to represent the different fields of the student
     private enum StudentField {
         REGISTRATION_NUMBER, FIRST_NAME, LAST_NAME
     }
