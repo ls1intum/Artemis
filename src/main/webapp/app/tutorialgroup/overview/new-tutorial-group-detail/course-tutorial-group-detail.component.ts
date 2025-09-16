@@ -8,7 +8,7 @@ import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/cour
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBuildingColumns, faCalendar, faCircleExclamation, faClock, faFlag, faMapPin, faQuestion, faTag, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faBuildingColumns, faCalendar, faCheck, faCircleExclamation, faClock, faFlag, faMapPin, faQuestion, faTag, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupDetailSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { SelectButton } from 'primeng/selectbutton';
@@ -71,7 +71,7 @@ export class CourseTutorialGroupDetailComponent {
         this.locale();
         return this.computeSessionsToDisplay(this.selectedSessionListOption(), this.tutorialGroup().sessions);
     });
-    nextSessionData = computed<TutorialGroupDetailSession | undefined>(() => this.computeNextSessionDataUsing(this.tutorialGroup().sessions));
+    nextSession = computed<TutorialGroupDetailSession | undefined>(() => this.computeNextSessionDataUsing(this.tutorialGroup().sessions));
     teachingAssistantImageUrl = computed(() => addPublicFilePrefix(this.tutorialGroup().teachingAssistantImageUrl));
     tutorialGroupLanguage = computed<string>(() => this.tutorialGroup().language);
     tutorialGroupCapacity = computed<string>(() => String(this.tutorialGroup().capacity ?? '-'));
@@ -99,6 +99,7 @@ export class CourseTutorialGroupDetailComponent {
     readonly faMapPin = faMapPin;
     readonly faBuildingColumns = faBuildingColumns;
     readonly faQuestion = faQuestion;
+    readonly faCheck = faCheck;
 
     constructor() {
         effect(() => {
@@ -149,8 +150,6 @@ export class CourseTutorialGroupDetailComponent {
     private computePieChartColor(averageAttendanceRatio: number | undefined): Color {
         if (!averageAttendanceRatio) {
             return {
-                name: 'vivid',
-                selectable: false,
                 group: ScaleType.Ordinal,
                 domain: [GraphColors.LIGHT_GREY],
             } as Color;
@@ -166,8 +165,6 @@ export class CourseTutorialGroupDetailComponent {
                 color = 'var(--green)';
             }
             return {
-                name: 'vivid',
-                selectable: false,
                 group: ScaleType.Ordinal,
                 domain: [color, GraphColors.LIGHT_GREY],
             } as Color;
@@ -178,7 +175,7 @@ export class CourseTutorialGroupDetailComponent {
         if (!courseId || !tutorChatId) return undefined;
         return {
             routerLink: ['/courses', courseId, 'communication'],
-            queryParams: { conversationId: tutorChatId },
+            queryParameters: { conversationId: tutorChatId },
         };
     }
 
@@ -186,7 +183,7 @@ export class CourseTutorialGroupDetailComponent {
         if (!courseId || !groupChannelId) return undefined;
         return {
             routerLink: ['/courses', courseId, 'communication'],
-            queryParams: { conversationId: groupChannelId },
+            queryParameters: { conversationId: groupChannelId },
         };
     }
 

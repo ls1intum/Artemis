@@ -272,7 +272,7 @@ export const routes: Routes = [
                     {
                         path: ':tutorialGroupId',
                         loadComponent: () =>
-                            import('app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail-container.component').then(
+                            import('app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component').then(
                                 (m) => m.CourseTutorialGroupDetailContainerComponent,
                             ),
                         data: {

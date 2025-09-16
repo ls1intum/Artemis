@@ -7,22 +7,30 @@
             @if (chatLink) {
                 <a
                     [routerLink]="chatLink.routerLink"
-                    [queryParams]="chatLink.queryParams"
+                    [queryParams]="chatLink.queryParameters"
                     pButton
                     class="p-button-secondary p-button-sm"
                     jhiTranslate="artemisApp.pages.tutorialGroupDetail.tutorChatLinkLabel"
+                    data-testid="tutor-chat-link"
                 ></a>
             } @else {
-                <button pButton class="p-button-secondary p-button-sm" (click)="createTutorChat()" jhiTranslate="artemisApp.pages.tutorialGroupDetail.tutorChatLinkLabel"></button>
+                <button
+                    pButton
+                    class="p-button-secondary p-button-sm"
+                    (click)="createTutorChat()"
+                    jhiTranslate="artemisApp.pages.tutorialGroupDetail.tutorChatLinkLabel"
+                    data-testid="tutor-chat-button"
+                ></button>
             }
             @let channelLink = groupChannelLink();
             @if (channelLink) {
                 <a
                     [routerLink]="channelLink.routerLink"
-                    [queryParams]="channelLink.queryParams"
+                    [queryParams]="channelLink.queryParameters"
                     pButton
                     class="p-button-secondary p-button-sm"
                     jhiTranslate="artemisApp.pages.tutorialGroupDetail.groupChannelLinkLabel"
+                    data-testid="group-channel-link"
                 ></a>
             }
         }
@@ -91,9 +99,10 @@
                         aria-hidden="true"
                     />
                 } @else {
-                    <div class="no-data-available-disclaimer">
+                    <div class="no-data-available-disclaimer" data-testid="no-data-available-disclaimer">
                         <fa-icon [icon]="faQuestion" size="2x" aria-hidden="true" />
                         No Data Available
+                        <!-- TODO: translate -->
                     </div>
                 }
             </div>
@@ -101,22 +110,22 @@
         <section class="card big" aria-labelledby="next-session-card-title">
             <h3 id="next-session-card-title" jhiTranslate="artemisApp.pages.tutorialGroupDetail.cardTitles.nextSessionCardTitle"></h3>
             <div class="info-card-content" role="list">
-                @let nextSession = nextSessionData();
-                @if (nextSession) {
+                @let session = nextSession();
+                @if (session) {
                     <div class="info-stack">
                         <div class="info-item" role="listitem" aria-labelledby="next-session-date-label" aria-describedby="next-session-date-value">
                             <fa-icon [icon]="faCalendar" aria-hidden="true" />
                             <span class="info-label" id="next-session-date-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.date"></span>
-                            <span [ngClass]="{ 'strikethrough-text': nextSession.isCancelled }" id="next-session-date-value">{{ nextSession.date }}</span>
-                            @if (nextSession.dateChanged) {
+                            <span [ngClass]="{ 'strikethrough-text': session.isCancelled }" id="next-session-date-value">{{ session.date }}</span>
+                            @if (session.dateChanged) {
                                 <div class="change-indicator" aria-hidden="true"></div>
                             }
                         </div>
                         <div class="info-item" role="listitem" aria-labelledby="next-session-time-label" aria-describedby="next-session-time-value">
                             <fa-icon [icon]="faClock" aria-hidden="true" />
                             <span class="info-label" id="next-session-time-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.time"></span>
-                            <span [ngClass]="{ 'strikethrough-text': nextSession.isCancelled }" id="next-session-time-value">{{ nextSession.time }}</span>
-                            @if (nextSession.timeChanged) {
+                            <span [ngClass]="{ 'strikethrough-text': session.isCancelled }" id="next-session-time-value">{{ session.time }}</span>
+                            @if (session.timeChanged) {
                                 <div class="change-indicator" aria-hidden="true"></div>
                             }
                         </div>
@@ -126,21 +135,27 @@
                             <fa-icon [icon]="faCircleExclamation" aria-hidden="true" />
                             <span class="info-label" id="next-session-status-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.status"></span>
                             <jhi-tutorial-group-detail-session-status-indicator
-                                [isCancelled]="nextSession.isCancelled"
-                                [locationChanged]="nextSession.locationChanged"
-                                [timeChanged]="nextSession.timeChanged"
-                                [dateChanged]="nextSession.dateChanged"
+                                [isCancelled]="session.isCancelled"
+                                [locationChanged]="session.locationChanged"
+                                [timeChanged]="session.timeChanged"
+                                [dateChanged]="session.dateChanged"
                                 id="next-session-status-indicator"
                             />
                         </div>
                         <div class="info-item" role="listitem" aria-labelledby="next-session-location-label" aria-describedby="next-session-location-value">
                             <fa-icon [icon]="faMapPin" aria-hidden="true" />
                             <span class="info-label" id="next-session-location-label" jhiTranslate="artemisApp.pages.tutorialGroupDetail.location"></span>
-                            <span [ngClass]="{ 'strikethrough-text': nextSession.isCancelled }" id="next-session-location-value">{{ nextSession.location }}</span>
-                            @if (nextSession.locationChanged) {
+                            <span [ngClass]="{ 'strikethrough-text': session.isCancelled }" id="next-session-location-value">{{ session.location }}</span>
+                            @if (session.locationChanged) {
                                 <div class="change-indicator" aria-hidden="true"></div>
                             }
                         </div>
+                    </div>
+                } @else {
+                    <div class="no-upcoming-session-disclaimer" data-testid="no-upcoming-session-disclaimer">
+                        <fa-icon [icon]="faCheck" size="2x" aria-hidden="true" />
+                        No Upcoming Session
+                        <!-- TODO: translate -->
                     </div>
                 }
             </div>
