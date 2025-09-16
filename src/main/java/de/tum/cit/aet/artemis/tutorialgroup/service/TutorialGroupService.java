@@ -666,22 +666,16 @@ public class TutorialGroupService {
             session.setCancelled(true);
             return;
         }
-
         ZonedDateTime sessionStart = session.getStart().withZoneSameInstant(courseTimeZone);
         ZonedDateTime sessionEnd = session.getEnd().withZoneSameInstant(courseTimeZone);
-
         boolean sameDay = sessionStart.getDayOfWeek().getValue() == scheduleDayOfWeek;
         if (!sameDay) {
             session.setDateChanged(!sameDay);
         }
-
-        // TODO: verify that sessionStart and sessionTime always only have minute precision (in UI only minute precision can be chosen ->
-        // verify that no seconds or more precise time units are sent to server)
         boolean sameTime = sessionStart.toLocalTime().equals(scheduleStart) && sessionEnd.toLocalTime().equals(scheduleEnd);
         if (!sameTime) {
             session.setTimeChanged(true);
         }
-
         boolean sameLocation = session.getLocation().equals(scheduleLocation);
         if (!sameLocation) {
             session.setLocationChanged(true);
