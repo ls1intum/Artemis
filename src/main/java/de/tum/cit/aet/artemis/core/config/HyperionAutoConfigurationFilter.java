@@ -60,7 +60,6 @@ public class HyperionAutoConfigurationFilter implements AutoConfigurationImportF
 
             // autoConfigurationClasses can contain null values which leads to a NPE in the contains check below, so we handle it here
             if (fullyQualifiedClassName == null) {
-                matches[i] = false;
                 continue;
             }
 
