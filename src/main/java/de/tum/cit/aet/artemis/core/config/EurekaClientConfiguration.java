@@ -30,7 +30,7 @@ import org.springframework.web.client.RestClient;
  */
 @Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Configuration
-@Lazy(false)
+@Lazy
 public class EurekaClientConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(EurekaClientConfiguration.class);

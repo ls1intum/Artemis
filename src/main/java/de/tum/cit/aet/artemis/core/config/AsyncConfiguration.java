@@ -23,7 +23,7 @@ import tech.jhipster.async.ExceptionHandlingAsyncTaskExecutor;
 
 @Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
 @Configuration
-@Lazy(false)
+@Lazy
 @EnableAsync(proxyTargetClass = true)
 @EnableScheduling
 public class AsyncConfiguration implements AsyncConfigurer {

@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.programming.service.AbstractGitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Profile(PROFILE_BUILDAGENT)
-@Lazy(false)
+@Lazy
 @Service
 public class BuildJobGitService extends AbstractGitService {
 

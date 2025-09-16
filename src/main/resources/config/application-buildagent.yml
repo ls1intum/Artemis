@@ -71,13 +71,6 @@ artemis:
         email: artemis@xcit.tum.de
 
 spring:
-    # TODO: try to disable Spring AI completely for build agents
-    ai:
-        azure:
-            openai:
-                endpoint: https://api.openai.com/v1
-        model:
-            chat: none #disable any spring ai interaction
     liquibase:
         enabled: false #not needed for build agents
     autoconfigure:
@@ -91,6 +84,12 @@ spring:
             - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
             - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
             - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
+            - org.springframework.ai.model.azure.openai.autoconfigure.AzureOpenAiAudioTranscriptionAutoConfiguration
+            - org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration
+            - org.springframework.ai.model.azure.openai.autoconfigure.AzureOpenAiChatAutoConfiguration
+            - org.springframework.ai.model.azure.openai.autoconfigure.AzureOpenAiEmbeddingAutoConfiguration
+            - org.springframework.ai.model.azure.openai.autoconfigure.AzureOpenAiImageAutoConfiguration
+
     cloud:
         loadbalancer:
             cache:

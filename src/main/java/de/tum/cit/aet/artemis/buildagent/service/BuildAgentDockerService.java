@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
 /**
  * Service for Docker related operations in local CI
  */
-@Lazy(false)
+@Lazy
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildAgentDockerService {
