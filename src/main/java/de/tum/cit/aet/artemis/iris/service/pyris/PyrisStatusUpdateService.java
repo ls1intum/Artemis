@@ -9,19 +9,16 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
-import de.tum.cit.aet.artemis.iris.service.IrisConsistencyCheckService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.consistencyCheck.PyrisConsistencyCheckStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.ConsistencyCheckJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
@@ -52,8 +49,6 @@ public class PyrisStatusUpdateService {
 
     private final IrisCompetencyGenerationService competencyGenerationService;
 
-    private final IrisConsistencyCheckService consistencyCheckService;
-
     private final IrisLectureChatSessionService irisLectureChatSessionService;
 
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
@@ -61,14 +56,13 @@ public class PyrisStatusUpdateService {
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
             IrisCompetencyGenerationService competencyGenerationService, IrisLectureChatSessionService irisLectureChatSessionService,
-            IrisConsistencyCheckService consistencyCheckService, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService) {
+            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
         this.courseChatSessionService = courseChatSessionService;
         this.competencyGenerationService = competencyGenerationService;
         this.irisLectureChatSessionService = irisLectureChatSessionService;
-        this.consistencyCheckService = consistencyCheckService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
     }
 
@@ -121,18 +115,6 @@ public class PyrisStatusUpdateService {
     public void handleStatusUpdate(CompetencyExtractionJob job, PyrisCompetencyStatusUpdateDTO statusUpdate) {
         var updatedJob = competencyGenerationService.handleStatusUpdate(job, statusUpdate);
 
-        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
-    }
-
-    /**
-     * Handles the status update of a consistency check job and forwards it to
-     * {@link IrisConsistencyCheckService#handleStatusUpdate(ConsistencyCheckJob, PyrisConsistencyCheckStatusUpdateDTO)}
-     *
-     * @param job          the job that is updated
-     * @param statusUpdate the status update
-     */
-    public void handleStatusUpdate(ConsistencyCheckJob job, PyrisConsistencyCheckStatusUpdateDTO statusUpdate) {
-        var updatedJob = consistencyCheckService.handleStatusUpdate(job, statusUpdate);
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
     }
 

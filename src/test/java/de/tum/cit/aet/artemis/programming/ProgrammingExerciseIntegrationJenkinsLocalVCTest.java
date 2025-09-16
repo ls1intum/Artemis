@@ -29,7 +29,7 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
 
     @BeforeEach
     void initTestCase() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         programmingExerciseIntegrationTestService.setup(TEST_PREFIX, this, versionControlService, continuousIntegrationService);
     }
 
@@ -100,8 +100,8 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest() throws Exception {
-        programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_invalidParticipationId_badRequest();
+    void testExportSubmissionsByParticipationIds_nonExistentParticipationId_notFound() throws Exception {
+        programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_nonExistentParticipationId_notFound();
     }
 
     @Test

@@ -30,7 +30,7 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         if (!this.commits) {
             if (this.participationId) {
-                this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
+                this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId).subscribe((commits) => {
                     if (commits) {
                         this.commits = commits;
                     }

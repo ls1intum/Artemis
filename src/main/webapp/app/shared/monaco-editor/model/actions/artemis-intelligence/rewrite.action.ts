@@ -1,6 +1,7 @@
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 
 /**
  * Artemis Intelligence action for rewriting in the editor.
@@ -12,6 +13,7 @@ export class RewriteAction extends TextEditorAction {
 
     constructor(
         private readonly artemisIntelligenceService: ArtemisIntelligenceService,
+        private readonly rewritingVariant: RewritingVariant,
         private readonly courseId: number,
     ) {
         super(RewriteAction.ID, 'artemisApp.markdownEditor.artemisIntelligence.commands.rewrite');
@@ -22,6 +24,6 @@ export class RewriteAction extends TextEditorAction {
      * @param editor The editor in which to rewrite the markdown.
      */
     run(editor: TextEditor): void {
-        this.rewriteMarkdown(editor, this.artemisIntelligenceService, this.courseId);
+        this.rewriteMarkdown(editor, this.artemisIntelligenceService, this.rewritingVariant, this.courseId);
     }
 }
