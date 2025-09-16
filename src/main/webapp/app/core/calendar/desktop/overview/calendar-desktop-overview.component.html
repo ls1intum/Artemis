@@ -3,6 +3,20 @@
         <span class="h3">{{ getMonthDescription() }}</span>
         <div class="spacer"></div>
         <jhi-calendar-event-filter [variant]="CalendarEventFilterComponentVariant.DESKTOP" />
+        @let courseId = currentCourseId();
+        @let subscriptionToken = calendarSubscriptionToken();
+        @if (courseId && subscriptionToken) {
+            <div>
+                <button
+                    data-testid="subscribe-button"
+                    type="button"
+                    class="btn btn-outline-primary"
+                    (click)="subscriptionPopover.open($event)"
+                    jhiTranslate="artemisApp.calendar.subscribeButtonLabel"
+                ></button>
+                <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="courseId" #subscriptionPopover />
+            </div>
+        }
         <button id="today-button" type="button" class="btn btn-outline-primary" (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
         <div class="btn-group" role="group">
             <button
