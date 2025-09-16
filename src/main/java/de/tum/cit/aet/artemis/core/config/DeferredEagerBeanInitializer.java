@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -70,7 +71,7 @@ public class DeferredEagerBeanInitializer {
                     log.error("A bean that is required for the initialization of bean {} is missing", name);
                 }
                 log.error("Deferred eager initialization of bean {} failed. Going to shutdown the application", name, ex);
-                System.exit(2);
+                System.exit(SpringApplication.exit(context, () -> 2));
             }
         });
         context.publishEvent(new DeferredEagerBeanInitializationCompletedEvent());
