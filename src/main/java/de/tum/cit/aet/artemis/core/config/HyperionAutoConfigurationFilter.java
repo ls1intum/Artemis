@@ -28,12 +28,9 @@ import org.springframework.core.env.Environment;
  * {@code spring.autoconfigure.exclude} in {@code application.yml}) still apply independently.
  *
  * <h3>Registration</h3>
- * To activate this filter, it must be declared under
- * {@code META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.importFilter}:
+ * To activate this filter, it must be declared in
+ * {@code src/main/resources/META-INF/spring.factories}
  *
- * <pre>
- * de.tum.cit.aet.artemis.core.config.HyperionAutoConfigurationFilter
- * </pre>
  *
  */
 
