@@ -26,6 +26,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -131,9 +132,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.service.AutomaticProgrammingExerciseCleanupService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -149,6 +152,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTas
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
@@ -281,6 +285,15 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private ContinuousIntegrationService continuousIntegrationService;
+
+    @Autowired
+    private LocalVCLocalCITestService localVCLocalCITestService;
+
+    @Autowired
+    private TemplateProgrammingExerciseParticipationTestRepository templateProgrammingExerciseParticipationRepository;
+
+    @Autowired
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     public Course course;
 
@@ -562,6 +575,55 @@ public class ProgrammingExerciseTestService {
         exercise.setChannelName("testchannel-pe");
         assertThat(programmingLanguageFeature.packageNameRequired()).isEqualTo(exercise.getPackageName() != null);
         validateProgrammingExercise(request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED));
+    }
+
+    /**
+     * Centralized setup for preparing a programming exercise for repository export tests.
+     * Ensures template/solution/test repositories exist in LocalVC and the exercise contains correct repository URIs.
+     *
+     * @param programmingExercise the exercise to prepare
+     * @return the updated exercise with participations and repository URIs
+     */
+    public ProgrammingExercise setupExerciseForExport(ProgrammingExercise programmingExercise) throws IOException, GitAPIException, URISyntaxException {
+        // Minimal problem statement content with embedded resources like in export tests
+        String problemStatement = """
+                Problem statement
+                ![mountain.jpg](/api/core/files/markdown/test-image.jpg)
+                <img src="/api/core/files/markdown/test-image2.jpg" width=\"400\">
+                """;
+        programmingExercise.setProblemStatement(problemStatement);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        if (programmingExercise.getTemplateParticipation() == null) {
+            programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        }
+        if (programmingExercise.getSolutionParticipation() == null) {
+            programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        }
+
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExercise.getId()).orElseThrow();
+
+        String projectKey = programmingExercise.getProjectKey();
+        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
+        String testsRepositorySlug = projectKey.toLowerCase() + "-tests";
+
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+
+        var solutionParticipation = programmingExercise.getSolutionParticipation();
+        solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+
+        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + testsRepositorySlug + ".git");
+
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
+        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsRepositorySlug);
+
+        return programmingExerciseRepository.save(programmingExercise);
     }
 
     // TEST

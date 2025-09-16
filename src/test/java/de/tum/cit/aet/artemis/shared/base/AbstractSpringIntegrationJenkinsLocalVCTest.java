@@ -85,7 +85,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @MockitoSpyBean
     protected ResultWebsocketService resultWebsocketService;
 
-    @MockitoSpyBean
+    @Autowired
     protected GitRepositoryExportService gitRepositoryExportService;
 
     @Autowired
@@ -117,7 +117,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(continuousIntegrationService, gitRepositoryExportService);
+        Mockito.reset(continuousIntegrationService);
         super.resetSpyBeans();
     }
 

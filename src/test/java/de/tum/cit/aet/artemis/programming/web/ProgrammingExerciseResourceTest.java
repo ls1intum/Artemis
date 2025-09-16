@@ -27,12 +27,12 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
 import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
-import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -75,7 +75,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationTestRepository;
 
     @Autowired
-    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+    private ProgrammingExerciseTestService programmingExerciseTestService;
 
     protected Course course;
 
@@ -194,18 +194,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     void testExportStudentRequestedSolutionRepository_shouldReturnZipWithoutGit() throws Exception {
         programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(2));
         programmingExerciseRepository.save(programmingExercise);
-
-        String projectKey = programmingExercise.getProjectKey();
-        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
-
-        // Create LocalVC repo for solution first
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
-
-        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-
-        var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
-        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+        programmingExercise = programmingExerciseTestService.setupExerciseForExport(programmingExercise);
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-requested-repository?includeTests=false",
                 HttpStatus.OK, byte[].class);
@@ -224,13 +213,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setReleaseTestsWithExampleSolution(true);
         programmingExerciseRepository.save(programmingExercise);
-
-        // Prepare tests repository in LocalVC
-        String projectKey = programmingExercise.getProjectKey();
-        String testsRepositorySlug = projectKey.toLowerCase() + "-tests";
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsRepositorySlug);
-        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + testsRepositorySlug + ".git");
-        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseTestService.setupExerciseForExport(programmingExercise);
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-requested-repository?includeTests=true",
                 HttpStatus.OK, byte[].class);
