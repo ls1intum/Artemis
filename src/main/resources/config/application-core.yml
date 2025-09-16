@@ -23,7 +23,7 @@ spring:
             openai:
                 endpoint: https://api.openai.com/v1
         model:
-            chat: none #disabled by default, you can enable spring ai when hyperion is enabled (see above), then you must configure other values as well
+            chat: azure-openai #disabled by default, you can enable spring ai when hyperion is enabled (see above), then you must configure other values as well
     liquibase:
         enabled: true
     autoconfigure:
