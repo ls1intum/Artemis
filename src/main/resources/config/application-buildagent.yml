@@ -9,20 +9,20 @@
 # TODO: we should make sure this is not required here, because build agent could never enable those modules / features
 artemis:
     atlas:
-      enabled: false
-    hyperion:
-      enabled: false
-    exam:
-      enabled: false
-    plagiarism:
-      enabled: false
-    text:
-      enabled: false
-    tutorialgroup:
-      enabled: false
-    user-management:
-      passkey:
         enabled: false
+    hyperion:
+        enabled: false
+    exam:
+        enabled: false
+    plagiarism:
+        enabled: false
+    text:
+        enabled: false
+    tutorialgroup:
+        enabled: false
+    user-management:
+        passkey:
+            enabled: false
 
     checked-out-repos-path: ./checked-out-repos # The directory to which repositories temporarily get cloned for the build job execution
     repo-clone-path: ./repos
@@ -71,6 +71,13 @@ artemis:
         email: artemis@xcit.tum.de
 
 spring:
+    # TODO: try to disable Spring AI completely for build agents
+    ai:
+        azure:
+            openai:
+                endpoint: https://api.openai.com/v1
+        model:
+            chat: none #disable any spring ai interaction
     liquibase:
         enabled: false #not needed for build agents
     autoconfigure:
@@ -111,5 +118,5 @@ eureka:
         enabled: true
 
 helios:
-  status:
-    enabled: false
+    status:
+        enabled: false
