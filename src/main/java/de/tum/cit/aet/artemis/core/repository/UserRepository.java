@@ -1390,4 +1390,14 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 OR (:#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
             """)
     boolean isAtLeastInstructorInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
+
+    @Query("""
+            SELECT jhiUser
+            FROM CalendarSubscriptionTokenStore store
+                JOIN store.user jhiUser
+                LEFT JOIN FETCH jhiUser.groups
+                LEFT JOIN FETCH jhiUser.authorities
+            WHERE store.token = :token
+            """)
+    Optional<User> findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
 }
