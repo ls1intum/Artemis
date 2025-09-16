@@ -15,6 +15,7 @@ import { TutorialGroupDetailSessionDTO } from 'app/tutorialgroup/shared/entities
 import dayjs from 'dayjs/esm';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ScaleType } from '@swimlane/ngx-charts';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
 describe('NewTutorialGroupDetail', () => {
     let component: CourseTutorialGroupDetailComponent;
@@ -160,14 +161,15 @@ describe('NewTutorialGroupDetail', () => {
         fixture.detectChanges();
 
         const nextSession = component.nextSession();
-        expect(nextSession.date.endsWith(nextSessionStart.format('DD.MM.YYYY'))).toBeTrue();
-        expect(nextSession.time).toBe('13:00-15:00');
-        expect(nextSession.location).toBe('01.05.13');
-        expect(nextSession.isCancelled).toBeFalse();
-        expect(nextSession.locationChanged).toBeFalse();
-        expect(nextSession.timeChanged).toBeFalse();
-        expect(nextSession.dateChanged).toBeFalse();
-        expect(nextSession.capacity).toBeUndefined();
+        expect(nextSession).toBeDefined();
+        expect(nextSession!.date.endsWith(nextSessionStart.format('DD.MM.YYYY'))).toBeTrue();
+        expect(nextSession!.time).toBe('13:00-15:00');
+        expect(nextSession!.location).toBe('01.05.13');
+        expect(nextSession!.isCancelled).toBeFalse();
+        expect(nextSession!.locationChanged).toBeFalse();
+        expect(nextSession!.timeChanged).toBeFalse();
+        expect(nextSession!.dateChanged).toBeFalse();
+        expect(nextSession!.attendanceCount).toBeUndefined();
     });
 
     it('should expose no nextSession if no sessions available', () => {
@@ -586,8 +588,8 @@ describe('NewTutorialGroupDetail', () => {
 
         const tutorChatLink = component.tutorChatLink();
         expect(tutorChatLink).toBeDefined();
-        expect(tutorChatLink.routerLink).toEqual(['/courses', 1, 'communication']);
-        expect(tutorChatLink.queryParameters).toEqual({ conversationId: 3 });
+        expect(tutorChatLink!.routerLink).toEqual(['/courses', 1, 'communication']);
+        expect(tutorChatLink!.queryParameters).toEqual({ conversationId: 3 });
     });
 
     it('should expose no tutorChatLink if tutorChatId is unavailable', () => {
@@ -606,8 +608,8 @@ describe('NewTutorialGroupDetail', () => {
 
         const groupChannelLink = component.groupChannelLink();
         expect(groupChannelLink).toBeDefined();
-        expect(groupChannelLink.routerLink).toEqual(['/courses', 1, 'communication']);
-        expect(groupChannelLink.queryParameters).toEqual({ conversationId: 2 });
+        expect(groupChannelLink!.routerLink).toEqual(['/courses', 1, 'communication']);
+        expect(groupChannelLink!.queryParameters).toEqual({ conversationId: 2 });
     });
 
     it('should expose no groupChannelLink if groupChannelId is unavailable', () => {

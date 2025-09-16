@@ -10,7 +10,7 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { AsyncPipe } from '@angular/common';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { CourseTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/new-tutorial-group-detail/course-tutorial-group-detail.component';
+import { CourseTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail.component';
 
 @Component({
     selector: 'jhi-course-tutorial-group-detail-container',

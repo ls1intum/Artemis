@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -214,6 +215,17 @@ public class TutorialGroupResource {
         return ResponseEntity.ok().body(tutorialGroup);
     }
 
+    /**
+     * GET /courses/{courseId}/tutorial-group-detail/{tutorialGroupId} : Retrieves a DTO needed to display information in the course-tutorial-group-detail.component.ts
+     *
+     * @param courseId        the ID of the course containing the tutorial group
+     * @param tutorialGroupId the ID of the tutorial group to retrieve
+     * @return {@link ResponseEntity} with status 200 (OK) containing the DTO
+     * @throws EntityNotFoundException      {@code 404 (Not Found)} if no course exists for courseId
+     * @throws EntityNotFoundException      {@code 404 (Not Found)} if no tutorial group exists for tutorialGroupId
+     * @throws AccessForbiddenException     {@code 403 (Forbidden)} if the requesting user is not part of the course
+     * @throws InternalServerErrorException {@code 500 (Internal Server Error)} if no time zone is set for the course
+     */
     @GetMapping("courses/{courseId}/tutorial-group-detail/{tutorialGroupId}")
     @EnforceAtLeastStudent
     public ResponseEntity<TutorialGroupDetailGroupDTO> getTutorialGroupDetailGroupDTO(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {

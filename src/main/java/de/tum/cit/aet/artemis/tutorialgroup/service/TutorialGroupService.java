@@ -628,6 +628,15 @@ public class TutorialGroupService {
         return TutorialGroup.preventCircularJsonConversion(tutorialGroup);
     }
 
+    /**
+     * Assembles a DTO needed to display the information in the course-tutorial-group-detail.component.ts.
+     * Retrieves a raw form of the DTO together with some meta data. Uses the meta data to set the tutorChatId and sessions of the DTO.
+     *
+     * @param tutorialGroupId the ID of the tutorial group to fetch
+     * @param courseTimeZone  the time zone of the course, used for session status evaluation
+     * @return a {@link TutorialGroupDetailGroupDTO}
+     * @throws EntityNotFoundException if no tutorial group exists with the given ID
+     */
     public TutorialGroupDetailGroupDTO getTutorialGroupDetailTutorialGroupDTO(Long tutorialGroupId, ZoneId courseTimeZone) {
         TutorialGroupDetailGroupDTO groupDto = tutorialGroupRepository.getTutorialGroupDetailGroupDTO(tutorialGroupId)
                 .orElseThrow(() -> new EntityNotFoundException("Tutorial Group Not Found with id: " + tutorialGroupId));
