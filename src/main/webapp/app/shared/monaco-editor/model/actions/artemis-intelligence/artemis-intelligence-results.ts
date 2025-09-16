@@ -1,5 +1,8 @@
 export interface RewriteResult {
-    rewrittenText: string;
+    result: string;
+    inconsistencies: string[] | undefined;
+    suggestions: string[] | undefined;
+    improvement: string | undefined;
 }
 
 export interface ConsistencyCheckResult {

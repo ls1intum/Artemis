@@ -22,8 +22,9 @@ import { CategorySelectorComponent } from 'app/shared/category-selector/category
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaqConsistencyComponent } from 'app/communication/faq/faq-consistency.component';
 import { ConsistencyCheckResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence-results';
-import { FaqConsistencyAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/FacConsistencyAction';
+import { FaqConsistencyAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/FaqConsistencyAction';
 import { MODULE_FEATURE_NEBULA } from 'app/app.constants';
+import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 
 @Component({
     selector: 'jhi-faq-update',
@@ -62,7 +63,7 @@ export class FaqUpdateComponent implements OnInit {
     artemisIntelligenceActions = computed(() =>
         this.nebulaEnabled
             ? [
-                  new RewriteAction(this.artemisIntelligenceService, this.courseId),
+                  new RewriteAction(this.artemisIntelligenceService, RewritingVariant.FAQ, this.courseId),
                   new FaqConsistencyAction(this.artemisIntelligenceService, this.courseId, this.renderedConsistencyCheckResultMarkdown),
               ]
             : [],
