@@ -52,7 +52,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
  * Includes functionality for processing build jobs from the shared build job queue.
  */
 @Profile(PROFILE_BUILDAGENT)
-@Lazy
+@Lazy(false)
 @Service
 public class SharedQueueProcessingService {
 
