@@ -50,7 +50,7 @@ public class DeferredEagerBeanInitializer {
             log.debug("Priority initialization of HazelcastConnection completed");
         }
         catch (Throwable ex) {
-            log.warn("Priority initialization of HazelcastConnection failed", ex);
+            shutdownOnDeferredInitFailure("HazelcastConnection", ex);
         }
 
         DefaultListableBeanFactory bf = (DefaultListableBeanFactory) context.getBeanFactory();
@@ -64,17 +64,25 @@ public class DeferredEagerBeanInitializer {
                 log.debug("Deferred eager initialization of bean {} completed", name);
             }
             catch (Throwable ex) {
-                if (ex instanceof PlaceholderResolutionException) {
-                    log.error("Some required configuration value is not set for bean {}. Please check your configuration.", name);
-                }
-                else if (ex instanceof NoSuchBeanDefinitionException) {
-                    log.error("A bean that is required for the initialization of bean {} is missing", name);
-                }
-                log.error("Deferred eager initialization of bean {} failed. Going to shutdown the application", name, ex);
-                System.exit(SpringApplication.exit(context, () -> 2));
+                shutdownOnDeferredInitFailure(name, ex);
             }
         });
         context.publishEvent(new DeferredEagerBeanInitializationCompletedEvent());
         log.info("Deferred eager initialization of all beans completed");
+    }
+
+    private void shutdownOnDeferredInitFailure(String name, Throwable ex) {
+        Throwable root = ex;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        if (root instanceof PlaceholderResolutionException) {
+            log.error("Required configuration is missing while initializing bean {}: {}", name, root.getMessage());
+        }
+        else if (root instanceof NoSuchBeanDefinitionException) {
+            log.error("A required dependency for bean {} is missing: {}", name, root.getMessage());
+        }
+        log.error("Deferred eager initialization of bean {} failed. Shutting down the application.", name, ex);
+        System.exit(SpringApplication.exit(context, () -> 2));
     }
 }
