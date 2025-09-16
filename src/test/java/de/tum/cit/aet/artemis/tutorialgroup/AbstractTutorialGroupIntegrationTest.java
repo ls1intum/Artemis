@@ -461,17 +461,17 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     }
 
     void assertGroupDTOHasCorrectFields(TutorialGroupDetailSessionDTO dto, TutorialGroupSession session) {
-        assertThat(dto.getStart().toInstant()).isEqualTo(session.getStart().toInstant());
-        assertThat(dto.getEnd().toInstant()).isEqualTo(session.getEnd().toInstant());
-        assertThat(dto.getLocation()).isEqualTo(session.getLocation());
-        assertThat(dto.getAttendanceCount()).isEqualTo(session.getAttendanceCount());
+        assertThat(dto.start().toInstant()).isEqualTo(session.getStart().toInstant());
+        assertThat(dto.end().toInstant()).isEqualTo(session.getEnd().toInstant());
+        assertThat(dto.location()).isEqualTo(session.getLocation());
+        assertThat(dto.attendanceCount()).isEqualTo(session.getAttendanceCount());
     }
 
     void assertGroupDTOHasCorrectFlags(TutorialGroupDetailSessionDTO dto, boolean expectIsCancelled, boolean expectLocationChanged, boolean expectTimeChanged,
             boolean expectDateChanged) {
         assertThat(dto.isCancelled()).isEqualTo(expectIsCancelled);
-        assertThat(dto.isLocationChanged()).isEqualTo(expectLocationChanged);
-        assertThat(dto.isTimeChanged()).isEqualTo(expectTimeChanged);
-        assertThat(dto.isDateChanged()).isEqualTo(expectDateChanged);
+        assertThat(dto.locationChanged()).isEqualTo(expectLocationChanged);
+        assertThat(dto.timeChanged()).isEqualTo(expectTimeChanged);
+        assertThat(dto.dateChanged()).isEqualTo(expectDateChanged);
     }
 }

@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupDetailGroupData;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
@@ -143,29 +143,27 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
     Optional<TutorialGroup> findByIdWithSessions(@Param("tutorialGroupId") long tutorialGroupId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO(
+            SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupDetailGroupData(
+                tutorialGroup.course.id,
                 tutorialGroup.id,
                 tutorialGroup.title,
                 tutorialGroup.language,
                 tutorialGroup.isOnline,
+                tutorialGroup.capacity,
+                tutorialGroup.campus,
                 CONCAT(tutorialGroup.teachingAssistant.firstName, CONCAT(' ', tutorialGroup.teachingAssistant.lastName)),
                 tutorialGroup.teachingAssistant.login,
                 tutorialGroup.teachingAssistant.imageUrl,
-                tutorialGroup.capacity,
-                tutorialGroup.campus,
                 tutorialGroup.tutorialGroupChannel.id,
-                new de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTOMetaData(
-                    tutorialGroup.course.id,
-                    tutorialGroup.tutorialGroupSchedule.dayOfWeek,
-                    tutorialGroup.tutorialGroupSchedule.startTime,
-                    tutorialGroup.tutorialGroupSchedule.endTime,
-                    tutorialGroup.tutorialGroupSchedule.location
-                )
+                tutorialGroup.tutorialGroupSchedule.dayOfWeek,
+                tutorialGroup.tutorialGroupSchedule.startTime,
+                tutorialGroup.tutorialGroupSchedule.endTime,
+                tutorialGroup.tutorialGroupSchedule.location
             )
             FROM TutorialGroup tutorialGroup
             WHERE tutorialGroup.id = :tutorialGroupId
             """)
-    Optional<TutorialGroupDetailGroupDTO> getTutorialGroupDetailGroupDTO(@Param("tutorialGroupId") long tutorialGroupId);
+    Optional<TutorialGroupDetailGroupData> getTutorialGroupDetailData(@Param("tutorialGroupId") long tutorialGroupId);
 
     default TutorialGroup findByIdWithSessionsElseThrow(long tutorialGroupId) {
         return getValueElseThrow(findByIdWithSessions(tutorialGroupId), tutorialGroupId);

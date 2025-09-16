@@ -54,11 +54,12 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTOMetaData;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupDetailGroupData;
+import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupDetailSessionData;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupImportErrors;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
 
@@ -629,8 +630,7 @@ public class TutorialGroupService {
     }
 
     /**
-     * Assembles a DTO needed to display the information in the course-tutorial-group-detail.component.ts.
-     * Retrieves a raw form of the DTO together with some meta data. Uses the meta data to set the tutorChatId and sessions of the DTO.
+     * Retrieves the required data and uses them to assembles a DTO needed to display the information in the course-tutorial-group-detail.component.ts.
      *
      * @param tutorialGroupId the ID of the tutorial group to fetch
      * @param courseTimeZone  the time zone of the course, used for session status evaluation
@@ -638,48 +638,23 @@ public class TutorialGroupService {
      * @throws EntityNotFoundException if no tutorial group exists with the given ID
      */
     public TutorialGroupDetailGroupDTO getTutorialGroupDetailTutorialGroupDTO(Long tutorialGroupId, ZoneId courseTimeZone) {
-        TutorialGroupDetailGroupDTO groupDto = tutorialGroupRepository.getTutorialGroupDetailGroupDTO(tutorialGroupId)
+        TutorialGroupDetailGroupData groupData = tutorialGroupRepository.getTutorialGroupDetailData(tutorialGroupId)
                 .orElseThrow(() -> new EntityNotFoundException("Tutorial Group Not Found with id: " + tutorialGroupId));
-        TutorialGroupDetailGroupDTOMetaData metaData = groupDto.getMetaData();
 
-        Long courseId = metaData.courseId();
-        String tutorLogin = groupDto.getTeachingAssistantLogin();
+        Long courseId = groupData.courseId();
+        String tutorLogin = groupData.teachingAssistantLogin();
         String currentUserLogin = userRepository.getCurrentUserLogin();
-        Optional<Long> tutorChatId = oneToOneChatRepository.findIdOfChatInCourseBetweenUsers(courseId, tutorLogin, currentUserLogin);
-        tutorChatId.ifPresent(groupDto::setTutorChatId);
+        Long tutorChatId = oneToOneChatRepository.findIdOfChatInCourseBetweenUsers(courseId, tutorLogin, currentUserLogin);
 
-        List<TutorialGroupDetailSessionDTO> sessionDtos = tutorialGroupSessionRepository.getTutorialGroupDetailSessionDTOs(tutorialGroupId);
-        int scheduleDayOfWeek = metaData.scheduleDayOfWeek();
-        LocalTime scheduleStart = LocalTime.parse(metaData.scheduleStartTime());
-        LocalTime scheduleEnd = LocalTime.parse(metaData.scheduleEndTime());
-        String scheduleLocation = metaData.scheduleLocation();
-        for (TutorialGroupDetailSessionDTO sessionDto : sessionDtos) {
-            setSessionStatusFlags(sessionDto, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone);
-        }
-        groupDto.setSessions(sessionDtos);
-        return groupDto;
-    }
+        List<TutorialGroupDetailSessionData> sessionData = tutorialGroupSessionRepository.getTutorialGroupDetailSessionDTOs(tutorialGroupId);
+        int scheduleDayOfWeek = groupData.scheduleDayOfWeek();
+        LocalTime scheduleStart = LocalTime.parse(groupData.scheduleStartTime());
+        LocalTime scheduleEnd = LocalTime.parse(groupData.scheduleEndTime());
+        String scheduleLocation = groupData.scheduleLocation();
+        List<TutorialGroupDetailSessionDTO> sessionDTOs = sessionData.stream()
+                .map(data -> TutorialGroupDetailSessionDTO.from(data, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone)).toList();
 
-    private void setSessionStatusFlags(TutorialGroupDetailSessionDTO session, int scheduleDayOfWeek, LocalTime scheduleStart, LocalTime scheduleEnd, String scheduleLocation,
-            ZoneId courseTimeZone) {
-        if (session.getOriginSessionStatus() == TutorialGroupSessionStatus.CANCELLED) {
-            session.setCancelled(true);
-            return;
-        }
-        ZonedDateTime sessionStart = session.getStart().withZoneSameInstant(courseTimeZone);
-        ZonedDateTime sessionEnd = session.getEnd().withZoneSameInstant(courseTimeZone);
-        boolean sameDay = sessionStart.getDayOfWeek().getValue() == scheduleDayOfWeek;
-        if (!sameDay) {
-            session.setDateChanged(!sameDay);
-        }
-        boolean sameTime = sessionStart.toLocalTime().equals(scheduleStart) && sessionEnd.toLocalTime().equals(scheduleEnd);
-        if (!sameTime) {
-            session.setTimeChanged(true);
-        }
-        boolean sameLocation = session.getLocation().equals(scheduleLocation);
-        if (!sameLocation) {
-            session.setLocationChanged(true);
-        }
+        return TutorialGroupDetailGroupDTO.from(groupData, sessionDTOs, tutorChatId);
     }
 
     /**

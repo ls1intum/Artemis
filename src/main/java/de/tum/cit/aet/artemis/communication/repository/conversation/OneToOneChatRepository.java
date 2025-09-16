@@ -91,5 +91,5 @@ public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneCha
                                 WHERE participantB.conversation = chat AND participantB.user.login = :loginB
                           )
             """)
-    Optional<Long> findIdOfChatInCourseBetweenUsers(@Param("courseId") Long courseId, @Param("loginA") String loginA, @Param("loginB") String loginB);
+    Long findIdOfChatInCourseBetweenUsers(@Param("courseId") Long courseId, @Param("loginA") String loginA, @Param("loginB") String loginB);
 }

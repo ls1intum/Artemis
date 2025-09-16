@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupDetailSessionData;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
@@ -69,7 +69,7 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
     Set<CalendarEventDTO> getCalendarEventDTOsFromActiveSessionsForTutorialGroupIds(@Param("tutorialGroupIds") Set<Long> tutorialGroupIds);
 
     @Query("""
-                SELECT new de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO(
+                SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupDetailSessionData(
                     session.start,
                     session.end,
                     session.location,
@@ -81,7 +81,7 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
                 WHERE tutorialGroup.id = :tutorialGroupId
                 ORDER BY session.start
             """)
-    List<TutorialGroupDetailSessionDTO> getTutorialGroupDetailSessionDTOs(@Param("tutorialGroupId") long tutorialGroupId);
+    List<TutorialGroupDetailSessionData> getTutorialGroupDetailSessionDTOs(@Param("tutorialGroupId") long tutorialGroupId);
 
     @Query("""
             SELECT session

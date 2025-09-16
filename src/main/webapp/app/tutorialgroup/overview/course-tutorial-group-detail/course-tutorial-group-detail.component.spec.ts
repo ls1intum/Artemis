@@ -169,7 +169,7 @@ describe('NewTutorialGroupDetail', () => {
         expect(nextSession!.locationChanged).toBeFalse();
         expect(nextSession!.timeChanged).toBeFalse();
         expect(nextSession!.dateChanged).toBeFalse();
-        expect(nextSession!.attendanceCount).toBeUndefined();
+        expect(nextSession!.attendance).toBeUndefined();
     });
 
     it('should expose no nextSession if no sessions available', () => {
