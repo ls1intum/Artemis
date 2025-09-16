@@ -307,7 +307,6 @@ public class LocalVCLocalCITestService {
             performFetch(repositoryHandle, username, password, projectKey, repositorySlug);
         }
         catch (GitAPIException | URISyntaxException e) {
-            e.printStackTrace();
             fail("Fetching was not successful: " + e.getMessage());
         }
     }
