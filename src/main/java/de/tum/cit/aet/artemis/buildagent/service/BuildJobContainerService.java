@@ -137,7 +137,7 @@ public class BuildJobContainerService {
                     ? ((maxMemorySwap > 0) ? Math.min(convertMemoryFromMBToBytes(memorySwap), convertMemoryFromMBToBytes(maxMemorySwap)) : convertMemoryFromMBToBytes(memorySwap))
                     : defaultHostConfig.getMemorySwap();
 
-            customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, adjustedNetwork, customNetworkSelected, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
+            customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, adjustedNetwork, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
         }
         else {
             customHostConfig = defaultHostConfig;
@@ -158,11 +158,11 @@ public class BuildJobContainerService {
         }
     }
 
-    private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, String network, boolean setNetwork, long cpuCount, long memory, long memorySwap) {
+    private HostConfig copyAndAdjustHostConfig(HostConfig defaultHostConfig, String network, long cpuCount, long memory, long memorySwap) {
         long cpuPeriod = defaultHostConfig.getCpuPeriod();
         HostConfig host = HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
                 .withPidsLimit(defaultHostConfig.getPidsLimit()).withAutoRemove(true);
-        if (setNetwork) {
+        if (network != null) {
             host.withNetworkMode(network);
         }
         return host;

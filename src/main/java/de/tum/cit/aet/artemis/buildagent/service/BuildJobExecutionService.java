@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
@@ -240,17 +241,13 @@ public class BuildJobExecutionService {
             index++;
         }
 
-        DockerRunConfig dockerRunConfig;
-        if (buildJob.buildConfig().dockerRunConfig() != null) {
-            dockerRunConfig = buildJob.buildConfig().dockerRunConfig();
-        }
-        else {
-            dockerRunConfig = new DockerRunConfig(null, null, 0, 0, 0);
+        BuildConfig buildConfig = buildJob.buildConfig();
+        DockerRunConfig dockerRunConfig = new DockerRunConfig(null, null, 0, 0, 0);
+        if (buildConfig.dockerRunConfig() != null) {
+            dockerRunConfig = buildConfig.dockerRunConfig();
         }
 
-        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript(),
-                dockerRunConfig);
-
+        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildConfig.dockerImage(), buildConfig.buildScript(), dockerRunConfig);
         return runScriptAndParseResults(buildJob, containerName, container.getId(), assignmentRepoUri, testsRepoUri, solutionRepoUri, auxiliaryRepositoriesUris,
                 assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash);
     }
