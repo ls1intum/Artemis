@@ -79,4 +79,5 @@ public class LocalCIInfoContributor implements InfoContributor {
             return Long.parseLong(memoryString);
         }
     }
+
 }

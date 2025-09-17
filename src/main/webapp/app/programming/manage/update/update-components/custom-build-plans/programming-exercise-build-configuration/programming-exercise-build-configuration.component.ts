@@ -36,7 +36,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     timeoutChange = output<number>();
 
     envVars: [string, string][] = [];
-    allowedCustomNetworks: string[] | undefined;
+    allowedCustomNetworks: string[];
     cpuCount: number | undefined;
     memory: number | undefined;
     memorySwap: number | undefined;
@@ -135,7 +135,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     onNetworkChange(event: any) {
-        this.network.set(event);
+        this.network.set(event.target.value);
     }
 
     onCpuCountChange(event: any) {

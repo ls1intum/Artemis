@@ -70,18 +70,21 @@
             </span>
         </div>
         @if (isLanguageSupported) {
-            <div class="form-check mb-2">
-                <label class="form-check-label" for="field_useCustomNetwork">
-                    <input class="form-check-input" type="checkbox" name="useCustomNetwork" id="field_useCustomNetwork" (change)="onUseCustomNetworkToggle($event)" />
-                    <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.title"></span>
+            <div class="mb-2">
+                <label for="networkMode">
+                    Network mode
                     <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.description" />
                 </label>
-            </div>
-            @if (useCustomNetwork()) {
-                <select class="form-select mb-2" id="network" (change)="onNetworkChange($event)">
-                    <option hidden></option>
-                    @for (customNetwork of allowedCustomNetworks; track customNetwork) {
-                        <option [value]="customNetwork">{{ customNetwork }}</option>
+                <select id="networkMode" class="form-select" [ngModel]="network() ?? ''" (ngModelChange)="onNetworkChange($event || undefined)">
+                    <option value="">Default (Docker)</option>
+                    @if (allowedCustomNetworks?.length) {
+                        @for (customNetwork of allowedCustomNetworks; track customNetwork) {
+                            @if (customNetwork === 'none') {
+                                <option value="none">None (no network)</option>
+                            } @else {
+                                <option [value]="customNetwork">{{ customNetwork }}</option>
+                            }
+                        }
                     }
                 </select>
                 @if (network() === 'none') {
@@ -89,7 +92,7 @@
                         <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.disableNetworkAccess.warning"></span>
                     </div>
                 }
-            }
+            </div>
         }
         <div class="mb-2">
             <label>

@@ -1224,19 +1224,49 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().env()).containsExactlyInAnyOrder("key=value", "key1=value1");
         }
 
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testIllegalNetwork() {
-            String illegalNetworkName = "illegalNetwork";
-            String dockerFlags = String.format("{\"network\": \"%s\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}", illegalNetworkName);
+        private void createAndSaveBuildConfigWithNetworkName(String networkName) {
+            String dockerFlags = String.format("{\"network\": \"%s\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}", networkName);
             ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
             buildConfig.setDockerFlags(dockerFlags);
             programmingExerciseBuildConfigRepository.save(buildConfig);
+        }
 
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIllegalNetwork() {
+            String networkName = "illegalNetwork";
+            createAndSaveBuildConfigWithNetworkName(networkName);
             ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
             assertThatThrownBy(() -> localCITriggerService.triggerBuild(studentParticipation, false)).isInstanceOf(ResponseStatusException.class)
-                    .hasMessageContaining("Invalid network: " + illegalNetworkName);
+                    .hasMessageContaining("Invalid network: " + networkName);
         }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIllegalNetwork222222() {
+            String networkName = "bridge";
+            createAndSaveBuildConfigWithNetworkName(networkName);
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            assertThatThrownBy(() -> localCITriggerService.triggerBuild(studentParticipation, false)).isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("Invalid network: " + networkName);
+        }
+
+        /*
+         * @Test
+         * @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+         * void testIllegalNetwork() {
+         * String illegalNetworkName = "illegalNetwork";
+         * String dockerFlags = String.format("{\"network\": \"%s\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}", illegalNetworkName);
+         * ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+         * buildConfig.setDockerFlags(dockerFlags);
+         * programmingExerciseBuildConfigRepository.save(buildConfig);
+         * ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+         * assertThatThrownBy(() -> localCITriggerService.triggerBuild(studentParticipation, false)).isInstanceOf(ResponseStatusException.class)
+         * .hasMessageContaining("Invalid network: " + illegalNetworkName);
+         * }
+         */
+
     }
 }
