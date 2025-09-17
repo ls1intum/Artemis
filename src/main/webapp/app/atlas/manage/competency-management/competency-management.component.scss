@@ -1,7 +1,7 @@
 // Floating Agent Chat Button Styles
 .agent-chat-button {
     position: fixed;
-    bottom: 2rem;
+    bottom: 3rem;
     right: 2rem;
     width: 3.5rem;
     height: 3.5rem;
@@ -13,6 +13,7 @@
     align-items: center;
     justify-content: center;
     font-size: 1.25rem;
+    overflow: hidden;
 
     // Hover effects
     &:hover {
@@ -37,6 +38,13 @@
     // Icon styling
     fa-icon {
         color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        line-height: 1;
+        flex-shrink: 0;
     }
 }
 
