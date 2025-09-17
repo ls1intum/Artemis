@@ -77,6 +77,26 @@ describe('CodeEditorFileBrowserComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('uncompresses the tree when toggling from true → false', () => {
+        comp.repositoryFiles = { a: FileType.FILE };
+        comp.compressFolders = true;
+
+        const treeNode = { folder: '', file: 'a', children: [], text: 'a', value: 'a' };
+        jest.spyOn(comp, 'buildTree').mockReturnValue([treeNode]);
+        const transformSpy = jest.spyOn(comp, 'transformTreeToTreeViewItem').mockReturnValue([new TreeViewItem(treeNode)]);
+
+        comp.toggleTreeCompress();
+
+        expect(comp.compressFolders).toBeFalse();
+        expect(transformSpy).toHaveBeenCalled();
+    });
+
+    it('returns [] for getFolderBadges on unknown folder', () => {
+        comp.fileBadges = { 'known/file': [] };
+        const result = comp.getFolderBadges({ value: 'unknown', collapsed: true } as TreeViewItem<string>);
+        expect(result).toEqual([]);
+    });
+
     it('should NOT open a delete modal for Problem Statement (PS is not deletable)', () => {
         // PS present in non-repository view
         comp.displayOnly = false;
@@ -236,6 +256,29 @@ describe('CodeEditorFileBrowserComponent', () => {
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).toHaveLength(0);
         expect(renderedFiles).toHaveLength(0);
+    });
+
+    it('opens a delete modal when deleting a folder', () => {
+        comp.repositoryFiles = {
+            folder: FileType.FOLDER,
+            'folder/file1': FileType.FILE,
+        };
+        comp.setupTreeview();
+        fixture.detectChanges();
+
+        const item = { value: 'folder', text: 'folder' } as unknown as TreeViewItem<string>;
+        const modalRef = {
+            componentInstance: { parent: undefined, fileNameToDelete: undefined, fileType: undefined },
+        } as any;
+
+        const openSpy = jest.spyOn(comp.modalService, 'open').mockReturnValue(modalRef);
+
+        comp.openDeleteFileModal(item);
+
+        expect(openSpy).toHaveBeenCalledOnce();
+        expect(modalRef.componentInstance.parent).toBe(comp);
+        expect(modalRef.componentInstance.fileNameToDelete).toBe('folder');
+        expect(modalRef.componentInstance.fileType).toBe(FileType.FOLDER);
     });
 
     it('should create treeviewItems if getRepositoryContent returns files', () => {
