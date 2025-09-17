@@ -62,7 +62,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     ngAfterViewInit(): void {
-        // Auto-focus on textarea when modal opens - using same pattern as Iris
+        // Auto-focus on textarea when modal opens
         setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
     }
 
@@ -101,7 +101,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             error: () => {
                 this.isAgentTyping = false;
                 this.addMessage(this.translateService.instant('artemisApp.agent.chat.error'), false);
-                // Restore focus to input after error - using Iris pattern
+                // Restore focus to input after error
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
             },
         });
