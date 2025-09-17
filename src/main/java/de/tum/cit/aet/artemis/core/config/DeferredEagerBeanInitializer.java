@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Arrays;
@@ -24,7 +23,7 @@ import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent
  * The beans are initialized by accessing them, which triggers their initialization.
  */
 @Component
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Profile(PROFILE_CORE)
 @Lazy
 public class DeferredEagerBeanInitializer {
 
@@ -41,6 +40,7 @@ public class DeferredEagerBeanInitializer {
      * This method should be called after the application is fully started to not block the startup process.
      */
     public void initializeDeferredEagerBeans() {
+        log.info("Start deferred eager initialization of all lazy singleton beans");
         // Force eager initialization of HazelcastConnection first, so that connections are established as early as possible.
         try {
             context.getBean(HazelcastConnection.class);

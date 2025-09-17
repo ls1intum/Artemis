@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+// TODO: convert to record
 public class OneToOneChatDTO extends ConversationDTO {
 
     public Set<ConversationUserDTO> members;

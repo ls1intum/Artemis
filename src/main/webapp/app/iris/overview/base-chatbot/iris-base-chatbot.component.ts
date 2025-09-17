@@ -227,12 +227,19 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             }
             this.messages = _.cloneDeep(messages).reverse();
             this.messages.forEach((message) => {
-                // @ts-expect-error - TS doesn't get that I'm checking for the type
-                if (message.content?.[0]?.textContent) {
+                if (message.content?.[0] && 'textContent' in message.content[0]) {
                     // Double all \n
                     const cnt = message.content[0] as IrisTextMessageContent;
                     cnt.textContent = cnt.textContent.replace(/\n\n/g, '\n\u00A0\n');
                     cnt.textContent = cnt.textContent.replace(/\n/g, '\n\n');
+                }
+                if ('accessedMemories' in message) {
+                    // eslint-disable-next-line no-undef
+                    console.log('Accessed memories found in message:', message.accessedMemories);
+                }
+                if ('createdMemories' in message) {
+                    // eslint-disable-next-line no-undef
+                    console.log('Created memories found in message:', message.createdMemories);
                 }
             });
         });

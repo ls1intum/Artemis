@@ -16,15 +16,9 @@ import com.thoughtworks.qdox.model.JavaMethod;
  * This class is used to serialize the elements that are generally defined in types, e.g. methods and various properties of the types. These properties are defined as the hierarchy
  * of the types.
  */
-class JavaClassDiffSerializer {
-
-    private final JavaClassDiff javaClassDiff;
+record JavaClassDiffSerializer(JavaClassDiff javaClassDiff) {
 
     private static final ObjectMapper mapper = new ObjectMapper();
-
-    JavaClassDiffSerializer(JavaClassDiff javaClassDiff) {
-        this.javaClassDiff = javaClassDiff;
-    }
 
     /**
      * This method is used to serialize the class properties of each type defined in the types diff into a JSON object containing the following information:

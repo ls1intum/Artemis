@@ -55,11 +55,12 @@ public interface SolutionProgrammingExerciseParticipationRepository
     }
 
     @Query("""
-            SELECT p FROM SolutionProgrammingExerciseParticipation p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results r
-            LEFT JOIN FETCH r.feedbacks f
-            LEFT JOIN FETCH f.testCase
+            SELECT p
+            FROM SolutionProgrammingExerciseParticipation p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
             WHERE p.programmingExercise.id = :exerciseId
             """)
     Optional<SolutionProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(@Param("exerciseId") long exerciseId);
@@ -68,25 +69,25 @@ public interface SolutionProgrammingExerciseParticipationRepository
     Optional<SolutionProgrammingExerciseParticipation> findWithEagerSubmissionsByProgrammingExerciseId(long exerciseId);
 
     @Query("""
-             SELECT DISTINCT sp
-             FROM SolutionProgrammingExerciseParticipation sp
-               LEFT JOIN FETCH sp.submissions s
-             WHERE sp.programmingExercise.id = :exerciseId
-             AND (
-                  s.id = (
-                    SELECT MAX(s2.id)
-                      FROM Submission s2
-                     WHERE s2.participation.id = sp.id
-                  )
-                  OR s.id IS NULL
-                )
+            SELECT DISTINCT sp
+            FROM SolutionProgrammingExerciseParticipation sp
+                LEFT JOIN FETCH sp.submissions s
+            WHERE sp.programmingExercise.id = :exerciseId
+            AND (
+                 s.id = (
+                   SELECT MAX(s2.id)
+                     FROM Submission s2
+                    WHERE s2.participation.id = sp.id
+                 )
+                 OR s.id IS NULL
+               )
             """)
     Optional<SolutionProgrammingExerciseParticipation> findWithLatestSubmissionByExerciseId(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT DISTINCT sp
             FROM SolutionProgrammingExerciseParticipation sp
-              LEFT JOIN FETCH sp.submissions s
+                LEFT JOIN FETCH sp.submissions s
             WHERE sp.programmingExercise.id IN :exerciseIds
             AND (
                  s.id = (

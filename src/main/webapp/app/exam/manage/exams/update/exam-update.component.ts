@@ -28,7 +28,7 @@ import { ExamModePickerComponent } from '../exam-mode-picker/exam-mode-picker.co
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -54,7 +54,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private calendarEventService = inject(CalendarEventService);
+    private calendarService = inject(CalendarService);
     private modalService = inject(NgbModal);
     private router = inject(Router);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
@@ -287,7 +287,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      */
     private async onSaveSuccess(exam: Exam) {
         this.isSaving = false;
-        this.calendarEventService.refresh();
+        this.calendarService.reloadEvents();
         await this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
         window.scrollTo(0, 0);
     }

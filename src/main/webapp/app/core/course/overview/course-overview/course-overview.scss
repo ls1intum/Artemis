@@ -14,7 +14,6 @@ Course Info Bar
     display: flex;
     justify-content: center;
     align-items: flex-start;
-
     opacity: 0;
     pointer-events: none;
     transition: 0.1s ease-out opacity;
@@ -86,7 +85,6 @@ Course Info Bar
 .icon-container {
     display: inline-block;
     vertical-align: middle;
-    horiz-align: center;
 }
 
 .course-information {
@@ -96,8 +94,10 @@ Course Info Bar
         .row.has-exercises {
             cursor: pointer;
             border-radius: 3px;
+
             &:hover {
                 background-color: var(--overview-light-background-color);
+
                 .icon {
                     color: var(--primary);
                 }
@@ -109,7 +109,7 @@ Course Info Bar
 .exercise-divider {
     height: 0;
     width: 100%;
-    margin: 1rem 0 0.5rem 0;
+    margin: 1rem 0 0.5rem;
     border-top: 1px solid var(--overview-light-border-color);
 }
 
@@ -133,12 +133,15 @@ canvas#complete-chart {
     background-color: #3e8acc;
     border: none;
     border-radius: 1px;
+
     &:hover {
         background-color: #0f6ab4;
     }
+
     &:active {
         box-shadow: 0 2px 0 var(--artemis-dark);
     }
+
     &:disabled {
         background-color: gray;
     }
@@ -195,6 +198,7 @@ canvas#complete-chart {
     width: calc(100% - 263px) !important;
     transition: width 0.1s 0s ease-in-out;
 }
+
 .content-width {
     width: 100%;
     transition: width 0.1s 0s ease-in-out;
