@@ -118,8 +118,9 @@ public class BuildJobContainerService {
         if (exerciseEnvVars != null && !exerciseEnvVars.isEmpty()) {
             envVars.addAll(exerciseEnvVars);
         }
+
         HostConfig defaultHostConfig = buildAgentConfiguration.hostConfig();
-        HostConfig customHostConfig;
+        HostConfig customHostConfig = defaultHostConfig;
         if (network != null || cpuCount > 0 || memory > 0 || memorySwap > 0) {
             // Use provided values if they are greater than 0 and less than the maximum values, otherwise use either the maximum values or the default values from the host config.
             long adjustedCpuCount = (cpuCount > 0) ? ((maxCpuCount > 0) ? Math.min(cpuCount, maxCpuCount) : cpuCount)
@@ -135,10 +136,9 @@ public class BuildJobContainerService {
 
             customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, network, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
         }
-        else {
-            customHostConfig = defaultHostConfig;
-        }
+
         log.debug("Set docker network to {}", customHostConfig.getNetworkMode());
+
         try (final var createCommand = buildAgentConfiguration.getDockerClient().createContainerCmd(image)) {
             return createCommand.withName(containerName).withHostConfig(customHostConfig).withEnv(envVars)
                     // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks
@@ -158,7 +158,7 @@ public class BuildJobContainerService {
         long cpuPeriod = defaultHostConfig.getCpuPeriod();
         HostConfig host = HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
                 .withPidsLimit(defaultHostConfig.getPidsLimit()).withAutoRemove(true);
-        if (network != null && !network.isBlank()) {
+        if (network != null && !network.trim().isBlank()) {
             host.withNetworkMode(network);
         }
         return host;
