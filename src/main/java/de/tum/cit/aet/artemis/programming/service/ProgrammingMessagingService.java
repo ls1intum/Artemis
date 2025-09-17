@@ -70,10 +70,6 @@ public class ProgrammingMessagingService {
         return EXERCISE_TOPIC_ROOT + exerciseId + SUBMISSION_PROCESSING;
     }
 
-    public static String getProgrammingExerciseTestCaseChangedTopic(Long programmingExerciseId) {
-        return "/topic/programming-exercises/" + programmingExerciseId + "/test-cases-changed";
-    }
-
     private static String getProgrammingExerciseAllExerciseBuildsTriggeredTopic(Long programmingExerciseId) {
         return "/topic/programming-exercises/" + programmingExerciseId + "/all-builds-triggered";
     }

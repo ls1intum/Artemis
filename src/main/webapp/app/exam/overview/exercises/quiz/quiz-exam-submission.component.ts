@@ -17,7 +17,6 @@ import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multi
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { cloneDeep } from 'lodash-es';
-import * as smoothscroll from 'smoothscroll-polyfill';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
@@ -78,7 +77,6 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
     ngOnInit(): void {
-        smoothscroll.polyfill();
         this.initQuiz();
         this.updateViewFromSubmission();
     }
