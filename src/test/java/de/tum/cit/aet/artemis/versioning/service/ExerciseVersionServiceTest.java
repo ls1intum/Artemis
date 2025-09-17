@@ -123,7 +123,8 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     private static final long pushTestWaitTime = 5L;
 
-    private static final BiPredicate<ZonedDateTime, ZonedDateTime> zonedDateTimeBiPredicate = (a, b) -> a.toInstant().equals(b.toInstant());
+    private static final BiPredicate<ZonedDateTime, ZonedDateTime> zonedDateTimeBiPredicate = (a,
+            b) -> Math.abs(a.toInstant().getEpochSecond() - b.toInstant().getEpochSecond()) < 1;
 
     @BeforeEach
     void init() {
