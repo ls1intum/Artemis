@@ -2,7 +2,7 @@ import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { UMLDiagramType, UMLModel, UMLRelationship } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
@@ -21,58 +21,43 @@ describe('ModelingAssessmentComponent', () => {
 
     const generateMockModel = (elementId: string, elementId2: string, relationshipId: string) => {
         return {
-            version: '3.0.0',
-            type: 'ClassDiagram',
-            size: { width: 740, height: 660 },
-            interactive: { elements: {}, relationships: {} },
-
-            elements: {
-                [elementId]: {
+            version: '4.0.0',
+            id: 'model-id',
+            title: 'Class Diagram',
+            type: UMLDiagramType.ClassDiagram,
+            nodes: [
+                {
                     id: elementId,
-                    name: 'Package',
+                    width: 200,
+                    height: 100,
                     type: 'Package',
-                    owner: null,
-                    bounds: { x: 160, y: 40, width: 200, height: 100 },
-                    highlight: undefined,
+                    position: { x: 160, y: 40 },
+                    data: { name: 'Package' },
+                    measured: { width: 200, height: 100 },
                 },
-                [elementId2]: {
+                {
                     id: elementId2,
-                    name: 'Class',
+                    width: 200,
+                    height: 100,
                     type: 'Class',
-                    owner: null,
-                    bounds: { x: 280, y: 320, width: 200, height: 100 },
-                    attributes: [],
-                    methods: [],
-                    highlight: undefined,
+                    position: { x: 280, y: 320 },
+                    data: { name: 'Class', attributes: [], methods: [] },
+                    measured: { width: 200, height: 100 },
                 },
-            },
-            relationships: {
-                [relationshipId]: {
+            ],
+            edges: [
+                {
                     id: relationshipId,
-                    name: '',
+                    source: elementId2,
+                    target: elementId,
                     type: 'ClassBidirectional',
-                    owner: null,
-                    bounds: { x: 120, y: 0, width: 265, height: 320 },
-                    path: [
-                        { x: 260, y: 320 },
-                        { x: 260, y: 280 },
-                        { x: 0, y: 280 },
-                        { x: 0, y: 0 },
-                        { x: 140, y: 0 },
-                        { x: 140, y: 40 },
-                    ],
-                    source: {
-                        direction: 'Up',
-                        element: elementId2,
-                    },
-                    target: {
-                        direction: 'Up',
-                        element: elementId,
-                    },
-                } as UMLRelationship,
-            },
+                    sourceHandle: 'source',
+                    targetHandle: 'target',
+                    data: { points: [] },
+                },
+            ],
             assessments: {},
-        } as UMLModel;
+        } as unknown as UMLModel;
     };
 
     const makeMockModel = () => generateMockModel('elementId1', 'elementId2', 'relationshipId');
@@ -80,6 +65,7 @@ describe('ModelingAssessmentComponent', () => {
         text: 'FeedbackWithReference',
         referenceId: 'relationshipId',
         reference: 'reference',
+        referenceType: 'ClassBidirectional',
         credits: 30,
         correctionStatus: 'CORRECT',
     };
@@ -87,11 +73,18 @@ describe('ModelingAssessmentComponent', () => {
         text: 'FeedbackWithReference Copied',
         referenceId: 'relationshipId',
         reference: 'reference',
+        referenceType: 'ClassBidirectional',
         credits: 35,
         copiedFeedbackId: 12,
     };
     const mockFeedbackWithoutReference: Feedback = { text: 'FeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED };
-    const mockFeedbackInvalid: Feedback = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference', correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE };
+    const mockFeedbackInvalid: Feedback = {
+        text: 'FeedbackInvalid',
+        referenceId: '4',
+        reference: 'reference',
+        referenceType: 'ClassBidirectional',
+        correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE,
+    };
     const mockValidFeedbacks = [mockFeedbackWithReference, mockFeedbackWithoutReference];
     const mockFeedbacks = [...mockValidFeedbacks, mockFeedbackInvalid];
 
@@ -99,9 +92,11 @@ describe('ModelingAssessmentComponent', () => {
         text: 'FeedbackWithGradingInstruction',
         referenceId: 'relationshipId',
         reference: 'reference',
+        referenceType: 'ClassBidirectional',
         credits: 30,
         gradingInstruction: new GradingInstruction(),
     };
+    mockFeedbackWithGradingInstruction.gradingInstruction!.instructionDescription = 'instruction description';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -212,9 +207,9 @@ describe('ModelingAssessmentComponent', () => {
         jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
         function getElementCounts(model: UMLModel): ModelElementCount[] {
             // Not sure whether this is the correct logic to build OtherModelElementCounts.
-            return Object.values(model.elements).map((el) => ({
-                elementId: el.id,
-                numberOfOtherElements: Object.values(model.elements).length - 1,
+            return model.nodes.map((node) => ({
+                elementId: node.id,
+                numberOfOtherElements: model.nodes.length - 1,
             }));
         }
 
@@ -225,11 +220,11 @@ describe('ModelingAssessmentComponent', () => {
         const spy = jest.spyOn(translatePipe, 'transform');
         fixture.detectChanges();
         await fixture.whenStable();
-        await comp.ngAfterViewInit();
+        const impactWarningCalls = spy.mock.calls.filter(([key]) => key === 'artemisApp.modelingAssessment.impactWarning');
         for (let i = 0; i < elementCounts.length; i++) {
-            expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCounts[i].numberOfOtherElements });
+            expect(impactWarningCalls).toContainEqual(['artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCounts[i].numberOfOtherElements }]);
         }
-        expect(spy).toHaveBeenCalledTimes(elementCounts.length);
+        expect(impactWarningCalls).toHaveLength(elementCounts.length);
     });
 
     it('should generate feedback from assessment', () => {
@@ -252,20 +247,19 @@ describe('ModelingAssessmentComponent', () => {
 
         fixture.detectChanges();
         await fixture.whenStable();
-        await comp.ngAfterViewInit();
+        await comp.apollonEditor!.nextRender;
         expect(comp.apollonEditor).not.toBeNull();
 
         const apollonModel = comp.apollonEditor!.model;
-        const elements = apollonModel.elements;
-        const highlightedElement = elements!['elementId1'];
-        const notHighlightedElement = elements!['elementId2'];
-        const relationship = (Object.values(apollonModel!.relationships) as UMLRelationship[])[0];
+        const highlightedElement = apollonModel.nodes.find((node) => node.id === 'elementId1');
+        const notHighlightedElement = apollonModel.nodes.find((node) => node.id === 'elementId2');
+        const relationship = apollonModel.edges.find((edge) => edge.id === 'relationshipId');
         expect(highlightedElement).not.toBeNull();
-        expect(highlightedElement!.highlight).toBe('red');
+        expect(highlightedElement!.data.highlight).toBe('red');
         expect(notHighlightedElement).not.toBeNull();
-        expect(notHighlightedElement!.highlight).toBeUndefined();
+        expect(notHighlightedElement!.data.highlight).toBeUndefined();
         expect(relationship).not.toBeNull();
-        expect(relationship!.highlight).toBe('blue');
+        expect(relationship!.data.highlight).toBe('blue');
     });
 
     it('should update model', async () => {
@@ -288,23 +282,21 @@ describe('ModelingAssessmentComponent', () => {
 
         fixture.detectChanges();
         await fixture.whenStable();
+        await comp.apollonEditor!.nextRender;
         await comp.ngOnChanges(changes);
-        await comp.ngAfterViewInit();
 
         expect(comp.apollonEditor).not.toBeNull();
         const apollonModel = comp.apollonEditor!.model;
-        const elements = apollonModel!.elements;
-        const highlightedElement = elements!['elementId2'];
-        const notHighlightedElement = elements!['elementId1'];
-        const relationship = (Object.values(apollonModel!.relationships) as UMLRelationship[])[0];
+        const highlightedElement = apollonModel.nodes.find((node) => node.id === 'elementId2');
+        const notHighlightedElement = apollonModel.nodes.find((node) => node.id === 'elementId1');
+        const relationship = comp.apollonEditor!.model.edges.find((edge) => edge.id === 'relationshipId');
 
         expect(highlightedElement).not.toBeNull();
-        expect(highlightedElement!.highlight).toBe('green');
+        expect(highlightedElement!.data.highlight).toBe('green');
         expect(notHighlightedElement).not.toBeNull();
-        expect(notHighlightedElement!.highlight).toBeUndefined();
+        expect(notHighlightedElement!.data.highlight).toBeUndefined();
         expect(relationship).not.toBeNull();
-        expect(relationship!.highlight).toBeUndefined();
-        expect(relationship!.highlight).toBeUndefined();
+        expect(relationship!.data.highlight).toBeUndefined();
     });
 
     it('should update highlighted assessments first round', async () => {
@@ -353,9 +345,15 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     it('should update feedbacks', () => {
-        const newMockFeedbackWithReference = { text: 'NewFeedbackWithReference', referenceId: 'relationshipId', reference: 'reference', credits: 30 } as Feedback;
+        const newMockFeedbackWithReference = {
+            text: 'NewFeedbackWithReference',
+            referenceId: 'relationshipId',
+            reference: 'reference',
+            referenceType: 'ClassBidirectional',
+            credits: 30,
+        } as Feedback;
         const newMockFeedbackWithoutReference = { text: 'NewFeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
-        const newMockFeedbackInvalid = { text: 'NewFeedbackInvalid', referenceId: '4', reference: 'reference' };
+        const newMockFeedbackInvalid = { text: 'NewFeedbackInvalid', referenceId: '4', reference: 'reference', referenceType: 'ClassBidirectional' };
         const newMockValidFeedbacks = [newMockFeedbackWithReference, newMockFeedbackWithoutReference];
         const newMockFeedbacks = [...newMockValidFeedbacks, newMockFeedbackInvalid];
         comp.umlModel = makeMockModel();

@@ -12,7 +12,7 @@ import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/ser
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 
 describe('ApollonDiagramCreateForm Component', () => {
     let apollonDiagramService: ApollonDiagramService;

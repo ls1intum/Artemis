@@ -97,8 +97,10 @@ describe('Team Submission Sync Component', () => {
         expect(textSubmissionWithParticipation).toBeDefined();
         expect(textSubmissionWithParticipation?.participation?.exercise).toBeUndefined();
         expect(textSubmissionWithParticipation?.participation?.submissions).toBeEmpty();
-        expect(websocketSendSpy).toHaveBeenCalledOnce();
-        expect(websocketSendSpy).toHaveBeenCalledWith(expectedWebsocketTopic + '/update', textSubmissionWithParticipation);
+        expect(websocketSendSpy).toHaveBeenCalledTimes(2);
+        expect(websocketSendSpy).toHaveBeenNthCalledWith(1, expectedWebsocketTopic + '/update', textSubmissionWithParticipation);
+        expect(websocketSendSpy.mock.calls[1][0]).toBe(expectedWebsocketTopic + '/patch');
+        expect(websocketSendSpy.mock.calls[1][1]).toBeInstanceOf(SubmissionPatch);
     });
 
     it('should handle submission patch payloads.', () => {

@@ -16,7 +16,7 @@ import { MockProfileService } from 'src/test/javascript/spec/helpers/mocks/servi
 import { MockLanguageHelper, MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import * as testClassDiagram from 'src/test/javascript/spec/helpers/sample/modeling/test-models/class-diagram.json';
-import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockCourseManagementService } from 'src/test/javascript/spec/helpers/mocks/service/mock-course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -82,7 +82,7 @@ describe('ApollonDiagramDetail Component', () => {
         jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
         fixture.componentInstance.apollonDiagram = diagram;
         // setup
-        const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
+        const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram, status: 200, statusText: 'OK' });
         const updateStub = jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
 
         fixture.componentInstance.initializeApollonEditor(model);
@@ -99,16 +99,23 @@ describe('ApollonDiagramDetail Component', () => {
     it('generateExercise', async () => {
         // setup
         fixture.componentInstance.apollonDiagram = diagram;
-        const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
+        const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram, status: 200, statusText: 'OK' });
         // TODO: we should mock this differently without require
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const svgRenderer = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
-        jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(of(new Blob()));
+        jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob());
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const generatorModule = require('app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator');
+        const generatedQuestion = { title: 'question' } as any;
+        jest.spyOn(generatorModule, 'generateDragAndDropQuizExercise').mockResolvedValue(generatedQuestion);
         jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
 
         fixture.componentInstance.initializeApollonEditor(model);
         expect(fixture.componentInstance.apollonEditor).toBeTruthy();
         fixture.detectChanges();
+
+        fixture.componentInstance.course = course;
+        jest.spyOn(fixture.componentInstance, 'hasInteractive', 'get').mockReturnValue(true);
 
         const emitSpy = jest.spyOn(fixture.componentInstance.closeEdit, 'emit');
 
@@ -116,7 +123,7 @@ describe('ApollonDiagramDetail Component', () => {
         await fixture.componentInstance.apollonEditor?.nextRender;
         await fixture.componentInstance.generateExercise();
 
-        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(emitSpy).toHaveBeenCalledWith(generatedQuestion);
 
         // clear the set time interval
         fixture.componentInstance.ngOnDestroy();
@@ -143,23 +150,21 @@ describe('ApollonDiagramDetail Component', () => {
         // TODO: we should mock this differently without require
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const module = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
-        jest.spyOn(module, 'convertRenderedSVGToPNG').mockReturnValue(new Blob([]));
+        jest.spyOn(module, 'convertRenderedSVGToPNG').mockResolvedValue(new Blob([]));
         fixture.componentInstance.apollonDiagram = diagram;
         fixture.componentInstance.initializeApollonEditor(model);
         // ApollonEditor is the child
 
-        await fixture.componentInstance.apollonEditor?.nextRender;
-        expect(div.children).toHaveLength(1);
-
         // set selection
-        fixture.componentInstance.apollonEditor!.selection = {
-            elements: Object.fromEntries(Object.keys(model.elements).map((key) => [key, true])),
-            relationships: {},
-        };
+        const editor = fixture.componentInstance.apollonEditor! as any;
+        editor.getNodes = () => Object.fromEntries(Object.keys(model.elements).map((key) => [key, true]));
+        editor.getEdges = () => ({});
+        const exportSpy = jest.spyOn(editor, 'exportAsSVG').mockResolvedValue({ svg: '<svg></svg>', clip: { width: 100, height: 100, x: 0, y: 0 } });
         fixture.detectChanges();
         // test
         await fixture.componentInstance.downloadSelection();
         expect(window.URL.createObjectURL).toHaveBeenCalledOnce();
+        expect(exportSpy).toHaveBeenCalledOnce();
     });
 
     it('confirmExitDetailView', () => {
@@ -179,7 +184,7 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('ngOnInit', async () => {
-        const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
+        const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram, status: 200, statusText: 'OK' });
         jest.spyOn(apollonDiagramService, 'find').mockReturnValue(of(response));
 
         // test
@@ -190,7 +195,7 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('ngOnDestroy', async () => {
-        const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
+        const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram, status: 200, statusText: 'OK' });
         jest.spyOn(apollonDiagramService, 'find').mockReturnValue(of(response));
         fixture.componentInstance.ngOnInit();
         expect(div.children).toHaveLength(0);

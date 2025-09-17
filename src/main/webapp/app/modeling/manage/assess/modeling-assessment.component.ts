@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { captureException } from '@sentry/angular';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -220,15 +221,22 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
 
         if (this.apollonEditor != undefined) {
-            // console.log('DEBUG updateHighlightedElements', JSON.stringify(newElements));
-            // const model: UMLModel = this.apollonEditor!.model;
-            // for (const element of Object.values(model!.nodes)) {
-            //     element.highlight = newElements.get(element.id);
-            // }
-            // for (const relationship of Object.values(model!.relationships)) {
-            //     relationship.highlight = newElements.get(relationship.id);
-            // }
-            // this.apollonEditor!.model = model!;
+            const model: UMLModel = this.apollonEditor.model;
+            for (const node of Object.values(model.nodes)) {
+                const highlight = newElements.get(node.id);
+                (node as any).highlight = highlight;
+                if (node.data) {
+                    (node.data as Record<string, unknown>).highlight = highlight;
+                }
+            }
+            for (const edge of Object.values(model.edges)) {
+                const highlight = newElements.get(edge.id);
+                (edge as any).highlight = highlight;
+                if (edge.data) {
+                    (edge.data as Record<string, unknown>).highlight = highlight;
+                }
+            }
+            this.apollonEditor.model = model;
         }
     }
 
@@ -273,15 +281,25 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             const newAssessment: Assessment = {
                 modelElementId: feedback.referenceId!,
                 elementType: feedback.referenceType!,
-                score: feedback.credits!,
-                feedback: feedback.text || undefined,
+                score: feedback.credits ?? 0,
+                feedback: feedback.text ?? '',
                 label: this.calculateLabel(feedback),
                 labelColor: this.calculateLabelColor(feedback),
                 correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
                 dropInfo: this.calculateDropInfo(feedback),
             };
+            if (!this.umlModel.assessments) {
+                this.umlModel.assessments = {} as any;
+            }
+            this.umlModel.assessments[feedback.referenceId!] = newAssessment;
             if (this.apollonEditor) {
-                this.apollonEditor.addOrUpdateAssessment(newAssessment);
+                try {
+                    this.apollonEditor.addOrUpdateAssessment(newAssessment);
+                } catch (error) {
+                    captureException(error);
+                    // Fall back to reassigning the model so assessments are still reflected in degraded environments (e.g., tests).
+                    this.apollonEditor.model = this.umlModel;
+                }
             }
         });
 

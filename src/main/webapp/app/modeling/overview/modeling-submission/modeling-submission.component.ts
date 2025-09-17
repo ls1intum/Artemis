@@ -122,7 +122,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     result?: Result;
     resultWithComplaint?: Result;
 
-    selectedElementIds: string[];
+    selectedElementIds: string[] = [];
 
     submission: ModelingSubmission;
     submissionId: number | undefined;
@@ -380,7 +380,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private updateModelAndExplanation(): void {
         if (this.submission.model) {
             this.umlModel = JSON.parse(this.submission.model);
-            this.hasElements = this.umlModel.nodes && Object.values(this.umlModel.nodes).length !== 0;
+            const nodes = this.umlModel.nodes ?? this.umlModel.elements ?? {};
+            this.hasElements = Array.isArray(nodes) ? nodes.length !== 0 : Object.values(nodes).length !== 0;
         }
         this.explanation = this.submission.explanationText ?? '';
     }
@@ -741,7 +742,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             return;
         }
         const umlModel = this.modelingEditor.getCurrentModel();
-        this.hasElements = umlModel.nodes && Object.values(umlModel.nodes).length !== 0;
+        const nodes = umlModel.nodes ?? umlModel.elements ?? {};
+        this.hasElements = Array.isArray(nodes) ? nodes.length !== 0 : Object.values(nodes).length !== 0;
         const diagramJson = JSON.stringify(umlModel);
         if (this.submission && diagramJson) {
             this.submission.model = diagramJson;
@@ -838,7 +840,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     calculateNumberOfModelElements(): number {
         if (this.submission && this.submission.model) {
             const umlModel = JSON.parse(this.submission.model);
-            return umlModel.elements.length + umlModel.relationships.length;
+            const elements = umlModel.elements ?? umlModel.nodes ?? [];
+            const elementCount = Array.isArray(elements) ? elements.length : Object.values(elements).length;
+            const relationships = umlModel.relationships ?? [];
+            const relationshipCount = Array.isArray(relationships) ? relationships.length : Object.values(relationships).length;
+            return elementCount + relationshipCount;
         }
         return 0;
     }

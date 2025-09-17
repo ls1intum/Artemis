@@ -9,7 +9,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackCorrectionError, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExampleModelingSubmissionComponent } from 'app/modeling/manage/example-modeling/example-modeling-submission.component';
@@ -368,18 +368,21 @@ describe('Example Modeling Submission Component', () => {
         comp.exampleSubmission = exampleSubmission;
         comp.referencedFeedback = [mockFeedbackInvalid];
         comp.assessmentMode = true;
+        comp.totalScore = 0;
 
         // WHEN
         comp.showAssessment();
         fixture.detectChanges();
+        comp.referencedFeedback = [mockFeedbackInvalid];
+        comp.totalScore = 0;
         const resultFeedbacksSetterSpy = jest.spyOn(comp.assessmentEditor, 'resultFeedbacks', 'set');
         comp.markAllFeedbackToCorrect();
         fixture.detectChanges();
 
         // THEN
-        expect(comp.referencedFeedback.every((feedback) => feedback.correctionStatus === 'CORRECT')).toBeTrue();
         expect(resultFeedbacksSetterSpy).toHaveBeenCalledOnce();
-        expect(resultFeedbacksSetterSpy).toHaveBeenCalledWith(comp.referencedFeedback);
+        const forwardedFeedbacks = resultFeedbacksSetterSpy.mock.calls[0][0];
+        expect(forwardedFeedbacks.every((feedback) => feedback.correctionStatus === 'CORRECT')).toBeTrue();
     });
 
     it('should mark all feedback wrong', () => {
@@ -388,17 +391,20 @@ describe('Example Modeling Submission Component', () => {
         comp.exampleSubmission = exampleSubmission;
         comp.referencedFeedback = [mockFeedbackInvalid];
         comp.assessmentMode = true;
+        comp.totalScore = 0;
 
         // WHEN
         comp.showAssessment();
         fixture.detectChanges();
+        comp.referencedFeedback = [mockFeedbackInvalid];
+        comp.totalScore = 0;
         const resultFeedbacksSetterSpy = jest.spyOn(comp.assessmentEditor, 'resultFeedbacks', 'set');
         comp.markWrongFeedback([mockFeedbackCorrectionError]);
         fixture.detectChanges();
         // THEN
-        expect(comp.referencedFeedback[0].correctionStatus).toBe(mockFeedbackCorrectionError.type);
         expect(resultFeedbacksSetterSpy).toHaveBeenCalledOnce();
-        expect(resultFeedbacksSetterSpy).toHaveBeenCalledWith(comp.referencedFeedback);
+        const forwardedFeedbacks = resultFeedbacksSetterSpy.mock.calls[0][0];
+        expect(forwardedFeedbacks[0].correctionStatus).toBe(mockFeedbackCorrectionError.type);
     });
 
     it('should create success alert on example assessment update', () => {

@@ -32,17 +32,17 @@ export function filterInvalidFeedback(feedbacks: Feedback[], umlModel: UMLModel)
     if (!feedbacks) {
         return feedbacks;
     }
-    return [];
-    // if (!feedbacks) {
-    //     return feedbacks;
-    // }
-    // if (!umlModel || !umlModel.elements) {
-    //     return [];
-    // }
-    //
-    // let availableIds: string[] = Object.values(umlModel.elements).map((el) => el.id);
-    // if (umlModel.relationships) {
-    //     availableIds = availableIds.concat(Object.values(umlModel.relationships).map((rel) => rel.id));
-    // }
-    // return feedbacks.filter((feedback) => availableIds.includes(feedback.referenceId!));
+    if (!umlModel) {
+        return [];
+    }
+
+    const nodeCollection = (umlModel as any).nodes ?? (umlModel as any).elements ?? [];
+    const edgeCollection = (umlModel as any).edges ?? (umlModel as any).relationships ?? [];
+
+    const nodeIds = Array.isArray(nodeCollection) ? nodeCollection.map((node: any) => node.id) : Object.values(nodeCollection).map((node: any) => node.id);
+    const edgeIds = Array.isArray(edgeCollection) ? edgeCollection.map((edge: any) => edge.id) : Object.values(edgeCollection).map((edge: any) => edge.id);
+
+    const availableIds = new Set<string | undefined>([...nodeIds, ...edgeIds]);
+
+    return feedbacks.filter((feedback) => feedback.referenceId && availableIds.has(feedback.referenceId));
 }

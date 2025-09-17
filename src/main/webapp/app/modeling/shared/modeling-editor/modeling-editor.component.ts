@@ -6,7 +6,7 @@ import { faCheck, faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-ico
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-// import { Patch } from '@ls1intum/apollon';
+// import { Patch } from '@tumaet/apollon';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, NgStyle } from '@angular/common';

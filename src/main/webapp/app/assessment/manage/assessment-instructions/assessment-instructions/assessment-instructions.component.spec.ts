@@ -10,7 +10,7 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('AssessmentInstructionsComponent', () => {

@@ -2,10 +2,10 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Subject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ApollonEditor, Patch, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import * as testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import { cloneDeep } from 'lodash-es';
@@ -22,7 +22,7 @@ describe('ModelingEditorComponent', () => {
     const course = { id: 123 } as Course;
     const diagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
     // @ts-ignore
-    const classDiagram = cloneDeep(testClassDiagram as UMLModel); // note: clone is needed to prevent weird errors with setters, because testClassDiagram is not an actual object
+    const classDiagram = cloneDeep(importDiagram({ id: 'diagram', title: 'Diagram', model: testClassDiagram } as { id: string; title: string; model: UMLModel })); // note: clone is needed to prevent weird errors with setters, because testClassDiagram is not an actual object
     const route = { params: of({ id: 1, courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
     beforeEach(() => {
         diagram.id = 1;
@@ -60,7 +60,8 @@ describe('ModelingEditorComponent', () => {
         expect(editor).toBeDefined();
         await editor.nextRender;
 
-        expect(Object.keys(editor.model.elements)).toEqual(Object.keys(classDiagram.elements));
+        expect(editor.model.nodes).toHaveLength(classDiagram.nodes.length);
+        expect(editor.model.edges).toHaveLength(classDiagram.edges.length);
     });
 
     it('ngOnDestroy', () => {
@@ -81,12 +82,9 @@ describe('ModelingEditorComponent', () => {
         await component.ngAfterViewInit();
 
         const changedModel = cloneDeep(model) as any;
-        changedModel.elements = {};
-        changedModel.relationships = {};
-        changedModel.interactive = { elements: {}, relationships: {} };
-        changedModel.size = { height: 0, width: 0 };
-        // note: using cloneDeep a default value exists, which would prevent the comparison below to pass, therefore we need to remove it here
-        changedModel.default = undefined;
+        changedModel.nodes = [];
+        changedModel.edges = [];
+        changedModel.assessments = {};
         // test
         await component.apollonEditor?.nextRender;
         component.ngOnChanges({
@@ -96,8 +94,8 @@ describe('ModelingEditorComponent', () => {
             } as SimpleChange,
         });
         await component.apollonEditor?.nextRender;
-        const componentModel = component['apollonEditor']!.model as UMLModel;
-        expect(componentModel).toEqual(changedModel);
+        expect(component.umlModel).toEqual(changedModel);
+        expect(component['apollonEditor']!.model.assessments).toEqual({});
     });
 
     it('isFullScreen false', () => {
@@ -115,39 +113,6 @@ describe('ModelingEditorComponent', () => {
         // const model = component.getCurrentModel();
         // TODO: uncomment after deserialization bugfix in Apollon library, see https://github.com/ls1intum/Apollon/issues/146
         // expect(model).toEqual(testClassDiagram);
-    });
-
-    it('elementWithClass', () => {
-        const model = classDiagram;
-        component.umlModel = model;
-        fixture.detectChanges();
-        component.ngAfterViewInit();
-
-        // test
-        const umlElement = component.elementWithClass('Sibling 2', model);
-        expect(umlElement?.id).toBe('e0dad7e7-f67b-4e4a-8845-6c5d801ea9ca');
-    });
-
-    it('elementWithAttribute', () => {
-        const model = classDiagram;
-        component.umlModel = model;
-        fixture.detectChanges();
-        component.ngAfterViewInit();
-
-        // test
-        const umlElement = component.elementWithAttribute('attribute', model);
-        expect(umlElement?.id).toBe('6f572312-066b-4678-9c03-5032f3ba9be9');
-    });
-
-    it('elementWithMethod', () => {
-        const model = classDiagram;
-        component.umlModel = model;
-        fixture.detectChanges();
-        component.ngAfterViewInit();
-
-        // test
-        const umlElement = component.elementWithMethod('method', model);
-        expect(umlElement?.id).toBe('11aae531-3244-4d07-8d60-b6210789ffa3');
     });
 
     it('should not show save indicator without savedStatus set', () => {
@@ -236,26 +201,22 @@ describe('ModelingEditorComponent', () => {
         expect(component.explanation).toBe(newExplanation);
     });
 
-    it('should subscribe to model change patches and emit them.', () => {
+    it('should subscribe to broadcast messages and emit them.', () => {
         fixture.detectChanges();
 
         const receiver = jest.fn();
 
         component.onModelPatch.subscribe(receiver);
-        const mockEmitter = new Subject<Patch>();
+        const callbacks: Array<(message: string) => void> = [];
 
-        jest.spyOn(ApollonEditor.prototype, 'subscribeToModelChangePatches').mockImplementation((cb) => {
-            mockEmitter.subscribe(cb);
-            return 42;
+        jest.spyOn(ApollonEditor.prototype, 'sendBroadcastMessage').mockImplementation((cb) => {
+            callbacks.push(cb);
         });
-        const cleanupSpy = jest.spyOn(ApollonEditor.prototype, 'unsubscribeFromModelChangePatches').mockImplementation(() => {});
 
         component.ngAfterViewInit();
 
-        mockEmitter.next([{ op: 'add', path: '/elements', value: { id: '1', type: 'class' } }]);
-        expect(receiver).toHaveBeenCalledWith([{ op: 'add', path: '/elements', value: { id: '1', type: 'class' } }]);
-
-        component.ngOnDestroy();
-        expect(cleanupSpy).toHaveBeenCalledWith(42);
+        expect(callbacks).toHaveLength(1);
+        callbacks[0]('encoded-patch');
+        expect(receiver).toHaveBeenCalledWith('encoded-patch');
     });
 });

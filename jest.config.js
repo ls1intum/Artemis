@@ -14,7 +14,7 @@ const esModules = [
     '@ctrl/ngx-emoji-mart',
     '@danielmoncada/angular-datetime-picker',
     '@fortawesome/angular-fontawesome',
-    '@ls1intum/apollon',
+    '@tumaet/apollon',
     '@ng-bootstrap/ng-bootstrap',
     '@ngx-translate/core',
     '@ngx-translate/http-loader',
@@ -133,6 +133,5 @@ module.exports = {
         '^lodash-es$': 'lodash',
         '\\.css$': '<rootDir>/src/test/javascript/spec/stub.js',
         '^monaco-editor$': '<rootDir>/node_modules/monaco-editor/esm/vs/editor/editor.api.js',
-        '^@ls1intum/apollon$': '<rootDir>/node_modules/@ls1intum/apollon/lib/es6/index.js', // adjust if the package.json "exports" points elsewhere
     },
 };

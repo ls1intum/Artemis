@@ -26,7 +26,7 @@ import { CourseScores } from 'app/core/course/manage/course-scores/course-scores
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
 import { CoursesForDashboardDTO } from 'app/core/course/shared/entities/courses-for-dashboard-dto';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { provideHttpClient } from '@angular/common/http';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 

@@ -24,7 +24,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { UMLDiagramType, UMLElement, UMLModel } from '@ls1intum/apollon';
+import { UMLDiagramType, UMLElement, UMLModel } from '@tumaet/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
@@ -279,7 +279,7 @@ describe('ModelingSubmissionComponent', () => {
     it('should set correct properties on modeling exercise create when submitting', () => {
         fixture.detectChanges();
 
-        const modelSubmission = <ModelingSubmission>(<unknown>{ model: '{"elements": [{"id": 1}]}', submitted: true, participation });
+        const modelSubmission = <ModelingSubmission>(<unknown>{ model: '{"nodes": [{"id": 1}], "edges": []}', submitted: true, participation });
         comp.submission = modelSubmission;
         const createStub = jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: submission })));
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
@@ -290,7 +290,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should catch error on submit', () => {
-        const modelSubmission = <ModelingSubmission>(<unknown>{ model: '{"elements": [{"id": 1}]}', submitted: true, participation });
+        const modelSubmission = <ModelingSubmission>(<unknown>{ model: '{"nodes": [{"id": 1}], "edges": []}', submitted: true, participation });
         comp.submission = modelSubmission;
         jest.spyOn(service, 'create').mockReturnValue(throwError(() => ({ status: 500 })));
         const alertServiceSpy = jest.spyOn(alertService, 'error');
@@ -302,7 +302,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should set result when new result comes in from websocket', () => {
-        submission.model = '{"elements": [{"id": 1}]}';
+        submission.model = '{"nodes": [{"id": 1}], "edges": []}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
         const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
 
@@ -333,7 +333,7 @@ describe('ModelingSubmissionComponent', () => {
         jest.spyOn(websocketService, 'subscribe');
         const modelSubmission = <ModelingSubmission>(<unknown>{
             id: 1,
-            model: '{"elements": [{"id": 1}]}',
+            model: '{"nodes": [{"id": 1}], "edges": []}',
             submitted: true,
             participation,
         });
@@ -346,7 +346,7 @@ describe('ModelingSubmissionComponent', () => {
     it('should set correct properties on modeling exercise update when submitting', () => {
         comp.submission = <ModelingSubmission>(<unknown>{
             id: 1,
-            model: '{"elements": [{"id": 1}]}',
+            model: '{"nodes": [{"id": 1}], "edges": []}',
             submitted: true,
             participation,
         });
@@ -368,62 +368,37 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.calculateNumberOfModelElements()).toBe(elements.length + relationships.length);
     });
 
-    it('should update selected entities with given elements', () => {
-        const selection = {
-            elements: {
-                ownerId1: true,
-                ownerId2: true,
-            },
-            relationships: {
-                relationShip1: true,
-                relationShip2: true,
-            },
-        };
-        comp.umlModel = <UMLModel>(<unknown>{
-            elements: {
-                elementId1: <UMLElement>(<unknown>{
-                    owner: 'ownerId1',
-                    id: 'elementId1',
-                }),
-                elementId2: <UMLElement>(<unknown>{
-                    owner: 'ownerId2',
-                    id: 'elementId2',
-                }),
-            },
-        });
-        fixture.detectChanges();
-        comp.onSelectionChanged(selection);
-        expect(comp.selectedRelationships).toEqual(['relationShip1', 'relationShip2']);
-        expect(comp.selectedEntities).toEqual(['ownerId1', 'ownerId2', 'elementId1', 'elementId2']);
+    it('should track selected element ids', () => {
+        const selectedIds = ['elementId1', 'relationshipId'];
+        comp.onSelectedElementIdsChanged(selectedIds);
+        expect(comp.selectedElementIds).toEqual(selectedIds);
     });
 
-    it('should shouldBeDisplayed return true if no selectedEntities and selectedRelationships', () => {
+    it('should display feedback when nothing is selected', () => {
         const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: '5' });
-        comp.selectedEntities = [];
-        comp.selectedRelationships = [];
-        fixture.detectChanges();
+        comp.selectedElementIds = [];
         expect(comp.shouldBeDisplayed(feedback)).toBeTrue();
-        comp.selectedEntities = ['3'];
-        fixture.detectChanges();
+        comp.selectedElementIds = ['3'];
         expect(comp.shouldBeDisplayed(feedback)).toBeFalse();
     });
 
-    it('should shouldBeDisplayed return true if feedback reference is in selectedEntities or selectedRelationships', () => {
+    it('should display feedback only if selection contains its reference', () => {
         const id = 'referenceId';
         const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: id });
-        comp.selectedEntities = [id];
-        comp.selectedRelationships = [];
-        fixture.detectChanges();
+        comp.selectedElementIds = [id];
         expect(comp.shouldBeDisplayed(feedback)).toBeTrue();
-        comp.selectedEntities = [];
-        comp.selectedRelationships = [id];
-        fixture.detectChanges();
+        comp.selectedElementIds = ['other'];
         expect(comp.shouldBeDisplayed(feedback)).toBeFalse();
     });
 
     it('should update submission with current values', () => {
         const model = <UMLModel>(<unknown>{
-            elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
+            nodes: {
+                elementId1: <UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' }),
+                elementId2: <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' }),
+            },
+            elements: [],
+            relationships: [],
         });
         const currentModelStub = jest.spyOn(comp.modelingEditor, 'getCurrentModel').mockReturnValue(model as UMLModel);
         comp.explanation = 'Explanation Test';
@@ -482,7 +457,7 @@ describe('ModelingSubmissionComponent', () => {
     it('should set isChanged property to false after saving', () => {
         comp.submission = <ModelingSubmission>(<unknown>{
             id: 1,
-            model: '{"elements": [{"id": 1}]}',
+            model: '{"nodes": [{"id": 1}], "edges": []}',
             submitted: true,
             participation,
         });
