@@ -33,7 +33,10 @@ public class AtlasPromptTemplateService {
     public String render(String resourcePath, Map<String, String> variables) {
         try {
             var resource = new ClassPathResource(resourcePath);
-            String rendered = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
+            String rendered;
+            try (var is = resource.getInputStream()) {
+                rendered = StreamUtils.copyToString(is, StandardCharsets.UTF_8);
+            }
             for (var entry : variables.entrySet()) {
                 rendered = rendered.replace("{{" + entry.getKey() + "}}", entry.getValue());
             }

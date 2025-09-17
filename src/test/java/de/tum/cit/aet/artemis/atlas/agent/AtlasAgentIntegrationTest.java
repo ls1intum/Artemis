@@ -207,7 +207,11 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         @Bean
         @Primary
         public ChatClient mockChatClient() {
-            return mock(ChatClient.class);
+            ChatClient client = mock(ChatClient.class, org.mockito.Mockito.RETURNS_DEEP_STUBS);
+            // Return a stable stubbed response for all tests
+            org.mockito.Mockito.when(client.prompt().system(org.mockito.ArgumentMatchers.anyString()).user(org.mockito.ArgumentMatchers.anyString())
+                    .options(org.mockito.ArgumentMatchers.any()).call().content()).thenReturn("stubbed agent response");
+            return client;
         }
     }
 }
