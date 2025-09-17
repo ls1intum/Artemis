@@ -23,7 +23,7 @@ import { FaqCategory } from 'app/communication/shared/entities/faq-category.mode
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FaqConsistencyComponent } from './faq-consistency.component';
 import { RewriteAction } from '../../shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
-import { FaqConsistencyAction } from '../../shared/monaco-editor/model/actions/artemis-intelligence/FacConsistencyAction';
+import { FaqConsistencyAction } from '../../shared/monaco-editor/model/actions/artemis-intelligence/FaqConsistencyAction';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
