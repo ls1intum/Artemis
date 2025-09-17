@@ -72,7 +72,7 @@
         @if (isLanguageSupported) {
             <div class="mb-2">
                 <label for="networkMode">
-                    Network mode
+                    <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.title"></span>
                     <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.description" />
                 </label>
                 <select id="networkMode" class="form-select mb-2" [ngModel]="network() ?? ''" (ngModelChange)="onNetworkChange($event)">
@@ -80,7 +80,7 @@
                     @if (allowedCustomNetworks?.length) {
                         @for (customNetwork of allowedCustomNetworks; track customNetwork) {
                             @if (customNetwork === 'none') {
-                                <option value="none">None (no network)</option>
+                                <option value="none" jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.noneOption"></option>
                             } @else {
                                 <option [value]="customNetwork">{{ customNetwork }}</option>
                             }
