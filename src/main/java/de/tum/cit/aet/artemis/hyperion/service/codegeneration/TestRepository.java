@@ -26,6 +26,8 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
  * and problem requirements to ensure thorough testing coverage.
  */
 @Service("testRepositoryStrategy")
+@Lazy
+@Conditional(HyperionEnabled.class)
 public class TestRepository extends CodeGenerationStrategy {
 
     private static final Logger log = LoggerFactory.getLogger(TestRepository.class);

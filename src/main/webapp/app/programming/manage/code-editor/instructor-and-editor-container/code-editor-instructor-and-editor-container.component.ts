@@ -18,8 +18,6 @@ import { CodeGenerationService } from 'app/hyperion/code-generation.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { inject } from '@angular/core';
-import { CodeGenerationAction } from 'app/hyperion/actions/code-generation.action';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -65,9 +63,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private codeGenerationService = inject(CodeGenerationService);
     private codeGenAlertService = inject(AlertService);
     isGeneratingCode = false;
-
-    // AI Intelligence Actions - mimics the pattern from ProgrammingExerciseEditableInstructionComponent
-    artemisIntelligenceActions: TextEditorAction[] = [new CodeGenerationAction(() => this.generateCode())];
 
     /**
      * Generates code for the current programming exercise using AI

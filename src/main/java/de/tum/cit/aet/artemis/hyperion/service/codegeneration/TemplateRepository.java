@@ -26,6 +26,8 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
  * removing implementation details, based on complete solution code analysis.
  */
 @Service("templateRepositoryStrategy")
+@Lazy
+@Conditional(HyperionEnabled.class)
 public class TemplateRepository extends CodeGenerationStrategy {
 
     private static final Logger log = LoggerFactory.getLogger(TemplateRepository.class);

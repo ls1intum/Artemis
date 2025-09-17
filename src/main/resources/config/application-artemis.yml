@@ -106,17 +106,16 @@ artemis:
     event-logging: # event logging is used to collect data for research purposes. It is disabled by default.
       enable: false # Set this to true to enable the feature toggle for the science module on startup.
 
-# Enable Hyperion features via Spring profile
+
+# Configure Spring AI, if you want to use Hyperion
 spring:
-  config:
-    activate:
-      on-profile: hyperion
   ai:
     model:
       chat: none #disable any spring ai interaction
     chat:
       client:
         enabled: ${artemis.hyperion.enabled} # Enable the chat client if hyperion is enabled
+    # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
     azure:
       openai:
         api-key: ${AZURE_OPENAI_API_KEY:}

@@ -42,6 +42,8 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
  * build triggering, and feedback loop integration for iterative improvement.
  */
 @Service
+@Lazy
+@Conditional(HyperionEnabled.class)
 public class CodeGenerationExecutionService {
 
     private static final Logger log = LoggerFactory.getLogger(CodeGenerationExecutionService.class);

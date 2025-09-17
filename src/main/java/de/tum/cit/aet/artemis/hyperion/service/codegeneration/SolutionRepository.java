@@ -19,6 +19,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  * using AI-powered analysis of problem statements and requirements.
  */
 @Service("solutionRepositoryStrategy")
+@Lazy
+@Conditional(HyperionEnabled.class)
 public class SolutionRepository extends CodeGenerationStrategy {
 
     public SolutionRepository(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, PromptTemplateService templates) {
