@@ -57,6 +57,7 @@ describe('AgentChatModalComponent', () => {
 
     it('should close modal when close button is clicked', () => {
         const spyClose = jest.spyOn(mockActiveModal, 'close');
+        fixture.detectChanges();
         const closeButton = fixture.debugElement.query(By.css('.btn-close'));
 
         closeButton.nativeElement.click();
@@ -902,6 +903,7 @@ describe('AgentChatModalComponent', () => {
 
         it('should test actual timeout behavior in service', () => {
             // Test the timeout(30000) operator more directly
+            jest.useFakeTimers();
             jest.spyOn(mockAgentChatService, 'sendMessage').mockImplementation(() => {
                 return new Observable((subscriber) => {
                     // Simulate a request that takes longer than timeout
@@ -913,7 +915,11 @@ describe('AgentChatModalComponent', () => {
             });
 
             component.currentMessage = 'Test timeout';
-            (component as any).sendMessage();
+            fixture.detectChanges();
+            const btn = fixture.debugElement.query(By.css('.send-button'));
+            btn.nativeElement.click();
+            jest.runOnlyPendingTimers();
+            jest.useRealTimers();
 
             expect(mockAgentChatService.sendMessage).toHaveBeenCalled();
         });
