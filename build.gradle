@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.4.0"
+version = "8.4.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -400,8 +400,8 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
     // required by sshd-git
-    implementation "org.bouncycastle:bcpkix-jdk18on:1.81"
-    implementation "org.bouncycastle:bcprov-jdk18on:1.81"
+    implementation "org.bouncycastle:bcpkix-jdk18on:1.82"
+    implementation "org.bouncycastle:bcprov-jdk18on:1.82"
 
     implementation "com.mysql:mysql-connector-j:${mysql_version}"
     implementation "org.postgresql:postgresql:42.7.7"
@@ -483,7 +483,7 @@ dependencies {
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:9.0.0"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.3"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.4"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
 
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
