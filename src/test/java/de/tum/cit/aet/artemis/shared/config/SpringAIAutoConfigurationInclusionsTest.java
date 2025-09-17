@@ -10,13 +10,13 @@ import org.springframework.context.ApplicationContext;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 // AbstractSpringIntegrationLocalCILocalVCTest has hyperion enabled
-class HyperionAutoConfigurationInclusionsTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class SpringAIAutoConfigurationInclusionsTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     private ApplicationContext applicationContext;
 
     @Test
-    void testSpringAiAutoConfigurationsIncluded() {
+    void testSpringAIAutoConfigurationsIncluded() {
         assertThatNoException().isThrownBy(() -> applicationContext.getBean(AzureOpenAiChatAutoConfiguration.class));
     }
 }

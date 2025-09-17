@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import java.util.Set;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfigurationImportFilter;
@@ -10,13 +8,13 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
 
 /**
- * {@code HyperionAutoConfigurationFilter} is a custom {@link AutoConfigurationImportFilter}
+ * {@code SpringAIAutoConfigurationFilter} is a custom {@link AutoConfigurationImportFilter}
  * that conditionally excludes certain Spring AI Azure/OpenAI auto-configurations from being
  * loaded into the application context.
  * <p>
  * This filter checks the value of the property defined by
  * {@link Constants#HYPERION_ENABLED_PROPERTY_NAME}. If the property is {@code false} or absent,
- * all auto-configuration classes listed in {@link #AUTOCONFIGURATIONS_TO_EXCLUDE} will be
+ * all auto-configuration fully qualified class names starting with org.springframework.ai will be
  * filtered out and not applied. If the property is {@code true}, the filter allows all
  * auto-configurations to proceed (it does not re-include anything excluded elsewhere such
  * as through {@code spring.autoconfigure.exclude} in YAML).
@@ -34,16 +32,9 @@ import org.springframework.core.env.Environment;
  *
  */
 
-public class HyperionAutoConfigurationFilter implements AutoConfigurationImportFilter, EnvironmentAware {
+public class SpringAIAutoConfigurationFilter implements AutoConfigurationImportFilter, EnvironmentAware {
 
-    private static final Set<String> AUTOCONFIGURATIONS_TO_EXCLUDE = Set.of(
-            "org.springframework.ai.model.azure.openai.autoconfigure.AzureOpenAiAudioTranscriptionAutoConfiguration",
-            "org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration",
-            "org.springframework.ai.model.azure.openai.autoconfigure.AzureOpenAiChatAutoConfiguration",
-            "org.springframework.ai.model.azure.openai.autoconfigure.AzureOpenAiEmbeddingAutoConfiguration",
-            "org.springframework.ai.model.azure.openai.autoconfigure.AzureOpenAiImageAutoConfiguration");
-
-    private static final Logger log = LoggerFactory.getLogger(HyperionAutoConfigurationFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(SpringAIAutoConfigurationFilter.class);
 
     private Environment env;
 
@@ -60,7 +51,7 @@ public class HyperionAutoConfigurationFilter implements AutoConfigurationImportF
                 continue;
             }
 
-            matches[i] = hyperionEnabled || !AUTOCONFIGURATIONS_TO_EXCLUDE.contains(fullyQualifiedClassName);
+            matches[i] = hyperionEnabled || !fullyQualifiedClassName.startsWith("org.springframework.ai");
             if (!matches[i]) {
                 log.debug("Excluding auto-configuration: {} because Hyperion is disabled", fullyQualifiedClassName);
             }
