@@ -18,6 +18,8 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -145,18 +147,22 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizExercise.setQuizQuestions(questions);
         quizExerciseTestRepository.save(quizExercise);
 
-        /*
-         * Page<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(1L, userId, Pageable.ofSize(10));
-         * //assertThat(result.size()).isEqualTo(12);
-         * for (QuizQuestionTrainingDTO dto : result) {
-         * assertThat(dto.isRated()).isTrue();
-         * }
-         * List<QuizQuestionProgress> progresses = result.stream().map(q -> quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, q.getId()).orElseThrow()).toList();
-         * List<ZonedDateTime> dueDates = progresses.stream().map(p -> p.getProgressJson().getDueDate()).toList();
-         * List<ZonedDateTime> sortedDueDates = new ArrayList<>(dueDates);
-         * sortedDueDates.sort(Comparator.naturalOrder());
-         * assertThat(dueDates).isEqualTo(sortedDueDates);
-         */
+        Pageable pageable = Pageable.ofSize(10);
+
+        Page<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(1L, userId, pageable);
+        assertThat(result.getTotalElements()).isEqualTo(12);
+        assertThat(result.getSize()).isEqualTo(10);
+        assertThat(result.getTotalPages()).isEqualTo(2);
+        for (QuizQuestionTrainingDTO dto : result.getContent()) {
+            assertThat(dto.isRated()).isTrue();
+        }
+
+        List<QuizQuestionProgress> progresses = result.getContent().stream().map(q -> quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, q.getId()).orElseThrow())
+                .toList();
+        List<ZonedDateTime> dueDates = progresses.stream().map(p -> p.getProgressJson().getDueDate()).toList();
+        List<ZonedDateTime> sortedDueDates = new ArrayList<>(dueDates);
+        sortedDueDates.sort(java.util.Comparator.naturalOrder());
+        assertThat(dueDates).isEqualTo(sortedDueDates);
     }
 
     @Test
@@ -190,13 +196,16 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizExercise.setQuizQuestions(questions);
         quizExerciseTestRepository.save(quizExercise);
 
-        /*
-         * Page<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(1L, userId, Pageable.ofSize(10));
-         * //assertThat(result.size()).isEqualTo(12);
-         * for (QuizQuestionTrainingDTO dto : result) {
-         * assertThat(dto.isRated()).isFalse();
-         * }
-         */
+        Pageable pageable = Pageable.ofSize(10);
+
+        Page<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(1L, userId, pageable);
+
+        assertThat(result.getTotalElements()).isEqualTo(12);
+        assertThat(result.getSize()).isEqualTo(10);
+        assertThat(result.getTotalPages()).isEqualTo(2);
+        for (QuizQuestionTrainingDTO dto : result.getContent()) {
+            assertThat(dto.isRated()).isFalse();
+        }
     }
 
     @Test
