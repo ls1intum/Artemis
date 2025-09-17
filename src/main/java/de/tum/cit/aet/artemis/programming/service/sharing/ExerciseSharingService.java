@@ -151,12 +151,11 @@ public class ExerciseSharingService {
      * @return the exercise as a zip stream
      * @throws SharingException if exercise cannot be loaded
      */
-    public Optional<SharingMultipartZipFile> getBasketItem(SharingInfoDTO sharingInfo, int itemPosition) throws SharingException {
+    public SharingMultipartZipFile getBasketItem(SharingInfoDTO sharingInfo, int itemPosition) throws SharingException {
         try {
             Path cachedZipFile = repositoryCache.get(Pair.of(sharingInfo, itemPosition));
             // Ensure proper resource management - SharingMultipartZipFile should handle stream closing
-            SharingMultipartZipFile zipFileItem = new SharingMultipartZipFile(getBasketFileName(sharingInfo.basketToken(), itemPosition), Files.newInputStream(cachedZipFile));
-            return Optional.of(zipFileItem);
+            return new SharingMultipartZipFile(getBasketFileName(sharingInfo.basketToken(), itemPosition), Files.newInputStream(cachedZipFile));
         }
         catch (IOException | ExecutionException wae) {
             log.warn("Exception during shared exercise retrieval", wae);
@@ -170,15 +169,11 @@ public class ExerciseSharingService {
     private final LoadingCache<@NotNull Pair<SharingInfoDTO, Integer>, @NotNull Path> repositoryCache = CacheBuilder.newBuilder().maximumSize(100)
             .expireAfterAccess(1, TimeUnit.HOURS).removalListener(notification -> {
                 Path outdatedBasketZipfile = (Path) notification.getValue();
-                boolean deleted = false;
                 try {
-                    deleted = Files.deleteIfExists(outdatedBasketZipfile);
+                    Files.deleteIfExists(outdatedBasketZipfile);
                 }
                 catch (IOException e) {
                     log.info("Cannot delete {}", outdatedBasketZipfile, e);
-                }
-                if (!deleted) {
-                    log.info("Cannot delete {}", outdatedBasketZipfile);
                 }
             }).build(new CacheLoader<>() {
 
@@ -217,7 +212,7 @@ public class ExerciseSharingService {
         return repositoryCache;
     }
 
-    public Optional<SharingMultipartZipFile> getCachedBasketItem(SharingInfoDTO sharingInfo) throws SharingException {
+    public SharingMultipartZipFile getCachedBasketItem(SharingInfoDTO sharingInfo) throws SharingException {
         int itemPosition = sharingInfo.exercisePosition();
         return getBasketItem(sharingInfo, itemPosition);
     }
@@ -254,18 +249,7 @@ public class ExerciseSharingService {
      * @throws IOException if a reading error occurs
      */
     public Optional<String> getEntryFromBasket(Pattern matchingPattern, SharingInfoDTO sharingInfo) throws IOException {
-        Optional<SharingMultipartZipFile> zipOpt;
-        try {
-            zipOpt = this.getCachedBasketItem(sharingInfo);
-        }
-        catch (SharingException e) {
-            log.error("Cannot read input Template for {}", sharingInfo.basketToken(), e);
-            return Optional.empty();
-        }
-        if (zipOpt.isEmpty()) {
-            return Optional.empty();
-        }
-        try (SharingMultipartZipFile zipFile = zipOpt.get(); ZipInputStream zippedRepositoryStream = new ZipInputStream(zipFile.getInputStream())) {
+        try (SharingMultipartZipFile zipFile = this.getCachedBasketItem(sharingInfo); ZipInputStream zippedRepositoryStream = new ZipInputStream(zipFile.getInputStream())) {
 
             ZipEntry entry;
             while ((entry = zippedRepositoryStream.getNextEntry()) != null) {
@@ -284,6 +268,10 @@ public class ExerciseSharingService {
                 zippedRepositoryStream.closeEntry();
             }
             return Optional.empty(); // Not found
+        }
+        catch (SharingException e) {
+            log.error("Cannot read input Template for {}", sharingInfo.basketToken(), e);
+            return Optional.empty();
         }
 
     }
@@ -334,12 +322,7 @@ public class ExerciseSharingService {
 
             return builder.build().toURL();
         }
-        catch (URISyntaxException e) {
-            String msg = "An error occurred during URL creation: " + e.getMessage();
-            log.error(msg, e);
-            throw new SharingException(msg, e);
-        }
-        catch (IOException | EntityNotFoundException e) {
+        catch (URISyntaxException | IOException | EntityNotFoundException e) {
             String msg = "Could not generate Zip file for export: " + e.getMessage();
             log.error(msg, e);
             throw new SharingException(msg, e);

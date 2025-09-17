@@ -51,7 +51,9 @@ export class ProgrammingExerciseInstructorExerciseSharingComponent {
                             if (!window.name) {
                                 window.name = 'artemis';
                             }
-                            this.sharingTab.location.href = `${redirectURL}&window=${window.name}`;
+                            const targetUrl = new URL(redirectURL, window.location.origin);
+                            targetUrl.searchParams.set('window', window.name);
+                            this.sharingTab.location.href = targetUrl.toString();
                             this.sharingTab.focus();
                         } else {
                             window.location.href = redirectURL;

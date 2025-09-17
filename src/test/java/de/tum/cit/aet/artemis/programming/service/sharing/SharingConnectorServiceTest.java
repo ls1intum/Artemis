@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,6 +12,13 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.client.ExpectedCount;
+import org.springframework.test.web.client.ResponseActions;
+import org.springframework.test.web.client.response.MockRestResponseCreators;
+import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -17,6 +26,10 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private SharingPlatformMockProvider sharingPlatformMockProvider;
+
+    @Autowired
+    @Qualifier("sharingRestTemplate")
+    private RestTemplate restTemplate;
 
     @Autowired
     private SharingConnectorService sharingConnectorService;
@@ -96,6 +109,19 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
         String fakeKey = "x1234123123sdfsdfxx";
         assertThat(sharingConnectorService.validateApiKey(fakeKey)).isFalse();
         assertThat(sharingConnectorService.validateApiKey("Bearer " + fakeKey)).isFalse();
+    }
+
+    @Test
+    void testTriggerReinit() {
+        String reinitUrl = SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/reInitialize?apiKey=" + sharingPlatformMockProvider.getTestSharingApiKey();
+        final ResponseActions responseActions = sharingPlatformMockProvider.getMockSharingServer().expect(ExpectedCount.once(), requestTo(reinitUrl))
+                .andExpect(method(HttpMethod.GET));
+        responseActions.andRespond(MockRestResponseCreators.withSuccess("true", MediaType.APPLICATION_JSON));
+        sharingConnectorService.triggerReinit();
+        SharingConnectorService.HealthStatusWithHistory lastHealthStati = sharingConnectorService.getLastHealthStati();
+        assertThat(lastHealthStati).isNotEmpty();
+        assertThat(lastHealthStati.getLast().getStatusMessage()).describedAs("This assertion may fail due to race conditions!")
+                .isEqualTo("Requested reinitialization from Sharing Platform via http://localhost:9001");
     }
 
 }

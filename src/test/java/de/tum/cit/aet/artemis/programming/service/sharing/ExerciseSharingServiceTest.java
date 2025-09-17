@@ -20,12 +20,12 @@ import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.ResponseActions;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.authentication.AuthenticationFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -50,7 +51,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     private static final String TEST_PREFIX = "exerciseSharingServiceTest";
 
-    public static final String INSTRUCTOR1 = TEST_PREFIX + "instructor1";
+    public static final String INSTRUCTOR1 = TEST_PREFIX + "instructor";
 
     @Autowired
     private SharingPlatformMockProvider sharingPlatformMockProvider;
@@ -63,6 +64,9 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @Autowired
     private ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService;
+
+    @Autowired
+    private VersionControlService versionControlService;
 
     @BeforeEach
     void startUp() throws Exception {
@@ -215,9 +219,11 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     }
 
     @Test
-    @Disabled("interferes with other tests :-(")
+    // @Disabled("interferes with other tests :-(")
+    @WithMockUser(username = INSTRUCTOR1, roles = "INSTRUCTOR")
     void testImportProgrammingExerciseFromSharing() throws URISyntaxException, IOException, GitAPIException, SharingException {
         userUtilService.addInstructor("Sharing", INSTRUCTOR1);
+
         SecurityContextHolder.getContext().setAuthentication(AuthenticationFactory.createUsernamePasswordAuthentication(INSTRUCTOR1.toLowerCase()));
 
         ProgrammingExercise exercise = getExerciseInfoFromBasket();
@@ -227,31 +233,37 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
                         SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN),
                 0);
 
-        // doReturn(exercise).when(programmingExerciseImportFromFileService).importProgrammingExerciseFromFile(any(), any(), any(), any(), eq(true));
-        SharingSetupInfo setupInfo = new SharingSetupInfo(exercise, course1, sharingInfo);
+        try {
 
-        programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(setupInfo);
+            // doReturn(exercise).when(programmingExerciseImportFromFileService).importProgrammingExerciseFromFile(any(), any(), any(), any(), eq(true));
+            SharingSetupInfo setupInfo = new SharingSetupInfo(exercise, course1, sharingInfo);
 
-        // Verify that the import pipeline was triggered once with the expected flag
-        // verify(programmingExerciseImportFromFileService, times(1)).importProgrammingExerciseFromFile(any(), any(), any(), any(), eq(true));
+            ProgrammingExercise importedExercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(setupInfo);
+
+            assertThat(importedExercise.getId()).isNotNull();
+            assertThat(importedExercise.getPackageName()).isEqualTo(exercise.getPackageName());
+            // Verify that the import pipeline was triggered once with the expected flag
+            // verify(programmingExerciseImportFromFileService, times(1)).importProgrammingExerciseFromFile(any(), any(), any(), any(), eq(true));
+        }
+        finally {
+            // we have to explicitely clean up the repository, otherwise repeated tests will fail, because the repository already exists.
+            // we do this in a finally, because otherwise we would have to repeat it every afterEach.
+            versionControlService.deleteProject(exercise.getProjectKey());
+        }
     }
 
     @Test
-    @Disabled("interferes with other tests :-(")
-    void testImportProgrammingExerciseFromSharingVia() throws URISyntaxException, IOException, GitAPIException, SharingException {
-        userUtilService.addInstructor("Sharing", INSTRUCTOR1);
-        SecurityContextHolder.getContext().setAuthentication(AuthenticationFactory.createUsernamePasswordAuthentication(INSTRUCTOR1.toLowerCase()));
+    void trivialSharingExceptionTests() {
+        SharingException e = new SharingException("trivial");
+        assertThat(e.getMessage()).isEqualTo("trivial");
 
-        ProgrammingExercise exercise = getExerciseInfoFromBasket();
-        Course course1 = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
-        SharingInfoDTO sharingInfo = new SharingInfoDTO(SAMPLE_BASKET_TOKEN, TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN,
-                SharingPlatformMockProvider.calculateCorrectChecksum(sharingPlatformMockProvider.getTestSharingApiKey(), "returnURL", TEST_RETURN_URL, "apiBaseURL",
-                        SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN),
-                0);
+        SharingException e1 = new SharingException("trivial", e);
+        assertThat(e1.getMessage()).isEqualTo("trivial");
+        assertThat(e1.getCause()).isEqualTo(e);
 
-        SharingSetupInfo setupInfo = new SharingSetupInfo(exercise, course1, sharingInfo);
-
-        programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(setupInfo);
+        SharingException e2 = SharingException.withEndpoint("trivial", e);
+        assertThat(e2.getMessage()).isEqualTo("Failed to connect to sharing platform at " + "trivial");
+        assertThat(e2.getCause()).isEqualTo(e);
 
     }
 

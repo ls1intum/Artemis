@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.context.annotation.Lazy;
@@ -43,21 +42,18 @@ public class ProgrammingExerciseImportFromSharingService {
      */
     public ProgrammingExercise importProgrammingExerciseFromSharing(SharingSetupInfo sharingSetupInfo) throws SharingException, IOException, GitAPIException, URISyntaxException {
         if (sharingSetupInfo.exercise() == null) {
-            throw new SharingException("Exercise is null?");
+            throw new SharingException("Exercise should not be null?");
         }
-        Optional<SharingMultipartZipFile> zipFileO = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.sharingInfo());
-        if (zipFileO.isEmpty()) {
-            throw new SharingException("Failed to retrieve exercise zip file from sharing platform");
-        }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        try (SharingMultipartZipFile zip = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.sharingInfo())) {
 
-        if (sharingSetupInfo.exercise().getCourseViaExerciseGroupOrCourseMember() == null) {
-            if (sharingSetupInfo.course() == null) {
-                throw new SharingException("Target course is missing for import");
+            User user = userRepository.getUserWithGroupsAndAuthorities();
+
+            if (sharingSetupInfo.exercise().getCourseViaExerciseGroupOrCourseMember() == null) {
+                if (sharingSetupInfo.course() == null) {
+                    throw new SharingException("Target course is missing for import");
+                }
+                sharingSetupInfo.exercise().setCourse(sharingSetupInfo.course());
             }
-            sharingSetupInfo.exercise().setCourse(sharingSetupInfo.course());
-        }
-        try (SharingMultipartZipFile zip = zipFileO.get()) {
             return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(sharingSetupInfo.exercise(), zip, sharingSetupInfo.course(), user, true);
         }
     }

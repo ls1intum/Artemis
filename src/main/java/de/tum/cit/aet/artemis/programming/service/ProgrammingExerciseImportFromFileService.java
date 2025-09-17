@@ -113,7 +113,7 @@ public class ProgrammingExerciseImportFromFileService {
             Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
 
             if (isImportFromSharing) {
-                // Exercises from Sharing are currently exported in a different zip structure containing an additional dir
+                // Exercises from Sharing are currently exported in a slightly different zip structure containing an additional root dir
                 try (Stream<Path> walk = Files.walk(importExerciseDir)) {
                     List<Path> directories = walk.filter(Files::isDirectory).toList();
                     if (directories.isEmpty()) {

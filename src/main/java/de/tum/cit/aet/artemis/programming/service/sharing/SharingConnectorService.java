@@ -247,9 +247,10 @@ public class SharingConnectorService {
     }
 
     /**
-     * request a reinitialization of the sharing platform
+     * request a reinitialization of the sharing platform.
+     * Not for external use, protected for test purpose only.
      */
-    private void triggerReinit() {
+    protected void triggerReinit() {
         if (sharingUrl != null) {
             log.info("Requesting reinitialization from Sharing Platform");
             lastHealthStati.add(new HealthStatus("Requested reinitialization from Sharing Platform via " + sharingUrl));
