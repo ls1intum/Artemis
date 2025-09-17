@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-@Lazy
+@Lazy(false)
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildAgentSshKeyService {
@@ -40,9 +40,6 @@ public class BuildAgentSshKeyService {
 
     @Value("${artemis.version-control.build-agent-use-ssh:false}")
     private boolean useSshForBuildAgent;
-
-    @Value("${info.contact}")
-    private String sshKeyComment;
 
     /**
      * Generates the SSH key pair and writes the private key when the application is started and the build agents should use SSH for their git operations.
@@ -85,7 +82,7 @@ public class BuildAgentSshKeyService {
         OpenSSHKeyPairResourceWriter writer = new OpenSSHKeyPairResourceWriter();
 
         try (OutputStream outputStream = Files.newOutputStream(privateKeyPath)) {
-            writer.writePrivateKey(keyPair, sshKeyComment, new OpenSSHKeyEncryptionContext(), outputStream);
+            writer.writePrivateKey(keyPair, null, new OpenSSHKeyEncryptionContext(), outputStream);
         }
 
         // Avoid an UnsupportedOperationException on Windows
@@ -108,7 +105,7 @@ public class BuildAgentSshKeyService {
 
         OpenSSHKeyPairResourceWriter writer = new OpenSSHKeyPairResourceWriter();
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            writer.writePublicKey(keyPair, sshKeyComment, outputStream);
+            writer.writePublicKey(keyPair, null, outputStream);
             return outputStream.toString();
         }
         catch (IOException | GeneralSecurityException e) {
