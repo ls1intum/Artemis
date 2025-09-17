@@ -50,7 +50,7 @@ OpenAI
                temperature: 1.0 # Required to be 1.0 for gpt-5
 
 Azure OpenAI
-"""""""""""
+""""""""""""
 
 .. code:: yaml
 
