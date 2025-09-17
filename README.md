@@ -74,7 +74,6 @@ Artemis integrates with the [EduTelligence suite](https://github.com/ls1intum/ed
 
 * **Iris** - AI Virtual Tutor powered by Pyris for intelligent student assistance
 * **Athena** - Automated assessment system for text, modeling, and programming exercises
-* **Hyperion** - AI-driven programming exercise creation assistance
 
 Additional services are available in the EduTelligence suite for advanced deployments. For detailed information about all available services, please refer to the [EduTelligence repository](https://github.com/ls1intum/edutelligence).
 
@@ -95,7 +94,6 @@ The Artemis development team prioritizes the following areas in the future. We w
 * **Short term**: Further improve the communication features with mobile apps for iOS and Android
 * **Short term**: Add the possibility to use Iris for questions on all exercise types and lectures (partly done)
 * **Short term**: Provide GenAI based automatic feedback to modeling, text and programming exercise with Athena
-* **Short term**: Expand Hyperion's AI-powered exercise creation assistance beyond consistency checking
 * **Short term**: Improve the LTI integration with Moodle
 * **Medium term**: Improve the REST API of the server application
 * **Medium term**: Integrate an online IDE (e.g. Eclipse Theia) into Artemis for enhanced user experience
@@ -206,7 +204,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.4.0.war
+./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.4.1.war
 ```
 
 ## Architecture

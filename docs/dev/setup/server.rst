@@ -70,12 +70,6 @@ You only need to modify them if your specific work or production environments re
        athena:
             # If you want to use Athena, refer to the dedicated configuration section. Under Administration Guide, Setup of Extension Services.
 
-       hyperion:
-            # If you want to use Hyperion for programming exercise creation assistance,
-            # refer to the dedicated configuration section.
-            # See: Hyperion Service section below.
-
-
 **Note:**
 If you use a password for authentication, update it in ``gradle/liquibase.gradle``.
 
@@ -112,8 +106,6 @@ module replacement in the client.
   ``dev,jenkins,localvc,artemis,scheduling,core,atlas,local``.
 * **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with ``athena`` profile and Local VC / CI enabled
   (see `Athena Service <#athena-service>`__).
-* **Artemis (Server, LocalVC & LocalCI, Hyperion):** The server will be started separated from the client with ``hyperion`` profile and Local VC / CI enabled
-  (see `Hyperion Service <#hyperion-service>`__).
 * **Artemis (Server, LocalVC & LocalCI, Theia):** The server will be started separated from the client with ``theia`` profile and Local VC / CI enabled.
 * **Artemis (BuildAgent):** The server will be started separated from the client with the profiles ``buildagent,local``.
   This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
@@ -261,33 +253,46 @@ sure to pass the active profiles to the ``gradlew`` command like this:
 
 .. _hyperion-service:
 
-Hyperion Service (Optional)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Hyperion (Optional)
+^^^^^^^^^^^^^^^^^^^^
 
-**Hyperion** is an AI-driven programming exercise creation assistance that provides consistency checking and problem statement rewriting features for programming exercises.
+Hyperion provides AI-assisted exercise creation features via Spring AI. No external Edutelligence service is required, only a LLM provider such as OpenAI or Azure OpenAI.
 
-Quick Setup for Development
+Quick setup for development
 """""""""""""""""""""""""""
 
-1. **Start Hyperion Service**
+1. Enable the hyperion service
 
-   .. code-block:: bash
+    In your ``application-local.yml``, enable the hyperion service:
 
-      # Navigate to EduTelligence Hyperion directory
-      cd /path/to/edutelligence/hyperion/docker
-      docker compose -f compose.local.yaml up -d
+   .. code-block:: yaml
 
-2. **Enable Hyperion Profile**
+        artemis:
+            hyperion:
+                enabled: true
 
-   Add ``hyperion`` to your Spring profiles:
+2. Configure Spring AI
 
-   .. code-block:: bash
+   Set up your preferred provider (Azure OpenAI or OpenAI) in ``application-local.yml``. Examples:
 
-      --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,hyperion
+   .. code-block:: yaml
 
-3. **Verify Connection**
+        spring:
+          ai:
+            # https://docs.spring.io/spring-ai/reference/api/chat/azure-openai-chat.html
+            azure:
+              openai:
+                api-key: <azure_openai_key> # comment out if using OpenAI
+                # open-ai-api-key: <openai_key> # Fallback OpenAI key if needed, sets non-azure endpoint automatically
+                endpoint: <azure_openai_endpoint> # comment out if using OpenAI
+                chat:
+                  options:
+                    deployment-name: <azure_openai_deployment_name or openai_model_name>
+                    # Some Azure/OpenAI deployments (e.g., gpt-5-mini) only support the default temperature (1.0)
+                    temperature: 1.0
 
-   The default development configuration uses ``http://localhost:8000`` with API key ``local-development-key``.
+Production setup
+""""""""""""""""
 
-.. note::
-   For detailed setup, AI provider configuration, and production deployment, see the :doc:`Hyperion admin documentation <../../admin/setup/hyperion>` and the `EduTelligence Hyperion repository <https://github.com/ls1intum/edutelligence/tree/main/hyperion>`__.
+See :ref:`Hyperion Service <hyperion_admin_setup>` in the Administration Guide for instructions on enabling the
+module in production and configuring LLM credentials.

@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.4.0"
+version = "8.4.1"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -97,10 +97,6 @@ repositories {
     // required for org.opensaml:* dependencies
     maven {
         url = "https://build.shibboleth.net/maven/releases"
-    }
-    // required for Spring AI milestones
-    maven {
-        url = "https://repo.spring.io/milestone"
     }
 }
 
@@ -185,6 +181,9 @@ dependencies {
     implementation "de.jplag:swift:${jplag_version}"
     implementation "de.jplag:text:${jplag_version}"
     implementation "de.jplag:typescript:${jplag_version}"
+
+    implementation platform("org.springframework.ai:spring-ai-bom:1.0.2")
+    implementation "org.springframework.ai:spring-ai-starter-model-azure-openai" // can also use non-azure models
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -356,9 +355,6 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    // Spring AI for Hyperion module
-    implementation "org.springframework.ai:spring-ai-openai-spring-boot-starter:1.0.0-M4"
-
     implementation "org.springframework.data:spring-data-jpa:3.5.4"
     implementation "org.springframework.data:spring-data-ldap:3.5.4"
     implementation "org.springframework.ldap:spring-ldap-core:3.3.3"
@@ -404,8 +400,8 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
     // required by sshd-git
-    implementation "org.bouncycastle:bcpkix-jdk18on:1.81"
-    implementation "org.bouncycastle:bcprov-jdk18on:1.81"
+    implementation "org.bouncycastle:bcpkix-jdk18on:1.82"
+    implementation "org.bouncycastle:bcprov-jdk18on:1.82"
 
     implementation "com.mysql:mysql-connector-j:${mysql_version}"
     implementation "org.postgresql:postgresql:42.7.7"
@@ -487,7 +483,7 @@ dependencies {
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:9.0.0"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.3"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.4"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
 
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
@@ -518,20 +514,12 @@ apply from: "gradle/openapi.gradle"
 dependencyManagement {
     imports {
         mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:17.2.0"
-        mavenBom "org.springframework.ai:spring-ai-bom:1.0.0-M4"
     }
 }
 
 tasks.register("cleanResources", Delete) {
     delete "build/resources"
 }
-
-tasks.register("cleanGenerated", Delete) {
-    delete "build/generated"
-}
-
-// Clean task should also clean generated files
-clean.dependsOn cleanGenerated
 
 tasks.withType(JavaCompile).configureEach {
     options.compilerArgs << "-Xlint:deprecation"
@@ -595,5 +583,5 @@ tasks.named("dependencyUpdates").configure {
 // 11) Create changelog between Java and DB         ./gradlew liquibaseDiffChangeLog (make sure to set the correct username and password in liquibase.gradle)
 // 12) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
-// 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups at the moment)
-// 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups at the moment)
+// 14) Generate OpenAPI client services & DTOs:     ./gradlew openApiGenerate -x webapp (only relevant for tutorial groups and hyperion at the moment)
+// 15) Generate OpenAPI spec:                       ./gradlew generateApiDocs -x webapp (only relevant for tutorial groups and hyperion at the moment)

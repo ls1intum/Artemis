@@ -85,9 +85,7 @@ public class HyperionConsistencyCheckService {
         // @formatter:on
 
         List<ConsistencyIssueDTO> issueDTOs = Objects.requireNonNullElse(combinedIssues, new ArrayList<ConsistencyIssue>()).stream().map(this::mapConsistencyIssueToDto).toList();
-        boolean hasIssues = !issueDTOs.isEmpty();
-        String summary = hasIssues ? String.format("Found %d consistency issues", issueDTOs.size()) : "No consistency issues found";
-        return new ConsistencyCheckResponseDTO(issueDTOs, hasIssues, summary);
+        return new ConsistencyCheckResponseDTO(issueDTOs);
     }
 
     /**

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HYPERION;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.UPLOADS_FILE_PATH_DEFAULT;
 import static de.tum.cit.aet.artemis.core.config.Constants.UPLOADS_FILE_PATH_PROPERTY_NAME;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
@@ -79,8 +79,6 @@ public class ArtemisApp {
     public static void main(String[] args) {
         SpringApplication app = new SpringApplication(ArtemisApp.class);
         DefaultProfileUtil.addDefaultProfile(app);
-        // Enable Hyperion profile by default TODO: REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!
-        app.setAdditionalProfiles(PROFILE_HYPERION);
         var context = app.run(args);
         Environment env = context.getEnvironment();
         String fileUploadPath = env.getProperty(UPLOADS_FILE_PATH_PROPERTY_NAME);
@@ -99,7 +97,9 @@ public class ArtemisApp {
         // Publish the FullStartupEvent to indicate that the application is fully started.
         // We use this in most of our services that execute logic on startup as we there's no need that they already execute this logic when the ApplicationReadyEvent is published.
         context.publishEvent(new FullStartupEvent());
-        deferredEagerBeanInitialization(context);
+        if (env.acceptsProfiles(Profiles.of(PROFILE_CORE))) {
+            deferredEagerBeanInitialization(context);
+        }
     }
 
     /**

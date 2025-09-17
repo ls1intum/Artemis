@@ -205,16 +205,5 @@ describe('ArtemisIntelligenceService', () => {
             service.consistencyCheck(42).subscribe((res) => expect(res.issues).toEqual([]));
             expect(service.isLoading()).toBeFalsy(); // Should be false after synchronous completion
         });
-
-        it('should handle loading state for Hyperion consistency check with detailed response', () => {
-            const mockResponse: ConsistencyCheckResponse = {
-                issues: [],
-            };
-            mockHyperionApiService.checkExerciseConsistency.mockReturnValue(of(mockResponse));
-
-            expect(service.isLoading()).toBeFalsy();
-            service.consistencyCheck(42).subscribe();
-            expect(service.isLoading()).toBeFalsy(); // Should be false after synchronous completion
-        });
     });
 });

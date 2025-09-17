@@ -15,9 +15,5 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Response containing consistency check results")
 public record ConsistencyCheckResponseDTO(
 
-        @NotNull @Schema(description = "List of consistency issues found") List<ConsistencyIssueDTO> issues,
-
-        @NotNull @Schema(description = "Whether any issues were found", example = "true") Boolean hasIssues,
-
-        @NotNull @Schema(description = "Summary of the consistency check", example = "Found 3 consistency issues") String summary) {
+        @NotNull @Schema(description = "List of consistency issues found") List<ConsistencyIssueDTO> issues) {
 }
