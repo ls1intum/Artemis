@@ -120,11 +120,7 @@ public class BuildJobContainerService {
         }
         HostConfig defaultHostConfig = buildAgentConfiguration.hostConfig();
         HostConfig customHostConfig;
-        boolean customNetworkSelected = network != null;
-        if (customNetworkSelected || cpuCount > 0 || memory > 0 || memorySwap > 0) {
-            // The "bridge" network refers to the default network used by docker when no network is specified
-            String adjustedNetwork = customNetworkSelected ? network : "bridge";
-
+        if (network != null || cpuCount > 0 || memory > 0 || memorySwap > 0) {
             // Use provided values if they are greater than 0 and less than the maximum values, otherwise use either the maximum values or the default values from the host config.
             long adjustedCpuCount = (cpuCount > 0) ? ((maxCpuCount > 0) ? Math.min(cpuCount, maxCpuCount) : cpuCount)
                     : (defaultHostConfig.getCpuQuota() / defaultHostConfig.getCpuPeriod());
@@ -137,7 +133,7 @@ public class BuildJobContainerService {
                     ? ((maxMemorySwap > 0) ? Math.min(convertMemoryFromMBToBytes(memorySwap), convertMemoryFromMBToBytes(maxMemorySwap)) : convertMemoryFromMBToBytes(memorySwap))
                     : defaultHostConfig.getMemorySwap();
 
-            customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, adjustedNetwork, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
+            customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, network, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
         }
         else {
             customHostConfig = defaultHostConfig;
@@ -162,7 +158,7 @@ public class BuildJobContainerService {
         long cpuPeriod = defaultHostConfig.getCpuPeriod();
         HostConfig host = HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap)
                 .withPidsLimit(defaultHostConfig.getPidsLimit()).withAutoRemove(true);
-        if (network != null) {
+        if (network != null && !network.isBlank()) {
             host.withNetworkMode(network);
         }
         return host;

@@ -100,27 +100,12 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.timeoutDefaultValue).toBe(120);
     });
 
-    it('should set custom network flag value', () => {
-        comp.onUseCustomNetworkToggle({ target: { checked: true } });
-        expect(comp.useCustomNetwork()).toBeTrue();
-
-        comp.onUseCustomNetworkToggle({ target: { checked: false } });
-        expect(comp.useCustomNetwork()).toBeFalse();
-    });
-
-    it('should remove selected network when flag is un-checked', () => {
-        comp.network.set('some_network');
-        comp.onUseCustomNetworkToggle({ target: { checked: false } });
-
-        expect(comp.network()).toBeUndefined();
-    });
-
     it('should parse docker flags correctly', () => {
         comp.envVars = [['key', 'value']];
         comp.parseDockerFlagsToString();
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{"key":"value"}}');
 
-        comp.network.set('custom');
+        comp.onNetworkChange({ target: { value: 'custom' } });
         comp.parseDockerFlagsToString();
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{"key":"value"},"network":"custom"}');
 

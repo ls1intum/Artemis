@@ -11,6 +11,7 @@ import static org.assertj.core.groups.Tuple.tuple;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
@@ -1233,7 +1234,27 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testIllegalNetwork() {
+        void testDockerDefaultNetworkWorks() {
+            createAndSaveBuildConfigWithNetworkName("");
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            assertThat(dockerClient.createContainerCmd(anyString()).withHostConfig(argThat(h -> h.getNetworkMode() == null)));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testDockerNoneNetworkWorks() {
+            createAndSaveBuildConfigWithNetworkName("none");
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            assertThat(dockerClient.createContainerCmd(anyString()).withHostConfig(argThat(h -> h.getNetworkMode().equals("none"))));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testDockerIllegalNetworkThrows() {
             String networkName = "illegalNetwork";
             createAndSaveBuildConfigWithNetworkName(networkName);
             ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -1241,32 +1262,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThatThrownBy(() -> localCITriggerService.triggerBuild(studentParticipation, false)).isInstanceOf(ResponseStatusException.class)
                     .hasMessageContaining("Invalid network: " + networkName);
         }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testIllegalNetwork222222() {
-            String networkName = "bridge";
-            createAndSaveBuildConfigWithNetworkName(networkName);
-            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-
-            assertThatThrownBy(() -> localCITriggerService.triggerBuild(studentParticipation, false)).isInstanceOf(ResponseStatusException.class)
-                    .hasMessageContaining("Invalid network: " + networkName);
-        }
-
-        /*
-         * @Test
-         * @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-         * void testIllegalNetwork() {
-         * String illegalNetworkName = "illegalNetwork";
-         * String dockerFlags = String.format("{\"network\": \"%s\", \"env\": {\"key\": \"value\", \"key1\": \"value1\"}}", illegalNetworkName);
-         * ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
-         * buildConfig.setDockerFlags(dockerFlags);
-         * programmingExerciseBuildConfigRepository.save(buildConfig);
-         * ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-         * assertThatThrownBy(() -> localCITriggerService.triggerBuild(studentParticipation, false)).isInstanceOf(ResponseStatusException.class)
-         * .hasMessageContaining("Invalid network: " + illegalNetworkName);
-         * }
-         */
 
     }
 }

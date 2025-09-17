@@ -47,7 +47,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     dockerImageField = viewChild<NgModel>('dockerImageField');
     timeoutField = viewChild<NgModel>('timeoutField');
 
-    useCustomNetwork = signal<boolean>(false);
     network = signal<string | undefined>(undefined);
 
     timeoutMinValue?: number;
@@ -124,13 +123,6 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
             for (const key in this.dockerFlags.env) {
                 this.envVars.push([key, this.dockerFlags.env?.[key] ?? '']);
             }
-        }
-    }
-
-    onUseCustomNetworkToggle(event: any) {
-        this.useCustomNetwork.set(event.target.checked);
-        if (!this.useCustomNetwork()) {
-            this.network.set(undefined);
         }
     }
 
