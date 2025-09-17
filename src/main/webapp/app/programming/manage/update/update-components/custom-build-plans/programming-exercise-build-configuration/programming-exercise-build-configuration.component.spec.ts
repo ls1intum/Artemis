@@ -14,6 +14,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ProgrammingExercise Docker Image', () => {
     let comp: ProgrammingExerciseBuildConfigurationComponent;
+    let fixture: any;
     const course = { id: 123 } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
     programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
@@ -30,7 +31,7 @@ describe('ProgrammingExercise Docker Image', () => {
             ],
         });
 
-        const fixture = TestBed.createComponent(ProgrammingExerciseBuildConfigurationComponent);
+        fixture = TestBed.createComponent(ProgrammingExerciseBuildConfigurationComponent);
         comp = fixture.componentInstance;
 
         profileService = TestBed.inject(ProfileService);
@@ -105,7 +106,8 @@ describe('ProgrammingExercise Docker Image', () => {
         comp.parseDockerFlagsToString();
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{"key":"value"}}');
 
-        comp.onNetworkChange({ target: { value: 'custom' } });
+        // selecting a custom network stores it and serializes correctly
+        comp.onNetworkChange('custom');
         comp.parseDockerFlagsToString();
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{"key":"value"},"network":"custom"}');
 
@@ -123,17 +125,33 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{},"network":"custom","cpuCount":1,"memory":1024,"memorySwap":2048}');
     });
 
-    it('should parse existing docker flags', () => {
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-            buildTimeoutMin: undefined,
-            buildTimeoutMax: undefined,
-            buildTimeoutDefault: undefined,
-        } as unknown as ProfileInfo);
+    it('should omit network when default is selected', () => {
+        // set custom first, then switch back to default (undefined)
+        comp.onNetworkChange('someNet');
+        comp.parseDockerFlagsToString();
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toContain('"network":"someNet"');
 
+        comp.onNetworkChange(undefined);
+        comp.envVars = [];
+        comp.cpuCount = undefined;
+        comp.memory = undefined;
+        comp.memorySwap = undefined;
+        comp.parseDockerFlagsToString();
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{}}');
+    });
+
+    it('should parse existing docker flags', () => {
         programmingExercise.buildConfig!.dockerFlags = '{"env":{"key":"value"}, "network":"none"}';
         comp.ngOnInit();
         expect(comp.network()).toBe('none');
         expect(comp.envVars).toEqual([['key', 'value']]);
+    });
+
+    it('should show warning when network none is selected', () => {
+        comp.network.set('none');
+        fixture.detectChanges();
+        const warning = fixture.nativeElement.querySelector('.alert-warning');
+        expect(warning).not.toBeNull();
     });
 
     it('should set supported languages', () => {

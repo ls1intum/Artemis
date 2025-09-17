@@ -62,7 +62,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         effect(() => {
             this.setIsLanguageSupported();
         });
-        // when the network changes
+        // when the network changes, update flags
         effect(() => {
             this.parseDockerFlagsToString();
         });
@@ -126,8 +126,8 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         }
     }
 
-    onNetworkChange(event: any) {
-        this.network.set(event.target.value);
+    onNetworkChange(value: any) {
+        this.network.set(value);
     }
 
     onCpuCountChange(event: any) {
