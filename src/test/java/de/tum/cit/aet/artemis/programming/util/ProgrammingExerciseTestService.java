@@ -283,7 +283,7 @@ public class ProgrammingExerciseTestService {
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
-    @Autowired
+    @Autowired(required = false)
     private ContinuousIntegrationService continuousIntegrationService;
 
     @Autowired
