@@ -496,6 +496,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.ExamCalendarEventDTO(
+                exam.id,
                 exam.title,
                 exam.visibleDate,
                 exam.startDate,
@@ -508,7 +509,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             FROM Exam exam
             WHERE exam.course.id = :courseId
             """)
-    Set<ExamCalendarEventDTO> getExamCalendarEventDAOsForCourseId(@Param("courseId") long courseId);
+    Set<ExamCalendarEventDTO> getExamCalendarEventDTOsForCourseId(@Param("courseId") long courseId);
 
     @Query("""
             SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO(
