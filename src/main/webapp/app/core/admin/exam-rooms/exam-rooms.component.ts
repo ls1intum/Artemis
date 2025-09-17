@@ -92,17 +92,7 @@ export class ExamRoomsComponent {
             .join(', '),
     );
     hasExamRoomData: Signal<boolean> = computed(() => !!this.numberOfUniqueExamRooms());
-    examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => {
-        return this.overview()?.newestUniqueExamRooms?.map(
-            (examRoomDTO) =>
-                ({
-                    ...examRoomDTO,
-                    defaultCapacity: this.getDefaultCapacityOfExamRoom(examRoomDTO),
-                    maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO),
-                    layoutStrategyNames: this.getLayoutStrategyNames(examRoomDTO),
-                }) as ExamRoomDTOExtended,
-        );
-    });
+    examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => this.calculateExamRoomData());
 
     // Fields for working with SortDirective
     sortAttribute: 'id' | 'roomNumber' | 'name' | 'building' | 'defaultCapacity' | 'maxCapacity' = 'id';
@@ -281,6 +271,18 @@ export class ExamRoomsComponent {
                 ?.map((layoutStrategy) => layoutStrategy.name)
                 .sort()
                 .join(', ') ?? ''
+        );
+    }
+
+    private calculateExamRoomData() {
+        return this.overview()?.newestUniqueExamRooms?.map(
+            (examRoomDTO) =>
+                ({
+                    ...examRoomDTO,
+                    defaultCapacity: this.getDefaultCapacityOfExamRoom(examRoomDTO),
+                    maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO),
+                    layoutStrategyNames: this.getLayoutStrategyNames(examRoomDTO),
+                }) as ExamRoomDTOExtended,
         );
     }
 }

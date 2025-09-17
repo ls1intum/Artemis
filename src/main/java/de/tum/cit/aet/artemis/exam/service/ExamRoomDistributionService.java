@@ -2,14 +2,13 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotEmpty;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -33,8 +32,6 @@ import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 @Lazy
 @Service
 public class ExamRoomDistributionService {
-
-    private static final Logger log = LoggerFactory.getLogger(ExamRoomDistributionService.class);
 
     private static final String ENTITY_NAME = "examRoomDistributionService";
 
@@ -67,15 +64,14 @@ public class ExamRoomDistributionService {
      */
     public void distributeRegisteredStudents(long examId, @NotEmpty Set<Long> examRoomIds) {
         final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
-        final var examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
-
-        final var examUsers = exam.getExamUsers();
+        final Set<ExamRoom> examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
 
         final int numberOfUsableSeats = examRoomsForExam.stream().mapToInt(examRoom -> examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity()).sum();
+        final int numberOfExamUsers = exam.getExamUsers().size();
 
-        if (numberOfUsableSeats < examUsers.size()) {
+        if (numberOfUsableSeats < numberOfExamUsers) {
             throw new BadRequestAlertException("Not enough seats available in the selected rooms", ENTITY_NAME, "notEnoughExamSeats",
-                    Map.of("numberOfUsableSeats", numberOfUsableSeats, "numberOfExamUsers", examUsers.size()));
+                    Map.of("numberOfUsableSeats", numberOfUsableSeats, "numberOfExamUsers", numberOfExamUsers));
         }
 
         examRoomExamAssignmentRepository.deleteAllByExamId(examId);
@@ -88,19 +84,33 @@ public class ExamRoomDistributionService {
         }
         examRoomExamAssignmentRepository.saveAll(examRoomExamAssignments);
 
-        // Now we distribute students to the seats
+        distributeExamUsersToUsableSeatsInRooms(exam, examRoomsForExam);
+    }
+
+    private void distributeExamUsersToUsableSeatsInRooms(Exam exam, Set<ExamRoom> examRoomsForExam) {
         Map<String, List<ExamSeatDTO>> roomNumberToUsableSeatsDefaultLayout = new HashMap<>();
         for (ExamRoom examRoom : examRoomsForExam) {
             roomNumberToUsableSeatsDefaultLayout.put(examRoom.getRoomNumber(), examRoomService.getDefaultUsableSeats(examRoom));
         }
 
-        final var examUsersIterator = examUsers.iterator();
-        roomNumberToUsableSeatsDefaultLayout.forEach((roomNumber, usableSeats) -> usableSeats.stream().takeWhile(ignored -> examUsersIterator.hasNext()).forEach(seat -> {
-            ExamUser nextExamUser = examUsersIterator.next();
-            nextExamUser.setPlannedRoom(roomNumber);
-            nextExamUser.setPlannedSeat(seat.name());
-            exam.addExamUser(nextExamUser);
-        }));
+        Set<ExamUser> examUsers = exam.getExamUsers();
+        Iterator<ExamUser> examUsersIterator = examUsers.iterator();
+
+        distributionLoop: for (var roomNumberToUsableSeatsEntry : roomNumberToUsableSeatsDefaultLayout.entrySet()) {
+            final String roomNumber = roomNumberToUsableSeatsEntry.getKey();
+            final List<ExamSeatDTO> usableSeatsForThisRoom = roomNumberToUsableSeatsEntry.getValue();
+
+            for (ExamSeatDTO seat : usableSeatsForThisRoom) {
+                if (!examUsersIterator.hasNext()) {
+                    break distributionLoop;
+                }
+
+                ExamUser nextExamUser = examUsersIterator.next();
+                nextExamUser.setPlannedRoom(roomNumber);
+                nextExamUser.setPlannedSeat(seat.name());
+                exam.addExamUser(nextExamUser);
+            }
+        }
 
         examUserRepository.saveAll(examUsers);
         examRepository.save(exam);

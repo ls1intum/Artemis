@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomDistributionService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
-import de.tum.cit.aet.artemis.exam.service.ExamService;
 
 /**
  * REST controller for managing distributions of {@link ExamUser}s to {@link ExamRoom}s in an {@link Exam}
@@ -43,8 +42,7 @@ public class ExamRoomDistributionResource {
 
     private final ExamRoomDistributionService examRoomDistributionService;
 
-    public ExamRoomDistributionResource(ExamAccessService examAccessService, ExamRoomService examRoomService, ExamService examService,
-            ExamRoomDistributionService examRoomDistributionService) {
+    public ExamRoomDistributionResource(ExamAccessService examAccessService, ExamRoomService examRoomService, ExamRoomDistributionService examRoomDistributionService) {
         this.examAccessService = examAccessService;
         this.examRoomService = examRoomService;
         this.examRoomDistributionService = examRoomDistributionService;
