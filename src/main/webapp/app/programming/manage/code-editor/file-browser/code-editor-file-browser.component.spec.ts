@@ -169,11 +169,11 @@ describe('CodeEditorFileBrowserComponent', () => {
         // start with PS present
         comp.displayOnly = false;
         comp.ngOnInit();
-        (comp as any).handleDisplayOnlyChange?.();
+        (comp as any).handleProblemStatementVisibility?.();
 
         // toggle to repository view (no PS)
         comp.displayOnly = true;
-        (comp as any).handleDisplayOnlyChange?.();
+        (comp as any).handleProblemStatementVisibility?.();
 
         expect(comp.repositoryFiles?.[PROBLEM_STATEMENT_IDENTIFIER]).toBeUndefined();
     });

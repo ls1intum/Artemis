@@ -95,6 +95,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
     @ViewChild('treeview', { static: false }) treeview: TreeViewComponent<string>;
     participation = input<Participation>();
+    showEditorInstructions = input(true);
     @Input()
     get selectedFile(): string | undefined {
         return this.selectedFileValue;
@@ -216,7 +217,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         }
 
         // Add Problem Statement as a first-class file type (not in display-only/repository-view mode)
-        if (!this.displayOnly) {
+        if (!this.displayOnly && this.showEditorInstructions()) {
             const existing = this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER];
             if (!existing || existing === FileType.PROBLEM_STATEMENT) {
                 this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
@@ -253,22 +254,22 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             this.setupTreeview();
         }
 
-        // Handle displayOnly changes - add/remove Problem Statement from repositoryFiles
-        if (changes.displayOnly) {
-            this.handleDisplayOnlyChange();
+        // Handle displayOnly/showEditorInstructions changes - add/remove Problem Statement from repositoryFiles
+        if (changes.displayOnly || changes.showEditorInstructions) {
+            this.handleProblemStatementVisibility();
         }
     }
 
     /**
      * Handle displayOnly mode changes by adding/removing Problem Statement from repositoryFiles
      */
-    private handleDisplayOnlyChange(): void {
+    private handleProblemStatementVisibility(): void {
         // Ensure the map exists before we mutate / render
         if (!this.repositoryFiles) {
             this.repositoryFiles = {};
         }
 
-        if (this.displayOnly) {
+        if (this.displayOnly || !this.showEditorInstructions()) {
             delete this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER];
             if (this.isProblemStatement(this.selectedFile)) {
                 this.selectedFile = undefined;

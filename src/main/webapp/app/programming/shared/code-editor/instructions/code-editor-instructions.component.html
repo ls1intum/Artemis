@@ -3,7 +3,7 @@
     class="instructions-wrapper card collapsable-card"
     [ngStyle]="collapsed ? (isAssessmentMode ? { height: '200px' } : { height: '250px' }) : { height: '100%' }"
 >
-    <div class="card-header d-flex justify-content-left text-white bg-primary" (click)="!disableCollapse && toggleEditorCollapse($event)">
+    <div class="card-header d-flex justify-content-left text-white bg-primary" (click)="!disableCollapse() && toggleEditorCollapse($event)">
         <h3 class="card-title">
             @if (!collapsed) {
                 <span>
@@ -23,7 +23,7 @@
             }
             @if (collapsed) {
                 <span class="collapsed-instructions-card">
-                    @if (!disableCollapse) {
+                    @if (!disableCollapse()) {
                         <fa-icon class="top-icon" [icon]="faChevronLeft" />
                     }
                     <fa-icon [icon]="farListAlt" class="fa-rotate-90" id="panel-symbol" />
@@ -38,13 +38,13 @@
                     @if (isAssessmentMode) {
                         <span class="header" jhiTranslate="artemisApp.exercise.instructions"></span>
                     }
-                    @if (!disableCollapse) {
+                    @if (!disableCollapse()) {
                         <fa-icon class="bottom-icon" [icon]="faChevronLeft" />
                     }
                 </span>
             }
         </h3>
-        @if (!collapsed && !disableCollapse) {
+        @if (!collapsed && !disableCollapse()) {
             <fa-icon class="ms-auto clickable" [icon]="faChevronRight" />
         }
     </div>
