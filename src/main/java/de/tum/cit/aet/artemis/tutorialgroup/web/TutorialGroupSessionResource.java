@@ -122,7 +122,7 @@ public class TutorialGroupSessionResource {
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
 
         checkEntityIdMatchesPathIds(session, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
-        if (!tutorialGroupService.isAllowedToSeePrivateTutorialGroupInformation(session.getTutorialGroup(), user, isAdmin, isAtLeastInstructor)) {
+        if (!tutorialGroupService.userHasManagingRightsForTutorialGroup(session.getTutorialGroup(), user, isAdmin, isAtLeastInstructor)) {
             session.hidePrivacySensitiveInformation();
         }
         return ResponseEntity.ok().body(TutorialGroupSession.preventCircularJsonConversion(session));
@@ -225,7 +225,7 @@ public class TutorialGroupSessionResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         boolean isAdmin = authorizationCheckService.isAdmin(user);
         boolean isInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-        tutorialGroupService.isAllowedToChangeRegistrationsOfTutorialGroup(sessionFromDatabase.getTutorialGroup(), user, isAdmin, isInstructor);
+        tutorialGroupService.isAllowedToDeleteTutorialGroup(sessionFromDatabase.getTutorialGroup(), user, isAdmin, isInstructor);
 
         tutorialGroupSessionRepository.deleteById(sessionId);
         return ResponseEntity.noContent().build();

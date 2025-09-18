@@ -603,7 +603,7 @@ public class TutorialGroupService {
         // TODO: this is some overkill, we calculate way too many information with way too many database calls, we must reduce this
         tutorialGroups.forEach(tutorialGroup -> this.setTransientPropertiesForUser(user, tutorialGroup));
         tutorialGroups.forEach(tutorialGroup -> {
-            if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user, isAdmin, isInstructor)) {
+            if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdmin, isInstructor)) {
                 tutorialGroup.hidePrivacySensitiveInformation();
             }
         });
@@ -627,7 +627,7 @@ public class TutorialGroupService {
             throw new BadRequestAlertException("The courseId in the path does not match the courseId in the tutorial group", "tutorialGroup", "courseIdMismatch");
         }
         this.setTransientPropertiesForUser(user, tutorialGroup);
-        if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user, isAdmin, isInstructor)) {
+        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdmin, isInstructor)) {
             tutorialGroup.hidePrivacySensitiveInformation();
         }
         return TutorialGroup.preventCircularJsonConversion(tutorialGroup);
@@ -668,7 +668,7 @@ public class TutorialGroupService {
     }
 
     /**
-     * Determines if a user is allowed to see private information about a tutorial group such as the list of registered students
+     * Determines if a user has managing rights for the tutorial group (e.g. see private information about a tutorial group such as the list of registered students)
      *
      * @param tutorialGroup the tutorial group for which to check permission
      * @param user          the user for which to check permission
@@ -676,7 +676,7 @@ public class TutorialGroupService {
      * @param isInstructor  whether the user is instructor of the course of the tutorialGroup
      * @return true if the user is allowed, false otherwise
      */
-    public boolean isAllowedToSeePrivateTutorialGroupInformation(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdmin, boolean isInstructor) {
+    public boolean userHasManagingRightsForTutorialGroup(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdmin, boolean isInstructor) {
         if (isAdmin || isInstructor) {
             return true;
         }
@@ -699,8 +699,14 @@ public class TutorialGroupService {
      */
     public void isAllowedToChangeRegistrationsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user, boolean isAdmin, boolean isInstructor) {
         // ToDo: Clarify if this is the correct permission check
-        if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user, isAdmin, isInstructor)) {
+        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdmin, isInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to change the registrations of tutorial group: " + tutorialGroup.getId());
+        }
+    }
+
+    public void isAllowedToDeleteTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user, boolean isAdmin, boolean isInstructor) {
+        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdmin, isInstructor)) {
+            throw new AccessForbiddenException("The user is not allowed to delete the tutorial group: " + tutorialGroup.getId());
         }
     }
 
@@ -714,7 +720,7 @@ public class TutorialGroupService {
      */
     public void isAllowedToModifySessionsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user, boolean isAdmin, boolean isInstructor) {
         // ToDo: Clarify if this is the correct permission check
-        if (!this.isAllowedToSeePrivateTutorialGroupInformation(tutorialGroup, user, isAdmin, isInstructor)) {
+        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdmin, isInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to modify the sessions of tutorial group: " + tutorialGroup.getId());
         }
     }
