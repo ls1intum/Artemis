@@ -112,8 +112,6 @@ artemis:
 # Configure Spring AI, if you want to use Hyperion
 spring:
   ai:
-    model:
-      chat: none #disable any spring ai interaction
     chat:
       client:
         enabled: false  # Disable auto-configuration to avoid conflicts
