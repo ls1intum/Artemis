@@ -229,7 +229,7 @@ export class CourseTutorialGroupDetailComponent {
     }
 
     private computeWeekdayStringKeyUsing(sessionStart: Dayjs): string {
-        const weekDayIndex = sessionStart.day();
+        const weekDayIndex = sessionStart.isoWeekday();
         const keys = [
             'global.weekdays.monday',
             'global.weekdays.tuesday',
