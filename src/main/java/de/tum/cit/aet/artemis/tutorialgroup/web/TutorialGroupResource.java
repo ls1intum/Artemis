@@ -229,18 +229,16 @@ public class TutorialGroupResource {
     @GetMapping("courses/{courseId}/tutorial-group-detail/{tutorialGroupId}")
     @EnforceAtLeastStudent
     public ResponseEntity<TutorialGroupDetailGroupDTO> getTutorialGroupDetailGroupDTO(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
-        log.info("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
+        log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        log.info("Found course: {}", courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        log.info("Found user");
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         String timeZoneString = course.getTimeZone();
         if (timeZoneString == null) {
             throw new InternalServerErrorException("The course of the tutorial group has an invalid timezone value. This should never happen when tutorial groups exist.");
         }
         ZoneId timeZone = ZoneId.of(timeZoneString);
-        var groupDto = tutorialGroupService.getTutorialGroupDetailGroupDTO(tutorialGroupId, timeZone);
+        var groupDto = tutorialGroupService.getTutorialGroupDetailGroupDTO(tutorialGroupId, courseId, timeZone);
         return ResponseEntity.ok().body(groupDto);
     }
 

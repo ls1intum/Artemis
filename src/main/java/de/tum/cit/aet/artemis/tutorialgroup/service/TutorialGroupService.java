@@ -641,12 +641,11 @@ public class TutorialGroupService {
      * @return a {@link TutorialGroupDetailGroupDTO}
      * @throws EntityNotFoundException if no tutorial group exists with the given ID
      */
-    public TutorialGroupDetailGroupDTO getTutorialGroupDetailGroupDTO(Long tutorialGroupId, ZoneId courseTimeZone) {
-        TutorialGroupDetailGroupData groupData = tutorialGroupRepository.getTutorialGroupDetailData(tutorialGroupId)
-                .orElseThrow(() -> new EntityNotFoundException("Tutorial Group Not Found with id: " + tutorialGroupId));
+    public TutorialGroupDetailGroupDTO getTutorialGroupDetailGroupDTO(Long tutorialGroupId, Long courseId, ZoneId courseTimeZone) {
+        TutorialGroupDetailGroupData groupData = tutorialGroupRepository.getTutorialGroupDetailData(tutorialGroupId, courseId)
+                .orElseThrow(() -> new EntityNotFoundException("No tutorial group found with id " + tutorialGroupId + " found for course with id " + courseId + "."));
         log.info("Found group detail data");
 
-        Long courseId = groupData.courseId();
         String tutorLogin = groupData.teachingAssistantLogin();
         String currentUserLogin = userRepository.getCurrentUserLogin();
         log.info("Found user login");
