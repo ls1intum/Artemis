@@ -5,11 +5,12 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Optional;
 
+import org.apache.commons.lang.StringUtils;
 import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
 
 /**
@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorServic
  */
 @RestController
 @RequestMapping("api/core/sharing/")
-@Profile(Constants.PROFILE_SHARING)
+@ConditionalOnProperty(name = "artemis.sharing.enabled", havingValue = "true", matchIfMissing = false)
 @Lazy
 public class SharingSupportResource {
 
@@ -67,6 +67,15 @@ public class SharingSupportResource {
             URL parsedApiBaseUrl;
             try {
                 parsedApiBaseUrl = URI.create(apiBaseUrl).toURL();
+                if (StringUtils.isEmpty(parsedApiBaseUrl.getHost())) {
+                    log.warn("Rejected config request: apiBaseUrl missing host");
+                    return ResponseEntity.badRequest().build();
+                }
+                final String protocol = parsedApiBaseUrl.getProtocol();
+                if (!"https".equalsIgnoreCase(protocol) && !"http".equalsIgnoreCase(protocol)) {
+                    log.warn("Rejected config request: disallowed scheme {}", protocol);
+                    return ResponseEntity.badRequest().build();
+                }
             }
             catch (IllegalArgumentException | MalformedURLException e) {
                 log.error("Bad URL", e);

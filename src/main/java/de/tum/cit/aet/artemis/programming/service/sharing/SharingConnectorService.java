@@ -17,14 +17,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import de.tum.cit.aet.artemis.core.config.Constants;
 
 /**
  * Service to support Sharing Platform functionality as a plugin.
@@ -32,7 +30,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
  * @see <a href="https://sharing-codeability.uibk.ac.at/sharing/codeability-sharing-platform/-/wikis/technical/Plugin-Interface">Plugin Tutorial</a>
  */
 @Service
-@Profile(Constants.PROFILE_SHARING)
+@ConditionalOnProperty(name = "artemis.sharing.enabled", havingValue = "true", matchIfMissing = false)
 @Lazy
 public class SharingConnectorService {
 
@@ -248,9 +246,9 @@ public class SharingConnectorService {
 
     /**
      * request a reinitialization of the sharing platform.
-     * Not for external use, protected for test purpose only.
+     * Not for external use, package visible for test purpose only.
      */
-    protected void triggerReinit() {
+    void triggerReinit() {
         if (sharingUrl != null) {
             log.info("Requesting reinitialization from Sharing Platform");
             lastHealthStati.add(new HealthStatus("Requested reinitialization from Sharing Platform via " + sharingUrl));

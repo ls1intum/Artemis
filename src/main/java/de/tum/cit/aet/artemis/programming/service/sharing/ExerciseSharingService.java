@@ -42,8 +42,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
@@ -57,7 +57,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -68,7 +67,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportServi
  * service for sharing exercises via the sharing platform.
  */
 @Service
-@Profile(Constants.PROFILE_SHARING)
+@ConditionalOnProperty(name = "artemis.sharing.enabled", havingValue = "true", matchIfMissing = false)
 @Lazy
 public class ExerciseSharingService {
 

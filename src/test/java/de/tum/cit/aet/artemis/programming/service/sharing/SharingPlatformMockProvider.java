@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.programming.service.sharing;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SHARING;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -13,8 +12,8 @@ import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -31,7 +30,7 @@ import de.tum.cit.aet.artemis.core.util.RequestUtilService;
  * and the sharing platform, allowing for isolated testing of sharing functionality.
  */
 @Component
-@Profile(PROFILE_SHARING)
+@ConditionalOnProperty(name = "artemis.sharing.enabled", havingValue = "true", matchIfMissing = false)
 @Lazy
 public class SharingPlatformMockProvider {
 

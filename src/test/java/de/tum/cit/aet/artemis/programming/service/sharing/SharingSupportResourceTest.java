@@ -67,6 +67,20 @@ class SharingSupportResourceTest extends AbstractSpringIntegrationIndependentTes
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void shouldReturnBadRequestWhenSuspiciousApiBaseURLWithMissingHost() throws Exception {
+        requestUtilService.performMvcRequest(get("/api/core/sharing/config").queryParam("apiBaseUrl", "https:///missingHost/api")
+                .queryParam("installationName", SharingPlatformMockProvider.TEST_INSTALLATION_NAME).header("Authorization", sharingPlatformMockProvider.getTestSharingApiKey())
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenSuspiciousApiBaseURLWithWeirdProtocoll() throws Exception {
+        requestUtilService.performMvcRequest(get("/api/core/sharing/config").queryParam("apiBaseUrl", "ftp://localhost:1234/missingHost/api")
+                .queryParam("installationName", SharingPlatformMockProvider.TEST_INSTALLATION_NAME).header("Authorization", sharingPlatformMockProvider.getTestSharingApiKey())
+                .contentType(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+    }
+
     /**
      * request config with a missing api key
      *
