@@ -230,7 +230,6 @@ describe('CourseExerciseDetailsComponent', () => {
     it('should initialize', fakeAsync(() => {
         fixture.detectChanges();
         tick(500);
-        expect(comp.isProduction).toBeFalse();
         expect(comp.exerciseId).toBe(42);
         expect(comp.courseId).toBe(1);
         expect(comp.exercise).toStrictEqual(exercise);

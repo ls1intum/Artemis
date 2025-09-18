@@ -1,7 +1,6 @@
 @import 'bootstrap/scss/functions';
 @import 'bootstrap/scss/variables';
 @import 'bootstrap/scss/mixins';
-
 @import '../metis.component';
 
 .answer-post {
@@ -40,7 +39,6 @@
 .post-reactions-bar,
 .answer-post {
     background-color: transparent;
-
     transition: background-color 0.2s ease-in-out;
 
     &.is-saved {

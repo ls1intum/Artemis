@@ -42,7 +42,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { signal } from '@angular/core';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
@@ -79,7 +79,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(CalendarEventService),
+                MockProvider(CalendarService),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
@@ -166,8 +166,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             entity.id = 123;
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             jest.spyOn(programmingExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
-            const calendarEventService = TestBed.inject(CalendarEventService);
-            const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+            const calendarService = TestBed.inject(CalendarService);
+            const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
@@ -195,8 +195,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     }),
                 ),
             );
-            const calendarEventService = TestBed.inject(CalendarEventService);
-            const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+            const calendarService = TestBed.inject(CalendarService);
+            const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
