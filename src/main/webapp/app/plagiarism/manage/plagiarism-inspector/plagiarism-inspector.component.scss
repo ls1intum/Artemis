@@ -7,6 +7,7 @@ $footer-height: 31px;
     display: flex;
     flex-direction: column;
     height: calc(100vh - 2 * #{$card-body-padding} - #{$navbar-height} - #{$footer-height} - #{$breadcrumbs-height});
+
     // JHipster's .card-body has default padding of 1.25
     margin: -1rem;
 

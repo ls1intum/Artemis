@@ -12,8 +12,6 @@
     z-index: 1000;
     overflow-y: auto;
     overflow-x: visible;
-    // pointer-events: none;
-
     transition:
         max-height 0.2s 0.2s ease-in-out,
         height 0.2s 0.2s ease-in-out;
@@ -38,8 +36,6 @@
     position: absolute;
     bottom: 1.5rem;
     right: 0;
-    // opacity: 0;
-
     transition:
         opacity 0.4s ease-out,
         bottom 0.4s ease-in-out;
@@ -68,7 +64,6 @@
     right: 0;
     width: 20rem;
     text-align: right;
-
     transition: opacity 0.4s ease-in-out;
 }
 
@@ -85,7 +80,6 @@
     & .course-notification-popup-overlay-collapse {
         opacity: 1;
         pointer-events: all;
-
         transition: opacity 0.4s 0.5s ease-in-out;
     }
 }

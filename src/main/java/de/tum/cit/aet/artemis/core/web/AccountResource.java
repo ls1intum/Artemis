@@ -255,4 +255,18 @@ public class AccountResource {
         }
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * PUT account/enable-memiris : sets the memirisEnabled flag for the user to true or false.
+     *
+     * @param memirisEnabled the boolean indicating whether Memiris is enabled or not
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("account/enable-memiris")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> setMemirisEnabled(@RequestBody boolean memirisEnabled) {
+        User user = userRepository.getUser();
+        userRepository.updateMemirisEnabled(user.getId(), memirisEnabled);
+        return ResponseEntity.ok().build();
+    }
 }

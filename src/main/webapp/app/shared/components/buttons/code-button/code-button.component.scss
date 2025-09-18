@@ -14,9 +14,11 @@
     border-bottom-#{$direction}-radius: 0;
     border-#{$direction}: none;
 }
+
 .url-box-remove-line-left {
     @include url-box-remove-line(left);
 }
+
 .url-box-remove-line-right {
     @include url-box-remove-line(right);
 }

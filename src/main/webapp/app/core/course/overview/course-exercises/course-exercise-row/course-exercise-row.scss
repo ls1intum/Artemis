@@ -9,13 +9,16 @@
         padding: 5px 0;
         background-color: var(--overview-light-background-color);
         border-radius: var(--bs-border-radius-lg);
+
         .row {
             min-height: 35px;
             align-items: center;
         }
+
         &:hover {
             background-color: var(--hover-slightly-darker-body-bg);
         }
+
         .exercise-link {
             color: #212529;
         }

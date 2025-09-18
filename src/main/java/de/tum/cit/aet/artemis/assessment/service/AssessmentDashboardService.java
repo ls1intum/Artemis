@@ -89,15 +89,15 @@ public class AssessmentDashboardService {
 
         // parts of this loop can possibly still be extracted
         for (Exercise exercise : exercises) {
-            DueDateStat totalNumberOfAssessments;
+            long numberOfAssessments;
 
             if (exercise instanceof ProgrammingExercise) {
-                totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
+                numberOfAssessments = programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId());
                 log.debug("Finished >> programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted << call for exercise {} in {}", exercise.getId(),
                         TimeLogUtil.formatDurationFrom(start));
             }
             else {
-                totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
+                numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
                 log.debug("Finished >> resultRepository.countNumberOfFinishedAssessmentsForExercise << call for exercise {} in {}", exercise.getId(),
                         TimeLogUtil.formatDurationFrom(start));
             }
@@ -112,8 +112,8 @@ public class AssessmentDashboardService {
                         TimeLogUtil.formatDurationFrom(start));
             }
             else {
-                // no examMode here, so correction rounds defaults to 1 and is the same as totalNumberOfAssessments
-                numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { totalNumberOfAssessments };
+                // no examMode here, so correction rounds defaults to 1 and is the same as numberOfAssessments
+                numberOfAssessmentsOfCorrectionRounds = new DueDateStat[] { new DueDateStat(numberOfAssessments, 0L) };
             }
 
             exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);

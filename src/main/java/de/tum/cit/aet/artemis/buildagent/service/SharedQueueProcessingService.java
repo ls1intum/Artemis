@@ -52,7 +52,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
  * Includes functionality for processing build jobs from the shared build job queue.
  */
 @Profile(PROFILE_BUILDAGENT)
-@Lazy
+@Lazy(false)
 @Service
 public class SharedQueueProcessingService {
 
@@ -205,7 +205,6 @@ public class SharedQueueProcessingService {
             return;
         }
 
-        // Remove build agent information of offline nodes
         removeOfflineNodes();
 
         // Add build agent information of local hazelcast member to map if not already present
@@ -300,13 +299,28 @@ public class SharedQueueProcessingService {
         return null;
     }
 
+    /**
+     * Removes build agent information for offline nodes and processing jobs that are assigned to these nodes.
+     */
     private void removeOfflineNodes() {
         Set<String> memberAddresses = distributedDataAccessService.getClusterMemberAddresses();
-        for (String key : distributedDataAccessService.getDistributedBuildAgentInformation().keySet()) {
+        for (String key : distributedDataAccessService.getBuildAgentInformationMap().keySet()) {
             if (!memberAddresses.contains(key)) {
-                distributedDataAccessService.getDistributedBuildAgentInformation().remove(key);
+                removeBuildAgentInformationForNode(key);
+                removeProcessingJobsForNode(key);
             }
         }
+    }
+
+    private void removeBuildAgentInformationForNode(String memberAddress) {
+        log.debug("Cleaning up build agent information for offline node: {}", memberAddress);
+        distributedDataAccessService.getDistributedBuildAgentInformation().remove(memberAddress);
+    }
+
+    private void removeProcessingJobsForNode(String memberAddress) {
+        List<String> jobsToRemove = distributedDataAccessService.getProcessingJobIdsForAgent(memberAddress);
+        log.debug("Removing {} processing jobs for offline node: {}", jobsToRemove.size(), memberAddress);
+        distributedDataAccessService.getDistributedProcessingJobs().removeAll(entry -> jobsToRemove.contains(entry.getKey()));
     }
 
     /**
@@ -339,16 +353,9 @@ public class SharedQueueProcessingService {
             buildLogsMap.removeBuildLogs(buildJob.id());
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
-            if (processResults.get()) {
-                distributedDataAccessService.getDistributedBuildResultQueue().add(resultQueueItem);
-            }
-            else {
-                log.info("Build agent is paused. Not adding build result to result queue for build job: {}", buildJob);
-            }
+            enqueueBuildResult(resultQueueItem, buildJob);
+            removeProcessingJob(buildJob);
 
-            // after processing a build job, remove it from the processing jobs
-            distributedDataAccessService.getDistributedProcessingJobs().remove(buildJob.id());
-            localProcessingJobs.decrementAndGet();
             buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get(), false, consecutiveBuildJobFailures.get());
 
             consecutiveBuildJobFailures.set(0);
@@ -391,15 +398,9 @@ public class SharedQueueProcessingService {
                     buildLogs, false);
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, job, buildLogs, ex);
-            if (processResults.get()) {
-                distributedDataAccessService.getDistributedBuildResultQueue().add(resultQueueItem);
-            }
-            else {
-                log.info("Build agent is paused. Not adding build result to result queue for build job: {}", buildJob);
-            }
+            enqueueBuildResult(resultQueueItem, buildJob);
+            removeProcessingJob(buildJob);
 
-            distributedDataAccessService.getDistributedProcessingJobs().remove(buildJob.id());
-            localProcessingJobs.decrementAndGet();
             buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(job, isPaused.get(), false, consecutiveBuildJobFailures.get());
 
             if (consecutiveBuildJobFailures.get() >= buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs()) {
@@ -411,6 +412,32 @@ public class SharedQueueProcessingService {
             checkAvailabilityAndProcessNextBuild();
             return null;
         });
+    }
+
+    /**
+     * Enqueue the build result to the distributed build result queue.
+     * If the build agent is paused, the result will not be added to the queue.
+     *
+     * @param resultQueueItem the build result to enqueue
+     * @param buildJob        the build job that was processed
+     */
+    private void enqueueBuildResult(ResultQueueItem resultQueueItem, BuildJobQueueItem buildJob) {
+        if (processResults.get()) {
+            distributedDataAccessService.getDistributedBuildResultQueue().add(resultQueueItem);
+        }
+        else {
+            log.info("Build agent is paused. Not adding build result to result queue for build job: {}", buildJob);
+        }
+    }
+
+    /**
+     * Remove the processing job from the distributed processing jobs map and decrement the local processing jobs counter.
+     *
+     * @param buildJob the build job to remove
+     */
+    private void removeProcessingJob(BuildJobQueueItem buildJob) {
+        distributedDataAccessService.getDistributedProcessingJobs().remove(buildJob.id());
+        localProcessingJobs.decrementAndGet();
     }
 
     private void pauseBuildAgent(boolean dueToFailures) {
