@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -43,11 +44,14 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 @Lazy
 @Profile(SPRING_PROFILE_TEST)
 @Configuration
-public class RepositoryUriWebServerThreadOverrideConfiguration extends OncePerRequestFilter {
+public class RepositoryUriWebServerThreadFilter extends OncePerRequestFilter {
 
-    private static final Logger log = LoggerFactory.getLogger(RepositoryUriWebServerThreadOverrideConfiguration.class);
+    private static final Logger log = LoggerFactory.getLogger(RepositoryUriWebServerThreadFilter.class);
 
     private static final String GIT_PREFIX = "/git/";
+
+    @Value("${artemis.version-control.url}")
+    private String baseUrl;
 
     /**
      * Overrides the thread-local base URL for {@link RepositoryUriConversionUtil}
@@ -77,9 +81,9 @@ public class RepositoryUriWebServerThreadOverrideConfiguration extends OncePerRe
         }
 
         final String base = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
-        log.debug("Setting RepositoryUriConversionUtil base URL override to {} for request {}", base, uri);
+        log.debug("Setting RepositoryUriConversionUtil base URL override to {} for request {}", baseUrl, uri);
 
-        RepositoryUriConversionUtil.overrideServerUrlForCurrentThread(base);
+        RepositoryUriConversionUtil.overrideServerUrlForCurrentThread(baseUrl);
         try {
             chain.doFilter(request, response);
         }
