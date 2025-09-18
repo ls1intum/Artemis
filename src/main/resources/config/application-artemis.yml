@@ -87,6 +87,8 @@ artemis:
     restricted-modules: module_text_llm,module_programming_llm
   apollon:
     conversion-service-url: http://localhost:8080
+  atlas:
+    enabled: true   # Enable Atlas for the agent service
   hyperion:
     enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
 
