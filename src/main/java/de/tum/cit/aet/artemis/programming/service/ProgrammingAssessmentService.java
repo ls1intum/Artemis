@@ -60,7 +60,6 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * @return result that was saved in the database
      */
     private Result saveManualAssessment(Result result, User assessor) {
-        var participation = result.getSubmission().getParticipation();
 
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);

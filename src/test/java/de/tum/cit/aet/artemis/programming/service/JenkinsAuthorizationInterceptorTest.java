@@ -39,7 +39,7 @@ class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegration
      */
     @BeforeEach
     void initTestCase() throws Exception {
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
         mockRestServiceServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).bufferContent().build();
     }
 

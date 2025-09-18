@@ -134,11 +134,6 @@ public class LocalCIService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void givePlanPermissions(ProgrammingExercise programmingExercise, String planName) {
-        // Not implemented for local CI.
-    }
-
-    @Override
     public void enablePlan(String projectKey, String planKey) throws LocalCIException {
         // Not implemented for local CI. No plans exist that must be enabled.
     }
