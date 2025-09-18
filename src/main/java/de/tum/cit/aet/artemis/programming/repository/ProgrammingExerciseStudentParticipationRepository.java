@@ -95,7 +95,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     default ProgrammingExerciseStudentParticipation findWithSubmissionsByRepositoryUriElseThrow(String repositoryUri) {
         log.debug("findWithSubmissionsByRepositoryUri full uri:{}", repositoryUri);
         String shortRepositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(repositoryUri);
-        log.debug("findWithSubmissionsByRepositoryUri short ui:{}", shortRepositoryUri);
+        log.debug("findWithSubmissionsByRepositoryUri short uri:{}", shortRepositoryUri);
         return getValueElseThrow(findWithSubmissionsByRepositoryUri(shortRepositoryUri));
     }
 
@@ -105,6 +105,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
         log.debug("findByRepositoryUri full uri:{}", repositoryUri);
         String shortRepositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(repositoryUri);
         log.debug("findByRepositoryUri short uri :{}", shortRepositoryUri);
+        log.debug("all uris: {}", findAll().stream().filter(e -> e.getRepositoryUri() != null).filter(e -> !e.getRepositoryUri().isEmpty())
+                .map(e -> RepositoryUriConversionUtil.toShortRepositoryUri(e.getRepositoryUri())).toList());
         return getValueElseThrow(findByRepositoryUri(shortRepositoryUri));
     }
 
