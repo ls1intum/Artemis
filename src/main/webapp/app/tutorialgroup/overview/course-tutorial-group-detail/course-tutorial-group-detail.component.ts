@@ -63,7 +63,7 @@ export class CourseTutorialGroupDetailComponent {
     private locale = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)), {
         initialValue: this.translateService.currentLang,
     });
-    private averageAttendanceRatio = computed<number | undefined>(() => this.computeAverageAttendanceRation(this.tutorialGroup().sessions, this.tutorialGroup().capacity));
+    private averageAttendanceRatio = computed<number | undefined>(() => this.computeAverageAttendanceRatio(this.tutorialGroup().sessions, this.tutorialGroup().capacity));
 
     course = input.required<Course>();
     tutorialGroup = input.required<TutorialGroupDetailGroupDTO>();
@@ -121,9 +121,9 @@ export class CourseTutorialGroupDetailComponent {
             .map((session) => this.computeSessionDataFrom(session, capacity));
     }
 
-    private computeAverageAttendanceRation(sessions: TutorialGroupDetailSessionDTO[], capacity: number | undefined): number | undefined {
+    private computeAverageAttendanceRatio(sessions: TutorialGroupDetailSessionDTO[], capacity: number | undefined): number | undefined {
         if (capacity === undefined) return undefined;
-        const sessionsWithAttendance = sessions.filter((session) => session.attendanceCount);
+        const sessionsWithAttendance = sessions.filter((session) => session.attendanceCount !== undefined && session.attendanceCount !== null);
         if (sessionsWithAttendance.length === 0) return undefined;
         const averageAttendance = sessionsWithAttendance.reduce((sum, session) => sum + session.attendanceCount!, 0) / sessionsWithAttendance.length;
         return averageAttendance / capacity;
