@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Artemis (Server, LocalVC &amp; LocalCI, Athena)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+  <configuration default="false" name="Artemis Server (Dev, LocalCI+BuildAgent, Athena)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <option name="ACTIVE_PROFILES" value="dev,localci,localvc,artemis,scheduling,athena,buildagent,core,local" />
     <option name="ALTERNATIVE_JRE_PATH" value="17" />
     <module name="Artemis.main" />
