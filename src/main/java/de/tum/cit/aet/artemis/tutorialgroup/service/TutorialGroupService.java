@@ -697,7 +697,7 @@ public class TutorialGroupService {
      * @param isAdmin       whether the user is admin
      * @param isInstructor  whether the user is instructor of the course of the tutorialGroup
      */
-    public void isAllowedToChangeRegistrationsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user, boolean isAdmin, boolean isInstructor) {
+    public void isAllowedToChangeRegistrationsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdmin, boolean isInstructor) {
         // ToDo: Clarify if this is the correct permission check
         if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdmin, isInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to change the registrations of tutorial group: " + tutorialGroup.getId());
@@ -718,7 +718,7 @@ public class TutorialGroupService {
      * @param isAdmin       whether the user is admin
      * @param isInstructor  whether the user is instructor of the course of the tutorialGroup
      */
-    public void isAllowedToModifySessionsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user, boolean isAdmin, boolean isInstructor) {
+    public void isAllowedToModifySessionsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdmin, boolean isInstructor) {
         // ToDo: Clarify if this is the correct permission check
         if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdmin, isInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to modify the sessions of tutorial group: " + tutorialGroup.getId());
