@@ -49,6 +49,44 @@ For a broader view of how competencies and prerequisites are interconnected, stu
 
 |students-learning-path-graph|
 
+.. _learner_profile_student:
+
+Learner Profile
+--------------
+**Learner Profiles** allow students to configure their personal learning preferences and motivations, making their experience in Artemis more tailored to their individual needs. 
+Currently, there are two types of learner profiles available: **Feedback Learner Profile** and **Course Learner Profile**.
+
+Feedback Learner Profile
+^^^^^^^^^^^^^^^^^^^^^^^^
+The Feedback Learner Profile contains the feedback preferences of the student. Students can adjust how they would like to receive feedback along predetermined dimensions. The automatically generated feedback from Athena will respect these preferences whenever a student selects "request AI feedback" after submitting a solution to an exercise.
+Currently, the available dimensions are:
+* Detail of the feedback
+* Formality of the feedback
+For each dimension, students can choose between binary options or leave the setting as neutral.
+When setting up the feedback preferences for the first time, students are guided by an onboarding wizard. This wizard presents examples from both ends of the spectrum for each dimension, helping students to understand the impact of their choices.
+
+The setup screen welcomes students with a button that would direct them to an onboarding wizard.
+
+|students-feedback-learner-profile-initial-screen|
+
+The onboarding wizard displays example feedback for each dimension, and aligns students' expectations with what actually system generates.
+
+|students-feedback-learner-profile-onboarding-modal|
+
+Once students have completed the onboarding wizard, they can see their feedback preferences in the setup screen, and can change them at any time. Students can redo the onboarding at any time as well.
+
+|students-feedback-learner-profile-setup|
+
+
+Course Learner Profile
+^^^^^^^^^^^^^^^^^^^^^^
+The Course Learner Profile captures the student's explicit motivation for the course. These settings are used to calculate learning progress more meaningfully and to personalize the course experience further.
+By indicating their goals and motivations, students enable Artemis to provide a more individualized learning journey that aligns both with their personal expectations and the learning objectives of the course.
+
+Students can modify their course learner profile at the bottom of the Learner Profile settings page..
+
+|students-course-learner-profile|
+
 .. |students-learning-goals-statistics| image:: student/students-learning-goals-statistics.png
     :width: 1000
 .. |students-learning-goals-statistics-detail| image:: student/students-learning-goals-statistics-detail.png
@@ -56,4 +94,12 @@ For a broader view of how competencies and prerequisites are interconnected, stu
 .. |students-learning-path-participation| image:: student/students-learning-path-participation.png
     :width: 1000
 .. |students-learning-path-graph| image:: student/students-learning-path-graph.png
+    :width: 1000
+.. |students-feedback-learner-profile-initial-screen| image:: student/students-feedback-learner-profile-initial-screen.png
+    :width: 1000
+.. |students-feedback-learner-profile-onboarding-modal| image:: student/students-feedback-learner-profile-onboarding-modal.png
+    :width: 1000
+.. |students-feedback-learner-profile-setup| image:: student/students-feedback-learner-profile-setup.png
+    :width: 1000
+.. |students-course-learner-profile| image:: student/students-course-learner-profile.png
     :width: 1000
