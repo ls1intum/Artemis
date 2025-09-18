@@ -48,7 +48,6 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.Tutorial
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.TutorialGroupUnassignedNotification;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -455,12 +454,11 @@ public class TutorialGroupResource {
     public ResponseEntity<Void> deregisterStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
         log.debug("REST request to deregister {} student from tutorial group : {}", studentLogin, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
-        var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        boolean isAdmin = authorizationCheckService.isAdmin(responsibleUser);
-        boolean isInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, responsibleUser);
-        tutorialGroupService.isAllowedToChangeRegistrationsOfTutorialGroup(tutorialGroupFromDatabase, responsibleUser, isAdmin, isInstructor);
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
+        var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isAdmin = authorizationCheckService.isAdmin(responsibleUser);
+        boolean isInstructor = authorizationCheckService.isAtLeastInstructorInCourse(tutorialGroupFromDatabase.getCourse(), responsibleUser);
+        tutorialGroupService.isAllowedToChangeRegistrationsOfTutorialGroup(tutorialGroupFromDatabase, responsibleUser, isAdmin, isInstructor);
         User studentToDeregister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
         tutorialGroupService.deregisterStudent(studentToDeregister, tutorialGroupFromDatabase, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
         return ResponseEntity.noContent().build();
@@ -479,12 +477,11 @@ public class TutorialGroupResource {
     public ResponseEntity<Void> registerStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
         log.debug("REST request to register {} student to tutorial group : {}", studentLogin, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
-        var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        boolean isAdmin = authorizationCheckService.isAdmin(responsibleUser);
-        boolean isInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, responsibleUser);
-        tutorialGroupService.isAllowedToChangeRegistrationsOfTutorialGroup(tutorialGroupFromDatabase, responsibleUser, isAdmin, isInstructor);
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
+        var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isAdmin = authorizationCheckService.isAdmin(responsibleUser);
+        boolean isInstructor = authorizationCheckService.isAtLeastInstructorInCourse(tutorialGroupFromDatabase.getCourse(), responsibleUser);
+        tutorialGroupService.isAllowedToChangeRegistrationsOfTutorialGroup(tutorialGroupFromDatabase, responsibleUser, isAdmin, isInstructor);
         User userToRegister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
         if (!userToRegister.getGroups().contains(tutorialGroupFromDatabase.getCourse().getStudentGroupName())) {
             throw new BadRequestAlertException("The user is not a student of the course", ENTITY_NAME, "userNotPartOfCourse");
