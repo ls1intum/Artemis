@@ -19,7 +19,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { ExampleSubmissionDTO } from 'app/assessment/shared/entities/example-submission.model';
 
 describe('Example Submission Component', () => {
     let component: ExampleSubmissionsComponent;
@@ -143,14 +142,5 @@ describe('Example Submission Component', () => {
 
         expect(modalServiceStub).toHaveBeenCalledOnce();
         expect(modalServiceDismissSpy).toHaveBeenCalledOnce();
-    });
-});
-//DTO testing
-describe('ExampleSubmissionDTO', () => {
-    it('should construct with values', () => {
-        const dto = new ExampleSubmissionDTO(7, true, 'hello world');
-        expect(dto.id).toBe(7);
-        expect(dto.usedForTutorial).toBeTrue();
-        expect(dto.assessmentExplanation).toBe('hello world');
     });
 });

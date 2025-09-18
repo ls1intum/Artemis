@@ -21,11 +21,13 @@ export enum ExampleSubmissionMode {
 export class ExampleSubmissionDTO {
     public id?: number;
     public usedForTutorial?: boolean;
+    public submissionId?: number;
     public assessmentExplanation?: string;
 
-    constructor(id?: number, usedForTutorial?: boolean, assessmentExplanation?: string) {
+    constructor(id?: number, usedForTutorial?: boolean, submissionId?: number, assessmentExplanation?: string) {
         this.id = id;
         this.usedForTutorial = usedForTutorial;
+        this.submissionId = submissionId;
         this.assessmentExplanation = assessmentExplanation;
     }
 }

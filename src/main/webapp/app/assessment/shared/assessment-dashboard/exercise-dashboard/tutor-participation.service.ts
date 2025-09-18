@@ -13,13 +13,13 @@ export class TutorParticipationService {
     public resourceUrl = 'api/assessment/exercises';
 
     /**
-     * Starts the exercise with the given ID for the current tutor. A tutor participation will be created and returned
+     * Starts the exercise with the given ID for the current tutor. A tutor participation dto will be created and returned
      * for the exercise given by the exercise id. The tutor participation status will be assigned based on which
      * features are available for the exercise (e.g. grading instructions) The method is valid only for tutors,
      * since it inits the tutor participation to the exercise, which is different from a standard participation
      *
-     * @param exerciseId The ID of the exercise for which to init a participation
-     * @return The new tutor participation
+     * @param exerciseId The ID of the exercise for which to init a participation dto
+     * @return The new tutor participation dto
      */
     create(exerciseId: number): Observable<EntityResponseType> {
         return this.http.post<TutorParticipationDTO>(`${this.resourceUrl}/${exerciseId}/tutor-participations`, null, { observe: 'response' });
