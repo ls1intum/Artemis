@@ -654,13 +654,19 @@ public class TutorialGroupService {
         log.info("Found tutor chat id");
 
         List<TutorialGroupDetailSessionData> sessionData = tutorialGroupSessionRepository.getTutorialGroupDetailSessionData(tutorialGroupId);
-        log.info("Found session data");
-        int scheduleDayOfWeek = groupData.scheduleDayOfWeek();
-        LocalTime scheduleStart = LocalTime.parse(groupData.scheduleStartTime());
-        LocalTime scheduleEnd = LocalTime.parse(groupData.scheduleEndTime());
-        String scheduleLocation = groupData.scheduleLocation();
-        List<TutorialGroupDetailSessionDTO> sessionDTOs = sessionData.stream()
-                .map(data -> TutorialGroupDetailSessionDTO.from(data, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone)).toList();
+        List<TutorialGroupDetailSessionDTO> sessionDTOs;
+        // the schedule related properties are null if and only if there is no schedule for the tutorial group
+        if (groupData.scheduleDayOfWeek() != null) {
+            int scheduleDayOfWeek = groupData.scheduleDayOfWeek();
+            LocalTime scheduleStart = LocalTime.parse(groupData.scheduleStartTime());
+            LocalTime scheduleEnd = LocalTime.parse(groupData.scheduleEndTime());
+            String scheduleLocation = groupData.scheduleLocation();
+            sessionDTOs = sessionData.stream()
+                    .map(data -> TutorialGroupDetailSessionDTO.from(data, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone)).toList();
+        }
+        else {
+            sessionDTOs = sessionData.stream().map(TutorialGroupDetailSessionDTO::from).toList();
+        }
 
         return TutorialGroupDetailGroupDTO.from(groupData, sessionDTOs, tutorChatId);
     }

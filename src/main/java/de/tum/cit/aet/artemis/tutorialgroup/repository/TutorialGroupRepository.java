@@ -154,13 +154,15 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
                 CONCAT(tutorialGroup.teachingAssistant.firstName, CONCAT(' ', tutorialGroup.teachingAssistant.lastName)),
                 tutorialGroup.teachingAssistant.login,
                 tutorialGroup.teachingAssistant.imageUrl,
-                tutorialGroup.tutorialGroupChannel.id,
-                tutorialGroup.tutorialGroupSchedule.dayOfWeek,
-                tutorialGroup.tutorialGroupSchedule.startTime,
-                tutorialGroup.tutorialGroupSchedule.endTime,
-                tutorialGroup.tutorialGroupSchedule.location
+                channel.id,
+                schedule.dayOfWeek,
+                schedule.startTime,
+                schedule.endTime,
+                schedule.location
             )
             FROM TutorialGroup tutorialGroup
+                LEFT JOIN tutorialGroup.tutorialGroupChannel channel
+                LEFT JOIN tutorialGroup.tutorialGroupSchedule schedule
             WHERE tutorialGroup.id = :tutorialGroupId
             """)
     Optional<TutorialGroupDetailGroupData> getTutorialGroupDetailData(@Param("tutorialGroupId") long tutorialGroupId);
