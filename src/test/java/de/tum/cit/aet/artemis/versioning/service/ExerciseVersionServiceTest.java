@@ -119,9 +119,9 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     @Autowired
     private SubmissionPolicyRepository submissionPolicyRepository;
 
-    private static final long testWaitTime = 2L;
+    private static final long TEST_WAIT_TIME = 100L;
 
-    private static final long pushTestWaitTime = 5L;
+    private static final TimeUnit TEST_TIME_UNIT = TimeUnit.MILLISECONDS;
 
     private static final BiPredicate<ZonedDateTime, ZonedDateTime> zonedDateTimeBiPredicate = (a,
             b) -> Math.abs(a.toInstant().getEpochSecond() - b.toInstant().getEpochSecond()) < 1;
@@ -143,11 +143,10 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     void testCreateExerciseVersion(ExerciseType exerciseType) {
         Exercise exercise = createExerciseByType(exerciseType);
 
-        // ExerciseVersionService.createExerciseVersion is marked with @Async,
-        // so we need to wait for the async task to finish
-        // "during" is needed because for createProgrammingExercise(), we have some
-        // "update" actions that
-        await().during(testWaitTime, TimeUnit.SECONDS).until(() -> {
+        // ExerciseVersionService.createExerciseVersion is executed only after current transaction is completed, and is marked as async,
+        // programming exercise creation would take longer, due to git operations and setting up repositories takes time
+        // using a small delay to avoid flaky tests.
+        await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).until(() -> {
             log.info("Exercise {} has been created", exercise.getId());
             return exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).isPresent();
         });
@@ -172,15 +171,10 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExerciseVersionOnUpdate(ExerciseType exerciseType) {
         Exercise exercise = createExerciseByType(exerciseType);
-        // ExerciseVersionService.createExerciseVerion is marked with @Async,
-        // so we need to wait for the async task to finish
-        // "during" is needed because for createProgrammingExercise(), we have some
-        // "update" actions that
-        await().during(testWaitTime, TimeUnit.SECONDS).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).isPresent());
+        await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).isPresent());
 
         exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElseThrow();
 
-        // Update various Exercise fields
         exercise.setTitle("Updated Title");
         exercise.setProblemStatement("Updated problem statement");
         exercise.setMaxPoints(100.0);
@@ -201,22 +195,18 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         exercise.setAssessmentDueDate(now.plusDays(10));
         exercise.setExampleSolutionPublicationDate(now.plusDays(12));
 
-        //
         final var updatedExercise = updateExerciseByType(exercise);
-        // Save the updated exercise to trigger version creation
+
         saveExerciseByType(exercise);
 
-        // Wait for new version to be created
-        await().during(testWaitTime, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).untilAsserted(() -> {
             var versions = exerciseVersionRepository.findAllByExerciseId(updatedExercise.getId());
             assertThat(versions.size() > 1);
         });
 
-        // Get the new version
         var newVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(updatedExercise.getId());
         assertThat(newVersion).isPresent();
 
-        // Verify that the new version contains the updated field values
         var snapshot = newVersion.get().getExerciseSnapshot();
         assertThat(snapshot).isNotNull();
 
@@ -229,7 +219,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExerciseVersionOnInvalidUpdate(ExerciseType exerciseType) {
         Exercise exercise = createExerciseByType(exerciseType);
-        await().during(testWaitTime, TimeUnit.SECONDS).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).isPresent());
+        await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).isPresent());
         var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElseThrow();
 
         exercise.setTitle(exercise.getTitle());
@@ -240,19 +230,17 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         exercise.setAllowComplaintsForAutomaticAssessments(exercise.getAllowComplaintsForAutomaticAssessments());
         exercise.setIncludedInOverallScore(exercise.getIncludedInOverallScore());
         exercise.setReleaseDate(exercise.getReleaseDate());
-        // Save the non-updated exercise to try to trigger version creation
         saveExerciseByType(exercise);
-        // Wait for new version to be created
-        await().during(testWaitTime, TimeUnit.SECONDS).untilAsserted(() -> {
+
+        await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).untilAsserted(() -> {
             var versions = exerciseVersionRepository.findAllByExerciseId(exercise.getId());
             assertThat(!versions.isEmpty());
         });
-        // Get the new version
+
         var newVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
         assertThat(newVersion).isPresent();
         assertThat(newVersion.get().getId()).isEqualTo(previousVersion.getId());
 
-        // Verify that the new version contains the updated field values
         var snapshot = newVersion.get().getExerciseSnapshot();
         assertThat(snapshot).isNotNull();
 
@@ -264,7 +252,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testVersionCreationOnProcessNewPush_templateRepository() throws Exception {
         var programmingExercise = createProgrammingExercise();
-        await().during(testWaitTime, TimeUnit.SECONDS).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).isPresent());
+        await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).isPresent());
 
         var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).orElseThrow();
         Long templateParticipationId = programmingExercise.getTemplateParticipation().getId();
@@ -272,12 +260,11 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         request.postWithoutLocation("/api/programming/repository/" + templateParticipationId + "/file?file=Template.java", null, HttpStatus.OK, null);
         request.postWithoutLocation("/api/programming/repository/" + templateParticipationId + "/commit", null, HttpStatus.OK, null);
 
-        // push actions take longer, prevents tests from being flaky
-        await().during(pushTestWaitTime, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().untilAsserted(() -> {
             Optional<ExerciseVersion> version = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId());
             assertThat(version).isPresent();
 
-            // Verify the version contains the updated template
+            assertThat(previousVersion.getId()).isNotEqualTo(version.get().getId());
             assertThat(version.get().getExerciseSnapshot()).isNotNull();
             assertThat(version.get().getExerciseSnapshot().programmingData()).isNotNull();
             assertThat(previousVersion.getExerciseSnapshot().programmingData().templateParticipation())
@@ -289,21 +276,18 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testVersionCreationOnProcessNewPush_solutionRepository() throws Exception {
         var programmingExercise = createProgrammingExercise();
-        await().during(testWaitTime, TimeUnit.SECONDS).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).isPresent());
+        await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).isPresent());
         var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).orElseThrow();
-        // 1. Get template participation ID
+
         Long solutionParticipationId = programmingExercise.getSolutionParticipation().getId();
 
-        // Create file
         request.postWithoutLocation("/api/programming/repository/" + solutionParticipationId + "/file?file=Template.java", null, HttpStatus.OK, null);
         request.postWithoutLocation("/api/programming/repository/" + solutionParticipationId + "/commit", null, HttpStatus.OK, null);
 
-        // 4. Verify version was created
-        await().during(pushTestWaitTime, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().untilAsserted(() -> {
             Optional<ExerciseVersion> version = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId());
             assertThat(version).isPresent();
 
-            // Verify the version contains the updated template
             assertThat(version.get().getExerciseSnapshot()).isNotNull();
             assertThat(version.get().getExerciseSnapshot().programmingData()).isNotNull();
             assertThat(previousVersion.getExerciseSnapshot().programmingData().solutionParticipation())
@@ -315,13 +299,13 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testVersionCreationOnProcessNewPush_testsRepository() throws Exception {
         var programmingExercise = createProgrammingExercise();
-        await().during(testWaitTime, TimeUnit.SECONDS).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).isPresent());
+        await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).isPresent());
         var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).orElseThrow();
 
         request.postWithoutLocation("/api/programming/test-repository/" + programmingExercise.getId() + "/file?file=Template.java", null, HttpStatus.OK, null);
         request.postWithoutLocation("/api/programming/test-repository/" + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
 
-        await().during(pushTestWaitTime, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().untilAsserted(() -> {
             Optional<ExerciseVersion> version = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId());
             assertThat(version).isPresent();
             assertThat(version.get().getId()).isNotEqualTo(previousVersion.getId());
@@ -344,7 +328,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         localVCLocalCITestService.createAndConfigureLocalRepository(programmingExercise.getProjectKey(), auxRepoSlug);
         auxiliaryRepositoryRepository.save(auxRepo);
 
-        await().during(testWaitTime, TimeUnit.SECONDS).until(() -> auxiliaryRepositoryRepository.count() > previousCount);
+        await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).until(() -> auxiliaryRepositoryRepository.count() > previousCount);
 
         var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).orElseThrow();
 
@@ -356,7 +340,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
         request.postWithoutLocation("/api/programming/auxiliary-repository/" + auxiliaryRepositoryId + "/file?file=Template.java", null, HttpStatus.OK, null);
         request.postWithoutLocation("/api/programming/auxiliary-repository/" + auxiliaryRepositoryId + "/commit", null, HttpStatus.OK, null);
 
-        await().during(pushTestWaitTime, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().untilAsserted(() -> {
             Optional<ExerciseVersion> version = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId());
             assertThat(version).isPresent();
             assertThat(version.get().getExerciseSnapshot()).isNotNull();
@@ -370,12 +354,12 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testVersionCreation_resetStaticCodeAnalysisCategories() throws Exception {
         var programmingExercise = createProgrammingExercise();
-        await().during(testWaitTime, TimeUnit.SECONDS).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).isPresent());
+        await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).isPresent());
         var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).orElseThrow();
 
         request.patch("/api/programming/programming-exercises/" + programmingExercise.getId() + "/static-code-analysis-categories/reset", null, HttpStatus.OK);
 
-        await().during(testWaitTime, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).untilAsserted(() -> {
             Optional<ExerciseVersion> version = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId());
             assertThat(version).isPresent();
 
@@ -390,12 +374,12 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testVersionCreation_toggleSubmissionPolicy() throws Exception {
         var programmingExercise = createProgrammingExercise();
-        await().during(testWaitTime, TimeUnit.SECONDS).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).isPresent());
+        await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).isPresent());
         var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId()).orElseThrow();
 
         request.put("/api/programming/programming-exercises/" + programmingExercise.getId() + "/submission-policy?activate=false", null, HttpStatus.OK);
 
-        await().during(testWaitTime, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).untilAsserted(() -> {
             Optional<ExerciseVersion> version = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(programmingExercise.getId());
             assertThat(version).isPresent();
 
@@ -411,11 +395,11 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testVersionCreation_competencyExerciseLink(ExerciseType exerciseType) {
         Exercise exercise = createExerciseByType(exerciseType);
-        await().during(testWaitTime, TimeUnit.SECONDS).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).isPresent());
+        await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).until(() -> exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).isPresent());
         var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElseThrow();
         competencyUtilService.createCompetencyWithExercise(exercise.getCourseViaExerciseGroupOrCourseMember(), exercise);
 
-        await().during(testWaitTime, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).untilAsserted(() -> {
             Optional<ExerciseVersion> version = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
             assertThat(version).isPresent();
             assertThat(version.get().getExerciseSnapshot()).isNotNull();

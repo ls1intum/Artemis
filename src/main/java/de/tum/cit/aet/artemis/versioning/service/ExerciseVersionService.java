@@ -2,21 +2,15 @@ package de.tum.cit.aet.artemis.versioning.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -54,8 +48,6 @@ public class ExerciseVersionService {
 
     private final UserRepository userRepository;
 
-    private final BlockingQueue<ExerciseChangedEvent> versioningQueue = new LinkedBlockingQueue<>(5000);
-
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseVersioningRepository textExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
             FileUploadExerciseVersioningRepository fileUploadExerciseRepository, UserRepository userRepository) {
@@ -71,44 +63,22 @@ public class ExerciseVersionService {
 
     /**
      * Handle ExerciseChangedEvent after the surrounding transaction commits.
-     * Falls back to immediate execution if no transaction is active when the event is published.
      *
-     * @param event The ExerciseChangedEvent to handle, containing the exercise ID and the user login.
-     *                  userLogin is used to avoid. Also, methods in {link @ExerciseVersionEntityListener}
-     *                  should not try to access {@link User} from {@link UserRepository} as we should not try to access
-     *                  JPA entities from within JPA entity listeners.
+     * @param event The ExerciseChangedEvent to handle, containing the exercise ID
+     *                  and the user login. userLogin is used to avoid attempting to
+     *                  fetch from database before transaction commits.
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    @Async
     public void onExerciseChangedEvent(ExerciseChangedEvent event) {
-        versioningQueue.add(event);
+        createExerciseVersion(event.exerciseId(), event.exerciseType(), event.userLogin());
     }
 
     /**
-     * Process the versioning queue.
-     * This method is scheduled to run every 2 seconds. Creating exercise version immediately after the surrounding transaction commits would cause
-     * obscure hibernate errors. Therefore, a delayed batch execution is used to avoid this issue.
-     */
-    @Scheduled(initialDelay = 1000, fixedDelay = 1000)
-    public void processVersioningQueue() {
-        List<ExerciseChangedEvent> batch = new ArrayList<>();
-
-        // Drain up to 50 items at once for batch processing
-        int drained = versioningQueue.drainTo(batch, 50);
-
-        if (drained == 0) {
-            return;
-        }
-
-        for (var request : batch) {
-            createExerciseVersion(request.exerciseId(), request.exerciseType(), request.userLogin());
-        }
-
-        log.info("Processed {} exercise versioning requests", batch.size());
-    }
-
-    /**
-     * Creates an exercise version. This function would fetch the exercise eagerly that corresponds to its type,
-     * initialize an {@link ExerciseSnapshotDTO} and create a new {@link ExerciseVersion} to persist.
+     * Creates an exercise version. This function would fetch the exercise eagerly
+     * that corresponds to its type,
+     * initialize an {@link ExerciseSnapshotDTO} and create a new
+     * {@link ExerciseVersion} to persist.
      *
      * @param exerciseId   The ID of the exercise to create a version of
      * @param exerciseType the {@link ExerciseType} of the exercise
@@ -140,7 +110,8 @@ public class ExerciseVersionService {
                 }
             }
             exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
-            exerciseVersionRepository.save(exerciseVersion);
+            var savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
+            log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
         }
         catch (Exception e) {
             log.error("Error creating exercise version for exercise with id {}: {}", exerciseId, e.getMessage(), e);
@@ -148,11 +119,13 @@ public class ExerciseVersionService {
     }
 
     /**
-     * Fetches an exercise eagerly with versioned fields, with the correct exercise type.
+     * Fetches an exercise eagerly with versioned fields, with the correct exercise
+     * type.
      *
      * @param exerciseId   the exercise id to fetch from
      * @param exerciseType the {@link ExerciseType} to fetch from
-     * @return the exercise with the given id of the specific subclass, fetched eagerly with versioned fields,
+     * @return the exercise with the given id of the specific subclass, fetched
+     *         eagerly with versioned fields,
      *         or null if the exercise does not exist
      */
     private Exercise fetchExerciseEagerly(Long exerciseId, ExerciseType exerciseType) {
