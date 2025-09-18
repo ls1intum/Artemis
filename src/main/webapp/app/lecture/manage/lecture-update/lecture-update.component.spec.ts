@@ -35,7 +35,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 describe('LectureUpdateComponent', () => {
     let lectureService: LectureService;
@@ -80,7 +80,7 @@ describe('LectureUpdateComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(CalendarEventService),
+                MockProvider(CalendarService),
             ],
         });
     });
@@ -129,8 +129,8 @@ describe('LectureUpdateComponent', () => {
                 }),
             ),
         );
-        const calendarEventService = TestBed.inject(CalendarEventService);
-        const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+        const calendarService = TestBed.inject(CalendarService);
+        const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
         lectureUpdateComponent.save();
         lectureUpdateComponentFixture.detectChanges();
@@ -160,8 +160,8 @@ describe('LectureUpdateComponent', () => {
                 }),
             ),
         );
-        const calendarEventService = TestBed.inject(CalendarEventService);
-        const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+        const calendarService = TestBed.inject(CalendarService);
+        const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
         lectureUpdateComponent.save();
         lectureUpdateComponentFixture.detectChanges();

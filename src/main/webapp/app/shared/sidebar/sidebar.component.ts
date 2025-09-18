@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, effect, inject, input, output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, effect, inject, input, output } from '@angular/core';
 import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
@@ -20,7 +20,6 @@ import { TranslateDirective } from '../language/translate.directive';
 import { SidebarAccordionComponent } from './sidebar-accordion/sidebar-accordion.component';
 import { SidebarCardDirective } from './directive/sidebar-card.directive';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarItemShowAlways, SidebarTypes } from 'app/shared/types/sidebar';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 
@@ -43,9 +42,8 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
         SearchFilterPipe,
     ],
 })
-export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
+export class SidebarComponent implements OnDestroy, OnChanges {
     private route = inject(ActivatedRoute);
-    private profileService = inject(ProfileService);
     private sidebarEventService = inject(SidebarEventService);
     private modalService = inject(NgbModal);
     private sessionStorageService = inject(SessionStorageService);
@@ -76,9 +74,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     sidebarEventSubscription?: Subscription;
 
     routeParams: Params;
-    isProduction = true;
-    isTestServer = false;
-
     private modalRef?: NgbModalRef;
 
     readonly faFilter = faFilter;
@@ -117,11 +112,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         this.onGroupChatPressed.emit();
     }
 
-    ngOnInit(): void {
-        this.isProduction = this.profileService.isProduction();
-        this.isTestServer = this.profileService.isTestServer();
-    }
-
     private subscribeToSidebarEvents() {
         this.sidebarEventSubscription?.unsubscribe();
         const listener = this.sidebarEventService.sidebarCardEventListener();
@@ -129,10 +119,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         if (this.reEmitNonDistinctSidebarEvents()) {
             pipe = listener;
         } else {
-            pipe = listener.pipe(
-                distinctUntilChanged(),
-                // switchMap(sidebarCardEvent => sidebarCardEvent.onEvent),
-            );
+            pipe = listener.pipe(distinctUntilChanged());
         }
         this.sidebarEventSubscription = pipe.subscribe((itemId) => {
             if (itemId) {

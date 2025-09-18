@@ -23,7 +23,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.pipe';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 describe('TutorialGroupSessionsManagement', () => {
     let fixture: ComponentFixture<TutorialGroupSessionsManagementComponent>;
@@ -65,7 +65,7 @@ describe('TutorialGroupSessionsManagement', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(CalendarEventService),
+                MockProvider(CalendarService),
             ],
         })
             .compileComponents()
@@ -126,9 +126,9 @@ describe('TutorialGroupSessionsManagement', () => {
         });
     }));
 
-    it('should call calendarEventService.refresh in loadAll', fakeAsync(() => {
-        const calendarEventService = TestBed.inject(CalendarEventService);
-        const refreshSpy = jest.spyOn(calendarEventService, 'refresh').mockImplementation(() => {});
+    it('should call calendarService.refresh in loadAll', fakeAsync(() => {
+        const calendarService = TestBed.inject(CalendarService);
+        const refreshSpy = jest.spyOn(calendarService, 'reloadEvents').mockImplementation(() => {});
 
         component.course = course;
         component.tutorialGroupId = tutorialGroupId;

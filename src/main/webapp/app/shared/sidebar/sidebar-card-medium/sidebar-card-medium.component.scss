@@ -28,12 +28,12 @@
     }
 
     &.item-border {
-        border-color: var(--bs-card-border-color) !important;
+        border-color: var(--bs-border-color) !important;
     }
 }
 
 .item-border {
     border-width: 1px !important;
     border-style: solid;
-    border-color: var(--bs-card-border-color) !important;
+    border-color: var(--bs-border-color) !important;
 }

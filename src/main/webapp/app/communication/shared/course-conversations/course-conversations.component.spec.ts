@@ -1,3 +1,4 @@
+import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -36,8 +37,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 import { ChannelsCreateDialogComponent } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { LayoutService } from 'app/shared/breakpoints/layout.service';
-import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { ElementRef, signal } from '@angular/core';
 import {
@@ -68,21 +67,8 @@ examples.forEach((activeConversation) => {
         let courseOverviewService: CourseOverviewService;
         let modalService: NgbModal;
         let courseSidebarService: CourseSidebarService;
-        let layoutService: LayoutService;
         let activatedRoute: ActivatedRoute;
-
-        const MockLayoutService = {
-            activeBreakpoints: [],
-            breakpointObserver: undefined,
-            breakpointService: {
-                getBreakpoints: jest.fn().mockReturnValue(['(min-width: 600px)']),
-                getBreakpointName: jest.fn().mockReturnValue(CustomBreakpointNames.medium),
-            },
-            subscribeToLayoutChanges: () => {
-                return EMPTY;
-            },
-            isBreakpointActive: jest.fn().mockReturnValue(CustomBreakpointNames.medium),
-        };
+        let breakpoint$: BehaviorSubject<BreakpointState>;
 
         // Workaround for mocked components with viewChild: https://github.com/help-me-mom/ng-mocks/issues/8634
         MockInstance(CourseWideSearchComponent, 'content', signal(new ElementRef(document.createElement('div'))));
@@ -94,6 +80,11 @@ examples.forEach((activeConversation) => {
         MockInstance(ConversationThreadSidebarComponent, 'expandTooltip', signal(dummyTooltip));
 
         beforeEach(waitForAsync(() => {
+            breakpoint$ = new BehaviorSubject<BreakpointState>({
+                matches: false,
+                breakpoints: { [Breakpoints.Handset]: false },
+            });
+
             queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
 
             TestBed.configureTestingModule({
@@ -114,6 +105,13 @@ examples.forEach((activeConversation) => {
                     MockPipe(HtmlForMarkdownPipe),
                 ],
                 providers: [
+                    {
+                        provide: BreakpointObserver,
+                        useValue: {
+                            observe: () => breakpoint$.asObservable(),
+                            isMatched: (query: string | string[]) => false,
+                        },
+                    },
                     { provide: Router, useValue: router },
                     {
                         provide: ActivatedRoute,
@@ -139,7 +137,6 @@ examples.forEach((activeConversation) => {
                     MockProvider(SidebarEventService),
                     MockProvider(ProfileService),
                     MockProvider(AlertService),
-                    { provide: LayoutService, useValue: MockLayoutService },
                 ],
                 imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule],
             }).compileComponents();
@@ -155,7 +152,6 @@ examples.forEach((activeConversation) => {
             metisConversationService = TestBed.inject(MetisConversationService);
             courseOverviewService = TestBed.inject(CourseOverviewService);
             courseSidebarService = TestBed.inject(CourseSidebarService);
-            layoutService = TestBed.inject(LayoutService);
             activatedRoute = TestBed.inject(ActivatedRoute);
 
             Object.defineProperty(metisConversationService, 'isServiceSetup$', { get: () => new BehaviorSubject(true).asObservable() });
@@ -366,16 +362,22 @@ examples.forEach((activeConversation) => {
 
         it('should switch to mobile if breakpoint returns true and open sidebar', () => {
             const openSidebarSpy = jest.spyOn(courseSidebarService, 'openSidebar');
-            expect(component.isMobile).toBeFalse();
-            layoutService.isBreakpointActive = jest.fn().mockReturnValue(true);
+            expect(component.isMobile()).toBeFalse();
+            breakpoint$.next({
+                matches: true,
+                breakpoints: { [Breakpoints.Handset]: true },
+            });
             component.ngOnInit();
-            expect(component.isMobile).toBeTrue();
+            expect(component.isMobile()).toBeTrue();
             expect(openSidebarSpy).toHaveBeenCalled();
         });
 
-        it('should call close sidebar if coversation is selected', () => {
+        it('should call close sidebar if conversation is selected', () => {
             const closeSidebarSpy = jest.spyOn(courseSidebarService, 'closeSidebar');
-            component.isMobile = true;
+            breakpoint$.next({
+                matches: true,
+                breakpoints: { [Breakpoints.Handset]: true },
+            });
 
             component.onConversationSelected(activeConversation?.id ?? 1);
 
@@ -385,7 +387,10 @@ examples.forEach((activeConversation) => {
         it('should call close sidebar and search term is set and open sidebar otherwise if on mobile', () => {
             const openSidebarSpy = jest.spyOn(courseSidebarService, 'openSidebar');
             fixture.detectChanges();
-            component.isMobile = true;
+            breakpoint$.next({
+                matches: true,
+                breakpoints: { [Breakpoints.Handset]: true },
+            });
             component.onSearch({
                 searchTerm: '',
                 selectedAuthors: [],

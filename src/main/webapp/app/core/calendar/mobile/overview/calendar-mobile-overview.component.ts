@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
-import { NgClass, NgStyle } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarMobileMonthPresentationComponent } from 'app/core/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
@@ -10,30 +9,27 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarMobileDayPresentationComponent } from 'app/core/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 
 @Component({
     selector: 'jhi-calendar-mobile-overview',
     imports: [
-        NgStyle,
-        NgClass,
         CalendarMobileMonthPresentationComponent,
         CalendarMobileDayPresentationComponent,
         TranslateDirective,
         FaIconComponent,
-        NgbPopover,
         CalendarEventFilterComponent,
+        CalendarSubscriptionPopoverComponent,
     ],
     templateUrl: './calendar-mobile-overview.component.html',
     styleUrl: './calendar-mobile-overview.component.scss',
 })
 export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
-    private calendarEventService = inject(CalendarEventService);
+    private calendarService = inject(CalendarService);
     private activatedRoute = inject(ActivatedRoute);
     private activatedRouteSubscription?: Subscription;
-    private courseId?: number;
 
     readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
     readonly faXmark = faXmark;
@@ -44,15 +40,19 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     selectedDate = signal<Dayjs | undefined>(undefined);
     weekdayNameKeys = utils.getWeekDayNameKeys();
     isLoading = signal<boolean>(false);
+    calendarSubscriptionToken = this.calendarService.subscriptionToken;
+    currentCourseId = signal<number | undefined>(undefined);
 
     ngOnInit(): void {
         this.activatedRouteSubscription = this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
             const courseIdParameter = parameterMap.get('courseId');
             if (courseIdParameter) {
-                this.courseId = +courseIdParameter;
+                this.currentCourseId.set(+courseIdParameter);
                 this.loadEventsForCurrentMonth();
             }
         });
+
+        this.calendarService.loadSubscriptionToken().subscribe();
     }
 
     ngOnDestroy() {
@@ -103,10 +103,11 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     }
 
     private loadEventsForCurrentMonth(): void {
-        if (!this.courseId) return;
+        const courseId = this.currentCourseId();
+        if (!courseId) return;
         this.isLoading.set(true);
-        this.calendarEventService
-            .loadEventsForCurrentMonth(this.courseId, this.firstDateOfCurrentMonth())
+        this.calendarService
+            .loadEventsForCurrentMonth(courseId, this.firstDateOfCurrentMonth())
             .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe();
     }
