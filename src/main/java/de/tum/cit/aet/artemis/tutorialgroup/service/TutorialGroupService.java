@@ -26,6 +26,8 @@ import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -67,6 +69,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGr
 @Lazy
 @Service
 public class TutorialGroupService {
+
+    private static final Logger log = LoggerFactory.getLogger(TutorialGroupService.class);
 
     private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
@@ -640,13 +644,17 @@ public class TutorialGroupService {
     public TutorialGroupDetailGroupDTO getTutorialGroupDetailGroupDTO(Long tutorialGroupId, ZoneId courseTimeZone) {
         TutorialGroupDetailGroupData groupData = tutorialGroupRepository.getTutorialGroupDetailData(tutorialGroupId)
                 .orElseThrow(() -> new EntityNotFoundException("Tutorial Group Not Found with id: " + tutorialGroupId));
+        log.debug("Found group detail data");
 
         Long courseId = groupData.courseId();
         String tutorLogin = groupData.teachingAssistantLogin();
         String currentUserLogin = userRepository.getCurrentUserLogin();
+        log.debug("Found user login");
         Long tutorChatId = oneToOneChatRepository.findIdOfChatInCourseBetweenUsers(courseId, tutorLogin, currentUserLogin);
+        log.debug("Found tutor chat id");
 
         List<TutorialGroupDetailSessionData> sessionData = tutorialGroupSessionRepository.getTutorialGroupDetailSessionData(tutorialGroupId);
+        log.debug("Found session data");
         int scheduleDayOfWeek = groupData.scheduleDayOfWeek();
         LocalTime scheduleStart = LocalTime.parse(groupData.scheduleStartTime());
         LocalTime scheduleEnd = LocalTime.parse(groupData.scheduleEndTime());

@@ -231,7 +231,9 @@ public class TutorialGroupResource {
     public ResponseEntity<TutorialGroupDetailGroupDTO> getTutorialGroupDetailGroupDTO(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
+        log.debug("Found course: {}", courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("Found user");
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         String timeZoneString = course.getTimeZone();
         if (timeZoneString == null) {
