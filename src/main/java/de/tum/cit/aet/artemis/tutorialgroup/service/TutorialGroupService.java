@@ -644,17 +644,17 @@ public class TutorialGroupService {
     public TutorialGroupDetailGroupDTO getTutorialGroupDetailGroupDTO(Long tutorialGroupId, ZoneId courseTimeZone) {
         TutorialGroupDetailGroupData groupData = tutorialGroupRepository.getTutorialGroupDetailData(tutorialGroupId)
                 .orElseThrow(() -> new EntityNotFoundException("Tutorial Group Not Found with id: " + tutorialGroupId));
-        log.debug("Found group detail data");
+        log.info("Found group detail data");
 
         Long courseId = groupData.courseId();
         String tutorLogin = groupData.teachingAssistantLogin();
         String currentUserLogin = userRepository.getCurrentUserLogin();
-        log.debug("Found user login");
+        log.info("Found user login");
         Long tutorChatId = oneToOneChatRepository.findIdOfChatInCourseBetweenUsers(courseId, tutorLogin, currentUserLogin);
-        log.debug("Found tutor chat id");
+        log.info("Found tutor chat id");
 
         List<TutorialGroupDetailSessionData> sessionData = tutorialGroupSessionRepository.getTutorialGroupDetailSessionData(tutorialGroupId);
-        log.debug("Found session data");
+        log.info("Found session data");
         int scheduleDayOfWeek = groupData.scheduleDayOfWeek();
         LocalTime scheduleStart = LocalTime.parse(groupData.scheduleStartTime());
         LocalTime scheduleEnd = LocalTime.parse(groupData.scheduleEndTime());

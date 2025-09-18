@@ -229,11 +229,11 @@ public class TutorialGroupResource {
     @GetMapping("courses/{courseId}/tutorial-group-detail/{tutorialGroupId}")
     @EnforceAtLeastStudent
     public ResponseEntity<TutorialGroupDetailGroupDTO> getTutorialGroupDetailGroupDTO(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
-        log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
+        log.info("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        log.debug("Found course: {}", courseId);
+        log.info("Found course: {}", courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("Found user");
+        log.info("Found user");
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         String timeZoneString = course.getTimeZone();
         if (timeZoneString == null) {
