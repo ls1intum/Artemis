@@ -25,7 +25,6 @@ import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,7 +82,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     @Test
-    @Disabled
     void testFetchPush_repositoryDoesNotExist() throws IOException, GitAPIException, URISyntaxException {
         // Create a new repository, delete the remote repository and try to fetch and push to the remote repository.
         String projectKey = "SOMEPROJECTKEY";
@@ -152,7 +150,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     @Test
-    @Disabled
     void testFetchPush_wrongCredentials() throws InvalidNameException {
         var student1 = new LdapUserDto().login(getTestPrefix() + "student1");
         student1.setUid(new LdapName("cn=student1,ou=test,o=lab"));
@@ -177,7 +174,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     @Test
-    @Disabled
     void testFetchPush_programmingExerciseDoesNotExist() throws GitAPIException, IOException, URISyntaxException {
         // Create a repository for an exercise that does not exist.
         String projectKey = "SOMEPROJECTKEY";
@@ -192,7 +188,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     @Test
-    @Disabled
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFetchPush_offlineIDENotAllowed() {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -209,7 +204,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     @Test
-    @Disabled
     void testFetchPush_assignmentRepository_student_noParticipation() throws GitAPIException, IOException, URISyntaxException {
         // Create a new repository, but don't create a participation for student2.
         String repositorySlug = projectKey1.toLowerCase() + "-" + student2Login;
@@ -223,7 +217,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     @Test
-    @Disabled
     void testFetchPush_templateRepository_noParticipation() {
         // Remove the template participation from the programming exercise.
         programmingExercise.setTemplateParticipation(null);
@@ -235,7 +228,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     @Test
-    @Disabled
     void testFetchPush_solutionRepository_noParticipation() {
         // Remove the solution participation from the programming exercise.
         programmingExercise.setSolutionParticipation(null);
@@ -247,7 +239,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     @Test
-    @Disabled
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserTriesToDeleteBranch() throws GitAPIException, URISyntaxException {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -262,7 +253,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     @Test
-    @Disabled
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStudentTriesToForcePush() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -276,7 +266,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     // TODO add test for force push over ssh, which should work
     @Test
-    @Disabled
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorTriesToForcePushOverHttp() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -333,7 +322,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     @Test
-    @Disabled
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesNewBranch() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -351,7 +339,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     @Test
-    @Disabled
     void testRepositoryFolderName() {
 
         // we specifically choose logins containing "git" to test it does not accidentally get replaced
@@ -371,7 +358,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     @Test
-    @Disabled
     void testFilesLargerThan10MbAreRejected() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 

@@ -30,9 +30,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
  * using a thread-local “server base URL” inside {@code RepositoryUriConversionUtil}.
  *
  * <p>
- * When Git clients (JGit) hit Artemis’ real HTTP endpoints (under {@code /git/**}),
- * this filter computes the effective base URL from the incoming request
- * (scheme, server name, and port) and overrides the thread-local base just for this request.
+ * This filter ensures that the thread-local base URL is set to the correct value
  * This ensures that any short-to-full URI expansion performed while handling the request
  * uses the correct host and port of the currently running server, even when multiple test contexts
  * use different {@code server.port} values.
@@ -47,8 +45,6 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 public class RepositoryUriWebServerThreadFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(RepositoryUriWebServerThreadFilter.class);
-
-    private static final String GIT_PREFIX = "/git/";
 
     @Value("${artemis.version-control.url}")
     private String baseUrl;
@@ -74,13 +70,6 @@ public class RepositoryUriWebServerThreadFilter extends OncePerRequestFilter {
 
         final String uri = request.getRequestURI();
 
-        // Only necessary for real HTTP git traffic (e.g. JGit). Calls to all other endpoints are MockMVC-based and skipped.
-        if (!uri.startsWith(GIT_PREFIX)) {
-            chain.doFilter(request, response);
-            return;
-        }
-
-        final String base = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
         log.debug("Setting RepositoryUriConversionUtil base URL override to {} for request {}", baseUrl, uri);
 
         RepositoryUriConversionUtil.overrideServerUrlForCurrentThread(baseUrl);

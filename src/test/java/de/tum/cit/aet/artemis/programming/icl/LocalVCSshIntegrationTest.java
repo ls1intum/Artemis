@@ -29,7 +29,6 @@ import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.apache.sshd.common.session.helpers.AbstractSession;
 import org.apache.sshd.server.session.ServerSession;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +43,6 @@ import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshGitCommand;
 
 @Profile(PROFILE_LOCALVC)
-@Disabled
 class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCSshIntegrationTest.class);
