@@ -60,7 +60,7 @@ export class TutorialGroupsService {
                                     dayjs(session.start),
                                     dayjs(session.end),
                                     session.location,
-                                    session.cancelled,
+                                    session.isCancelled,
                                     session.locationChanged,
                                     session.timeChanged,
                                     session.dateChanged,
