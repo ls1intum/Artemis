@@ -7,10 +7,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -316,26 +314,26 @@ public class ProgrammingExerciseExportImportResource {
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository
+                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigAndGradingCriteria(exerciseId)
+                .orElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         long start = System.nanoTime();
-        Path path;
+        Resource resource;
         try {
-            path = programmingExerciseExportService.exportProgrammingExerciseForDownload(programmingExercise, Collections.synchronizedList(new ArrayList<>()));
+            resource = programmingExerciseExportService.exportProgrammingExerciseForDownload(programmingExercise);
         }
         catch (Exception e) {
             log.error("Error while exporting programming exercise with id {} for instructor", exerciseId, e);
             throw new InternalServerErrorException("Error while exporting programming exercise with id " + exerciseId + " for instructor");
         }
 
-        InputStreamResource resource = new InputStreamResource(Files.newInputStream(path));
-
-        log.info("Export of the programming exercise {} with title '{}' was successful in {}.", programmingExercise.getId(), programmingExercise.getTitle(),
+        log.info("Streaming of the programming exercise {} with title '{}' started successfully in {}.", programmingExercise.getId(), programmingExercise.getTitle(),
                 formatDurationFrom(start));
 
-        final var zipFile = path.toFile();
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
+        return ResponseEntity.ok().contentLength(resource.contentLength()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", resource.getFilename())
+                .body(resource);
     }
 
     /**
