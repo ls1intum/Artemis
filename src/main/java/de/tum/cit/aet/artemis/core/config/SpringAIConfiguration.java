@@ -3,15 +3,10 @@ package de.tum.cit.aet.artemis.core.config;
 import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-
-import com.azure.ai.openai.OpenAIClient;
-import com.azure.ai.openai.OpenAIClientBuilder;
-import com.azure.core.credential.AzureKeyCredential;
 
 /**
  * Configuration for Spring AI chat clients.
@@ -23,24 +18,6 @@ import com.azure.core.credential.AzureKeyCredential;
 @Lazy
 public class SpringAIConfiguration {
 
-    @Value("${spring.ai.azure.openai.api-key}")
-    private String apiKey;
-
-    @Value("${spring.ai.azure.openai.endpoint}")
-    private String endpoint;
-
-    @Value("${spring.ai.azure.openai.chat.options.deployment-name}")
-    private String deploymentName;
-
-    /**
-     * Azure OpenAI Client bean - manually configured.
-     */
-    @Bean
-    @Lazy
-    public OpenAIClient openAIClient() {
-        return new OpenAIClientBuilder().endpoint(endpoint).credential(new AzureKeyCredential(apiKey)).buildClient();
-    }
-
     /**
      * Default Chat Client for AI features.
      * Uses the manually configured Azure OpenAI model.
@@ -48,7 +25,7 @@ public class SpringAIConfiguration {
     @Bean
     @Lazy
     public ChatClient chatClient(AzureOpenAiChatModel azureOpenAiChatModel) {
-        return ChatClient.builder(azureOpenAiChatModel).defaultOptions(AzureOpenAiChatOptions.builder().deploymentName(deploymentName).build()).build();
+        return ChatClient.builder(azureOpenAiChatModel).defaultOptions(AzureOpenAiChatOptions.builder().deploymentName("gpt-5-mini").temperature(1.0).build()).build();
     }
 
     /**
