@@ -26,6 +26,8 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
@@ -40,6 +42,8 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localvcint";
+
+    private static final Logger log = LoggerFactory.getLogger(LocalVCIntegrationTest.class);
 
     private LocalRepository assignmentRepository;
 
@@ -114,6 +118,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         var student = userUtilService.getUserByLogin(student1Login);
         var participationVcsAccessToken = localVCLocalCITestService.getParticipationVcsAccessToken(student, programmingParticipation.getId());
         var token = participationVcsAccessToken.getVcsAccessToken();
+        log.debug("token is {}", token);
         programmingExerciseRepository.save(programmingExercise);
 
         // Fetch from and push to the remote repository with participation VCS access token
