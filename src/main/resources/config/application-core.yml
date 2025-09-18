@@ -18,12 +18,19 @@ artemis:
             token-validity-in-seconds-for-passkey: 15552000 # jwtToken is valid for 180 days when using passkey authentication
 
 spring:
+    ai:
+        azure:
+            openai:
+                endpoint: https://api.openai.com/v1
+        model:
+            chat: none #disabled by default, you can enable spring ai when hyperion is enabled (see above), then you must configure other values as well
     liquibase:
         enabled: true
     autoconfigure:
         # These AutoConfiguration are excluded as they include metrics which are not evaluated and only cause unnecessary network load
         # They can be included once they are processed
         exclude:
+          # Important: Make sure to keep the exclusions in sync with the `application-buildagent.yml` file, except for the build agent specific exclusions
           - org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration
           - org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
           - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
