@@ -69,9 +69,9 @@ export class CourseTutorialGroupDetailComponent {
     tutorialGroup = input.required<TutorialGroupDetailGroupDTO>();
     tutorialGroupSessions = computed<TutorialGroupDetailSession[]>(() => {
         this.locale();
-        return this.computeSessionsToDisplay(this.selectedSessionListOption(), this.tutorialGroup().sessions);
+        return this.computeSessionsToDisplay(this.selectedSessionListOption(), this.tutorialGroup().sessions, this.tutorialGroup().capacity);
     });
-    nextSession = computed<TutorialGroupDetailSession | undefined>(() => this.computeNextSessionDataUsing(this.tutorialGroup().sessions));
+    nextSession = computed<TutorialGroupDetailSession | undefined>(() => this.computeNextSessionDataUsing(this.tutorialGroup().sessions, this.tutorialGroup().capacity));
     teachingAssistantImageUrl = computed(() => addPublicFilePrefix(this.tutorialGroup().teachingAssistantImageUrl));
     tutorialGroupLanguage = computed<string>(() => this.tutorialGroup().language);
     tutorialGroupCapacity = computed<string>(() => String(this.tutorialGroup().capacity ?? '-'));
@@ -110,7 +110,7 @@ export class CourseTutorialGroupDetailComponent {
         });
     }
 
-    private computeSessionsToDisplay(selectedListOption: ListOption, sessions: TutorialGroupDetailSessionDTO[]): TutorialGroupDetailSession[] {
+    private computeSessionsToDisplay(selectedListOption: ListOption, sessions: TutorialGroupDetailSessionDTO[], capacity: number | undefined): TutorialGroupDetailSession[] {
         const now = dayjs();
         return sessions
             .filter((session) => {
@@ -118,7 +118,7 @@ export class CourseTutorialGroupDetailComponent {
                 return session.start.isSameOrAfter(now);
             })
             .sort((first, second) => first.start.diff(second.start))
-            .map((session) => this.computeSessionDataFrom(session));
+            .map((session) => this.computeSessionDataFrom(session, capacity));
     }
 
     private computeAverageAttendanceRation(sessions: TutorialGroupDetailSessionDTO[], capacity: number | undefined): number | undefined {
@@ -196,20 +196,20 @@ export class CourseTutorialGroupDetailComponent {
         ];
     }
 
-    private computeNextSessionDataUsing(sessions: TutorialGroupDetailSessionDTO[]): TutorialGroupDetailSession | undefined {
+    private computeNextSessionDataUsing(sessions: TutorialGroupDetailSessionDTO[], capacity: number | undefined): TutorialGroupDetailSession | undefined {
         if (sessions && sessions.length > 0) {
             const now = dayjs();
             const upcoming = sessions.filter((session) => dayjs(session.start).isAfter(now)).sort((first, second) => dayjs(first.start).diff(dayjs(second.start)));
             if (upcoming.length > 0) {
                 const nextSession = upcoming[0];
-                return this.computeSessionDataFrom(nextSession);
+                return this.computeSessionDataFrom(nextSession, capacity);
             }
             return undefined;
         }
         return undefined;
     }
 
-    private computeSessionDataFrom(session: TutorialGroupDetailSessionDTO): TutorialGroupDetailSession {
+    private computeSessionDataFrom(session: TutorialGroupDetailSessionDTO, capacity: number | undefined): TutorialGroupDetailSession {
         const weekdayStringKey = this.computeWeekdayStringKeyUsing(session.start);
         const weekday = this.translateService.instant(weekdayStringKey);
         const date = weekday + ', ' + session.start.format('DD.MM.YYYY');
@@ -219,7 +219,12 @@ export class CourseTutorialGroupDetailComponent {
         const locationChanged = session.locationChanged;
         const timeChanged = session.timeChanged;
         const dateChanged = session.dateChanged;
-        const attendance = session.attendanceCount ? session.attendanceCount + ' / ' + this.tutorialGroup().capacity : undefined;
+        let attendance: string | undefined = undefined;
+        if (session.attendanceCount && capacity) {
+            attendance = session.attendanceCount + ' / ' + capacity;
+        } else if (session.attendanceCount) {
+            attendance = session.attendanceCount.toString();
+        }
         return { date, time, location, isCancelled, locationChanged, timeChanged, dateChanged, attendance };
     }
 
