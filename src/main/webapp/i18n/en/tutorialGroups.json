@@ -308,7 +308,7 @@
                 },
                 "disclaimerText": {
                     "noAttendanceDataAvailable": "No data available",
-                    "noUpcomingSession": "No data available"
+                    "noUpcomingSession": "No upcoming session"
                 }
             },
             "tutorialFreePeriodsManagement": {
