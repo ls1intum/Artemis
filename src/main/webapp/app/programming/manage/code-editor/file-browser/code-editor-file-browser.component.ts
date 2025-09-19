@@ -265,8 +265,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             this.setupTreeview();
         }
 
-        // Handle displayOnly/showEditorInstructions changes - add/remove Problem Statement from repositoryFiles
-        if (changes.displayOnly || changes.showEditorInstructions) {
+        // Handle displayOnly changes - add/remove Problem Statement from repositoryFiles
+        if (changes.displayOnly) {
             this.handleProblemStatementVisibility();
         }
     }
