@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -121,6 +122,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private ConversationUtilService conversationUtilService;
+
+    @Autowired
+    private AtlasMLRequestMockProvider atlasMLRequestMockProvider;
 
     private ModelingExercise classExercise;
 
@@ -984,6 +988,25 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         result = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void atlasML_isCalledOnCreateUpdateAndDelete() throws Exception {
+        atlasMLRequestMockProvider.enableMockingOfRequests();
+        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+        // Create
+        var modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        modelingExercise.setTitle("AtlasML Create");
+        request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+
+        // Update
+        var created = modelingExerciseRepository.findByCourseIdWithCategories(classExercise.getCourseViaExerciseGroupOrCourseMember().getId()).getFirst();
+        created.setTitle("AtlasML Update");
+        request.putWithResponseBody("/api/modeling/modeling-exercises", created, ModelingExercise.class, HttpStatus.OK);
+
+        // Delete
+        request.delete("/api/modeling/modeling-exercises/" + created.getId(), HttpStatus.OK);
     }
 
     @Test
