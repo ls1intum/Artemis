@@ -22,10 +22,11 @@ import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/quiz-
 import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluation';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { QuizQuestionTraining } from 'app/quiz/overview/course-training-quiz/quiz-question-training.model';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
-    selector: 'jhi-course-practice-quiz',
-    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent, TranslateDirective],
+    selector: 'jhi-course-training-quiz',
+    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent, TranslateDirective, DialogModule],
     templateUrl: './course-training-quiz.component.html',
 })
 export class CourseTrainingQuizComponent {
@@ -43,11 +44,12 @@ export class CourseTrainingQuizComponent {
     private courseService = inject(CourseManagementService);
 
     // Pagination options
-    page = signal(1);
+    page = signal(0);
     size = 10;
     totalItems = signal(0);
     loading = signal(false);
     allLoadedQuestions = signal<QuizQuestionTraining[]>([]);
+    allQuestionsLoaded = signal(false);
 
     // Reactive chain for loading quiz questions based on the current route
     paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
@@ -63,6 +65,9 @@ export class CourseTrainingQuizComponent {
     );
     course = computed(() => this.courseSignal());
     questionsLoaded = computed(() => this.allLoadedQuestions().length > 0);
+    nextPage = computed(
+        () => (this.currentIndex() + 2) % this.size === 0 && !this.loading() && !this.allQuestionsLoaded() && this.allLoadedQuestions().length <= this.currentIndex() + 2,
+    );
 
     trainingAnswer = new QuizTrainingAnswer();
     showingResult = false;
@@ -71,8 +76,9 @@ export class CourseTrainingQuizComponent {
     selectedAnswerOptions: AnswerOption[] = [];
     dragAndDropMappings: DragAndDropMapping[] = [];
     shortAnswerSubmittedTexts: ShortAnswerSubmittedText[] = [];
-    previousRatedStatus: boolean | undefined = true;
+    previousRatedStatus = true;
     showUnratedConfirmation = false;
+    questionIds: number[] | undefined;
 
     /**
      * checks if the current question is the last question
@@ -107,7 +113,7 @@ export class CourseTrainingQuizComponent {
     constructor() {
         effect(() => {
             const id = this.courseId();
-            if (id) {
+            if (id && this.page() === 0) {
                 this.loadQuestions();
             }
         });
@@ -120,10 +126,7 @@ export class CourseTrainingQuizComponent {
         });
 
         effect(() => {
-            const currentIndex = this.currentIndex();
-            const questions = this.allLoadedQuestions();
-
-            if (questions.length > 0 && currentIndex >= questions.length - 2 && (this.page() + 1) * this.size > this.totalItems()) {
+            if (this.nextPage()) {
                 this.loadNextPage();
             }
         });
@@ -137,11 +140,21 @@ export class CourseTrainingQuizComponent {
             return;
         }
 
-        this.loading.set(true);
-        this.quizService.getQuizQuestionsPage(this.courseId(), this.page(), this.size).subscribe({
+        this.quizService.getQuizQuestionsPage(this.courseId(), this.page(), this.size, this.questionIds).subscribe({
             next: (res: HttpResponse<QuizQuestionTraining[]>) => {
                 const totalCount = res.headers.get('X-Total-Count');
-                this.totalItems.set(totalCount ? parseInt(totalCount, 10) : 0);
+
+                this.loading.set(true);
+                if (this.page() === 0) {
+                    this.questionIds = res.body?.[0]?.questionIds;
+                    this.totalItems.set(totalCount ? parseInt(totalCount, 10) : 0);
+                }
+
+                if (!res.body || res.body.length === 0) {
+                    this.allQuestionsLoaded.set(true);
+                    this.loading.set(false);
+                    return;
+                }
 
                 if (this.page() === 0) {
                     this.allLoadedQuestions.set(res.body || []);
@@ -161,7 +174,7 @@ export class CourseTrainingQuizComponent {
      * loads the next page of questions
      */
     loadNextPage(): void {
-        if (this.loading() || (this.page() + 1) * this.size >= this.totalItems()) {
+        if (this.loading() || this.allQuestionsLoaded()) {
             return;
         }
         this.page.update((page) => page + 1);
@@ -178,8 +191,6 @@ export class CourseTrainingQuizComponent {
             const question = this.currentQuestion();
             if (question) {
                 this.initQuestion(question);
-            } else if ((this.page() + 1) * this.size < this.totalItems()) {
-                this.loadNextPage();
             }
         }
     }
@@ -187,11 +198,11 @@ export class CourseTrainingQuizComponent {
     checkRatingStatusChange(): void {
         const currentIsRated = this.isRated();
 
-        if (this.previousRatedStatus === true && currentIsRated === false) {
+        if (this.previousRatedStatus && currentIsRated === false) {
             this.showUnratedConfirmation = true;
         }
 
-        this.previousRatedStatus = currentIsRated;
+        this.previousRatedStatus = currentIsRated!;
     }
 
     /**
@@ -269,7 +280,7 @@ export class CourseTrainingQuizComponent {
             return;
         }
         this.applySelection();
-        this.trainingAnswer.isRated = this.isRated();
+        this.trainingAnswer.isRated = this.isRated()!;
         this.quizService.submitForTraining(this.trainingAnswer, questionId, this.courseId()).subscribe({
             next: (response: HttpResponse<SubmittedAnswerAfterEvaluation>) => {
                 if (response.body) {

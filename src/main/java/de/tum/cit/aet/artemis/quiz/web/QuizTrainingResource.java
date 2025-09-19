@@ -5,6 +5,7 @@ import static tech.jhipster.web.util.PaginationUtil.generatePaginationHttpHeader
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.validation.Valid;
 
@@ -17,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -71,15 +71,16 @@ public class QuizTrainingResource {
      * @param courseId the id of the course whose quiz questions should be retrieved
      * @return a list of 10 quiz questions for the training session
      */
-    @GetMapping("courses/{courseId}/training-questions")
+    @PostMapping("courses/{courseId}/training-questions")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<QuizQuestionTrainingDTO>> getQuizQuestionsForPractice(@PathVariable long courseId, Pageable pageable) {
+    public ResponseEntity<List<QuizQuestionTrainingDTO>> getQuizQuestionsForPractice(@PathVariable long courseId, Pageable pageable,
+            @RequestBody(required = false) Set<Long> questionIds) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        Page<QuizQuestionTrainingDTO> quizQuestionsPage = quizQuestionProgressService.getQuestionsForSession(courseId, user.getId(), pageable);
+        Page<QuizQuestionTrainingDTO> quizQuestionsPage = quizQuestionProgressService.getQuestionsForSession(courseId, user.getId(), pageable, questionIds);
         HttpHeaders headers = generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), quizQuestionsPage);
         return new ResponseEntity<>(quizQuestionsPage.getContent(), headers, HttpStatus.OK);
     }

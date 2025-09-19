@@ -1,23 +1,16 @@
 <div>
-    @if (showUnratedConfirmation) {
-        <div class="modal-backdrop fade show"></div>
-        <div class="modal d-block" tabindex="-1" role="dialog">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" jhiTranslate="artemisApp.quizQuestion.unratedConfirmationTitle"></h5>
-                    </div>
-                    <div class="modal-body">
-                        <p jhiTranslate="artemisApp.quizQuestion.unratedConfirmation"></p>
-                    </div>
-                    <div class="modal-footer">
-                        <jhi-button (onClick)="confirmUnratedPractice()" [title]="'global.generic.yes'" />
-                        <jhi-button (onClick)="cancelUnratedPractice()" [title]="'global.generic.no'" />
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
+    <p-dialog [(visible)]="showUnratedConfirmation" [modal]="true" [draggable]="false" [style]="{ width: '450px' }">
+        <ng-template pTemplate="header">
+            <h5 jhiTranslate="artemisApp.quizQuestion.unratedConfirmationTitle"></h5>
+        </ng-template>
+
+        <p jhiTranslate="artemisApp.quizQuestion.unratedConfirmation"></p>
+
+        <ng-template pTemplate="footer">
+            <jhi-button (onClick)="confirmUnratedPractice()" [title]="'global.generic.yes'" />
+            <jhi-button (onClick)="cancelUnratedPractice()" [title]="'global.generic.no'" />
+        </ng-template>
+    </p-dialog>
 
     @if (questionsLoaded()) {
         @if (currentQuestion(); as question) {

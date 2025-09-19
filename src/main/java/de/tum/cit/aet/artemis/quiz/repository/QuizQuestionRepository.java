@@ -54,7 +54,12 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
             """)
     Page<QuizQuestion> findAllPracticeQuizQuestionsByCourseId(@Param("courseId") Long courseId, Pageable pageable);
 
-    Page<QuizQuestion> findAllById(Set<Long> ids, Pageable pageable);
+    @Query("""
+            SELECT q
+            FROM QuizQuestion q
+            WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE AND q.id NOT In (:ids)
+            """)
+    Page<QuizQuestion> findAllDueQuestions(Set<Long> ids, Long courseId, Pageable pageable);
 
     @Query("""
             SELECT COUNT(q) > 0
@@ -62,6 +67,13 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
             WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE
             """)
     boolean areQuizQuestionsAvailableForPractice(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT COUNT(q)
+            FROM QuizQuestion q
+            WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE
+            """)
+    long countAllPracticeQuizQuestionsByCourseId(@Param("courseId") Long courseId);
 
     default DragAndDropQuestion findDnDQuestionByIdOrElseThrow(Long questionId) {
         return getValueElseThrow(findDnDQuestionById(questionId), questionId);

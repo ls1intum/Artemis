@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/quiz-training-answer.model';
 import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluation';
@@ -16,11 +16,12 @@ export class CourseTrainingQuizService {
      * Retrieves a set of quiz questions for a given course by course ID from the server and returns them as an Observable.
      * @param courseId The course ID for which to retrieve quiz questions.
      * @param req Pagination options
+     * @param questionIds
      */
-    getQuizQuestions(courseId: number, req?: any): Observable<HttpResponse<QuizQuestionTraining[]>> {
-        const options = createRequestOption(req);
-        return this.http.get<QuizQuestionTraining[]>(`api/quiz/courses/${courseId}/training-questions`, {
-            params: options,
+    getQuizQuestions(courseId: number, req?: any, questionIds?: number[]): Observable<HttpResponse<QuizQuestionTraining[]>> {
+        const params: HttpParams = createRequestOption(req);
+        return this.http.post<QuizQuestionTraining[]>(`api/quiz/courses/${courseId}/training-questions`, questionIds, {
+            params,
             observe: 'response',
         });
     }
@@ -30,13 +31,14 @@ export class CourseTrainingQuizService {
      * @param courseId The course ID for which to retrieve quiz questions
      * @param page the page number to retrieve
      * @param size the number of items per page
+     * @param questionIds
      */
-    getQuizQuestionsPage(courseId: number, page: number, size: number): Observable<HttpResponse<QuizQuestionTraining[]>> {
-        const req = {
+    getQuizQuestionsPage(courseId: number, page: number, size: number, questionIds?: number[]): Observable<HttpResponse<QuizQuestionTraining[]>> {
+        const params = {
             page,
             size,
         };
-        return this.getQuizQuestions(courseId, req);
+        return this.getQuizQuestions(courseId, params, questionIds);
     }
 
     submitForTraining(answer: QuizTrainingAnswer, questionId: number, courseId: number): Observable<HttpResponse<SubmittedAnswerAfterEvaluation>> {

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -27,6 +29,8 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 @Lazy
 @Service
 public class QuizQuestionProgressService {
+
+    private static final Logger log = LoggerFactory.getLogger(QuizQuestionProgressService.class);
 
     private final QuizQuestionProgressRepository quizQuestionProgressRepository;
 
@@ -93,30 +97,37 @@ public class QuizQuestionProgressService {
      * @param userId   ID of the user for whom the quiz questions are to be fetched
      * @return A list of quiz questions sorted by due date
      */
-    public Page<QuizQuestionTrainingDTO> getQuestionsForSession(Long courseId, Long userId, Pageable pageable) {
+    public Page<QuizQuestionTrainingDTO> getQuestionsForSession(Long courseId, Long userId, Pageable pageable, Set<Long> questionIds) {
         ZonedDateTime now = ZonedDateTime.now();
+        if (questionIds == null) {
+            Set<QuizQuestionProgress> allProgress = quizQuestionProgressRepository.findAllByUserId(userId);
 
-        Set<QuizQuestionProgress> allProgress = quizQuestionProgressRepository.findAllByUserId(userId);
+            questionIds = allProgress.stream().filter(progress -> {
+                QuizQuestionProgressData data = progress.getProgressJson();
+                return data != null && data.getDueDate() != null && data.getDueDate().isAfter(now);
+            }).map(QuizQuestionProgress::getQuizQuestionId).collect(Collectors.toSet());
+        }
 
-        Set<Long> dueQuestionIds = allProgress.stream().filter(progress -> {
-            QuizQuestionProgressData data = progress.getProgressJson();
-            return data != null && data.getDueDate() != null && data.getDueDate().isAfter(now);
-        }).map(QuizQuestionProgress::getQuizQuestionId).collect(Collectors.toSet());
-
-        if (!dueQuestionIds.isEmpty()) {
-            return loadDueQuestions(dueQuestionIds, pageable);
+        if (areQuestionsDue(courseId, questionIds.size())) {
+            return loadDueQuestions(questionIds, courseId, pageable);
         }
         else {
             return loadAllPracticeQuestions(courseId, pageable);
         }
     }
 
-    private Page<QuizQuestionTrainingDTO> loadDueQuestions(Set<Long> questionIds, Pageable pageable) {
-        Page<QuizQuestion> questionPage = quizQuestionRepository.findAllById(questionIds, pageable);
+    private boolean areQuestionsDue(Long courseId, int notDueCount) {
+        long totalQuestionsCount = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(courseId);
+
+        return notDueCount < totalQuestionsCount;
+    }
+
+    private Page<QuizQuestionTrainingDTO> loadDueQuestions(Set<Long> questionIds, Long courseId, Pageable pageable) {
+        Page<QuizQuestion> questionPage = quizQuestionRepository.findAllDueQuestions(questionIds, courseId, pageable);
 
         return questionPage.map(question -> {
             QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(question);
-            return QuizQuestionTrainingDTO.of(dto, true);
+            return new QuizQuestionTrainingDTO(dto, true, questionIds);
         });
     }
 
@@ -125,7 +136,7 @@ public class QuizQuestionProgressService {
 
         return questionPage.map(question -> {
             QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(question);
-            return QuizQuestionTrainingDTO.of(dto, false);
+            return new QuizQuestionTrainingDTO(dto, false, null);
         });
     }
 
