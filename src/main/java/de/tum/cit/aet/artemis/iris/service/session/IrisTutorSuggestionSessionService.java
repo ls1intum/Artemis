@@ -245,7 +245,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         else {
             savedMessage = null;
             savedArtifact = null;
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), null, statusUpdate.tokens());
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), null, null, statusUpdate.tokens());
         }
 
         AtomicReference<TrackedSessionBasedPyrisJob> updatedJob = new AtomicReference<>(job);

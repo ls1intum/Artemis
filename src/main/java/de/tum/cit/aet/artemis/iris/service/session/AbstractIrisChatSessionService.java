@@ -92,6 +92,13 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         var session = (S) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
         AtomicReference<TrackedSessionBasedPyrisJob> updatedJob = new AtomicReference<>(job);
         IrisMessage savedMessage;
+        boolean statusSent = false;
+        if (statusUpdate.sessionTitle() != null && !statusUpdate.sessionTitle().isBlank()) {
+            session.setTitle(statusUpdate.sessionTitle());
+            irisSessionRepository.save(session);
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens());
+            statusSent = true;
+        }
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
@@ -117,7 +124,9 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
                     irisChatWebsocketService.sendMessage(session, message, statusUpdate.stages());
                 });
             }
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions(), statusUpdate.tokens());
+            if (!statusSent) {
+                irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens());
+            }
         }
 
         if (statusUpdate.tokens() != null && !statusUpdate.tokens().isEmpty()) {
