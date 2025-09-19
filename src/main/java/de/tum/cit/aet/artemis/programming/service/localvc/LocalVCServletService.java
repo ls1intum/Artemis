@@ -243,7 +243,6 @@ public class LocalVCServletService {
         }
 
         try {
-            log.debug("Authorizing user {} for repository {}", user.getLogin(), localVCRepositoryUri);
             var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false);
             savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation);
         }
@@ -393,7 +392,6 @@ public class LocalVCServletService {
         String passwordOrToken = usernameAndPassword.password();
 
         User user = userRepository.findOneByLogin(username).orElseThrow(LocalVCAuthException::new);
-        log.debug("Authenticating user {} with token {}", username, passwordOrToken);
 
         try {
             SecurityUtils.checkUsernameAndPasswordValidity(username, passwordOrToken);
@@ -402,28 +400,18 @@ public class LocalVCServletService {
             if (StringUtils.isNotEmpty(passwordOrToken)) {
                 log.warn("Failed login attempt for user {} with password {} due to issue: {}", username, passwordOrToken, e.getMessage());
             }
-            log.debug("Failed login attempt for user", e);
             throw new LocalVCAuthException(e.getMessage());
         }
-
-        log.debug("user access token {}", user.getVcsAccessToken());
-        log.debug("provided token {}", passwordOrToken);
-        log.debug("expiry date {}", user.getVcsAccessTokenExpiryDate());
-
         // check user VCS access token
         if (Objects.equals(user.getVcsAccessToken(), passwordOrToken) && user.getVcsAccessTokenExpiryDate() != null
                 && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())) {
-            log.debug("User access with VCS access token");
             return user;
         }
 
         // check user participation VCS access token
         if (tryAuthenticationWithParticipationVCSAccessToken(user, passwordOrToken, exercise, localVCRepositoryUri)) {
-            log.debug("User {} authenticated with Participation VCS access token {}", username, passwordOrToken);
             return user;
         }
-
-        log.debug("User uses password for authentication");
 
         // if the user does not have an access token or used a password, we try to authenticate the user with it
         // Try to authenticate the user based on the configured options, this can include sending the data to an external system (e.g. LDAP) or using internal authentication.
@@ -457,16 +445,10 @@ public class LocalVCServletService {
                 }
                 else {
                     participations = programmingExerciseParticipationService.findStudentParticipationsByExerciseAndStudentId(exercise, user.getLogin());
-                    log.debug("participations: {}", participations);
-                    log.debug("LocalVCRepositoryUri: {}", localVCRepositoryUri);
-                    log.debug("participation uri list: {}", participations.stream().map(ProgrammingExerciseStudentParticipation::getRepositoryUri).toList());
                     studentParticipation = participations.stream().filter(participation -> participation.getRepositoryUri().equals(localVCRepositoryUri.toString())).findAny();
                 }
                 if (studentParticipation.isPresent()) {
-                    log.debug("Retrieving participation token");
                     var storedToken = participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), studentParticipation.get().getId());
-                    log.debug("stored token: {}", storedToken);
-                    log.debug("provided token: {}", providedToken);
                     if (storedToken.isPresent() && Objects.equals(storedToken.get().getVcsAccessToken(), providedToken)) {
                         user.setVcsAccessToken(storedToken.get().getVcsAccessToken());
                         return true;
@@ -474,7 +456,6 @@ public class LocalVCServletService {
                 }
             }
             catch (EntityNotFoundException e) {
-                log.debug("Could not find some entity", e);
                 throw new LocalVCAuthException();
             }
         }
@@ -547,8 +528,6 @@ public class LocalVCServletService {
         }
         String username = basicAuthCredentials.substring(0, separatorIndex);
         String password = basicAuthCredentials.substring(separatorIndex + 1);
-        log.debug("Extracted username {} from authorization header", username);
-        log.debug("Extracted password {} from authorization header", password);
 
         return new UsernameAndPassword(username, password);
     }
@@ -567,16 +546,12 @@ public class LocalVCServletService {
      */
     public Optional<ProgrammingExerciseParticipation> authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise,
             RepositoryActionType repositoryActionType, LocalVCRepositoryUri localVCRepositoryUri, boolean usingSSH) throws LocalVCForbiddenException {
-        log.debug("authorize user usingSSH: {}", usingSSH);
         if (checkIfRepositoryIsAuxiliaryOrTestRepository(exercise, repositoryTypeOrUserName, repositoryActionType, user)) {
             return Optional.empty();
         }
 
         ProgrammingExerciseParticipation participation = tryToLoadParticipation(usingSSH, repositoryTypeOrUserName, localVCRepositoryUri, exercise);
-        log.debug("Loaded participation {}", participation);
-        ;
         checkAccessForRepository(participation, user, exercise, repositoryActionType);
-        log.debug("Checked access for user {} to repository {}", user.getLogin(), localVCRepositoryUri);
         return Optional.of(participation);
     }
 
@@ -606,15 +581,12 @@ public class LocalVCServletService {
     private ProgrammingExerciseParticipation tryToLoadParticipation(boolean usingSSH, String repositoryTypeOrUserName, LocalVCRepositoryUri localVCRepositoryUri,
             ProgrammingExercise exercise) throws LocalVCInternalException {
         ProgrammingExerciseParticipation participation;
-        log.debug("SSH access: {}", usingSSH);
         try {
             if (usingSSH) {
-                log.debug("Trying to load participation with submissions for repository {} in exercise {}", repositoryTypeOrUserName, exercise.getId());
                 participation = programmingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString(),
                         exercise);
             }
             else {
-                log.debug("Trying to load participation for repository {} in exercise {}", repositoryTypeOrUserName, exercise.getId());
                 participation = programmingExerciseParticipationService.fetchParticipationByRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString(), exercise);
             }
         }
@@ -623,7 +595,6 @@ public class LocalVCServletService {
             if (auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
                 return programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(exercise.getId());
             }
-            log.debug("No participation found!");
             throw new LocalVCInternalException(
                     "No participation found for repository with repository type or username " + repositoryTypeOrUserName + " in exercise " + exercise.getId(), e);
         }
@@ -636,7 +607,6 @@ public class LocalVCServletService {
             repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, repositoryActionType);
         }
         catch (AccessForbiddenException e) {
-            log.debug("AccessForbiddenException", e);
             throw new LocalVCForbiddenException(e);
         }
     }
@@ -774,7 +744,6 @@ public class LocalVCServletService {
                     .fetchParticipationWithSubmissionsByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(), localVCRepositoryUri.toString(), exercise));
         }
         catch (EntityNotFoundException e) {
-            log.debug("processNewPush: Could not find participation for repository type or username {} in exercise {}", repositoryTypeOrUserName, exercise.getId());
             repositoryType = getRepositoryType(repositoryTypeOrUserName, exercise);
             if (repositoryType.equals(RepositoryType.AUXILIARY) || repositoryType.equals(RepositoryType.TESTS)) {
                 participation = retrieveSolutionParticipation(exercise);
@@ -1050,7 +1019,6 @@ public class LocalVCServletService {
      */
     public void createVCSAccessLogForFailedAuthenticationAttempt(HttpServletRequest servletRequest) {
         try {
-            log.debug("Writing access log for failed authentication attempt");
             String authorizationHeader = servletRequest.getHeader(HttpHeaders.AUTHORIZATION);
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
