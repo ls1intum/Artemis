@@ -206,6 +206,17 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             },
             { injector: this.injector },
         );
+
+        // React to showEditorInstructions signal changes
+        effect(
+            () => {
+                this.showEditorInstructions();
+                if (this.participation()) {
+                    this.handleProblemStatementVisibility();
+                }
+            },
+            { injector: this.injector },
+        );
     }
 
     /**
