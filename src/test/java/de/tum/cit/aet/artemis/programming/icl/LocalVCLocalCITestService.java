@@ -122,7 +122,6 @@ public class LocalVCLocalCITestService {
         String repositorySlug = getRepositorySlug(projectKey, userLogin);
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userLogin);
         participation.setRepositoryUri(String.format(localVCBaseUri + "/git/%s/%s.git", projectKey, repositorySlug));
-        log.debug("Set repository URL to: {}", participation.getRepositoryUri());
         participation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(participation);
 
@@ -359,7 +358,6 @@ public class LocalVCLocalCITestService {
 
     private void performFetch(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException, URISyntaxException {
         String repositoryUri = buildLocalVCUri(username, password, projectKey, repositorySlug);
-        log.debug("Fetching from repository: {}", repositoryUri);
         FetchCommand fetchCommand = repositoryHandle.fetch();
         // Set the remote URL.
         fetchCommand.setRemote(repositoryUri);
