@@ -206,6 +206,16 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             },
             { injector: this.injector },
         );
+
+        // React to instructions visibility changes (signal)
+        effect(
+            () => {
+                // establish dependency
+                this.showEditorInstructions();
+                this.handleProblemStatementVisibility();
+            },
+            { injector: this.injector },
+        );
     }
 
     /**
@@ -254,8 +264,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             this.setupTreeview();
         }
 
-        // Handle displayOnly/showEditorInstructions changes - add/remove Problem Statement from repositoryFiles
-        if (changes.displayOnly || changes.showEditorInstructions) {
+        // Handle displayOnly changes - PS visibility for repository-only view
+        if (changes.displayOnly) {
             this.handleProblemStatementVisibility();
         }
     }
