@@ -126,6 +126,10 @@
             "missingLayouts": "Couldn't parse layouts from room {{ roomNumber }}",
             "malformedLayout": "Layout {{ layoutName }} is malformed in room {{ roomNumber }}",
             "unknownLayoutType": "Unknown layout type '{{ layoutType }}' in layout '{{ layoutName }}' in room {{ roomNumber }}"
-        }
+        },
+        "wrongCourse": "The reaction does not belong to the selected course.",
+        "reactionNotFound": "The reaction could not be found.",
+        "missingAssociation": "The reaction must be associated with a post or an answer post.",
+        "emojiIdMissing": "emojiId must be set."
     }
 }

@@ -184,4 +184,42 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
      * @return the list of build jobs
      */
     List<BuildJob> findAllByBuildStatusIn(List<BuildStatus> statuses);
+
+    /**
+     * Returns a slice of missing build jobs submitted within the given time range for whose participation no newer job exists, ordered by submission date descending.
+     *
+     * @param startTime earliest build submission time
+     * @param endTime   latest build submission time
+     * @param pageable  pagination information
+     * @return slice of matching build jobs
+     */
+    @Query("""
+            SELECT b
+            FROM BuildJob b
+            WHERE b.buildStatus = de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.MISSING
+              AND b.buildSubmissionDate >= :startTime
+              AND b.buildSubmissionDate <= :endTime
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM BuildJob b2
+                  WHERE b2.participationId = b.participationId
+                    AND b2.buildSubmissionDate > b.buildSubmissionDate
+              )
+            ORDER BY b.buildSubmissionDate DESC
+            """)
+    Slice<BuildJob> findMissingJobsToRetryInTimeRange(@Param("startTime") ZonedDateTime startTime, @Param("endTime") ZonedDateTime endTime, Pageable pageable);
+
+    /**
+     * Increment the retry count of a build job by 1
+     *
+     * @param buildJobId the ID of the build job
+     */
+    @Modifying
+    @Transactional
+    @Query("""
+            UPDATE BuildJob b
+            SET b.retryCount = b.retryCount + 1
+            WHERE b.buildJobId = :buildJobId
+            """)
+    void incrementRetryCount(@Param("buildJobId") String buildJobId);
 }
