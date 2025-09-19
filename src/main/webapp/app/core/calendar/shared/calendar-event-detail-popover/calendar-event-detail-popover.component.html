@@ -1,11 +1,6 @@
 <div class="frame">
     <div class="header">
-        @let eventSubtypeDescriptor = utils.getEventSubtypeNameKey(event());
-        @if (eventSubtypeDescriptor) {
-            <div>{{ eventSubtypeDescriptor | artemisTranslate }}: {{ event().title }}</div>
-        } @else {
-            <div>{{ event().title }}</div>
-        }
+        <div>{{ event().title }}</div>
         <fa-icon [icon]="faXmark" class="close-button" (click)="closePopover()" />
     </div>
     <div class="info-row">

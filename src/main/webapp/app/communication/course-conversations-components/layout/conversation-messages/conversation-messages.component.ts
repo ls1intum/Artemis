@@ -1,3 +1,4 @@
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import {
     AfterViewInit,
     ChangeDetectorRef,
@@ -19,6 +20,7 @@ import {
     input,
     output,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { faArrowDown, faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Observable, Subject, forkJoin, map, takeUntil } from 'rxjs';
@@ -32,8 +34,6 @@ import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/b
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { OneToOneChat, isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { LayoutService } from 'app/shared/breakpoints/layout.service';
-import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { User } from 'app/core/user/user.model';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -72,11 +72,15 @@ interface PostGroup {
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
     private sessionStorageService = inject(SessionStorageService);
+    private breakpointObserver = inject(BreakpointObserver);
     metisService = inject(MetisService);
     metisConversationService = inject(MetisConversationService);
     cdr = inject(ChangeDetectorRef);
 
     private ngUnsubscribe = new Subject<void>();
+    readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), {
+        initialValue: this.breakpointObserver.isMatched(Breakpoints.Handset),
+    });
     readonly sessionStorageKey = 'conversationId.scrollPosition.';
 
     readonly PageType = PageType;
@@ -94,7 +98,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     @ViewChild('container') content: ElementRef;
 
     @Input() course?: Course;
-    @Input() contentHeightDev = false;
     showOnlyPinned = input<boolean>(false);
     pinnedCount = output<number>();
     pinnedPosts: Post[] = [];
@@ -128,20 +131,19 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     firstUnreadPostId: number | undefined;
     unreadPostsCount: number = 0;
     atNewPostPosition = false;
+
     // Icons
     protected readonly faTimes = faTimes;
     protected readonly faEnvelope = faEnvelope;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faArrowDown = faArrowDown;
 
-    isMobile = false;
     isHiddenInputWithCallToAction = false;
     isHiddenInputFull = false;
     focusOnPostId: number | undefined = undefined;
     isOpenThreadOnFocus = false;
 
-    layoutService: LayoutService = inject(LayoutService);
-    accountService: AccountService = inject(AccountService);
+    accountService = inject(AccountService);
 
     constructor() {
         effect(() => {
@@ -174,13 +176,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.subscribeToMetis();
         this.subscribeToActiveConversation();
         this.setupScrollDebounce();
-        this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
-        this.layoutService
-            .subscribeToLayoutChanges()
-            .pipe(takeUntil(this.ngUnsubscribe))
-            .subscribe(() => {
-                this.isMobile = this.layoutService.isBreakpointActive(CustomBreakpointNames.extraSmall);
-            });
 
         // Fetch and subscribe to pinned posts, emit count to parent component
         this.metisService

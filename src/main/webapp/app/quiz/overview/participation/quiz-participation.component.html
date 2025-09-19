@@ -1,6 +1,6 @@
 <div [id]="'exercise-' + quizExercise?.id" class="position-relative min-h-100 d-flex flex-column">
     @if (quizExercise) {
-        <div class="row sticky-top module-bg">
+        <div #quizHeader class="row sticky-top module-bg">
             <div class="d-flex justify-content-between align-items-center module-bg gap-2" [ngClass]="'pt-2 mt-n3'">
                 <h5 class="mb-0 d-flex gap-2 align-items-center">
                     {{ quizExercise.course?.title ? quizExercise.course?.title : quizExercise.exerciseGroup?.exam?.course?.title }}
@@ -78,6 +78,7 @@
         <div class="row m-0">
             <div class="col-md-auto ps-0">
                 <div
+                    #stepWizard
                     class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard hide-scrollbar-unless-scrolling"
                     [ngClass]="{ 'sticky-top-quiz': mode === 'preview' }"
                 >
@@ -213,12 +214,12 @@
                             <div>
                                 <span ngbTooltip="{{ submission.submissionDate | artemisDate: 'long' : true }}" placement="right auto">
                                     @if (submission.submitted) {
-                                        <span jhiTranslate="artemisApp.quizExercise.submitted" [ngClass]="{ 'colon-suffix': !isMobile }"></span>
+                                        <span jhiTranslate="artemisApp.quizExercise.submitted" [ngClass]="{ 'colon-suffix': !isMobile() }"></span>
                                     } @else {
-                                        <span jhiTranslate="artemisApp.quizExercise.lastSaved" [ngClass]="{ 'colon-suffix': !isMobile }"></span>
+                                        <span jhiTranslate="artemisApp.quizExercise.lastSaved" [ngClass]="{ 'colon-suffix': !isMobile() }"></span>
                                     }
                                     <!-- Only display save and submission hint without time stamps for mobile -->
-                                    @if (!isMobile) {
+                                    @if (!isMobile()) {
                                         @if (justSaved) {
                                             <span jhiTranslate="justNow"></span>
                                         } @else {
