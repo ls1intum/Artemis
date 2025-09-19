@@ -402,6 +402,7 @@ public class LocalVCServletService {
             }
             throw new LocalVCAuthException(e.getMessage());
         }
+
         // check user VCS access token
         if (Objects.equals(user.getVcsAccessToken(), passwordOrToken) && user.getVcsAccessTokenExpiryDate() != null
                 && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())) {
@@ -546,12 +547,15 @@ public class LocalVCServletService {
      */
     public Optional<ProgrammingExerciseParticipation> authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise,
             RepositoryActionType repositoryActionType, LocalVCRepositoryUri localVCRepositoryUri, boolean usingSSH) throws LocalVCForbiddenException {
+
         if (checkIfRepositoryIsAuxiliaryOrTestRepository(exercise, repositoryTypeOrUserName, repositoryActionType, user)) {
             return Optional.empty();
         }
 
         ProgrammingExerciseParticipation participation = tryToLoadParticipation(usingSSH, repositoryTypeOrUserName, localVCRepositoryUri, exercise);
+
         checkAccessForRepository(participation, user, exercise, repositoryActionType);
+
         return Optional.of(participation);
     }
 
