@@ -232,6 +232,28 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(psNode).not.toBeNull();
     });
 
+    it('removes Problem Statement when showEditorInstructions toggles to false', () => {
+        comp.displayOnly = false;
+        comp.ngOnInit();
+        expect(comp.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER]).toBe(FileType.PROBLEM_STATEMENT);
+        // flip instructions visibility (signal input)
+        fixture.componentRef.setInput('showEditorInstructions', false);
+        fixture.detectChanges();
+        expect(comp.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER]).toBeUndefined();
+        expect(comp.filesTreeViewItem.find((i) => i.value === PROBLEM_STATEMENT_IDENTIFIER)).toBeUndefined();
+    });
+
+    it('re-adds Problem Statement when showEditorInstructions toggles back to true', () => {
+        comp.displayOnly = false;
+        comp.ngOnInit();
+        fixture.componentRef.setInput('showEditorInstructions', false);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('showEditorInstructions', true);
+        fixture.detectChanges();
+        expect(comp.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER]).toBe(FileType.PROBLEM_STATEMENT);
+        expect(comp.filesTreeViewItem.map((i) => i.value)).toContain(PROBLEM_STATEMENT_IDENTIFIER);
+    });
+
     it('should create no treeviewItems if getRepositoryContent returns an empty result', () => {
         const repositoryContent: { [fileName: string]: string } = {};
         getRepositoryContentStub.mockReturnValue(of(repositoryContent));
