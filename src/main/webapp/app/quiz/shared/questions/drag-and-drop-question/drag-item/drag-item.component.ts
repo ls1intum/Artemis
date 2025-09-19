@@ -1,5 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Component, Input, ViewEncapsulation, inject } from '@angular/core';
+import { Component, ViewEncapsulation, inject, input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { NgClass, NgStyle } from '@angular/common';
@@ -21,11 +21,11 @@ export class DragItemComponent {
     private breakpointObserver = inject(BreakpointObserver);
     readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), { initialValue: false });
 
-    @Input() minWidth: string;
-    @Input() dragItem: DragItem;
-    @Input() clickDisabled: boolean;
-    @Input() invalid: boolean;
-    @Input() filePreviewPaths: Map<string, string> = new Map<string, string>();
+    minWidth = input<string>();
+    dragItem = input.required<DragItem>();
+    clickDisabled = input<boolean>();
+    invalid = input<boolean>();
+    filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }
