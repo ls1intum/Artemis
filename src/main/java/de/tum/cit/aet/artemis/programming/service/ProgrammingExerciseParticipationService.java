@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -296,50 +295,18 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Get the commits information for the given participation.
+     * Get the commits information for the given repository URI: can be a template, solution, tests, auxiliary or student repository.
      *
-     * @param participation the participation for which to get the commits.
+     * @param localVCRepositoryUri the repository URI for which to get the commits.
      * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
      */
-    public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseParticipation participation) {
+    // TODO: use some kind of paging mechanism
+    public List<CommitInfoDTO> getCommitInfos(LocalVCRepositoryUri localVCRepositoryUri) {
         try {
-            return gitService.getCommitInfos(participation.getVcsRepositoryUri());
+            return gitService.getCommitInfos(localVCRepositoryUri);
         }
         catch (GitAPIException e) {
-            log.error("Could not get commit infos for participation {} with repository uri {}", participation.getId(), participation.getVcsRepositoryUri());
-            return List.of();
-        }
-    }
-
-    /**
-     * Get the commits information for the given auxiliary repository.
-     *
-     * @param auxiliaryRepository the auxiliary repository for which to get the commits.
-     * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
-     */
-    public List<CommitInfoDTO> getAuxiliaryRepositoryCommitInfos(AuxiliaryRepository auxiliaryRepository) {
-        try {
-            return gitService.getCommitInfos(auxiliaryRepository.getVcsRepositoryUri());
-        }
-        catch (GitAPIException e) {
-            log.error("Could not get commit infos for auxiliaryRepository {} with repository uri {}", auxiliaryRepository.getId(), auxiliaryRepository.getVcsRepositoryUri());
-            return List.of();
-        }
-    }
-
-    /**
-     * Get the commits information for the test repository of the given participation's exercise.
-     *
-     * @param participation the participation for which to get the commits.
-     * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
-     */
-    public List<CommitInfoDTO> getCommitInfosTestRepo(ProgrammingExerciseParticipation participation) {
-        ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
-        try {
-            return gitService.getCommitInfos(exercise.getVcsTestRepositoryUri());
-        }
-        catch (GitAPIException e) {
-            log.error("Could not get commit infos for test repository with participation id {}", participation.getId());
+            log.error("Could not get commit infos for repository with uri {}", localVCRepositoryUri);
             return List.of();
         }
     }
