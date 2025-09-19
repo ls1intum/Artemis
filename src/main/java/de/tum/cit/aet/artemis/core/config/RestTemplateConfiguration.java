@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -59,6 +60,22 @@ public class RestTemplateConfiguration {
     @Profile(PROFILE_APOLLON)
     public RestTemplate apollonRestTemplate() {
         return createRestTemplate();
+    }
+
+    /**
+     * Creates a RestTemplate with short timeouts that can be used to communicate with the Sharing Platform.
+     * Just needed to have an independent rest template.
+     * Especially when mocked for tests.
+     *
+     * @return a RestTemplate with short timeouts for sharing platform integration
+     */
+    @Bean
+    @ConditionalOnProperty(name = "artemis.sharing.enabled",   // property key
+            havingValue = "true",              // required value
+            matchIfMissing = false             // default behavior if property is absent
+    )
+    public RestTemplate sharingRestTemplate() {
+        return createShortTimeoutRestTemplate();
     }
 
     /**
