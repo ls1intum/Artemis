@@ -201,7 +201,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).untilAsserted(() -> {
             var versions = exerciseVersionRepository.findAllByExerciseId(updatedExercise.getId());
-            assertThat(versions.size() > 1);
+            assertThat(versions).hasSizeGreaterThan(1);
         });
 
         var newVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(updatedExercise.getId());
