@@ -159,6 +159,14 @@
                 background-color: var(--bs-body-bg);
                 color: var(--bs-body-color);
 
+                /* Hide scrollbar */
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+
+                &::-webkit-scrollbar {
+                    display: none;
+                }
+
                 &:focus {
                     border-color: var(--bs-primary);
                     box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
