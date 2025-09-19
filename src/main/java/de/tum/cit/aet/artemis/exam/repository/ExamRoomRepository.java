@@ -4,6 +4,7 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -49,7 +50,32 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
                 ON examRoom.roomNumber = latestRoom.roomNumber
                 AND examRoom.name = latestRoom.name
                 AND examRoom.createdDate < latestRoom.maxCreatedDate
-            WHERE examRoom.id NOT IN ( SELECT DISTINCT erea.examRoom.id FROM ExamRoomExamAssignment erea )
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM ExamRoomExamAssignment erea
+                WHERE erea.examRoom.id = examRoom.id
+            )
             """)
     Set<Long> findAllIdsOfOutdatedAndUnusedExamRooms();
+
+    /**
+     * Returns IDs of the current (latest) version of each unique exam room (roomNumber, name).
+     *
+     * @return All IDs of the current exam rooms
+     */
+    @Query("""
+            SELECT id
+            FROM (
+                SELECT er.id AS id, er.roomNumber AS roomNumber, er.name AS name, er.createdDate AS createdDate, ROW_NUMBER() OVER (
+                    PARTITION BY er.roomNumber, er.name
+                    ORDER BY er.createdDate DESC, er.id DESC
+                ) AS rowNumber
+                FROM ExamRoom er
+            )
+            WHERE rowNumber = 1
+            """)
+    Set<Long> findAllIdsOfCurrentExamRooms();
+
+    @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = { "layoutStrategies" })
+    Set<ExamRoom> findAllWithEagerLayoutStrategiesByIdIn(Set<Long> ids);
 }
