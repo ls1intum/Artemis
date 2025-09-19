@@ -21,10 +21,16 @@ public class SpringAIConfiguration {
     /**
      * Default Chat Client for AI features.
      * Uses the manually configured Azure OpenAI model.
+     *
+     * @param azureOpenAiChatModel the Azure OpenAI chat model to use
+     * @return a configured ChatClient with default options
      */
     @Bean
     @Lazy
     public ChatClient chatClient(AzureOpenAiChatModel azureOpenAiChatModel) {
+        if (deploymentName == null || deploymentName.trim().isEmpty()) {
+            throw new IllegalStateException("Azure OpenAI deployment name is required but not configured");
+        }
         return ChatClient.builder(azureOpenAiChatModel).defaultOptions(AzureOpenAiChatOptions.builder().deploymentName("gpt-5-mini").temperature(1.0).build()).build();
     }
 
