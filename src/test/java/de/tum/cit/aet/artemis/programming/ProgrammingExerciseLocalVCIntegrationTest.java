@@ -6,7 +6,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
@@ -146,14 +150,14 @@ class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testExportAuxiliaryRepositoryBadRequest() throws Exception {
-        programmingExerciseIntegrationTestService.testExportAuxiliaryRepositoryBadRequest();
+    void testExportAuxiliaryRepositoryUnprocessableEntity() throws Exception {
+        programmingExerciseIntegrationTestService.testExportAuxiliaryRepositoryUnprocessableEntity();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testExportAuxiliaryRepositoryExerciseNotFound() throws Exception {
-        programmingExerciseIntegrationTestService.testExportAuxiliaryRepositoryExerciseNotFound();
+    void testExportAuxiliaryRepositoryExerciseAccessForbidden() throws Exception {
+        programmingExerciseIntegrationTestService.testExportAuxiliaryRepositoryExerciseAccessForbidden();
     }
 
     @Test
@@ -202,5 +206,18 @@ class ProgrammingExerciseLocalVCIntegrationTest extends AbstractProgrammingInteg
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetParticipationFilesWithContentAtCommitEditorForbidden() throws Exception {
         programmingExerciseIntegrationTestService.testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(TEST_PREFIX);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = RepositoryType.class, names = { "TEMPLATE", "SOLUTION", "TESTS" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportInstructorRepositories(RepositoryType repositoryType) throws Exception {
+        programmingExerciseIntegrationTestService.exportInstructorRepositories_shouldReturnFile(repositoryType);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void exportAuxiliaryRepository_shouldReturnFile() throws Exception {
+        programmingExerciseIntegrationTestService.exportInstructorAuxiliaryRepository_shouldReturnFile();
     }
 }

@@ -22,7 +22,7 @@ import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgClass, UpperCasePipe } from '@angular/common';
+import { UpperCasePipe } from '@angular/common';
 import { ExerciseUnitComponent } from '../exercise-unit/exercise-unit.component';
 import { AttachmentVideoUnitComponent } from '../attachment-video-unit/attachment-video-unit.component';
 import { TextUnitComponent } from '../text-unit/text-unit.component';
@@ -49,7 +49,6 @@ export interface LectureUnitCompletionEvent {
     styleUrls: ['../../../../core/course/overview/course-overview/course-overview.scss', '../../../shared/course-lectures/course-lectures.scss'],
     imports: [
         TranslateDirective,
-        NgClass,
         ExerciseUnitComponent,
         AttachmentVideoUnitComponent,
         TextUnitComponent,
@@ -94,14 +93,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     irisSettings?: IrisSettings;
     paramsSubscription: Subscription;
     courseParamsSubscription: Subscription;
-    isProduction = true;
-    isTestServer = false;
     irisEnabled = false;
     informationBoxData: InformationBox[] = [];
 
     ngOnInit(): void {
-        this.isProduction = this.profileService.isProduction();
-        this.isTestServer = this.profileService.isTestServer();
         this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
 
         // As defined in courses.route.ts, the courseId is in the grand parent route of the lectureId route.

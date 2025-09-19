@@ -11,6 +11,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
@@ -56,6 +58,8 @@ import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -67,13 +71,11 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
-import de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity;
-import de.tum.cit.aet.artemis.core.util.CalendarEventSemantics;
+import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -89,7 +91,10 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
@@ -103,12 +108,17 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -156,8 +166,6 @@ public class ExamService {
 
     private final TutorLeaderboardService tutorLeaderboardService;
 
-    private final GitService gitService;
-
     private final CourseExamExportService courseExamExportService;
 
     private final GradingScaleRepository gradingScaleRepository;
@@ -176,21 +184,29 @@ public class ExamService {
 
     private final CourseScoreCalculationService courseScoreCalculationService;
 
-    private final CourseRepository courseRepository;
-
     private final ObjectMapper defaultObjectMapper;
+
+    private final ExerciseRepository exerciseRepository;
 
     @Value("${artemis.course-archives-path}")
     private Path examArchivesDirPath;
+
+    private final QuizQuestionRepository quizQuestionRepository;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, TutorLeaderboardService tutorLeaderboardService,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
             ExamLiveEventsService examLiveEventsService, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            CourseExamExportService courseExamExportService, GitService gitService, GradingScaleRepository gradingScaleRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi,
+            CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi,
             AuthorizationCheckService authorizationCheckService, BonusService bonusService, ExerciseDeletionService exerciseDeletionService,
             SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
-            CourseRepository courseRepository, QuizResultService quizResultService) {
+            QuizResultService quizResultService, ExerciseRepository exerciseRepository, QuizQuestionRepository quizQuestionRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -204,7 +220,6 @@ public class ExamService {
         this.submissionRepository = submissionRepository;
         this.tutorLeaderboardService = tutorLeaderboardService;
         this.courseExamExportService = courseExamExportService;
-        this.gitService = gitService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.plagiarismCaseApi = plagiarismCaseApi;
         this.authorizationCheckService = authorizationCheckService;
@@ -213,9 +228,12 @@ public class ExamService {
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.auditEventRepository = auditEventRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
-        this.courseRepository = courseRepository;
         this.defaultObjectMapper = new ObjectMapper();
         this.quizResultService = quizResultService;
+        this.exerciseRepository = exerciseRepository;
+        this.quizQuestionRepository = quizQuestionRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
     }
 
     private static boolean isSecondCorrectionEnabled(Exam exam) {
@@ -293,8 +311,152 @@ public class ExamService {
             return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         }
         else {
-            return examRepository.findWithExerciseGroupsAndExercisesAndDetailsByIdOrElseThrow(examId);
+            return findWithExerciseGroupsAndExercisesAndDetailsByIdElseThrow(examId);
         }
+    }
+
+    /**
+     * Loads an {@link Exam} with its exercise groups, exercises, and exercise-specific details.
+     * <p>
+     * For quiz exercises, this also loads and attaches their {@link QuizQuestion}s.
+     * For programming exercises, this loads and attaches template/solution participations along with
+     * the latest {@link Result} for each participation's latest submission.
+     *
+     * @param examId the id of the exam
+     * @return the fully populated exam
+     * @throws EntityNotFoundException if the exam does not exist
+     */
+    private Exam findWithExerciseGroupsAndExercisesAndDetailsByIdElseThrow(long examId) {
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+
+        Set<QuizExercise> quizExercises = getAllExercisesForExamByType(exam, QuizExercise.class);
+        Set<ProgrammingExercise> programmingExercises = getAllExercisesForExamByType(exam, ProgrammingExercise.class);
+
+        populateQuizQuestions(quizExercises);
+        populateProgrammingExerciseParticipationsAndResults(programmingExercises);
+
+        return exam;
+    }
+
+    /**
+     * Loads all {@link QuizQuestion}s for the provided quiz exercises and attaches them
+     * to their respective {@link QuizExercise}.
+     *
+     * @param quizExercises the quiz exercises to enrich
+     */
+    private void populateQuizQuestions(Set<QuizExercise> quizExercises) {
+        if (quizExercises == null || quizExercises.isEmpty()) {
+            return;
+        }
+
+        Set<Long> quizExerciseIds = quizExercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
+
+        Set<QuizQuestion> quizQuestions = quizQuestionRepository.findAllByExerciseIds(quizExerciseIds);
+
+        Map<Long, List<QuizQuestion>> questionsByExerciseId = quizQuestions.stream().filter(q -> q.getExercise() != null && q.getExercise().getId() != null)
+                .collect(Collectors.groupingBy(q -> q.getExercise().getId()));
+
+        quizExercises.forEach(qe -> qe.setQuizQuestions(questionsByExerciseId.getOrDefault(qe.getId(), List.of())));
+    }
+
+    /**
+     * For each {@link ProgrammingExercise}:
+     * <ul>
+     * <li>Loads and attaches template and solution participations (with their latest submission).</li>
+     * <li>Loads the latest {@link Result} for each participation's latest submission and attaches it to the submission.</li>
+     * </ul>
+     *
+     * @param programmingExercises the programming exercises to enrich
+     */
+    private void populateProgrammingExerciseParticipationsAndResults(Set<ProgrammingExercise> programmingExercises) {
+        if (programmingExercises == null || programmingExercises.isEmpty()) {
+            return;
+        }
+
+        Set<Long> programmingExerciseIds = programmingExercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
+
+        Set<TemplateProgrammingExerciseParticipation> templateParticipations = templateProgrammingExerciseParticipationRepository
+                .findAllWithLatestSubmissionByExerciseIds(programmingExerciseIds);
+
+        Set<SolutionProgrammingExerciseParticipation> solutionParticipations = solutionProgrammingExerciseParticipationRepository
+                .findAllWithLatestSubmissionByExerciseIds(programmingExerciseIds);
+
+        attachParticipationsToExercises(programmingExercises, templateParticipations, solutionParticipations);
+
+        Map<Long, Result> latestTemplateResults = loadLatestResultsBySubmissionIdForParticipations(templateParticipations);
+        Map<Long, Result> latestSolutionResults = loadLatestResultsBySubmissionIdForParticipations(solutionParticipations);
+
+        attachResultsToSubmissions(programmingExercises, latestTemplateResults, latestSolutionResults);
+    }
+
+    /**
+     * Attaches template and solution participations to their corresponding programming exercises.
+     */
+    private void attachParticipationsToExercises(Set<ProgrammingExercise> programmingExercises, Set<TemplateProgrammingExerciseParticipation> templateParticipations,
+            Set<SolutionProgrammingExerciseParticipation> solutionParticipations) {
+        Map<Long, TemplateProgrammingExerciseParticipation> templateByExerciseId = templateParticipations.stream()
+                .filter(templateProgrammingExerciseParticipation -> templateProgrammingExerciseParticipation.getProgrammingExercise() != null
+                        && templateProgrammingExerciseParticipation.getProgrammingExercise().getId() != null)
+                .collect(Collectors.toMap(templateProgrammingExerciseParticipation -> templateProgrammingExerciseParticipation.getProgrammingExercise().getId(),
+                        Function.identity(), (a, b) -> a));
+
+        Map<Long, SolutionProgrammingExerciseParticipation> solutionByExerciseId = solutionParticipations.stream()
+                .filter(solutionProgrammingExerciseParticipation -> solutionProgrammingExerciseParticipation.getProgrammingExercise() != null
+                        && solutionProgrammingExerciseParticipation.getProgrammingExercise().getId() != null)
+                .collect(Collectors.toMap(solutionProgrammingExerciseParticipation -> solutionProgrammingExerciseParticipation.getProgrammingExercise().getId(),
+                        Function.identity(), (a, b) -> a));
+
+        programmingExercises.forEach(exercise -> {
+            if (templateByExerciseId.containsKey(exercise.getId())) {
+                exercise.setTemplateParticipation(templateByExerciseId.get(exercise.getId()));
+            }
+            if (solutionByExerciseId.containsKey(exercise.getId())) {
+                exercise.setSolutionParticipation(solutionByExerciseId.get(exercise.getId()));
+            }
+        });
+    }
+
+    /**
+     * Attaches the latest results to submissions of both template and solution participations.
+     */
+    private void attachResultsToSubmissions(Set<ProgrammingExercise> programmingExercises, Map<Long, Result> latestTemplateResults, Map<Long, Result> latestSolutionResults) {
+        programmingExercises.forEach(ex -> {
+            if (ex.getSolutionParticipation() != null && ex.getSolutionParticipation().getSubmissions() != null) {
+                ex.getSolutionParticipation().getSubmissions().forEach(sub -> {
+                    Result result = latestSolutionResults.get(sub.getId());
+                    if (result != null) {
+                        sub.setResults(List.of(result));
+                    }
+                });
+            }
+            if (ex.getTemplateParticipation() != null && ex.getTemplateParticipation().getSubmissions() != null) {
+                ex.getTemplateParticipation().getSubmissions().forEach(sub -> {
+                    Result result = latestTemplateResults.get(sub.getId());
+                    if (result != null) {
+                        sub.setResults(List.of(result));
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Loads the latest {@link Result}s for the given set of participations and returns a map keyed by
+     * the corresponding submission id.
+     *
+     * @param participations the participations whose latest results should be loaded
+     * @return map of submission id -&gt; latest result
+     */
+    private Map<Long, Result> loadLatestResultsBySubmissionIdForParticipations(Set<? extends Participation> participations) {
+        if (participations == null || participations.isEmpty()) {
+            return Map.of();
+        }
+
+        Set<Long> participationIds = participations.stream().map(DomainObject::getId).collect(Collectors.toSet());
+
+        return resultRepository.findLatestResultsByParticipationIds(participationIds).stream()
+                .filter(result -> result.getSubmission() != null && result.getSubmission().getId() != null)
+                .collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity(), (r1, r2) -> r1));
     }
 
     /**
@@ -306,18 +468,11 @@ public class ExamService {
      */
     public ExamScoresDTO calculateExamScores(Long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-
-        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithLatestSubmissionWithRelevantResultIgnoreTestRunParticipations(examId);
-        log.info("Try to find quiz submitted answer counts");
+        var examGrades = studentParticipationRepository.findGradesByExamId(examId);
         List<QuizSubmittedAnswerCount> submittedAnswerCounts = studentParticipationRepository.findSubmittedAnswerCountForQuizzesInExam(examId);
-        log.info("Found {} quiz submitted answer counts", submittedAnswerCounts.size());
 
-        // Counts how many participants each exercise has
-        Map<Long, Long> exerciseIdToNumberParticipations = studentParticipations.stream()
-                .collect(Collectors.groupingBy(studentParticipation -> studentParticipation.getExercise().getId(), Collectors.counting()));
-
+        Map<Long, Long> exerciseIdToNumberParticipants = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::exerciseId, Collectors.counting()));
         PlagiarismMapping plagiarismMapping = plagiarismCaseApi.map(api -> api.getPlagiarismMappingForExam(exam.getId())).orElse(PlagiarismMapping.empty());
-
         var exerciseGroups = new ArrayList<ExamScoresDTO.ExerciseGroup>();
 
         // Adding exercise group information to DTO
@@ -332,7 +487,7 @@ public class ExamService {
             // Add information about exercise groups and exercises
 
             for (Exercise exercise : exerciseGroup.getExercises()) {
-                Long participantsForExercise = exerciseIdToNumberParticipations.get(exercise.getId());
+                Long participantsForExercise = exerciseIdToNumberParticipants.get(exercise.getId());
                 // If no participation exists for an exercise then no entry exists in the map
                 if (participantsForExercise == null) {
                     participantsForExercise = 0L;
@@ -347,19 +502,40 @@ public class ExamService {
         }
 
         // Adding registered student information to DTO
-        Set<StudentExam> studentExams = studentExamRepository.findByExamId(examId); // fetched without test runs
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(examId);
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamIdWithBonusFrom(examId);
         List<Long> studentIds = studentExams.stream().map(studentExam -> studentExam.getUser().getId()).toList();
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, studentIds);
 
-        var studentResults = new ArrayList<ExamScoresDTO.StudentResult>();
+        Map<Long, List<StudentParticipation>> participationsByStudentId = new HashMap<>();
 
+        List<StudentExam> regularStudentExams = studentExams.stream().filter(se -> !se.isTestRun() && !se.isTestExam()).toList();
+
+        if (!regularStudentExams.isEmpty()) {
+            var regularStudentIds = regularStudentExams.stream().map(se -> se.getUser().getId()).toList();
+            var allExercises = regularStudentExams.stream().flatMap(se -> se.getExercises().stream()).filter(Objects::nonNull).collect(Collectors.toSet());
+            List<StudentParticipation> regularParticipations = studentParticipationRepository
+                    .findByStudentIdsAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(regularStudentIds, allExercises);
+            regularParticipations.forEach(participation -> participation.getStudent()
+                    .ifPresent(student -> participationsByStudentId.computeIfAbsent(student.getId(), key -> new ArrayList<>()).add(participation)));
+        }
+
+        var studentResults = new ArrayList<ExamScoresDTO.StudentResult>();
+        var gradesByUser = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::userId, Collectors.toSet()));
         for (StudentExam studentExam : studentExams) {
-            // Adding student results information to DTO
-            List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
-                    .filter(studentParticipation -> studentParticipation.getStudent().orElseThrow().getId().equals(studentExam.getUser().getId())).toList();
-            var studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, true, submittedAnswerCounts, plagiarismMapping,
-                    examBonusCalculator);
+            var studentGrades = new HashSet<>(gradesByUser.getOrDefault(studentExam.getUser().getId(), Set.of()));
+            var studentExercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
+
+            List<StudentParticipation> participations;
+            if (studentExam.isTestRun() || studentExam.isTestExam()) {
+                participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
+            }
+            else {
+                participations = participationsByStudentId.getOrDefault(studentExam.getUser().getId(), List.of());
+            }
+
+            var studentResult = calculateStudentResultWithGrade(studentExam, studentGrades, exam, gradingScale, true, submittedAnswerCounts, plagiarismMapping, examBonusCalculator,
+                    studentExercises, participations);
             studentResults.add(studentResult);
         }
 
@@ -380,12 +556,12 @@ public class ExamService {
      * Calculates max points, max bonus points and achieved points per exercise if the given studentExam is assessed.
      * Includes the corresponding grade and grade type as well if a GradingScale is set for the relevant exam.
      *
-     * @param studentExam             a StudentExam instance that will have its points and grades calculated if it is assessed
-     * @param participationsOfStudent StudentParticipation list for the given studentExam with eagerly loaded latest submission and result
+     * @param studentExam       a StudentExam instance that will have its points and grades calculated if it is assessed
+     * @param studentExamGrades grade scores for the given studentExam with eagerly loaded latest submission and result
      * @return Student Exam results with exam grade calculated if applicable
      */
     @NotNull
-    public StudentExamWithGradeDTO calculateStudentResultWithGradeAndPoints(StudentExam studentExam, List<StudentParticipation> participationsOfStudent) {
+    public StudentExamWithGradeDTO calculateStudentResultWithGradeAndPoints(StudentExam studentExam, Set<ExamGradeScoreDTO> studentExamGrades) {
         // load again from the database because the exam object of the student exam might not have all the properties we need
         var exam = examRepository.findByIdElseThrow(studentExam.getExam().getId());
         var gradingScale = gradingScaleRepository.findByExamIdWithBonusFrom(exam.getId());
@@ -393,12 +569,14 @@ public class ExamService {
         List<PlagiarismCase> plagiarismCasesForStudent = plagiarismCaseApi.map(api -> api.findByExamIdAndStudentId(exam.getId(), studentId)).orElse(List.of());
         var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCasesForStudent);
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, List.of(studentId));
-        var studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, false, null, plagiarismMapping, examBonusCalculator);
         var exercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
+        var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
+        var studentResult = calculateStudentResultWithGrade(studentExam, studentExamGrades, exam, gradingScale, false, null, plagiarismMapping, examBonusCalculator, exercises,
+                participations);
         var maxPoints = calculateMaxPointsSum(exercises, exam.getCourse());
         var maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
         var gradingType = gradingScale.map(GradingScale::getGradeType).orElse(null);
-        var achievedPointsPerExercise = calculateAchievedPointsForExercises(participationsOfStudent, exam.getCourse(), plagiarismMapping);
+        var achievedPointsPerExercise = calculatePointsStudentAchievedInExercises(studentExamGrades, exam.getCourse(), plagiarismMapping);
         return new StudentExamWithGradeDTO(maxPoints, maxBonusPoints, gradingType, studentExam, studentResult, achievedPointsPerExercise);
     }
 
@@ -411,16 +589,16 @@ public class ExamService {
         GradingScale bonusToGradingScale = gradingScale.get();
         var bonus = bonusToGradingScale.getBonusFrom().stream().findAny().orElseThrow();
         GradingScale sourceGradingScale = bonus.getSourceGradingScale();
-
         Map<Long, BonusSourceResultDTO> scoresMap = calculateBonusSourceStudentPoints(sourceGradingScale, studentIds);
         String bonusFromTitle = bonus.getSourceGradingScale().getTitle();
         BonusStrategy bonusStrategy = bonus.getBonusToGradingScale().getBonusStrategy();
 
         double tempSourceReachablePoints = sourceGradingScale.getMaxPoints();
         if (sourceGradingScale.getExam() == null && sourceGradingScale.getCourse() != null) {
+            var courseId = sourceGradingScale.getCourse().getId();
             // fetch course with exercises to calculate reachable points
-            Course course = courseRepository.findWithEagerExercisesById(sourceGradingScale.getCourse().getId());
-            tempSourceReachablePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, course.getExercises());
+            var exercises = exerciseRepository.findCourseExerciseScoreInformationByCourseId(courseId);
+            tempSourceReachablePoints = courseScoreCalculationService.calculateReachablePoints(sourceGradingScale, exercises);
         }
         final double sourceReachablePoints = tempSourceReachablePoints;
 
@@ -519,8 +697,15 @@ public class ExamService {
         List<StudentParticipation> participations = studentExam.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream()).toList();
         // fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
+        Set<ExamGradeScoreDTO> examGrades;
+        if (studentExam.isTestRun()) {
+            examGrades = studentParticipationRepository.findGradesByExamIdAndStudentIdForTestRun(studentExam.getExam().getId(), studentExam.getUser().getId());
+        }
+        else {
+            examGrades = studentParticipationRepository.findGradesByExamIdAndStudentId(studentExam.getExam().getId(), studentExam.getUser().getId());
+        }
 
-        return calculateStudentResultWithGradeAndPoints(studentExam, participations);
+        return calculateStudentResultWithGradeAndPoints(studentExam, examGrades);
     }
 
     /**
@@ -539,12 +724,16 @@ public class ExamService {
                 .toList();
         // fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
-        return calculateStudentResultWithGradeAndPoints(studentExam, participations);
+
+        Set<ExamGradeScoreDTO> examGrades = studentExam.isTestRun()
+                ? studentParticipationRepository.findGradesByExamIdAndStudentIdForTestRun(studentExam.getExam().getId(), studentExam.getUser().getId())
+                : studentParticipationRepository.findGradesByExamIdAndStudentId(studentExam.getExam().getId(), studentExam.getUser().getId());
+        return calculateStudentResultWithGradeAndPoints(studentExam, examGrades);
     }
 
     /**
      * Loads the quiz questions as is not possible to load them in a generic way with the entity graph used.
-     * See {@link StudentParticipationRepository#findByStudentExamWithEagerLatestSubmissionsResult}
+     * See {@link StudentParticipationRepository#findByStudentExamWithEagerLatestSubmissionResult}
      *
      * @param studentExam the studentExam for which to load exercises
      */
@@ -572,7 +761,7 @@ public class ExamService {
     public void fetchParticipationsSubmissionsAndResultsForExam(StudentExam studentExam, User currentUser) {
 
         // 1st: fetch participations, with latest submissions and results (a distinction for test runs, real exams and test exams is done within the following method)
-        var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionsResult(studentExam, false);
+        var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
 
         // 2nd: fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
@@ -655,17 +844,16 @@ public class ExamService {
      * Calculates the corresponding grade if a GradingScale is given.
      *
      * @param studentExam                    a StudentExam instance that will have its points and grades calculated if it is assessed
-     * @param participationsOfStudent        StudentParticipation list for the given studentExam with eagerly loaded latest submission and results
+     * @param examGrades                     grade DTOs for the given studentExam
      * @param exam                           the relevant exam
      * @param gradingScale                   optional GradingScale that will be used to set the grade type and the achieved grade if present
      * @param calculateFirstCorrectionPoints flag to determine whether to calculate the first correction results or not
      * @return exam result for a student who participated in the exam
      */
-    private ExamScoresDTO.StudentResult calculateStudentResultWithGrade(StudentExam studentExam, List<StudentParticipation> participationsOfStudent, Exam exam,
-            Optional<GradingScale> gradingScale, boolean calculateFirstCorrectionPoints, List<QuizSubmittedAnswerCount> quizSubmittedAnswerCounts,
-            PlagiarismMapping plagiarismMapping, ExamBonusCalculator examBonusCalculator) {
+    private ExamScoresDTO.StudentResult calculateStudentResultWithGrade(StudentExam studentExam, Set<ExamGradeScoreDTO> examGrades, Exam exam, Optional<GradingScale> gradingScale,
+            boolean calculateFirstCorrectionPoints, List<QuizSubmittedAnswerCount> quizSubmittedAnswerCounts, PlagiarismMapping plagiarismMapping,
+            ExamBonusCalculator examBonusCalculator, List<Exercise> studentExercises, List<StudentParticipation> participations) {
         User user = studentExam.getUser();
-
         if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
             String noParticipationGrade = gradingScale.map(GradingScale::getNoParticipationGradeOrDefault).orElse(GradingScale.DEFAULT_NO_PARTICIPATION_GRADE);
             return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
@@ -676,76 +864,58 @@ public class ExamService {
             return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
                     0.0, plagiarismGrade, plagiarismGrade, false, 0.0, null, null, PlagiarismVerdict.PLAGIARISM);
         }
-
         var overallPointsAchieved = 0.0;
         var overallScoreAchieved = 0.0;
         var overallPointsAchievedInFirstCorrection = 0.0;
         Map<Long, ExamScoresDTO.ExerciseResult> exerciseGroupIdToExerciseResult = new HashMap<>();
         var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(user.getId());
-        for (StudentParticipation studentParticipation : participationsOfStudent) {
-            Exercise exercise = studentParticipation.getExercise();
-
+        for (ExamGradeScoreDTO examGrade : examGrades) {
+            ExamGradeScoreDTO finalExamGrade = examGrade;
+            Exercise exercise = studentExercises.stream().filter(e -> e.getId().equals(finalExamGrade.exerciseId())).findFirst().orElse(null);
             if (exercise == null) {
                 continue;
             }
-            // Relevant Result is already calculated
-            Optional<Result> optionalRelevantResult = studentParticipation.getSubmissions().stream().findFirst()
-                    .flatMap(submission -> Optional.ofNullable(submission.getLatestResult()));
-            if (optionalRelevantResult.isPresent()) {
-                Result relevantResult = optionalRelevantResult.get();
-                PlagiarismCase plagiarismCase = plagiarismCasesForStudent.get(exercise.getId());
-                double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
-                double achievedPoints = calculateAchievedPoints(exercise, relevantResult, exam.getCourse(), plagiarismPointDeductionPercentage);
-
-                // points earned in NOT_INCLUDED exercises do not count towards the students result in the exam
-                if (!exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
-                    overallPointsAchieved += achievedPoints;
-                }
-
-                // Collect points of first correction, if a second correction exists
-                if (calculateFirstCorrectionPoints && exam.getNumberOfCorrectionRoundsInExam() == 2
-                        && !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
-                    Optional<Submission> latestSubmission = studentParticipation.getSubmissions().stream().findFirst();
-                    if (latestSubmission.isPresent()) {
-                        Submission submission = latestSubmission.get();
-                        // Check if second correction already started
-                        if (submission.getManualResults().size() > 1) {
-                            Result firstManualResult = submission.getFirstManualResult();
-                            double achievedPointsInFirstCorrection = 0.0;
-                            if (firstManualResult != null) {
-                                achievedPointsInFirstCorrection = calculateAchievedPoints(exercise, firstManualResult, exam.getCourse(), plagiarismPointDeductionPercentage);
-                            }
-                            overallPointsAchievedInFirstCorrection += achievedPointsInFirstCorrection;
-                        }
-                    }
-                }
-
-                // Check whether the student attempted to solve the exercise
-                boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise);
-                // special handling for quizzes to avoid performance issues
-                if (exercise instanceof QuizExercise && quizSubmittedAnswerCounts != null) {
-                    hasNonEmptySubmission = hasNonEmptySubmissionInQuiz(studentParticipation, quizSubmittedAnswerCounts);
-                }
-                exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
-                        exercise.getMaxPoints(), relevantResult.getScore(), achievedPoints, hasNonEmptySubmission));
+            StudentParticipation studentParticipation = exercise.findParticipation(participations);
+            PlagiarismCase plagiarismCase = plagiarismCasesForStudent.get(examGrade.exerciseId());
+            double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
+            if (examGrade.score() == null) {
+                examGrade = new ExamGradeScoreDTO(examGrade.participationId(), examGrade.userId(), examGrade.exerciseId(), 0.0, examGrade.maxPoints(),
+                        examGrade.includedInOverallScore());
             }
-        }
+            double achievedPoints = calculateAchievedPoints(examGrade.maxPoints(), examGrade.score(), exam.getCourse(), plagiarismPointDeductionPercentage);
+            if (!examGrade.includedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)) {
+                overallPointsAchieved += achievedPoints;
+            }
+            if (calculateFirstCorrectionPoints) {
+                double firstCorrectionPoints = calculateFirstCorrectionPoints(studentParticipation, exam, examGrade, plagiarismPointDeductionPercentage);
+                overallPointsAchievedInFirstCorrection += firstCorrectionPoints;
+            }
 
+            boolean hasNonEmptySubmission = studentParticipation != null && hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise);
+            if (exercise instanceof QuizExercise && quizSubmittedAnswerCounts != null && studentParticipation != null) {
+                hasNonEmptySubmission = hasNonEmptySubmissionInQuiz(studentParticipation, quizSubmittedAnswerCounts);
+            }
+            Result relevantResult = null;
+            Submission latestSubmission = studentParticipation != null ? studentParticipation.findLatestSubmission().orElse(null) : null;
+            if (latestSubmission != null) {
+                relevantResult = latestSubmission.getLatestCompletedResult();
+            }
+            double resultScore = (relevantResult != null && relevantResult.getScore() != null) ? relevantResult.getScore() : 0.0;
+            exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(),
+                    new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), resultScore, achievedPoints, hasNonEmptySubmission));
+        }
         // Round the points again to prevent floating point issues that might occur when summing up the exercise points (e.g. 0.3 + 0.3 + 0.3 = 0.8999999999999999)
         overallPointsAchieved = roundScoreSpecifiedByCourseSettings(overallPointsAchieved, exam.getCourse());
-
         var overallGrade = "";
         var overallGradeInFirstCorrection = "";
         var hasPassed = false;
         BonusResultDTO gradeWithBonus = null;
-
         if (exam.getExamMaxPoints() > 0) {
             overallScoreAchieved = (overallPointsAchieved / exam.getExamMaxPoints()) * 100.0;
             if (gradingScale.isPresent()) {
-                // Calculate current student grade
-                GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchieved, gradingScale.get().getId());
+                GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchieved, gradingScale.get());
                 var overallScoreAchievedInFirstCorrection = (overallPointsAchievedInFirstCorrection / exam.getExamMaxPoints()) * 100.0;
-                GradeStep studentGradeInFirstCorrection = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchievedInFirstCorrection, gradingScale.get().getId());
+                GradeStep studentGradeInFirstCorrection = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchievedInFirstCorrection, gradingScale.get());
                 overallGrade = studentGrade.getGradeName();
                 overallGradeInFirstCorrection = studentGradeInFirstCorrection.getGradeName();
                 hasPassed = studentGrade.getIsPassingGrade();
@@ -774,6 +944,42 @@ public class ExamService {
             }
         }
         return false;
+    }
+
+    /**
+     * Calculates the points achieved in the first correction round if applicable.
+     *
+     * @param participation                      the participation of the student in the exercise
+     * @param exam                               the exam the exercise belongs to
+     * @param examGrade                          the exam grade dto containing the score and max points of the exercise
+     * @param plagiarismPointDeductionPercentage the percentage of points to be deducted due to plagiarism
+     * @return the points achieved in the first correction round or 0.0 if not applicable
+     */
+    private double calculateFirstCorrectionPoints(StudentParticipation participation, Exam exam, ExamGradeScoreDTO examGrade, double plagiarismPointDeductionPercentage) {
+        if (exam.getNumberOfCorrectionRoundsInExam() != 2) {
+            return 0.0;
+        }
+        if (examGrade.includedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) {
+            return 0.0;
+        }
+        if (participation == null) {
+            return 0.0;
+        }
+
+        Optional<Submission> latestSubmission = participation.getSubmissions().stream().max(Comparator.comparing(DomainObject::getId));
+        if (latestSubmission.isEmpty()) {
+            return 0.0;
+        }
+
+        Submission submission = latestSubmission.get();
+        if (submission.getManualResults().size() <= 1) {
+            return 0.0;
+        }
+
+        Result firstManualResult = submission.getFirstManualResult();
+        double firstRoundScore = (firstManualResult != null && firstManualResult.getScore() != null) ? firstManualResult.getScore() : 0.0;
+
+        return calculateAchievedPoints(examGrade.maxPoints(), firstRoundScore, exam.getCourse(), plagiarismPointDeductionPercentage);
     }
 
     /**
@@ -832,28 +1038,27 @@ public class ExamService {
      * If the student adds up the displayed points, they get a total of 5.5 points.
      * In order to get the same total result as the student, we have to round before summing.
      *
-     * @param exercise the relevant exercise
-     * @param result   the result for the given exercise
-     * @param course   course to specify number of decimal places to round
+     * @param maxPoints the maximum points of the exercise
+     * @param score     the score of the result of the student for the given exercise
+     * @param course    course to specify number of decimal places to round
      * @return the rounded points according to the student's achieved score and max points of the exercise
      */
-    private double calculateAchievedPoints(Exercise exercise, Result result, Course course, double plagiarismPointDeductionPercentage) {
-        if (result != null && result.getScore() != null) {
-            double achievedPoints = roundScoreSpecifiedByCourseSettings(exercise.getMaxPoints() * result.getScore() / 100.0, course);
-            if (plagiarismPointDeductionPercentage > 0.0) {
-                achievedPoints = roundScoreSpecifiedByCourseSettings(achievedPoints * (100.0 - plagiarismPointDeductionPercentage) / 100.0, course);
-            }
-            return achievedPoints;
+    private double calculateAchievedPoints(double maxPoints, double score, Course course, double plagiarismPointDeductionPercentage) {
+        double achievedPoints = roundScoreSpecifiedByCourseSettings(maxPoints * score / 100.0, course);
+        if (plagiarismPointDeductionPercentage > 0.0) {
+            achievedPoints = roundScoreSpecifiedByCourseSettings(achievedPoints * (100.0 - plagiarismPointDeductionPercentage) / 100.0, course);
         }
-        return 0.0;
+        return achievedPoints;
     }
 
-    private Map<Long, Double> calculateAchievedPointsForExercises(List<StudentParticipation> participationsOfStudent, Course course, PlagiarismMapping plagiarismMapping) {
-        return participationsOfStudent.stream().collect(Collectors.toMap(participation -> participation.getExercise().getId(), participation -> {
-            PlagiarismCase plagiarismCase = plagiarismMapping.getPlagiarismCase(participation.getStudent().orElseThrow().getId(), participation.getExercise().getId());
+    private Map<Long, Double> calculatePointsStudentAchievedInExercises(Set<ExamGradeScoreDTO> studentExamGrades, Course course, PlagiarismMapping plagiarismMapping) {
+        return studentExamGrades.stream().collect(Collectors.toMap(ExamGradeScoreDTO::exerciseId, grade -> {
+            PlagiarismCase plagiarismCase = plagiarismMapping.getPlagiarismCase(grade.userId(), grade.exerciseId());
             double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
-            Result result = participation.getSubmissions().stream().findFirst().flatMap(submission -> submission.getResults().stream().findFirst()).orElse(null);
-            return calculateAchievedPoints(participation.getExercise(), result, course, plagiarismPointDeductionPercentage);
+            if (grade.score() == null) {
+                grade = new ExamGradeScoreDTO(grade.participationId(), grade.userId(), grade.exerciseId(), 0.0, grade.maxPoints(), grade.includedInOverallScore());
+            }
+            return calculateAchievedPoints(grade.maxPoints(), grade.score(), course, plagiarismPointDeductionPercentage);
         }));
     }
 
@@ -991,7 +1196,7 @@ public class ExamService {
      * @return a examStatisticsDTO filled with all statistics regarding the exam
      */
     public ExamChecklistDTO getStatsForChecklist(Exam exam, boolean isInstructor) {
-        log.info("getStatsForChecklist invoked for exam {}", exam.getId());
+        log.debug("getStatsForChecklist invoked for exam {}", exam.getId());
         int numberOfCorrectionRoundsInExam = exam.getNumberOfCorrectionRoundsInExam();
         long start = System.nanoTime();
 
@@ -1296,7 +1501,7 @@ public class ExamService {
         auditEventRepository.add(auditEvent);
 
         var programmingExercises = getAllExercisesForExamByType(examId, ProgrammingExercise.class);
-        programmingExercises.forEach(exercise -> exerciseDeletionService.cleanup(exercise.getId(), true));
+        programmingExercises.forEach(exercise -> exerciseDeletionService.cleanup(exercise.getId()));
         log.info("The exam {} has been cleaned up!", examId);
     }
 
@@ -1358,11 +1563,13 @@ public class ExamService {
      *
      * @param courseId      the ID of the course
      * @param userIsStudent indicates whether the logged-in user is a student of the course
+     * @param language      the language that will be used add context information to titles (e.g. the title of an event representing the student review start will be prefixed with
+     *                          "Review Start: ")
      * @return the set of results
      */
-    public Set<CalendarEventDTO> getCalendarEventDTOsFromExams(long courseId, boolean userIsStudent) {
-        Set<ExamCalendarEventDTO> daos = examRepository.getExamCalendarEventDAOsForCourseId(courseId);
-        return daos.stream().flatMap(dao -> deriveCalendarEventDTOs(dao, userIsStudent).stream()).collect(Collectors.toSet());
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromExams(long courseId, boolean userIsStudent, Language language) {
+        Set<ExamCalendarEventDTO> dtos = examRepository.getExamCalendarEventDTOsForCourseId(courseId);
+        return dtos.stream().flatMap(dto -> deriveCalendarEventDTOs(dto, userIsStudent, language).stream()).collect(Collectors.toSet());
     }
 
     /**
@@ -1378,22 +1585,36 @@ public class ExamService {
      *
      * @param dto           the DTO for which to derive the events
      * @param userIsStudent indicates whether the logged-in user is student of the course associated to the exam
+     * @param language      the language that will be used add context information to titles (e.g. the title of an event representing the student review start will be prefixed with
+     *                          "Review Start: ")
      * @return the derived events
      */
-    private Set<CalendarEventDTO> deriveCalendarEventDTOs(ExamCalendarEventDTO dto, boolean userIsStudent) {
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(ExamCalendarEventDTO dto, boolean userIsStudent, Language language) {
         Set<CalendarEventDTO> events = new HashSet<>();
         boolean userIsCourseStaff = !userIsStudent;
         if (userIsCourseStaff || dto.visibleDate().isBefore(now())) {
-            events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.START_AND_END_DATE, dto.title(), dto.startDate(), dto.endDate(), null,
+            events.add(new CalendarEventDTO("examStartAndEndEvent-" + dto.originEntityId(), CalendarEventType.EXAM, dto.title(), dto.startDate(), dto.endDate(), null,
                     dto.examiner()));
             if (dto.publishResultsDate() != null) {
-                events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.PUBLISH_RESULTS_DATE, dto.title(), dto.publishResultsDate(), null, null,
-                        null));
+                String publishResultsDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Results Release: ";
+                    case GERMAN -> "Veröffentlichung Ergebnisse: ";
+                };
+                events.add(new CalendarEventDTO("examPublishResultsEvent-" + dto.originEntityId(), CalendarEventType.EXAM, publishResultsDateTitlePrefix + dto.title(),
+                        dto.publishResultsDate(), null, null, null));
                 if (dto.studentReviewStart() != null) {
-                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_START_DATE, dto.title(), dto.studentReviewStart(), null,
-                            null, null));
-                    events.add(new CalendarEventDTO(CalendarEventRelatedEntity.EXAM, CalendarEventSemantics.STUDENT_REVIEW_END_DATE, dto.title(), dto.studentReviewEnd(), null,
-                            null, null));
+                    String studentReviewStartDateTitlePrefix = switch (language) {
+                        case ENGLISH -> "Review Start: ";
+                        case GERMAN -> "Einsicht Start: ";
+                    };
+                    events.add(new CalendarEventDTO("examReviewStartEvent-" + dto.originEntityId(), CalendarEventType.EXAM, studentReviewStartDateTitlePrefix + dto.title(),
+                            dto.studentReviewStart(), null, null, null));
+                    String studentReviewEndDateTitlePrefix = switch (language) {
+                        case ENGLISH -> "Review End: ";
+                        case GERMAN -> "Einsicht Ende: ";
+                    };
+                    events.add(new CalendarEventDTO("examReviewEndEvent-" + dto.originEntityId(), CalendarEventType.EXAM, studentReviewEndDateTitlePrefix + dto.title(),
+                            dto.studentReviewEnd(), null, null, null));
                 }
             }
         }

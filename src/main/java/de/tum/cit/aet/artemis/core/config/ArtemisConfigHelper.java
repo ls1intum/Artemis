@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.HYPERION_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
 
 import org.springframework.core.env.Environment;
@@ -31,6 +32,16 @@ public class ArtemisConfigHelper {
      */
     public boolean isAtlasEnabled(Environment environment) {
         return getPropertyOrExitArtemis(ATLAS_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Hyperion module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Hyperion module is enabled, false otherwise
+     */
+    public boolean isHyperionEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(HYPERION_ENABLED_PROPERTY_NAME, environment);
     }
 
     /**

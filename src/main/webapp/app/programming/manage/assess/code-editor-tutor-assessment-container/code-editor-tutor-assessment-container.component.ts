@@ -1,11 +1,11 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild, inject, input } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnInit, Output, ViewChild, inject, input } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { Observable, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, CanDeactivateFn, Router, RouterLink } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
@@ -130,6 +130,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit {
     templateParticipation: TemplateProgrammingExerciseParticipation;
     templateFileSession: { [fileName: string]: string } = {};
 
+    hasPendingChanges = false;
+
     // listener, will get notified upon loading of feedback
     @Output() onFeedbackLoaded = new EventEmitter();
     // function override, if set will be executed instead of going to the next submission page
@@ -236,6 +238,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit {
             // Update the url with the new id, without reloading the page, to make the history consistent
             const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission!.id}`);
             this.location.go(newUrl);
+        }
+    }
+
+    @HostListener('window:beforeunload', ['$event'])
+    handleBeforeUnload(event: BeforeUnloadEvent) {
+        if (this.hasPendingChanges && this.submission !== undefined) {
+            // Required to trigger the native prompt in modern browsers
+            event.preventDefault();
+            event.returnValue = '';
         }
     }
 
@@ -408,6 +419,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit {
             this.manualResultService.cancelAssessment(this.submission.id!).subscribe(() => this.navigateBack());
         }
         this.cancelBusy = false;
+        this.hasPendingChanges = false;
     }
 
     /**
@@ -540,6 +552,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit {
         // Filter out other feedback than manual feedback
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         this.validateFeedback();
+        this.hasPendingChanges = true;
     }
 
     /**
@@ -549,6 +562,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit {
      */
     removeSuggestion(feedback: Feedback) {
         this.feedbackSuggestions = this.feedbackSuggestions.filter((feedbackSuggestion) => feedbackSuggestion !== feedback);
+        this.hasPendingChanges = true;
     }
 
     /**
@@ -559,6 +573,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit {
     onError(error: string) {
         this.alertService.error(error);
         this.saveBusy = this.cancelBusy = this.submitBusy = this.nextSubmissionBusy = false;
+    }
+
+    /**
+     *  Validate the feedback of the assessment with the guarantee that it has changed.
+     */
+    validateUpdatedFeedback(): void {
+        this.validateFeedback();
+        this.hasPendingChanges = true;
     }
 
     /**
@@ -590,6 +612,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit {
         this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;
         this.checkPermissions();
+        this.hasPendingChanges = false;
     }
 
     /**
@@ -704,3 +727,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit {
         return totalScore;
     }
 }
+
+export const canLeaveCodeEditorTutorAssessmentContainer: CanDeactivateFn<CodeEditorTutorAssessmentContainerComponent> = (component) => {
+    if (component.hasPendingChanges && component.submission !== undefined) {
+        const translate = inject(TranslateService);
+        return window.confirm(translate.instant('artemisApp.programmingAssessment.confirmLeave'));
+    }
+    return true;
+};
