@@ -111,18 +111,15 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Test
     void testFetchPush_usingVcsAccessToken() {
         var programmingParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        log.debug("Repository URI is {}", programmingParticipation.getRepositoryUri());
         var student = userUtilService.getUserByLogin(student1Login);
         var participationVcsAccessToken = localVCLocalCITestService.getParticipationVcsAccessToken(student, programmingParticipation.getId());
         var token = participationVcsAccessToken.getVcsAccessToken();
         programmingExerciseRepository.save(programmingExercise);
 
         // Fetch from and push to the remote repository with participation VCS access token
-        log.debug("Test fetch successful with token");
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug);
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug);
 
-        log.debug("Test fetch successful with user token");
         // Fetch from and push to the remote repository with user VCS access token
         var studentWithToken = userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(student, token, ZonedDateTime.now().plusDays(1));
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug);
@@ -132,14 +129,12 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         userUtilService.deleteUserVcsAccessToken(studentWithToken);
         localVCLocalCITestService.deleteParticipationVcsAccessToken(programmingParticipation.getId());
         localVCLocalCITestService.createParticipationVcsAccessToken(student, programmingParticipation.getId());
-        log.debug("Test fetch error invalid expired token");
         localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
         localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
 
         // Try to fetch and push with removed participation
         localVCLocalCITestService.deleteParticipationVcsAccessToken(programmingParticipation.getId());
         localVCLocalCITestService.deleteParticipation(programmingParticipation);
-        log.debug("Test fetch error removed participation");
         localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
         localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
     }
