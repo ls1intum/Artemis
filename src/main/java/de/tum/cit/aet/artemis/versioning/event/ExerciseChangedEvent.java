@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.versioning.service.event;
+package de.tum.cit.aet.artemis.versioning.event;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;

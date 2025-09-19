@@ -234,7 +234,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         await().during(TEST_WAIT_TIME, TEST_TIME_UNIT).untilAsserted(() -> {
             var versions = exerciseVersionRepository.findAllByExerciseId(exercise.getId());
-            assertThat(!versions.isEmpty());
+            assertThat(versions).isNotEmpty();
         });
 
         var newVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
@@ -267,7 +267,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
             assertThat(previousVersion.getId()).isNotEqualTo(version.get().getId());
             assertThat(version.get().getExerciseSnapshot()).isNotNull();
             assertThat(version.get().getExerciseSnapshot().programmingData()).isNotNull();
-            assertThat(previousVersion.getExerciseSnapshot().programmingData().templateParticipation())
+            assertThat(previousVersion.getExerciseSnapshot().programmingData().templateParticipation()).usingRecursiveComparison()
                     .isNotEqualTo(version.get().getExerciseSnapshot().programmingData().templateParticipation());
         });
     }
@@ -290,7 +290,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
             assertThat(version.get().getExerciseSnapshot()).isNotNull();
             assertThat(version.get().getExerciseSnapshot().programmingData()).isNotNull();
-            assertThat(previousVersion.getExerciseSnapshot().programmingData().solutionParticipation())
+            assertThat(previousVersion.getExerciseSnapshot().programmingData().solutionParticipation()).usingRecursiveComparison()
                     .isNotEqualTo(version.get().getExerciseSnapshot().programmingData().solutionParticipation());
         });
     }
@@ -345,8 +345,8 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
             assertThat(version).isPresent();
             assertThat(version.get().getExerciseSnapshot()).isNotNull();
             assertThat(version.get().getExerciseSnapshot().programmingData()).isNotNull();
-            assertThat(previousVersion.getExerciseSnapshot().programmingData().auxiliaryCommitIds())
-                    .isNotEqualTo(version.get().getExerciseSnapshot().programmingData().auxiliaryCommitIds());
+            assertThat(previousVersion.getExerciseSnapshot().programmingData().auxiliaryRepositories()).usingRecursiveComparison()
+                    .isNotEqualTo(version.get().getExerciseSnapshot().programmingData().auxiliaryRepositories());
         });
     }
 
@@ -365,7 +365,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
             assertThat(version.get().getExerciseSnapshot()).isNotNull();
             assertThat(version.get().getExerciseSnapshot().programmingData()).isNotNull();
-            assertThat(previousVersion.getExerciseSnapshot().programmingData().staticCodeAnalysisCategories())
+            assertThat(previousVersion.getExerciseSnapshot().programmingData().staticCodeAnalysisCategories()).usingRecursiveComparison()
                     .isNotEqualTo(version.get().getExerciseSnapshot().programmingData().staticCodeAnalysisCategories());
         });
     }
@@ -385,7 +385,7 @@ class ExerciseVersionServiceTest extends AbstractSpringIntegrationLocalCILocalVC
 
             assertThat(version.get().getExerciseSnapshot()).isNotNull();
             assertThat(version.get().getExerciseSnapshot().programmingData()).isNotNull();
-            assertThat(previousVersion.getExerciseSnapshot().programmingData().submissionPolicy())
+            assertThat(previousVersion.getExerciseSnapshot().programmingData().submissionPolicy()).usingRecursiveComparison()
                     .isNotEqualTo(version.get().getExerciseSnapshot().programmingData().submissionPolicy());
         });
     }

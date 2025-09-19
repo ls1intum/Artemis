@@ -35,7 +35,7 @@ public record ExerciseSnapshotDTO(
         Set<CompetencyExerciseLinkSnapshotDTO> competencyLinks, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
         IncludedInOverallScore includedInOverallScore, String problemStatement, String gradingInstructions, Set<String> categories,
         TeamAssignmentConfigSnapshotDTO teamAssignmentConfig, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule,
-        Set<GradingCriterionDTO> gradingCriteria, PlagiarismDetectionConfig plagiarismDetectionConfig, ProgrammingExerciseSnapshotDTO programmingData,
+        Set<GradingCriterionDTO> gradingCriteria, PlagiarismDetectionConfigSnapshotDTO plagiarismDetectionConfig, ProgrammingExerciseSnapshotDTO programmingData,
         TextExerciseSnapshotDTO textData, ModelingExerciseSnapshotDTO modelingData, QuizExerciseSnapshotDTO quizData, FileUploadExerciseSnapshotDTO fileUploadData
 
 ) implements Serializable {
@@ -57,6 +57,7 @@ public record ExerciseSnapshotDTO(
         if (gradingCriteria.isEmpty()) {
             gradingCriteria = null;
         }
+        var plagiarismDetectionConfig = exercise.getPlagiarismDetectionConfig() == null ? null : PlagiarismDetectionConfigSnapshotDTO.of(exercise.getPlagiarismDetectionConfig());
         var programmingData = exercise instanceof ProgrammingExercise ? ProgrammingExerciseSnapshotDTO.of((ProgrammingExercise) exercise, gitService) : null;
         var textData = exercise instanceof TextExercise ? TextExerciseSnapshotDTO.of((TextExercise) exercise) : null;
         var modelingData = exercise instanceof ModelingExercise ? ModelingExerciseSnapshotDTO.of((ModelingExercise) exercise) : null;
@@ -67,8 +68,8 @@ public record ExerciseSnapshotDTO(
                 toUtc(exercise.getAssessmentDueDate()), toUtc(exercise.getExampleSolutionPublicationDate()), exercise.getDifficulty(), exercise.getMode(), competencyLinks,
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getIncludedInOverallScore(), exercise.getProblemStatement(),
                 exercise.getGradingInstructions(), exercise.getCategories(), TeamAssignmentConfigSnapshotDTO.of(exercise.getTeamAssignmentConfig()),
-                exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), gradingCriteria,
-                exercise.getPlagiarismDetectionConfig(), programmingData, textData, modelingData, quizData, fileUploadData);
+                exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), gradingCriteria, plagiarismDetectionConfig,
+                programmingData, textData, modelingData, quizData, fileUploadData);
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -90,6 +91,17 @@ public record ExerciseSnapshotDTO(
                 return null;
             }
             return new TeamAssignmentConfigSnapshotDTO(config.getId(), config.getMinTeamSize(), config.getMaxTeamSize());
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record PlagiarismDetectionConfigSnapshotDTO(boolean continuousPlagiarismControlEnabled, boolean continuousPlagiarismControlPostDueDateChecksEnabled,
+            int continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod, int similarityThreshold, int minimumScore, int minimum_size) implements Serializable {
+
+        private static PlagiarismDetectionConfigSnapshotDTO of(PlagiarismDetectionConfig config) {
+            return new PlagiarismDetectionConfigSnapshotDTO(config.isContinuousPlagiarismControlEnabled(), config.isContinuousPlagiarismControlPostDueDateChecksEnabled(),
+                    config.getContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(), config.getSimilarityThreshold(), config.getMinimumScore(), config.getMinimumSize());
+
         }
     }
 

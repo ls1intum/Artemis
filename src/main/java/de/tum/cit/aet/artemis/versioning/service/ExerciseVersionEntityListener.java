@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.versioning.service.event.ExerciseChangedEvent;
+import de.tum.cit.aet.artemis.versioning.event.ExerciseChangedEvent;
 
 @Profile(PROFILE_CORE)
 @Configurable

@@ -20,10 +20,10 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.versioning.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.versioning.dto.ExerciseSnapshotDTO;
+import de.tum.cit.aet.artemis.versioning.event.ExerciseChangedEvent;
 import de.tum.cit.aet.artemis.versioning.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.versioning.repository.FileUploadExerciseVersioningRepository;
 import de.tum.cit.aet.artemis.versioning.repository.TextExerciseVersioningRepository;
-import de.tum.cit.aet.artemis.versioning.service.event.ExerciseChangedEvent;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -105,7 +105,7 @@ public class ExerciseVersionService {
                 var previousVersionSnapshot = previousVersion.get().getExerciseSnapshot();
                 var equal = previousVersionSnapshot.equals(exerciseSnapshot);
                 if (equal) {
-                    log.info("Exercise {} has no versionable changes from last version, {}", exercise.getId(), exerciseSnapshot);
+                    log.info("Exercise {} has no versionable changes from last version", exercise.getId());
                     return;
                 }
             }

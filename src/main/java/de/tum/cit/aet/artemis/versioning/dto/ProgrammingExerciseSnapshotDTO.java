@@ -4,9 +4,7 @@ import java.io.Serializable;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -31,14 +28,14 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<AuxiliaryRepository> auxiliaryRepositories, Boolean allowOnlineEditor, Boolean allowOfflineIde,
-        Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, ProgrammingLanguage programmingLanguage, String packageName,
-        Boolean showTestNamesToStudents, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, String projectKey, ParticipationSnapshotDTO templateParticipation,
-        ParticipationSnapshotDTO solutionParticipation, Set<ProgrammingExerciseTestCaseDTO> testCases, List<ProgrammingExerciseTaskSnapshotDTO> tasks,
-        Set<StaticCodeAnalysisCategorySnapshotDTO> staticCodeAnalysisCategories, SubmissionPolicySnapshotDTO submissionPolicy, ProjectType projectType,
-        Boolean releaseTestsWithExampleSolution, ProgrammingExerciseBuildConfigSnapshotDTO buildConfig,
+public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<AuxiliaryRepositorySnapshotDTO> auxiliaryRepositories, Boolean allowOnlineEditor,
+        Boolean allowOfflineIde, Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, ProgrammingLanguage programmingLanguage,
+        String packageName, Boolean showTestNamesToStudents, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, String projectKey,
+        ParticipationSnapshotDTO templateParticipation, ParticipationSnapshotDTO solutionParticipation, Set<ProgrammingExerciseTestCaseDTO> testCases,
+        List<ProgrammingExerciseTaskSnapshotDTO> tasks, Set<StaticCodeAnalysisCategorySnapshotDTO> staticCodeAnalysisCategories, SubmissionPolicySnapshotDTO submissionPolicy,
+        ProjectType projectType, Boolean releaseTestsWithExampleSolution, ProgrammingExerciseBuildConfigSnapshotDTO buildConfig,
         // Derivative fields for versioning
-        String testsCommitId, Map<String, String> auxiliaryCommitIds) implements Serializable {
+        String testsCommitId) implements Serializable {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseSnapshotDTO.class);
 
@@ -61,17 +58,17 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
             auxiliaryRepositories = null;
         }
 
-        var auxiliaryCommitHashes = new HashMap<String, String>();
-        if (exercise.getAuxiliaryRepositories() != null) {
-            for (AuxiliaryRepository auxiliaryRepository : exercise.getAuxiliaryRepositories()) {
-                if (auxiliaryRepository.getVcsRepositoryUri() != null) {
-                    var auxiliaryCommitHash = getCommitHash(auxiliaryRepository.getVcsRepositoryUri(), gitService);
-                    if (auxiliaryCommitHash == null) {
-                        continue;
-                    }
-                    auxiliaryCommitHashes.put(auxiliaryRepository.getId().toString(), auxiliaryCommitHash);
+        ArrayList<AuxiliaryRepositorySnapshotDTO> auxiliaryRepositoriesDTO = new ArrayList<>();
+        if (auxiliaryRepositories != null) {
+            for (AuxiliaryRepository repository : exercise.getAuxiliaryRepositories()) {
+                if (repository.getVcsRepositoryUri() != null) {
+                    var auxiliaryCommitHash = getCommitHash(repository.getVcsRepositoryUri(), gitService);
+                    auxiliaryRepositoriesDTO.add(new AuxiliaryRepositorySnapshotDTO(repository.getId(), repository.getRepositoryUri(), auxiliaryCommitHash));
                 }
             }
+        }
+        if (auxiliaryRepositoriesDTO.isEmpty()) {
+            auxiliaryRepositoriesDTO = null;
         }
         var analysisCategories = exercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategorySnapshotDTO::of).collect(Collectors.toSet());
         if (analysisCategories.isEmpty()) {
@@ -86,14 +83,16 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
             testCases = null;
         }
 
-        return new ProgrammingExerciseSnapshotDTO(exercise.getTestRepositoryUri(), auxiliaryRepositories, exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
+        return new ProgrammingExerciseSnapshotDTO(exercise.getTestRepositoryUri(), auxiliaryRepositoriesDTO, exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
                 exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(),
                 exercise.getPackageName(), exercise.getShowTestNamesToStudents(), toUtc(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()), exercise.getProjectKey(),
                 templateParticipation, solutionParticipation, testCases, tasks, analysisCategories, SubmissionPolicySnapshotDTO.of(exercise.getSubmissionPolicy()),
-                exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), ProgrammingExerciseBuildConfigSnapshotDTO.of(exercise.getBuildConfig()), testCommitHash,
-                auxiliaryCommitHashes.isEmpty() ? null : auxiliaryCommitHashes
+                exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), ProgrammingExerciseBuildConfigSnapshotDTO.of(exercise.getBuildConfig()), testCommitHash);
+    }
 
-        );
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record AuxiliaryRepositorySnapshotDTO(long id, String repositoryUri, String commitId) implements Serializable {
+
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -157,7 +156,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
             var commitHash = gitService.getLastCommitHash(uri);
             return commitHash == null ? null : commitHash.getName();
         }
-        catch (EntityNotFoundException e) {
+        catch (Exception e) {
             log.warn("Could not retrieve the last commit hash for repoUri {} in ExerciseSnapshot", uri);
             return null;
         }

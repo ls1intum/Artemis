@@ -46,13 +46,20 @@ public class ProgrammingExerciseParticipationUtilService {
      */
     public ProgrammingExercise addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         final var repoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
-        TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
+        TemplateProgrammingExerciseParticipation participation = exercise.getTemplateParticipation();
+        if (participation == null && exercise.getId() != null) {
+            participation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(exercise.getId()).orElse(null);
+        }
+
+        if (participation == null) {
+            participation = new TemplateProgrammingExerciseParticipation();
+        }
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.TEMPLATE));
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         participation.setInitializationState(InitializationState.INITIALIZED);
-        templateProgrammingExerciseParticipationTestRepo.save(participation);
+        participation = templateProgrammingExerciseParticipationTestRepo.save(participation);
         exercise.setTemplateParticipation(participation);
         return programmingExerciseRepository.save(exercise);
     }
@@ -65,13 +72,20 @@ public class ProgrammingExerciseParticipationUtilService {
      */
     public ProgrammingExercise addSolutionParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         final var repoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
-        SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
+        SolutionProgrammingExerciseParticipation participation = exercise.getSolutionParticipation();
+        if (participation == null && exercise.getId() != null) {
+            participation = solutionProgrammingExerciseParticipationRepo.findByProgrammingExerciseId(exercise.getId()).orElse(null);
+        }
+
+        if (participation == null) {
+            participation = new SolutionProgrammingExerciseParticipation();
+        }
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.SOLUTION));
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         participation.setInitializationState(InitializationState.INITIALIZED);
-        solutionProgrammingExerciseParticipationRepo.save(participation);
+        participation = solutionProgrammingExerciseParticipationRepo.save(participation);
         exercise.setSolutionParticipation(participation);
         return programmingExerciseRepository.save(exercise);
     }

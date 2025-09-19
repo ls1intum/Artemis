@@ -981,51 +981,50 @@ public class ExamUtilService {
      * @param withQuizExercise        True, if a QuizExercise should be added
      * @return The updated Exam
      */
-    public Exam addTextModelingProgrammingExercisesToExam(Exam initialExam, boolean withProgrammingExercise, boolean withQuizExercise) {
-        ExamFactory.generateExerciseGroup(true, initialExam); // text
-        ExamFactory.generateExerciseGroup(true, initialExam); // modeling
-        initialExam.setNumberOfExercisesInExam(2);
-        var exam = examRepository.save(initialExam);
-        // NOTE: we have to reassign, otherwise we get problems, because the objects have changed
-        var exerciseGroup0 = exam.getExerciseGroups().getFirst();
-        var exerciseGroup1 = exam.getExerciseGroups().get(1);
+    public Exam addTextModelingProgrammingExercisesToExam(Exam exam, boolean withProgrammingExercise, boolean withQuizExercise) {
+        int totalExerciseGroups = 2 + (withProgrammingExercise ? 1 : 0) + (withQuizExercise ? 1 : 0);
 
-        TextExercise textExercise1 = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup0);
-        TextExercise textExercise2 = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup0);
-        exerciseGroup0.setExercises(Set.of(textExercise1, textExercise2));
-        exerciseRepository.save(textExercise1);
-        exerciseRepository.save(textExercise2);
+        for (int i = 0; i < totalExerciseGroups; i++) {
+            ExamFactory.generateExerciseGroup(true, exam);
+        }
 
-        ModelingExercise modelingExercise1 = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
-        ModelingExercise modelingExercise2 = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
-        exerciseGroup1.setExercises(Set.of(modelingExercise1, modelingExercise2));
-        exerciseRepository.save(modelingExercise1);
-        exerciseRepository.save(modelingExercise2);
+        exam.setNumberOfExercisesInExam(totalExerciseGroups);
+        exam = examRepository.save(exam);
 
+        var exerciseGroups = exam.getExerciseGroups();
+        var textExerciseGroup = exerciseGroups.getFirst();
+        var modelingExerciseGroup = exerciseGroups.get(1);
+
+        TextExercise textExercise1 = TextExerciseFactory.generateTextExerciseForExam(textExerciseGroup);
+        TextExercise textExercise2 = TextExerciseFactory.generateTextExerciseForExam(textExerciseGroup);
+        textExercise1 = exerciseRepository.save(textExercise1);
+        textExercise2 = exerciseRepository.save(textExercise2);
+        textExerciseGroup.setExercises(Set.of(textExercise1, textExercise2));
+
+        ModelingExercise modelingExercise1 = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, modelingExerciseGroup);
+        ModelingExercise modelingExercise2 = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, modelingExerciseGroup);
+        modelingExercise1 = exerciseRepository.save(modelingExercise1);
+        modelingExercise2 = exerciseRepository.save(modelingExercise2);
+        modelingExerciseGroup.setExercises(Set.of(modelingExercise1, modelingExercise2));
+
+        int nextGroupIndex = 2;
         if (withProgrammingExercise) {
-            ExamFactory.generateExerciseGroup(true, exam); // programming
-            exam.setNumberOfExercisesInExam(3);
-            exam = examRepository.save(exam);
-            var exerciseGroup2 = exam.getExerciseGroups().get(2);
-            // Programming exercises need a proper setup for 'prepare exam start' to work
-            ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup2);
+            var programmingExerciseGroup = exerciseGroups.get(nextGroupIndex++);
+            ProgrammingExercise programmingExercise1 = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingExerciseGroup);
             programmingExerciseBuildConfigRepository.save(programmingExercise1.getBuildConfig());
-            exerciseRepository.save(programmingExercise1);
+            programmingExercise1 = exerciseRepository.save(programmingExercise1);
             programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise1);
             programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise1);
-            exerciseGroup2.setExercises(Set.of(programmingExercise1));
+            programmingExerciseGroup.setExercises(Set.of(programmingExercise1));
         }
 
         if (withQuizExercise) {
-            ExamFactory.generateExerciseGroup(true, exam); // modeling
-            exam.setNumberOfExercisesInExam(3 + (withProgrammingExercise ? 1 : 0));
-            exam = examRepository.save(exam);
-            var exerciseGroup3 = exam.getExerciseGroups().get(2 + (withProgrammingExercise ? 1 : 0));
-            // Programming exercises need a proper setup for 'prepare exam start' to work
-            QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup3);
-            exerciseRepository.save(quizExercise);
-            exerciseGroup3.setExercises(Set.of(quizExercise));
+            var quizExerciseGroup = exerciseGroups.get(nextGroupIndex);
+            QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(quizExerciseGroup);
+            quizExercise = exerciseRepository.save(quizExercise);
+            quizExerciseGroup.setExercises(Set.of(quizExercise));
         }
+
         return exam;
     }
 
