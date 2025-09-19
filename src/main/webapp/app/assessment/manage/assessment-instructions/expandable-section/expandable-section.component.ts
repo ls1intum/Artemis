@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
@@ -13,9 +13,9 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 export class ExpandableSectionComponent implements OnInit {
     private localStorageService = inject(LocalStorageService);
 
-    @Input() headerKey: string;
-    @Input() hasTranslation = true;
-    @Input() isSubHeader = false;
+    readonly headerKey = input.required<string>();
+    readonly hasTranslation = input(true);
+    readonly isSubHeader = input(false);
 
     isCollapsed: boolean;
     // Icons
@@ -41,6 +41,6 @@ export class ExpandableSectionComponent implements OnInit {
      * Returns the key to identify the value in the local storage
      */
     get storageKey() {
-        return this.PREFIX + this.headerKey;
+        return this.PREFIX + this.headerKey();
     }
 }
