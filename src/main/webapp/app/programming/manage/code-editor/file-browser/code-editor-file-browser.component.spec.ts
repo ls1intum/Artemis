@@ -245,6 +245,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     it('re-adds Problem Statement when showEditorInstructions toggles back to true', () => {
         comp.displayOnly = false;
+        fixture.componentRef.setInput('participation', { id: 1 });
         comp.ngOnInit();
         fixture.componentRef.setInput('showEditorInstructions', false);
         fixture.detectChanges();
