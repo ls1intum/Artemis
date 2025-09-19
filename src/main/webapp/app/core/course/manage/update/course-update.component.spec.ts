@@ -805,8 +805,9 @@ describe('Course Management Update Component', () => {
     });
 
     describe('changeOrganizations', () => {
+        let organization: Organization;
         beforeEach(() => {
-            const organization = new Organization();
+            organization = new Organization();
             organization.id = 12345;
             jest.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([organization]));
         });
@@ -816,7 +817,7 @@ describe('Course Management Update Component', () => {
             fixture.detectChanges();
 
             const addButton = fixture.debugElement.query(By.css('#addOrganizationButton'));
-            const removeButton = fixture.debugElement.query(By.css('#removeOrganizationButton'));
+            const removeButton = fixture.debugElement.query(By.css('#removeOrganizationButton-' + organization.id));
 
             expect(addButton).not.toBeNull();
             expect(removeButton).not.toBeNull();
