@@ -36,18 +36,23 @@
 
         <renameColumn tableName="exercise"
                       oldColumnName="test_repository_url"
-                      newColumnName="test_repository_url_old"/>
+                      newColumnName="test_repository_url_old"
+                      columnDataType="varchar(255)"/>
+
         <renameColumn tableName="exercise"
                       oldColumnName="test_repository_url_new"
-                      newColumnName="test_repository_url"/>
+                      newColumnName="test_repository_url"
+                      columnDataType="varchar(150)"/>
 
         <rollback>
             <renameColumn tableName="exercise"
                           oldColumnName="test_repository_url"
-                          newColumnName="test_repository_url_new"/>
+                          newColumnName="test_repository_url_new"
+                          columnDataType="varchar(150)"/>
             <renameColumn tableName="exercise"
                           oldColumnName="test_repository_url_old"
-                          newColumnName="test_repository_url"/>
+                          newColumnName="test_repository_url"
+                          columnDataType="varchar(255)"/>
             <dropColumn tableName="exercise" columnName="test_repository_url_new"/>
         </rollback>
     </changeSet>
@@ -85,18 +90,23 @@
 
         <renameColumn tableName="auxiliary_repository"
                       oldColumnName="repository_url"
-                      newColumnName="repository_url_old"/>
+                      newColumnName="repository_url_old"
+                      columnDataType="varchar(255)"/>
+
         <renameColumn tableName="auxiliary_repository"
                       oldColumnName="repository_url_new"
-                      newColumnName="repository_url"/>
+                      newColumnName="repository_url"
+                      columnDataType="varchar(150)"/>
 
         <rollback>
             <renameColumn tableName="auxiliary_repository"
                           oldColumnName="repository_url"
-                          newColumnName="repository_url_new"/>
+                          newColumnName="repository_url_new"
+                          columnDataType="varchar(150)"/>
             <renameColumn tableName="auxiliary_repository"
                           oldColumnName="repository_url_old"
-                          newColumnName="repository_url"/>
+                          newColumnName="repository_url"
+                          columnDataType="varchar(255)"/>
             <dropColumn tableName="auxiliary_repository" columnName="repository_url_new"/>
         </rollback>
     </changeSet>
@@ -137,18 +147,23 @@
 
         <renameColumn tableName="participation"
                       oldColumnName="repository_url"
-                      newColumnName="repository_url_old"/>
+                      newColumnName="repository_url_old"
+                      columnDataType="varchar(255)"/>
+
         <renameColumn tableName="participation"
                       oldColumnName="repository_url_new"
-                      newColumnName="repository_url"/>
+                      newColumnName="repository_url"
+                      columnDataType="varchar(150)"/>
 
         <rollback>
             <renameColumn tableName="participation"
                           oldColumnName="repository_url"
-                          newColumnName="repository_url_new"/>
+                          newColumnName="repository_url_new"
+                          columnDataType="varchar(150)"/>
             <renameColumn tableName="participation"
                           oldColumnName="repository_url_old"
-                          newColumnName="repository_url"/>
+                          newColumnName="repository_url"
+                          columnDataType="varchar(255)"/>
             <dropColumn tableName="participation" columnName="repository_url_new"/>
         </rollback>
     </changeSet>
