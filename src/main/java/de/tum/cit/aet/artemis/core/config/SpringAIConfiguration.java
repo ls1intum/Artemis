@@ -28,9 +28,6 @@ public class SpringAIConfiguration {
     @Bean
     @Lazy
     public ChatClient chatClient(AzureOpenAiChatModel azureOpenAiChatModel) {
-        if (deploymentName == null || deploymentName.trim().isEmpty()) {
-            throw new IllegalStateException("Azure OpenAI deployment name is required but not configured");
-        }
         return ChatClient.builder(azureOpenAiChatModel).defaultOptions(AzureOpenAiChatOptions.builder().deploymentName("gpt-5-mini").temperature(1.0).build()).build();
     }
 
