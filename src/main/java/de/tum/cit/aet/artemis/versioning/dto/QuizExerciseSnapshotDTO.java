@@ -27,6 +27,9 @@ public record QuizExerciseSnapshotDTO(Boolean randomizeQuestionOrder, Integer al
             implements Serializable {
 
         private static QuizQuestionSnapshotDTO of(QuizQuestion quizQuestion) {
+            if (quizQuestion.getId() == null) {
+                return null;
+            }
             ShortAnswerQuestionWithMappingDTO shortAnswerQuestionWithMappingDTO = quizQuestion instanceof ShortAnswerQuestion
                     ? ShortAnswerQuestionWithMappingDTO.of((ShortAnswerQuestion) quizQuestion)
                     : null;
@@ -52,9 +55,7 @@ public record QuizExerciseSnapshotDTO(Boolean randomizeQuestionOrder, Integer al
             questions = null;
         }
         return new QuizExerciseSnapshotDTO(exercise.isRandomizeQuestionOrder(), exercise.getAllowedNumberOfAttempts(), exercise.isIsOpenForPractice(), exercise.getQuizMode(),
-                exercise.getDuration(),
-                exercise.getQuizQuestions() != null ? exercise.getQuizQuestions().stream().map(QuizQuestionSnapshotDTO::of).collect(Collectors.toCollection(ArrayList::new))
-                        : null);
+                exercise.getDuration(), questions);
     }
 
 }
