@@ -5,7 +5,7 @@
     flex: 1 1 auto;
     height: 100%;
 
-    // Override bootstrap tooltip width.
+    /* Wider Bootstrap tooltip */
     .tooltip-inner {
         width: 500px;
     }
@@ -29,24 +29,23 @@
     }
 
     .markdown-editor-wrapper {
-        // Important needed here to override scoped styling
+        /* override scoped styling */
         background-color: var(--markdown-preview-editor-background) !important;
+
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background-color: var(--markdown-preview-editor-background);
+        }
     }
 
-    .markdown-editor-wrapper .nav {
-        position: sticky;
-        top: 0;
-        z-index: 1;
+    .instructions__content__markdown,
+    .card-second-header {
         background-color: var(--markdown-preview-editor-background);
     }
-
-    .instructions__content__markdown {
-        background-color: var(--markdown-preview-editor-background);
-    }
-
     .card-second-header {
         padding: 10px 15px;
-        background-color: var(--markdown-preview-editor-background);
     }
 
     &__save {
@@ -60,24 +59,33 @@
 
     &__status {
         display: grid;
-        grid-template-columns: repeat(2, minmax(max-content, 1fr));
+        grid-template-columns: 1fr 2fr; /* left | right */
+        align-items: center;
 
-        > :not(:first-child) {
-            border-left: 1px solid rgba(0, 0, 0, 0.125);
-        }
-
-        &__container {
+        .instructions-status {
+            grid-column: 1;
             display: flex;
-            text-align: center;
-
-            > :not(:first-child) {
-                border-left: 1px solid rgba(0, 0, 0, 0.125);
-                flex: 1;
-            }
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
         }
 
-        &__item {
-            flex: 1;
+        &__testcase {
+            grid-column: 2;
+            min-width: 0;
+
+            & > .editable-instruction-container__status__container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                align-items: center;
+                border-left: 1px solid rgba(0, 0, 0, 0.125);
+                padding-left: 0.75rem;
+
+                > * {
+                    justify-self: center;
+                    text-align: center;
+                }
+            }
         }
     }
 }

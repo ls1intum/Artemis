@@ -44,6 +44,11 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
      * @desc Reads the provided fileName and deletes the matching file in the repository
      */
     deleteFile() {
+        // Guard against PROBLEM_STATEMENT deletion - it's a pseudo-file, not a real repository file
+        if (this.fileType === FileType.PROBLEM_STATEMENT) {
+            this.closeModal();
+            return;
+        }
         this.isLoading = true;
         // Make sure we have a filename
         if (this.fileNameToDelete) {

@@ -16,6 +16,7 @@ import { CodeEditorConflictStateService } from 'app/programming/shared/code-edit
 import { DomainDependentEndpointService } from 'app/programming/shared/code-editor/services/code-editor-domain-dependent-endpoint.service';
 import { BuildLogService } from 'app/programming/shared/services/build-log.service';
 import { downloadFile } from 'app/shared/util/download.util';
+import { PROBLEM_STATEMENT_IDENTIFIER } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 export interface ICodeEditorRepositoryFileService {
     getRepositoryContent: () => Observable<{ [fileName: string]: FileType }>;
@@ -251,8 +252,15 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
             this.fileUpdateSubject.complete();
         }
         this.fileUpdateSubject = new Subject<FileSubmission>();
+
+        // Filter out any PROBLEM_STATEMENT entries from the payload
+        const filteredUpdates = fileUpdates.filter((update) => {
+            // Only allow regular file operations - exclude PROBLEM_STATEMENT pseudo-files
+            return !update.fileName.includes(PROBLEM_STATEMENT_IDENTIFIER);
+        });
+
         return this.http
-            .put<FileSubmission>(`${this.restResourceUrl}/files`, fileUpdates, {
+            .put<FileSubmission>(`${this.restResourceUrl}/files`, filteredUpdates, {
                 params: { commit: thenCommit ? 'yes' : 'no' },
             })
             .pipe(

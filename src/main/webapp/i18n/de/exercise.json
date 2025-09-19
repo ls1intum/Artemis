@@ -58,6 +58,7 @@
             "actions": "Aktionen",
             "notStarted": "Du hast diese Aufgabe noch nicht gestartet.",
             "problemStatement": "Aufgabenstellung",
+            "problemStatementEditor": "Aufgabenstellung (Editor)",
             "emptyProblemStatement": "(Keine Aufgabenstellung)",
             "instructions": "Anweisungen",
             "exampleSolution": "Beispiellösung",

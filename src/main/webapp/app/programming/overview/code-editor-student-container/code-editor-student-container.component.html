@@ -20,6 +20,7 @@
 
     @if (!loadingParticipation && !participationCouldNotBeFetched) {
         <jhi-code-editor-container
+            [forRepositoryView]="true"
             [editable]="!repositoryIsLocked"
             [participation]="participation"
             [showEditorInstructions]="showEditorInstructions"

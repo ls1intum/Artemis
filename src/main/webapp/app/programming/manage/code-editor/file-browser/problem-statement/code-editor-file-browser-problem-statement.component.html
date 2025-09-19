@@ -1,0 +1,9 @@
+<!-- Problem Statement -->
+<li (click)="onNodeSelect.emit(item)" class="list-group-item file-item problem-statement-entry" [class.node-selected]="item.checked" id="file-browser-problem-statement">
+    <fa-icon aria-hidden="true" [icon]="faListAlt" [fixedWidth]="true" class="problem-statement-icon" />
+    <span
+        class="ms-1 list-group-item__fileName problem-statement-text"
+        jhiTranslate="artemisApp.exercise.problemStatement"
+        [ngClass]="item.checked ? 'text-white' : 'text-primary'"
+    ></span>
+</li>
