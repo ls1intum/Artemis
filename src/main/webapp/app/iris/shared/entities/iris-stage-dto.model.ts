@@ -3,6 +3,8 @@ export class IrisStageDTO {
     weight: number;
     state: IrisStageStateDTO;
     message: string;
+    // Internal stages are not shown in the UI and are hidden from the user
+    internal: boolean;
 
     lowerCaseState?: string;
 }
