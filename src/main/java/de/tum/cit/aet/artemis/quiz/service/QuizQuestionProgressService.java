@@ -113,7 +113,7 @@ public class QuizQuestionProgressService {
             }
         }
 
-        if (areQuestionsDue(courseId, questionIds.size())) {
+        if (areQuestionsDue(courseId, questionIds)) {
             return loadDueQuestions(questionIds, courseId, pageable);
         }
         else {
@@ -121,8 +121,9 @@ public class QuizQuestionProgressService {
         }
     }
 
-    private boolean areQuestionsDue(Long courseId, int notDueCount) {
+    private boolean areQuestionsDue(Long courseId, Set<Long> questionIds) {
         long totalQuestionsCount = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(courseId);
+        long notDueCount = quizQuestionRepository.countAllDueQuestionsByCourseID(courseId, questionIds);
 
         return notDueCount < totalQuestionsCount;
     }
