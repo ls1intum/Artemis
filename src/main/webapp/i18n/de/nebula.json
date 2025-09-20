@@ -1,0 +1,8 @@
+{
+    "artemisApp": {
+        "errors": {
+            "unauthorized": "Sie sind nicht berechtigt, diese Aktion auszuführen.",
+            "internalNebulaError": "Ein interner Nebula Fehler ist aufgetreten"
+        }
+    }
+}
