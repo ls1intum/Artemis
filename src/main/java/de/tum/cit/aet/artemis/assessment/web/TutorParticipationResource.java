@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.dto.TutorParticipationDTO;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -76,7 +77,7 @@ public class TutorParticipationResource {
      */
     @PostMapping("exercises/{exerciseId}/tutor-participations")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorParticipation> initTutorParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
+    public ResponseEntity<TutorParticipationDTO> initTutorParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start tutor participation : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -89,7 +90,8 @@ public class TutorParticipationResource {
         }
 
         TutorParticipation tutorParticipation = tutorParticipationService.createNewParticipation(exercise, user);
-        return ResponseEntity.created(new URI("/api/assessment/exercises/" + exerciseId + "tutor-participations/" + tutorParticipation.getId())).body(tutorParticipation);
+        TutorParticipationDTO dto = TutorParticipationDTO.of(tutorParticipation);
+        return ResponseEntity.created(new URI("/api/assessment/exercises/" + exerciseId + "/tutor-participations/" + tutorParticipation.getId())).body(dto);
     }
 
     /**
@@ -104,7 +106,7 @@ public class TutorParticipationResource {
      */
     @PostMapping("exercises/{exerciseId}/assess-example-submission")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorParticipation> assessExampleSubmissionForTutorParticipation(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
+    public ResponseEntity<TutorParticipationDTO> assessExampleSubmissionForTutorParticipation(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to add example submission to exercise id : {}", exerciseId);
         Exercise exercise = this.exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -112,12 +114,7 @@ public class TutorParticipationResource {
 
         TutorParticipation resultTutorParticipation = tutorParticipationService.addExampleSubmission(exercise, exampleSubmission, user);
 
-        // Avoid infinite recursion for JSON
-        resultTutorParticipation.getTrainedExampleSubmissions().forEach(trainedExampleSubmission -> {
-            trainedExampleSubmission.setTutorParticipations(null);
-            trainedExampleSubmission.setExercise(null);
-        });
-
-        return ResponseEntity.ok().body(resultTutorParticipation);
+        TutorParticipationDTO dto = TutorParticipationDTO.of(resultTutorParticipation);
+        return ResponseEntity.ok().body(dto);
     }
 }
