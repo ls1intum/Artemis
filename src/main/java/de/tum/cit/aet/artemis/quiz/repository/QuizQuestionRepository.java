@@ -58,7 +58,7 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
     @Query("""
             SELECT q
             FROM QuizQuestion q
-            WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE AND q.id NOT In (:ids)
+            WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE AND q.id NOT IN (:ids)
             """)
     Page<QuizQuestion> findAllDueQuestions(@Param("ids") Set<Long> ids, @Param("courseId") Long courseId, Pageable pageable);
 
