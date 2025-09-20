@@ -33,7 +33,8 @@
             "hideSampleSolution": "Blende die Musterlösung aus",
             "allOptions": "Wähle bitte alle richtigen Antwortmöglichkeiten aus.",
             "singleOption": "Wähle bitte die richtige Antwortmöglichkeit aus.",
-            "noQuestionDue": "Keine Fragen fällig, schaue morgen wieder vorbei."
+            "unratedConfirmation": "Es gibt keine fälligen Fragen. Möchtest du trotzdem im unbewerteten Modus trainieren?",
+            "unratedConfirmationTitle": "Keine fälligen Fragen"
         }
     }
 }

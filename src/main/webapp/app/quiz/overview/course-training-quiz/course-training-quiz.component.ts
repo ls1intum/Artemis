@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -18,13 +18,15 @@ import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-dr
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/QuizTrainingAnswer';
+import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/quiz-training-answer.model';
 import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluation';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { QuizQuestionTraining } from 'app/quiz/overview/course-training-quiz/quiz-question-training.model';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
-    selector: 'jhi-course-practice-quiz',
-    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent, TranslateDirective],
+    selector: 'jhi-course-training-quiz',
+    imports: [MultipleChoiceQuestionComponent, ShortAnswerQuestionComponent, DragAndDropQuestionComponent, ButtonComponent, TranslateDirective, DialogModule],
     templateUrl: './course-training-quiz.component.html',
 })
 export class CourseTrainingQuizComponent {
@@ -37,24 +39,21 @@ export class CourseTrainingQuizComponent {
     private router = inject(Router);
     private quizService = inject(CourseTrainingQuizService);
 
-    private static readonly INITIAL_QUESTIONS: QuizQuestion[] = [];
-
     currentIndex = signal(0);
     private alertService = inject(AlertService);
     private courseService = inject(CourseManagementService);
 
+    // Pagination options
+    page = signal(0);
+    size = 10;
+    totalItems = signal(0);
+    loading = signal(false);
+    allLoadedQuestions = signal<QuizQuestionTraining[]>([]);
+    allQuestionsLoaded = signal(false);
+
     // Reactive chain for loading quiz questions based on the current route
     paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
     courseId = computed(() => this.paramsSignal()?.['courseId']);
-    questionsSignal = toSignal(
-        this.route.parent!.params.pipe(
-            map((p) => p['courseId'] as number | undefined),
-            filter((id): id is number => id !== undefined),
-            switchMap((id) => this.quizService.getQuizQuestions(id)),
-        ),
-        { initialValue: CourseTrainingQuizComponent.INITIAL_QUESTIONS },
-    );
-    questions = computed(() => this.questionsSignal());
     courseSignal = toSignal(
         this.route.parent!.params.pipe(
             map((p) => p['courseId'] as number | undefined),
@@ -65,7 +64,10 @@ export class CourseTrainingQuizComponent {
         { initialValue: undefined },
     );
     course = computed(() => this.courseSignal());
-    questionsLoaded = computed(() => this.questionsSignal() !== CourseTrainingQuizComponent.INITIAL_QUESTIONS);
+    questionsLoaded = computed(() => this.allLoadedQuestions().length > 0);
+    nextPage = computed(
+        () => (this.currentIndex() + 2) % this.size === 0 && !this.loading() && !this.allQuestionsLoaded() && this.allLoadedQuestions().length <= this.currentIndex() + 2,
+    );
 
     trainingAnswer = new QuizTrainingAnswer();
     showingResult = false;
@@ -74,38 +76,133 @@ export class CourseTrainingQuizComponent {
     selectedAnswerOptions: AnswerOption[] = [];
     dragAndDropMappings: DragAndDropMapping[] = [];
     shortAnswerSubmittedTexts: ShortAnswerSubmittedText[] = [];
+    previousRatedStatus = true;
+    showUnratedConfirmation = false;
+    questionIds: number[] | undefined;
 
     /**
      * checks if the current question is the last question
      */
     isLastQuestion = computed(() => {
-        if (this.questions().length === 0) {
+        const questions = this.allLoadedQuestions();
+        if (questions.length === 0) {
             return true;
         }
-        return this.currentIndex() === this.questions().length - 1;
+        return this.currentIndex() === this.totalItems() - 1;
     });
 
     /**
      * gets the current question
      */
     currentQuestion = computed(() => {
-        if (this.questions().length === 0) {
+        const questions = this.allLoadedQuestions();
+        if (questions.length === 0) {
             return undefined;
         }
-        return this.questions()[this.currentIndex()];
+        return questions[this.currentIndex()].quizQuestionWithSolutionDTO;
     });
+
+    isRated = computed(() => {
+        const questions = this.allLoadedQuestions();
+        if (questions.length === 0) {
+            return undefined;
+        }
+        return questions[this.currentIndex()].isRated;
+    });
+
+    constructor() {
+        effect(() => {
+            const id = this.courseId();
+            if (id && this.page() === 0) {
+                this.loadQuestions();
+            }
+        });
+
+        effect(() => {
+            const questionStatus = this.isRated();
+            if (questionStatus !== undefined) {
+                this.checkRatingStatusChange();
+            }
+        });
+
+        effect(() => {
+            if (this.nextPage()) {
+                this.loadNextPage();
+            }
+        });
+    }
+
+    /**
+     * loads questions for the current page
+     */
+    loadQuestions(): void {
+        if (!this.courseId()) {
+            return;
+        }
+
+        this.quizService.getQuizQuestionsPage(this.courseId(), this.page(), this.size, this.questionIds).subscribe({
+            next: (res: HttpResponse<QuizQuestionTraining[]>) => {
+                const totalCount = res.headers.get('X-Total-Count');
+
+                this.loading.set(true);
+                if (this.page() === 0) {
+                    this.questionIds = res.body?.[0]?.questionIds;
+                    this.totalItems.set(totalCount ? parseInt(totalCount, 10) : 0);
+                }
+
+                if (!res.body || res.body.length === 0) {
+                    this.allQuestionsLoaded.set(true);
+                    this.loading.set(false);
+                    return;
+                }
+
+                if (this.page() === 0) {
+                    this.allLoadedQuestions.set(res.body || []);
+                } else {
+                    this.allLoadedQuestions.update((current) => [...current, ...(res.body || [])]);
+                }
+                this.loading.set(false);
+
+                if (this.allLoadedQuestions().length > 0 && this.currentIndex() === 0) {
+                    this.initQuestion(this.currentQuestion()!);
+                }
+            },
+        });
+    }
+
+    /**
+     * loads the next page of questions
+     */
+    loadNextPage(): void {
+        if (this.loading() || this.allQuestionsLoaded()) {
+            return;
+        }
+        this.page.update((page) => page + 1);
+        this.loadQuestions();
+    }
 
     /**
      * increments the current question index or navigates to the course practice page if the last question is reached
      */
     nextQuestion(): void {
-        if (this.currentIndex() < this.questions().length - 1) {
-            this.currentIndex.set(this.currentIndex() + 1);
+        const questions = this.allLoadedQuestions();
+        if (this.currentIndex() < questions.length - 1) {
+            this.currentIndex.update((index) => index + 1);
             const question = this.currentQuestion();
             if (question) {
                 this.initQuestion(question);
             }
         }
+    }
+
+    checkRatingStatusChange(): void {
+        const currentIsRated = this.isRated();
+
+        if (this.previousRatedStatus && currentIsRated === false) {
+            this.showUnratedConfirmation = true;
+        }
+
+        this.previousRatedStatus = currentIsRated!;
     }
 
     /**
@@ -116,6 +213,7 @@ export class CourseTrainingQuizComponent {
         this.showingResult = false;
         this.submitted = false;
         this.trainingAnswer = new QuizTrainingAnswer();
+        this.checkRatingStatusChange();
         if (question) {
             switch (question.type) {
                 case QuizQuestionType.MULTIPLE_CHOICE:
@@ -182,6 +280,7 @@ export class CourseTrainingQuizComponent {
             return;
         }
         this.applySelection();
+        this.trainingAnswer.isRated = this.isRated()!;
         this.quizService.submitForTraining(this.trainingAnswer, questionId, this.courseId()).subscribe({
             next: (response: HttpResponse<SubmittedAnswerAfterEvaluation>) => {
                 if (response.body) {
@@ -239,5 +338,14 @@ export class CourseTrainingQuizComponent {
      */
     navigateToTraining(): void {
         this.router.navigate(['courses', this.courseId(), 'training']);
+    }
+
+    confirmUnratedPractice(): void {
+        this.showUnratedConfirmation = false;
+    }
+
+    cancelUnratedPractice(): void {
+        this.showUnratedConfirmation = false;
+        this.navigateToTraining();
     }
 }
