@@ -82,6 +82,10 @@ public class QuizTrainingResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
+        if (questionIds != null && questionIds.contains(-1L)) {
+            questionIds.remove(-1L);
+        }
+
         Page<QuizQuestionTrainingDTO> quizQuestionsPage = quizQuestionProgressService.getQuestionsForSession(courseId, user.getId(), pageable, questionIds);
         HttpHeaders headers = generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), quizQuestionsPage);
         return new ResponseEntity<>(quizQuestionsPage.getContent(), headers, HttpStatus.OK);

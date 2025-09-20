@@ -129,6 +129,9 @@ public class QuizQuestionProgressService {
 
         return questionPage.map(question -> {
             QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(question);
+            if (questionIds.size() == 0) {
+                questionIds.add(-1L);
+            }
             return new QuizQuestionTrainingDTO(dto, true, questionIds);
         });
     }
