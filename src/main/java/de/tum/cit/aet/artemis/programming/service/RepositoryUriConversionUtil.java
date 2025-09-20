@@ -72,12 +72,7 @@ public final class RepositoryUriConversionUtil {
         if (isNullOrEmpty(fullUri)) {
             return null;
         }
-        String base = currentServerUrl();
         String uri = fullUri;
-
-        if (base == null) {
-            throw new IllegalStateException("Server URL is not configured. Cannot convert to full repository URI.");
-        }
 
         int gitPrefix = uri.indexOf(GIT_PREFIX);
         if (gitPrefix == -1) {
