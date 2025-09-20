@@ -1,4 +1,5 @@
 import {
+    AfterViewChecked,
     Component,
     ContentChild,
     ElementRef,
@@ -77,9 +78,10 @@ type PagingValue = number | 'all';
         ArtemisTranslatePipe,
     ],
 })
-export class DataTableComponent implements OnInit, OnChanges {
+export class DataTableComponent implements OnInit, OnChanges, AfterViewChecked {
     private sortService = inject(SortService);
     private localStorageService = inject(LocalStorageService);
+    private resizeScheduled = false;
 
     /**
      * @property templateRef Ref to the content child of this component (which is ngx-datatable)
@@ -207,6 +209,21 @@ export class DataTableComponent implements OnInit, OnChanges {
         if (changes.allEntities || changes.customFilterKey) {
             this.updateEntities();
         }
+    }
+
+    /**
+     * Life cycle hook called by Angular after a component has been checked for changes.
+     * Throttled to one global resize per animation frame.
+     */
+    ngAfterViewChecked() {
+        if (this.resizeScheduled) {
+            return;
+        }
+        this.resizeScheduled = true;
+        requestAnimationFrame(() => {
+            this.resizeScheduled = false;
+            window.dispatchEvent(new Event('resize'));
+        });
     }
 
     /**
