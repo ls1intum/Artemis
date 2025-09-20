@@ -34,10 +34,16 @@ public class LdapConfig {
         LdapContextSource contextSource = new LdapContextSource();
         contextSource.setUrl(ldapUrl);
         contextSource.setUserDn(ldapUserDn);
+        // NOTE: we should note call setBase() here, it is not needed and would not work anymore
         contextSource.setPassword(ldapPassword);
         return contextSource;
     }
 
+    /**
+     * This template allows to perform LDAP operations using the configured context source, e.g. to compare the password of users that login on Artemis
+     *
+     * @return a SpringSecurityLdapTemplate that uses the configured context source
+     */
     @Bean
     public SpringSecurityLdapTemplate ldapTemplate() {
         return new SpringSecurityLdapTemplate(contextSource());
