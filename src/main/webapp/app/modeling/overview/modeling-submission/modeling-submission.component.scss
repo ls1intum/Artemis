@@ -19,6 +19,13 @@ jhi-modeling-assessment {
     height: 100vh;
 }
 
+.feedback-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
 .rg-bottom {
     align-self: center;
     cursor: row-resize;

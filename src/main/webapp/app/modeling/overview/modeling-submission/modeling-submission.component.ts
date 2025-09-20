@@ -53,6 +53,7 @@ import { captureException } from '@sentry/angular';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -80,6 +81,7 @@ import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.c
         DecimalPipe,
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
+        UnifiedFeedbackComponent,
     ],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
