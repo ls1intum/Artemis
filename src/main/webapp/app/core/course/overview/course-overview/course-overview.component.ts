@@ -215,6 +215,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      */
     loadCourse(refresh = false): Observable<void> {
         this.refreshingCourse.set(refresh);
+
         const observable = this.courseManagementService.findOneForDashboard(this.courseId()).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {

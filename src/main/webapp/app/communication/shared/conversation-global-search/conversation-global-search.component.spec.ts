@@ -185,6 +185,7 @@ describe('ConversationGlobalSearchComponent', () => {
 
     it('should clear search term, selected conversations, and selected authors, and emit selection change when clearing search', fakeAsync(() => {
         const selectionChangeSpy = jest.spyOn(component.onSelectionChange, 'emit');
+        const clearSearchSpy = jest.spyOn(component.onClearSearch, 'emit');
 
         component.fullSearchTerm = 'in:general';
         component.selectedConversations = [mockConversations[0]];
@@ -203,6 +204,7 @@ describe('ConversationGlobalSearchComponent', () => {
             selectedConversations: [],
             selectedAuthors: [],
         });
+        expect(clearSearchSpy).toHaveBeenCalledWith();
     }));
 
     it('should set search mode to NORMAL and close dropdown for invalid prefix', fakeAsync(() => {
