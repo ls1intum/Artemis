@@ -42,6 +42,7 @@ import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/cour
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
+import { ExercisePreliminaryFeedbackOptionsComponent } from 'app/exercises/shared/preliminary-feedback/exercise-preliminary-feedback-options.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 @Component({
@@ -64,6 +65,7 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
         ExerciseFeedbackSuggestionOptionsComponent,
+        ExercisePreliminaryFeedbackOptionsComponent,
         PresentationScoreComponent,
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
