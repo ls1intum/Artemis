@@ -102,7 +102,7 @@ public class QuizQuestionProgressService {
     public Page<QuizQuestionTrainingDTO> getQuestionsForSession(Long courseId, Long userId, Pageable pageable, Set<Long> questionIds) {
         ZonedDateTime now = ZonedDateTime.now();
         if (questionIds == null) {
-            Set<QuizQuestionProgress> allProgress = quizQuestionProgressRepository.findAllByUserId(userId);
+            Set<QuizQuestionProgress> allProgress = quizQuestionProgressRepository.findAllByUserIdAndCourseId(userId, courseId);
 
             questionIds = allProgress.stream().filter(progress -> {
                 QuizQuestionProgressData data = progress.getProgressJson();
@@ -113,7 +113,7 @@ public class QuizQuestionProgressService {
             }
         }
 
-        if (areQuestionsDue(courseId, questionIds)) {
+        if (areQuestionsDue(courseId, questionIds.size())) {
             return loadDueQuestions(questionIds, courseId, pageable);
         }
         else {
@@ -121,9 +121,8 @@ public class QuizQuestionProgressService {
         }
     }
 
-    private boolean areQuestionsDue(Long courseId, Set<Long> questionIds) {
+    private boolean areQuestionsDue(Long courseId, int notDueCount) {
         long totalQuestionsCount = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(courseId);
-        long notDueCount = quizQuestionRepository.countAllDueQuestionsByCourseID(courseId, questionIds);
 
         return notDueCount < totalQuestionsCount;
     }
@@ -271,7 +270,7 @@ public class QuizQuestionProgressService {
      * @param answer     The submitted answer for the question
      * @param answeredAt The time when the question was answered
      */
-    public void saveProgressFromTraining(QuizQuestion question, Long userId, SubmittedAnswer answer, ZonedDateTime answeredAt) {
+    public void saveProgressFromTraining(QuizQuestion question, long userId, long courseId, SubmittedAnswer answer, ZonedDateTime answeredAt) {
         QuizQuestionProgress existingProgress = quizQuestionProgressRepository.findByUserIdAndQuizQuestionId(userId, question.getId()).orElse(new QuizQuestionProgress());
         QuizQuestionProgressData data = existingProgress.getProgressJson() != null ? existingProgress.getProgressJson() : new QuizQuestionProgressData();
 
@@ -279,6 +278,7 @@ public class QuizQuestionProgressService {
         if (dueDate == null || !dueDate.isAfter(answeredAt)) {
             existingProgress.setQuizQuestionId(question.getId());
             existingProgress.setUserId(userId);
+            existingProgress.setCourseId(courseId);
             double score = question.getPoints() > 0 ? answer.getScoreInPoints() / question.getPoints() : 0.0;
             updateProgressWithNewAttempt(data, score, answeredAt);
             updateProgressCalculations(data, score, existingProgress, answeredAt);

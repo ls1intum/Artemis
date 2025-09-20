@@ -110,7 +110,7 @@ public class QuizTrainingResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         ZonedDateTime answeredAt = ZonedDateTime.now();
 
-        SubmittedAnswerAfterEvaluationDTO result = quizTrainingService.submitForTraining(quizQuestionId, user.getId(), submittedAnswer, answeredAt);
+        SubmittedAnswerAfterEvaluationDTO result = quizTrainingService.submitForTraining(quizQuestionId, user.getId(), courseId, submittedAnswer, answeredAt);
 
         return ResponseEntity.ok(result);
     }

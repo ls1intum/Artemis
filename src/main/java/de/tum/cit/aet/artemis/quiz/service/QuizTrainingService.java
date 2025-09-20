@@ -37,7 +37,8 @@ public class QuizTrainingService {
      * @param answeredAt             the time when the question was answered
      * @return a DTO containing the submitted answer after the evaluation
      */
-    public SubmittedAnswerAfterEvaluationDTO submitForTraining(long quizQuestionId, long userId, QuizTrainingAnswerDTO studentSubmittedAnswer, ZonedDateTime answeredAt) {
+    public SubmittedAnswerAfterEvaluationDTO submitForTraining(long quizQuestionId, long userId, long courseId, QuizTrainingAnswerDTO studentSubmittedAnswer,
+            ZonedDateTime answeredAt) {
         QuizQuestion quizQuestion = quizQuestionRepository.findByIdElseThrow(quizQuestionId);
         SubmittedAnswer answer = studentSubmittedAnswer.submittedAnswer();
         boolean isRated = studentSubmittedAnswer.isRated();
@@ -48,7 +49,7 @@ public class QuizTrainingService {
         answer.setQuizQuestion(quizQuestion);
 
         if (isRated) {
-            quizQuestionProgressService.saveProgressFromTraining(quizQuestion, userId, answer, answeredAt);
+            quizQuestionProgressService.saveProgressFromTraining(quizQuestion, userId, courseId, answer, answeredAt);
         }
 
         return SubmittedAnswerAfterEvaluationDTO.of(answer);

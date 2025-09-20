@@ -120,6 +120,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetQuestionsForSession() {
+        quizQuestionRepository.deleteAll();
         Course course = new Course();
         courseTestRepository.save(course);
 
@@ -161,6 +162,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetQuestionsForSessionNoDueDate() {
+        quizQuestionRepository.deleteAll();
         Course course = new Course();
         courseTestRepository.save(course);
 
@@ -177,6 +179,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
             QuizQuestionProgress progress = new QuizQuestionProgress();
             progress.setUserId(userId);
+            progress.setCourseId(course.getId());
             progress.setQuizQuestionId(question.getId());
             QuizQuestionProgressData data = new QuizQuestionProgressData();
             data.setDueDate(ZonedDateTime.now().plusDays(i + 1));
@@ -188,6 +191,11 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizExercise.setQuizQuestions(questions);
         quizExerciseTestRepository.save(quizExercise);
 
+        long totalQuestionsCount = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(course.getId());
+        System.out.println("Total: " + totalQuestionsCount);
+        Set<QuizQuestionProgress> allProgress = quizQuestionProgressRepository.findAllByUserIdAndCourseId(userId, course.getId());
+        System.out.println("Progress: " + allProgress.size());
+
         Pageable pageable = Pageable.ofSize(10);
 
         Page<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(course.getId(), userId, pageable, null);
@@ -198,7 +206,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         for (QuizQuestionTrainingDTO dto : result.getContent()) {
             assertThat(dto.isRated()).isFalse();
         }
-        quizQuestionRepository.deleteAll();
     }
 
     @Test
