@@ -34,7 +34,7 @@ describe('CourseTrainingQuizService', () => {
             expect(questions).toEqual(mockQuestions);
         });
         const req = httpMock.expectOne(`api/quiz/courses/${courseId}/training-questions`);
-        expect(req.request.method).toBe('GET');
+        expect(req.request.method).toBe('POST');
         req.flush(mockQuestions);
     });
 

@@ -17,6 +17,7 @@ import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and
 import { ImageComponent } from 'app/shared/image/image.component';
 import { signal } from '@angular/core';
 import { SubmittedAnswerAfterEvaluation } from './SubmittedAnswerAfterEvaluation';
+import { QuizQuestionTraining } from './quiz-question-training.model';
 
 const question1: QuizQuestion = {
     id: 1,
@@ -54,9 +55,9 @@ describe('CourseTrainingQuizComponent', () => {
     let quizService: CourseTrainingQuizService;
 
     const mockQuestions = [
-        { quizQuestionWithSolutionDTO: question1, isRated: false },
-        { quizQuestionWithSolutionDTO: question2, isRated: true },
-        { quizQuestionWithSolutionDTO: question3, isRated: false },
+        { quizQuestionWithSolutionDTO: question1, isRated: false, questionIds: [1] },
+        { quizQuestionWithSolutionDTO: question2, isRated: true, questionIds: [1] },
+        { quizQuestionWithSolutionDTO: question3, isRated: false, questionIds: [1] },
     ];
 
     beforeEach(async () => {
@@ -77,7 +78,14 @@ describe('CourseTrainingQuizComponent', () => {
                 },
             ]);
         quizService = TestBed.inject(CourseTrainingQuizService);
-        jest.spyOn(quizService, 'getQuizQuestions').mockReturnValue(of(mockQuestions));
+        jest.spyOn(quizService, 'getQuizQuestions').mockReturnValue(
+            of(
+                new HttpResponse<QuizQuestionTraining[]>({
+                    body: mockQuestions,
+                    headers: { get: () => '3' } as any,
+                }),
+            ),
+        );
         jest.spyOn(TestBed.inject(CourseManagementService), 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
         fixture = TestBed.createComponent(CourseTrainingQuizComponent);
@@ -98,11 +106,20 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     it('should load questions from service', () => {
-        expect(component.questionsSignal()).toEqual(mockQuestions);
-        expect(component.questions()).toEqual(mockQuestions);
+        const mockResponse = new HttpResponse<QuizQuestionTraining[]>({
+            body: mockQuestions,
+            headers: { get: () => '3' } as any,
+        });
+        jest.spyOn(quizService, 'getQuizQuestionsPage').mockReturnValue(of(mockResponse));
+        component.page.set(0);
+        component.loadQuestions();
+        expect(component.allLoadedQuestions()).toHaveLength(3);
+        expect(component.allLoadedQuestions()[0].quizQuestionWithSolutionDTO).toEqual(question1);
     });
 
     it('should check for last question', () => {
+        component.totalItems.set(3);
+        component.allLoadedQuestions.set(mockQuestions);
         component.currentIndex.set(0);
         expect(component.isLastQuestion()).toBeFalsy();
         component.currentIndex.set(2);
@@ -110,24 +127,65 @@ describe('CourseTrainingQuizComponent', () => {
     });
 
     it('should check if questions is empty', () => {
-        jest.spyOn(component, 'questions').mockReturnValue([]);
+        component.allLoadedQuestions.set([]);
         component.currentIndex.set(1);
         expect(component.isLastQuestion()).toBeTruthy();
         expect(component.currentQuestion()).toBeUndefined();
     });
 
     it('should return the current question based on currentIndex', () => {
+        component.allLoadedQuestions.set(mockQuestions);
         component.currentIndex.set(0);
-        expect(component.currentQuestion()).toBe(mockQuestions[0].quizQuestionWithSolutionDTO);
+        expect(component.currentQuestion()).toBe(question1);
     });
 
     it('should go to the next question and call initQuestion', () => {
+        component.allLoadedQuestions.set(mockQuestions);
         component.currentIndex.set(0);
         const initQuestionSpy = jest.spyOn(component, 'initQuestion');
         component.nextQuestion();
         expect(component.currentIndex()).toBe(1);
         expect(initQuestionSpy).toHaveBeenCalledOnce();
         expect(initQuestionSpy).toHaveBeenCalledWith(question2);
+    });
+
+    it('should increment page and call loadQuestions when not loading and not allQuestionsLoaded', () => {
+        component.loading.set(false);
+        component.allQuestionsLoaded.set(false);
+        component.page.set(0);
+        const loadQuestionsSpy = jest.spyOn(component, 'loadQuestions');
+
+        component.loadNextPage();
+
+        expect(component.page()).toBe(1);
+        expect(loadQuestionsSpy).toHaveBeenCalled();
+    });
+
+    it('should not increment page or call loadQuestions when loading is true', () => {
+        component.loading.set(true);
+        component.allQuestionsLoaded.set(false);
+        component.page.set(0);
+        const loadQuestionsSpy = jest.spyOn(component, 'loadQuestions');
+
+        component.loadNextPage();
+
+        expect(component.page()).toBe(0);
+        expect(loadQuestionsSpy).not.toHaveBeenCalled();
+    });
+
+    it('should set allQuestionsLoaded to true and loading to false when response body is empty', () => {
+        const mockResponse = new HttpResponse<QuizQuestionTraining[]>({
+            body: [],
+            headers: { get: () => '0' } as any,
+        });
+        jest.spyOn(quizService, 'getQuizQuestionsPage').mockReturnValue(of(mockResponse));
+        component.allQuestionsLoaded.set(false);
+        component.loading.set(true);
+
+        component.loadQuestions();
+
+        expect(component.allQuestionsLoaded()).toBeTrue();
+        expect(component.loading()).toBeFalse();
     });
 
     it('should init the current question', () => {
@@ -201,5 +259,19 @@ describe('CourseTrainingQuizComponent', () => {
         component.navigateToTraining();
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'training']);
+    });
+
+    it('should set showUnratedConfirmation to false when confirmUnratedPractice is called', () => {
+        component.showUnratedConfirmation = true;
+        component.confirmUnratedPractice();
+        expect(component.showUnratedConfirmation).toBeFalse();
+    });
+
+    it('should set showUnratedConfirmation to false and navigate to training when cancelUnratedPractice is called', () => {
+        const navigateSpy = jest.spyOn(component, 'navigateToTraining');
+        component.showUnratedConfirmation = true;
+        component.cancelUnratedPractice();
+        expect(component.showUnratedConfirmation).toBeFalse();
+        expect(navigateSpy).toHaveBeenCalled();
     });
 });
