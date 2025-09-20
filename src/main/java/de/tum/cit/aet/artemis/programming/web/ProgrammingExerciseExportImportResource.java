@@ -37,6 +37,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -313,27 +314,30 @@ public class ProgrammingExerciseExportImportResource {
     @GetMapping("programming-exercises/{exerciseId}/export-instructor-exercise")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.Exports)
-    public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
+    public ResponseEntity<StreamingResponseBody> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
         var programmingExercise = programmingExerciseRepository
                 .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigAndGradingCriteria(exerciseId)
                 .orElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         long start = System.nanoTime();
-        Resource resource;
-        try {
-            resource = programmingExerciseExportService.exportProgrammingExerciseForDownload(programmingExercise);
-        }
-        catch (Exception e) {
-            log.error("Error while exporting programming exercise with id {} for instructor", exerciseId, e);
-            throw new InternalServerErrorException("Error while exporting programming exercise with id " + exerciseId + " for instructor");
-        }
 
         log.info("Streaming of the programming exercise {} with title '{}' started successfully in {}.", programmingExercise.getId(), programmingExercise.getTitle(),
                 formatDurationFrom(start));
 
-        return ResponseEntity.ok().contentLength(resource.contentLength()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", resource.getFilename())
-                .body(resource);
+        String exportFilename = programmingExerciseExportService.getProgrammingExerciseExportFilename(programmingExercise);
+
+        StreamingResponseBody streamingBody = outputStream -> {
+            try {
+                programmingExerciseExportService.writeProgrammingExerciseForDownload(programmingExercise, outputStream);
+            }
+            catch (IOException e) {
+                log.error("Error while exporting programming exercise with id {} for instructor", exerciseId, e);
+                throw e;
+            }
+        };
+
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", exportFilename).body(streamingBody);
     }
 
     /**

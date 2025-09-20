@@ -3,10 +3,10 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils.getDocumentBuilderFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,7 +46,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
@@ -225,69 +224,30 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     }
 
     /**
-     * Exports a programming exercise for download purposes. This includes the instructor repositories and combines them into a single zip stream.
+     * Gets the export filename for a programming exercise without performing the actual export.
      *
-     * @param exercise the programming exercise to export
-     * @return a resource streaming the zipped instructor repositories
-     * @throws IOException if an error occurs while creating the zip
+     * @param exercise the programming exercise to get the export filename for
+     * @return the export filename
      */
-    public Resource exportProgrammingExerciseForDownload(@NotNull ProgrammingExercise exercise) throws IOException {
-        anonymizeGradingCriteria(exercise);
+    public String getProgrammingExerciseExportFilename(@NotNull ProgrammingExercise exercise) {
+        String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
+        String courseShortName = Optional.ofNullable(exercise.getCourseViaExerciseGroupOrCourseMember().getShortName()).orElse("course");
+        String exerciseTitle = Optional.ofNullable(exercise.getTitle()).orElse(exercise.getShortName());
 
-        // Inner zip containing the instructor repositories (template, solution, tests, auxiliary)
-        Resource instructorRepositoriesZip = createInstructorRepositoriesZip(exercise);
-        // Outer zip containing the inner zip + exercise details (json) + problem statement (md)
-        return createCombinedZipResource(exercise, instructorRepositoriesZip);
+        return FileUtil.sanitizeFilename("Material-" + courseShortName + "-" + exerciseTitle + "-" + exercise.getId() + "-" + timestamp + ".zip");
     }
 
-    private void anonymizeGradingCriteria(ProgrammingExercise exercise) {
-        if (exercise.getGradingCriteria() != null) {
-            for (GradingCriterion gradingCriterion : exercise.getGradingCriteria()) {
-                gradingCriterion.setId(null);
-            }
-        }
-    }
-
-    private Resource createInstructorRepositoriesZip(ProgrammingExercise exercise) throws IOException {
-        Resource templateResource = gitRepositoryExportService.exportInstructorRepositoryForExerciseInMemory(exercise, RepositoryType.TEMPLATE);
-        Resource solutionResource = gitRepositoryExportService.exportInstructorRepositoryForExerciseInMemory(exercise, RepositoryType.SOLUTION);
-        Resource testsResource = gitRepositoryExportService.exportInstructorRepositoryForExerciseInMemory(exercise, RepositoryType.TESTS);
-
-        List<InputStreamResource> auxiliaryResources = exercise.getAuxiliaryRepositories().stream().map(auxiliaryRepository -> {
-            try {
-                return gitRepositoryExportService.exportInstructorAuxiliaryRepositoryForExerciseInMemory(exercise, auxiliaryRepository);
-            }
-            catch (IOException e) {
-                log.error("Failed to export auxiliary repository {}: {}", auxiliaryRepository.getName(), e.getMessage());
-                return null;
-            }
-        }).filter(Objects::nonNull).toList();
-
-        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(); ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
-
-            addResourceToZip(zipOutputStream, templateResource, templateResource.getFilename());
-            addResourceToZip(zipOutputStream, solutionResource, solutionResource.getFilename());
-            addResourceToZip(zipOutputStream, testsResource, testsResource.getFilename());
-            auxiliaryResources.forEach(resource -> {
-                try {
-                    addResourceToZip(zipOutputStream, resource, resource.getFilename());
-                }
-                catch (IOException e) {
-                    log.error("Failed to add auxiliary repository to zip: {}", e.getMessage());
-                }
-            });
-
-            zipOutputStream.finish();
-            return new ByteArrayResource(byteArrayOutputStream.toByteArray());
-        }
-    }
-
-    private Resource createCombinedZipResource(ProgrammingExercise exercise, Resource instructorRepositoriesZip) throws IOException {
+    /**
+     * Writes the programming exercise export directly to the provided output stream. The export contains the instructor repositories, exercise details, and
+     * problem statement bundled as a zip archive.
+     *
+     * @param exercise     the programming exercise to export
+     * @param outputStream the output stream to write the export to
+     * @throws IOException if an error occurs while writing the export
+     */
+    public void writeProgrammingExerciseForDownload(@NotNull ProgrammingExercise exercise, OutputStream outputStream) throws IOException {
         String exerciseDetailsFileName = FileUtil.sanitizeFilename(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + "-" + exercise.getTitle() + ".json");
-        Resource exerciseDetailsJson = createExerciseDetailsJson(exercise);
-
         String problemStatementFileName = FileUtil.sanitizeFilename(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + "-" + exercise.getSanitizedExerciseTitle() + ".md");
-        Resource problemStatementMarkdown = createProblemStatementMarkdown(exercise);
 
         String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         String courseShortName = Optional.ofNullable(exercise.getCourseViaExerciseGroupOrCourseMember().getShortName()).orElse("course");
@@ -295,15 +255,24 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
         String instructorRepositoriesFilename = FileUtil.sanitizeFilename(courseShortName + "-" + exerciseTitle + "-" + exercise.getId() + "-" + timestamp + ".zip");
 
-        String exportFilename = FileUtil.sanitizeFilename("Material-" + courseShortName + "-" + exerciseTitle + "-" + exercise.getId() + "-" + timestamp + ".zip");
+        anonymizeGradingCriteria(exercise);
 
-        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(); ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
-            addResourceToZip(zipOutputStream, instructorRepositoriesZip, instructorRepositoriesFilename);
+        Resource exerciseDetailsJson = createExerciseDetailsJson(exercise);
+        Resource problemStatementMarkdown = createProblemStatementMarkdown(exercise);
+
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+            writeInstructorRepositoriesZipEntry(exercise, zipOutputStream, instructorRepositoriesFilename);
             addResourceToZip(zipOutputStream, exerciseDetailsJson, exerciseDetailsFileName);
             addResourceToZip(zipOutputStream, problemStatementMarkdown, problemStatementFileName);
             zipOutputStream.finish();
+        }
+    }
 
-            return new ByteArrayResource(byteArrayOutputStream.toByteArray(), exportFilename);
+    private void anonymizeGradingCriteria(ProgrammingExercise exercise) {
+        if (exercise.getGradingCriteria() != null) {
+            for (GradingCriterion gradingCriterion : exercise.getGradingCriteria()) {
+                gradingCriterion.setId(null);
+            }
         }
     }
 
@@ -323,7 +292,17 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
     }
 
     private void addResourceToZip(ZipOutputStream zipOutputStream, Resource resource, String entryName) throws IOException {
-        ZipEntry zipEntry = new ZipEntry(entryName);
+        if (resource == null) {
+            return;
+        }
+
+        String effectiveEntryName = entryName != null ? entryName : resource.getFilename();
+        if (effectiveEntryName == null) {
+            log.warn("Skipping resource without entry name when creating zip");
+            return;
+        }
+
+        ZipEntry zipEntry = new ZipEntry(effectiveEntryName);
         zipOutputStream.putNextEntry(zipEntry);
 
         try (InputStream inputStream = resource.getInputStream()) {
@@ -331,6 +310,63 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
 
         zipOutputStream.closeEntry();
+    }
+
+    private void writeInstructorRepositoriesZipEntry(ProgrammingExercise exercise, ZipOutputStream zipOutputStream, String entryName) throws IOException {
+        if (entryName == null) {
+            log.warn("Skipping instructor repositories export because entry name is null");
+            return;
+        }
+
+        zipOutputStream.putNextEntry(new ZipEntry(entryName));
+        try (ZipOutputStream innerZipOutputStream = new ZipOutputStream(new NonClosingOutputStream(zipOutputStream))) {
+            exportInstructorRepository(innerZipOutputStream, () -> gitRepositoryExportService.exportInstructorRepositoryForExerciseInMemory(exercise, RepositoryType.TEMPLATE),
+                    RepositoryType.TEMPLATE.getName());
+            exportInstructorRepository(innerZipOutputStream, () -> gitRepositoryExportService.exportInstructorRepositoryForExerciseInMemory(exercise, RepositoryType.SOLUTION),
+                    RepositoryType.SOLUTION.getName());
+            exportInstructorRepository(innerZipOutputStream, () -> gitRepositoryExportService.exportInstructorRepositoryForExerciseInMemory(exercise, RepositoryType.TESTS),
+                    RepositoryType.TESTS.getName());
+
+            var auxiliaryRepositories = exercise.getAuxiliaryRepositories();
+            if (auxiliaryRepositories != null) {
+                for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
+                    exportInstructorRepository(innerZipOutputStream,
+                            () -> gitRepositoryExportService.exportInstructorAuxiliaryRepositoryForExerciseInMemory(exercise, auxiliaryRepository),
+                            auxiliaryRepository.getRepositoryName());
+                }
+            }
+        }
+        finally {
+            zipOutputStream.closeEntry();
+        }
+    }
+
+    private void exportInstructorRepository(ZipOutputStream zipOutputStream, RepositoryResourceSupplier supplier, String repositoryIdentifier) {
+        try {
+            Resource resource = supplier.get();
+            addResourceToZip(zipOutputStream, resource, resource != null ? resource.getFilename() : null);
+        }
+        catch (IOException e) {
+            log.error("Failed to export instructor repository {}: {}", repositoryIdentifier, e.getMessage());
+        }
+    }
+
+    @FunctionalInterface
+    private interface RepositoryResourceSupplier {
+
+        Resource get() throws IOException;
+    }
+
+    private static class NonClosingOutputStream extends java.io.FilterOutputStream {
+
+        NonClosingOutputStream(OutputStream out) {
+            super(out);
+        }
+
+        @Override
+        public void close() throws IOException {
+            flush();
+        }
     }
 
     /**
