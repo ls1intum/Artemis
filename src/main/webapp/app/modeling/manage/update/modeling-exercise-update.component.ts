@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -95,6 +95,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
     @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
     @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
+    @ViewChild('editForm', { read: ElementRef }) editFormEl?: ElementRef<HTMLFormElement>;
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
@@ -230,6 +231,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     ngOnDestroy() {
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
+        this.teamSubscription?.unsubscribe();
     }
 
     async calculateFormSectionStatus() {
@@ -292,6 +294,45 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     validateDate(): void {
         this.exerciseService.validateDate(this.modelingExercise);
         this.calculateFormSectionStatus();
+    }
+
+    /**
+     * Handles Enter key navigation - moves to next input field
+     * Only applies to form inputs, not Apollon Editor elements
+     */
+    handleEnterKeyNavigation(event: Event): void {
+        // Always block the implicit submit caused by the hidden submit button
+        event.preventDefault();
+        event.stopPropagation();
+        const activeElement = document.activeElement as HTMLElement;
+
+        // Let multiline editors/fields handle Enter
+        if (activeElement?.tagName === 'TEXTAREA' || activeElement?.isContentEditable) {
+            return; // default submit already suppressed above
+        }
+
+        // Only handle navigation within this form
+        const formRoot = this.editFormEl?.nativeElement as HTMLElement | undefined;
+        if (!formRoot) {
+            return;
+        }
+
+        // Check if we're inside Apollon Editor inside this form - let it handle Enter
+        const apollonContainer = formRoot.querySelector('.apollon-container');
+        if (apollonContainer?.contains(activeElement)) {
+            return; // default submit already suppressed above
+        }
+
+        const focusableElements = Array.from(
+            formRoot.querySelectorAll(
+                'input:not([disabled]):not([readonly]):not([tabindex="-1"]):not([hidden]):not([type="hidden"]), ' + 'select:not([disabled]):not([tabindex="-1"]):not([hidden])',
+            ),
+        ) as HTMLElement[];
+
+        const currentIndex = focusableElements.indexOf(activeElement);
+        if (currentIndex >= 0 && currentIndex < focusableElements.length - 1) {
+            focusableElements[currentIndex + 1].focus();
+        }
     }
 
     save() {
