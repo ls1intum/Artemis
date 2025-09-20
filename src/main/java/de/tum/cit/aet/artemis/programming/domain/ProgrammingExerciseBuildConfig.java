@@ -6,6 +6,7 @@ import java.util.UUID;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
@@ -20,12 +21,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
+import de.tum.cit.aet.artemis.versioning.service.ExerciseVersionEntityListener;
 
 @Entity
 @Table(name = "programming_exercise_build_config")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 // We dont want to expose the programming exercise in the build config
 @JsonIgnoreProperties(value = { "programmingExercise" })
+@EntityListeners(ExerciseVersionEntityListener.class)
 public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseBuildConfig.class);

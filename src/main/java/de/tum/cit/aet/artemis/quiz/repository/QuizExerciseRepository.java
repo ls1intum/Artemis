@@ -81,6 +81,17 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
     Optional<QuizExercise> findWithEagerBatchesById(Long quizExerciseId);
 
+    /**
+     * Finds a QuizExercise with minimal data necessary for exercise versioning.
+     * Only includes core configuration data, NOT submissions, results, or statistics.
+     * This includes: quizQuestions (without specific answer options to avoid polymorphic issues)
+     *
+     * @param exerciseId the id of the exercise to fetch
+     * @return {@link QuizExercise}
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
+    Optional<QuizExercise> findWithEagerForVersioningById(Long exerciseId);
+
     @Query("""
             SELECT q
             FROM QuizExercise q

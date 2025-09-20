@@ -5,6 +5,7 @@ import jakarta.persistence.DiscriminatorColumn;
 import jakarta.persistence.DiscriminatorType;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.OneToOne;
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.versioning.service.ExerciseVersionEntityListener;
 
 /**
  * Represents an abstract submission policy.
@@ -44,6 +46,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
     @JsonSubTypes.Type(value = LockRepositoryPolicy.class, name = "lock_repository"),
     @JsonSubTypes.Type(value = SubmissionPenaltyPolicy.class, name = "submission_penalty")
 })
+@EntityListeners(ExerciseVersionEntityListener.class)
 // @formatter:on
 public abstract class SubmissionPolicy extends DomainObject {
 

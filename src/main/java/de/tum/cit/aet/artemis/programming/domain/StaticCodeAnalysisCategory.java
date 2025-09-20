@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -17,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
+import de.tum.cit.aet.artemis.versioning.service.ExerciseVersionEntityListener;
 
 /**
  * Entity for storing static code analysis categories and their settings.
@@ -25,6 +27,7 @@ import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 @Table(name = "static_code_analysis_category")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@EntityListeners(ExerciseVersionEntityListener.class)
 public class StaticCodeAnalysisCategory extends DomainObject {
 
     @Column(name = "name")

@@ -19,7 +19,8 @@ import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
         "de.tum.cit.aet.artemis.exercise.repository", "de.tum.cit.aet.artemis.fileupload.repository", "de.tum.cit.aet.artemis.iris.repository",
         "de.tum.cit.aet.artemis.lecture.repository", "de.tum.cit.aet.artemis.lti.repository", "de.tum.cit.aet.artemis.modeling.repository",
         "de.tum.cit.aet.artemis.plagiarism.repository", "de.tum.cit.aet.artemis.programming.repository", "de.tum.cit.aet.artemis.quiz.repository",
-        "de.tum.cit.aet.artemis.text.repository", "de.tum.cit.aet.artemis.tutorialgroup.repository" }, repositoryBaseClass = RepositoryImpl.class)
+        "de.tum.cit.aet.artemis.text.repository", "de.tum.cit.aet.artemis.tutorialgroup.repository",
+        "de.tum.cit.aet.artemis.versioning.repository" }, repositoryBaseClass = RepositoryImpl.class)
 @EnableJpaAuditing(auditorAwareRef = "springSecurityAuditorAware")
 @EnableTransactionManagement
 public class DatabaseConfiguration {
