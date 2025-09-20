@@ -108,6 +108,9 @@ public class QuizQuestionProgressService {
                 QuizQuestionProgressData data = progress.getProgressJson();
                 return data != null && data.getDueDate() != null && data.getDueDate().isAfter(now);
             }).map(QuizQuestionProgress::getQuizQuestionId).collect(Collectors.toSet());
+            if (questionIds.isEmpty()) {
+                questionIds.add(-1L);
+            }
         }
 
         if (areQuestionsDue(courseId, questionIds.size())) {
@@ -129,9 +132,6 @@ public class QuizQuestionProgressService {
 
         return questionPage.map(question -> {
             QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(question);
-            if (questionIds.size() == 0) {
-                questionIds.add(-1L);
-            }
             return new QuizQuestionTrainingDTO(dto, true, questionIds);
         });
     }
