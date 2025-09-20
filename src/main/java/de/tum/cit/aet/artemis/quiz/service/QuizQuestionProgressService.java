@@ -93,8 +93,10 @@ public class QuizQuestionProgressService {
     /**
      * Get the sorted List of quiz questions based on their due date
      *
-     * @param courseId ID of the course for which the quiz questions are to be fetched
-     * @param userId   ID of the user for whom the quiz questions are to be fetched
+     * @param courseId    ID of the course for which the quiz questions are to be fetched
+     * @param userId      ID of the user for whom the quiz questions are to be fetched
+     * @param pageable    Pageable object with pagination information
+     * @param questionIds Optional set of question IDs to filter the questions
      * @return A list of quiz questions sorted by due date
      */
     public Page<QuizQuestionTrainingDTO> getQuestionsForSession(Long courseId, Long userId, Pageable pageable, Set<Long> questionIds) {

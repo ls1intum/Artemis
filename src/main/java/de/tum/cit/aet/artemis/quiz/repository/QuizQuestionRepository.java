@@ -45,6 +45,7 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
      * Finds all quiz question from a course that are open for practice.
      *
      * @param courseId of the course
+     * @param pageable pagination information
      * @return a set of quiz questions
      */
     @Query("""
@@ -59,7 +60,7 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
             FROM QuizQuestion q
             WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE AND q.id NOT In (:ids)
             """)
-    Page<QuizQuestion> findAllDueQuestions(Set<Long> ids, Long courseId, Pageable pageable);
+    Page<QuizQuestion> findAllDueQuestions(@Param("ids") Set<Long> ids, @Param("courseId") Long courseId, Pageable pageable);
 
     @Query("""
             SELECT COUNT(q) > 0

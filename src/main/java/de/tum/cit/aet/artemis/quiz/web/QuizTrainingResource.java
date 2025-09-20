@@ -66,9 +66,11 @@ public class QuizTrainingResource {
     }
 
     /**
-     * Retrieves 10 quiz questions for the training session for the given course. The questions are selected based on the spaced repetition algorithm.
+     * Retrieves the quiz questions for the training session for the given course. The questions are selected based on the spaced repetition algorithm.
      *
-     * @param courseId the id of the course whose quiz questions should be retrieved
+     * @param courseId    the id of the course whose quiz questions should be retrieved
+     * @param pageable    pagination information
+     * @param questionIds optional set of question IDs to filter the questions
      * @return a list of 10 quiz questions for the training session
      */
     @PostMapping("courses/{courseId}/training-questions")
