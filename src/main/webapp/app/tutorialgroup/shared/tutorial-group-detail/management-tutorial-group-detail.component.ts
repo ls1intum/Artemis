@@ -21,9 +21,9 @@ import { IconCardComponent } from 'app/tutorialgroup/shared/icon-card/icon-card.
 import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
-    selector: 'jhi-tutorial-group-detail',
-    templateUrl: './tutorial-group-detail.component.html',
-    styleUrls: ['./tutorial-group-detail.component.scss'],
+    selector: 'jhi-management-tutorial-group-detail',
+    templateUrl: './management-tutorial-group-detail.component.html',
+    styleUrls: ['./management-tutorial-group-detail.component.scss'],
     imports: [
         NgTemplateOutlet,
         IconCardComponent,
@@ -38,7 +38,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
         ArtemisTranslatePipe,
     ],
 })
-export class TutorialGroupDetailComponent implements OnChanges {
+export class ManagementTutorialGroupDetailComponent implements OnChanges {
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     private artemisMarkdownService = inject(ArtemisMarkdownService);
@@ -87,7 +87,19 @@ export class TutorialGroupDetailComponent implements OnChanges {
         this.getTutorialDetail();
     }
 
-    getTutorialTimeSlotString(): string | undefined {
+    private getTutorialDetail() {
+        const tutorialGroup = this.tutorialGroup();
+
+        this.isMessagingEnabled = isMessagingEnabled(this.course());
+        if (tutorialGroup.averageAttendance && tutorialGroup.capacity) {
+            this.utilization = Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100);
+        } else {
+            this.utilization = undefined;
+        }
+        this.tutorialTimeslotString = this.getTutorialTimeSlotString();
+    }
+
+    private getTutorialTimeSlotString(): string | undefined {
         const tutorialGroup = this.tutorialGroup();
         if (!tutorialGroup.tutorialGroupSchedule) {
             return undefined;
@@ -102,18 +114,6 @@ export class TutorialGroupDetailComponent implements OnChanges {
             { n: tutorialGroup.tutorialGroupSchedule!.repetitionFrequency! },
         );
         return `${day} ${start}-${end}, ${repetition}`;
-    }
-
-    getTutorialDetail() {
-        const tutorialGroup = this.tutorialGroup();
-
-        this.isMessagingEnabled = isMessagingEnabled(this.course());
-        if (tutorialGroup.averageAttendance && tutorialGroup.capacity) {
-            this.utilization = Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100);
-        } else {
-            this.utilization = undefined;
-        }
-        this.tutorialTimeslotString = this.getTutorialTimeSlotString();
     }
 
     recalculateAttendanceDetails() {

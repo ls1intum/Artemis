@@ -46,6 +46,6 @@ export function getDayTranslationKey(dayOfWeek?: number) {
     if (!dayOfWeek) {
         return '';
     } else {
-        return `artemisApp.generic.weekdays.${weekDays[dayOfWeek - 1].translationKey}`;
+        return `global.weekdays.${weekDays[dayOfWeek - 1].translationKey}`;
     }
 }

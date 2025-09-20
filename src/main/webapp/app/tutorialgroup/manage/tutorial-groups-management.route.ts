@@ -73,7 +73,9 @@ export const tutorialGroupManagementRoutes: Routes = [
     {
         path: ':tutorialGroupId',
         loadComponent: () =>
-            import('app/tutorialgroup/manage/tutorial-groups/detail/tutorial-group-management-detail.component').then((m) => m.TutorialGroupManagementDetailComponent),
+            import('app/tutorialgroup/manage/tutorial-groups/detail/management-tutorial-group-detail-container.component').then(
+                (m) => m.ManagementTutorialGroupDetailContainerComponent,
+            ),
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.pages.tutorialGroupDetail.title',

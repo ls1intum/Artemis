@@ -1,0 +1,14 @@
+<div class="frame" role="list">
+    @if (!isCancelled() && !locationChanged() && !timeChanged() && !dateChanged()) {
+        <jhi-tutorial-group-detail-session-status-chip [variant]="'REGULAR'" role="listitem" />
+    }
+    @if (isCancelled()) {
+        <jhi-tutorial-group-detail-session-status-chip [variant]="'CANCELLED'" role="listitem" />
+    }
+    @if (timeChanged() || dateChanged()) {
+        <jhi-tutorial-group-detail-session-status-chip [variant]="'RESCHEDULED'" role="listitem" />
+    }
+    @if (locationChanged()) {
+        <jhi-tutorial-group-detail-session-status-chip [variant]="'RELOCATED'" role="listitem" />
+    }
+</div>
