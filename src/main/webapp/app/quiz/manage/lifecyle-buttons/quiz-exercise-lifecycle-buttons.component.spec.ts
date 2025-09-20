@@ -64,7 +64,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
             ),
         );
 
-        comp.quizExercise = quizExercise;
+        fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.openForPractice();
         expect(quizExerciseService.openForPractice).toHaveBeenCalledWith(456);
         expect(quizExerciseService.openForPractice).toHaveBeenCalledOnce();
@@ -74,7 +74,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         jest.spyOn(quizExerciseService, 'openForPractice').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
         jest.spyOn(alertService, 'error');
 
-        comp.quizExercise = quizExercise;
+        fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.openForPractice();
         expect(quizExerciseService.openForPractice).toHaveBeenCalledWith(456);
         expect(quizExerciseService.openForPractice).toHaveBeenCalledOnce();
@@ -90,7 +90,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
             ),
         );
 
-        comp.quizExercise = quizExercise;
+        fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.startQuiz();
         expect(quizExerciseService.start).toHaveBeenCalledWith(456);
         expect(quizExerciseService.start).toHaveBeenCalledOnce();
@@ -100,7 +100,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         jest.spyOn(quizExerciseService, 'start').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
         jest.spyOn(alertService, 'error');
 
-        comp.quizExercise = quizExercise;
+        fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.startQuiz();
         expect(quizExerciseService.start).toHaveBeenCalledWith(456);
         expect(quizExerciseService.start).toHaveBeenCalledOnce();
@@ -116,7 +116,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
             ),
         );
 
-        comp.quizExercise = quizExercise;
+        fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.endQuiz();
         expect(quizExerciseService.end).toHaveBeenCalledWith(456);
         expect(quizExerciseService.end).toHaveBeenCalledOnce();
@@ -131,7 +131,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
             ),
         );
 
-        comp.quizExercise = quizExercise;
+        fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.addBatch();
         expect(quizExerciseService.addBatch).toHaveBeenCalledWith(456);
         expect(quizExerciseService.addBatch).toHaveBeenCalledOnce();
@@ -146,7 +146,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
             ),
         );
 
-        comp.quizExercise = quizExercise;
+        fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.startBatch(567);
         expect(quizExerciseService.startBatch).toHaveBeenCalledWith(567);
         expect(quizExerciseService.startBatch).toHaveBeenCalledOnce();
@@ -161,7 +161,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
             ),
         );
 
-        comp.quizExercise = quizExercise;
+        fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.showQuiz();
         expect(quizExerciseService.setVisible).toHaveBeenCalledWith(456);
         expect(quizExerciseService.setVisible).toHaveBeenCalledOnce();
@@ -178,7 +178,7 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
         jest.spyOn(quizExerciseService, 'setVisible').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'Forbidden', status: 403 })));
         jest.spyOn(alertService, 'error');
 
-        comp.quizExercise = quizExercise;
+        fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.showQuiz();
         expect(quizExerciseService.setVisible).toHaveBeenCalledWith(456);
         expect(quizExerciseService.setVisible).toHaveBeenCalledOnce();

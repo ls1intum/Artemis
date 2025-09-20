@@ -80,6 +80,7 @@ describe('ApollonDiagramList Component', () => {
         // setup
         const response: HttpResponse<void> = new HttpResponse();
         jest.spyOn(apollonDiagramService, 'delete').mockReturnValue(of(response));
+        fixture.componentRef.instance.course = course;
 
         const apollonDiagrams = [];
         for (let i = 0; i < 3; i++) {
@@ -95,8 +96,9 @@ describe('ApollonDiagramList Component', () => {
     });
 
     it('openCreateDiagramDialog', () => {
+        fixture.componentRef.instance.course = course;
         const openModalSpy = jest.spyOn(modalService, 'open');
-        fixture.componentInstance.openCreateDiagramDialog(course.id!);
+        fixture.componentInstance.openCreateDiagramDialog();
         expect(openModalSpy).toHaveBeenCalledOnce();
     });
 

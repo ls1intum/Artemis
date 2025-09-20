@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, model, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -50,23 +50,22 @@ export class QuizExerciseComponent extends ExerciseComponent {
     readonly QuizStatus = QuizStatus;
     readonly QuizMode = QuizMode;
 
-    @Input() quizExercises: QuizExercise[] = [];
-    filteredQuizExercises: QuizExercise[] = [];
+    quizExercises = model<QuizExercise[]>([]);
+    filteredQuizExercises = signal<QuizExercise[]>([]);
 
     // Icons
     faSort = faSort;
     faTrash = faTrash;
 
     protected get exercises() {
-        return this.quizExercises;
+        return this.quizExercises();
     }
 
     protected loadExercises(): void {
         this.quizExerciseService.findForCourse(this.courseId).subscribe({
             next: (res: HttpResponse<QuizExercise[]>) => {
-                this.quizExercises = res.body!;
-                // reconnect exercise with course
-                this.quizExercises.forEach((exercise) => {
+                const quizzes = res.body ?? [];
+                quizzes.forEach((exercise) => {
                     exercise.course = this.course;
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
@@ -74,10 +73,11 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     exercise.quizBatches = exercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
                     exercise.status = this.quizExerciseService.getStatus(exercise);
                     exercise.isEditable = isQuizEditable(exercise);
-                    this.selectedExercises = [];
                 });
+                this.quizExercises.set(quizzes);
+                this.selectedExercises = [];
                 this.setQuizExercisesStatus();
-                this.emitExerciseCount(this.quizExercises.length);
+                this.emitExerciseCount(this.quizExercises().length);
                 this.applyFilter();
             },
             error: (res: HttpErrorResponse) => this.onError(res),
@@ -85,8 +85,9 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     protected applyFilter(): void {
-        this.filteredQuizExercises = this.quizExercises.filter((exercise) => this.filter.matchesExercise(exercise));
-        this.emitFilteredExerciseCount(this.filteredQuizExercises.length);
+        const filtered = this.quizExercises().filter((exercise) => this.filter.matchesExercise(exercise));
+        this.filteredQuizExercises.set(filtered);
+        this.emitFilteredExerciseCount(filtered.length);
     }
 
     /**
@@ -119,7 +120,12 @@ export class QuizExerciseComponent extends ExerciseComponent {
      * Set the quiz exercise status for all quiz exercises.
      */
     setQuizExercisesStatus() {
-        this.quizExercises.forEach((quizExercise) => (quizExercise.status = this.quizExerciseService.getStatus(quizExercise)));
+        this.quizExercises.update((exercises) =>
+            exercises.map((quizExercise) => ({
+                ...quizExercise,
+                status: this.quizExerciseService.getStatus(quizExercise),
+            })),
+        );
     }
 
     /**
@@ -134,23 +140,27 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     handleNewQuizExercise(newQuizExercise: QuizExercise) {
-        const index = this.quizExercises.findIndex((quizExercise) => quizExercise.id === newQuizExercise.id);
         newQuizExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(newQuizExercise.course);
         newQuizExercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(newQuizExercise.course);
         newQuizExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(newQuizExercise.course);
         newQuizExercise.status = this.quizExerciseService.getStatus(newQuizExercise);
         newQuizExercise.quizBatches = newQuizExercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
         newQuizExercise.isEditable = isQuizEditable(newQuizExercise);
-        if (index === -1) {
-            this.quizExercises.push(newQuizExercise);
-        } else {
-            this.quizExercises[index] = newQuizExercise;
-        }
+        this.quizExercises.update((exercises) => {
+            const index = exercises.findIndex((quizExercise) => quizExercise.id === newQuizExercise.id);
+            if (index === -1) {
+                return [...exercises, newQuizExercise];
+            } else {
+                const updated = [...exercises];
+                updated[index] = newQuizExercise;
+                return updated;
+            }
+        });
         this.applyFilter();
     }
 
     public sortRows() {
-        this.sortService.sortByProperty(this.quizExercises, this.predicate, this.reverse);
+        this.quizExercises.update((exercises) => this.sortService.sortByProperty(exercises, this.predicate, this.reverse));
         this.applyFilter();
     }
 }
