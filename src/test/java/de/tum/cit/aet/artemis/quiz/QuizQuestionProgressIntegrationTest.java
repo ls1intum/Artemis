@@ -191,11 +191,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizExercise.setQuizQuestions(questions);
         quizExerciseTestRepository.save(quizExercise);
 
-        long totalQuestionsCount = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(course.getId());
-        System.out.println("Total: " + totalQuestionsCount);
-        Set<QuizQuestionProgress> allProgress = quizQuestionProgressRepository.findAllByUserIdAndCourseId(userId, course.getId());
-        System.out.println("Progress: " + allProgress.size());
-
         Pageable pageable = Pageable.ofSize(10);
 
         Page<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(course.getId(), userId, pageable, null);
