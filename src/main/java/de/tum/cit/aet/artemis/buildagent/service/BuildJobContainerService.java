@@ -450,13 +450,29 @@ public class BuildJobContainerService {
     }
 
     private void copyToContainer(Path sourcePath, String containerId) {
-        try (final var uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray());
-                final var copyToContainerCommand = buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId)
-                        .withRemotePath(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).withTarInputStream(uploadStream)) {
-            copyToContainerCommand.exec();
-        }
-        catch (IOException e) {
-            throw new LocalCIException("Could not copy to container " + containerId, e);
+        final int maxRetries = 3;
+        final long retryDelayMs = 1000;
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+            try (final var uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray());
+                    final var copyToContainerCommand = buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId)
+                            .withRemotePath(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).withTarInputStream(uploadStream)) {
+                copyToContainerCommand.exec();
+                return; // Success, exit method
+            }
+            catch (Exception e) {
+                if (attempt == maxRetries) {
+                    throw new LocalCIException("Could not copy to container " + containerId + " after " + maxRetries + " attempts", e);
+                }
+                log.warn("Attempt {} failed to copy to container {}: {}. Retrying in {} ms...", attempt, containerId, e.getMessage(), retryDelayMs);
+                try {
+                    Thread.sleep(retryDelayMs);
+                }
+                catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new LocalCIException("Interrupted while retrying copy to container " + containerId, ie);
+                }
+            }
         }
     }
 
