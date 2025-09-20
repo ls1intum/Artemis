@@ -212,6 +212,24 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 tap((commitState) => {
                     this.commitState = commitState;
                 }),
+                // In tutor assessment mode, automatically resolve dirty/conflicted working copies
+                // by resetting to the last commit so that the latest committed state is shown.
+                switchMap((commitState) => {
+                    const needsAutoResolve = this.isTutorAssessment && (commitState === CommitState.UNCOMMITTED_CHANGES || commitState === CommitState.CONFLICT);
+                    if (needsAutoResolve) {
+                        return this.repositoryService.resetRepository().pipe(
+                            // After reset, re-check status before continuing
+                            switchMap(() => this.checkIfRepositoryIsClean()),
+                            tap((resolvedState) => {
+                                this.commitState = resolvedState;
+                                if (resolvedState !== CommitState.CONFLICT) {
+                                    this.conflictService.notifyConflictState(GitConflictState.OK);
+                                }
+                            }),
+                        );
+                    }
+                    return of(commitState);
+                }),
                 switchMap(() => {
                     if (this.commitState === CommitState.COULD_NOT_BE_RETRIEVED) {
                         return throwError(() => new Error('couldNotBeRetrieved'));
