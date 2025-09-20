@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -88,13 +89,15 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByRepositoryUri(String repositoryUri);
 
     default ProgrammingExerciseStudentParticipation findWithSubmissionsByRepositoryUriElseThrow(String repositoryUri) {
-        return getValueElseThrow(findWithSubmissionsByRepositoryUri(repositoryUri));
+        String shortRepositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(repositoryUri);
+        return getValueElseThrow(findWithSubmissionsByRepositoryUri(shortRepositoryUri));
     }
 
     Optional<ProgrammingExerciseStudentParticipation> findByRepositoryUri(String repositoryUri);
 
     default ProgrammingExerciseStudentParticipation findByRepositoryUriElseThrow(String repositoryUri) {
-        return getValueElseThrow(findByRepositoryUri(repositoryUri));
+        String shortRepositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(repositoryUri);
+        return getValueElseThrow(findByRepositoryUri(shortRepositoryUri));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })

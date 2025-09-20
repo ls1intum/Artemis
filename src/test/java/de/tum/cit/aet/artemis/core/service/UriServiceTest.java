@@ -13,15 +13,15 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
+class UriServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
-    private final VcsRepositoryUri repositoryUri1 = new VcsRepositoryUri("https://ab12cde@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde.git");
+    private final VcsRepositoryUri repositoryUri1 = new VcsRepositoryUri("http://ab12cde@localhost:49152/git/EIST2016RME/RMEXERCISE-ab12cde.git");
 
-    private final VcsRepositoryUri repositoryUri2 = new VcsRepositoryUri("https://artemistest2.aet.cit.tum.de/TESTADAPTER/testadapter-exercise.git");
+    private final VcsRepositoryUri repositoryUri2 = new VcsRepositoryUri("http://localhost:49152/git/TESTADAPTER/testadapter-exercise.git");
 
-    private final VcsRepositoryUri repositoryUri3 = new VcsRepositoryUri("https://username@artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
+    private final VcsRepositoryUri repositoryUri3 = new VcsRepositoryUri("http://username@localhost:49152/git/FTCSCAGRADING1/ftcscagrading1-username.git");
 
     private final VcsRepositoryUri fileRepositoryUri1 = new VcsRepositoryUri(Path.of("C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950").toFile());
 
@@ -89,32 +89,31 @@ class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testUserIndependentRepositoryUri() {
         var solutionProgrammingExerciseParticipation = new SolutionProgrammingExerciseParticipation();
         solutionProgrammingExerciseParticipation.setRepositoryUri(repositoryUri2.toString());
-        assertThat(solutionProgrammingExerciseParticipation.getUserIndependentRepositoryUri())
-                .isEqualTo("https://artemistest2.aet.cit.tum.de/TESTADAPTER/testadapter-exercise.git");
+        assertThat(solutionProgrammingExerciseParticipation.getUserIndependentRepositoryUri()).isEqualTo("http://localhost:49152/git/TESTADAPTER/testadapter-exercise.git");
 
         var templateProgrammingExerciseParticipation = new TemplateProgrammingExerciseParticipation();
         templateProgrammingExerciseParticipation.setRepositoryUri(repositoryUri1.toString());
-        assertThat(templateProgrammingExerciseParticipation.getUserIndependentRepositoryUri()).isEqualTo("https://repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde.git");
+        assertThat(templateProgrammingExerciseParticipation.getUserIndependentRepositoryUri()).isEqualTo("http://localhost:49152/git/EIST2016RME/RMEXERCISE-ab12cde.git");
 
         var studentParticipation1 = new ProgrammingExerciseStudentParticipation();
         studentParticipation1.setRepositoryUri(repositoryUri2.toString());
-        assertThat(studentParticipation1.getUserIndependentRepositoryUri()).isEqualTo("https://artemistest2.aet.cit.tum.de/TESTADAPTER/testadapter-exercise.git");
+        assertThat(studentParticipation1.getUserIndependentRepositoryUri()).isEqualTo("http://localhost:49152/git/TESTADAPTER/testadapter-exercise.git");
 
         var studentParticipation2 = new ProgrammingExerciseStudentParticipation();
         studentParticipation2.setRepositoryUri(repositoryUri3.toString());
-        assertThat(studentParticipation2.getUserIndependentRepositoryUri()).isEqualTo("https://artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
+        assertThat(studentParticipation2.getUserIndependentRepositoryUri()).isEqualTo("http://localhost:49152/git/FTCSCAGRADING1/ftcscagrading1-username.git");
 
         assertThat(new ProgrammingExerciseStudentParticipation().getUserIndependentRepositoryUri()).isNull();
 
         var studentParticipation3 = new ProgrammingExerciseStudentParticipation();
-        studentParticipation3.setRepositoryUri("http://localhost:8080/Assignment/rest/words/{name}/protection");
+        studentParticipation3.setRepositoryUri("http://localhost:49152/git/Assignment/rest/words/{name}/protection");
         assertThat(studentParticipation3.getUserIndependentRepositoryUri()).isNull();
     }
 
     @Test
     void testGetPlainUrl() {
-        assertThat(uriService.getPlainUriFromRepositoryUri(repositoryUri1)).isEqualTo("https://repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde.git");
-        assertThat(uriService.getPlainUriFromRepositoryUri(repositoryUri2)).isEqualTo("https://artemistest2.aet.cit.tum.de/TESTADAPTER/testadapter-exercise.git");
-        assertThat(uriService.getPlainUriFromRepositoryUri(repositoryUri3)).isEqualTo("https://artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
+        assertThat(uriService.getPlainUriFromRepositoryUri(repositoryUri1)).isEqualTo("http://localhost:49152/git/EIST2016RME/RMEXERCISE-ab12cde.git");
+        assertThat(uriService.getPlainUriFromRepositoryUri(repositoryUri2)).isEqualTo("http://localhost:49152/git/TESTADAPTER/testadapter-exercise.git");
+        assertThat(uriService.getPlainUriFromRepositoryUri(repositoryUri3)).isEqualTo("http://localhost:49152/git/FTCSCAGRADING1/ftcscagrading1-username.git");
     }
 }

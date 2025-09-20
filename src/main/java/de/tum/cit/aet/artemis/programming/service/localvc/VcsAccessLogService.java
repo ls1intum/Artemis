@@ -83,7 +83,7 @@ public class VcsAccessLogService {
     @Async
     public void updateRepositoryActionType(LocalVCRepositoryUri localVCRepositoryUri, RepositoryActionType repositoryActionType) {
         var repositoryURL = localVCRepositoryUri.toString().replace("/git-upload-pack", "").replace("/git-receive-pack", "");
-        var vcsAccessLog = vcsAccessLogRepository.findNewestByRepositoryUri(repositoryURL);
+        var vcsAccessLog = vcsAccessLogRepository.findNewestByFullRepositoryUri(repositoryURL);
         if (vcsAccessLog.isPresent()) {
             vcsAccessLog.get().setRepositoryActionType(repositoryActionType);
             vcsAccessLogRepository.save(vcsAccessLog.get());

@@ -8,13 +8,16 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 
-class AuxiliaryRepositoryServiceTest extends AbstractProgrammingIntegrationIndependentTest {
+class AuxiliaryRepositoryServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_INVALID_LENGTH_STRING = "a".repeat(AuxiliaryRepository.MAX_NAME_LENGTH + 1);
 
@@ -23,6 +26,12 @@ class AuxiliaryRepositoryServiceTest extends AbstractProgrammingIntegrationIndep
     private static ProgrammingExercise programmingExerciseBeforeUpdate;
 
     private static ProgrammingExercise updatedProgrammingExercise;
+
+    @Autowired
+    private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
+    @Autowired
+    private AuxiliaryRepositoryService auxiliaryRepositoryService;
 
     @BeforeEach
     void setUp() {
@@ -192,7 +201,6 @@ class AuxiliaryRepositoryServiceTest extends AbstractProgrammingIntegrationIndep
         auxiliaryRepository.setName(name);
         auxiliaryRepository.setDescription(description);
         auxiliaryRepository.setCheckoutDirectory(checkoutDirectory);
-        auxiliaryRepository.setRepositoryUri(repositoryUri);
         auxiliaryRepository.setExercise(exercise);
         if (id != null) {
             auxiliaryRepository.setId(id);

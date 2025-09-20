@@ -386,7 +386,6 @@ public class ParticipationUtilService {
         }
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
-        final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
         participation.setRepositoryUri(localRepoPath.toString());
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 

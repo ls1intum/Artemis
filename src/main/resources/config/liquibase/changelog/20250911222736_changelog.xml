@@ -1,0 +1,171 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet author="tobias-lippert" id="20250911222736-1">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="exercise"/>
+            <columnExists tableName="exercise" columnName="test_repository_url"/>
+        </preConditions>
+
+        <comment>Conversion of test_repository_url in exercise</comment>
+
+        <addColumn tableName="exercise">
+            <column name="test_repository_url_new" type="varchar(150)"/>
+        </addColumn>
+
+        <sql dbms="postgresql">
+            UPDATE exercise
+            SET test_repository_url_new = REGEXP_REPLACE(test_repository_url, '^.*?/git/([^?]+?)(?:\.git)?(?:\?.*)?$', '\1')
+            WHERE test_repository_url IS NOT NULL
+              AND test_repository_url LIKE '%/git/%';
+        </sql>
+        <sql dbms="mysql">
+            UPDATE exercise
+            SET test_repository_url_new = REGEXP_REPLACE(test_repository_url, '^.*?/git/([^?]+?)(\\.git)?(?:\\?.*)?$', '$1')
+            WHERE test_repository_url IS NOT NULL
+              AND test_repository_url LIKE '%/git/%';
+        </sql>
+        <sql dbms="h2">
+            UPDATE exercise
+            SET test_repository_url_new = REGEXP_REPLACE(test_repository_url, '^.*?/git/([^?]+?)(\\.git)?(?:\\?.*)?$', '$1')
+            WHERE test_repository_url IS NOT NULL
+              AND test_repository_url LIKE '%/git/%';
+        </sql>
+
+        <renameColumn tableName="exercise"
+                      oldColumnName="test_repository_url"
+                      newColumnName="test_repository_url_old"
+                      columnDataType="varchar(255)"/>
+
+        <renameColumn tableName="exercise"
+                      oldColumnName="test_repository_url_new"
+                      newColumnName="test_repository_url"
+                      columnDataType="varchar(150)"/>
+
+        <rollback>
+            <renameColumn tableName="exercise"
+                          oldColumnName="test_repository_url"
+                          newColumnName="test_repository_url_new"
+                          columnDataType="varchar(150)"/>
+            <renameColumn tableName="exercise"
+                          oldColumnName="test_repository_url_old"
+                          newColumnName="test_repository_url"
+                          columnDataType="varchar(255)"/>
+            <dropColumn tableName="exercise" columnName="test_repository_url_new"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet author="tobias-lippert" id="20250911222736-2">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="auxiliary_repository"/>
+            <columnExists tableName="auxiliary_repository" columnName="repository_url"/>
+        </preConditions>
+
+        <comment>Conversion of repository_url in auxiliary_repository</comment>
+
+        <addColumn tableName="auxiliary_repository">
+            <column name="repository_url_new" type="varchar(150)"/>
+        </addColumn>
+
+        <sql dbms="postgresql">
+            UPDATE auxiliary_repository
+            SET repository_url_new = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(?:\.git)?(?:\?.*)?$', '\1')
+            WHERE repository_url IS NOT NULL
+              AND repository_url LIKE '%/git/%';
+        </sql>
+        <sql dbms="mysql">
+            UPDATE auxiliary_repository
+            SET repository_url_new = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(\\.git)?(?:\\?.*)?$', '$1')
+            WHERE repository_url IS NOT NULL
+              AND repository_url LIKE '%/git/%';
+        </sql>
+        <sql dbms="h2">
+            UPDATE auxiliary_repository
+            SET repository_url_new = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(\\.git)?(?:\\?.*)?$', '$1')
+            WHERE repository_url IS NOT NULL
+              AND repository_url LIKE '%/git/%';
+        </sql>
+
+        <renameColumn tableName="auxiliary_repository"
+                      oldColumnName="repository_url"
+                      newColumnName="repository_url_old"
+                      columnDataType="varchar(255)"/>
+
+        <renameColumn tableName="auxiliary_repository"
+                      oldColumnName="repository_url_new"
+                      newColumnName="repository_url"
+                      columnDataType="varchar(150)"/>
+
+        <rollback>
+            <renameColumn tableName="auxiliary_repository"
+                          oldColumnName="repository_url"
+                          newColumnName="repository_url_new"
+                          columnDataType="varchar(150)"/>
+            <renameColumn tableName="auxiliary_repository"
+                          oldColumnName="repository_url_old"
+                          newColumnName="repository_url"
+                          columnDataType="varchar(255)"/>
+            <dropColumn tableName="auxiliary_repository" columnName="repository_url_new"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet author="tobias-lippert" id="20250911222736-3">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="participation"/>
+            <columnExists tableName="participation" columnName="repository_url"/>
+        </preConditions>
+
+        <comment>Conversion of repository_url in participation</comment>
+
+        <addColumn tableName="participation">
+            <column name="repository_url_new" type="varchar(150)"/>
+        </addColumn>
+
+        <sql dbms="postgresql">
+            UPDATE participation
+            SET repository_url_new = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(?:\.git)?(?:\?.*)?$', '\1')
+            WHERE repository_url IS NOT NULL
+              AND repository_url LIKE '%/git/%'
+              AND discriminator IN ('TEPEP', 'SEPEP', 'PESP');
+        </sql>
+        <sql dbms="mysql">
+            UPDATE participation
+            SET repository_url_new = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(\\.git)?(?:\\?.*)?$', '$1')
+            WHERE repository_url IS NOT NULL
+              AND repository_url LIKE '%/git/%'
+              AND discriminator IN ('TEPEP', 'SEPEP', 'PESP');
+        </sql>
+        <sql dbms="h2">
+            UPDATE participation
+            SET repository_url_new = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(\\.git)?(?:\\?.*)?$', '$1')
+            WHERE repository_url IS NOT NULL
+              AND repository_url LIKE '%/git/%'
+              AND discriminator IN ('TPEP', 'SPEP', 'PESP');
+        </sql>
+
+        <renameColumn tableName="participation"
+                      oldColumnName="repository_url"
+                      newColumnName="repository_url_old"
+                      columnDataType="varchar(255)"/>
+
+        <renameColumn tableName="participation"
+                      oldColumnName="repository_url_new"
+                      newColumnName="repository_url"
+                      columnDataType="varchar(150)"/>
+
+        <rollback>
+            <renameColumn tableName="participation"
+                          oldColumnName="repository_url"
+                          newColumnName="repository_url_new"
+                          columnDataType="varchar(150)"/>
+            <renameColumn tableName="participation"
+                          oldColumnName="repository_url_old"
+                          newColumnName="repository_url"
+                          columnDataType="varchar(255)"/>
+            <dropColumn tableName="participation" columnName="repository_url_new"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

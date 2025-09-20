@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +53,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
@@ -111,8 +113,24 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
         ProgrammingExerciseFactory.localVCBaseUri = localVCBaseUri; // Set the static field in ProgrammingExerciseFactory for convenience
     }
 
+    // this is necessary otherwise the @PostConstruct method in RepositoryUriConversionUtil is not called and the staticServerUrl is null
+    @Autowired
+    private RepositoryUriConversionUtil repositoryUriConversionUtil;
+
     @Value("${artemis.version-control.local-vcs-repo-path}")
     protected Path localVCRepoPath;
+
+    @BeforeEach
+    void setLocalVcBaseUriInConversionUtil() {
+        // Ensure that the RepositoryUriConversionUtil has the correct base URL for each test
+        RepositoryUriConversionUtil.overrideServerUrlForCurrentThread(localVCBaseUri.toString());
+    }
+
+    @AfterEach
+    void resetLocalVcBaseUriInConversionUtil() {
+        // Clear the override after each test to avoid cross-test contamination
+        RepositoryUriConversionUtil.clearServerUrlOverrideForCurrentThread();
+    }
 
     @AfterEach
     @Override

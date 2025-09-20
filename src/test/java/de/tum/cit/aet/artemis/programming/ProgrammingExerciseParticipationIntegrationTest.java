@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 
 class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
@@ -733,12 +734,12 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
             // Format: /path/to/git/PROJECT_KEY/repo_name.git
             String repoName = valid ? String.format("%s-%s", randomKey, randomName) : randomName;
-            repoUrl = String.format("%s/%s/%s.git", basePath, randomKey, repoName);
+            repoUrl = randomKey + "/" + repoName;
 
             foundParticipation = programmingExerciseStudentParticipationRepository.findByRepositoryUri(repoUrl);
         }
         while (foundParticipation.isPresent());
-        return repoUrl;
+        return RepositoryUriConversionUtil.toFullRepositoryUri(repoUrl);
     }
 
     @Test

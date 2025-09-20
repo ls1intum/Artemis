@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
+import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 /**
@@ -190,11 +191,11 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public void setTestRepositoryUri(String testRepositoryUri) {
-        this.testRepositoryUri = testRepositoryUri;
+        this.testRepositoryUri = RepositoryUriConversionUtil.toShortRepositoryUri(testRepositoryUri);
     }
 
     public String getTestRepositoryUri() {
-        return testRepositoryUri;
+        return RepositoryUriConversionUtil.toFullRepositoryUri(testRepositoryUri);
     }
 
     public List<AuxiliaryRepository> getAuxiliaryRepositories() {
@@ -471,10 +472,10 @@ public class ProgrammingExercise extends Exercise {
         }
 
         try {
-            return new LocalVCRepositoryUri(testRepositoryUri);
+            return new LocalVCRepositoryUri(getTestRepositoryUri());
         }
         catch (LocalVCInternalException e) {
-            log.warn("Cannot create URI for testRepositoryUri: {} due to the following error: {}", testRepositoryUri, e.getMessage());
+            log.warn("Cannot create URI for testRepositoryUri: {} due to the following error: {}", getTestRepositoryUri(), e.getMessage());
         }
         return null;
     }

@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildSta
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
@@ -178,6 +179,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected URI localVCBaseUri;
 
+    // this is necessary otherwise the @PostConstruct method in RepositoryUriConversionUtil is not called and the staticServerUrl is null
+    @Autowired
+    private RepositoryUriConversionUtil repositoryUriConversionUtil;
+
     @Value("${artemis.version-control.url}")
     public void setLocalVCBaseUri(URI localVCBaseUri) {
         this.localVCBaseUri = localVCBaseUri;
@@ -220,6 +225,18 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @BeforeEach
     void clearBuildJobsBefore() {
         buildJobRepository.deleteAll();
+    }
+
+    @BeforeEach
+    void setLocalVcBaseUriInConversionUtil() {
+        // Ensure that the RepositoryUriConversionUtil has the correct base URL for each test
+        RepositoryUriConversionUtil.overrideServerUrlForCurrentThread(localVCBaseUri.toString());
+    }
+
+    @AfterEach
+    void resetLocalVcBaseUriInConversionUtil() {
+        // Clear the override after each test to avoid cross-test contamination
+        RepositoryUriConversionUtil.clearServerUrlOverrideForCurrentThread();
     }
 
     @AfterEach

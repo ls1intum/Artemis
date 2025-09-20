@@ -52,7 +52,7 @@ public class ProgrammingExerciseParticipationUtilService {
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         participation.setInitializationState(InitializationState.INITIALIZED);
-        templateProgrammingExerciseParticipationTestRepo.save(participation);
+        participation = templateProgrammingExerciseParticipationTestRepo.save(participation);
         exercise.setTemplateParticipation(participation);
         return programmingExerciseRepository.save(exercise);
     }
@@ -71,7 +71,7 @@ public class ProgrammingExerciseParticipationUtilService {
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         participation.setInitializationState(InitializationState.INITIALIZED);
-        solutionProgrammingExerciseParticipationRepo.save(participation);
+        participation = solutionProgrammingExerciseParticipationRepo.save(participation);
         exercise.setSolutionParticipation(participation);
         return programmingExerciseRepository.save(exercise);
     }

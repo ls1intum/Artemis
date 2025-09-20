@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryUriConversionUtil;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -82,6 +83,7 @@ class PlagiarismDetectionServiceTest {
     static void setTempPath() throws IOException {
         // we cannot rely on spring boot value injection here as it's not an integration test.
         tempPath = Path.of("local", "server-integration-test");
+        RepositoryUriConversionUtil.overrideServerUrlForCurrentThread("http://localhost:8080");
         Files.createDirectories(tempPath);
     }
 
