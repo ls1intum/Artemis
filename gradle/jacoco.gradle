@@ -1,6 +1,6 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.865, "CLASS": 119]
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.865, "CLASS": 121]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.926, "CLASS":  0],
@@ -22,6 +22,7 @@ ext {
         "quiz"          :          ["INSTRUCTION": 0.906, "CLASS":  2],
         "text"          :          ["INSTRUCTION": 0.947, "CLASS":  1],
         "tutorialgroup" :          ["INSTRUCTION": 0.915, "CLASS":  1],
+        "nebula"        :          ["INSTRUCTION": 0.800, "CLASS":  2],
     ]
     // If no explicit modules defined -> generate reports and validate for each module
     reportedModules = includedModules.size() == 0
