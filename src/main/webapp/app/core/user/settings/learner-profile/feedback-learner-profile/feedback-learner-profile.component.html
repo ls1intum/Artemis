@@ -15,17 +15,17 @@
     <!-- Profile settings section -->
     <button class="btn btn-outline-secondary mt-3" (click)="openOnboardingModal()" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.replayOnboardingButton"></button>
     <div [ngClass]="{ 'd-none': disabled }">
-        <div class="row row-cols-1 row-cols-xl-2 gx-5 align-items-end">
+        <div class="row row-cols-1 row-cols-xl-2 gx-5">
             <!-- Brief vs. Detailed setting -->
-            <div class="col">
+            <div class="col d-flex flex-column">
                 <div class="title" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackDetail.label"></div>
                 <div class="description" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackDetail.description"></div>
-                <jhi-segmented-toggle [options]="feedbackDetailOptions" [(selected)]="feedbackDetail" (selectedChange)="onToggleChange()" />
+                <jhi-segmented-toggle class="mt-auto" [options]="feedbackDetailOptions" [(selected)]="feedbackDetail" (selectedChange)="onToggleChange()" />
             </div>
-            <div class="col">
+            <div class="col d-flex flex-column">
                 <div class="title" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackFormality.label"></div>
                 <div class="description" jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.feedbackFormality.description"></div>
-                <jhi-segmented-toggle [options]="feedbackFormalityOptions" [(selected)]="feedbackFormality" (selectedChange)="onToggleChange()" />
+                <jhi-segmented-toggle class="mt-auto" [options]="feedbackFormalityOptions" [(selected)]="feedbackFormality" (selectedChange)="onToggleChange()" />
             </div>
         </div>
     </div>

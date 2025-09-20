@@ -126,6 +126,10 @@
             "missingLayouts": "Konnte die Layouts von Raum {{ roomNumber }} nicht verarbeiten",
             "malformedLayout": "Layout {{ layoutName }} ist fehlerhaft in Raum {{ roomNumber }}",
             "unknownLayoutType": "Unbekannter Layout-Typ '{{ layoutType }}' in Layout '{{ layoutName }}' in Raum {{ roomNumber }}"
-        }
+        },
+        "wrongCourse": "Die Reaktion gehört nicht zum ausgewählten Kurs.",
+        "reactionNotFound": "Die Reaktion konnte nicht gefunden werden.",
+        "missingAssociation": "Die Reaktion muss einem Beitrag oder einer Antwort zugeordnet sein.",
+        "emojiIdMissing": "emojiId muss gesetzt sein."
     }
 }
