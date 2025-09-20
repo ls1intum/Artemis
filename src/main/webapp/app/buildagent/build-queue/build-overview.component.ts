@@ -3,7 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BuildJob, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
+import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
@@ -33,9 +33,9 @@ import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/
 import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/shared/components/slice-navigator/slice-navigator.component';
 
 @Component({
-    selector: 'jhi-build-queue',
-    templateUrl: './build-queue.component.html',
-    styleUrl: './build-queue.component.scss',
+    selector: 'jhi-build-overview',
+    templateUrl: './build-overview.component.html',
+    styleUrl: './build-overview.component.scss',
     imports: [
         TranslateDirective,
         HelpIconComponent,
@@ -54,10 +54,10 @@ import { PageChangeEvent, PaginationConfig, SliceNavigatorComponent } from 'app/
         SliceNavigatorComponent,
     ],
 })
-export class BuildQueueComponent implements OnInit, OnDestroy {
+export class BuildOverviewComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private websocketService = inject(WebsocketService);
-    private buildQueueService = inject(BuildQueueService);
+    private buildQueueService = inject(BuildOverviewService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
 
