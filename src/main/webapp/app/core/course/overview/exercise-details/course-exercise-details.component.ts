@@ -202,7 +202,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     handleNewExercise(newExerciseDetails: ExerciseDetailsType) {
         this.exercise = newExerciseDetails.exercise;
-        this.cdr.detectChanges(); // IMPORTANT: necessary to update the view after the exercise has been loaded in learning path view
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
@@ -232,6 +231,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.exerciseIcon = getIcon(this.exercise?.type);
         }
         this.createInstructorActions();
+
+        this.cdr.detectChanges(); // IMPORTANT: necessary to update the view after the exercise has been loaded in learning path view
     }
 
     /**
