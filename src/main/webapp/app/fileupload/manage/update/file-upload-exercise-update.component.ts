@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild, effect, inject, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, viewChild } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -82,15 +82,15 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'FileUpload';
 
-    @ViewChild('bonusPoints') bonusPoints: NgModel;
-    @ViewChild('points') points: NgModel;
-    @ViewChild('solutionPublicationDate') solutionPublicationDateField?: FormDateTimePickerComponent;
-    @ViewChild('releaseDate') releaseDateField?: FormDateTimePickerComponent;
-    @ViewChild('startDate') startDateField?: FormDateTimePickerComponent;
-    @ViewChild('dueDate') dueDateField?: FormDateTimePickerComponent;
-    @ViewChild('assessmentDueDate') assessmentDateField?: FormDateTimePickerComponent;
+    bonusPoints = viewChild<NgModel>('bonusPoints');
+    points = viewChild<NgModel>('points');
+    solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
+    releaseDateField = viewChild<FormDateTimePickerComponent>('releaseDate');
+    startDateField = viewChild<FormDateTimePickerComponent>('startDate');
+    dueDateField = viewChild<FormDateTimePickerComponent>('dueDate');
+    assessmentDateField = viewChild<FormDateTimePickerComponent>('assessmentDueDate');
     exerciseTitleChannelNameComponent = viewChild.required(ExerciseTitleChannelNameComponent);
-    @ViewChild(TeamConfigFormGroupComponent) teamConfigFormGroupComponent: TeamConfigFormGroupComponent;
+    teamConfigFormGroupComponent = viewChild.required(TeamConfigFormGroupComponent);
 
     isExamMode: boolean;
     fileUploadExercise: FileUploadExercise;
@@ -161,9 +161,9 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
     }
 
     ngAfterViewInit() {
-        this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.teamSubscription = this.teamConfigFormGroupComponent.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
+        this.pointsSubscription = this.points()?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        this.bonusPointsSubscription = this.bonusPoints()?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
+        this.teamSubscription = this.teamConfigFormGroupComponent().formValidChanges.subscribe(() => this.calculateFormSectionStatus());
     }
 
     ngOnDestroy() {
@@ -178,26 +178,26 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
                 title: 'artemisApp.exercise.sections.general',
                 valid: this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(),
             },
-            { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent.formValid },
+            { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent().formValid },
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.fileUploadExercise.problemStatement },
             {
                 title: 'artemisApp.exercise.sections.solution',
-                valid: Boolean(this.isExamMode || (!this.fileUploadExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField?.dateInput.valid)),
+                valid: Boolean(this.isExamMode || (!this.fileUploadExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField()?.dateInput.valid)),
                 empty: !this.fileUploadExercise.exampleSolution || (!this.isExamMode && !this.fileUploadExercise.exampleSolutionPublicationDate),
             },
             {
                 title: 'artemisApp.exercise.sections.grading',
                 valid: Boolean(
-                    this.points.valid &&
-                        this.bonusPoints.valid &&
+                    this.points()?.valid &&
+                        this.bonusPoints()?.valid &&
                         (this.isExamMode ||
                             (!this.fileUploadExercise.startDateError &&
                                 !this.fileUploadExercise.dueDateError &&
                                 !this.fileUploadExercise.assessmentDueDateError &&
-                                this.releaseDateField?.dateInput.valid &&
-                                this.startDateField?.dateInput.valid &&
-                                this.dueDateField?.dateInput.valid &&
-                                this.assessmentDateField?.dateInput.valid)),
+                                this.releaseDateField()?.dateInput.valid &&
+                                this.startDateField()?.dateInput.valid &&
+                                this.dueDateField()?.dateInput.valid &&
+                                this.assessmentDateField()?.dateInput.valid)),
                 ),
                 empty:
                     !this.isExamMode &&

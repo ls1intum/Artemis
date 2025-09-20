@@ -170,21 +170,22 @@ describe('FileUploadExerciseUpdateComponent', () => {
         it('should calculate valid sections', () => {
             const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(false);
-            comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
-            comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
-            comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
+            const teamStub = { formValidChanges: new Subject(), formValid: true } as TeamConfigFormGroupComponent;
+            comp.teamConfigFormGroupComponent = (() => teamStub) as any;
+            comp.bonusPoints = (() => ({ valueChanges: new Subject(), valid: true }) as NgModel) as any;
+            comp.points = (() => ({ valueChanges: new Subject(), valid: true }) as NgModel) as any;
 
             comp.ngOnInit();
             comp.ngAfterViewInit();
 
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(true);
             fixture.detectChanges();
-            expect(calculateValidSpy).toHaveBeenCalledOnce();
+            expect(calculateValidSpy).toHaveBeenCalledTimes(2);
             expect(comp.formStatusSections).toBeDefined();
             expect(comp.formStatusSections[0].valid).toBeTrue();
 
             comp.validateDate();
-            expect(calculateValidSpy).toHaveBeenCalledTimes(2);
+            expect(calculateValidSpy).toHaveBeenCalledTimes(3);
 
             comp.ngOnDestroy();
         });

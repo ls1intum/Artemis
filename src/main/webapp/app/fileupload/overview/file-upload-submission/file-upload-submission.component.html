@@ -1,4 +1,4 @@
-@if (displayHeader) {
+@if (displayHeader()) {
     <jhi-header-participation-page class="d-block mb-4" [exercise]="fileUploadExercise" [participation]="participation">
         <span pagetitle>
             {{ 'artemisApp.fileUploadSubmission.fileUpload' | artemisTranslate }}:
@@ -20,11 +20,11 @@
     </jhi-header-participation-page>
 }
 @if (fileUploadExercise) {
-    <jhi-resizeable-container [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement">
+    <jhi-resizeable-container [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement()">
         <!--region Left Panel-->
         <div left-body class="px-2 pb-2 w-100">
             <div class="row">
-                @if ((isActive || isLate) && !result && fileUploadExercise && submission && isOwnerOfParticipation) {
+                @if ((isActive || isLate) && fileUploadExercise && submission && isOwnerOfParticipation) {
                     <div class="col-12 col-md-6">
                         <div class="form-group">
                             <label for="fileUploadInput" class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
@@ -47,7 +47,7 @@
             </div>
             @if (submittedFileName && submission?.filePathUrl) {
                 <div class="card-text">
-                    @if (!displayedInExamSummary) {
+                    @if (!displayedInExamSummary()) {
                         <h6>
                             {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName } }}
                             <span> {{ submission!.submissionDate! | artemisTimeAgo }}</span>

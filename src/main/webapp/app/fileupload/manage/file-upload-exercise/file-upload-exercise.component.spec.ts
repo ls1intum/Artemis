@@ -47,7 +47,7 @@ describe('FileUploadExercise Management Component', () => {
         service = TestBed.inject(CourseExerciseService);
         fileUploadExerciseService = TestBed.inject(FileUploadExerciseService);
 
-        comp.fileUploadExercises = [fileUploadExercise];
+        fixture.componentRef.setInput('fileUploadExercises', [fileUploadExercise]);
     });
 
     afterEach(() => {
@@ -72,7 +72,7 @@ describe('FileUploadExercise Management Component', () => {
 
         // THEN
         expect(service.findAllFileUploadExercisesForCourse).toHaveBeenCalledOnce();
-        expect(comp.fileUploadExercises[0]).toEqual(fileUploadExercise);
+        expect(comp.fileUploadExercises()[0]).toEqual(fileUploadExercise);
     });
 
     it('should delete exercise', () => {
@@ -103,7 +103,7 @@ describe('FileUploadExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('pdf', '', 'file-upload');
 
             // THEN
-            expect(comp.fileUploadExercises).toHaveLength(1);
+            expect(comp.fileUploadExercises()).toHaveLength(1);
             expect(comp.filteredFileUploadExercises).toHaveLength(1);
         });
 
@@ -112,7 +112,7 @@ describe('FileUploadExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
 
             // THEN
-            expect(comp.fileUploadExercises).toHaveLength(1);
+            expect(comp.fileUploadExercises()).toHaveLength(1);
             expect(comp.filteredFileUploadExercises).toHaveLength(0);
         });
     });
@@ -123,6 +123,6 @@ describe('FileUploadExercise Management Component', () => {
 
         // THEN
         expect(comp.selectedExercises[0]).toContainEntry(['id', fileUploadExercise.id]);
-        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.fileUploadExercises.length);
+        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.fileUploadExercises().length);
     });
 });

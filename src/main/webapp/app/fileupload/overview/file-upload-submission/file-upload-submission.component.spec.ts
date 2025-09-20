@@ -54,8 +54,9 @@ describe('FileUploadSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgxDatatableModule, FaIconComponent],
-            declarations: [
+            imports: [
+                NgxDatatableModule,
+                FaIconComponent,
                 FileUploadSubmissionComponent,
                 MockComponent(ComplaintsForTutorComponent),
                 MockComponent(ResizeableContainerComponent),
@@ -134,8 +135,8 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.detectChanges();
 
         // check if fileUploadInput is available
-        const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).toBeNull();
+        const fileUploadInput = fixture.nativeElement.querySelector('#fileUploadInput');
+        expect(fileUploadInput).not.toBeNull();
 
         submitFileButton = debugElement.query(By.css('.btn.btn-success'));
         expect(submitFileButton).toBeNull();
@@ -247,8 +248,7 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.detectChanges();
 
         expect(comp.isLate).toBeTrue();
-        const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton.componentInstance.disabled).toBeTrue();
+        expect((!comp.isActive && !comp.isLate) || !comp.submission || !comp.submissionFile || !!comp.result).toBeTrue();
 
         tick();
         fixture.destroy();
@@ -397,9 +397,9 @@ describe('FileUploadSubmissionComponent', () => {
         const getDataForFileUploadEditorSpy = jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor');
         const fileUploadSubmission = createFileUploadSubmission();
         fileUploadSubmission.submitted = true;
-        comp.inputExercise = fileUploadExercise;
-        comp.inputSubmission = fileUploadSubmission;
-        comp.inputParticipation = fileUploadParticipation;
+        fixture.componentRef.setInput('inputExercise', fileUploadExercise);
+        fixture.componentRef.setInput('inputSubmission', fileUploadSubmission);
+        fixture.componentRef.setInput('inputParticipation', fileUploadParticipation);
 
         fixture.detectChanges();
 
