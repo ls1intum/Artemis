@@ -29,7 +29,7 @@
             }
 
             <!-- Typing Indicator -->
-            @if (isAgentTyping) {
+            @if (isAgentTyping()) {
                 <div class="message-wrapper agent-message">
                     <div class="message-content typing-indicator">
                         <div class="message-header">
@@ -57,24 +57,25 @@
                 <textarea
                     #messageInput
                     class="form-control message-input"
-                    [(ngModel)]="currentMessage"
+                    [ngModel]="currentMessage()"
+                    (ngModelChange)="currentMessage.set($event)"
                     (keypress)="onKeyPress($event)"
                     (input)="onTextareaInput()"
                     placeholder="Type your message here..."
-                    [disabled]="isAgentTyping"
+                    [disabled]="isAgentTyping()"
                     rows="1"
                 ></textarea>
-                <button type="button" class="btn btn-primary send-button ms-2" (click)="sendMessage()" [disabled]="!canSendMessage" aria-label="Send">
+                <button type="button" class="btn btn-primary send-button ms-2" (click)="sendMessage()" [disabled]="!canSendMessage()" aria-label="Send">
                     <fa-icon [icon]="sendIcon" />
                 </button>
             </div>
             <div class="d-flex justify-content-between mt-1">
                 <small class="text-body-secondary" jhiTranslate="artemisApp.agent.chat.inputHint"></small>
-                <small class="text-end" [class.text-danger]="isMessageTooLong" [class.text-body-secondary]="!isMessageTooLong">
-                    {{ currentMessageLength }} / {{ MAX_MESSAGE_LENGTH }}
+                <small class="text-end" [class.text-danger]="isMessageTooLong()" [class.text-body-secondary]="!isMessageTooLong()">
+                    {{ currentMessageLength() }} / {{ MAX_MESSAGE_LENGTH }}
                 </small>
             </div>
-            @if (isMessageTooLong) {
+            @if (isMessageTooLong()) {
                 <small class="text-danger mt-1 d-block">
                     <span jhiTranslate="artemisApp.agent.chat.messageTooLong"></span>
                 </small>

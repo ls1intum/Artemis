@@ -126,60 +126,60 @@ describe('AgentChatModalComponent', () => {
         });
     });
 
-    describe('canSendMessage getter', () => {
+    describe('canSendMessage computed signal', () => {
         beforeEach(() => {
-            component.isAgentTyping = false;
+            component.isAgentTyping.set(false);
         });
 
         it('should return false for empty input', () => {
             // Arrange
-            component.currentMessage = '';
+            component.currentMessage.set('');
 
             // Act & Assert
-            expect(component.canSendMessage).toBeFalse();
+            expect(component.canSendMessage()).toBeFalse();
         });
 
         it('should return false for whitespace only input', () => {
             // Arrange
-            component.currentMessage = '   \n\t  ';
+            component.currentMessage.set('   \n\t  ');
 
             // Act & Assert
-            expect(component.canSendMessage).toBeFalse();
+            expect(component.canSendMessage()).toBeFalse();
         });
 
         it('should return false for too long input', () => {
             // Arrange
-            component.currentMessage = 'a'.repeat(component.MAX_MESSAGE_LENGTH + 1);
+            component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH + 1));
 
             // Act & Assert
-            expect(component.canSendMessage).toBeFalse();
+            expect(component.canSendMessage()).toBeFalse();
         });
 
         it('should return false when agent is typing', () => {
             // Arrange
-            component.currentMessage = 'Valid message';
-            component.isAgentTyping = true;
+            component.currentMessage.set('Valid message');
+            component.isAgentTyping.set(true);
 
             // Act & Assert
-            expect(component.canSendMessage).toBeFalse();
+            expect(component.canSendMessage()).toBeFalse();
         });
 
         it('should return true for valid input', () => {
             // Arrange
-            component.currentMessage = 'Valid message';
-            component.isAgentTyping = false;
+            component.currentMessage.set('Valid message');
+            component.isAgentTyping.set(false);
 
             // Act & Assert
-            expect(component.canSendMessage).toBeTrue();
+            expect(component.canSendMessage()).toBeTrue();
         });
 
         it('should return true for input at max length limit', () => {
             // Arrange
-            component.currentMessage = 'a'.repeat(component.MAX_MESSAGE_LENGTH);
-            component.isAgentTyping = false;
+            component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH));
+            component.isAgentTyping.set(false);
 
             // Act & Assert
-            expect(component.canSendMessage).toBeTrue();
+            expect(component.canSendMessage()).toBeTrue();
         });
     });
 
@@ -242,16 +242,16 @@ describe('AgentChatModalComponent', () => {
     describe('sendMessage', () => {
         beforeEach(() => {
             // Setup component for successful message sending
-            component.currentMessage = 'Test message';
-            component.isAgentTyping = false;
+            component.currentMessage.set('Test message');
+            component.isAgentTyping.set(false);
             component.courseId = 123;
             component['sessionId'] = 'test-session-123';
         });
 
         it('should send message when send button is clicked', () => {
             // Arrange
-            component.currentMessage = 'Test message';
-            component.isAgentTyping = false;
+            component.currentMessage.set('Test message');
+            component.isAgentTyping.set(false);
             mockAgentChatService.sendMessage.mockReturnValue(of('Agent response'));
 
             // Clear any existing messages to start fresh
@@ -269,8 +269,8 @@ describe('AgentChatModalComponent', () => {
 
         it('should send message when Enter key is pressed', () => {
             // Arrange
-            component.currentMessage = 'Test message';
-            component.isAgentTyping = false;
+            component.currentMessage.set('Test message');
+            component.isAgentTyping.set(false);
             mockAgentChatService.sendMessage.mockReturnValue(of('Agent response'));
             fixture.detectChanges();
 
@@ -289,7 +289,7 @@ describe('AgentChatModalComponent', () => {
 
         it('should handle service error gracefully', fakeAsync(() => {
             // Arrange
-            component.currentMessage = 'Test message';
+            component.currentMessage.set('Test message');
             const errorMessage = 'Connection failed';
             mockAgentChatService.sendMessage.mockReturnValue(throwError(() => new Error('Service error')));
             mockTranslateService.instant.mockReturnValue(errorMessage);
@@ -304,7 +304,7 @@ describe('AgentChatModalComponent', () => {
             tick();
 
             // Assert
-            expect(component.isAgentTyping).toBeFalse();
+            expect(component.isAgentTyping()).toBeFalse();
             expect(mockTranslateService.instant).toHaveBeenCalledOnce();
             expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
             expect(component.messages).toHaveLength(3); // Welcome + user message + error message
@@ -314,7 +314,7 @@ describe('AgentChatModalComponent', () => {
 
         it('should not send message if canSendMessage is false', () => {
             // Arrange
-            component.currentMessage = ''; // Makes canSendMessage false
+            component.currentMessage.set(''); // Makes canSendMessage false
             fixture.detectChanges();
 
             // Act - Try to click disabled button
@@ -400,7 +400,7 @@ describe('AgentChatModalComponent', () => {
 
         it('should show typing indicator when isAgentTyping is true', () => {
             // Arrange
-            component.isAgentTyping = true;
+            component.isAgentTyping.set(true);
 
             // Act
             fixture.detectChanges();
@@ -412,7 +412,7 @@ describe('AgentChatModalComponent', () => {
 
         it('should hide typing indicator when isAgentTyping is false', () => {
             // Arrange
-            component.isAgentTyping = false;
+            component.isAgentTyping.set(false);
 
             // Act
             fixture.detectChanges();
@@ -424,17 +424,17 @@ describe('AgentChatModalComponent', () => {
 
         it('should prevent message sending when agent is typing', () => {
             // Arrange
-            component.currentMessage = 'Valid message';
-            component.isAgentTyping = true;
+            component.currentMessage.set('Valid message');
+            component.isAgentTyping.set(true);
 
             // Act & Assert
-            expect(component.canSendMessage).toBeFalse();
-            expect(component.isAgentTyping).toBeTrue();
+            expect(component.canSendMessage()).toBeFalse();
+            expect(component.isAgentTyping()).toBeTrue();
         });
 
         it('should disable send button when canSendMessage is false', () => {
             // Arrange
-            component.currentMessage = '';
+            component.currentMessage.set('');
 
             // Act
             fixture.detectChanges();
@@ -446,8 +446,8 @@ describe('AgentChatModalComponent', () => {
 
         it('should enable send button when canSendMessage is true', () => {
             // Arrange
-            component.currentMessage = 'Valid message';
-            component.isAgentTyping = false;
+            component.currentMessage.set('Valid message');
+            component.isAgentTyping.set(false);
 
             // Act
             fixture.detectChanges();
@@ -459,7 +459,7 @@ describe('AgentChatModalComponent', () => {
 
         it('should show character count in template', () => {
             // Arrange
-            component.currentMessage = 'Test message';
+            component.currentMessage.set('Test message');
 
             // Act
             fixture.detectChanges();
@@ -471,7 +471,7 @@ describe('AgentChatModalComponent', () => {
 
         it('should show error styling when message is too long', () => {
             // Arrange
-            component.currentMessage = 'a'.repeat(component.MAX_MESSAGE_LENGTH + 1);
+            component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH + 1));
 
             // Act
             fixture.detectChanges();

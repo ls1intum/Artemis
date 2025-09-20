@@ -1,4 +1,4 @@
-import { AfterViewChecked, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnInit, inject, viewChild } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faRobot, faUser } from '@fortawesome/free-solid-svg-icons';
@@ -33,26 +33,20 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     courseId!: number;
     messages: ChatMessage[] = [];
-    currentMessage = '';
-    isAgentTyping = false;
+    currentMessage = signal('');
+    isAgentTyping = signal(false);
     private shouldScrollToBottom = false;
     private sessionId!: string;
 
     // Message validation
     readonly MAX_MESSAGE_LENGTH = 8000;
 
-    get currentMessageLength(): number {
-        return this.currentMessage.length;
-    }
-
-    get isMessageTooLong(): boolean {
-        return this.currentMessage.length > this.MAX_MESSAGE_LENGTH;
-    }
-
-    get canSendMessage(): boolean {
-        const message = this.currentMessage.trim();
-        return !!(message && !this.isAgentTyping && !this.isMessageTooLong);
-    }
+    currentMessageLength = computed(() => this.currentMessage().length);
+    isMessageTooLong = computed(() => this.currentMessageLength() > this.MAX_MESSAGE_LENGTH);
+    canSendMessage = computed(() => {
+        const message = this.currentMessage().trim();
+        return !!(message && !this.isAgentTyping() && !this.isMessageTooLong());
+    });
 
     ngOnInit(): void {
         this.sessionId = `course_${this.courseId}_session_${Date.now()}`;
@@ -78,28 +72,28 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     protected sendMessage(): void {
-        const message = this.currentMessage.trim();
-        if (!this.canSendMessage) {
+        const message = this.currentMessage().trim();
+        if (!this.canSendMessage()) {
             return;
         }
 
         // Add user message
         this.addMessage(message, true);
-        this.currentMessage = '';
+        this.currentMessage.set('');
 
         // Show typing indicator
-        this.isAgentTyping = true;
+        this.isAgentTyping.set(true);
 
         // Send message with session ID for continuity
         this.agentChatService.sendMessage(message, this.courseId, this.sessionId).subscribe({
             next: (response) => {
-                this.isAgentTyping = false;
+                this.isAgentTyping.set(false);
                 this.addMessage(response, false);
                 // Restore focus to input after agent responds - using Iris pattern
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
             },
             error: () => {
-                this.isAgentTyping = false;
+                this.isAgentTyping.set(false);
                 this.addMessage(this.translateService.instant('artemisApp.agent.chat.error'), false);
                 // Restore focus to input after error
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
