@@ -25,6 +25,7 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.iris.config.PyrisAuthorizationInterceptor;
+import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
 
 /**
