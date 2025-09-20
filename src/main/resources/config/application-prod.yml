@@ -29,8 +29,9 @@ spring:
         livereload:
             enabled: false
     datasource:
+        driver-class-name: com.p6spy.engine.spy.P6SpyDriver
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+        url: jdbc:p6spy:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
         username: root
         password:
         hikari:
@@ -119,3 +120,9 @@ info:
     operatorName: # Must be set before starting the application in production. Shown in the about us page and sent to the telemetry service (e.g. university or school)
     operatorAdminName: # Can be set before starting the application in production. Shown in the about us page and used by the telemetry service
     contact: # The admins contact email address, shown in the about us page, and sent to the telemetry service
+
+# Overrides for sample rate and environment
+# To ensure consistency across all parts of the Sentry SDK, these settings need to be specified in the configuration files
+sentry:
+  environment: prod
+  traces-sample-rate: 0.2
