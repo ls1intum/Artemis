@@ -30,24 +30,21 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.CommitCommand;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.GitCommand;
 import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
-import org.eclipse.jgit.api.TransportCommand;
 import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
@@ -71,9 +68,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.revwalk.filter.CommitTimeRevFilter;
 import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RemoteConfig;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,56 +110,11 @@ public class GitService extends AbstractGitService {
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
 
-    // TODO: we do not need this user any more
-    @Value("${artemis.version-control.user}")
-    protected String gitUser;
-
-    // TODO: we do not need this password any more
-    @Value("${artemis.version-control.password}")
-    protected String gitPassword;
-
     private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
     private static final String ANONYMIZED_STUDENT_NAME = "student";
 
     private static final String ANONYMIZED_STUDENT_EMAIL = "";
-
-    public GitService() {
-        super();
-    }
-
-    /**
-     * initialize the GitService, in particular which authentication mechanism should be used
-     * EventListener cannot be used here, as the bean is lazy
-     * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
-     * Artemis uses the following order for authentication:
-     * 1. ssh key (if available)
-     * 2. username + personal access token (if available)
-     * 3. username + password
-     */
-    @PostConstruct
-    public void init() {
-        // TODO: this should not be used anymore
-        if (useSsh()) {
-            log.info("GitService will use ssh keys as authentication method to interact with remote git repositories");
-            configureSsh();
-        }
-        else if (gitToken.isPresent()) {
-            log.info("GitService will use username + token as authentication method to interact with remote git repositories");
-            CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitToken.get()));
-        }
-        else {
-            log.info("GitService will use username + password as authentication method to interact with remote git repositories");
-            CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(gitUser, gitPassword));
-        }
-
-    }
-
-    @PreDestroy
-    @Override
-    public void cleanup() {
-        super.cleanup();
-    }
 
     /**
      * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
@@ -1349,22 +1299,27 @@ public class GitService extends AbstractGitService {
     }
 
     private PullCommand pullCommand(Git git) {
-        return authenticate(git.pull());
+        return git.pull();
     }
 
     private PushCommand pushCommand(Git git) {
-        return authenticate(git.push());
+        return git.push();
     }
 
     private FetchCommand fetchCommand(Git git) {
-        return authenticate(git.fetch());
+        return git.fetch();
     }
 
-    private LsRemoteCommand lsRemoteCommand(Git git) {
-        return authenticate(git.lsRemote());
+    protected LsRemoteCommand lsRemoteCommand(Git git) {
+        return git.lsRemote();
     }
 
-    protected <C extends GitCommand<?>> C authenticate(TransportCommand<C, ?> command) {
-        return command.setTransportConfigCallback(sshCallback);
+    @Override
+    protected LsRemoteCommand lsRemoteCommand() {
+        return Git.lsRemoteRepository();
+    }
+
+    protected CloneCommand cloneCommand() {
+        return Git.cloneRepository();
     }
 }
