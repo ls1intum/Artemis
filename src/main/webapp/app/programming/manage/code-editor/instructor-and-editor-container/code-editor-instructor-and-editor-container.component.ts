@@ -6,7 +6,7 @@ import { UpdatingResultComponent } from 'app/exercise/result/updating-result/upd
 import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faPlus, faSpinner, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -14,6 +14,10 @@ import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../stat
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HyperionCodeGenerationService } from 'app/hyperion/code-generation.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { facArtemisIntelligence } from 'app/shared/icons/icons';
+import { inject } from '@angular/core';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -22,6 +26,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [
         FaIconComponent,
         TranslateDirective,
+        ArtemisTranslatePipe,
         CodeEditorContainerComponent,
         IncludedInScoreBadgeComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
@@ -30,6 +35,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         NgbDropdownMenu,
         NgbDropdownButtonItem,
         NgbDropdownItem,
+        NgbTooltip,
         UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseEditableInstructionComponent,
@@ -48,6 +54,62 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
+    faSpinner = faSpinner;
+    facArtemisIntelligence = facArtemisIntelligence;
     irisSettings?: IrisSettings;
     protected readonly RepositoryType = RepositoryType;
+
+    private codeGenerationService = inject(HyperionCodeGenerationService);
+    private codeGenAlertService = inject(AlertService);
+    isGeneratingCode = false;
+
+    /**
+     * Generates code for the current programming exercise using AI
+     */
+    generateCode(): void {
+        if (!this.exercise?.id || this.isGeneratingCode) {
+            return;
+        }
+
+        // Only allow code generation for supported repository types
+        if (this.selectedRepository !== RepositoryType.TEMPLATE && this.selectedRepository !== RepositoryType.SOLUTION && this.selectedRepository !== RepositoryType.TESTS) {
+            this.codeGenAlertService.addAlert({
+                type: AlertType.WARNING,
+                translationKey: 'artemisApp.programmingExercise.codeGeneration.unsupportedRepository',
+            });
+            return;
+        }
+
+        this.isGeneratingCode = true;
+
+        const request = { repositoryType: this.selectedRepository };
+
+        this.codeGenerationService.generateCode(this.exercise.id, request).subscribe({
+            next: (response) => {
+                this.isGeneratingCode = false;
+
+                if (response.success) {
+                    this.codeGenAlertService.addAlert({
+                        type: AlertType.SUCCESS,
+                        translationKey: 'artemisApp.programmingExercise.codeGeneration.success',
+                        translationParams: { repositoryType: this.selectedRepository },
+                    });
+                } else {
+                    this.codeGenAlertService.addAlert({
+                        type: AlertType.WARNING,
+                        translationKey: 'artemisApp.programmingExercise.codeGeneration.partialSuccess',
+                        translationParams: { repositoryType: this.selectedRepository },
+                    });
+                }
+            },
+            error: () => {
+                this.isGeneratingCode = false;
+                this.codeGenAlertService.addAlert({
+                    type: AlertType.DANGER,
+                    translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
+                    translationParams: { repositoryType: this.selectedRepository },
+                });
+            },
+        });
+    }
 }

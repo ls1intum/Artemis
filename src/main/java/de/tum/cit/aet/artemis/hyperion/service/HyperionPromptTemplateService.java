@@ -39,4 +39,27 @@ public class HyperionPromptTemplateService {
             throw new RuntimeException("Failed to load template: " + resourcePath, e);
         }
     }
+
+    /**
+     * Render the template at the given classpath resource path with the provided variables.
+     * <p>
+     * Supporting placeholders of the form {{var}}
+     *
+     * @param resourcePath classpath to the template resource
+     * @param variables    map of variables used during rendering
+     * @return the rendered string
+     */
+    public String renderObject(String resourcePath, Map<String, Object> variables) {
+        try {
+            var resource = new ClassPathResource(resourcePath);
+            String rendered = StreamUtils.copyToString(resource.getInputStream(), StandardCharsets.UTF_8);
+            for (var entry : variables.entrySet()) {
+                rendered = rendered.replace("{{" + entry.getKey() + "}}", entry.getValue().toString());
+            }
+            return rendered;
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Failed to load template: " + resourcePath, e);
+        }
+    }
 }

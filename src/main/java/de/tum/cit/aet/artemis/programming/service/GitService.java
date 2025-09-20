@@ -134,6 +134,15 @@ public class GitService extends AbstractGitService {
     }
 
     /**
+     * Returns the configured default branch name.
+     *
+     * @return the default branch name (e.g., "main")
+     */
+    public String getDefaultBranch() {
+        return defaultBranch;
+    }
+
+    /**
      * initialize the GitService, in particular which authentication mechanism should be used
      * EventListener cannot be used here, as the bean is lazy
      * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>

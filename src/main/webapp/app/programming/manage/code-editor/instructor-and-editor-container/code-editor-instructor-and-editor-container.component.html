@@ -152,6 +152,22 @@
                         [btnSize]="ButtonSize.MEDIUM"
                     />
                 }
+                <!-- Hyperion Code Generation -->
+                <div class="btn-group" ngbDropdown role="group" aria-label="AI Code Generation">
+                    @if (isGeneratingCode) {
+                        <button class="btn btn-outline-primary" disabled>
+                            <fa-icon [icon]="faSpinner" animation="spin" />
+                        </button>
+                    } @else {
+                        <button class="btn btn-outline-primary" type="button" ngbDropdownToggle>
+                            <fa-icon [icon]="facArtemisIntelligence" />
+                            <span class="ms-2">Creation Assistance</span>
+                        </button>
+                        <div class="dropdown-menu" ngbDropdownMenu>
+                            <button type="button" class="dropdown-item" (click)="generateCode()" [disabled]="isGeneratingCode">Generate Code</button>
+                        </div>
+                    }
+                </div>
             </div>
             <jhi-programming-exercise-editable-instructions
                 editorSidebar
