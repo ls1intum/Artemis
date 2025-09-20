@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.icl;
 
 import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -26,10 +27,12 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
@@ -40,6 +43,9 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localvcint";
+
+    @Autowired
+    private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private LocalRepository assignmentRepository;
 
@@ -313,7 +319,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUserCreatesNewBranch() throws Exception {
+    void testUserCreatesNewBranchBranchingDisallowed() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Users cannot create new branches.
@@ -328,9 +334,54 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
     }
 
+    void customBranchTestHelper(boolean allowBranching, String regex, boolean shouldSucceed) throws Exception {
+        var buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        buildConfig.setAllowBranching(allowBranching);
+        buildConfig.setBranchRegex(regex);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        await().until(() -> programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(programmingExercise.getId(), student1Login).isPresent());
+        await().until(() -> assignmentRepository.remoteBareGitRepoFile.exists());
+        await().until(() -> assignmentRepository.workingCopyGitRepoFile.exists());
+
+        assignmentRepository.workingCopyGitRepo.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
+        String repositoryUri = localVCLocalCITestService.buildLocalVCUri(student1Login, projectKey1, assignmentRepositorySlug);
+
+        // Push the new branch.
+        PushResult pushResult = assignmentRepository.workingCopyGitRepo.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch"))
+                .call().iterator().next();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+
+        if (shouldSucceed) {
+            assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+        }
+        else {
+            assertThat(remoteRefUpdate.getStatus()).isNotEqualTo(RemoteRefUpdate.Status.OK);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesCustomBranchAllowedMatchesRegex() throws Exception {
+        customBranchTestHelper(true, "^new-branch$", true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesCustomBranchDisallowedDoesntMatchRegex() throws Exception {
+        customBranchTestHelper(true, "^old-branch$", false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesCustomBranchDisallowedBranchingDisabled() throws Exception {
+        customBranchTestHelper(false, ".*", false);
+    }
+
     @Test
     void testRepositoryFolderName() {
-
         // we specifically choose logins containing "git" to test it does not accidentally get replaced
         String login1 = "ab123git";
         String login2 = "git123ab";

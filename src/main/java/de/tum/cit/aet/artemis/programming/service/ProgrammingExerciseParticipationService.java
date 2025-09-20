@@ -260,6 +260,7 @@ public class ProgrammingExerciseParticipationService {
      */
     public ProgrammingExerciseParticipation fetchParticipationWithSubmissionsByRepository(String repositoryTypeOrUserName, String repositoryURI, ProgrammingExercise exercise) {
         var repositoryURL = repositoryURI.replace("/git-upload-pack", "").replace("/git-receive-pack", "");
+
         if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
             return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
         }
@@ -291,6 +292,7 @@ public class ProgrammingExerciseParticipationService {
         if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
             return templateParticipationRepository.findByRepositoryUriElseThrow(repositoryURL);
         }
+
         return studentParticipationRepository.findByRepositoryUriElseThrow(repositoryURL);
     }
 
