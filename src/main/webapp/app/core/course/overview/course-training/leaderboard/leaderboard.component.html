@@ -1,0 +1,49 @@
+<div class="leaderboard-container">
+    <div class="highlight-box">
+        <div class="highlight-content">
+            <div class="highlight-item">
+                <span class="highlight-label">Rank</span>
+                <span class="highlight-value">#{{ currentUserRank }}</span>
+            </div>
+            <div class="highlight-item">
+                <span class="highlight-label">Student</span>
+                <span class="highlight-value">
+                    <jhi-profile-picture class="picture" [authorName]="currentUserStudent" [authorId]="currentUserRank" />
+                    {{ leaderboardName() }}
+                </span>
+            </div>
+            <div class="highlight-item">
+                <span class="highlight-label">Score</span>
+                <span class="highlight-value">{{ currentUserScore }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-frame">
+        <table class="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Student</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (entry of leaderboard(); track entry.rank) {
+                    <tr>
+                        <td class="not-user-column">{{ entry.rank }}</td>
+                        <td class="user-name">
+                            <jhi-profile-picture class="picture" [authorName]="entry.student" [authorId]="entry.rank" />
+                            @if (entry.student === currentUserStudent) {
+                                {{ leaderboardName() }}
+                            } @else {
+                                {{ entry.student }}
+                            }
+                        </td>
+                        <td class="not-user-column">{{ entry.score }}</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

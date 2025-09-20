@@ -1,1 +1,115 @@
-<jhi-button (onClick)="navigateToTraining()" [title]="'artemisApp.exercise.startTraining'" />
+<div class="course-training-container">
+    <div class="header-section d-flex">
+        @if (isRanked()) {
+            <h5 class="header">Quiz Leaderboard</h5>
+        } @else {
+            <h5 class="header">Normal Mode</h5>
+        }
+
+        <div class="ms-auto d-flex align-items-center">
+            @if (isRanked()) {
+                <jhi-button (onClick)="navigateToTraining()" class="button-class" [title]="'artemisApp.exercise.startTraining'" />
+            } @else {
+                <div class="d-flex">
+                    <jhi-button (onClick)="navigateToTraining()" class="button-class me-2" [title]="'artemisApp.exercise.startTraining'" />
+                    <jhi-button (onClick)="navigateToTraining()" class="button-class" [title]="'artemisApp.exercise.freeTrainingMode'" />
+                </div>
+            }
+        </div>
+    </div>
+
+    <hr class="mt-2 mb-4" />
+
+    <div class="main-body-section">
+        <div class="legend-section p-3">
+            <h5>Scorecard</h5>
+            @if (isRanked()) {
+                <div class="league-display">
+                    @if (league() === 'Bronze') {
+                        <div class="league-badge bronze">
+                            <app-league-bronze-icon [league]="league()" />
+                            <div class="league-info">
+                                <div class="league-header">
+                                    <div class="league-name-points-container">
+                                        <div class="league-name">Bronze</div>
+                                        <div class="league-points">{{ points() }} / {{ pointsBronzeLeague }}</div>
+                                    </div>
+                                    <div class="info-button">i</div>
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress" [style.width]="(points() / 100) * 100 + '%'"></div>
+                                    </div>
+                                    <div class="next-league-icon">
+                                        <app-league-silver-icon [league]="'Silver'" class="small-icon" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (league() === 'Silver') {
+                        <div class="league-badge silver">
+                            <app-league-silver-icon [league]="league()" />
+                            <div class="league-info">
+                                <div class="league-header">
+                                    <div class="league-name-points-container">
+                                        <div class="league-name">Silver</div>
+                                        <div class="league-points">{{ points() }} / {{ pointsSilverLeague }}</div>
+                                    </div>
+                                    <div class="info-button">i</div>
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress" [style.width]="(points() / 150) * 100 + '%'"></div>
+                                    </div>
+                                    <div class="next-league-icon">
+                                        <app-league-gold-icon [league]="'Gold'" class="small-icon" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (league() === 'Gold') {
+                        <div class="league-badge gold">
+                            <app-league-gold-icon [league]="league()" />
+                            <div class="league-info">
+                                <div class="league-header">
+                                    <div class="league-name-points-container">
+                                        <div class="league-name">Gold</div>
+                                        <div class="league-points">{{ points() }} / {{ pointsGoldLeague }}</div>
+                                    </div>
+                                    <div class="info-button">i</div>
+                                </div>
+                                <div class="progress-container">
+                                    <div class="progress-bar">
+                                        <div class="progress" [style.width]="(points() / 200) * 100 + '%'"></div>
+                                    </div>
+                                    <div class="next-league-icon">
+                                        <span class="max-level">⭐</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (league() === 'No League') {
+                        <div class="league-badge no-league">
+                            <span>Keine Liga</span>
+                        </div>
+                    }
+                </div>
+            }
+            <div class="due-date-container mt-5">
+                <span class="emoji">⏰</span> <span>Next questions due in {{ dueIn() }} days</span>
+            </div>
+            <div class="streak-container mt-2">
+                <span class="emoji">🔥</span> <span class="streak-display">{{ streak() }} days streak</span>
+            </div>
+        </div>
+
+        @if (isRanked()) {
+            <div class="leaderboard-section">
+                <jhi-leaderboard [leaderboard]="_leaderboard()" [currentUser]="'Maria Musterfrau'" [leaderboardName]="displayName()" />
+            </div>
+        }
+    </div>
+</div>
