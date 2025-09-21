@@ -153,6 +153,28 @@
                     "programmingExercise": "Diese Konversation bezieht sich auf eine Programmieraufgabe.",
                     "lecture": "Diese Konversation bezieht sich auf eine Vorlesung."
                 }
+            },
+            "memories": {
+                "title": "Erinnerungen",
+                "loadingList": "Lade Erinnerungen...",
+                "empty": "Keine Erinnerungen gefunden.",
+                "delete": "Löschen",
+                "deleting": "Lösche...",
+                "details": {
+                    "loading": "Lade Details...",
+                    "learnings": "Erkenntnisse",
+                    "connections": "Verbindungen",
+                    "reference": "Referenz",
+                    "memories": "Erinnerungen",
+                    "weight": "Gewicht",
+                    "none": "Keine",
+                    "noDetails": "Keine Details verfügbar."
+                },
+                "error": {
+                    "loadFailed": "Fehler beim Laden der Erinnerungen.",
+                    "deleteFailed": "Fehler beim Löschen der Erinnerung.",
+                    "detailsLoadFailed": "Fehler beim Laden der Erinnerungsdetails."
+                }
             }
         }
     }

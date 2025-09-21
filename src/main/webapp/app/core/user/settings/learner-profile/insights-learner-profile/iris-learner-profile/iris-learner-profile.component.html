@@ -5,3 +5,9 @@
     <input class="form-check-input" type="checkbox" id="memirisEnabled" [(ngModel)]="memirisEnabled" (change)="onMemirisEnabledChange()" />
     <label class="form-check-label" for="memirisEnabled" jhiTranslate="artemisApp.learnerProfile.insightsLearnerProfile.iris.memirisEnabledToggle"></label>
 </div>
+
+@if (memirisEnabled) {
+    <div class="mt-3">
+        <jhi-memiris-memories-list />
+    </div>
+}
