@@ -198,6 +198,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "external_llm_usage_accepted")
     private ZonedDateTime externalLLMUsageAccepted = null;
 
+    @NotNull
+    @Column(name = "memiris_enabled", nullable = false)
+    private boolean memirisEnabled = false;
+
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("user")
     @JoinColumn(name = "learner_profile_id")
@@ -525,5 +529,13 @@ public class User extends AbstractAuditingEntity implements Participant {
             return null;
         }
         return BytesConverter.longToBytes(this.getId());
+    }
+
+    public boolean isMemirisEnabled() {
+        return memirisEnabled;
+    }
+
+    public void setMemirisEnabled(boolean memirisEnabled) {
+        this.memirisEnabled = memirisEnabled;
     }
 }

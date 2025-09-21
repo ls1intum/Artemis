@@ -1,9 +1,10 @@
 package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.sortDataIntoDays;
-import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.sortDataIntoHours;
-import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.sortDataIntoWeeks;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoDays;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoHours;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoMonths;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoWeeks;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.time.DayOfWeek;
@@ -141,7 +142,7 @@ public class StatisticsService {
                 lengthOfMonth = YearMonth.of(now.minusYears(-periodIndex).getYear(), now.minusYears(-periodIndex).getMonth()).lengthOfMonth();
                 endDate = now.minusYears(-periodIndex).withDayOfMonth(lengthOfMonth).withHour(23).withMinute(59).withSecond(59);
                 outcome = statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate, endDate, view, entityId);
-                statisticsRepository.sortDataIntoMonths(outcome, result, startDate);
+                sortDataIntoMonths(outcome, result, startDate);
             }
         }
         return result;

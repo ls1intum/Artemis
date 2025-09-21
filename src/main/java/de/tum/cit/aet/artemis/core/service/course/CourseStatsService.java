@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.core.service.course;
 import static de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT;
 import static de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.getWeekOfDate;
-import static de.tum.cit.aet.artemis.core.repository.StatisticsRepository.sortDataIntoWeeks;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.getWeekOfDate;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoWeeks;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.time.DayOfWeek;
@@ -152,7 +152,7 @@ public class CourseStatsService {
         }
         long start = System.currentTimeMillis();
         List<StatisticsEntry> outcome = courseRepository.getActiveStudents(exerciseIds, startDate, endDate);
-        log.info("courseRepository.getActiveStudents took {} ms for exercises with ids {} between start {} and end {}", System.currentTimeMillis() - start, exerciseIds, startDate,
+        log.debug("courseRepository.getActiveStudents took {} ms for exercises with ids {} between start {} and end {}", System.currentTimeMillis() - start, exerciseIds, startDate,
                 endDate);
         List<StatisticsEntry> distinctOutcome = removeDuplicateActiveUserRows(outcome, startDate);
         List<Integer> result = new ArrayList<>(Collections.nCopies(length, 0));
@@ -210,14 +210,14 @@ public class CourseStatsService {
      */
     public CourseManagementDetailViewDTO getStatsForDetailView(Course course, GradingScale gradingScale) {
 
-        var start = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
         Set<Exercise> courseExercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
         log.debug("exerciseRepository.findAllExercisesByCourseId took {} ms for course with id {}", System.currentTimeMillis() - start, course.getId());
         start = System.currentTimeMillis();
         Set<Long> courseExerciseIdsWithManualAssessments = exerciseRepository.findExerciseIdsWithManualAssessmentByCourseId(course.getId());
         log.debug("exerciseRepository.findExerciseIdsWithManualAssessmentsByCourseId took {} ms for course with id {}", System.currentTimeMillis() - start, course.getId());
         if (courseExercises == null || courseExercises.isEmpty()) {
-            return new CourseManagementDetailViewDTO(0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0.0, 0.0, List.of(), 0.0);
+            return new CourseManagementDetailViewDTO(0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0L, 0L, 0.0, 0.0, 0.0, 0.0);
         }
         // For the average score we need to only consider scores which are included completely or as bonus
         Set<Exercise> includedExercises = courseExercises.stream().filter(Exercise::isCourseExercise)
@@ -230,7 +230,7 @@ public class CourseStatsService {
         double currentMaxAverageScore = includedExercises.stream().map(Exercise::getMaxPoints).mapToDouble(Double::doubleValue).sum();
 
         // calculate scores taking presentation points into account, if a grading scale is present and set for graded presentations
-        if (gradingScale != null && gradingScale.getCourse().equals(course) && gradingScale.getPresentationsNumber() != null && gradingScale.getPresentationsWeight() != null) {
+        if (gradingScale != null && course.equals(gradingScale.getCourse()) && gradingScale.getPresentationsNumber() != null && gradingScale.getPresentationsWeight() != null) {
             double maxBaseScore = includedExercises.stream().filter(e -> !e.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_AS_BONUS))
                     .map(Exercise::getMaxPoints).mapToDouble(Double::doubleValue).sum();
             start = System.currentTimeMillis();
@@ -246,13 +246,13 @@ public class CourseStatsService {
 
         Set<Long> exerciseIds = courseExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
         start = System.currentTimeMillis();
-        long numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(exerciseIds);
-        log.error("number of assessments: {}", numberOfAssessments);
-        log.debug("resultRepository.countNumberOfAssessments took {} ms for exercises with ids {}", System.currentTimeMillis() - start, courseExerciseIdsWithManualAssessments);
+        long numberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(courseExerciseIdsWithManualAssessments);
+        log.debug("resultRepository.countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns took {} ms for exercises with ids {}", System.currentTimeMillis() - start,
+                courseExerciseIdsWithManualAssessments);
         start = System.currentTimeMillis();
         long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIds)
                 + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIds);
-        log.error("number of in time submissions: {}", numberOfInTimeSubmissions);
+        log.debug("number of in time submissions: {}", numberOfInTimeSubmissions);
         log.debug(
                 "submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate and programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted took {} ms for exercises with ids {}",
                 System.currentTimeMillis() - start, exerciseIds);
@@ -261,7 +261,7 @@ public class CourseStatsService {
         log.debug("submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate took {} ms for exercises with ids {}", System.currentTimeMillis() - start, exerciseIds);
 
         long numberOfSubmissions = numberOfInTimeSubmissions + numberOfLateSubmissions;
-        log.error("number of late submissions: {}, total number of submissions: {}", numberOfLateSubmissions, numberOfSubmissions);
+        log.debug("number of late submissions: {}, total number of submissions: {}", numberOfLateSubmissions, numberOfSubmissions);
         var currentPercentageAssessments = calculatePercentage(numberOfAssessments, numberOfSubmissions);
 
         long currentAbsoluteComplaints = 0;
@@ -270,12 +270,13 @@ public class CourseStatsService {
 
         if (course.getComplaintsEnabled()) {
             start = System.currentTimeMillis();
-            currentAbsoluteComplaints = complaintResponseRepository.countNumberOfComplaintsByComplaintTypeAndSubmittedTimeIsNotNullForExerciseIds(exerciseIds, COMPLAINT);
+            currentAbsoluteComplaints = complaintResponseRepository
+                    .countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), COMPLAINT);
             log.debug(
                     "complaintResponseRepository.countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull took {} ms for course with id {}",
                     System.currentTimeMillis() - start, course.getId());
             start = System.currentTimeMillis();
-            currentMaxComplaints = complaintRepository.countByExerciseIdsAndComplaintType(exerciseIds, COMPLAINT);
+            currentMaxComplaints = complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(course.getId(), COMPLAINT);
             log.debug("complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType took {} ms for course with id {}",
                     System.currentTimeMillis() - start, course.getId());
             currentPercentageComplaints = calculatePercentage(currentAbsoluteComplaints, currentMaxComplaints);
@@ -287,25 +288,26 @@ public class CourseStatsService {
 
         if (course.getRequestMoreFeedbackEnabled()) {
             start = System.currentTimeMillis();
-            currentAbsoluteMoreFeedbacks = complaintResponseRepository.countNumberOfComplaintsByComplaintTypeAndSubmittedTimeIsNotNullForExerciseIds(exerciseIds, MORE_FEEDBACK);
+            currentAbsoluteMoreFeedbacks = complaintResponseRepository
+                    .countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), MORE_FEEDBACK);
             log.debug(
                     "complaintResponseRepository.countByComplaint_Result_Submission_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull took {} ms for course with id {}",
                     System.currentTimeMillis() - start, course.getId());
             start = System.currentTimeMillis();
-            currentMaxMoreFeedbacks = complaintRepository.countByExerciseIdsAndComplaintType(exerciseIds, MORE_FEEDBACK);
+            currentMaxMoreFeedbacks = complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType(course.getId(), MORE_FEEDBACK);
             log.debug("complaintRepository.countByResult_Submission_Participation_Exercise_Course_IdAndComplaintType took {} ms for course with id {}",
                     System.currentTimeMillis() - start, course.getId());
             currentPercentageMoreFeedbacks = calculatePercentage(currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks);
         }
-        var currentAbsoluteAverageScore = roundScoreSpecifiedByCourseSettings((averageScoreForCourse / 100.0) * currentMaxAverageScore, course);
-        var currentPercentageAverageScore = currentMaxAverageScore > 0.0 ? roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course) : 0.0;
+        double currentAbsoluteAverageScore = roundScoreSpecifiedByCourseSettings((averageScoreForCourse / 100.0) * currentMaxAverageScore, course);
+        double currentPercentageAverageScore = currentMaxAverageScore > 0.0 ? roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course) : 0.0;
         start = System.currentTimeMillis();
         double currentTotalLlmCostInEur = llmTokenUsageTraceRepository.calculateTotalLlmCostInEurForCourse(course.getId());
         log.debug("llmTokenUsageTraceRepository.calculateTotalLlmCostInEurForCourse took {} ms for course with id {}", System.currentTimeMillis() - start, course.getId());
 
         return new CourseManagementDetailViewDTO(currentPercentageAssessments, numberOfAssessments, numberOfSubmissions, currentPercentageComplaints, currentAbsoluteComplaints,
                 currentMaxComplaints, currentPercentageMoreFeedbacks, currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks, currentPercentageAverageScore,
-                currentAbsoluteAverageScore, currentMaxAverageScore, List.of(), currentTotalLlmCostInEur);
+                currentAbsoluteAverageScore, currentMaxAverageScore, currentTotalLlmCostInEur);
     }
 
     private double calculatePercentage(double positive, double total) {

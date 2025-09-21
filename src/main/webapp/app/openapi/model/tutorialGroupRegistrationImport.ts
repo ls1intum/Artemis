@@ -22,12 +22,12 @@ export interface TutorialGroupRegistrationImport {
     isOnline?: boolean;
 }
 export namespace TutorialGroupRegistrationImport {
-    export type ErrorEnum = 'NO_TITLE' | 'NO_USER_FOUND' | 'MULTIPLE_REGISTRATIONS';
     export const ErrorEnum = {
-        NoTitle: 'NO_TITLE' as ErrorEnum,
-        NoUserFound: 'NO_USER_FOUND' as ErrorEnum,
-        MultipleRegistrations: 'MULTIPLE_REGISTRATIONS' as ErrorEnum
-    };
+        NoTitle: 'NO_TITLE',
+        NoUserFound: 'NO_USER_FOUND',
+        MultipleRegistrations: 'MULTIPLE_REGISTRATIONS'
+    } as const;
+    export type ErrorEnum = typeof ErrorEnum[keyof typeof ErrorEnum];
 }
 
 

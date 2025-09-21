@@ -22,6 +22,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -679,11 +680,12 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO(
+                exercise.id,
                 CASE TYPE(exercise)
-                    WHEN FileUploadExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity.FILE_UPLOAD_EXERCISE
-                    WHEN TextExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity.TEXT_EXERCISE
-                    WHEN ModelingExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity.MODELING_EXERCISE
-                    ELSE de.tum.cit.aet.artemis.core.util.CalendarEventRelatedEntity.PROGRAMMING_EXERCISE
+                    WHEN FileUploadExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventType.FILE_UPLOAD_EXERCISE
+                    WHEN TextExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventType.TEXT_EXERCISE
+                    WHEN ModelingExercise THEN de.tum.cit.aet.artemis.core.util.CalendarEventType.MODELING_EXERCISE
+                    ELSE de.tum.cit.aet.artemis.core.util.CalendarEventType.PROGRAMMING_EXERCISE
                 END,
                 exercise.title,
                 exercise.releaseDate,
@@ -694,5 +696,13 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             FROM Exercise exercise
             WHERE exercise.course.id = :courseId AND TYPE(exercise) IN (FileUploadExercise, TextExercise, ModelingExercise, ProgrammingExercise)
             """)
-    Set<NonQuizExerciseCalendarEventDTO> getNonQuizExerciseCalendarEventsDAOsForCourseId(@Param("courseId") long courseId);
+    Set<NonQuizExerciseCalendarEventDTO> getNonQuizExerciseCalendarEventsDTOsForCourseId(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO(e.id, TYPE(e), e.includedInOverallScore, e.assessmentType, e.dueDate, e.assessmentDueDate, p.buildAndTestStudentSubmissionsAfterDueDate, e.maxPoints, e.bonusPoints, e.course.id)
+            FROM Exercise e
+                LEFT JOIN ProgrammingExercise p ON e.id = p.id
+            WHERE e.course.id = :courseId
+            """)
+    Set<ExerciseCourseScoreDTO> findCourseExerciseScoreInformationByCourseId(@Param("courseId") long courseId);
 }
