@@ -320,6 +320,12 @@ public class ProgrammingExerciseValidationService {
         return errorMessageCis != null;
     }
 
+    /**
+     * Checks whether the exercise to be updated has valid references to its template and solution repositories and build plans.
+     *
+     * @param exercise the programming exercise to be checked
+     * @throws BadRequestAlertException if one of the references is invalid
+     */
     public void checkProgrammingExerciseForError(ProgrammingExercise exercise) {
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         VersionControlService versionControl = versionControlService.orElseThrow();
