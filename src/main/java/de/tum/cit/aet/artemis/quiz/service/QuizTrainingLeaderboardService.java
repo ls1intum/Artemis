@@ -68,8 +68,8 @@ public class QuizTrainingLeaderboardService {
      * @throws IllegalArgumentException if the user or course is not found
      */
     public List<LeaderboardEntryDTO> getLeaderboard(long userId, long courseId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
-        Course course = courseRepository.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
+        User user = userRepository.findByIdElseThrow(userId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         int studentLeague;
         if (authorizationCheckService.isStudentInCourse(course, user)) {
             studentLeague = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).map(QuizTrainingLeaderboard::getLeague).orElse(BRONZE_LEAGUE);
