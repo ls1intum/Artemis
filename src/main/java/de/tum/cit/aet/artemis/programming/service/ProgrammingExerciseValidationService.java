@@ -23,11 +23,11 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
-import de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys;
 
 @Service
 @Lazy
@@ -325,19 +325,17 @@ public class ProgrammingExerciseValidationService {
         VersionControlService versionControl = versionControlService.orElseThrow();
 
         if (!continuousIntegration.checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getTemplateBuildPlanId())) {
-            throw new BadRequestAlertException("The Template Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID);
+            throw new BadRequestAlertException("The Template Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID);
         }
         if (exercise.getVcsTemplateRepositoryUri() == null || !versionControl.repositoryUriIsValid(exercise.getVcsTemplateRepositoryUri())) {
-            throw new BadRequestAlertException("The Template Repository URI seems to be invalid.", "Exercise",
-                    ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL);
+            throw new BadRequestAlertException("The Template Repository URI seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL);
         }
         if (exercise.getSolutionBuildPlanId() != null && !continuousIntegration.checkIfBuildPlanExists(exercise.getProjectKey(), exercise.getSolutionBuildPlanId())) {
-            throw new BadRequestAlertException("The Solution Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseResourceErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID);
+            throw new BadRequestAlertException("The Solution Build Plan ID seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID);
         }
         var solutionRepositoryUri = exercise.getVcsSolutionRepositoryUri();
         if (solutionRepositoryUri != null && !versionControl.repositoryUriIsValid(solutionRepositoryUri)) {
-            throw new BadRequestAlertException("The Solution Repository URI seems to be invalid.", "Exercise",
-                    ProgrammingExerciseResourceErrorKeys.INVALID_SOLUTION_REPOSITORY_URL);
+            throw new BadRequestAlertException("The Solution Repository URI seems to be invalid.", "Exercise", ProgrammingExerciseErrorKeys.INVALID_SOLUTION_REPOSITORY_URL);
         }
 
         // It has already been checked when setting the test case weights that their sum is at least >= 0.
@@ -346,7 +344,7 @@ public class ProgrammingExerciseValidationService {
             final Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
             if (!ProgrammingExerciseTestCaseService.isTestCaseWeightSumValid(testCases)) {
                 throw new BadRequestAlertException("For exercises with only automatic assignment at least one test case weight must be greater than zero.", "Exercise",
-                        ProgrammingExerciseResourceErrorKeys.INVALID_TEST_CASE_WEIGHTS);
+                        ProgrammingExerciseErrorKeys.INVALID_TEST_CASE_WEIGHTS);
             }
         }
     }
