@@ -3,28 +3,18 @@ package de.tum.cit.aet.artemis.programming.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,11 +25,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -47,7 +34,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
-import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -55,28 +41,22 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
-import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
-import io.jsonwebtoken.lang.Arrays;
 
 /**
- * REST controller for managing ProgrammingExercise.
+ * REST controller for updating complete programming exercise entities.
  */
 @Profile(PROFILE_CORE)
 @Lazy
 @RestController
 @RequestMapping("api/programming/")
-public class ProgrammingExerciseCreationUpdateResource {
+public class ProgrammingExerciseUpdateResource {
 
-    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseCreationUpdateResource.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseUpdateResource.class);
 
     private static final String ENTITY_NAME = "programmingExercise";
 
     private final Environment environment;
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final CourseService courseService;
 
@@ -90,10 +70,6 @@ public class ProgrammingExerciseCreationUpdateResource {
 
     private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
-    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
-
-    private final StaticCodeAnalysisService staticCodeAnalysisService;
-
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
 
     private final Optional<AthenaApi> athenaApi;
@@ -104,65 +80,22 @@ public class ProgrammingExerciseCreationUpdateResource {
 
     private final UserRepository userRepository;
 
-    public ProgrammingExerciseCreationUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, CourseService courseService, ExerciseService exerciseService,
-            ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
-            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, Environment environment,
-            Optional<SlideApi> slideApi) {
+    public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
+            ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
+            AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, Environment environment, Optional<SlideApi> slideApi) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
-        this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
-        this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.athenaApi = athenaApi;
         this.environment = environment;
         this.slideApi = slideApi;
-    }
-
-    /**
-     * POST /programming-exercises/setup : Set up a new programmingExercise (with all needed repositories etc.)
-     *
-     * @param programmingExercise the programmingExercise to set up
-     * @return the ResponseEntity with status 201 (Created) and with body the new programmingExercise, or with status 400 (Bad Request) if the parameters are invalid
-     */
-    @PostMapping("programming-exercises/setup")
-    @EnforceAtLeastEditor
-    @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
-        log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
-
-        // Valid exercises have set either a course or an exerciseGroup
-        programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        programmingExerciseValidationService.validateNewProgrammingExerciseSettings(programmingExercise, course);
-
-        // Check that only allowed athena modules are used
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME), () -> programmingExercise.setFeedbackSuggestionModule(null));
-
-        try {
-            // Setup all repositories etc
-            ProgrammingExercise newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(programmingExercise);
-
-            // Create default static code analysis categories
-            if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
-                staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
-            }
-
-            return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId())).body(newProgrammingExercise);
-        }
-        catch (IOException | URISyntaxException | GitAPIException | ContinuousIntegrationException e) {
-            log.error("Error while setting up programming exercise", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .headers(HeaderUtil.createAlert(applicationName, "An error occurred while setting up the exercise: " + e.getMessage(), "errorProgrammingExercise")).body(null);
-        }
     }
 
     /**
@@ -272,104 +205,6 @@ public class ProgrammingExerciseCreationUpdateResource {
         slideApi.ifPresent(api -> api.handleDueDateChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise));
 
         return ResponseEntity.ok(savedProgrammingExercise);
-    }
-
-    /**
-     * PUT /programming-exercises/timeline : Updates the timeline attributes of a given exercise
-     *
-     * @param updatedProgrammingExercise containing the changes that have to be saved
-     * @param notificationText           an optional text to notify the student group about the update on the programming exercise
-     * @return the ResponseEntity with status 200 (OK) with the updated ProgrammingExercise, or with status 403 (Forbidden)
-     *         if the user is not allowed to update the exercise or with 404 (Not Found) if the updated ProgrammingExercise couldn't be found in the database
-     */
-    @PutMapping("programming-exercises/timeline")
-    @EnforceAtLeastEditor
-    @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExercise updatedProgrammingExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
-        log.debug("REST request to update the timeline of ProgrammingExercise : {}", updatedProgrammingExercise);
-        var existingProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, existingProgrammingExercise, user);
-        updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateTimeline(updatedProgrammingExercise, notificationText);
-        exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
-                .body(updatedProgrammingExercise);
-    }
-
-    /**
-     * PATCH /programming-exercises-problem: Updates the problem statement of the exercise.
-     *
-     * @param exerciseId              The ID of the exercise for which to change the problem statement
-     * @param updatedProblemStatement The new problemStatement
-     * @param notificationText        to notify the student group about the updated problemStatement on the programming exercise
-     * @return the ResponseEntity with status 200 (OK) and with body the updated problemStatement, with status 404 if the programmingExercise could not be found, or with 403 if the
-     *         user does not have permissions to access the programming exercise.
-     */
-    @PatchMapping("programming-exercises/{exerciseId}/problem-statement")
-    @EnforceAtLeastEditor
-    public ResponseEntity<ProgrammingExercise> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
-        log.debug("REST request to update ProgrammingExercise with new problem statement: {}", updatedProblemStatement);
-        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-        var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateProblemStatement(programmingExercise, updatedProblemStatement, notificationText);
-        exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        // we saved a problem statement with test ids instead of test names. For easier editing we send a problem statement with test names to the client:
-        programmingExerciseTaskService.replaceTestIdsWithNames(updatedProgrammingExercise);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
-                .body(updatedProgrammingExercise);
-    }
-
-    /**
-     * PUT /programming-exercises/{exerciseId}/generate-tests : Makes a call to StructureOracleGenerator to generate the structure oracle aka the test.json file
-     *
-     * @param exerciseId The ID of the programming exercise for which the structure oracle should get generated
-     * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
-     */
-    @PutMapping(value = "programming-exercises/{exerciseId}/generate-tests", produces = MediaType.TEXT_PLAIN_VALUE)
-    @EnforceAtLeastEditor
-    @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable long exerciseId) {
-        log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndBuildConfigElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-        if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                    "This is a linked exercise and generating the structure oracle for this exercise is not possible.", "couldNotGenerateStructureOracle")).body(null);
-        }
-
-        var solutionRepoUri = programmingExercise.getVcsSolutionRepositoryUri();
-        var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
-        var testRepoUri = programmingExercise.getVcsTestRepositoryUri();
-
-        try {
-            String testsPath = Path.of("test", programmingExercise.getPackageFolderName()).toString();
-            // Atm we only have one folder that can have structural tests, but this could change.
-            testsPath = programmingExercise.getBuildConfig().hasSequentialTestRuns() ? Path.of("structural", testsPath).toString() : testsPath;
-            boolean didGenerateOracle = programmingExerciseCreationUpdateService.generateStructureOracleFile(solutionRepoUri, exerciseRepoUri, testRepoUri, testsPath, user);
-
-            if (didGenerateOracle) {
-                HttpHeaders responseHeaders = new HttpHeaders();
-                responseHeaders.setContentType(MediaType.TEXT_PLAIN);
-                return new ResponseEntity<>("Successfully generated the structure oracle for the exercise " + programmingExercise.getProjectName(), responseHeaders, HttpStatus.OK);
-            }
-            else {
-                return ResponseEntity.badRequest().headers(
-                        HeaderUtil.createAlert(applicationName, "Did not update the oracle because there have not been any changes to it.", "didNotGenerateStructureOracle"))
-                        .body(null);
-            }
-        }
-        catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName,
-                            "An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": " + e,
-                            "errorStructureOracleGeneration"))
-                    .body(null);
-        }
     }
 
     /**
