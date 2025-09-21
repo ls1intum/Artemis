@@ -395,7 +395,7 @@ public class ExamRoomService {
                     Map.of("layoutName", layoutStrategy.getName(), "roomNumber", examRoom.getRoomNumber()));
         }
 
-        List<List<ExamSeatDTO>> sortedRows = getSortedRowsWithSortedSeats(examRoom);
+        List<List<ExamSeatDTO>> sortedRows = getSortedRowsWithSortedSeats(examRoom, false);
 
         return pickFixedSelectionSelectedSeats(seatInputs, sortedRows, examRoom.getRoomNumber());
     }
@@ -403,14 +403,18 @@ public class ExamRoomService {
     /**
      * Gets a list of all the rows of a given {@link ExamRoom}.
      * The rows are ordered (first to last), and the seats in each row are also ordered (left to right).
-     * <p>
-     * Useful for applying a {@link LayoutStrategyType#FIXED_SELECTION} layout
      *
-     * @param examRoom The exam room
+     * @param examRoom        The exam room
+     * @param onlyUsableSeats If true, then this function will only return those seats that are marked as
+     *                            {@link SeatCondition#USABLE}, if false no filtering is performed
      * @return List of rows (sorted) of seats (sorted)
      */
-    private static List<List<ExamSeatDTO>> getSortedRowsWithSortedSeats(ExamRoom examRoom) {
-        Map<Double, List<ExamSeatDTO>> rowsByRowHeight = examRoom.getSeats().stream().collect(Collectors.groupingBy(ExamSeatDTO::yCoordinate));
+    private static List<List<ExamSeatDTO>> getSortedRowsWithSortedSeats(ExamRoom examRoom, boolean onlyUsableSeats) {
+        List<ExamSeatDTO> examSeats = examRoom.getSeats();
+        if (onlyUsableSeats) {
+            examSeats = examSeats.stream().filter(examSeatDTO -> examSeatDTO.seatCondition() == SeatCondition.USABLE).toList();
+        }
+        Map<Double, List<ExamSeatDTO>> rowsByRowHeight = examSeats.stream().collect(Collectors.groupingBy(ExamSeatDTO::yCoordinate));
 
         // Sort rows by y ascending, and seats within row by x ascending
         return rowsByRowHeight.entrySet().stream().sorted(Map.Entry.comparingByKey())
@@ -467,16 +471,42 @@ public class ExamRoomService {
      * Useful for applying a {@link LayoutStrategyType#RELATIVE_DISTANCE} layout
      *
      * @param examRoom The exam room
-     * @param firstRow Number of the first row (starts at 1)
+     * @param firstRow Number of the first row (starts at 1, lower values default to 1)
      * @param xSpace   Minimum required free space between the left and right of seats
      * @param ySpace   Minimum required free space between rows
      * @return Sorted list of this room's seats, respecting the given filters
      */
     private static List<ExamSeatDTO> getSortedSeatsWithRelativeDistanceFilters(ExamRoom examRoom, int firstRow, double xSpace, double ySpace) {
-        List<ExamSeatDTO> sortedSeatsAfterFirstRowFilter = examRoom.getSeats().stream().filter(examSeatDTO -> examSeatDTO.yCoordinate() >= (firstRow - 1))
-                .filter(examSeatDTO -> examSeatDTO.seatCondition() == SeatCondition.USABLE)
-                .sorted(Comparator.comparingDouble(ExamSeatDTO::yCoordinate).thenComparingDouble(ExamSeatDTO::xCoordinate)).toList();
+        List<List<ExamSeatDTO>> sortedRowsWithSortedSeats = getSortedRowsWithSortedSeats(examRoom, true);
 
+        List<ExamSeatDTO> sortedSeatsAfterFirstRowFilter = applyFirstRowFilter(sortedRowsWithSortedSeats, firstRow);
+
+        return applyXSpaceAndYSpaceFilter(sortedSeatsAfterFirstRowFilter, xSpace, ySpace);
+    }
+
+    /**
+     * Applies the first row filter, and returns a flattened list of all exam seats
+     *
+     * @param sortedRows Rows of seats, sorted from first to last
+     * @param firstRow   The row in which we first want to seat students
+     *
+     * @return All seats from all rows that are not before the {@code firstRow}
+     */
+    private static List<ExamSeatDTO> applyFirstRowFilter(List<List<ExamSeatDTO>> sortedRows, int firstRow) {
+        if (firstRow < 1) {
+            firstRow = 1;
+        }
+
+        if (firstRow > sortedRows.size()) {
+            return List.of();
+        }
+
+        List<List<ExamSeatDTO>> sortedRowsAfterFirstRowFilter = sortedRows.subList(firstRow - 1, sortedRows.size());
+
+        return sortedRowsAfterFirstRowFilter.stream().flatMap(List::stream).toList();
+    }
+
+    private static List<ExamSeatDTO> applyXSpaceAndYSpaceFilter(List<ExamSeatDTO> sortedSeatsAfterFirstRowFilter, double xSpace, double ySpace) {
         List<ExamSeatDTO> usableSeats = new ArrayList<>();
         for (ExamSeatDTO examSeatDTO : sortedSeatsAfterFirstRowFilter) {
             boolean isFarEnough = usableSeats.stream().noneMatch(
