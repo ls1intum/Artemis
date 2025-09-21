@@ -81,13 +81,21 @@ describe('ShortAnswerQuestionComponent', () => {
         const getNavigationStub = jest.spyOn(document, 'getElementById').mockReturnValue(returnValue);
 
         fixture.componentRef.setInput('question', alternativeQuestion);
+        fixture.componentRef.setInput('submittedTexts', []);
         fixture.detectChanges();
+
+        const sub = component.submittedTextsChange.subscribe((v) => {
+            fixture.componentRef.setInput('submittedTexts', v ?? []);
+            fixture.detectChanges();
+        });
+
         component.setSubmittedText();
 
         expect(getNavigationStub).toHaveBeenCalledOnce();
         expect(component.submittedTexts()).toHaveLength(1);
         expect(component.submittedTexts()[0].text).toStrictEqual(text);
         expect(component.submittedTexts()[0].spot).toStrictEqual(spot);
+        sub.unsubscribe();
     });
 
     it('should show sample solution', () => {
@@ -121,6 +129,8 @@ describe('ShortAnswerQuestionComponent', () => {
         fixture.componentRef.setInput('showResult', true);
         component.showingSampleSolution = true;
 
+        fixture.componentRef.setInput('forceSampleSolution', false);
+        fixture.detectChanges();
         fixture.componentRef.setInput('forceSampleSolution', true);
         fixture.detectChanges();
         expect(component.showingSampleSolution).toBeTrue();
@@ -194,7 +204,8 @@ describe('ShortAnswerQuestionComponent', () => {
         expect(component.classifyInputField(tag)).toBe('correct');
         component.shortAnswerQuestion().correctMappings = [];
         expect(component.classifyInputField(tag)).toBe('correct');
-        component.submittedTexts.set([]);
+        fixture.componentRef.setInput('submittedTexts', []);
+        fixture.detectChanges();
         expect(component.classifyInputField(tag)).toBe('wrong');
         spot.invalid = true;
         expect(component.classifyInputField(tag)).toBe('invalid');

@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation, effect, inject, input, model } from '@angular/core';
+import { Component, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -25,7 +25,8 @@ export class MultipleChoiceQuestionComponent {
 
     question = input.required<MultipleChoiceQuestion>();
     // TODO: Map vs. Array --> consistency
-    selectedAnswerOptions = model.required<AnswerOption[]>();
+    selectedAnswerOptions = input.required<AnswerOption[]>();
+    _selectedAnswerOptions: AnswerOption[] = [];
     clickDisabled = input<boolean>(false);
     showResult = input<boolean>(false);
     questionIndex = input<number>(0);
@@ -34,6 +35,8 @@ export class MultipleChoiceQuestionComponent {
     fnOnSelection = input<any>();
     submittedResult = input<Result>();
     quizQuestions = input<QuizQuestion[] | undefined>();
+
+    selectedAnswerOptionsChange = output<AnswerOption[]>();
 
     constructor() {
         effect(() => {
@@ -76,22 +79,22 @@ export class MultipleChoiceQuestionComponent {
     toggleSelection(answerOption: AnswerOption): void {
         if (this.clickDisabled()) {
             // Do nothing
+            this._selectedAnswerOptions = this.selectedAnswerOptions();
             return;
         }
         if (this.isAnswerOptionSelected(answerOption)) {
-            this.selectedAnswerOptions.set(
-                this.selectedAnswerOptions().filter((selectedAnswerOption) => {
-                    if (answerOption.id) {
-                        return selectedAnswerOption.id !== answerOption.id;
-                    }
-                    return selectedAnswerOption !== answerOption;
-                }),
-            );
+            this._selectedAnswerOptions = this.selectedAnswerOptions().filter((selectedAnswerOption) => {
+                if (answerOption.id) {
+                    return selectedAnswerOption.id !== answerOption.id;
+                }
+                return selectedAnswerOption !== answerOption;
+            });
         } else if (this.isSingleChoice) {
-            this.selectedAnswerOptions.set([answerOption]);
+            this._selectedAnswerOptions = [answerOption];
         } else {
-            this.selectedAnswerOptions.set([...this.selectedAnswerOptions(), answerOption]);
+            this._selectedAnswerOptions.push(answerOption);
         }
+        this.selectedAnswerOptionsChange.emit(this._selectedAnswerOptions);
         /** Only execute the onSelection function if we received such input **/
         const fnOnSelectionFn = this.fnOnSelection();
         if (fnOnSelectionFn && typeof fnOnSelectionFn === 'function') {

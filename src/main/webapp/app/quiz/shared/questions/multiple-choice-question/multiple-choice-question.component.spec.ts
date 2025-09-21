@@ -24,7 +24,7 @@ describe('MultipleChoiceQuestionComponent', () => {
         fixture = TestBed.createComponent(MultipleChoiceQuestionComponent);
         component = fixture.componentInstance;
         artemisMarkdownService = TestBed.inject(ArtemisMarkdownService);
-        component.selectedAnswerOptions.set([]);
+        fixture.componentRef.setInput('selectedAnswerOptions', []);
     });
 
     afterEach(() => {
@@ -105,7 +105,7 @@ describe('MultipleChoiceQuestionComponent', () => {
             { id: 3, invalid: false },
         ];
 
-        component.selectedAnswerOptions.set([answerOptions[0], answerOptions[2]]);
+        fixture.componentRef.setInput('selectedAnswerOptions', [answerOptions[0], answerOptions[2]]);
         expect(component.isAnswerOptionSelected(answerOptions[0])).toBeTrue();
         expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
         expect(component.isAnswerOptionSelected(answerOptions[2])).toBeTrue();
@@ -154,7 +154,13 @@ describe('MultipleChoiceQuestionComponent', () => {
         };
 
         fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', []);
         fixture.detectChanges();
+
+        component.selectedAnswerOptionsChange.subscribe((v) => {
+            fixture.componentRef.setInput('selectedAnswerOptions', v ?? []);
+            fixture.detectChanges();
+        });
 
         component.toggleSelection(answerOptions[1]);
 
@@ -197,7 +203,13 @@ describe('MultipleChoiceQuestionComponent', () => {
         };
 
         fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('selectedAnswerOptions', []);
         fixture.detectChanges();
+
+        component.selectedAnswerOptionsChange.subscribe((v) => {
+            fixture.componentRef.setInput('selectedAnswerOptions', v ?? []);
+            fixture.detectChanges();
+        });
 
         component.toggleSelection(answerOptions[1]);
         expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();

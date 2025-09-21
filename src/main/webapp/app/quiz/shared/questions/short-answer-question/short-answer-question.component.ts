@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation, computed, effect, inject, input, model } from '@angular/core';
+import { Component, ViewEncapsulation, computed, effect, inject, input, output, untracked } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
@@ -37,13 +37,15 @@ export class ShortAnswerQuestionComponent {
     _forceSampleSolution: boolean;
 
     // TODO: Map vs. Array --> consistency
-    submittedTexts = model<ShortAnswerSubmittedText[]>([]);
+    submittedTexts = input<ShortAnswerSubmittedText[]>([]);
     clickDisabled = input<boolean>(false);
     showResult = input<boolean>(false);
     questionIndex = input<number>(0);
     score = input<number>(0);
     forceSampleSolution = input<boolean>(false);
     fnOnSubmittedTextUpdate = input<any>();
+
+    submittedTextsChange = output<ShortAnswerSubmittedText[]>();
 
     constructor() {
         effect(() => {
@@ -54,8 +56,10 @@ export class ShortAnswerQuestionComponent {
         effect(() => {
             const currentQuestion = this.shortAnswerQuestion();
             if (currentQuestion) {
-                this.hideSampleSolution();
-                this.watchCollection();
+                untracked(() => {
+                    this.hideSampleSolution();
+                    this.watchCollection();
+                });
             }
         });
     }
@@ -99,7 +103,7 @@ export class ShortAnswerQuestionComponent {
             }
             i++;
         }
-        this.submittedTexts.set(updated);
+        this.submittedTextsChange.emit(updated);
         /** Only execute the onMappingUpdate function if we received such input **/
         const _fnOnSubmittedTextUpdate = this.fnOnSubmittedTextUpdate();
         if (_fnOnSubmittedTextUpdate && typeof _fnOnSubmittedTextUpdate === 'function') {

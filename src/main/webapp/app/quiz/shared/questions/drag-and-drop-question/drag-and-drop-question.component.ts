@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, ViewEncapsulation, computed, effect, inject, input, model, viewChild } from '@angular/core';
+import { Component, OnChanges, OnInit, ViewEncapsulation, computed, effect, inject, input, output, viewChild } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
@@ -77,7 +77,8 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     dragAndDropQuestion = computed(() => this.question() as DragAndDropQuestion);
 
     // TODO: Map vs. Array --> consistency
-    mappings = model<DragAndDropMapping[]>([]);
+    mappings = input<DragAndDropMapping[]>([]);
+    _mappings: DragAndDropMapping[] = [];
     clickDisabled = input<boolean>(false);
     showResult = input<boolean>(false);
     questionIndex = input<number>(0);
@@ -87,6 +88,8 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
 
     onMappingUpdate = input<any>();
     filePreviewPaths = input<Map<string, string>>(new Map<string, string>());
+
+    mappingsChange = output<DragAndDropMapping[]>();
 
     showingSampleSolution = false;
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
@@ -170,19 +173,19 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     onDragDrop(dropLocation: DropLocation | undefined, dropEvent: CdkDragDrop<DragItem, DragItem>) {
         this.drop();
         const dragItem = dropEvent.item.data as DragItem;
-        let newMappings = [...this.mappings()];
 
         if (dropLocation) {
             // check if this mapping is new
             if (this.dragAndDropQuestionUtil.isMappedTogether(this.mappings(), dragItem, dropLocation)) {
                 // Do nothing
+                this._mappings = this.mappings();
                 return;
             }
 
             // remove existing mappings that contain the drop location or drag item and save their old partners
             let oldDragItem;
             let oldDropLocation;
-            newMappings = newMappings.filter(function (mapping) {
+            this._mappings = this.mappings().filter(function (mapping) {
                 if (this.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, mapping.dropLocation)) {
                     oldDragItem = mapping.dragItem;
                     return false;
@@ -195,25 +198,25 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
             }, this);
 
             // add new mapping
-            newMappings.push(new DragAndDropMapping(dragItem, dropLocation));
+            this._mappings.push(new DragAndDropMapping(dragItem, dropLocation));
 
             // map oldDragItem and oldDropLocation, if they exist
             // this flips positions of drag items when a drag item is dropped on a drop location with an existing drag item
             if (oldDragItem && oldDropLocation) {
-                newMappings.push(new DragAndDropMapping(oldDragItem, oldDropLocation));
+                this._mappings.push(new DragAndDropMapping(oldDragItem, oldDropLocation));
             }
         } else {
-            const lengthBefore = newMappings.length;
+            const lengthBefore = this.mappings().length;
             // remove existing mapping that contains the drag item
-            newMappings = newMappings.filter(function (mapping) {
+            this._mappings = this.mappings().filter(function (mapping) {
                 return !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem);
             }, this);
-            if (newMappings.length === lengthBefore) {
+            if (this._mappings.length === lengthBefore) {
                 // nothing changed => return here to skip calling this.onMappingUpdate()
                 return;
             }
         }
-        this.mappings.set(newMappings);
+        this.mappingsChange.emit(this._mappings);
 
         /** Only execute the onMappingUpdate function if we received such input **/
         const onMappingUpdateFn = this.onMappingUpdate();
