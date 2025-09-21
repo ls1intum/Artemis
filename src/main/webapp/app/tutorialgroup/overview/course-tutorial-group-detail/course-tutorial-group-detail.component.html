@@ -13,7 +13,7 @@
                     jhiTranslate="artemisApp.pages.tutorialGroupDetail.tutorChatLinkLabel"
                     data-testid="tutor-chat-link"
                 ></a>
-            } @else {
+            } @else if (userIsNotTutor()) {
                 <button
                     pButton
                     class="p-button-secondary p-button-sm"

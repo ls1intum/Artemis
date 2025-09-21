@@ -23,6 +23,7 @@ import { Router, RouterLink } from '@angular/router';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ButtonModule } from 'primeng/button';
+import { AccountService } from 'app/core/auth/account.service';
 
 interface TutorialGroupDetailSession {
     date: string;
@@ -70,6 +71,7 @@ export class CourseTutorialGroupDetailComponent {
     private translateService = inject(TranslateService);
     private oneToOneChatService = inject(OneToOneChatService);
     private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
     private router = inject(Router);
     private locale = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)), {
         initialValue: this.translateService.currentLang,
@@ -100,6 +102,7 @@ export class CourseTutorialGroupDetailComponent {
     messagingEnabled = computed<boolean>(() => isMessagingEnabled(this.course()));
     tutorChatLink = computed(() => this.computeTutorChatLink(this.course().id, this.tutorialGroup().tutorChatId));
     groupChannelLink = computed(() => this.computeGroupChannelLink(this.course().id, this.tutorialGroup().groupChannelId));
+    userIsNotTutor = computed(() => this.accountService.userIdentity?.login !== this.tutorialGroup().teachingAssistantLogin);
 
     constructor() {
         effect(() => {
@@ -247,8 +250,8 @@ export class CourseTutorialGroupDetailComponent {
         const tutorLogin = this.tutorialGroup().teachingAssistantLogin;
         if (courseId) {
             this.oneToOneChatService.create(courseId, tutorLogin).subscribe({
-                next: (res) => {
-                    const chatId = res.body?.id;
+                next: (response) => {
+                    const chatId = response.body?.id;
                     if (chatId) {
                         this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: chatId } });
                     } else {

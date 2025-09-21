@@ -644,7 +644,10 @@ public class TutorialGroupService {
 
         String tutorLogin = rawGroupDTOs.teachingAssistantLogin();
         String currentUserLogin = userRepository.getCurrentUserLogin();
-        Long tutorChatId = oneToOneChatRepository.findIdOfChatInCourseBetweenUsers(courseId, tutorLogin, currentUserLogin);
+        Long tutorChatId = null;
+        if (!tutorLogin.equals(currentUserLogin)) {
+            tutorChatId = oneToOneChatRepository.findIdOfChatInCourseBetweenUsers(courseId, tutorLogin, currentUserLogin);
+        }
 
         List<RawTutorialGroupDetailSessionDTO> rawSessionDTOs = tutorialGroupSessionRepository.getTutorialGroupDetailSessionData(tutorialGroupId);
         List<TutorialGroupDetailSessionDTO> sessionDTOs;
