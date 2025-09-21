@@ -73,6 +73,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
@@ -838,6 +839,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         DragAndDropQuestion question = new DragAndDropQuestion();
         List<DropLocation> dropLocations = getDropLocationsFromDTO(dc);
         List<DragItem> dragItems = getDragItemsFromDTO(dc);
+        List<DragAndDropMapping> mappings = getDragAndDropMappingsFromDTO(dc, dropLocations, dragItems);
         question.setTitle(dc.title());
         question.setText(dc.text());
         question.setHint(dc.hint());
@@ -846,6 +848,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         question.setScoringType(dc.scoringType());
         question.setRandomizeOrder(dc.randomizeOrder());
         question.setBackgroundFilePath(dc.backgroundFilePath());
+        question.setDropLocations(dropLocations);
+        question.setDragItems(dragItems);
+        question.setCorrectMappings(mappings);
         return question;
     }
 
@@ -888,6 +893,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         return mappings;
     }
 
+    private static ShortAnswerQuestion createShortAnswerQuestionFromDTO(ShortAnswerQuestionCreateDTO shortAnswerQuestionCreateDTO) {
+        return null;
+    }
+
     private static List<QuizQuestion> createQuizQuestionsFromDTOs(List<? extends QuizQuestionCreateDTO> questionCreateDTOs) {
         List<QuizQuestion> quizQuestions = new ArrayList<>();
         for (QuizQuestionCreateDTO questionCreateDTO : questionCreateDTOs) {
@@ -895,7 +904,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 quizQuestions.add(createMultipleChoiceQuestionFromDTO(mc));
             }
             else if (questionCreateDTO instanceof DragAndDropQuestionCreateDTO dnd) {
-
+                quizQuestions.add(createDragAndDropQuestionFromDTO(dnd));
             }
             else if (questionCreateDTO instanceof ShortAnswerQuestionCreateDTO sa) {
 
