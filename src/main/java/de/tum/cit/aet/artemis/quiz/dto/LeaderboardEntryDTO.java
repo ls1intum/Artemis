@@ -8,6 +8,6 @@ import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LeaderboardEntryDTO(int rank, int league, int studentLeague, long userId, @NotNull String userName, @Nullable String imageURL, @NotNull String leaderboardName,
+public record LeaderboardEntryDTO(int rank, int league, int studentLeague, long userId, @Nullable String userName, @Nullable String imageURL, @NotNull String leaderboardName,
         int score, int answeredCorrectly, int answeredWrong, long totalQuestions, @NotNull ZonedDateTime dueDate, int streak) {
 }
