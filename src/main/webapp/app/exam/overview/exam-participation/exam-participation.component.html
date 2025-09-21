@@ -3,20 +3,12 @@
 }
 @if (exam) {
     @if (isVisible() && !isGracePeriodOver() && !this.studentExam?.submitted && !examStartConfirmed) {
-        <jhi-exam-participation-cover
-            [startView]="true"
-            [exam]="exam"
-            [studentExam]="studentExam"
-            [testRunStartTime]="testStartTime"
-            (onExamStarted)="examStarted($event)"
-            [isProduction]="isProduction"
-            [isTestServer]="isTestServer"
-        />
+        <jhi-exam-participation-cover [startView]="true" [exam]="exam" [studentExam]="studentExam" [testRunStartTime]="testStartTime" (onExamStarted)="examStarted($event)" />
     }
     @if (studentExam) {
         <!-- exam participation -->
         @if (isVisible() && isActive() && !isOver() && examStartConfirmed) {
-            <div class="exam-background-wrapper hide-scrollbar-unless-scrolling" [ngClass]="{ 'py-2': testRunId }">
+            <div class="exam-background-wrapper hide-scrollbar-unless-scrolling">
                 <jhi-exam-bar
                     [exam]="exam"
                     [studentExam]="studentExam"
@@ -42,10 +34,7 @@
                         />
                     </div>
                     <!-- exercises -->
-                    <div
-                        class="vw-100 module-bg rounded-3 px-3 pt-3 content-exam-height"
-                        [ngClass]="{ 'content-exam-height-testRun-dev': !isProduction || isTestServer, 'content-exam-height-testRun': testRunId, 'me-3': !testRunId }"
-                    >
+                    <div class="vw-100 module-bg rounded-3 px-3 pt-3 content-exam-height" [ngClass]="{ 'content-exam-height-testRun': testRunId, 'me-3': !testRunId }">
                         <div [ngClass]="{ 'd-flex h-100 justify-content-between flex-column': !checkVerticalOverflow() }">
                             <div [hidden]="activePageIndex !== -1">
                                 <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)" />
@@ -162,7 +151,7 @@
         }
         @if (!studentExam.submitted && ((isOver() && examStartConfirmed) || isGracePeriodOver())) {
             @if (!studentFailedToSubmit) {
-                <div class="exam-background-wrapper" [ngClass]="{ 'py-2': testRunId }">
+                <div class="exam-background-wrapper">
                     <jhi-exam-bar
                         [endDate]="individualStudentEndDateWithGracePeriod"
                         [exerciseIndex]="exerciseIndex"
@@ -176,10 +165,7 @@
                         (heightChange)="updateHeight($event)"
                     />
 
-                    <div
-                        class="module-bg rounded-3 px-3 pt-3 end-view content-exam-height"
-                        [ngClass]="{ 'content-exam-height-dev content-exam-height-testRun-dev': !isProduction || isTestServer, 'content-exam-height-testRun': testRunId }"
-                    >
+                    <div class="module-bg rounded-3 px-3 pt-3 end-view content-exam-height" [ngClass]="{ 'content-exam-height-testRun': testRunId }">
                         <jhi-exam-participation-cover
                             [startView]="false"
                             [exam]="exam"
@@ -223,7 +209,7 @@
             </div>
         }
         @if (showExamSummary) {
-            <div [ngClass]="{ 'content-height-dev': (!isProduction || isTestServer) && !testRunId, 'p-3 scrollable-content': !testRunId }">
+            <div [ngClass]="{ 'p-3 scrollable-content': !testRunId }">
                 <jhi-exam-participation-summary [studentExam]="studentExam" />
             </div>
         }

@@ -10,7 +10,7 @@ class ConsistencyCheckLocalVCJenkinsIntegrationTest extends AbstractProgrammingI
     @BeforeEach
     void setup() throws Exception {
         consistencyCheckTestService.setup(this);
-        jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
+        jenkinsRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach

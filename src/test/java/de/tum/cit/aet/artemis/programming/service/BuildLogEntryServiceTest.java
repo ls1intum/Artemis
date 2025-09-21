@@ -140,8 +140,8 @@ class BuildLogEntryServiceTest extends AbstractProgrammingIntegrationIndependent
             Build mtc Test Maven - ARTEMISADMIN - Default Job #7 (MTCTSTMVN-ARTEMISADMIN-JOB1-7) started building on agent Agent1, jenkins version: 8.2.5
             the first of its kind
             Build working directory is /var/atlassian/application-data/jenkins/local-working-dir/MTCTSTMVN-ARTEMISADMIN-JOB1
-            Unable to find image 'ls1tum/artemis-maven-template:java17-20' locally
-            java17-20: Pulling from ls1tum/artemis-maven-template
+            Unable to find image 'ls1tum/artemis-maven-template:java17-25' locally
+            java17-25: Pulling from ls1tum/artemis-maven-template
             eaead16dc43b: Already exists
             b5503608cd3e: Already exists
             eae98b5113a2: Already exists
@@ -177,7 +177,7 @@ class BuildLogEntryServiceTest extends AbstractProgrammingIntegrationIndependent
             1d98a0f12066: Pull complete
             73cbc73d72f9: Pull complete
             Digest: sha256:d82b8a02960018ed070279a3c850638fe6527e72af076cc90531163b9ed229e5
-            Status: Downloaded newer image for ls1tum/artemis-maven-template:java17-20
+            Status: Downloaded newer image for ls1tum/artemis-maven-template:java17-25
             Executing build mtc Test Maven - ARTEMISADMIN - Default Job #7 (MTCTSTMVN-ARTEMISADMIN-JOB1-7)
             Starting task 'Checkout Default Repository' of type 'com.atlassian.jenkins.plugins.vcs:task.vcs.checkout'
             Checking out into /var/atlassian/application-data/jenkins/local-working-dir/MTCTSTMVN-ARTEMISADMIN-JOB1

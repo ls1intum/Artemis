@@ -1,18 +1,11 @@
 ****************************
-Coding and design guidelines
+Coding and Design Guidelines
 ****************************
 
 .. toctree::
-   :caption: Coding and design guidelines
-   :includehidden:
-   :maxdepth: 3
+   :maxdepth: 2
 
-   guidelines/performance
-   guidelines/server
-   guidelines/server-tests
-   guidelines/client
-   guidelines/client-tests
-   guidelines/client-design
+   guidelines/client-guidelines
+   guidelines/server-guidelines
    guidelines/database
-   guidelines/criteria-builder
    guidelines/language-guidelines
