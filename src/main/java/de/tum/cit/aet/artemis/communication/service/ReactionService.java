@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
@@ -10,10 +11,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.domain.Posting;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.ReactionDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
@@ -63,33 +64,39 @@ public class ReactionService {
      * Checks reaction validity, determines the reaction's user,
      * retrieves the associated posting and persists the mutual association
      *
-     * @param courseId if of course the according posting belongs to
-     * @param reaction reaction to create
+     * @param courseId    id of the course the corresponding posting belongs to
+     * @param reactionDTO reaction to create
      * @return created reaction that was persisted
      */
-    public Reaction createReaction(Long courseId, Reaction reaction) {
-        Posting posting = reaction.getPost() == null ? reaction.getAnswerPost() : reaction.getPost();
-        final Course course = courseRepository.findByIdElseThrow(courseId);
-
-        // checks
-        final User user = this.userRepository.getUserWithGroupsAndAuthorities();
-        if (reaction.getId() != null) {
+    public Reaction createReaction(Long courseId, ReactionDTO reactionDTO) {
+        if (reactionDTO.id() != null) {
             throw new BadRequestAlertException("A new reaction cannot already have an ID", METIS_REACTION_ENTITY_NAME, "idExists");
         }
 
-        // set user to current user
+        if (reactionDTO.emojiId() == null || reactionDTO.emojiId().isBlank()) {
+            throw new BadRequestAlertException("emojiId must be set", METIS_REACTION_ENTITY_NAME, "emojiIdMissing");
+        }
+
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+        final User user = this.userRepository.getUserWithGroupsAndAuthorities();
+        final long targetId = reactionDTO.relatedPostId();
+
+        Reaction reaction = new Reaction();
+        reaction.setEmojiId(reactionDTO.emojiId());
         reaction.setUser(user);
 
-        // we query the repository dependent on the type of posting and update this posting
-        Reaction savedReaction;
-        if (posting instanceof Post post) {
-            savedReaction = createReactionForPost(reaction, post, user, course);
+        var answerPostOpt = answerPostRepository.findById(targetId);
+        if (answerPostOpt.isPresent()) {
+            var answerPost = answerPostOpt.get();
+            checkThatCourseHasCourseIdElseThrow(course.getId(), answerPost.getCoursePostingBelongsTo());
+            reaction.setAnswerPost(answerPost);
+            return createReactionForAnswer(reaction, answerPost, user, course);
         }
-        else {
-            savedReaction = createReactionForAnswer(reaction, (AnswerPost) posting, user, course);
 
-        }
-        return savedReaction;
+        var post = postRepository.findByIdElseThrow(targetId);
+        checkThatCourseHasCourseIdElseThrow(course.getId(), post.getCoursePostingBelongsTo());
+        reaction.setPost(post);
+        return createReactionForPost(reaction, post, user, course);
     }
 
     /**
@@ -102,6 +109,9 @@ public class ReactionService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         Reaction reaction = reactionRepository.findByIdElseThrow(reactionId);
+
+        Course reactionCourse = getReactionCourseElseThrow(reaction);
+        checkThatCourseHasCourseIdElseThrow(courseId, reactionCourse);
 
         // check if user that wants to delete reaction is user that created the reaction
         if (!user.equals(reaction.getUser())) {
@@ -194,5 +204,35 @@ public class ReactionService {
         api.preparePostForBroadcast(post);
         api.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null);
         return savedReaction;
+    }
+
+    /**
+     * Returns the course for the given reaction, throws if not found.
+     *
+     * @param reaction the reaction entity
+     * @return the associated course
+     * @throws BadRequestAlertException if no course can be found
+     */
+    private Course getReactionCourseElseThrow(Reaction reaction) {
+        if (reaction.getPost() != null) {
+            return reaction.getPost().getCoursePostingBelongsTo();
+        }
+        if (reaction.getAnswerPost() != null) {
+            return reaction.getAnswerPost().getCoursePostingBelongsTo();
+        }
+        throw new BadRequestAlertException("Reaction could not be found", METIS_REACTION_ENTITY_NAME, "reactionNotFound");
+    }
+
+    /**
+     * Ensures that the given course matches the expected course ID.
+     *
+     * @param expectedCourseId the ID of the course that is expected
+     * @param actual           the actual course to verify
+     * @throws BadRequestAlertException if the actual course is null or does not match the expected course ID
+     */
+    private void checkThatCourseHasCourseIdElseThrow(Long expectedCourseId, Course actual) {
+        if (actual == null || !Objects.equals(actual.getId(), expectedCourseId)) {
+            throw new BadRequestAlertException("Reaction does not belong to the given course", METIS_REACTION_ENTITY_NAME, "wrongCourse");
+        }
     }
 }
