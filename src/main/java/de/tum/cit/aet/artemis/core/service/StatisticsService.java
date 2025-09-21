@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoDays;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoHours;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoMonths;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoWeeks;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.time.DayOfWeek;
@@ -107,21 +111,21 @@ public class StatisticsService {
             case DAY -> {
                 startDate = now.minusDays(-periodIndex).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusDays(-periodIndex).withHour(23).withMinute(59).withSecond(59);
-                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate, endDate, view, entityId);
-                this.statisticsRepository.sortDataIntoHours(outcome, result);
+                outcome = statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate, endDate, view, entityId);
+                sortDataIntoHours(outcome, result);
             }
             case WEEK -> {
                 startDate = now.minusWeeks(-periodIndex).minusDays(6).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusWeeks(-periodIndex).withHour(23).withMinute(59).withSecond(59);
-                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate, endDate, view, entityId);
-                this.statisticsRepository.sortDataIntoDays(outcome, result, startDate);
+                outcome = statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate, endDate, view, entityId);
+                sortDataIntoDays(outcome, result, startDate);
             }
             case MONTH -> {
                 startDate = now.minusMonths(1L - periodIndex).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = now.minusMonths(-periodIndex).withHour(23).withMinute(59).withSecond(59);
                 result = new ArrayList<>(Collections.nCopies((int) ChronoUnit.DAYS.between(startDate, endDate), 0));
-                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate.plusDays(1), endDate, view, entityId);
-                this.statisticsRepository.sortDataIntoDays(outcome, result, startDate.plusDays(1));
+                outcome = statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate.plusDays(1), endDate, view, entityId);
+                sortDataIntoDays(outcome, result, startDate.plusDays(1));
             }
             case QUARTER -> {
                 LocalDateTime localStartDate = now.toLocalDateTime().with(DayOfWeek.MONDAY);
@@ -130,15 +134,15 @@ public class StatisticsService {
                 startDate = localStartDate.atZone(zone).minusWeeks(11 + (12L * (-periodIndex))).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(12L * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
                         : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
-                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate, endDate, view, entityId);
-                this.statisticsRepository.sortDataIntoWeeks(outcome, result, startDate);
+                outcome = statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate, endDate, view, entityId);
+                sortDataIntoWeeks(outcome, result, startDate);
             }
             case YEAR -> {
                 startDate = now.minusYears(1L - periodIndex).plusMonths(1).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
                 lengthOfMonth = YearMonth.of(now.minusYears(-periodIndex).getYear(), now.minusYears(-periodIndex).getMonth()).lengthOfMonth();
                 endDate = now.minusYears(-periodIndex).withDayOfMonth(lengthOfMonth).withHour(23).withMinute(59).withSecond(59);
-                outcome = this.statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate, endDate, view, entityId);
-                this.statisticsRepository.sortDataIntoMonths(outcome, result, startDate);
+                outcome = statisticsRepository.getNumberOfEntriesPerTimeSlot(graphType, span, startDate, endDate, view, entityId);
+                sortDataIntoMonths(outcome, result, startDate);
             }
         }
         return result;

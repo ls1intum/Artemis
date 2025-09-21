@@ -2,11 +2,13 @@
     color: var(--exam-timer-label-color);
     margin-right: 2px;
 }
+
 .text-overflow {
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
 }
+
 .remaining-time {
     text-align: center;
     min-width: 80px;
@@ -15,6 +17,7 @@
 .end-view {
     min-width: 140px;
 }
+
 .critical {
     background: var(--exam-timer-critical-background);
 }

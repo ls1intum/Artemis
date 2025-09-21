@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.core.exception.LocalCIException;
  */
 @Configuration
 @Profile(PROFILE_BUILDAGENT)
-@Lazy
+@Lazy(false)
 public class BuildAgentConfiguration {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;

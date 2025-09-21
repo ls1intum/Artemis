@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!-- 1. Add Exam Room Table -->
+    <changeSet id="20250802175051-01-add-exam-room" author="röttgermann">
+        <createTable tableName="exam_room">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <!-- Columns required from AbstractAuditingEntity - Start -->
+            <column name="created_by" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_by" type="varchar(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="last_modified_date" type="datetime(3)">
+                <constraints nullable="true"/>
+            </column>
+            <!-- Columns required from AbstractAuditingEntity - End -->
+            <column name="room_number" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="alternative_room_number" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="alternative_name" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="building" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <!-- default type supposed to work for both MySQL and PostgreSQL -->
+            <column name="exam_seats" type="json">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Rollback section -->
+        <rollback>
+            <dropTable tableName="exam_room"/>
+        </rollback>
+    </changeSet>
+
+    <!-- 2. Add Layout Strategy table -->
+    <changeSet id="20250802175051-02-add-layout-strategy" author="röttgermann">
+        <createTable tableName="layout_strategy">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="capacity" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <!-- default type supposed to work for both MySQL and PostgreSQL -->
+            <column name="parameters" type="json">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exam_room_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_strategy_room"
+                             referencedTableName="exam_room" referencedColumnNames="id"/>
+            </column>
+        </createTable>
+
+        <!-- Unique constraint - ensures no room has the same layout strategy twice -->
+        <addUniqueConstraint tableName="layout_strategy"
+                             columnNames="exam_room_id, name"
+                             constraintName="uc_layout_strategy_exam_room_name"/>
+
+        <!-- Indexes for Layout Strategy table -->
+        <!-- One index on (exam_room_id), and one on (exam_room_id, layout_name) -->
+        <createIndex indexName="idx_layout_strategy_exam_room_id" tableName="layout_strategy">
+            <column name="exam_room_id"/>
+        </createIndex>
+
+        <!-- Rollback section -->
+        <rollback>
+            <dropTable tableName="layout_strategy"/>
+        </rollback>
+    </changeSet>
+
+    <!-- 3. Add exam room <-> exam assignment table -->
+    <changeSet id="20250802175051-03-add-exam-room-exam-assignment" author="röttgermann">
+        <createTable tableName="exam_room_exam_assignment">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="exam_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_exam_room_assignment_exam"
+                            referencedTableName="exam" referencedColumnNames="id"/>
+            </column>
+            <column name="exam_room_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_exam_room_assignment_room"
+                             referencedTableName="exam_room" referencedColumnNames="id"/>
+            </column>
+        </createTable>
+
+        <!-- Unique constraint to avoid duplicate assignment of the same room to the same exam -->
+        <addUniqueConstraint tableName="exam_room_exam_assignment"
+                             columnNames="exam_id, exam_room_id"
+                             constraintName="uc_exam_room_assignment_exam_room"/>
+
+        <!-- Indexes for Exam Room Assignment table -->
+        <!-- One index on (exam_id), and one on (exam_room_id) -->
+        <createIndex indexName="idx_exam_room_assignment_exam_id" tableName="exam_room_exam_assignment">
+            <column name="exam_id"/>
+        </createIndex>
+        <createIndex indexName="idx_exam_room_assignment_exam_room_id" tableName="exam_room_exam_assignment">
+            <column name="exam_room_id"/>
+        </createIndex>
+
+        <!-- Rollback section -->
+        <rollback>
+            <dropTable tableName="exam_room_exam_assignment"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

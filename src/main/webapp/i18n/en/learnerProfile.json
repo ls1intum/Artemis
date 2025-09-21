@@ -47,10 +47,18 @@
                     "friendly": "Friendly"
                 },
                 "profileSaved": "Feedback learner profile saved",
-                "invalidRange": "Values must be true or false",
+                "invalidRange": "Values must be between 1 and 3",
                 "error": "Feedback learner profile could not be saved",
                 "setPreferencesButton": "Set your feedback preferences",
                 "replayOnboardingButton": "Replay onboarding"
+            },
+            "insightsLearnerProfile": {
+                "title": "Insights from our system",
+                "iris": {
+                    "title": "Iris",
+                    "description": "Here, you can find insights that Iris has generated in the form of memories. These memories are based on your interactions with Iris. Iris uses these memories to provide you with personalized feedback and support.",
+                    "memirisEnabledToggle": "Enable memory creation and usage"
+                }
             },
             "onboardingModal": {
                 "title": "Which feedback feels better?",

@@ -2,13 +2,13 @@
     display: flex;
     flex-direction: column;
 
-    .navigate-section {
+    .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 0.5rem 0;
 
-        .navigate-button {
+        .header-button {
             all: unset;
             cursor: pointer;
             border-radius: 0.5rem;
@@ -31,13 +31,13 @@
             }
         }
 
-        .today-button {
+        .secondary-button {
             color: var(--secondary);
             border: 1px solid var(--secondary);
             padding: 0.125rem 0.25rem;
         }
 
-        .chevron-button {
+        .primary-button {
             color: var(--primary);
             border: 1px solid var(--primary);
             padding: 0.125rem;
@@ -59,7 +59,7 @@
             opacity: 0;
         }
 
-        .header {
+        .presentation-header {
             display: flex;
             flex-direction: column;
             border-left: 1px solid var(--border-color);
