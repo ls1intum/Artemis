@@ -4,6 +4,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
+import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('IrisLearnerProfileComponent', () => {
     let component: IrisLearnerProfileComponent;
@@ -31,7 +33,17 @@ describe('IrisLearnerProfileComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [IrisLearnerProfileComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(AccountService)],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(AccountService),
+                provideHttpClient(),
+                // Mock the IrisMemoriesHttpService to avoid HttpClient dependency in nested component
+                MockProvider(IrisMemoriesHttpService, {
+                    listUserMemories: jest.fn().mockReturnValue({ subscribe: () => {} } as any),
+                    getUserMemory: jest.fn(),
+                    deleteUserMemory: jest.fn(),
+                }),
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(IrisLearnerProfileComponent);
