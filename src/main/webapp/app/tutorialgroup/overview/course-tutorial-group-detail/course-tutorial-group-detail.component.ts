@@ -148,7 +148,7 @@ export class CourseTutorialGroupDetailComponent {
     }
 
     private computePieChartColor(averageAttendanceRatio: number | undefined): Color {
-        if (!averageAttendanceRatio) {
+        if (averageAttendanceRatio === undefined) {
             return {
                 group: ScaleType.Ordinal,
                 domain: [GraphColors.LIGHT_GREY],

@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.csv.CSVFormat;
@@ -700,7 +699,7 @@ public class TutorialGroupService {
         }
     }
 
-    public void isAllowedToDeleteTutorialGroup(@NotNull TutorialGroup tutorialGroup, @Nullable User user, boolean isAdminOrInstructor) {
+    public void isAllowedToDeleteTutorialGroup(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdminOrInstructor) {
         if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to delete the tutorial group: " + tutorialGroup.getId());
         }
