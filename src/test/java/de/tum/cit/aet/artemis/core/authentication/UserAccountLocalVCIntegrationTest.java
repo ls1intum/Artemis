@@ -18,7 +18,7 @@ class UserAccountLocalVCIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @BeforeEach
     void setUp() throws Exception {
-        userTestService.setup(TEST_PREFIX, this);
+        userTestService.setup(TEST_PREFIX);
     }
 
     @AfterEach

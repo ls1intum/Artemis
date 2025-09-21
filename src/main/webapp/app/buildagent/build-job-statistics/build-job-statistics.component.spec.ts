@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { BuildJobStatisticsComponent } from 'app/buildagent/build-job-statistics/build-job-statistics.component';
 import { BuildJobStatistics, SpanType } from 'app/buildagent/shared/entities/build-job.model';
-import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
+import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -35,7 +35,7 @@ describe('BuildJobStatisticsComponent', () => {
         await TestBed.configureTestingModule({
             imports: [BuildJobStatisticsComponent],
             providers: [
-                { provide: BuildQueueService, useValue: mockBuildQueueService },
+                { provide: BuildOverviewService, useValue: mockBuildQueueService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },

@@ -29,7 +29,7 @@ import { MockProvider } from 'ng-mocks';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -49,7 +49,7 @@ describe('TextExercise Management Update Component', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(CalendarEventService),
+                MockProvider(CalendarService),
             ],
         }).compileComponents();
 
@@ -76,8 +76,8 @@ describe('TextExercise Management Update Component', () => {
 
                 const entity = { ...textExercise };
                 jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
-                const calendarEventService = TestBed.inject(CalendarEventService);
-                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+                const calendarService = TestBed.inject(CalendarService);
+                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
                 // WHEN
                 comp.save();
@@ -122,8 +122,8 @@ describe('TextExercise Management Update Component', () => {
 
                 const entity = { ...textExercise };
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
-                const calendarEventService = TestBed.inject(CalendarEventService);
-                const refreshSpy = jest.spyOn(calendarEventService, 'refresh');
+                const calendarService = TestBed.inject(CalendarService);
+                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
 
                 // WHEN
                 comp.save();

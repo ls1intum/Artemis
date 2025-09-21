@@ -23,5 +23,6 @@
 
 .quiz-is-active-background {
     @include position-style(fixed, 0, 0, 0, 0, 6);
+
     background: rgba(0, 0, 0, 0.4);
 }

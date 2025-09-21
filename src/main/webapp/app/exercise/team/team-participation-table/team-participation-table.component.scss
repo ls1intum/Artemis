@@ -13,8 +13,9 @@ $space-left-from-divider: 50px;
         position: relative;
         overflow: visible !important;
 
-        &:after {
+        &::after {
             $border-width: 1px;
+
             content: ' ';
             position: absolute;
             width: 5px;
