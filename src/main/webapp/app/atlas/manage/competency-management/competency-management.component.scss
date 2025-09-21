@@ -1,8 +1,8 @@
 // Floating Agent Chat Button Styles
 .agent-chat-button {
     position: fixed;
-    bottom: 3.5rem;
-    right: 3.5rem;
+    bottom: calc(2rem + 32px); // considering footer height
+    right: 2rem;
     width: 3.5rem;
     height: 3.5rem;
     z-index: 1050; // Higher than most Bootstrap components
