@@ -61,8 +61,12 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
+import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
+import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -70,7 +74,16 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.create.AnswerOptionCreateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.create.DragAndDropMappingCreateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.create.DragAndDropQuestionCreateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.create.DragItemCreateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.create.DropLocationCreateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.create.MultipleChoiceQuestionCreateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.create.QuizQuestionCreateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.create.ShortAnswerQuestionCreateDTO;
 import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
@@ -791,5 +804,124 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
         return events;
+    }
+
+    private static MultipleChoiceQuestion createMultipleChoiceQuestionFromDTO(MultipleChoiceQuestionCreateDTO mc) {
+        MultipleChoiceQuestion question = new MultipleChoiceQuestion();
+        List<AnswerOption> answerOptions = getMCAnswerOptionsFromDTO(mc);
+        question.setTitle(mc.title());
+        question.setText(mc.text());
+        question.setHint(mc.hint());
+        question.setExplanation(mc.explanation());
+        question.setPoints(mc.points());
+        question.setScoringType(mc.scoringType());
+        question.setRandomizeOrder(mc.randomizeOrder());
+        question.setSingleChoice(mc.singleChoice());
+        question.setAnswerOptions(answerOptions);
+        return question;
+    }
+
+    private static List<AnswerOption> getMCAnswerOptionsFromDTO(MultipleChoiceQuestionCreateDTO mc) {
+        List<AnswerOption> answerOptions = new ArrayList<>();
+        for (AnswerOptionCreateDTO answerOptionCreateDTO : mc.answerOptions()) {
+            AnswerOption answerOption = new AnswerOption();
+            answerOption.setText(answerOptionCreateDTO.text());
+            answerOption.setHint(answerOptionCreateDTO.hint());
+            answerOption.setExplanation(answerOptionCreateDTO.explanation());
+            answerOption.setIsCorrect(answerOptionCreateDTO.isCorrect());
+            answerOptions.add(answerOption);
+        }
+        return answerOptions;
+    }
+
+    private static DragAndDropQuestion createDragAndDropQuestionFromDTO(DragAndDropQuestionCreateDTO dc) {
+        DragAndDropQuestion question = new DragAndDropQuestion();
+        List<DropLocation> dropLocations = getDropLocationsFromDTO(dc);
+        List<DragItem> dragItems = getDragItemsFromDTO(dc);
+        question.setTitle(dc.title());
+        question.setText(dc.text());
+        question.setHint(dc.hint());
+        question.setExplanation(dc.explanation());
+        question.setPoints(dc.points());
+        question.setScoringType(dc.scoringType());
+        question.setRandomizeOrder(dc.randomizeOrder());
+        question.setBackgroundFilePath(dc.backgroundFilePath());
+        return question;
+    }
+
+    private static List<DropLocation> getDropLocationsFromDTO(DragAndDropQuestionCreateDTO dc) {
+        List<DropLocation> dropLocations = new ArrayList<>();
+        for (DropLocationCreateDTO dropLocationCreateDTO : dc.dropLocations()) {
+            DropLocation dropLocation = new DropLocation();
+            dropLocation.setTempID(dropLocationCreateDTO.tempID());
+            dropLocation.setPosX(dropLocationCreateDTO.posX());
+            dropLocation.setPosY(dropLocationCreateDTO.posY());
+            dropLocation.setWidth(dropLocationCreateDTO.width());
+            dropLocation.setHeight(dropLocationCreateDTO.height());
+        }
+        return dropLocations;
+    }
+
+    private static List<DragItem> getDragItemsFromDTO(DragAndDropQuestionCreateDTO dc) {
+        List<DragItem> dragItems = new ArrayList<>();
+        for (DragItemCreateDTO dragItemCreateDTO : dc.dragItems()) {
+            DragItem dragItem = new DragItem();
+            dragItem.setTempID(dragItemCreateDTO.tempID());
+            dragItem.setText(dragItemCreateDTO.text());
+            dragItem.setPictureFilePath(dragItemCreateDTO.pictureFilePath());
+            dragItems.add(dragItem);
+        }
+        return dragItems;
+    }
+
+    private static List<DragAndDropMapping> getDragAndDropMappingsFromDTO(DragAndDropQuestionCreateDTO dc, List<DropLocation> dropLocations, List<DragItem> dragItems) {
+        List<DragAndDropMapping> mappings = new ArrayList<>();
+        for (DragAndDropMappingCreateDTO mappingCreateDTO : dc.correctMappings()) {
+            // TODO: Return here and check if this is even necessary
+            DragAndDropMapping mapping = new DragAndDropMapping();
+            DropLocation dropLocation = dropLocations.stream().filter(dl -> dl.getTempID().equals(mappingCreateDTO.dropLocationTempId())).findFirst().orElse(null);
+            DragItem dragItem = dragItems.stream().filter(di -> di.getTempID().equals(mappingCreateDTO.dragItemTempId())).findFirst().orElse(null);
+            mapping.setDropLocation(dropLocation);
+            mapping.setDragItem(dragItem);
+            mappings.add(mapping);
+        }
+        return mappings;
+    }
+
+    private static List<QuizQuestion> createQuizQuestionsFromDTOs(List<? extends QuizQuestionCreateDTO> questionCreateDTOs) {
+        List<QuizQuestion> quizQuestions = new ArrayList<>();
+        for (QuizQuestionCreateDTO questionCreateDTO : questionCreateDTOs) {
+            if (questionCreateDTO instanceof MultipleChoiceQuestionCreateDTO mc) {
+                quizQuestions.add(createMultipleChoiceQuestionFromDTO(mc));
+            }
+            else if (questionCreateDTO instanceof DragAndDropQuestionCreateDTO dnd) {
+
+            }
+            else if (questionCreateDTO instanceof ShortAnswerQuestionCreateDTO sa) {
+
+            }
+            else {
+                throw new BadRequestAlertException("Unknown question type: " + questionCreateDTO.getClass(), ENTITY_NAME, "unknownQuestionType");
+            }
+        }
+        return quizQuestions;
+    }
+
+    public static QuizExercise createNewQuizExerciseFromDTO(QuizExerciseCreateDTO quizExerciseCreateDTO) {
+        QuizExercise quizExercise = new QuizExercise();
+        quizExercise.setTitle(quizExerciseCreateDTO.title());
+        quizExercise.setReleaseDate(quizExerciseCreateDTO.releaseDate());
+        quizExercise.setStartDate(quizExerciseCreateDTO.startDate());
+        quizExercise.setDueDate(quizExerciseCreateDTO.dueDate());
+        quizExercise.setDifficulty(quizExerciseCreateDTO.difficulty());
+        quizExercise.setMode(quizExerciseCreateDTO.mode());
+        quizExercise.setIncludedInOverallScore(quizExerciseCreateDTO.includedInOverallScore());
+        quizExercise.setCompetencyLinks(quizExerciseCreateDTO.competencyLinks());
+        quizExercise.setCategories(quizExerciseCreateDTO.categories());
+        quizExercise.setChannelName(quizExerciseCreateDTO.channelName());
+        quizExercise.setRandomizeQuestionOrder(quizExerciseCreateDTO.randomizeQuestionOrder());
+        quizExercise.setQuizMode(quizExerciseCreateDTO.quizMode());
+        quizExercise.setDuration(quizExerciseCreateDTO.duration());
+        return quizExercise;
     }
 }

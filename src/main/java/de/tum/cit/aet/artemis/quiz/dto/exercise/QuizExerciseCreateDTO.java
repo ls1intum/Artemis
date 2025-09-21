@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.dto.exercise;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotEmpty;
@@ -13,9 +14,10 @@ import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.dto.question.create.QuizQuestionCreateDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, DifficultyLevel difficulty,
         @NotNull ExerciseMode mode, @NotNull IncludedInOverallScore includedInOverallScore, Set<CompetencyExerciseLink> competencyLinks, Set<String> categories,
-        @NotNull String channelName, Boolean randomizeQuestionOrder, @NotNull QuizMode quizMode, int duration) {
+        @NotNull String channelName, boolean randomizeQuestionOrder, @NotNull QuizMode quizMode, int duration, @NotEmpty List<? extends QuizQuestionCreateDTO> questions) {
 }
