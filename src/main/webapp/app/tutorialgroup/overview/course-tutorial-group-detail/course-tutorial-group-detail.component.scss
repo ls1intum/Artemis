@@ -128,18 +128,18 @@
         width: 20%;
         padding-top: 0;
         padding-bottom: 1rem;
-        border-bottom: 1px solid var(--border-color) !important;
+        border-bottom: 1px solid var(--border-color);
         white-space: normal;
-        word-break: break-word;
+        overflow-wrap: break-word;
     }
 
     td {
         width: 20%;
         padding-top: 1rem;
         padding-bottom: 1rem;
-        border-bottom: 1px solid var(--border-color) !important;
+        border-bottom: 1px solid var(--border-color);
         white-space: normal;
-        word-break: break-word;
+        overflow-wrap: break-word;
     }
 
     .changeable-session-property {

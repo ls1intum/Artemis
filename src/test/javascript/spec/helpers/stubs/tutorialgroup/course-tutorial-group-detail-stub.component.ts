@@ -5,7 +5,6 @@ import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/t
 @Component({
     selector: 'jhi-course-tutorial-group-detail',
     template: '',
-    standalone: true,
 })
 export class CourseTutorialGroupDetailStubComponent {
     course = input.required<Course>();

@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.Tutorial
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.TutorialGroupUnassignedNotification;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -61,6 +62,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupRegistrationApi;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
@@ -187,10 +189,9 @@ public class TutorialGroupResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        boolean isAdmin = authorizationCheckService.isAdmin(user);
-        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
+        boolean isAdminOrInstructor = isAdminOrInstructorOfCourse(user, course);
         // ToDo: Optimization Idea: Do not send all registered student information but just the number in a DTO
-        var tutorialGroups = tutorialGroupService.findAllForCourse(course, user, isAdmin, isAtLeastInstructor);
+        var tutorialGroups = tutorialGroupService.findAllForCourse(course, user, isAdminOrInstructor);
         return ResponseEntity.ok(new ArrayList<>(tutorialGroups));
     }
 
@@ -202,15 +203,13 @@ public class TutorialGroupResource {
      * @return ResponseEntity with status 200 (OK) and with body the tutorial group
      */
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<TutorialGroup> getOneOfCourse(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        boolean isAdmin = authorizationCheckService.isAdmin(user);
-        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-        var tutorialGroup = tutorialGroupService.getOneOfCourse(course, tutorialGroupId, user, isAdmin, isAtLeastInstructor);
+        boolean isAdminOrInstructor = isAdminOrInstructorOfCourse(user, course);
+        var tutorialGroup = tutorialGroupService.getOneOfCourse(course, tutorialGroupId, user, isAdminOrInstructor);
         return ResponseEntity.ok().body(tutorialGroup);
     }
 
@@ -226,17 +225,15 @@ public class TutorialGroupResource {
      * @throws InternalServerErrorException {@code 500 (Internal Server Error)} if no time zone is set for the course
      */
     @GetMapping("courses/{courseId}/tutorial-group-detail/{tutorialGroupId}")
-    @EnforceAtLeastStudent
-    public ResponseEntity<TutorialGroupDetailGroupDTO> getTutorialGroupDetailGroupDTO(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<TutorialGroupDetailGroupDTO> getTutorialGroupDetailGroupDTO(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
-        var course = courseRepository.findByIdElseThrow(courseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        String timeZoneString = course.getTimeZone();
-        if (timeZoneString == null) {
+        // TODO: only retrieve timeZone
+        Optional<String> timeZoneString = courseRepository.getTimeZoneOfCourseById(courseId);
+        if (timeZoneString.isEmpty()) {
             throw new InternalServerErrorException("The course of the tutorial group has an invalid timezone value. This should never happen when tutorial groups exist.");
         }
-        ZoneId timeZone = ZoneId.of(timeZoneString);
+        ZoneId timeZone = ZoneId.of(timeZoneString.get());
         var groupDto = tutorialGroupService.getTutorialGroupDetailGroupDTO(tutorialGroupId, courseId, timeZone);
         return ResponseEntity.ok().body(groupDto);
     }
@@ -455,10 +452,9 @@ public class TutorialGroupResource {
         log.debug("REST request to deregister {} student from tutorial group : {}", studentLogin, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
-        var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
-        boolean isAdmin = authorizationCheckService.isAdmin(responsibleUser);
-        boolean isInstructor = authorizationCheckService.isAtLeastInstructorInCourse(tutorialGroupFromDatabase.getCourse(), responsibleUser);
-        tutorialGroupService.isAllowedToChangeRegistrationsOfTutorialGroup(tutorialGroupFromDatabase, responsibleUser, isAdmin, isInstructor);
+
+        var responsibleUser = getUserAndCheckWhetherHeIsAllowedToChangeRegistration(tutorialGroupFromDatabase);
+
         User studentToDeregister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
         tutorialGroupService.deregisterStudent(studentToDeregister, tutorialGroupFromDatabase, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
         return ResponseEntity.noContent().build();
@@ -478,10 +474,9 @@ public class TutorialGroupResource {
         log.debug("REST request to register {} student to tutorial group : {}", studentLogin, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
-        var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
-        boolean isAdmin = authorizationCheckService.isAdmin(responsibleUser);
-        boolean isInstructor = authorizationCheckService.isAtLeastInstructorInCourse(tutorialGroupFromDatabase.getCourse(), responsibleUser);
-        tutorialGroupService.isAllowedToChangeRegistrationsOfTutorialGroup(tutorialGroupFromDatabase, responsibleUser, isAdmin, isInstructor);
+
+        User responsibleUser = getUserAndCheckWhetherHeIsAllowedToChangeRegistration(tutorialGroupFromDatabase);
+
         User userToRegister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
         if (!userToRegister.getGroups().contains(tutorialGroupFromDatabase.getCourse().getStudentGroupName())) {
             throw new BadRequestAlertException("The user is not a student of the course", ENTITY_NAME, "userNotPartOfCourse");
@@ -599,11 +594,10 @@ public class TutorialGroupResource {
         log.debug("REST request to export TutorialGroups to CSV for course: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        boolean isAdmin = authorizationCheckService.isAdmin(user);
-        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
+        boolean isAdminOrInstructor = isAdminOrInstructorOfCourse(user, course);
         String csvContent;
         try {
-            csvContent = tutorialGroupService.exportTutorialGroupsToCSV(course, user, isAdmin, isAtLeastInstructor, fields);
+            csvContent = tutorialGroupService.exportTutorialGroupsToCSV(course, user, isAdminOrInstructor, fields);
         }
         catch (IOException e) {
             throw new BadRequestException("Error occurred while exporting tutorial groups", e);
@@ -657,6 +651,17 @@ public class TutorialGroupResource {
             potentiallyInterestedUsers = Stream.concat(potentiallyInterestedUsers, Stream.of(tutorialGroup.getTeachingAssistant()));
         }
         return potentiallyInterestedUsers.filter(user -> StringUtils.hasText(user.getEmail())).collect(Collectors.toSet());
+    }
+
+    private boolean isAdminOrInstructorOfCourse(User user, Course course) {
+        return authorizationCheckService.isAdmin(user) || authorizationCheckService.isAtLeastInstructorInCourse(course, user);
+    }
+
+    private User getUserAndCheckWhetherHeIsAllowedToChangeRegistration(TutorialGroup tutorialGroup) {
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isAdminOrInstructor = authorizationCheckService.isAdmin(user) || authorizationCheckService.isAtLeastInstructorInCourse(tutorialGroup.getCourse(), user);
+        tutorialGroupService.isAllowedToChangeRegistrationsOfTutorialGroup(tutorialGroup, user, isAdminOrInstructor);
+        return user;
     }
 
     /**

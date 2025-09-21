@@ -56,6 +56,17 @@ type ListOption = 'all-sessions' | 'future-sessions';
     styleUrl: './course-tutorial-group-detail.component.scss',
 })
 export class CourseTutorialGroupDetailComponent {
+    protected readonly faFlag = faFlag;
+    protected readonly faUsers = faUsers;
+    protected readonly faTag = faTag;
+    protected readonly faCircleExclamation = faCircleExclamation;
+    protected readonly faCalendar = faCalendar;
+    protected readonly faClock = faClock;
+    protected readonly faMapPin = faMapPin;
+    protected readonly faBuildingColumns = faBuildingColumns;
+    protected readonly faQuestion = faQuestion;
+    protected readonly faCheck = faCheck;
+
     private translateService = inject(TranslateService);
     private oneToOneChatService = inject(OneToOneChatService);
     private alertService = inject(AlertService);
@@ -89,17 +100,6 @@ export class CourseTutorialGroupDetailComponent {
     messagingEnabled = computed<boolean>(() => isMessagingEnabled(this.course()));
     tutorChatLink = computed(() => this.computeTutorChatLink(this.course().id, this.tutorialGroup().tutorChatId));
     groupChannelLink = computed(() => this.computeGroupChannelLink(this.course().id, this.tutorialGroup().groupChannelId));
-
-    readonly faFlag = faFlag;
-    readonly faUsers = faUsers;
-    readonly faTag = faTag;
-    readonly faCircleExclamation = faCircleExclamation;
-    readonly faCalendar = faCalendar;
-    readonly faClock = faClock;
-    readonly faMapPin = faMapPin;
-    readonly faBuildingColumns = faBuildingColumns;
-    readonly faQuestion = faQuestion;
-    readonly faCheck = faCheck;
 
     constructor() {
         effect(() => {

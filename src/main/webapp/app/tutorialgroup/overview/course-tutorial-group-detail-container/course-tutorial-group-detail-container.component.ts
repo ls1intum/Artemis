@@ -15,7 +15,6 @@ import { CourseTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/c
 @Component({
     selector: 'jhi-course-tutorial-group-detail-container',
     templateUrl: './course-tutorial-group-detail-container.component.html',
-    styleUrls: ['./course-tutorial-group-detail-container.component.scss'],
     imports: [LoadingIndicatorContainerComponent, CourseTutorialGroupDetailComponent, AsyncPipe],
 })
 export class CourseTutorialGroupDetailContainerComponent implements OnInit, OnDestroy {
@@ -24,7 +23,7 @@ export class CourseTutorialGroupDetailContainerComponent implements OnInit, OnDe
     private alertService = inject(AlertService);
     private courseManagementService = inject(CourseManagementService);
 
-    isLoading$ = new BehaviorSubject<boolean>(false);
+    isLoading = new BehaviorSubject<boolean>(false);
     tutorialGroup?: TutorialGroupDetailGroupDTO;
     course?: Course;
     private paramsSubscription: Subscription;
@@ -36,7 +35,7 @@ export class CourseTutorialGroupDetailContainerComponent implements OnInit, OnDe
             this.paramsSubscription = combineLatest([courseIdParams$, tutorialGroupIdParams$])
                 .pipe(
                     switchMap(([courseIdParams, tutorialGroupIdParams]) => {
-                        this.isLoading$.next(true);
+                        this.isLoading.next(true);
                         const tutorialGroupId = parseInt(tutorialGroupIdParams.tutorialGroupId, 10);
                         const courseId = parseInt(courseIdParams.courseId, 10);
                         return forkJoin({
@@ -46,11 +45,11 @@ export class CourseTutorialGroupDetailContainerComponent implements OnInit, OnDe
                     }),
                     tap({
                         next: () => {
-                            this.isLoading$.next(false);
+                            this.isLoading.next(false);
                         },
                     }),
                     catchError((error: HttpErrorResponse) => {
-                        this.isLoading$.next(false);
+                        this.isLoading.next(false);
                         onError(this.alertService, error);
                         throw error;
                     }),

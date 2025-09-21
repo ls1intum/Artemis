@@ -34,3 +34,14 @@ export class TutorialGroupDetailSessionDTO {
         public attendanceCount?: number,
     ) {}
 }
+
+export interface RawTutorialGroupDetailSessionDTO {
+    start: string;
+    end: string;
+    location: string;
+    isCancelled: boolean;
+    locationChanged: boolean;
+    timeChanged: boolean;
+    dateChanged: boolean;
+    attendanceCount?: number;
+}

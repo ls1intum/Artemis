@@ -184,7 +184,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @ValueSource(booleans = { true, false })
     void getAllForCourse_asStudent_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
-        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, false, loadFromService, TEST_PREFIX + "student1");
+        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, loadFromService, TEST_PREFIX + "student1");
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
         for (var tutorialGroup : tutorialGroupsOfCourse) { // private information hidden
             verifyPrivateInformationIsHidden(tutorialGroup);
@@ -195,7 +195,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     @ValueSource(booleans = { true, false })
     void getAllForCourse_asEditor_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
-        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, false, loadFromService, TEST_PREFIX + "editor1");
+        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, loadFromService, TEST_PREFIX + "editor1");
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
         for (var tutorialGroup : tutorialGroupsOfCourse) { // private information hidden
             verifyPrivateInformationIsHidden(tutorialGroup);
@@ -206,7 +206,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAllForCourse_asTutorOfOneGroup_shouldShowPrivateInformationForOwnGroup(boolean loadFromService) throws Exception {
-        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, false, loadFromService, TEST_PREFIX + "tutor1");
+        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, loadFromService, TEST_PREFIX + "tutor1");
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).contains(exampleOneTutorialGroupId, exampleTwoTutorialGroupId);
         var groupWhereTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(exampleOneTutorialGroupId)).findFirst().orElseThrow();
         verifyPrivateInformationIsShown(groupWhereTutor);
@@ -219,7 +219,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAllForCourse_asInstructorOfCourse_shouldShowPrivateInformation(boolean loadFromService) throws Exception {
-        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(false, true, loadFromService, TEST_PREFIX + "instructor1");
+        var tutorialGroupsOfCourse = getTutorialGroupsOfExampleCourse(true, loadFromService, TEST_PREFIX + "instructor1");
         assertThat(tutorialGroupsOfCourse).hasSize(2);
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
                 exampleTwoTutorialGroupId);
@@ -233,35 +233,35 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getOneOfCourse_asStudent_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
-        oneOfCoursePrivateInfoHiddenTest(loadFromService, TEST_PREFIX + "student1", false, false);
+        oneOfCoursePrivateInfoHiddenTest(loadFromService, TEST_PREFIX + "student1", false);
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void getOneOfCourse_asEditor_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
-        oneOfCoursePrivateInfoHiddenTest(loadFromService, TEST_PREFIX + "editor1", false, false);
+        oneOfCoursePrivateInfoHiddenTest(loadFromService, TEST_PREFIX + "editor1", false);
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getOneOfCourse_asTutorOfGroup_shouldShowPrivateInformation(boolean loadFromService) throws Exception {
-        oneOfCoursePrivateInfoShownTest(loadFromService, TEST_PREFIX + "tutor1", false, false);
+        oneOfCoursePrivateInfoShownTest(loadFromService, TEST_PREFIX + "tutor1", false);
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getOneOfCourse_asInstructor_shouldShowPrivateInformation(boolean loadFromService) throws Exception {
-        oneOfCoursePrivateInfoShownTest(loadFromService, TEST_PREFIX + "instructor1", false, true);
+        oneOfCoursePrivateInfoShownTest(loadFromService, TEST_PREFIX + "instructor1", true);
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void getOneOfCourse_asNotTutorOfGroup_shouldHidePrivateInformation(boolean loadFromService) throws Exception {
-        oneOfCoursePrivateInfoHiddenTest(loadFromService, TEST_PREFIX + "tutor2", false, false);
+        oneOfCoursePrivateInfoHiddenTest(loadFromService, TEST_PREFIX + "tutor2", false);
     }
 
     @Test
@@ -934,34 +934,34 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertThat(tutorialGroup.getCourse()).isNotNull();
     }
 
-    private void oneOfCoursePrivateInfoHiddenTest(boolean loadFromService, String userLogin, boolean isAdmin, boolean isInstructor) throws Exception {
-        var tutorialGroup = getTutorialGroupOfExampleCourse(loadFromService, userLogin, isAdmin, isInstructor);
+    private void oneOfCoursePrivateInfoHiddenTest(boolean loadFromService, String userLogin, boolean isAdminOrInstructor) throws Exception {
+        var tutorialGroup = getTutorialGroupOfExampleCourse(loadFromService, userLogin, isAdminOrInstructor);
         assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
         verifyPrivateInformationIsHidden(tutorialGroup);
     }
 
-    private void oneOfCoursePrivateInfoShownTest(boolean loadFromService, String userLogin, boolean isAdmin, boolean isInstructor) throws Exception {
-        var tutorialGroup = getTutorialGroupOfExampleCourse(loadFromService, userLogin, isAdmin, isInstructor);
+    private void oneOfCoursePrivateInfoShownTest(boolean loadFromService, String userLogin, boolean isAdminOrInstructor) throws Exception {
+        var tutorialGroup = getTutorialGroupOfExampleCourse(loadFromService, userLogin, isAdminOrInstructor);
         assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
         verifyPrivateInformationIsShown(tutorialGroup);
     }
 
-    private TutorialGroup getTutorialGroupOfExampleCourse(boolean loadFromService, String userLogin, boolean isAdmin, boolean isInstructor) throws Exception {
+    private TutorialGroup getTutorialGroupOfExampleCourse(boolean loadFromService, String userLogin, boolean isAdminOrInstructor) throws Exception {
         if (loadFromService) {
             var user = userRepository.findOneByLogin(userLogin).orElseThrow();
             var course = courseRepository.findById(exampleCourseId).orElseThrow();
-            return tutorialGroupService.getOneOfCourse(course, exampleOneTutorialGroupId, user, isAdmin, isInstructor);
+            return tutorialGroupService.getOneOfCourse(course, exampleOneTutorialGroupId, user, isAdminOrInstructor);
         }
         else {
             return request.get("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
         }
     }
 
-    private List<TutorialGroup> getTutorialGroupsOfExampleCourse(boolean isAdmin, boolean isInstructor, boolean loadFromService, String userLogin) throws Exception {
+    private List<TutorialGroup> getTutorialGroupsOfExampleCourse(boolean isAdminOrInstructor, boolean loadFromService, String userLogin) throws Exception {
         if (loadFromService) {
             var user = userRepository.findOneByLogin(userLogin).orElseThrow();
             var course = courseRepository.findById(exampleCourseId).orElseThrow();
-            return tutorialGroupService.findAllForCourse(course, user, isAdmin, isInstructor).stream().toList();
+            return tutorialGroupService.findAllForCourse(course, user, isAdminOrInstructor).stream().toList();
         }
         else {
             return request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
@@ -1290,10 +1290,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void shouldReturnNotFoundIfCourseDoesNotExist() throws Exception {
+        void shouldReturnForbiddenIfCourseDoesNotExist() throws Exception {
             String nonExistentCourseId = "-1";
             String url = "/api/tutorialgroup/courses/" + nonExistentCourseId + "/tutorial-group-detail/" + exampleOneTutorialGroupId;
-            request.get(url, HttpStatus.NOT_FOUND, String.class);
+            request.get(url, HttpStatus.FORBIDDEN, String.class);
         }
 
         @Test

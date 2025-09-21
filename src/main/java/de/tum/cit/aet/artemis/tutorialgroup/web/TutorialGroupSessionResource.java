@@ -41,10 +41,10 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.Pair;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
@@ -111,18 +111,15 @@ public class TutorialGroupSessionResource {
      * @return ResponseEntity with status 200 (OK) and with body the tutorial group session
      */
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<TutorialGroupSession> getOneOfTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
         log.debug("REST request to get session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var session = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         Course course = session.getTutorialGroup().getCourse();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        boolean isAdmin = authorizationCheckService.isAdmin(user);
-        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-
+        boolean isAdminOrInstructor = authorizationCheckService.isAdmin(user) || authorizationCheckService.isAtLeastInstructorInCourse(course, user);
         checkEntityIdMatchesPathIds(session, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
-        if (!tutorialGroupService.userHasManagingRightsForTutorialGroup(session.getTutorialGroup(), user, isAdmin, isAtLeastInstructor)) {
+        if (!tutorialGroupService.userHasManagingRightsForTutorialGroup(session.getTutorialGroup(), user, isAdminOrInstructor)) {
             session.hidePrivacySensitiveInformation();
         }
         return ResponseEntity.ok().body(TutorialGroupSession.preventCircularJsonConversion(session));
@@ -147,11 +144,9 @@ public class TutorialGroupSessionResource {
         var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        boolean isAdmin = authorizationCheckService.isAdmin(user);
-        boolean isInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-        tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToUpdate.getTutorialGroup(), user, isAdmin, isInstructor);
+        Pair<User, Boolean> userAndIsAdminOrInstructorPair = getUserAndCheckWhetherHeIsAdminOrInstructor(courseId);
+        tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToUpdate.getTutorialGroup(), userAndIsAdminOrInstructorPair.first(),
+                userAndIsAdminOrInstructorPair.second());
 
         TutorialGroupsConfiguration configuration = validateTutorialGroupConfiguration(courseId);
         var updatedSession = tutorialGroupSessionDTO.toEntity(configuration);
@@ -178,6 +173,13 @@ public class TutorialGroupSessionResource {
         return ResponseEntity.ok(TutorialGroupSession.preventCircularJsonConversion(result));
     }
 
+    private Pair<User, Boolean> getUserAndCheckWhetherHeIsAdminOrInstructor(long courseId) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        boolean isAdminOrInstructor = authorizationCheckService.isAdmin(user) || authorizationCheckService.isAtLeastInstructorInCourse(course, user);
+        return new Pair<>(user, isAdminOrInstructor);
+    }
+
     /**
      * PATCH /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId/attendance-count : Updates the attendance count of a tutorial group session
      *
@@ -195,11 +197,9 @@ public class TutorialGroupSessionResource {
         var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        boolean isAdmin = authorizationCheckService.isAdmin(user);
-        boolean isInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-        tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToUpdate.getTutorialGroup(), user, isAdmin, isInstructor);
+        Pair<User, Boolean> userAndIsAdminOrInstructorPair = getUserAndCheckWhetherHeIsAdminOrInstructor(courseId);
+        tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToUpdate.getTutorialGroup(), userAndIsAdminOrInstructorPair.first(),
+                userAndIsAdminOrInstructorPair.second());
 
         sessionToUpdate.setAttendanceCount(attendanceCount);
         var result = tutorialGroupSessionRepository.save(sessionToUpdate);
@@ -221,11 +221,9 @@ public class TutorialGroupSessionResource {
         var sessionFromDatabase = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         checkEntityIdMatchesPathIds(sessionFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        boolean isAdmin = authorizationCheckService.isAdmin(user);
-        boolean isInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-        tutorialGroupService.isAllowedToDeleteTutorialGroup(sessionFromDatabase.getTutorialGroup(), user, isAdmin, isInstructor);
+        Pair<User, Boolean> userAndIsAdminOrInstructorPair = getUserAndCheckWhetherHeIsAdminOrInstructor(courseId);
+        tutorialGroupService.isAllowedToDeleteTutorialGroup(sessionFromDatabase.getTutorialGroup(), userAndIsAdminOrInstructorPair.first(),
+                userAndIsAdminOrInstructorPair.second());
 
         tutorialGroupSessionRepository.deleteById(sessionId);
         return ResponseEntity.noContent().build();
@@ -247,11 +245,8 @@ public class TutorialGroupSessionResource {
         tutorialGroupSessionDTO.validityCheck();
 
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(tutorialGroupId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        boolean isAdmin = authorizationCheckService.isAdmin(user);
-        boolean isInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-        tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(tutorialGroup, user, isAdmin, isInstructor);
+        Pair<User, Boolean> userAndIsAdminOrInstructorPair = getUserAndCheckWhetherHeIsAdminOrInstructor(courseId);
+        tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(tutorialGroup, userAndIsAdminOrInstructorPair.first(), userAndIsAdminOrInstructorPair.second());
 
         TutorialGroupsConfiguration configuration = validateTutorialGroupConfiguration(courseId);
         TutorialGroupSession newSession = tutorialGroupSessionDTO.toEntity(configuration);
@@ -298,11 +293,9 @@ public class TutorialGroupSessionResource {
         }
         checkEntityIdMatchesPathIds(sessionToCancel, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.of(sessionId));
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        boolean isAdmin = authorizationCheckService.isAdmin(user);
-        boolean isInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-        tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToCancel.getTutorialGroup(), user, isAdmin, isInstructor);
+        Pair<User, Boolean> userAndIsAdminOrInstructorPair = getUserAndCheckWhetherHeIsAdminOrInstructor(courseId);
+        tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToCancel.getTutorialGroup(), userAndIsAdminOrInstructorPair.first(),
+                userAndIsAdminOrInstructorPair.second());
 
         sessionToCancel.setStatus(TutorialGroupSessionStatus.CANCELLED);
         if (tutorialGroupStatusDTO != null && tutorialGroupStatusDTO.status_explanation() != null && !tutorialGroupStatusDTO.status_explanation().trim().isEmpty()) {
@@ -330,11 +323,9 @@ public class TutorialGroupSessionResource {
         }
         checkEntityIdMatchesPathIds(sessionToActivate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        boolean isAdmin = authorizationCheckService.isAdmin(user);
-        boolean isInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-        tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToActivate.getTutorialGroup(), user, isAdmin, isInstructor);
+        Pair<User, Boolean> userAndIsAdminOrInstructorPair = getUserAndCheckWhetherHeIsAdminOrInstructor(courseId);
+        tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToActivate.getTutorialGroup(), userAndIsAdminOrInstructorPair.first(),
+                userAndIsAdminOrInstructorPair.second());
 
         sessionToActivate.setStatus(TutorialGroupSessionStatus.ACTIVE);
         sessionToActivate.setStatusExplanation(null);

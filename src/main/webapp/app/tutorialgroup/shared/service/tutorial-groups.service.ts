@@ -1,17 +1,16 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { TutorialGroup, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { RawTutorialGroupDetailGroupDTO, TutorialGroup, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Observable } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
-import { TutorialGroupDetailSessionDTO, TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
 import { Student } from 'app/openapi/model/student';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
 import { TutorialGroupExport } from 'app/openapi/model/tutorialGroupExport';
-import dayjs from 'dayjs/esm';
 
 type EntityResponseType = HttpResponse<TutorialGroup>;
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
@@ -46,37 +45,9 @@ export class TutorialGroupsService {
     }
 
     getTutorialGroupDetailGroupDTO(courseId: number, tutorialGroupId: number) {
-        return this.httpClient.get<any>(`${this.resourceURL}/courses/${courseId}/tutorial-group-detail/${tutorialGroupId}`).pipe(
-            map(
-                (response) =>
-                    new TutorialGroupDetailGroupDTO(
-                        response.id,
-                        response.title,
-                        response.language,
-                        response.isOnline,
-                        (response.sessions ?? []).map(
-                            (session: any) =>
-                                new TutorialGroupDetailSessionDTO(
-                                    dayjs(session.start),
-                                    dayjs(session.end),
-                                    session.location,
-                                    session.isCancelled,
-                                    session.locationChanged,
-                                    session.timeChanged,
-                                    session.dateChanged,
-                                    session.attendanceCount,
-                                ),
-                        ),
-                        response.teachingAssistantName,
-                        response.teachingAssistantLogin,
-                        response.teachingAssistantImageUrl,
-                        response.capacity,
-                        response.campus,
-                        response.groupChannelId,
-                        response.tutorChatId,
-                    ),
-            ),
-        );
+        return this.httpClient
+            .get<RawTutorialGroupDetailGroupDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-group-detail/${tutorialGroupId}`)
+            .pipe(map((rawDto) => new TutorialGroupDetailGroupDTO(rawDto)));
     }
 
     create(tutorialGroup: TutorialGroup, courseId: number): Observable<EntityResponseType> {

@@ -11,12 +11,15 @@
     &.status-regular {
         background-color: var(--green);
     }
+
     &.status-cancelled {
         background-color: var(--danger);
     }
+
     &.status-rescheduled {
         background-color: var(--warning);
     }
+
     &.status-relocated {
         background-color: var(--warning);
     }

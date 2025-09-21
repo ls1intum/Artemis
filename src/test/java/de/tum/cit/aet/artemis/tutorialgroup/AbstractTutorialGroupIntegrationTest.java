@@ -318,27 +318,22 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         ZonedDateTime firstSessionEnd = ZonedDateTime.of(LocalDate.parse(schedule.getValidFromInclusive()), LocalTime.parse(schedule.getEndTime()),
                 ZoneId.of(course.getTimeZone()));
 
-        // create cancelled session
         TutorialGroupSession cancelledSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart, firstSessionEnd, schedule.getLocation(), null,
                 TutorialGroupSessionStatus.CANCELLED, tutorialGroup, schedule);
         sessions.add(cancelledSession);
 
-        // create relocated session
         TutorialGroupSession relocatedSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(1), firstSessionEnd.plusWeeks(1), "new room", null,
                 TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
         sessions.add(relocatedSession);
 
-        // create session with time change
         TutorialGroupSession changedTimeSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(2).plusHours(2),
                 firstSessionEnd.plusWeeks(2).plusHours(2), schedule.getLocation(), null, TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
         sessions.add(changedTimeSession);
 
-        // create session with date change
         TutorialGroupSession changedDateSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(3).plusDays(1),
                 firstSessionEnd.plusWeeks(3).plusDays(1), schedule.getLocation(), null, TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
         sessions.add(changedDateSession);
 
-        // create session with attendance count
         TutorialGroupSession attendanceCountSession = tutorialGroupUtilService.createTutorialGroupSession(firstSessionStart.plusWeeks(4), firstSessionEnd.plusWeeks(4),
                 schedule.getLocation(), 10, TutorialGroupSessionStatus.ACTIVE, tutorialGroup, schedule);
         sessions.add(attendanceCountSession);

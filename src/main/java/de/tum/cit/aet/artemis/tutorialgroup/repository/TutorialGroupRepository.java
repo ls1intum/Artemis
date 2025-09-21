@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
-import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupDetailGroupData;
+import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailGroupDTO;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
@@ -143,7 +143,7 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
     Optional<TutorialGroup> findByIdWithSessions(@Param("tutorialGroupId") long tutorialGroupId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupDetailGroupData(
+            SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailGroupDTO(
                 tutorialGroup.id,
                 tutorialGroup.title,
                 tutorialGroup.language,
@@ -164,7 +164,7 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
                 LEFT JOIN tutorialGroup.tutorialGroupSchedule schedule
             WHERE tutorialGroup.id = :tutorialGroupId AND tutorialGroup.course.id = :courseId
             """)
-    Optional<TutorialGroupDetailGroupData> getTutorialGroupDetailData(@Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId);
+    Optional<RawTutorialGroupDetailGroupDTO> getTutorialGroupDetailData(@Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId);
 
     default TutorialGroup findByIdWithSessionsElseThrow(long tutorialGroupId) {
         return getValueElseThrow(findByIdWithSessions(tutorialGroupId), tutorialGroupId);
