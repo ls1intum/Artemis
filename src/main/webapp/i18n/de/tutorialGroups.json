@@ -210,7 +210,7 @@
             },
             "configurationForm": {
                 "timeZoneInput": {
-                    "label": "Zeitzone",
+                    "label": "Übungsgruppen-Zeitzone",
                     "beta": "Die Zeitzone wird momentan nur in Verbindung mit dem Übungsgruppen-Feature verwendet. Sie hat momentan keinen Einfluss auf andere Bereiche von Artemis",
                     "changeWarning": "Die Zeitzone wurde geändert. Alle individuell erstellten Sitzungen und freien Tage werden gelöscht. In der neuen Zeitzone werden nur Sitzungen, die einem Zeitplan folgen neu erstellt. Soll das wirklich gemacht werden?",
                     "placeholder": "Wähle eine Zeitzone aus",

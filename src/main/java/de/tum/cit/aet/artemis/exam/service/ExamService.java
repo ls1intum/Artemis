@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
@@ -90,6 +91,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -314,67 +316,147 @@ public class ExamService {
     }
 
     /**
-     * Get one exam with exercise groups, exercises and additional details.
-     * Additional details are:
-     * - template and solution participation for programming exercises with latest submission and result
-     * - questions for quiz exercises
+     * Loads an {@link Exam} with its exercise groups, exercises, and exercise-specific details.
+     * <p>
+     * For quiz exercises, this also loads and attaches their {@link QuizQuestion}s.
+     * For programming exercises, this loads and attaches template/solution participations along with
+     * the latest {@link Result} for each participation's latest submission.
      *
-     * @param examId the id of the entity
-     * @return the exam with exercise groups and additional details
+     * @param examId the id of the exam
+     * @return the fully populated exam
+     * @throws EntityNotFoundException if the exam does not exist
      */
     private Exam findWithExerciseGroupsAndExercisesAndDetailsByIdElseThrow(long examId) {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+
         Set<QuizExercise> quizExercises = getAllExercisesForExamByType(exam, QuizExercise.class);
         Set<ProgrammingExercise> programmingExercises = getAllExercisesForExamByType(exam, ProgrammingExercise.class);
-        Set<Long> quizExerciseIds = quizExercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
-        Set<Long> programmingExerciseIds = programmingExercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
-        if (!quizExerciseIds.isEmpty()) {
-            Set<QuizQuestion> quizQuestions = quizQuestionRepository.findAllByExerciseIds(quizExerciseIds);
-            quizExercises.forEach(quizExercise -> quizExercise.setQuizQuestions(
-                    quizQuestions.stream().filter(quizQuestion -> quizQuestion.getExercise() != null && quizQuestion.getExercise().getId().equals(quizExercise.getId())).toList()));
-        }
-        if (!programmingExerciseIds.isEmpty()) {
-            Set<TemplateProgrammingExerciseParticipation> templateProgrammingExerciseParticipations = templateProgrammingExerciseParticipationRepository
-                    .findAllWithLatestSubmissionByExerciseIds(programmingExerciseIds);
-            Set<SolutionProgrammingExerciseParticipation> solutionProgrammingExerciseParticipations = solutionProgrammingExerciseParticipationRepository
-                    .findAllWithLatestSubmissionByExerciseIds(programmingExerciseIds);
 
-            programmingExercises.forEach(programmingExercise -> {
-                templateProgrammingExerciseParticipations.stream().filter(
-                        participation -> participation.getProgrammingExercise() != null && participation.getProgrammingExercise().getId().equals(programmingExercise.getId()))
-                        .findAny().ifPresent(programmingExercise::setTemplateParticipation);
-                solutionProgrammingExerciseParticipations.stream().filter(
-                        participation -> participation.getProgrammingExercise() != null && participation.getProgrammingExercise().getId().equals(programmingExercise.getId()))
-                        .findAny().ifPresent(programmingExercise::setSolutionParticipation);
-            });
-            Map<Long, Result> latestResultsForTemplateSubmissions = resultRepository
-                    .findLatestResultsByParticipationIds(templateProgrammingExerciseParticipations.stream().map(DomainObject::getId).collect(Collectors.toSet())).stream()
-                    .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1));
-            Map<Long, Result> latestResultsForSolutionSubmissions = resultRepository
-                    .findLatestResultsByParticipationIds(solutionProgrammingExerciseParticipations.stream().map(DomainObject::getId).collect(Collectors.toSet())).stream()
-                    .collect(Collectors.toMap(result -> result.getSubmission().getId(), result -> result, (r1, r2) -> r1));
+        populateQuizQuestions(quizExercises);
+        populateProgrammingExerciseParticipationsAndResults(programmingExercises);
 
-            programmingExercises.forEach(programmingExercise -> {
-                if (programmingExercise.getSolutionParticipation() != null) {
-                    programmingExercise.getSolutionParticipation().getSubmissions().forEach(submission -> {
-                        Result result = latestResultsForSolutionSubmissions.get(submission.getId());
-                        if (result != null) {
-                            submission.setResults(List.of(result));
-                        }
-                    });
-                }
-                if (programmingExercise.getTemplateParticipation() != null) {
-                    programmingExercise.getTemplateParticipation().getSubmissions().forEach(submission -> {
-                        Result result = latestResultsForTemplateSubmissions.get(submission.getId());
-                        if (result != null) {
-                            submission.setResults(List.of(result));
-                        }
-                    });
-                }
-            });
-
-        }
         return exam;
+    }
+
+    /**
+     * Loads all {@link QuizQuestion}s for the provided quiz exercises and attaches them
+     * to their respective {@link QuizExercise}.
+     *
+     * @param quizExercises the quiz exercises to enrich
+     */
+    private void populateQuizQuestions(Set<QuizExercise> quizExercises) {
+        if (quizExercises == null || quizExercises.isEmpty()) {
+            return;
+        }
+
+        Set<Long> quizExerciseIds = quizExercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
+
+        Set<QuizQuestion> quizQuestions = quizQuestionRepository.findAllByExerciseIds(quizExerciseIds);
+
+        Map<Long, List<QuizQuestion>> questionsByExerciseId = quizQuestions.stream().filter(q -> q.getExercise() != null && q.getExercise().getId() != null)
+                .collect(Collectors.groupingBy(q -> q.getExercise().getId()));
+
+        quizExercises.forEach(qe -> qe.setQuizQuestions(questionsByExerciseId.getOrDefault(qe.getId(), List.of())));
+    }
+
+    /**
+     * For each {@link ProgrammingExercise}:
+     * <ul>
+     * <li>Loads and attaches template and solution participations (with their latest submission).</li>
+     * <li>Loads the latest {@link Result} for each participation's latest submission and attaches it to the submission.</li>
+     * </ul>
+     *
+     * @param programmingExercises the programming exercises to enrich
+     */
+    private void populateProgrammingExerciseParticipationsAndResults(Set<ProgrammingExercise> programmingExercises) {
+        if (programmingExercises == null || programmingExercises.isEmpty()) {
+            return;
+        }
+
+        Set<Long> programmingExerciseIds = programmingExercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
+
+        Set<TemplateProgrammingExerciseParticipation> templateParticipations = templateProgrammingExerciseParticipationRepository
+                .findAllWithLatestSubmissionByExerciseIds(programmingExerciseIds);
+
+        Set<SolutionProgrammingExerciseParticipation> solutionParticipations = solutionProgrammingExerciseParticipationRepository
+                .findAllWithLatestSubmissionByExerciseIds(programmingExerciseIds);
+
+        attachParticipationsToExercises(programmingExercises, templateParticipations, solutionParticipations);
+
+        Map<Long, Result> latestTemplateResults = loadLatestResultsBySubmissionIdForParticipations(templateParticipations);
+        Map<Long, Result> latestSolutionResults = loadLatestResultsBySubmissionIdForParticipations(solutionParticipations);
+
+        attachResultsToSubmissions(programmingExercises, latestTemplateResults, latestSolutionResults);
+    }
+
+    /**
+     * Attaches template and solution participations to their corresponding programming exercises.
+     */
+    private void attachParticipationsToExercises(Set<ProgrammingExercise> programmingExercises, Set<TemplateProgrammingExerciseParticipation> templateParticipations,
+            Set<SolutionProgrammingExerciseParticipation> solutionParticipations) {
+        Map<Long, TemplateProgrammingExerciseParticipation> templateByExerciseId = templateParticipations.stream()
+                .filter(templateProgrammingExerciseParticipation -> templateProgrammingExerciseParticipation.getProgrammingExercise() != null
+                        && templateProgrammingExerciseParticipation.getProgrammingExercise().getId() != null)
+                .collect(Collectors.toMap(templateProgrammingExerciseParticipation -> templateProgrammingExerciseParticipation.getProgrammingExercise().getId(),
+                        Function.identity(), (a, b) -> a));
+
+        Map<Long, SolutionProgrammingExerciseParticipation> solutionByExerciseId = solutionParticipations.stream()
+                .filter(solutionProgrammingExerciseParticipation -> solutionProgrammingExerciseParticipation.getProgrammingExercise() != null
+                        && solutionProgrammingExerciseParticipation.getProgrammingExercise().getId() != null)
+                .collect(Collectors.toMap(solutionProgrammingExerciseParticipation -> solutionProgrammingExerciseParticipation.getProgrammingExercise().getId(),
+                        Function.identity(), (a, b) -> a));
+
+        programmingExercises.forEach(exercise -> {
+            if (templateByExerciseId.containsKey(exercise.getId())) {
+                exercise.setTemplateParticipation(templateByExerciseId.get(exercise.getId()));
+            }
+            if (solutionByExerciseId.containsKey(exercise.getId())) {
+                exercise.setSolutionParticipation(solutionByExerciseId.get(exercise.getId()));
+            }
+        });
+    }
+
+    /**
+     * Attaches the latest results to submissions of both template and solution participations.
+     */
+    private void attachResultsToSubmissions(Set<ProgrammingExercise> programmingExercises, Map<Long, Result> latestTemplateResults, Map<Long, Result> latestSolutionResults) {
+        programmingExercises.forEach(ex -> {
+            if (ex.getSolutionParticipation() != null && ex.getSolutionParticipation().getSubmissions() != null) {
+                ex.getSolutionParticipation().getSubmissions().forEach(sub -> {
+                    Result result = latestSolutionResults.get(sub.getId());
+                    if (result != null) {
+                        sub.setResults(List.of(result));
+                    }
+                });
+            }
+            if (ex.getTemplateParticipation() != null && ex.getTemplateParticipation().getSubmissions() != null) {
+                ex.getTemplateParticipation().getSubmissions().forEach(sub -> {
+                    Result result = latestTemplateResults.get(sub.getId());
+                    if (result != null) {
+                        sub.setResults(List.of(result));
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Loads the latest {@link Result}s for the given set of participations and returns a map keyed by
+     * the corresponding submission id.
+     *
+     * @param participations the participations whose latest results should be loaded
+     * @return map of submission id -&gt; latest result
+     */
+    private Map<Long, Result> loadLatestResultsBySubmissionIdForParticipations(Set<? extends Participation> participations) {
+        if (participations == null || participations.isEmpty()) {
+            return Map.of();
+        }
+
+        Set<Long> participationIds = participations.stream().map(DomainObject::getId).collect(Collectors.toSet());
+
+        return resultRepository.findLatestResultsByParticipationIds(participationIds).stream()
+                .filter(result -> result.getSubmission() != null && result.getSubmission().getId() != null)
+                .collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity(), (r1, r2) -> r1));
     }
 
     /**
