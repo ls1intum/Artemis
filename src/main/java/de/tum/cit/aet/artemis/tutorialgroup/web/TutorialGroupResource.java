@@ -228,7 +228,6 @@ public class TutorialGroupResource {
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<TutorialGroupDetailGroupDTO> getTutorialGroupDetailGroupDTO(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
-        // TODO: only retrieve timeZone
         Optional<String> timeZoneString = courseRepository.getTimeZoneOfCourseById(courseId);
         if (timeZoneString.isEmpty()) {
             throw new InternalServerErrorException("The course of the tutorial group has an invalid timezone value. This should never happen when tutorial groups exist.");
