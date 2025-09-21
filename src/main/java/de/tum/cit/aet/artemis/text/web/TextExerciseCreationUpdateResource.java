@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -81,13 +80,10 @@ public class TextExerciseCreationUpdateResource {
 
     private final ParticipationRepository participationRepository;
 
-    private final ChannelRepository channelRepository;
-
     public TextExerciseCreationUpdateResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
-            ChannelRepository channelRepository, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi,
-            Optional<SlideApi> slideApi) {
+            Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<SlideApi> slideApi) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -97,7 +93,6 @@ public class TextExerciseCreationUpdateResource {
         this.exerciseService = exerciseService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.channelService = channelService;
-        this.channelRepository = channelRepository;
         this.athenaApi = athenaApi;
         this.competencyProgressApi = competencyProgressApi;
         this.irisSettingsApi = irisSettingsApi;
@@ -243,9 +238,5 @@ public class TextExerciseCreationUpdateResource {
         exerciseService.reEvaluateExercise(textExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
         return updateTextExercise(textExercise, null);
-    }
-
-    public ChannelRepository getChannelRepository() {
-        return channelRepository;
     }
 }
