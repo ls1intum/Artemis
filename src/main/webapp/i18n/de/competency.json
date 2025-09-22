@@ -48,7 +48,7 @@
                 "generateButton": "Kompetenzen generieren",
                 "suggestionsButton": "KI-Vorschläge",
                 "empty": "Es existieren keine Kompetenzen für diesen Kurs",
-                "noSuggestions": "Keine Kompetenzvorschläge gefunden. Versuchen Sie, die Kursbeschreibung zu aktualisieren, um bessere Vorschläge zu erhalten.",
+                "noSuggestions": "Keine Kompetenzvorschläge gefunden. Versuche, die Kursbeschreibung zu aktualisieren, um bessere Vorschläge zu erhalten.",
                 "deleteRelationModalTitle": "Löschen bestätigen",
                 "deleteRelationModalText": "Bist du sicher, dass du die Relation zwischen \"{{titleTail}}\" und \"{{titleHead}}\" löschen willst?"
             },
@@ -136,7 +136,7 @@
                 }
             },
             "suggestion": {
-                "tooltip": "Diese Kompetenz wird von der KI auf Grundlage der Übungsbeschreibung vorgeschlagen."
+                "tooltip": "Diese Kompetenz wird von der KI auf Grundlage der Aufgabenstellung vorgeschlagen."
             },
             "competencyCard": {
                 "connectedLectureUnits": "Verbundene Vorlesungseinheiten",
@@ -304,7 +304,11 @@
                     "title": "Vorschläge",
                     "empty": "Keine Vorschläge",
                     "aiBadge": "KI",
-                    "aiTooltip": "Von KI vorgeschlagen"
+                    "aiTooltip": "Von KI vorgeschlagen",
+                    "aiSuggestionsTitle": "KI-Vorschläge",
+                    "addSuggestions": "Vorschläge hinzufügen ({{count}})",
+                    "alreadyExists": "(bereits vorhanden)",
+                    "getAiSuggestionsTooltip": "KI-Vorschläge abrufen"
                 }
             },
             "featureExplanation": {

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
@@ -8,6 +9,7 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilServic
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.PrerequisiteUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.StandardizedCompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
 import de.tum.cit.aet.artemis.atlas.learningpath.util.LearningPathUtilService;
 import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
@@ -177,9 +179,9 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
     protected TeamUtilService teamUtilService;
 
     @Autowired
-    protected de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider atlasMLRequestMockProvider;
+    protected AtlasMLRequestMockProvider atlasMLRequestMockProvider;
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setupAtlasMLMocks() {
         atlasMLRequestMockProvider.enableMockingOfRequests();
         atlasMLRequestMockProvider.mockSaveCompetenciesAny();

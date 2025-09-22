@@ -46,7 +46,7 @@
             type="button"
             (click)="fetchSuggestions()"
             [disabled]="isLoadingSuggestions()"
-            ngbTooltip="Get AI Suggestions"
+            [ngbTooltip]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip' | artemisTranslate"
             [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
         >
             <fa-icon [icon]="faLightbulb" style="color: white" />
@@ -82,12 +82,12 @@
 @if (suggestedRelations().length) {
     <div class="p-3 pt-0 suggestions-scroll-container">
         <div class="mb-3 d-flex justify-content-between align-items-center">
-            <h6 class="mb-0">AI Suggestions</h6>
+            <h6 class="mb-0" jhiTranslate="artemisApp.courseCompetency.relations.suggestions.aiSuggestionsTitle"></h6>
             <button class="btn btn-primary mt-2" (click)="addSelectedSuggestions()" [disabled]="selectedSuggestionsCount() === 0 || isLoading()" type="button">
                 @if (isLoading()) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 }
-                <span>Add Suggestions ({{ selectedSuggestionsCount() }})</span>
+                <span [jhiTranslate]="'artemisApp.courseCompetency.relations.suggestions.addSuggestions'" [translateValues]="{ count: selectedSuggestionsCount() }"></span>
             </button>
         </div>
         <div class="list-group">
@@ -115,14 +115,14 @@
                                     <span class="mx-1">→</span>
                                     <strong>{{ getCompetencyTitleById(s.tail_id) }}</strong>
                                     @if (doesSuggestionAlreadyExist(s)) {
-                                        <small class="text-muted ms-2">(already exists)</small>
+                                        <small class="text-muted ms-2" jhiTranslate="artemisApp.courseCompetency.relations.suggestions.alreadyExists"></small>
                                     }
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
-                                    <small class="badge bg-secondary" [title]="'artemisApp.courseCompetency.relations.suggestions.aiTooltip' | artemisTranslate">
-                                        {{ 'artemisApp.courseCompetency.relations.suggestions.aiBadge' | artemisTranslate }}
+                                    <small class="badge bg-secondary" [title]="'artemisApp.courseCompetency.relations.suggestions.aiTooltip'">
+                                        <span jhiTranslate="artemisApp.courseCompetency.relations.suggestions.aiBadge"></span>
                                     </small>
-                                    <small>{{ 'artemisApp.courseCompetency.relations.relationTypes.' + getUiRelationTypeKey(s) | artemisTranslate }}</small>
+                                    <small [jhiTranslate]="'artemisApp.courseCompetency.relations.relationTypes.' + getUiRelationTypeKey(s)"></small>
                                 </div>
                             </div>
                         </label>

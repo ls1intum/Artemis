@@ -11,20 +11,21 @@
                     <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
                 </fa-stack>
             }
-            <button
-                type="button"
-                class="btn btn-warning btn-sm ms-2 d-flex align-items-center"
+            <jhi-button
+                jhiType="WARNING"
                 [disabled]="isSuggesting || disabled || !exerciseDescription?.trim()"
-                (click)="suggestCompetencies()"
-                ngbTooltip="Get AI Suggestions"
+                (onClick)="suggestCompetencies()"
+                [tooltip]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip' | artemisTranslate"
                 [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
+                size="sm"
+                class="ms-2"
             >
                 @if (isSuggesting) {
                     <span class="spinner-border spinner-border-sm" role="status"></span>
                 } @else {
                     <fa-icon [icon]="faLightbulb" style="color: white" />
                 }
-            </button>
+            </jhi-button>
         </div>
         @if (isLoading) {
             <div>
@@ -51,7 +52,7 @@
                                     <span class="ms-1">{{ competencyLink.competency.title }}</span>
                                 </label>
                                 @if (isSuggested(competencyLink.competency.id)) {
-                                    <fa-icon [icon]="faLightbulb" class="text-warning ms-2" ngbTooltip="AI suggested competency" />
+                                    <fa-icon [icon]="faLightbulb" class="text-warning ms-2" [ngbTooltip]="'artemisApp.competency.suggestion.tooltip' | artemisTranslate" />
                                 }
                             </div>
                             @if (checkboxStates[competencyLink.competency.id]) {
@@ -64,11 +65,11 @@
                                               : HIGH_COMPETENCY_LINK_WEIGHT
                                     "
                                     (ngModelChange)="updateLinkWeight(competencyLink, $event)"
-                                    ngbTooltip="{{ 'artemisApp.competency.link.weightTooltip' | artemisTranslate }}"
+                                    [ngbTooltip]="'artemisApp.competency.link.weightTooltip' | artemisTranslate"
                                 >
-                                    <option [ngValue]="LOW_COMPETENCY_LINK_WEIGHT" [jhiTranslate]="'artemisApp.competency.link.weightLabels.low'"></option>
-                                    <option [ngValue]="MEDIUM_COMPETENCY_LINK_WEIGHT" [jhiTranslate]="'artemisApp.competency.link.weightLabels.medium'"></option>
-                                    <option [ngValue]="HIGH_COMPETENCY_LINK_WEIGHT" [jhiTranslate]="'artemisApp.competency.link.weightLabels.high'"></option>
+                                    <option [ngValue]="LOW_COMPETENCY_LINK_WEIGHT" jhiTranslate="artemisApp.competency.link.weightLabels.low"></option>
+                                    <option [ngValue]="MEDIUM_COMPETENCY_LINK_WEIGHT" jhiTranslate="artemisApp.competency.link.weightLabels.medium"></option>
+                                    <option [ngValue]="HIGH_COMPETENCY_LINK_WEIGHT" jhiTranslate="artemisApp.competency.link.weightLabels.high"></option>
                                 </select>
                             }
                         </div>
