@@ -309,7 +309,8 @@
                 "disclaimerText": {
                     "noAttendanceDataAvailable": "Keine Daten verfügbar",
                     "noUpcomingSession": "Keine bevorstehende Session"
-                }
+                },
+                "createOneToOneChatError": "Error while creating tutor chat. Please try again."
             },
             "tutorialFreePeriodsManagement": {
                 "explanation": "Definiere kursweite Tage, an denen keine Übungsgruppen stattfinden sollen. Dies kann verwendet werden, um Feiertage oder andere Tage zu definieren, an denen keine Übungsgruppen stattfinden sollen.",

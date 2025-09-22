@@ -223,10 +223,12 @@ export class CourseTutorialGroupDetailComponent {
         const timeChanged = session.timeChanged;
         const dateChanged = session.dateChanged;
         let attendance: string | undefined = undefined;
-        if (session.attendanceCount && capacity) {
-            attendance = session.attendanceCount + ' / ' + capacity;
-        } else if (session.attendanceCount) {
-            attendance = session.attendanceCount.toString();
+        if (session.attendanceCount !== undefined) {
+            if (capacity !== undefined) {
+                attendance = session.attendanceCount + ' / ' + capacity;
+            } else {
+                attendance = session.attendanceCount.toString();
+            }
         }
         return { date, time, location, isCancelled, locationChanged, timeChanged, dateChanged, attendance };
     }
@@ -255,11 +257,11 @@ export class CourseTutorialGroupDetailComponent {
                     if (chatId) {
                         this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: chatId } });
                     } else {
-                        this.alertService.addErrorAlert('Error while creating tutor chat');
+                        this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.createOneToOneChatError');
                     }
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('Error while creating tutor chat');
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.createOneToOneChatError');
                 },
             });
         }
