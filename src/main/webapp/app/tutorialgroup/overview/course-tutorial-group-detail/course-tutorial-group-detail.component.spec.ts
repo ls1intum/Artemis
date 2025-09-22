@@ -3,6 +3,8 @@ import { CourseTutorialGroupDetailComponent } from './course-tutorial-group-deta
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockDirective, MockService } from 'ng-mocks';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -11,11 +13,11 @@ import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/t
 import * as CourseModel from 'app/core/course/shared/entities/course.model';
 
 import { By } from '@angular/platform-browser';
-import { TutorialGroupDetailSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import dayjs from 'dayjs/esm';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ScaleType } from '@swimlane/ngx-charts';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { User } from 'app/core/user/user.model';
 
 describe('NewTutorialGroupDetail', () => {
     let component: CourseTutorialGroupDetailComponent;
@@ -23,12 +25,15 @@ describe('NewTutorialGroupDetail', () => {
 
     const mockTranslateService = new MockTranslateService();
     mockTranslateService.use('en');
+    const mockAccountService = new MockAccountService();
+    mockAccountService.userIdentity = new User(undefined, 'artemis_admin');
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CourseTutorialGroupDetailComponent],
             providers: [
                 { provide: TranslateService, useValue: mockTranslateService },
+                { provide: AccountService, useValue: mockAccountService },
                 { provide: OneToOneChatService, useValue: MockService(OneToOneChatService) },
                 { provide: AlertService, useValue: MockService(AlertService) },
                 { provide: Router, useValue: MockService(Router) },
@@ -46,7 +51,21 @@ describe('NewTutorialGroupDetail', () => {
 
     it('should display no conversation links if messaging disabled', () => {
         jest.spyOn(CourseModel, 'isMessagingEnabled').mockReturnValue(false);
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, 10, 'Garching', 2, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const tutorChatLink = fixture.debugElement.query(By.css('[data-testid="tutor-chat-link"]'));
@@ -58,7 +77,21 @@ describe('NewTutorialGroupDetail', () => {
     });
 
     it('should display conversation links if tutorChatId and groupChannelId available and messaging enabled', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, 10, 'Garching', 2, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const tutorChatLink = fixture.debugElement.query(By.css('[data-testid="tutor-chat-link"]'));
@@ -70,7 +103,21 @@ describe('NewTutorialGroupDetail', () => {
     });
 
     it('should not display group channel link if groupChannelId not available and messaging enabled', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, 10, 'Garching', undefined, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: 'Garching',
+            groupChannelId: undefined,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const groupChannelLink = fixture.debugElement.query(By.css('[data-testid="group-channel-link"]'));
@@ -78,7 +125,21 @@ describe('NewTutorialGroupDetail', () => {
     });
 
     it('should display tutorial chat button if tutorChatId not available and messaging enabled', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, 10, 'Garching', 2, undefined);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: undefined,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const tutorChatLink = fixture.debugElement.query(By.css('[data-testid="tutor-chat-link"]'));
@@ -88,49 +149,147 @@ describe('NewTutorialGroupDetail', () => {
     });
 
     it('should expose correct language', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, 10, 'Garching', 2, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupLanguage()).toBe(testTutorialGroup.language);
     });
 
     it('should expose correct capacity', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, 10, 'Garching', 2, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCapacity()).toBe('10');
     });
 
     it('should expose placeholder if capacity not available', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, undefined, 'Garching', 2, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: undefined,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCapacity()).toBe('-');
     });
 
     it('should expose correct mode key if group is online', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', true, [], 'Marlon Nienaber', 'gx89tum', undefined, 10, 'Garching', 2, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: true,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupMode()).toBe('artemisApp.generic.online');
     });
 
     it('should expose correct mode key if group is offline', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, 10, 'Garching', 2, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupMode()).toBe('artemisApp.generic.offline');
     });
 
     it('should expose correct campus', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, 10, 'Garching', 2, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCampus()).toBe(testTutorialGroup.campus);
     });
 
     it('should expose placeholder if campus not available', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, 10, undefined, 2, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCampus()).toBe('-');
@@ -139,24 +298,51 @@ describe('NewTutorialGroupDetail', () => {
     it('should compute correct nextSession', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
-        const firstSession = new TutorialGroupDetailSessionDTO(nextSessionStart.subtract(1, 'week'), nextSessionEnd.subtract(1, 'week'), '01.05.13', false, false, false, false, 7);
-        const secondSession = new TutorialGroupDetailSessionDTO(nextSessionStart, nextSessionEnd, '01.05.13', false, false, false, false, undefined);
-        const thirdSession = new TutorialGroupDetailSessionDTO(nextSessionStart.add(1, 'week'), nextSessionEnd.add(1, 'week'), '01.05.13', false, false, false, false, undefined);
-        const testTutorialGroupSessions = [firstSession, secondSession, thirdSession];
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(
-            1,
-            'TG 1 MN 13',
-            'English',
-            false,
-            testTutorialGroupSessions,
-            'Marlon Nienaber',
-            'gx89tum',
-            undefined,
-            10,
-            undefined,
-            2,
-            3,
-        );
+        const firstSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.subtract(1, 'week').toISOString(),
+            end: nextSessionEnd.subtract(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: 7,
+        };
+        const secondSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.toISOString(),
+            end: nextSessionEnd.toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const thirdSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.add(1, 'week').toISOString(),
+            end: nextSessionEnd.add(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [firstSession, secondSession, thirdSession],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -173,10 +359,23 @@ describe('NewTutorialGroupDetail', () => {
     });
 
     it('should expose no nextSession if no sessions available', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, 10, undefined, 2, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
-
         const nextSession = component.nextSession();
         expect(nextSession).toBeUndefined();
     });
@@ -184,24 +383,51 @@ describe('NewTutorialGroupDetail', () => {
     it('should expose no nextSession if there are no future sessions', () => {
         const referenceStart = dayjs().startOf('day').add(13, 'hour');
         const referenceEnd = referenceStart.add(2, 'hour');
-        const firstSession = new TutorialGroupDetailSessionDTO(referenceStart.subtract(3, 'week'), referenceEnd.subtract(3, 'week'), '01.05.13', false, false, false, false, 7);
-        const secondSession = new TutorialGroupDetailSessionDTO(referenceStart.subtract(2, 'week'), referenceEnd.subtract(2, 'week'), '01.05.13', false, false, false, false, 7);
-        const thirdSession = new TutorialGroupDetailSessionDTO(referenceStart.subtract(1, 'week'), referenceEnd.subtract(1, 'week'), '01.05.13', false, false, false, false, 7);
-        const testTutorialGroupSessions = [firstSession, secondSession, thirdSession];
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(
-            1,
-            'TG 1 MN 13',
-            'English',
-            false,
-            testTutorialGroupSessions,
-            'Marlon Nienaber',
-            'gx89tum',
-            undefined,
-            10,
-            undefined,
-            2,
-            3,
-        );
+        const firstSession: RawTutorialGroupDetailSessionDTO = {
+            start: referenceStart.subtract(3, 'week').toISOString(),
+            end: referenceEnd.subtract(3, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: 7,
+        };
+        const secondSession: RawTutorialGroupDetailSessionDTO = {
+            start: referenceStart.subtract(2, 'week').toISOString(),
+            end: referenceEnd.subtract(2, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: 7,
+        };
+        const thirdSession: RawTutorialGroupDetailSessionDTO = {
+            start: referenceStart.subtract(1, 'week').toISOString(),
+            end: referenceEnd.subtract(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: 7,
+        };
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [firstSession, secondSession, thirdSession],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -212,24 +438,51 @@ describe('NewTutorialGroupDetail', () => {
     it('should compute correct averageAttendancePercentage', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
-        const firstSession = new TutorialGroupDetailSessionDTO(nextSessionStart.subtract(1, 'week'), nextSessionEnd.subtract(1, 'week'), '01.05.13', false, false, false, false, 7);
-        const secondSession = new TutorialGroupDetailSessionDTO(nextSessionStart, nextSessionEnd, '01.05.13', false, false, false, false, undefined);
-        const thirdSession = new TutorialGroupDetailSessionDTO(nextSessionStart.add(1, 'week'), nextSessionEnd.add(1, 'week'), '01.05.13', false, false, false, false, undefined);
-        const testTutorialGroupSessions = [firstSession, secondSession, thirdSession];
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(
-            1,
-            'TG 1 MN 13',
-            'English',
-            false,
-            testTutorialGroupSessions,
-            'Marlon Nienaber',
-            'gx89tum',
-            undefined,
-            10,
-            undefined,
-            2,
-            3,
-        );
+        const firstSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.subtract(1, 'week').toISOString(),
+            end: nextSessionEnd.subtract(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: 7,
+        };
+        const secondSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.toISOString(),
+            end: nextSessionEnd.toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const thirdSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.add(1, 'week').toISOString(),
+            end: nextSessionEnd.add(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [firstSession, secondSession, thirdSession],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -239,33 +492,51 @@ describe('NewTutorialGroupDetail', () => {
     it('should expose no averageAttendancePercentage if no attendances were recorded', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
-        const firstSession = new TutorialGroupDetailSessionDTO(
-            nextSessionStart.subtract(1, 'week'),
-            nextSessionEnd.subtract(1, 'week'),
-            '01.05.13',
-            false,
-            false,
-            false,
-            false,
-            undefined,
-        );
-        const secondSession = new TutorialGroupDetailSessionDTO(nextSessionStart, nextSessionEnd, '01.05.13', false, false, false, false, undefined);
-        const thirdSession = new TutorialGroupDetailSessionDTO(nextSessionStart.add(1, 'week'), nextSessionEnd.add(1, 'week'), '01.05.13', false, false, false, false, undefined);
-        const testTutorialGroupSessions = [firstSession, secondSession, thirdSession];
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(
-            1,
-            'TG 1 MN 13',
-            'English',
-            false,
-            testTutorialGroupSessions,
-            'Marlon Nienaber',
-            'gx89tum',
-            undefined,
-            10,
-            undefined,
-            2,
-            3,
-        );
+        const firstSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.subtract(1, 'week').toISOString(),
+            end: nextSessionEnd.subtract(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const secondSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.toISOString(),
+            end: nextSessionEnd.toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const thirdSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.add(1, 'week').toISOString(),
+            end: nextSessionEnd.add(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [firstSession, secondSession, thirdSession],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -275,24 +546,51 @@ describe('NewTutorialGroupDetail', () => {
     it('should expose no averageAttendancePercentage if no capacity available for course', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
-        const firstSession = new TutorialGroupDetailSessionDTO(nextSessionStart.subtract(1, 'week'), nextSessionEnd.subtract(1, 'week'), '01.05.13', false, false, false, false, 7);
-        const secondSession = new TutorialGroupDetailSessionDTO(nextSessionStart, nextSessionEnd, '01.05.13', false, false, false, false, undefined);
-        const thirdSession = new TutorialGroupDetailSessionDTO(nextSessionStart.add(1, 'week'), nextSessionEnd.add(1, 'week'), '01.05.13', false, false, false, false, undefined);
-        const testTutorialGroupSessions = [firstSession, secondSession, thirdSession];
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(
-            1,
-            'TG 1 MN 13',
-            'English',
-            false,
-            testTutorialGroupSessions,
-            'Marlon Nienaber',
-            'gx89tum',
-            undefined,
-            undefined,
-            undefined,
-            2,
-            3,
-        );
+        const firstSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.subtract(1, 'week').toISOString(),
+            end: nextSessionEnd.subtract(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: 7,
+        };
+        const secondSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.toISOString(),
+            end: nextSessionEnd.toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const thirdSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.add(1, 'week').toISOString(),
+            end: nextSessionEnd.add(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [firstSession, secondSession, thirdSession],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: undefined,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -302,24 +600,51 @@ describe('NewTutorialGroupDetail', () => {
     it('should compute correct pieChartData', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
-        const firstSession = new TutorialGroupDetailSessionDTO(nextSessionStart.subtract(1, 'week'), nextSessionEnd.subtract(1, 'week'), '01.05.13', false, false, false, false, 7);
-        const secondSession = new TutorialGroupDetailSessionDTO(nextSessionStart, nextSessionEnd, '01.05.13', false, false, false, false, undefined);
-        const thirdSession = new TutorialGroupDetailSessionDTO(nextSessionStart.add(1, 'week'), nextSessionEnd.add(1, 'week'), '01.05.13', false, false, false, false, undefined);
-        const testTutorialGroupSessions = [firstSession, secondSession, thirdSession];
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(
-            1,
-            'TG 1 MN 13',
-            'English',
-            false,
-            testTutorialGroupSessions,
-            'Marlon Nienaber',
-            'gx89tum',
-            undefined,
-            10,
-            undefined,
-            2,
-            3,
-        );
+        const firstSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.subtract(1, 'week').toISOString(),
+            end: nextSessionEnd.subtract(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: 7,
+        };
+        const secondSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.toISOString(),
+            end: nextSessionEnd.toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const thirdSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.add(1, 'week').toISOString(),
+            end: nextSessionEnd.add(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [firstSession, secondSession, thirdSession],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -337,24 +662,51 @@ describe('NewTutorialGroupDetail', () => {
     it('should expose correct pieChartData if no capacity set for group', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
-        const firstSession = new TutorialGroupDetailSessionDTO(nextSessionStart.subtract(1, 'week'), nextSessionEnd.subtract(1, 'week'), '01.05.13', false, false, false, false, 7);
-        const secondSession = new TutorialGroupDetailSessionDTO(nextSessionStart, nextSessionEnd, '01.05.13', false, false, false, false, undefined);
-        const thirdSession = new TutorialGroupDetailSessionDTO(nextSessionStart.add(1, 'week'), nextSessionEnd.add(1, 'week'), '01.05.13', false, false, false, false, undefined);
-        const testTutorialGroupSessions = [firstSession, secondSession, thirdSession];
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(
-            1,
-            'TG 1 MN 13',
-            'English',
-            false,
-            testTutorialGroupSessions,
-            'Marlon Nienaber',
-            'gx89tum',
-            undefined,
-            undefined,
-            undefined,
-            2,
-            3,
-        );
+        const firstSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.subtract(1, 'week').toISOString(),
+            end: nextSessionEnd.subtract(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: 7,
+        };
+        const secondSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.toISOString(),
+            end: nextSessionEnd.toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const thirdSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.add(1, 'week').toISOString(),
+            end: nextSessionEnd.add(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [firstSession, secondSession, thirdSession],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: undefined,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -369,33 +721,51 @@ describe('NewTutorialGroupDetail', () => {
     it('should expose correct pieChartData if no attendances recorded', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
-        const firstSession = new TutorialGroupDetailSessionDTO(
-            nextSessionStart.subtract(1, 'week'),
-            nextSessionEnd.subtract(1, 'week'),
-            '01.05.13',
-            false,
-            false,
-            false,
-            false,
-            undefined,
-        );
-        const secondSession = new TutorialGroupDetailSessionDTO(nextSessionStart, nextSessionEnd, '01.05.13', false, false, false, false, undefined);
-        const thirdSession = new TutorialGroupDetailSessionDTO(nextSessionStart.add(1, 'week'), nextSessionEnd.add(1, 'week'), '01.05.13', false, false, false, false, undefined);
-        const testTutorialGroupSessions = [firstSession, secondSession, thirdSession];
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(
-            1,
-            'TG 1 MN 13',
-            'English',
-            false,
-            testTutorialGroupSessions,
-            'Marlon Nienaber',
-            'gx89tum',
-            undefined,
-            10,
-            undefined,
-            2,
-            3,
-        );
+        const firstSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.subtract(1, 'week').toISOString(),
+            end: nextSessionEnd.subtract(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const secondSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.toISOString(),
+            end: nextSessionEnd.toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const thirdSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.add(1, 'week').toISOString(),
+            end: nextSessionEnd.add(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [firstSession, secondSession, thirdSession],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -410,23 +780,31 @@ describe('NewTutorialGroupDetail', () => {
     it('should compute green and gray color for average attendance < 70%', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
-        const testTutorialGroupSessions = [
-            new TutorialGroupDetailSessionDTO(nextSessionStart.subtract(1, 'week'), nextSessionEnd.subtract(1, 'week'), '01.05.13', false, false, false, false, 6),
-        ];
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(
-            1,
-            'TG 1 MN 13',
-            'English',
-            false,
-            testTutorialGroupSessions,
-            'Marlon Nienaber',
-            'gx89tum',
-            undefined,
-            10,
-            undefined,
-            2,
-            3,
-        );
+        const firstSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.subtract(1, 'week').toISOString(),
+            end: nextSessionEnd.subtract(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: 6,
+        };
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [firstSession],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -439,23 +817,31 @@ describe('NewTutorialGroupDetail', () => {
     it('should compute green and gray color for 70% <= average attendance < 80%', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
-        const testTutorialGroupSessions = [
-            new TutorialGroupDetailSessionDTO(nextSessionStart.subtract(1, 'week'), nextSessionEnd.subtract(1, 'week'), '01.05.13', false, false, false, false, 7),
-        ];
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(
-            1,
-            'TG 1 MN 13',
-            'English',
-            false,
-            testTutorialGroupSessions,
-            'Marlon Nienaber',
-            'gx89tum',
-            undefined,
-            10,
-            undefined,
-            2,
-            3,
-        );
+        const firstSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.subtract(1, 'week').toISOString(),
+            end: nextSessionEnd.subtract(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: 7,
+        };
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [firstSession],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -468,23 +854,31 @@ describe('NewTutorialGroupDetail', () => {
     it('should compute green and gray color for 80% <= average attendance < 90%', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
-        const testTutorialGroupSessions = [
-            new TutorialGroupDetailSessionDTO(nextSessionStart.subtract(1, 'week'), nextSessionEnd.subtract(1, 'week'), '01.05.13', false, false, false, false, 8),
-        ];
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(
-            1,
-            'TG 1 MN 13',
-            'English',
-            false,
-            testTutorialGroupSessions,
-            'Marlon Nienaber',
-            'gx89tum',
-            undefined,
-            10,
-            undefined,
-            2,
-            3,
-        );
+        const firstSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.subtract(1, 'week').toISOString(),
+            end: nextSessionEnd.subtract(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: 8,
+        };
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [firstSession],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -497,23 +891,31 @@ describe('NewTutorialGroupDetail', () => {
     it('should compute green and gray color for 90% <= average attendance', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
-        const testTutorialGroupSessions = [
-            new TutorialGroupDetailSessionDTO(nextSessionStart.subtract(1, 'week'), nextSessionEnd.subtract(1, 'week'), '01.05.13', false, false, false, false, 9),
-        ];
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(
-            1,
-            'TG 1 MN 13',
-            'English',
-            false,
-            testTutorialGroupSessions,
-            'Marlon Nienaber',
-            'gx89tum',
-            undefined,
-            10,
-            undefined,
-            2,
-            3,
-        );
+        const firstSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.subtract(1, 'week').toISOString(),
+            end: nextSessionEnd.subtract(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: 9,
+        };
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [firstSession],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -526,23 +928,31 @@ describe('NewTutorialGroupDetail', () => {
     it('should compute gray color if no capacity set for group', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
-        const testTutorialGroupSessions = [
-            new TutorialGroupDetailSessionDTO(nextSessionStart.subtract(1, 'week'), nextSessionEnd.subtract(1, 'week'), '01.05.13', false, false, false, false, 9),
-        ];
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(
-            1,
-            'TG 1 MN 13',
-            'English',
-            false,
-            testTutorialGroupSessions,
-            'Marlon Nienaber',
-            'gx89tum',
-            undefined,
-            undefined,
-            undefined,
-            2,
-            3,
-        );
+        const firstSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.subtract(1, 'week').toISOString(),
+            end: nextSessionEnd.subtract(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: 9,
+        };
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [firstSession],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: undefined,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -555,23 +965,31 @@ describe('NewTutorialGroupDetail', () => {
     it('should compute gray color if no attendances recorded', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
-        const testTutorialGroupSessions = [
-            new TutorialGroupDetailSessionDTO(nextSessionStart.subtract(1, 'week'), nextSessionEnd.subtract(1, 'week'), '01.05.13', false, false, false, false, undefined),
-        ];
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(
-            1,
-            'TG 1 MN 13',
-            'English',
-            false,
-            testTutorialGroupSessions,
-            'Marlon Nienaber',
-            'gx89tum',
-            undefined,
-            10,
-            undefined,
-            2,
-            3,
-        );
+        const firstSession: RawTutorialGroupDetailSessionDTO = {
+            start: nextSessionStart.subtract(1, 'week').toISOString(),
+            end: nextSessionEnd.subtract(1, 'week').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: undefined,
+        };
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [firstSession],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -582,7 +1000,21 @@ describe('NewTutorialGroupDetail', () => {
     });
 
     it('should expose tutorChatLink if tutorChatId available', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, undefined, undefined, 2, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: undefined,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -593,7 +1025,21 @@ describe('NewTutorialGroupDetail', () => {
     });
 
     it('should expose no tutorChatLink if tutorChatId is unavailable', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, 10, undefined, 2, undefined);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: undefined,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -602,7 +1048,21 @@ describe('NewTutorialGroupDetail', () => {
     });
 
     it('should expose groupChannelLink if groupChannelId available', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, undefined, undefined, 2, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: undefined,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -613,7 +1073,21 @@ describe('NewTutorialGroupDetail', () => {
     });
 
     it('should expose no groupChannelLink if groupChannelId is unavailable', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, 10, undefined, undefined, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: undefined,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -622,7 +1096,21 @@ describe('NewTutorialGroupDetail', () => {
     });
 
     it('should display no data available disclaimer if no average attendance available', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, undefined, 'Garching', 2, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: undefined,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -631,7 +1119,21 @@ describe('NewTutorialGroupDetail', () => {
     });
 
     it('should display no upcoming session disclaimer if no nextSession available', () => {
-        const testTutorialGroup = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, undefined, 'Garching', 2, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: undefined,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
