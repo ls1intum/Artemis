@@ -285,14 +285,7 @@ public class ProgrammingExerciseResource {
             }
 
             // Notify AtlasML about the new exercise
-            atlasMLApi.ifPresent(api -> {
-                try {
-                    api.saveExerciseWithCompetencies(newProgrammingExercise, OperationTypeDTO.UPDATE);
-                }
-                catch (Exception e) {
-                    log.warn("Failed to notify AtlasML about exercise creation: {}", e.getMessage());
-                }
-            });
+            notifyAtlasML(newProgrammingExercise, OperationTypeDTO.UPDATE, "exercise creation");
 
             return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId())).body(newProgrammingExercise);
         }
@@ -410,14 +403,7 @@ public class ProgrammingExerciseResource {
         slideApi.ifPresent(api -> api.handleDueDateChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise));
 
         // Notify AtlasML about the exercise update
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(savedProgrammingExercise, OperationTypeDTO.UPDATE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about exercise update: {}", e.getMessage());
-            }
-        });
+        notifyAtlasML(savedProgrammingExercise, OperationTypeDTO.UPDATE, "exercise update");
 
         return ResponseEntity.ok(savedProgrammingExercise);
     }
@@ -625,14 +611,7 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
 
         // Notify AtlasML about the exercise deletion before actual deletion
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(programmingExercise, OperationTypeDTO.DELETE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about exercise deletion: {}", e.getMessage());
-            }
-        });
+        notifyAtlasML(programmingExercise, OperationTypeDTO.DELETE, "exercise deletion");
 
         exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, deleteBaseReposBuildPlans);
@@ -911,6 +890,24 @@ public class ProgrammingExerciseResource {
 
         CheckoutDirectoriesDTO repositoriesCheckoutDirectoryDTO = repositoryCheckoutService.getCheckoutDirectories(programmingLanguage, checkoutSolution);
         return ResponseEntity.ok(repositoriesCheckoutDirectoryDTO);
+    }
+
+    /**
+     * Helper method to notify AtlasML about programming exercise changes with consistent error handling.
+     *
+     * @param exercise             the exercise to save
+     * @param operationType        the operation type (UPDATE or DELETE)
+     * @param operationDescription the description of the operation for logging purposes
+     */
+    private void notifyAtlasML(ProgrammingExercise exercise, OperationTypeDTO operationType, String operationDescription) {
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(exercise, operationType);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
+            }
+        });
     }
 
 }

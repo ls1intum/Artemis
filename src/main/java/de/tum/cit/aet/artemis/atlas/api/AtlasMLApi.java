@@ -4,10 +4,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
@@ -22,6 +24,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  */
 @Profile(PROFILE_CORE)
 @Controller
+@Conditional(AtlasEnabled.class)
 @Lazy
 public class AtlasMLApi extends AbstractAtlasApi {
 

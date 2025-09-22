@@ -149,12 +149,7 @@ public class CompetencyResource {
         final var persistedCompetency = competencyService.createCourseCompetency(competency, course);
 
         // Notify AtlasML about the new competency
-        try {
-            atlasMLApi.saveCompetencies(List.of(persistedCompetency), OperationTypeDTO.UPDATE);
-        }
-        catch (Exception e) {
-            log.warn("Failed to notify AtlasML about competency creation: {}", e.getMessage());
-        }
+        notifyAtlasML(List.of(persistedCompetency), OperationTypeDTO.UPDATE, "competency creation");
 
         return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/" + persistedCompetency.getId())).body(persistedCompetency);
     }
@@ -179,12 +174,7 @@ public class CompetencyResource {
         var createdCompetencies = competencyService.createCompetencies(competencies, course);
 
         // Notify AtlasML about the new competencies
-        try {
-            atlasMLApi.saveCompetencies(createdCompetencies, OperationTypeDTO.UPDATE);
-        }
-        catch (Exception e) {
-            log.warn("Failed to notify AtlasML about competency creation for {} competencies: {}", createdCompetencies.size(), e.getMessage());
-        }
+        notifyAtlasML(createdCompetencies, OperationTypeDTO.UPDATE, "competency creation for " + createdCompetencies.size() + " competencies");
 
         return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/")).body(createdCompetencies);
     }
@@ -327,12 +317,7 @@ public class CompetencyResource {
         var persistedCompetency = competencyService.updateCourseCompetency(existingCompetency, competency);
 
         // Notify AtlasML about the competency update
-        try {
-            atlasMLApi.saveCompetencies(List.of(persistedCompetency), OperationTypeDTO.UPDATE);
-        }
-        catch (Exception e) {
-            log.warn("Failed to notify AtlasML about competency update: {}", e.getMessage());
-        }
+        notifyAtlasML(List.of(persistedCompetency), OperationTypeDTO.UPDATE, "competency update");
 
         return ResponseEntity.ok(persistedCompetency);
     }
@@ -354,14 +339,9 @@ public class CompetencyResource {
         checkCourseForCompetency(course, competency);
 
         // Notify AtlasML about the competency deletion before actual deletion
-        try {
-            Competency competencyForAtlasMl = new Competency(competency);
-            competencyForAtlasMl.setId(competency.getId());
-            atlasMLApi.saveCompetencies(List.of(competencyForAtlasMl), OperationTypeDTO.DELETE);
-        }
-        catch (Exception e) {
-            log.warn("Failed to notify AtlasML about competency deletion: {}", e.getMessage());
-        }
+        Competency competencyForAtlasMl = new Competency(competency);
+        competencyForAtlasMl.setId(competency.getId());
+        notifyAtlasML(List.of(competencyForAtlasMl), OperationTypeDTO.DELETE, "competency deletion");
 
         courseCompetencyService.deleteCourseCompetency(competency, course);
 
@@ -431,6 +411,22 @@ public class CompetencyResource {
         if (competency.getMasteryThreshold() < 1 || competency.getMasteryThreshold() > 100) {
             throw new BadRequestAlertException("The mastery threshold of the competency '" + competency.getTitle() + "' is invalid!", ENTITY_NAME,
                     "invalidCompetencyMasteryThreshold");
+        }
+    }
+
+    /**
+     * Helper method to notify AtlasML about competency changes with consistent error handling.
+     *
+     * @param competencies         the competencies to save
+     * @param operationType        the operation type (UPDATE or DELETE)
+     * @param operationDescription the description of the operation for logging purposes
+     */
+    private void notifyAtlasML(List<Competency> competencies, OperationTypeDTO operationType, String operationDescription) {
+        try {
+            atlasMLApi.saveCompetencies(competencies, operationType);
+        }
+        catch (Exception e) {
+            log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
         }
     }
 

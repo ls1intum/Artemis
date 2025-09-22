@@ -254,14 +254,7 @@ public class QuizExerciseResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
         // Notify AtlasML about the new quiz exercise
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(result, OperationTypeDTO.UPDATE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about quiz exercise creation: {}", e.getMessage());
-            }
-        });
+        notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise creation");
 
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
@@ -333,14 +326,7 @@ public class QuizExerciseResource {
         slideApi.ifPresent(api -> api.handleDueDateChange(originalQuiz, finalQuizExercise));
 
         // Notify AtlasML about the quiz exercise update
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(finalQuizExercise, OperationTypeDTO.UPDATE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about quiz exercise update: {}", e.getMessage());
-            }
-        });
+        notifyAtlasML(finalQuizExercise, OperationTypeDTO.UPDATE, "quiz exercise update");
 
         return ResponseEntity.ok(quizExercise);
     }
@@ -706,14 +692,7 @@ public class QuizExerciseResource {
                 .filter(Objects::nonNull).toList();
 
         // Notify AtlasML about the quiz exercise deletion before actual deletion
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(quizExercise, OperationTypeDTO.DELETE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about quiz exercise deletion: {}", e.getMessage());
-            }
-        });
+        notifyAtlasML(quizExercise, OperationTypeDTO.DELETE, "quiz exercise deletion");
 
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -841,17 +820,28 @@ public class QuizExerciseResource {
         QuizExercise newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, files);
 
         // Notify AtlasML about the imported exercise
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(newQuizExercise, OperationTypeDTO.UPDATE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about quiz exercise import: {}", e.getMessage());
-            }
-        });
+        notifyAtlasML(newQuizExercise, OperationTypeDTO.UPDATE, "quiz exercise import");
 
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
+    }
+
+    /**
+     * Helper method to notify AtlasML about quiz exercise changes with consistent error handling.
+     *
+     * @param exercise             the exercise to save
+     * @param operationType        the operation type (UPDATE or DELETE)
+     * @param operationDescription the description of the operation for logging purposes
+     */
+    private void notifyAtlasML(QuizExercise exercise, OperationTypeDTO operationType, String operationDescription) {
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(exercise, operationType);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
+            }
+        });
     }
 
     private void setQuizBatches(User user, QuizExercise quizExercise) {

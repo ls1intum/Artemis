@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.atlas.dto.atlasml;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -11,18 +14,23 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
  * This contains only IDs and matches the Python AtlasML API structure.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AtlasMLCompetencyRelationDTO(@JsonProperty("tail_id") Long tailId, @JsonProperty("head_id") Long headId, @JsonProperty("relation_type") String relationType) {
+public record AtlasMLCompetencyRelationDTO(@JsonProperty("tail_id") @NotNull Long tailId, @JsonProperty("head_id") @NotNull Long headId,
+        @JsonProperty("relation_type") @NotNull String relationType) {
 
     /**
      * Convert from domain CompetencyRelation to AtlasML DTO.
      */
-    public static AtlasMLCompetencyRelationDTO fromDomain(CompetencyRelation relation) {
+    @Nullable
+    public static AtlasMLCompetencyRelationDTO fromDomain(@Nullable CompetencyRelation relation) {
         if (relation == null) {
             return null;
         }
 
-        Long tailId = relation.getTailCompetency() != null ? relation.getTailCompetency().getId() : null;
-        Long headId = relation.getHeadCompetency() != null ? relation.getHeadCompetency().getId() : null;
+        @NotNull
+        Long tailId = relation.getTailCompetency().getId();
+        @NotNull
+        Long headId = relation.getHeadCompetency().getId();
+        @NotNull
         String relationType = relation.getType() != null ? relation.getType().name() : RelationType.ASSUMES.name();
 
         return new AtlasMLCompetencyRelationDTO(tailId, headId, relationType);
@@ -32,7 +40,9 @@ public record AtlasMLCompetencyRelationDTO(@JsonProperty("tail_id") Long tailId,
      * Convert to domain CompetencyRelation.
      * Note: This creates a basic relation without full competency objects.
      */
+    @NotNull
     public CompetencyRelation toDomain() {
+        @NotNull
         RelationType type = RelationType.ASSUMES; // Default
         if (this.relationType != null) {
             try {

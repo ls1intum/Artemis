@@ -252,16 +252,44 @@ public class TextExerciseResource {
         irisSettingsApi.ifPresent(api -> api.setEnabledForExerciseByCategories(result, new HashSet<>()));
 
         // Notify AtlasML about the new exercise
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(result, OperationTypeDTO.UPDATE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about exercise creation: {}", e.getMessage());
-            }
-        });
+        notifyAtlasMLWithOperationType(result, OperationTypeDTO.UPDATE, "creation");
 
         return ResponseEntity.created(new URI("/api/text/text-exercises/" + result.getId())).body(result);
+    }
+
+    /**
+     * Helper method to notify AtlasML about exercise operations with proper exception handling.
+     *
+     * @param exercise      the exercise to notify about
+     * @param operationType the type of operation (CREATE, UPDATE, DELETE)
+     * @param operationName the name of the operation for logging purposes
+     */
+    private void notifyAtlasMLWithOperationType(TextExercise exercise, OperationTypeDTO operationType, String operationName) {
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(exercise, operationType);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about exercise {}: {}", operationName, e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Helper method to notify AtlasML about exercise operations without operation type (for import).
+     *
+     * @param exercise      the exercise to notify about
+     * @param operationName the name of the operation for logging purposes
+     */
+    private void notifyAtlasML(TextExercise exercise, String operationName) {
+        atlasMLApi.ifPresent(api -> {
+            try {
+                api.saveExerciseWithCompetencies(exercise);
+            }
+            catch (Exception e) {
+                log.warn("Failed to notify AtlasML about exercise {}: {}", operationName, e.getMessage());
+            }
+        });
     }
 
     /**
@@ -325,14 +353,7 @@ public class TextExerciseResource {
         irisSettingsApi.ifPresent(api -> api.setEnabledForExerciseByCategories(textExercise, textExerciseBeforeUpdate.getCategories()));
 
         // Notify AtlasML about the exercise update
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(updatedTextExercise, OperationTypeDTO.UPDATE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about exercise update: {}", e.getMessage());
-            }
-        });
+        notifyAtlasMLWithOperationType(updatedTextExercise, OperationTypeDTO.UPDATE, "update");
 
         return ResponseEntity.ok(updatedTextExercise);
     }
@@ -422,14 +443,7 @@ public class TextExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, user);
 
         // Notify AtlasML about the exercise deletion before actual deletion
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(textExercise, OperationTypeDTO.DELETE);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about exercise deletion: {}", e.getMessage());
-            }
-        });
+        notifyAtlasMLWithOperationType(textExercise, OperationTypeDTO.DELETE, "deletion");
 
         // NOTE: we use the exerciseDeletionService here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -582,7 +596,7 @@ public class TextExerciseResource {
         textExerciseRepository.save(newTextExercise);
 
         // Notify AtlasML about the imported exercise
-        atlasMLApi.ifPresent(api -> api.saveExerciseWithCompetencies(newTextExercise));
+        notifyAtlasML(newTextExercise, "import");
 
         return ResponseEntity.created(new URI("/api/text/text-exercises/" + newTextExercise.getId())).body(newTextExercise);
     }
