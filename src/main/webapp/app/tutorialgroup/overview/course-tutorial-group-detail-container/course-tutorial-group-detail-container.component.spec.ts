@@ -63,7 +63,21 @@ describe('CourseTutorialGroupDetailContainerComponent', () => {
         tutorialGroupService = TestBed.inject(TutorialGroupsService);
         courseManagementService = TestBed.inject(CourseManagementService);
 
-        tutorialGroupOfResponse = new TutorialGroupDetailGroupDTO(1, 'TG 1 MN 13', 'English', false, [], 'Marlon Nienaber', 'gx89tum', undefined, 10, 'Garching', 2, 3);
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        tutorialGroupOfResponse = new TutorialGroupDetailGroupDTO(raw);
 
         courseOfResponse = { id: 2 } as Course;
 
