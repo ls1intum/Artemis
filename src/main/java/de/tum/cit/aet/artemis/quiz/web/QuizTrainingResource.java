@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.quiz.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static tech.jhipster.web.util.PaginationUtil.generatePaginationHttpHeaders;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -13,8 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +22,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -31,6 +29,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.quiz.dto.QuizTrainingAnswerDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
@@ -74,21 +73,20 @@ public class QuizTrainingResource {
      * @return a list of 10 quiz questions for the training session
      */
     @PostMapping("courses/{courseId}/training-questions")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<QuizQuestionTrainingDTO>> getQuizQuestionsForPractice(@PathVariable long courseId, Pageable pageable,
             @RequestBody(required = false) Set<Long> questionIds) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         if (questionIds != null && questionIds.isEmpty()) {
             questionIds.add(-1L);
         }
 
-        Page<QuizQuestionTrainingDTO> quizQuestionsPage = quizQuestionProgressService.getQuestionsForSession(courseId, user.getId(), pageable, questionIds);
-        HttpHeaders headers = generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), quizQuestionsPage);
-        return new ResponseEntity<>(quizQuestionsPage.getContent(), headers, HttpStatus.OK);
+        Slice<QuizQuestionTrainingDTO> quizQuestionsSlice = quizQuestionProgressService.getQuestionsForSession(courseId, user.getId(), pageable, questionIds);
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("X-Has-Next", Boolean.toString(quizQuestionsSlice.hasNext()));
+        return new ResponseEntity<>(quizQuestionsSlice.getContent(), headers, HttpStatus.OK);
     }
 
     /**

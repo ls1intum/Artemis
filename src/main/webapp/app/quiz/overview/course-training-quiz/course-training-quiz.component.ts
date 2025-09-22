@@ -49,7 +49,7 @@ export class CourseTrainingQuizComponent {
     totalItems = signal(0);
     loading = signal(false);
     allLoadedQuestions = signal<QuizQuestionTraining[]>([]);
-    allQuestionsLoaded = signal(false);
+    hasNext = signal(false);
 
     // Reactive chain for loading quiz questions based on the current route
     paramsSignal = toSignal(this.route.parent?.params ?? EMPTY);
@@ -65,9 +65,7 @@ export class CourseTrainingQuizComponent {
     );
     course = computed(() => this.courseSignal());
     questionsLoaded = computed(() => this.allLoadedQuestions().length > 0);
-    nextPage = computed(
-        () => (this.currentIndex() + 2) % this.size === 0 && !this.loading() && !this.allQuestionsLoaded() && this.allLoadedQuestions().length <= this.currentIndex() + 2,
-    );
+    nextPage = computed(() => (this.currentIndex() + 2) % this.size === 0 && !this.loading() && this.hasNext());
 
     trainingAnswer = new QuizTrainingAnswer();
     showingResult = false;
@@ -88,7 +86,7 @@ export class CourseTrainingQuizComponent {
         if (questions.length === 0) {
             return true;
         }
-        return this.currentIndex() === this.totalItems() - 1;
+        return this.currentIndex() === this.allLoadedQuestions().length - 1;
     });
 
     /**
@@ -105,7 +103,7 @@ export class CourseTrainingQuizComponent {
     isRated = computed(() => {
         const questions = this.allLoadedQuestions();
         if (questions.length === 0) {
-            return undefined;
+            return false;
         }
         return questions[this.currentIndex()].isRated;
     });
@@ -142,18 +140,11 @@ export class CourseTrainingQuizComponent {
 
         this.quizService.getQuizQuestionsPage(this.courseId(), this.page(), this.size, this.questionIds).subscribe({
             next: (res: HttpResponse<QuizQuestionTraining[]>) => {
-                const totalCount = res.headers.get('X-Total-Count');
+                this.hasNext.set(res.headers.get('X-Has-Next') === 'true');
 
                 this.loading.set(true);
                 if (this.page() === 0) {
                     this.questionIds = res.body?.[0]?.questionIds;
-                    this.totalItems.set(totalCount ? parseInt(totalCount, 10) : 0);
-                }
-
-                if (!res.body || res.body.length === 0) {
-                    this.allQuestionsLoaded.set(true);
-                    this.loading.set(false);
-                    return;
                 }
 
                 if (this.page() === 0) {
@@ -174,7 +165,7 @@ export class CourseTrainingQuizComponent {
      * loads the next page of questions
      */
     loadNextPage(): void {
-        if (this.loading() || this.allQuestionsLoaded()) {
+        if (this.loading() || !this.hasNext()) {
             return;
         }
         this.page.update((page) => page + 1);
@@ -202,7 +193,7 @@ export class CourseTrainingQuizComponent {
             this.showUnratedConfirmation = true;
         }
 
-        this.previousRatedStatus = currentIsRated!;
+        this.previousRatedStatus = currentIsRated;
     }
 
     /**
@@ -280,7 +271,7 @@ export class CourseTrainingQuizComponent {
             return;
         }
         this.applySelection();
-        this.trainingAnswer.isRated = this.isRated()!;
+        this.trainingAnswer.isRated = this.isRated();
         this.quizService.submitForTraining(this.trainingAnswer, questionId, this.courseId()).subscribe({
             next: (response: HttpResponse<SubmittedAnswerAfterEvaluation>) => {
                 if (response.body) {

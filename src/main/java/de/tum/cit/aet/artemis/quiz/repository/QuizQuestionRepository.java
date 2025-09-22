@@ -7,8 +7,8 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -53,14 +53,14 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
             FROM QuizQuestion q
             WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE
             """)
-    Page<QuizQuestion> findAllPracticeQuizQuestionsByCourseId(@Param("courseId") Long courseId, Pageable pageable);
+    Slice<QuizQuestion> findAllPracticeQuizQuestionsByCourseId(@Param("courseId") Long courseId, Pageable pageable);
 
     @Query("""
             SELECT q
             FROM QuizQuestion q
             WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE AND q.id NOT IN (:ids)
             """)
-    Page<QuizQuestion> findAllDueQuestions(@Param("ids") Set<Long> ids, @Param("courseId") Long courseId, Pageable pageable);
+    Slice<QuizQuestion> findAllDueQuestions(@Param("ids") Set<Long> ids, @Param("courseId") long courseId, Pageable pageable);
 
     @Query("""
             SELECT COUNT(q) > 0
@@ -74,7 +74,7 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
             FROM QuizQuestion q
             WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE
             """)
-    long countAllPracticeQuizQuestionsByCourseId(@Param("courseId") Long courseId);
+    long countAllPracticeQuizQuestionsByCourseId(@Param("courseId") long courseId);
 
     default DragAndDropQuestion findDnDQuestionByIdOrElseThrow(Long questionId) {
         return getValueElseThrow(findDnDQuestionById(questionId), questionId);

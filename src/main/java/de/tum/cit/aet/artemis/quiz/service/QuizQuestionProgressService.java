@@ -7,13 +7,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
@@ -29,8 +27,6 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 @Lazy
 @Service
 public class QuizQuestionProgressService {
-
-    private static final Logger log = LoggerFactory.getLogger(QuizQuestionProgressService.class);
 
     private final QuizQuestionProgressRepository quizQuestionProgressRepository;
 
@@ -99,7 +95,7 @@ public class QuizQuestionProgressService {
      * @param questionIds Optional set of question IDs to filter the questions
      * @return A list of quiz questions sorted by due date
      */
-    public Page<QuizQuestionTrainingDTO> getQuestionsForSession(Long courseId, Long userId, Pageable pageable, Set<Long> questionIds) {
+    public Slice<QuizQuestionTrainingDTO> getQuestionsForSession(long courseId, long userId, Pageable pageable, Set<Long> questionIds) {
         ZonedDateTime now = ZonedDateTime.now();
         if (questionIds == null) {
             Set<QuizQuestionProgress> allProgress = quizQuestionProgressRepository.findAllByUserIdAndCourseId(userId, courseId);
@@ -127,8 +123,8 @@ public class QuizQuestionProgressService {
         return notDueCount < totalQuestionsCount;
     }
 
-    private Page<QuizQuestionTrainingDTO> loadDueQuestions(Set<Long> questionIds, Long courseId, Pageable pageable) {
-        Page<QuizQuestion> questionPage = quizQuestionRepository.findAllDueQuestions(questionIds, courseId, pageable);
+    private Slice<QuizQuestionTrainingDTO> loadDueQuestions(Set<Long> questionIds, Long courseId, Pageable pageable) {
+        Slice<QuizQuestion> questionPage = quizQuestionRepository.findAllDueQuestions(questionIds, courseId, pageable);
 
         return questionPage.map(question -> {
             QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(question);
@@ -136,8 +132,8 @@ public class QuizQuestionProgressService {
         });
     }
 
-    private Page<QuizQuestionTrainingDTO> loadAllPracticeQuestions(Long courseId, Pageable pageable) {
-        Page<QuizQuestion> questionPage = quizQuestionRepository.findAllPracticeQuizQuestionsByCourseId(courseId, pageable);
+    private Slice<QuizQuestionTrainingDTO> loadAllPracticeQuestions(Long courseId, Pageable pageable) {
+        Slice<QuizQuestion> questionPage = quizQuestionRepository.findAllPracticeQuizQuestionsByCourseId(courseId, pageable);
 
         return questionPage.map(question -> {
             QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(question);
