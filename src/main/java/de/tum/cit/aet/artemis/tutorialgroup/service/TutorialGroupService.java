@@ -634,6 +634,7 @@ public class TutorialGroupService {
      * Retrieves the required data and uses them to assembles a DTO needed to display the information in the course-tutorial-group-detail.component.ts.
      *
      * @param tutorialGroupId the ID of the tutorial group to fetch
+     * @param courseId        the ID of the course of the tutorial group
      * @param courseTimeZone  the time zone of the course, used for session status evaluation
      * @return a {@link TutorialGroupDetailGroupDTO}
      * @throws EntityNotFoundException if no tutorial group exists with the given ID
