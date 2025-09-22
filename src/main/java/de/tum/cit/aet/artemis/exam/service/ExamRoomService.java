@@ -312,10 +312,11 @@ public class ExamRoomService {
         final int numberOfStoredExamSeats = examRooms.stream().mapToInt(er -> er.getSeats().size()).sum();
         final int numberOfStoredLayoutStrategies = examRooms.stream().mapToInt(er -> er.getLayoutStrategies().size()).sum();
 
-        Map<String, ExamRoom> newestRoomByRoomNumber = examRooms.stream()
-                .collect(Collectors.toMap(ExamRoom::getRoomNumber, Function.identity(), BinaryOperator.maxBy(Comparator.comparing(ExamRoom::getCreatedDate))));
+        Map<String, ExamRoom> newestRoomByRoomNumberAndName = examRooms.stream().collect(Collectors.toMap(
+                // Use null character as a separator, as it is not allowed in room numbers or names
+                examRoom -> examRoom.getRoomNumber() + "\u0000" + examRoom.getName(), Function.identity(), BinaryOperator.maxBy(Comparator.comparing(ExamRoom::getCreatedDate))));
 
-        final Set<ExamRoomDTO> examRoomDTOS = newestRoomByRoomNumber.values().stream()
+        final Set<ExamRoomDTO> examRoomDTOS = newestRoomByRoomNumberAndName.values().stream()
                 .map(examRoom -> new ExamRoomDTO(examRoom.getId(), examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoom.getSeats().size(),
                         examRoom.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
                 .collect(Collectors.toSet());
@@ -327,8 +328,8 @@ public class ExamRoomService {
      * Purges the DB of all exam room related data.
      */
     public void deleteAllExamRooms() {
-        examRoomRepository.deleteAll();
         examUserRepository.resetAllPlannedRoomsAndSeats();
+        examRoomRepository.deleteAll();
     }
 
     /**
@@ -489,7 +490,6 @@ public class ExamRoomService {
      *
      * @param sortedRows Rows of seats, sorted from first to last
      * @param firstRow   The row in which we first want to seat students
-     *
      * @return All seats from all rows that are not before the {@code firstRow}
      */
     private static List<ExamSeatDTO> applyFirstRowFilter(List<List<ExamSeatDTO>> sortedRows, int firstRow) {
