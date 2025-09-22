@@ -4,11 +4,8 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20250920163252-add-courseid-quiz-question-progress" author="MoritzSpengler">
         <addColumn tableName="quiz_question_progress">
-            <column name="course_id" type="BIGINT"/>
+            <column name="course_id" type="bigint"/>
         </addColumn>
-        <rollback>
-            <dropColumn tableName="quiz_question_progress" columnName="course_id"/>
-        </rollback>
     </changeSet>
 
     <changeSet id="20250920163252-populate-courseid-quiz-question-progress" author="MoritzSpengler">
@@ -25,9 +22,17 @@
         </sql>
     </changeSet>
 
-    <changeSet id="20250920163252-set-not-null-courseid-quiz-question-progress" author="MoritzSpengler">
+    <changeSet id="20250920163252-set-not-null-courseid-quiz-question-progress-and-foreign-key" author="MoritzSpengler">
         <addNotNullConstraint tableName="quiz_question_progress"
                               columnName="course_id"
-                              columnDataType="BIGINT"/>
+                              columnDataType="bigint"/>
+
+        <addForeignKeyConstraint
+                baseTableName="quiz_question_progress"
+                baseColumnNames="course_id"
+                referencedTableName="course"
+                referencedColumnNames="id"
+                constraintName="fk_quiz_question_progress_course"
+                onDelete="CASCADE"/>
     </changeSet>
 </databaseChangeLog>
