@@ -20,8 +20,8 @@ export class CalendarEventsPerDaySectionComponent {
     static readonly PIXELS_PER_REM = 16;
     static readonly HOUR_SEGMENT_HEIGHT_IN_PIXEL = 3.5 * CalendarEventsPerDaySectionComponent.PIXELS_PER_REM;
 
-    private eventService = inject(CalendarService);
-    private dateToEventAndPositionMap = computed(() => this.computeDateToEventAndPositionMap(this.eventService.eventMap(), this.dates()));
+    private calendarService = inject(CalendarService);
+    private dateToEventAndPositionMap = computed(() => this.computeDateToEventAndPositionMap(this.calendarService.eventMap(), this.dates()));
     private popover?: NgbPopover;
 
     readonly CalendarEventType = CalendarEventType;
@@ -88,12 +88,9 @@ export class CalendarEventsPerDaySectionComponent {
         if (calendarEvents.length === 0) {
             return [];
         }
-
-        const sorted = [...calendarEvents].sort((firstEvent, secondEvent) => firstEvent.startDate.diff(secondEvent.startDate));
-
         const eventsWithPositions: CalendarEventAndPosition[] = [];
         let currentGroup: CalendarEvent[] = [];
-        for (const event of sorted) {
+        for (const event of calendarEvents) {
             if (currentGroup.length === 0 || currentGroup.some((otherEvent) => this.doEventsOverlap(otherEvent, event))) {
                 currentGroup.push(event);
             } else {
