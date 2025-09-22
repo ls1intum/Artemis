@@ -67,13 +67,13 @@ public class BuildJobGitService extends AbstractGitService {
     private boolean useSshForBuildAgent;
 
     @Value("${artemis.version-control.ssh-private-key-folder-path:#{null}}")
-    protected Optional<String> gitSshPrivateKeyPath;
+    private Optional<String> gitSshPrivateKeyPath;
 
     @Value("${artemis.version-control.ssh-private-key-password:#{null}}")
-    protected Optional<String> gitSshPrivateKeyPassphrase;
+    private Optional<String> gitSshPrivateKeyPassphrase;
 
     @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")
-    protected Optional<String> sshUrlTemplate;
+    private Optional<String> sshUrlTemplate;
 
     private CredentialsProvider credentialsProvider;
 
