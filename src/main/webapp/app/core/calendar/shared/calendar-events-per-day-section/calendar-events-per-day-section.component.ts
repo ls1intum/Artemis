@@ -116,8 +116,8 @@ export class CalendarEventsPerDaySectionComponent {
     private addPositionsToEventGroup(group: CalendarEvent[]): CalendarEventAndPosition[] {
         const widthAndLeftOffsetFunction = this.getWidthAndLeftOffsetFunction(group.length);
         return group.map((event, index) => {
-            const top = this.getTop(event, CalendarEventsPerDaySectionComponent.PIXELS_PER_MINUTE);
-            const height = this.getHeight(event, CalendarEventsPerDaySectionComponent.PIXELS_PER_MINUTE);
+            const top = this.getTop(event);
+            const height = this.getHeight(event);
             const left = widthAndLeftOffsetFunction.leftOffset(index);
 
             const position: PositionInfo = { top, height, left, width: widthAndLeftOffsetFunction.eventWidth };
@@ -138,26 +138,37 @@ export class CalendarEventsPerDaySectionComponent {
         };
     }
 
-    private getTop(event: CalendarEvent, pixelsPerMinute: number): number {
+    private getTop(event: CalendarEvent): number {
         const minutes = event.startDate.diff(event.startDate.startOf('day'), 'minute');
-        return minutes * pixelsPerMinute;
+        return minutes * CalendarEventsPerDaySectionComponent.PIXELS_PER_MINUTE;
     }
 
-    private getHeight(event: CalendarEvent, pixelsPerMinute: number): number {
-        const defaultHeightInPixel = 24;
-        return event.endDate ? event.endDate.diff(event.startDate, 'minute') * pixelsPerMinute : defaultHeightInPixel;
+    private getHeight(event: CalendarEvent): number {
+        if (event.endDate) {
+            return Math.max(
+                event.endDate.diff(event.startDate, 'minute') * CalendarEventsPerDaySectionComponent.PIXELS_PER_MINUTE,
+                CalendarEventsPerDaySectionComponent.DEFAULT_EVENT_HEIGHT_IN_PIXEL,
+            );
+        } else {
+            return CalendarEventsPerDaySectionComponent.DEFAULT_EVENT_HEIGHT_IN_PIXEL;
+        }
     }
 
     private doEventsOverlap(firstEvent: CalendarEvent, secondEvent: CalendarEvent): boolean {
         const firstStartDate = firstEvent.startDate;
-        const firstEndDate = firstEvent.endDate ?? firstEvent.startDate.add(CalendarEventsPerDaySectionComponent.DEFAULT_EVENT_LENGTH_IN_MINUTES, 'minute');
+        const firstEndDate = this.getDisplayedEndOf(firstEvent);
         const secondStartDate = secondEvent.startDate;
-        const secondEndDate = secondEvent.endDate ?? secondEvent.startDate.add(CalendarEventsPerDaySectionComponent.DEFAULT_EVENT_LENGTH_IN_MINUTES, 'minute');
+        const secondEndDate = this.getDisplayedEndOf(secondEvent);
 
         const firstStartFallsInSecondRange = this.doesDateFallInRange(firstStartDate, secondStartDate, secondEndDate!);
         const firstEndFallsInSecondRange = this.doesDateFallInRange(firstEndDate, secondStartDate, secondEndDate!);
         const firstEventEngulfsSecondEvent = this.doesFirstRangeEngulfSecondRange(firstStartDate, firstEndDate, secondStartDate, secondEndDate);
         return firstStartFallsInSecondRange || firstEndFallsInSecondRange || firstEventEngulfsSecondEvent;
+    }
+
+    private getDisplayedEndOf(event: CalendarEvent): Dayjs {
+        const endWithDefaultLength = event.startDate.add(CalendarEventsPerDaySectionComponent.DEFAULT_EVENT_LENGTH_IN_MINUTES, 'minute');
+        return event.endDate && event.endDate.isAfter(endWithDefaultLength) ? event.endDate : endWithDefaultLength;
     }
 
     private doesDateFallInRange(date: Dayjs, rangeStart: Dayjs, rangeEnd: Dayjs): boolean {
