@@ -18,7 +18,14 @@ type Day = { date: Dayjs; eventsAndPositions: CalendarEventAndPosition[]; id: st
 })
 export class CalendarEventsPerDaySectionComponent {
     static readonly PIXELS_PER_REM = 16;
-    static readonly HOUR_SEGMENT_HEIGHT_IN_PIXEL = 3.5 * CalendarEventsPerDaySectionComponent.PIXELS_PER_REM;
+    static readonly HOUR_HEIGHT_IN_REM = 3.5;
+    static readonly HOUR_HEIGHT_IN_PIXEL = CalendarEventsPerDaySectionComponent.HOUR_HEIGHT_IN_REM * CalendarEventsPerDaySectionComponent.PIXELS_PER_REM;
+    static readonly PIXELS_PER_MINUTE = CalendarEventsPerDaySectionComponent.HOUR_HEIGHT_IN_PIXEL / 60;
+    static readonly MINUTES_PER_PIXEL = 1 / CalendarEventsPerDaySectionComponent.PIXELS_PER_MINUTE;
+    static readonly DEFAULT_EVENT_HEIGHT_IN_PIXEL = 24;
+    static readonly DEFAULT_EVENT_LENGTH_IN_MINUTES = Math.ceil(
+        CalendarEventsPerDaySectionComponent.DEFAULT_EVENT_HEIGHT_IN_PIXEL * CalendarEventsPerDaySectionComponent.MINUTES_PER_PIXEL,
+    );
 
     private eventService = inject(CalendarService);
     private dateToEventAndPositionMap = computed(() => this.computeDateToEventAndPositionMap(this.eventService.eventMap(), this.dates()));
@@ -107,13 +114,10 @@ export class CalendarEventsPerDaySectionComponent {
     }
 
     private addPositionsToEventGroup(group: CalendarEvent[]): CalendarEventAndPosition[] {
-        const pixelsPerMinute = CalendarEventsPerDaySectionComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL / 60;
-
         const widthAndLeftOffsetFunction = this.getWidthAndLeftOffsetFunction(group.length);
-
         return group.map((event, index) => {
-            const top = this.getTop(event, pixelsPerMinute);
-            const height = this.getHeight(event, pixelsPerMinute);
+            const top = this.getTop(event, CalendarEventsPerDaySectionComponent.PIXELS_PER_MINUTE);
+            const height = this.getHeight(event, CalendarEventsPerDaySectionComponent.PIXELS_PER_MINUTE);
             const left = widthAndLeftOffsetFunction.leftOffset(index);
 
             const position: PositionInfo = { top, height, left, width: widthAndLeftOffsetFunction.eventWidth };
@@ -146,28 +150,14 @@ export class CalendarEventsPerDaySectionComponent {
 
     private doEventsOverlap(firstEvent: CalendarEvent, secondEvent: CalendarEvent): boolean {
         const firstStartDate = firstEvent.startDate;
-        const firstEndDate = firstEvent.endDate;
+        const firstEndDate = firstEvent.endDate ?? firstEvent.startDate.add(CalendarEventsPerDaySectionComponent.DEFAULT_EVENT_LENGTH_IN_MINUTES, 'minute');
         const secondStartDate = secondEvent.startDate;
-        const secondEndDate = secondEvent.endDate;
-
-        if (!firstEndDate && !secondEndDate) {
-            return this.areDatesSameMinute(firstStartDate, secondStartDate);
-        }
-        if (!firstEndDate) {
-            return this.doesDateFallInRange(firstStartDate, secondStartDate, secondEndDate!);
-        }
-        if (!secondEndDate) {
-            return this.doesDateFallInRange(secondStartDate, firstStartDate, firstEndDate!);
-        }
+        const secondEndDate = secondEvent.endDate ?? secondEvent.startDate.add(CalendarEventsPerDaySectionComponent.DEFAULT_EVENT_LENGTH_IN_MINUTES, 'minute');
 
         const firstStartFallsInSecondRange = this.doesDateFallInRange(firstStartDate, secondStartDate, secondEndDate!);
         const firstEndFallsInSecondRange = this.doesDateFallInRange(firstEndDate, secondStartDate, secondEndDate!);
         const firstEventEngulfsSecondEvent = this.doesFirstRangeEngulfSecondRange(firstStartDate, firstEndDate, secondStartDate, secondEndDate);
         return firstStartFallsInSecondRange || firstEndFallsInSecondRange || firstEventEngulfsSecondEvent;
-    }
-
-    private areDatesSameMinute(firstDate: Dayjs, secondDate: Dayjs): boolean {
-        return firstDate.isSame(secondDate, 'minute');
     }
 
     private doesDateFallInRange(date: Dayjs, rangeStart: Dayjs, rangeEnd: Dayjs): boolean {
