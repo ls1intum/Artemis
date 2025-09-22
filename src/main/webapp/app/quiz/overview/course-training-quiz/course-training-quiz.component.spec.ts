@@ -151,8 +151,8 @@ describe('CourseTrainingQuizComponent', () => {
 
     it('should increment page and call loadQuestions when not loading and not allQuestionsLoaded', () => {
         component.loading.set(false);
-        component.allQuestionsLoaded.set(false);
         component.page.set(0);
+        component.hasNext.set(true);
         const loadQuestionsSpy = jest.spyOn(component, 'loadQuestions');
 
         component.loadNextPage();
@@ -163,7 +163,6 @@ describe('CourseTrainingQuizComponent', () => {
 
     it('should not increment page or call loadQuestions when loading is true', () => {
         component.loading.set(true);
-        component.allQuestionsLoaded.set(false);
         component.page.set(0);
         const loadQuestionsSpy = jest.spyOn(component, 'loadQuestions');
 
@@ -179,12 +178,10 @@ describe('CourseTrainingQuizComponent', () => {
             headers: { get: () => '0' } as any,
         });
         jest.spyOn(quizService, 'getQuizQuestionsPage').mockReturnValue(of(mockResponse));
-        component.allQuestionsLoaded.set(false);
         component.loading.set(true);
 
         component.loadQuestions();
 
-        expect(component.allQuestionsLoaded()).toBeTrue();
         expect(component.loading()).toBeFalse();
     });
 

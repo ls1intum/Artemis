@@ -19,8 +19,8 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -150,10 +150,9 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         Pageable pageable = Pageable.ofSize(10);
 
-        Page<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(course.getId(), userId, pageable, Set.of(questions.getFirst().getId()));
-        assertThat(result.getTotalElements()).isEqualTo(11);
+        Slice<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(course.getId(), userId, pageable, Set.of(questions.getFirst().getId()));
+        assertThat(result.hasNext()).isTrue();
         assertThat(result.getSize()).isEqualTo(10);
-        assertThat(result.getTotalPages()).isEqualTo(2);
         for (QuizQuestionTrainingDTO dto : result.getContent()) {
             assertThat(dto.isRated()).isTrue();
         }
@@ -193,11 +192,10 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         Pageable pageable = Pageable.ofSize(10);
 
-        Page<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(course.getId(), userId, pageable, null);
+        Slice<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(course.getId(), userId, pageable, null);
 
-        assertThat(result.getTotalElements()).isEqualTo(12);
+        assertThat(result.hasNext()).isTrue();
         assertThat(result.getSize()).isEqualTo(10);
-        assertThat(result.getTotalPages()).isEqualTo(2);
         for (QuizQuestionTrainingDTO dto : result.getContent()) {
             assertThat(dto.isRated()).isFalse();
         }
