@@ -18,7 +18,7 @@ ADMIN_USER: str = config.get('Settings', 'admin_user')
 ADMIN_PASSWORD: str = config.get('Settings', 'admin_password')
 
 # Course settings
-COURSE_ID: int = int(config.get('CourseSettings', 'course_id'))
+COURSE_ID: int = int(config.get('ExamSettings', 'course_id'))
 
 # Exam settings
 EXAM_TITLE: str = config.get('ExamSettings', 'exam_title')

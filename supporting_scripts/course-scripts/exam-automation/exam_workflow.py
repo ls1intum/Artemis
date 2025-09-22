@@ -18,7 +18,7 @@ SERVER_URL: str = config.get('Settings', 'server_url')
 CLIENT_URL: str = config.get('Settings', 'client_url')
 ADMIN_USER: str = config.get('Settings', 'admin_user')
 ADMIN_PASSWORD: str = config.get('Settings', 'admin_password')
-COURSE_ID: int = int(config.get('CourseSettings', 'course_id'))
+COURSE_ID: int = int(config.get('ExamSettings', 'course_id'))
 
 def get_exam_exercises(session: requests.Session, exam_id: int) -> List[Dict[str, Any]]:
     """Get all exercises in the exam."""
