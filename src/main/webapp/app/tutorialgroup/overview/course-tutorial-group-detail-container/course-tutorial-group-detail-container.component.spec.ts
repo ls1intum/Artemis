@@ -17,7 +17,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { RawTutorialGroupDetailGroupDTO, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 
 import { CourseTutorialGroupDetailStubComponent } from 'test/helpers/stubs/tutorialgroup/course-tutorial-group-detail-stub.component';
 
