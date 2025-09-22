@@ -9,7 +9,6 @@ import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,11 +29,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -55,7 +51,6 @@ import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResult
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsEndpoints;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsInternalUrlService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlConfigBuilder;
-import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobService;
 
 @Lazy
@@ -76,11 +71,7 @@ public class JenkinsBuildPlanService {
 
     private final JenkinsJobService jenkinsJobService;
 
-    private final JenkinsJobPermissionsService jenkinsJobPermissionsService;
-
     private final JenkinsInternalUrlService jenkinsInternalUrlService;
-
-    private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -100,15 +91,12 @@ public class JenkinsBuildPlanService {
     private String vcsCredentials;
 
     public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
-            JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator,
-            BuildPlanRepository buildPlanRepository, Optional<AeolusBuildPlanService> aeolusBuildPlanService,
+            JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService, ProgrammingExerciseRepository programmingExerciseRepository,
+            JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator, BuildPlanRepository buildPlanRepository, Optional<AeolusBuildPlanService> aeolusBuildPlanService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.restTemplate = restTemplate;
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
         this.jenkinsJobService = jenkinsJobService;
-        this.userRepository = userRepository;
-        this.jenkinsJobPermissionsService = jenkinsJobPermissionsService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jenkinsInternalUrlService = jenkinsInternalUrlService;
         this.jenkinsPipelineScriptCreator = jenkinsPipelineScriptCreator;
@@ -149,7 +137,6 @@ public class JenkinsBuildPlanService {
             jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
         }
 
-        givePlanPermissions(exercise, planKey);
         triggerBuild(jobFolder, job);
     }
 
@@ -384,35 +371,6 @@ public class JenkinsBuildPlanService {
         }
         catch (JenkinsException emAll) {
             return false;
-        }
-    }
-
-    /**
-     * Assigns access permissions to instructors and TAs for the specified build plan.
-     * This is done by getting all users that belong to the instructor and TA groups of
-     * the exercises' course and adding permissions to the Jenkins job.
-     *
-     * @param programmingExercise the programming exercise
-     * @param planName            the name of the build plan
-     */
-    public void givePlanPermissions(ProgrammingExercise programmingExercise, String planName) {
-        try {
-            // Retrieve the TAs and instructors that will be given access to the plan of the programming exercise
-            Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-            var teachingAssistants = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream()
-                    .map(User::getLogin).collect(Collectors.toSet());
-            var editors = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getEditorGroupName()).stream().map(User::getLogin)
-                    .collect(Collectors.toSet());
-            var instructors = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()).stream().map(User::getLogin)
-                    .collect(Collectors.toSet());
-
-            // The build plan of the exercise is inside the course folder
-            var jobFolder = programmingExercise.getProjectKey();
-            var jobName = jobFolder + "-" + planName;
-            jenkinsJobPermissionsService.addInstructorAndEditorAndTAPermissionsToUsersForJob(teachingAssistants, editors, instructors, jobFolder, jobName);
-        }
-        catch (IOException e) {
-            throw new JenkinsException("Cannot give assign permissions to plan " + planName, e);
         }
     }
 

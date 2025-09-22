@@ -11,7 +11,7 @@
 
         <!-- only display after isCodeOfConductAccepted is loaded and set to false -->
         @if (course() && isCodeOfConductAccepted === false) {
-            <div class="module-bg px-3 py-3 code-of-conduct">
+            <div class="module-bg px-3 py-3 scrollable-content">
                 <jhi-course-conversations-code-of-conduct [course]="course()!" />
                 <button
                     id="acceptCodeOfConductButton"
@@ -49,13 +49,12 @@
                     </div>
                 }
                 <div
-                    class="communication-message-wrap col flex-grow-1 module-bg rounded-3 scrollable-content"
-                    [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'is-answer-thread-open': !!postInThread }"
+                    class="communication-message-wrap col flex-grow-1 module-bg rounded-3 scrollable-communication-content"
+                    [ngClass]="{ 'is-answer-thread-open': !!postInThread }"
                 >
                     @if (activeConversation) {
                         <jhi-conversation-header (onSearchClick)="triggerSearchInConversation()" (togglePinnedMessage)="togglePinnedView()" [pinnedMessageCount]="pinnedCount" />
                         <jhi-conversation-messages
-                            [contentHeightDev]="!isProduction || isTestServer"
                             (openThread)="openThread($event)"
                             [course]="course()"
                             (onNavigateToPost)="onTriggerNavigateToPost($event)"
@@ -76,7 +75,7 @@
                         }
                     }
                 </div>
-                <div class="scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'is-answer-thread-open': !!postInThread }">
+                <div class="scrollable-communication-content" [ngClass]="{ 'is-answer-thread-open': !!postInThread }">
                     @if (!!postInThread) {
                         <jhi-conversation-thread-sidebar
                             [activeConversation]="activeConversation ?? postInThread.conversation!"

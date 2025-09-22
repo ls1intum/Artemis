@@ -1,0 +1,641 @@
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+
+import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
+import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Router } from '@angular/router';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { BuildJob, BuildJobStatistics, SpanType } from 'app/buildagent/shared/entities/build-job.model';
+import dayjs from 'dayjs/esm';
+import { RepositoryInfo, TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
+import { JobTimingInfo } from 'app/buildagent/shared/entities/job-timing-info.model';
+import { BuildConfig } from 'app/buildagent/shared/entities/build-config.model';
+import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
+import { provideHttpClient } from '@angular/common/http';
+import { BuildLogEntry } from 'app/buildagent/shared/entities/build-log.model';
+
+describe('BuildOverviewService', () => {
+    let service: BuildOverviewService;
+    let httpMock: HttpTestingController;
+    let elem1: BuildJob;
+    let repositoryInfo: RepositoryInfo;
+    let jobTimingInfo: JobTimingInfo;
+    let buildConfig: BuildConfig;
+
+    const filterOptions = new FinishedBuildJobFilter();
+    filterOptions.buildAgentAddress = '[127.0.0.1]:5701';
+    filterOptions.buildDurationFilterLowerBound = 1;
+    filterOptions.buildDurationFilterUpperBound = 10;
+    filterOptions.buildSubmissionDateFilterFrom = dayjs('2024-01-01');
+    filterOptions.buildSubmissionDateFilterTo = dayjs('2024-01-02');
+    filterOptions.status = 'SUCCESSFUL';
+
+    const buildLogEntries: BuildLogEntry[] = [
+        {
+            time: dayjs('2024-01-01'),
+            log: 'log1',
+        },
+        {
+            time: dayjs('2024-01-02'),
+            log: 'log2',
+        },
+    ];
+
+    const expectFilterParams = (req: TestRequest, filterOptions: FinishedBuildJobFilter) => {
+        expect(req.request.params.get('buildAgentAddress')).toBe(filterOptions.buildAgentAddress);
+        expect(req.request.params.get('buildDurationLower')).toBe(filterOptions.buildDurationFilterLowerBound?.toString());
+        expect(req.request.params.get('buildDurationUpper')).toBe(filterOptions.buildDurationFilterUpperBound?.toString());
+        expect(req.request.params.get('startDate')).toBe(filterOptions.buildSubmissionDateFilterFrom?.toISOString());
+        expect(req.request.params.get('endDate')).toBe(filterOptions.buildSubmissionDateFilterTo?.toISOString());
+        expect(req.request.params.get('buildStatus')).toBe(filterOptions.status);
+    };
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: Router, useClass: MockRouter },
+                LocalStorageService,
+                SessionStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        });
+        service = TestBed.inject(BuildOverviewService);
+        httpMock = TestBed.inject(HttpTestingController);
+        elem1 = new BuildJob();
+        repositoryInfo = new RepositoryInfo();
+        jobTimingInfo = new JobTimingInfo();
+        buildConfig = new BuildConfig();
+
+        repositoryInfo.repositoryName = 'name1';
+        repositoryInfo.repositoryType = 'USER';
+        repositoryInfo.triggeredByPushTo = TriggeredByPushTo.USER;
+        repositoryInfo.assignmentRepositoryUri = 'uri1';
+        repositoryInfo.testRepositoryUri = 'uri2';
+        repositoryInfo.solutionRepositoryUri = 'uri3';
+        repositoryInfo.auxiliaryRepositoryUris = ['uri4'];
+        repositoryInfo.auxiliaryRepositoryCheckoutDirectories = ['dir1'];
+
+        jobTimingInfo.submissionDate = dayjs('2023-01-02');
+        jobTimingInfo.buildStartDate = dayjs('2023-01-02');
+        jobTimingInfo.buildCompletionDate = dayjs('2023-01-02');
+
+        buildConfig.dockerImage = 'image1';
+        buildConfig.commitHashToBuild = 'hash1';
+        buildConfig.branch = 'branch1';
+        buildConfig.programmingLanguage = 'lang1';
+        buildConfig.projectType = 'type1';
+        buildConfig.scaEnabled = false;
+        buildConfig.sequentialTestRunsEnabled = false;
+        buildConfig.resultPaths = ['path1'];
+
+        elem1.id = '1';
+        elem1.name = 'test1';
+        elem1.participationId = 1;
+        elem1.retryCount = 1;
+        elem1.priority = 1;
+        elem1.courseId = 1;
+        elem1.repositoryInfo = repositoryInfo;
+        elem1.jobTimingInfo = jobTimingInfo;
+        elem1.buildConfig = buildConfig;
+    });
+
+    it('should return build job for course', () => {
+        const courseId = 1;
+        const expectedResponse = [elem1]; // Expecting an array
+
+        service.getQueuedBuildJobsByCourseId(courseId).subscribe((data) => {
+            expect(data).toEqual(expectedResponse); // Check if the response matches expected
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/queued-jobs`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse); // Flush an array of elements
+    });
+
+    it('should return running build jobs for a specific course', () => {
+        const courseId = 1;
+        const expectedResponse = [elem1]; // Assuming this is your expected response
+
+        service.getRunningBuildJobsByCourseId(courseId).subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/running-jobs`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    });
+
+    it('should return all queued build jobs', () => {
+        const expectedResponse = [elem1]; // Assuming this is your expected response
+
+        service.getQueuedBuildJobs().subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/queued-jobs`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    });
+
+    it('should return all running build jobs', () => {
+        const expectedResponse = [elem1]; // Assuming this is your expected response
+
+        service.getRunningBuildJobs().subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/running-jobs`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    });
+
+    it('should cancel a specific build job in a course', () => {
+        const courseId = 1;
+        const buildJobId = '1';
+
+        service.cancelBuildJobInCourse(courseId, buildJobId).subscribe(() => {
+            // Ensure that the cancellation was successful
+            expect(true).toBeTruthy();
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-job/${buildJobId}`);
+        expect(req.request.method).toBe('DELETE');
+        req.flush({}); // Flush an empty response to indicate success
+    });
+
+    it('should cancel a specific build job', () => {
+        const buildJobId = '1';
+
+        service.cancelBuildJob(buildJobId).subscribe(() => {
+            // Ensure that the cancellation was successful
+            expect(true).toBeTruthy();
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-job/${buildJobId}`);
+        expect(req.request.method).toBe('DELETE');
+        req.flush({}); // Flush an empty response to indicate success
+    });
+
+    it('should cancel all running build jobs', () => {
+        service.cancelAllRunningBuildJobs().subscribe(() => {
+            // Ensure that the cancellation was successful
+            expect(true).toBeTruthy();
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-all-running-jobs`);
+        expect(req.request.method).toBe('DELETE');
+        req.flush({}); // Flush an empty response to indicate success
+    });
+
+    it('should cancel all running build jobs in a course', () => {
+        const courseId = 1;
+
+        service.cancelAllRunningBuildJobsInCourse(courseId).subscribe(() => {
+            // Ensure that the cancellation was successful
+            expect(true).toBeTruthy();
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-all-running-jobs`);
+        expect(req.request.method).toBe('DELETE');
+        req.flush({}); // Flush an empty response to indicate success
+    });
+
+    it('should cancel all queued build jobs', () => {
+        service.cancelAllQueuedBuildJobs().subscribe(() => {
+            // Ensure that the cancellation was successful
+            expect(true).toBeTruthy();
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-all-queued-jobs`);
+        expect(req.request.method).toBe('DELETE');
+        req.flush({}); // Flush an empty response to indicate success
+    });
+
+    it('should cancel all queued build jobs in a course', () => {
+        const courseId = 1;
+
+        service.cancelAllQueuedBuildJobsInCourse(courseId).subscribe(() => {
+            // Ensure that the cancellation was successful
+            expect(true).toBeTruthy();
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-all-queued-jobs`);
+        expect(req.request.method).toBe('DELETE');
+        req.flush({}); // Flush an empty response to indicate success
+    });
+
+    it('should cancel all running build jobs for a specific agent', () => {
+        const agentName = 'agent1';
+
+        service.cancelAllRunningBuildJobsForAgent(agentName).subscribe(() => {
+            // Ensure that the cancellation was successful
+            expect(true).toBeTruthy();
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-all-running-jobs-for-agent?agentName=${agentName}`);
+        expect(req.request.method).toBe('DELETE');
+        req.flush({}); // Flush an empty response to indicate success
+    });
+
+    it('should handle errors when cancelling a specific build job', fakeAsync(() => {
+        const buildJobId = '1';
+
+        let errorOccurred = false;
+
+        service.cancelBuildJob(buildJobId).subscribe({
+            error: (err) => {
+                // Ensure that the error is handled properly
+                expect(err.message).toBe(
+                    'Failed to cancel build job ' +
+                        buildJobId +
+                        '\nHttp failure response for ' +
+                        service.adminResourceUrl +
+                        '/cancel-job/' +
+                        buildJobId +
+                        ': 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-job/${buildJobId}`);
+        expect(req.request.method).toBe('DELETE');
+
+        // Simulate an error response from the server
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        // Verify that an error occurred during the subscription
+        expect(errorOccurred).toBeTruthy();
+    }));
+
+    it('should handle errors when cancelling a specific build job in a course', fakeAsync(() => {
+        const courseId = 1;
+        const buildJobId = '1';
+
+        let errorOccurred = false;
+
+        service.cancelBuildJobInCourse(courseId, buildJobId).subscribe({
+            error: (err) => {
+                // Ensure that the error is handled properly
+                expect(err.message).toBe(
+                    'Failed to cancel build job ' +
+                        buildJobId +
+                        ' in course ' +
+                        courseId +
+                        '\nHttp failure response for ' +
+                        service.resourceUrl +
+                        '/courses/' +
+                        courseId +
+                        '/cancel-job/' +
+                        buildJobId +
+                        ': 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-job/${buildJobId}`);
+        expect(req.request.method).toBe('DELETE');
+
+        // Simulate an error response from the server
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        // Verify that an error occurred during the subscription
+        expect(errorOccurred).toBeTruthy();
+    }));
+
+    it('should handle errors when cancelling all running build jobs', fakeAsync(() => {
+        let errorOccurred = false;
+
+        service.cancelAllRunningBuildJobs().subscribe({
+            error: (err) => {
+                // Ensure that the error is handled properly
+                expect(err.message).toBe(
+                    'Failed to cancel all running build jobs' + '\nHttp failure response for ' + service.adminResourceUrl + '/cancel-all-running-jobs: 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-all-running-jobs`);
+        expect(req.request.method).toBe('DELETE');
+
+        // Simulate an error response from the server
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        // Verify that an error occurred during the subscription
+        expect(errorOccurred).toBeTruthy();
+    }));
+
+    it('should handle errors when cancelling all running build jobs in a course', fakeAsync(() => {
+        const courseId = 1;
+
+        let errorOccurred = false;
+
+        service.cancelAllRunningBuildJobsInCourse(courseId).subscribe({
+            error: (err) => {
+                // Ensure that the error is handled properly
+                expect(err.message).toBe(
+                    'Failed to cancel all running build jobs in course ' +
+                        courseId +
+                        '\nHttp failure response for ' +
+                        service.resourceUrl +
+                        '/courses/' +
+                        courseId +
+                        '/cancel-all-running-jobs: 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-all-running-jobs`);
+        expect(req.request.method).toBe('DELETE');
+
+        // Simulate an error response from the server
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        // Verify that an error occurred during the subscription
+        expect(errorOccurred).toBeTruthy();
+    }));
+
+    it('should handle errors when cancelling all queued build jobs', fakeAsync(() => {
+        let errorOccurred = false;
+
+        service.cancelAllQueuedBuildJobs().subscribe({
+            error: (err) => {
+                // Ensure that the error is handled properly
+                expect(err.message).toBe(
+                    'Failed to cancel all queued build jobs' + '\nHttp failure response for ' + service.adminResourceUrl + '/cancel-all-queued-jobs: 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-all-queued-jobs`);
+        expect(req.request.method).toBe('DELETE');
+
+        // Simulate an error response from the server
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        // Verify that an error occurred during the subscription
+        expect(errorOccurred).toBeTruthy();
+    }));
+
+    it('should handle errors when cancelling all queued build jobs in a course', fakeAsync(() => {
+        const courseId = 1;
+
+        let errorOccurred = false;
+
+        service.cancelAllQueuedBuildJobsInCourse(courseId).subscribe({
+            error: (err) => {
+                // Ensure that the error is handled properly
+                expect(err.message).toBe(
+                    'Failed to cancel all queued build jobs in course ' +
+                        courseId +
+                        '\nHttp failure response for ' +
+                        service.resourceUrl +
+                        '/courses/' +
+                        courseId +
+                        '/cancel-all-queued-jobs: 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/cancel-all-queued-jobs`);
+        expect(req.request.method).toBe('DELETE');
+
+        // Simulate an error response from the server
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        // Verify that an error occurred during the subscription
+        expect(errorOccurred).toBeTruthy();
+    }));
+
+    it('should handle errors when cancelling all running build jobs for a specific agent', fakeAsync(() => {
+        const agentName = 'agent1';
+
+        let errorOccurred = false;
+
+        service.cancelAllRunningBuildJobsForAgent(agentName).subscribe({
+            error: (err) => {
+                // Ensure that the error is handled properly
+                expect(err.message).toBe(
+                    'Failed to cancel all running build jobs for agent ' +
+                        agentName +
+                        '\nHttp failure response for ' +
+                        service.adminResourceUrl +
+                        '/cancel-all-running-jobs-for-agent?agentName=' +
+                        agentName +
+                        ': 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/cancel-all-running-jobs-for-agent?agentName=${agentName}`);
+        expect(req.request.method).toBe('DELETE');
+
+        // Simulate an error response from the server
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        // Verify that an error occurred during the subscription
+        expect(errorOccurred).toBeTruthy();
+    }));
+
+    it('should return all finished build jobs', () => {
+        const expectedResponse = [elem1];
+
+        service.getFinishedBuildJobs().subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/finished-jobs`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    });
+
+    it('should return filtered finished build jobs', () => {
+        const expectedResponse = [elem1];
+
+        service.getFinishedBuildJobs(undefined, filterOptions).subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne((r) => r.url === `${service.adminResourceUrl}/finished-jobs`);
+        expect(req.request.method).toBe('GET');
+        expectFilterParams(req, filterOptions);
+        req.flush(expectedResponse);
+    });
+
+    it('should handle errors when getting all finished build jobs', fakeAsync(() => {
+        let errorOccurred = false;
+
+        service.getFinishedBuildJobs().subscribe({
+            error: (err) => {
+                expect(err.message).toBe(
+                    'Failed to get all finished build jobs\nHttp failure response for ' + service.adminResourceUrl + '/finished-jobs: 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/finished-jobs`);
+        expect(req.request.method).toBe('GET');
+
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        expect(errorOccurred).toBeTruthy();
+    }));
+
+    it('should return all finished build jobs for a specific course', () => {
+        const courseId = 1;
+        const expectedResponse = [elem1];
+
+        service.getFinishedBuildJobsByCourseId(courseId).subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/finished-jobs`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    });
+
+    it('should return filtered finished build jobs for a specific course', () => {
+        const courseId = 1;
+        const expectedResponse = [elem1];
+
+        service.getFinishedBuildJobsByCourseId(courseId, undefined, filterOptions).subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne((r) => r.url === `${service.resourceUrl}/courses/${courseId}/finished-jobs`);
+        expect(req.request.method).toBe('GET');
+        expectFilterParams(req, filterOptions);
+        req.flush(expectedResponse);
+    });
+
+    it('should return build job statistics', fakeAsync(() => {
+        const expectedResponse: BuildJobStatistics = { totalBuilds: 1, successfulBuilds: 1, failedBuilds: 0, cancelledBuilds: 0, timeOutBuilds: 0, missingBuilds: 0 };
+
+        service.getBuildJobStatistics(SpanType.WEEK).subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-job-statistics?span=7`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    }));
+
+    it('should handle errors when getting build job statistics', fakeAsync(() => {
+        let errorOccurred = false;
+
+        service.getBuildJobStatistics(SpanType.MONTH).subscribe({
+            error: (err) => {
+                expect(err.message).toBe(
+                    'Failed to get build job statistics\nHttp failure response for ' + service.adminResourceUrl + '/build-job-statistics?span=30: 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/build-job-statistics?span=30`);
+        expect(req.request.method).toBe('GET');
+
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        expect(errorOccurred).toBeTruthy();
+    }));
+
+    it('should handle errors when getting all finished build jobs for a specific course', fakeAsync(() => {
+        const courseId = 1;
+
+        let errorOccurred = false;
+
+        service.getFinishedBuildJobsByCourseId(courseId).subscribe({
+            error: (err) => {
+                expect(err.message).toBe(
+                    'Failed to get all finished build jobs in course ' +
+                        courseId +
+                        '\nHttp failure response for ' +
+                        service.resourceUrl +
+                        '/courses/' +
+                        courseId +
+                        '/finished-jobs: 500 Internal Server Error',
+                );
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/courses/${courseId}/finished-jobs`);
+        expect(req.request.method).toBe('GET');
+
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        expect(errorOccurred).toBeTruthy();
+    }));
+
+    it('should return build log entries for a specific build job', () => {
+        const buildJobId = '1';
+        const expectedResponse = buildLogEntries;
+
+        service.getBuildJobLogs(buildJobId).subscribe((data) => {
+            expect(data).toEqual(expectedResponse);
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/build-log/${buildJobId}`);
+        expect(req.request.method).toBe('GET');
+        req.flush(expectedResponse);
+    });
+
+    it('should handle errors when getting build log entries for a specific build job', fakeAsync(() => {
+        const buildJobId = '1';
+
+        let errorOccurred = false;
+
+        service.getBuildJobLogs(buildJobId).subscribe({
+            error: (err) => {
+                expect(err.message).toBe('artemisApp.buildQueue.logs.errorFetchingLogs');
+                errorOccurred = true;
+            },
+        });
+
+        const req = httpMock.expectOne(`${service.resourceUrl}/build-log/${buildJobId}`);
+        expect(req.request.method).toBe('GET');
+
+        req.flush(null, { status: 500, statusText: 'Internal Server Error' });
+
+        tick();
+
+        expect(errorOccurred).toBeTruthy();
+    }));
+
+    afterEach(() => {
+        httpMock.verify(); // Verify that there are no outstanding requests.
+    });
+});

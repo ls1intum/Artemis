@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessS
  * This service is responsible for adding build jobs to the Integrated Code Lifecycle executor service.
  * It handles timeouts as well as exceptions that occur during the execution of the build job.
  */
-@Lazy
+@Lazy(false)
 @Service
 @Profile(PROFILE_BUILDAGENT)
 public class BuildJobManagementService {

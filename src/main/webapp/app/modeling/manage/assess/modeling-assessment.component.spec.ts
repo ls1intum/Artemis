@@ -11,7 +11,6 @@ import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -74,11 +73,6 @@ describe('ModelingAssessmentComponent', () => {
             },
             assessments: {},
         } as UMLModel;
-    };
-
-    // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
-    Text.size = () => {
-        return { width: 0, height: 0 };
     };
 
     const makeMockModel = () => generateMockModel('elementId1', 'elementId2', 'relationshipId');
@@ -215,6 +209,7 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     it('should update element counts', async () => {
+        jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
         function getElementCounts(model: UMLModel): ModelElementCount[] {
             // Not sure whether this is the correct logic to build OtherModelElementCounts.
             return Object.values(model.elements).map((el) => ({

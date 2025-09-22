@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeInformationDTO;
-import de.tum.cit.aet.artemis.exercise.dto.GradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 
@@ -131,8 +131,8 @@ public class ParticipantScoreResource {
     public ResponseEntity<CourseGradeInformationDTO> getGradeScoresForCourse(@PathVariable long courseId) {
         log.info("REST request to get grade scores for Course {}", courseId);
         long start = System.nanoTime();
-        List<GradeScoreDTO> gradeScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId);
-        Set<Long> userIds = gradeScores.stream().map(GradeScoreDTO::userId).collect(Collectors.toSet());
+        Set<CourseGradeScoreDTO> gradeScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId);
+        Set<Long> userIds = gradeScores.stream().map(CourseGradeScoreDTO::userId).collect(Collectors.toSet());
         List<StudentDTO> students = userIds.isEmpty() ? List.of() : userRepository.findAllStudentsByIdIn(userIds);
         log.info("Found {} grade scores, {} students, in {}", gradeScores.size(), students.size(), TimeLogUtil.formatDurationFrom(start));
 
