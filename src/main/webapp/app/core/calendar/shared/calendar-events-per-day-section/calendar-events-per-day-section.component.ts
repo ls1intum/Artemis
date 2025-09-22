@@ -17,12 +17,19 @@ type Day = { date: Dayjs; eventsAndPositions: CalendarEventAndPosition[]; id: st
     styleUrl: './calendar-events-per-day-section.component.scss',
 })
 export class CalendarEventsPerDaySectionComponent {
+    // amount of pixels in 1rem
     static readonly PIXELS_PER_REM = 16;
+    // height of one hour in the grid that is part of the template (measured in rem)
     static readonly HOUR_HEIGHT_IN_REM = 3.5;
+    // height of one hour in the grid that is part of the template (measured in px)
     static readonly HOUR_HEIGHT_IN_PIXEL = CalendarEventsPerDaySectionComponent.HOUR_HEIGHT_IN_REM * CalendarEventsPerDaySectionComponent.PIXELS_PER_REM;
+    // amount of pixels that represent 1min in the grid that is part of the template
     static readonly PIXELS_PER_MINUTE = CalendarEventsPerDaySectionComponent.HOUR_HEIGHT_IN_PIXEL / 60;
+    // amount of minutes represented by 1px in the grid that is part of the template
     static readonly MINUTES_PER_PIXEL = 1 / CalendarEventsPerDaySectionComponent.PIXELS_PER_MINUTE;
+    // default height for events that are displayed in the template (equivalent to 1.5rem)
     static readonly DEFAULT_EVENT_HEIGHT_IN_PIXEL = 24;
+    // rounded amount of minutes that is equivalent to the default height of events
     static readonly DEFAULT_EVENT_LENGTH_IN_MINUTES = Math.ceil(
         CalendarEventsPerDaySectionComponent.DEFAULT_EVENT_HEIGHT_IN_PIXEL * CalendarEventsPerDaySectionComponent.MINUTES_PER_PIXEL,
     );
