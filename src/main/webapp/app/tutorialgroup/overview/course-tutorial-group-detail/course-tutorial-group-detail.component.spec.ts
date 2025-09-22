@@ -10,6 +10,7 @@ import { OneToOneChatService } from 'app/communication/conversations/service/one
 import { AlertService } from 'app/shared/service/alert.service';
 import { Router, RouterLink } from '@angular/router';
 import { RawTutorialGroupDetailGroupDTO, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { RawTutorialGroupDetailSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import * as CourseModel from 'app/core/course/shared/entities/course.model';
 
 import { By } from '@angular/platform-browser';
