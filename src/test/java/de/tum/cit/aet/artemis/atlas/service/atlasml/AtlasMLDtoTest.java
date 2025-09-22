@@ -84,6 +84,13 @@ class AtlasMLDtoTest {
     void testAtlasMLCompetencyRelationDTO_mappingAndJson() throws JsonProcessingException {
         CompetencyRelation relation = new CompetencyRelation();
         relation.setType(RelationType.EXTENDS);
+        // Set tail and head competencies to avoid null pointer when mapping ids
+        Competency tail = new Competency();
+        tail.setId(1L);
+        Competency head = new Competency();
+        head.setId(2L);
+        relation.setTailCompetency(tail);
+        relation.setHeadCompetency(head);
 
         AtlasMLCompetencyRelationDTO dto = AtlasMLCompetencyRelationDTO.fromDomain(relation);
         assertThat(dto.relationType()).isEqualTo("EXTENDS");
@@ -118,6 +125,9 @@ class AtlasMLDtoTest {
         // fromCompetency
         Competency comp = new Competency("t", "d", null, 100, CompetencyTaxonomy.APPLY, false);
         comp.setId(1L);
+        Course course = new Course();
+        course.setId(7L);
+        comp.setCourse(course);
         SaveCompetencyRequestDTO r1 = SaveCompetencyRequestDTO.fromCompetency(comp, SaveCompetencyRequestDTO.OperationTypeDTO.UPDATE);
         assertThat(r1.competencies()).hasSize(1);
         assertThat(r1.operationType()).isEqualTo("UPDATE");

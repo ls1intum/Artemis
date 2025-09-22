@@ -19,6 +19,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CompetencySelection', () => {
     let fixture: ComponentFixture<CompetencySelectionComponent>;
@@ -218,17 +219,20 @@ describe('CompetencySelection', () => {
 
         it('should show lightbulb button for competency suggestions', () => {
             fixture.detectChanges();
-            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-            expect(lightbulbButton).not.toBeNull();
-            expect(lightbulbButton.nativeElement.disabled).toBeFalse();
+            const btnDe = fixture.debugElement.query(By.css('jhi-button'));
+            expect(btnDe).not.toBeNull();
+            // Disabled state is controlled by input binding
+            const cmp = btnDe.componentInstance;
+            expect(cmp.disabled).toBeFalse();
         });
 
         it('should disable lightbulb button when no exercise description', () => {
             component.exerciseDescription = '';
             fixture.detectChanges();
 
-            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-            expect(lightbulbButton.nativeElement.disabled).toBeTrue();
+            const btnDe = fixture.debugElement.query(By.css('jhi-button'));
+            const cmp = btnDe.componentInstance;
+            expect(cmp.disabled).toBeTrue();
         });
 
         it('should call API and show suggestions when lightbulb button is clicked', () => {
@@ -257,12 +261,11 @@ describe('CompetencySelection', () => {
             component.isSuggesting = true;
             fixture.detectChanges();
 
-            const spinner = fixture.debugElement.query(By.css('.spinner-border-sm'));
-            // There are multiple fa-icons in the component, so we need to be more specific
-            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-            const lightbulbIcon = lightbulbButton?.query(By.css('fa-icon'));
+            const btnDe = fixture.debugElement.query(By.css('jhi-button'));
+            const spinnerIcon = btnDe?.query(By.css('.jhi-btn__loading'));
+            const lightbulbIcon = btnDe?.query(By.css('.jhi-btn__icon'));
 
-            expect(spinner).not.toBeNull();
+            expect(spinnerIcon).not.toBeNull();
             expect(lightbulbIcon).toBeNull(); // Should not show lightbulb icon when showing spinner
         });
 
@@ -348,14 +351,16 @@ describe('CompetencySelection', () => {
             component.isSuggesting = true;
             fixture.detectChanges();
 
-            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-            expect(lightbulbButton.nativeElement.disabled).toBeTrue();
+            const btnDe = fixture.debugElement.query(By.css('jhi-button'));
+            const cmp = btnDe.componentInstance;
+            expect(cmp.disabled).toBeTrue();
         });
 
         it('should show lightbulb tooltip', () => {
             fixture.detectChanges();
-            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-            expect(lightbulbButton.attributes['ngbTooltip']).toBe('Get AI Suggestions');
+            const btnDe = fixture.debugElement.query(By.css('jhi-button'));
+            const cmp = btnDe.componentInstance;
+            expect(cmp.tooltip).toBe('artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
         });
 
         it('should show AI suggested competency tooltip', () => {
@@ -370,7 +375,9 @@ describe('CompetencySelection', () => {
 
             const suggestedIcon = fixture.debugElement.query(By.css('fa-icon.text-warning.ms-2'));
             expect(suggestedIcon).toBeTruthy();
-            expect(suggestedIcon.attributes['ngbTooltip']).toBe('AI suggested competency');
+            const tooltip = suggestedIcon.injector.get(NgbTooltip, null);
+            expect(tooltip).toBeTruthy();
+            expect(tooltip?.ngbTooltip).toBe('artemisApp.competency.suggestion.tooltip');
         });
 
         it('should match competencies by ID when processing suggestions', () => {

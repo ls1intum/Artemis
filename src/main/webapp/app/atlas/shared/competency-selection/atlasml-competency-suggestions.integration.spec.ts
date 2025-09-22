@@ -19,6 +19,7 @@ import { CompetencySelectionComponent } from 'app/atlas/shared/competency-select
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 
 /**
  * Integration test suite for AtlasML Competency Suggestion Feature
@@ -97,10 +98,10 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
 
     describe('UI Component Visibility', () => {
         it('should display lightbulb suggestion button when AtlasML is enabled', () => {
-            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-
-            expect(lightbulbButton).toBeTruthy();
-            expect(lightbulbButton.nativeElement.disabled).toBeFalsy();
+            const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
+            expect(btnDe).toBeTruthy();
+            const btn = btnDe.componentInstance as ButtonComponent;
+            expect(btn.disabled).toBeFalsy();
         });
 
         it('should hide lightbulb button when AtlasML feature is disabled', () => {
@@ -108,30 +109,32 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             mockFeatureToggleService.setFeatureToggleState(FeatureToggle.AtlasML, false).subscribe();
             fixture.detectChanges();
 
-            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-            // Button should be hidden with d-none class when AtlasML feature is disabled
-            expect(lightbulbButton?.nativeElement?.classList.contains('d-none')).toBeTruthy();
+            const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
+            expect(btnDe.nativeElement.classList.contains('d-none')).toBeTruthy();
         });
 
         it('should show proper tooltip for lightbulb button', () => {
-            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-            expect(lightbulbButton.attributes['ngbTooltip']).toBe('Get AI Suggestions');
+            const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
+            const btn = btnDe.componentInstance as ButtonComponent;
+            expect(btn.tooltip).toBe('artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
         });
 
         it('should disable lightbulb button when exercise description is empty', () => {
             component.exerciseDescription = '';
             fixture.detectChanges();
 
-            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-            expect(lightbulbButton.nativeElement.disabled).toBeTruthy();
+            const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
+            const btn = btnDe.componentInstance as ButtonComponent;
+            expect(btn.disabled).toBeTruthy();
         });
 
         it('should disable lightbulb button when exercise description contains only whitespace', () => {
             component.exerciseDescription = '   \n\t  ';
             fixture.detectChanges();
 
-            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-            expect(lightbulbButton.nativeElement.disabled).toBeTruthy();
+            const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
+            const btn = btnDe.componentInstance as ButtonComponent;
+            expect(btn.disabled).toBeTruthy();
         });
     });
 
@@ -214,7 +217,8 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             // Verify tooltips
             suggestedIcons.forEach((icon) => {
                 const tooltip = icon.injector.get(NgbTooltip, null);
-                expect(tooltip?.ngbTooltip).toBe('AI suggested competency');
+                // Expect translation key to be present (translated by pipe in template)
+                expect(tooltip?.ngbTooltip).toBe('artemisApp.competency.suggestion.tooltip');
             });
         });
 
@@ -264,13 +268,17 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             fixture.detectChanges();
 
             // Should show spinner
-            const spinner = fixture.debugElement.query(By.css('.spinner-border-sm'));
-            expect(spinner).toBeTruthy();
+            // Loading is now handled by jhi-button isLoading; spinner element is not directly in DOM here
+            const btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
+            const btn = btnDe.componentInstance as ButtonComponent;
+            expect(btn.isLoading).toBeTruthy();
 
-            // Should not show lightbulb icon
-            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-            const lightbulbIcon = lightbulbButton.query(By.css('fa-icon'));
+            // Should not show lightbulb icon (hidden when loading)
+            const lightbulbIcon = btnDe.query(By.css('.jhi-btn__icon'));
             expect(lightbulbIcon).toBeFalsy();
+            // Spinner should be visible on the button while loading
+            const spinnerIcon = btnDe.query(By.css('.jhi-btn__loading'));
+            expect(spinnerIcon).toBeTruthy();
 
             tick(200);
             fixture.detectChanges();
@@ -283,18 +291,23 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         it('should disable button during API call', fakeAsync(() => {
             jest.spyOn(httpClient, 'post').mockReturnValue(of({ competencies: [] }).pipe(delay(100)));
 
-            const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
-            expect(lightbulbButton.nativeElement.disabled).toBeFalsy();
+            let btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
+            let btn = btnDe.componentInstance as ButtonComponent;
+            expect(btn.disabled).toBeFalsy();
 
             component.suggestCompetencies();
             fixture.detectChanges();
 
-            expect(lightbulbButton.nativeElement.disabled).toBeTruthy();
+            btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
+            btn = btnDe.componentInstance as ButtonComponent;
+            expect(btn.disabled).toBeTruthy();
 
             tick(100);
             fixture.detectChanges();
 
-            expect(lightbulbButton.nativeElement.disabled).toBeFalsy();
+            btnDe = fixture.debugElement.query(By.directive(ButtonComponent));
+            btn = btnDe.componentInstance as ButtonComponent;
+            expect(btn.disabled).toBeFalsy();
         }));
     });
 

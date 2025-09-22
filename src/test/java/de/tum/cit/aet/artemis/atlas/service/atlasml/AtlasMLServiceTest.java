@@ -13,9 +13,11 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -70,6 +72,7 @@ class AtlasMLServiceTest {
     @BeforeEach
     void setUp() {
         lenient().when(config.getAtlasmlBaseUrl()).thenReturn("http://localhost:8000");
+        lenient().when(config.getAtlasmlAuthToken()).thenReturn("secret-token");
         atlasMLService = new AtlasMLService(atlasmlRestTemplate, shortTimeoutAtlasmlRestTemplate, config, competencyRepository, competencyExerciseLinkRepository,
                 featureToggleService);
     }
@@ -78,19 +81,26 @@ class AtlasMLServiceTest {
     void testIsHealthy_WhenServiceIsUp() {
         // Given
         ResponseEntity<String> response = new ResponseEntity<>("[]", HttpStatus.OK);
-        when(shortTimeoutAtlasmlRestTemplate.getForEntity(eq("http://localhost:8000/api/v1/health/"), eq(String.class))).thenReturn(response);
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        when(shortTimeoutAtlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/health/"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(response);
 
         // When
         boolean result = atlasMLService.isHealthy();
 
         // Then
         assertThat(result).isTrue();
+        verify(shortTimeoutAtlasmlRestTemplate).exchange(eq("http://localhost:8000/api/v1/health/"), eq(HttpMethod.GET), captor.capture(), eq(String.class));
+        HttpEntity<?> sentEntity = captor.getValue();
+        HttpHeaders headers = (HttpHeaders) sentEntity.getHeaders();
+        assertThat(headers.getFirst("Authorization")).isEqualTo("Bearer secret-token");
     }
 
     @Test
     void testIsHealthy_WhenServiceIsDown() {
         // Given
-        when(shortTimeoutAtlasmlRestTemplate.getForEntity(eq("http://localhost:8000/api/v1/health/"), eq(String.class))).thenThrow(new RuntimeException("Connection failed"));
+        when(shortTimeoutAtlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/health/"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(new RuntimeException("Connection failed"));
 
         // When
         boolean result = atlasMLService.isHealthy();
@@ -104,6 +114,7 @@ class AtlasMLServiceTest {
         // Given
         SuggestCompetencyRequestDTO request = new SuggestCompetencyRequestDTO("test description", 1L);
 
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/suggest"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(new ResponseEntity<>(
                         "{\"competencies\":[{\"id\":1,\"title\":\"Test Competency 1\",\"description\":\"Test Description 1\",\"course_id\":1},{\"id\":2,\"title\":\"Test Competency 2\",\"description\":\"Test Description 2\",\"course_id\":1}]}",
@@ -117,6 +128,48 @@ class AtlasMLServiceTest {
         assertThat(result.competencies()).hasSize(2);
         assertThat(result.competencies().get(0).id()).isEqualTo(1L);
         assertThat(result.competencies().get(1).id()).isEqualTo(2L);
+        verify(atlasmlRestTemplate).exchange(eq("http://localhost:8000/api/v1/competency/suggest"), eq(HttpMethod.POST), captor.capture(), eq(String.class));
+        HttpEntity<?> sentEntity = captor.getValue();
+        HttpHeaders headers = (HttpHeaders) sentEntity.getHeaders();
+        assertThat(headers.getFirst("Authorization")).isEqualTo("Bearer secret-token");
+    }
+
+    @Test
+    void testSuggestCompetencyRelations_AddsAuthorizationHeader() {
+        // Given
+        Long courseId = 42L;
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        ResponseEntity<String> response = new ResponseEntity<>('{' + "\"relations\":[]" + '}', HttpStatus.OK);
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/relations/suggest/42"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(response);
+
+        // When
+        atlasMLService.suggestCompetencyRelations(courseId);
+
+        // Then
+        verify(atlasmlRestTemplate).exchange(eq("http://localhost:8000/api/v1/competency/relations/suggest/42"), eq(HttpMethod.GET), captor.capture(), eq(String.class));
+        HttpEntity<?> sentEntity = captor.getValue();
+        HttpHeaders headers = (HttpHeaders) sentEntity.getHeaders();
+        assertThat(headers.getFirst("Authorization")).isEqualTo("Bearer secret-token");
+    }
+
+    @Test
+    void testSaveCompetencies_AddsAuthorizationHeader() {
+        // Given
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
+        SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(null, null, OperationTypeDTO.UPDATE.value());
+        ArgumentCaptor<HttpEntity> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>("", HttpStatus.OK));
+
+        // When
+        atlasMLService.saveCompetencies(request);
+
+        // Then
+        verify(atlasmlRestTemplate).exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), captor.capture(), eq(String.class));
+        HttpEntity<?> sentEntity = captor.getValue();
+        HttpHeaders headers = (HttpHeaders) sentEntity.getHeaders();
+        assertThat(headers.getFirst("Authorization")).isEqualTo("Bearer secret-token");
     }
 
     @Test
@@ -511,7 +564,7 @@ class AtlasMLServiceTest {
     @Test
     void testIsHealthy_HttpServerErrorException() {
         // Given
-        when(shortTimeoutAtlasmlRestTemplate.getForEntity(eq("http://localhost:8000/api/v1/health/"), eq(String.class)))
+        when(shortTimeoutAtlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/health/"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
         // When
@@ -524,7 +577,7 @@ class AtlasMLServiceTest {
     @Test
     void testIsHealthy_ResourceAccessException() {
         // Given
-        when(shortTimeoutAtlasmlRestTemplate.getForEntity(eq("http://localhost:8000/api/v1/health/"), eq(String.class)))
+        when(shortTimeoutAtlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/health/"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new ResourceAccessException("Connection timeout"));
 
         // When
@@ -537,7 +590,8 @@ class AtlasMLServiceTest {
     @Test
     void testIsHealthy_GenericException() {
         // Given
-        when(shortTimeoutAtlasmlRestTemplate.getForEntity(eq("http://localhost:8000/api/v1/health/"), eq(String.class))).thenThrow(new RuntimeException("Unexpected error"));
+        when(shortTimeoutAtlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/health/"), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(new RuntimeException("Unexpected error"));
 
         // When
         boolean result = atlasMLService.isHealthy();

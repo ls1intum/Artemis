@@ -342,9 +342,9 @@ describe('CourseCompetencyRelationFormComponent', () => {
         });
 
         it('should show lightbulb button for relation suggestions', () => {
-            const lightbulbButton = fixture.debugElement.nativeElement.querySelector('button[ngbTooltip="Get AI Suggestions"]');
-            expect(lightbulbButton).not.toBeNull();
-            expect(lightbulbButton.disabled).toBeFalse();
+            const btn = fixture.debugElement.queryAll(By.css('jhi-button')).find((de) => (de.componentInstance?.tooltip ?? '').includes('getAiSuggestionsTooltip'));
+            expect(btn).toBeTruthy();
+            expect(btn?.componentInstance?.disabled).toBeFalse();
         });
 
         it('should disable lightbulb button when loading suggestions', async () => {
@@ -353,8 +353,8 @@ describe('CourseCompetencyRelationFormComponent', () => {
             component.fetchSuggestions();
             fixture.detectChanges();
 
-            const lightbulbButton = fixture.debugElement.nativeElement.querySelector('button[ngbTooltip="Get AI Suggestions"]');
-            expect(lightbulbButton.disabled).toBeTrue();
+            const btn = fixture.debugElement.queryAll(By.css('jhi-button')).find((de) => (de.componentInstance?.tooltip ?? '').includes('getAiSuggestionsTooltip'));
+            expect(btn?.componentInstance?.disabled).toBeTrue();
             expect(component.isLoadingSuggestions()).toBeTrue();
         });
 

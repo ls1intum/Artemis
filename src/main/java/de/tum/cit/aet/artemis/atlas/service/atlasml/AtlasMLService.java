@@ -89,7 +89,9 @@ public class AtlasMLService {
     public boolean isHealthy() {
         try {
             log.debug("Checking AtlasML health status");
-            ResponseEntity<String> response = shortTimeoutAtlasmlRestTemplate.getForEntity(config.getAtlasmlBaseUrl() + HEALTH_ENDPOINT, String.class);
+            HttpHeaders headers = buildHeadersWithAuth();
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+            ResponseEntity<String> response = shortTimeoutAtlasmlRestTemplate.exchange(config.getAtlasmlBaseUrl() + HEALTH_ENDPOINT, HttpMethod.GET, entity, String.class);
 
             boolean isHealthy = response.getStatusCode().is2xxSuccessful();
             log.debug("AtlasML health check result: {}", isHealthy);
@@ -118,8 +120,7 @@ public class AtlasMLService {
     public SuggestCompetencyResponseDTO suggestCompetencies(SuggestCompetencyRequestDTO request) {
         try {
             log.debug("Requesting competency suggestions for id: {}", request.description());
-
-            HttpHeaders headers = new HttpHeaders();
+            HttpHeaders headers = buildHeadersWithAuth();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<SuggestCompetencyRequestDTO> entity = new HttpEntity<>(request, headers);
 
@@ -167,7 +168,7 @@ public class AtlasMLService {
         try {
             log.debug("Requesting competency relation suggestions for courseId: {}", courseId);
 
-            HttpHeaders headers = new HttpHeaders();
+            HttpHeaders headers = buildHeadersWithAuth();
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
             String url = config.getAtlasmlBaseUrl() + String.format(SUGGEST_RELATIONS_ENDPOINT, courseId);
@@ -221,7 +222,7 @@ public class AtlasMLService {
                     : (request.exercise() != null ? request.exercise().id().toString() : "unknown");
             log.debug("Saving competencies for id: {}", requestId);
 
-            HttpHeaders headers = new HttpHeaders();
+            HttpHeaders headers = buildHeadersWithAuth();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<SaveCompetencyRequestDTO> entity = new HttpEntity<>(request, headers);
 
@@ -426,5 +427,15 @@ public class AtlasMLService {
         public List<Competency> getCompetencies() {
             return competencies;
         }
+    }
+
+    private HttpHeaders buildHeadersWithAuth() {
+        HttpHeaders headers = new HttpHeaders();
+        String token = config.getAtlasmlAuthToken();
+        if (token != null && !token.isBlank()) {
+            String value = token.startsWith("Bearer ") ? token : "Bearer " + token;
+            headers.set("Authorization", value);
+        }
+        return headers;
     }
 }

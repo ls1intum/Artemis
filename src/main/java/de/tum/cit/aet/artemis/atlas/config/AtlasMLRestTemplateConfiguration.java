@@ -30,6 +30,9 @@ public class AtlasMLRestTemplateConfiguration {
     @Value("${atlas.atlasml.base-url:http://atlasml.aet.cit.tum.de/}")
     private String atlasmlBaseUrl;
 
+    @Value("${atlas.atlasml.auth-token:}")
+    private String atlasmlAuthToken;
+
     /**
      * Creates a RestTemplate for AtlasML with standard timeouts.
      *
@@ -59,5 +62,9 @@ public class AtlasMLRestTemplateConfiguration {
 
     public String getAtlasmlBaseUrl() {
         return atlasmlBaseUrl;
+    }
+
+    public String getAtlasmlAuthToken() {
+        return atlasmlAuthToken;
     }
 }

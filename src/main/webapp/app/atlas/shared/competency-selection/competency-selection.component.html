@@ -15,17 +15,13 @@
                 [btnType]="ButtonType.WARNING"
                 [disabled]="isSuggesting || disabled || !exerciseDescription?.trim()"
                 (onClick)="suggestCompetencies()"
-                [tooltip]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip' | artemisTranslate"
+                [tooltip]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip'"
                 [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
                 [btnSize]="ButtonSize.SMALL"
+                [icon]="faLightbulb"
+                [isLoading]="isSuggesting"
                 class="ms-2"
-            >
-                @if (isSuggesting) {
-                    <span class="spinner-border spinner-border-sm" role="status"></span>
-                } @else {
-                    <fa-icon [icon]="faLightbulb" style="color: white" />
-                }
-            </jhi-button>
+            />
         </div>
         @if (isLoading) {
             <div>

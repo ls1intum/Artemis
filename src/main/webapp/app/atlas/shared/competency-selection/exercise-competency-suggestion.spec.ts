@@ -144,21 +144,10 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
         jest.restoreAllMocks();
     });
 
-    describe('Template compatibility warnings', () => {
-        it("should log NG0303 for 'disabled' binding on 'jhi-button'", () => {
-            try {
-                // Trigger initial render that may produce the NG0303 warning
-                fixture.detectChanges();
-            } catch {
-                // Swallow expected template error to assert on the console output instead
-            }
-
-            // Assert that Angular logged the binding warning
-            expect(consoleErrorSpy).toHaveBeenCalled();
-            const joined = consoleErrorSpy.mock.calls.flat().join(' ');
-            expect(joined).toContain('NG0303');
-            expect(joined).toContain("Can't bind to 'disabled'");
-            expect(joined).toContain('jhi-button');
+    describe('Template compatibility', () => {
+        it('should render without template binding errors', () => {
+            expect(() => fixture.detectChanges()).not.toThrow();
+            expect(consoleErrorSpy).not.toHaveBeenCalled();
         });
     });
 
