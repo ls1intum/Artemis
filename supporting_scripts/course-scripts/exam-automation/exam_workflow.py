@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List
 from logging_config import logging
 from create_exam import main as create_exam_main
-from utils import authenticate_user
+from quick-course-setup.utils import authenticate_user
 import subprocess
 
 # Load configuration
