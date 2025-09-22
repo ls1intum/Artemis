@@ -62,19 +62,25 @@ public class ExamRoomDistributionService {
      * @param examRoomIds The ids of the rooms to distribute to
      * @implNote Currently only the "default" layout strategy is used.
      */
-    public void distributeRegisteredStudents(long examId, @NotEmpty Set<Long> examRoomIds) {
+    public void distributeRegisteredStudents(long examId, @NotEmpty Set<Long> examRoomIds, boolean onlyUseDefaultLayouts) {
         final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         final Set<ExamRoom> examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
 
         final int numberOfUsableSeats = examRoomsForExam.stream().mapToInt(examRoom -> examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity()).sum();
         final int numberOfExamUsers = exam.getExamUsers().size();
 
-        if (numberOfUsableSeats < numberOfExamUsers) {
+        if (onlyUseDefaultLayouts && numberOfUsableSeats < numberOfExamUsers) {
             throw new BadRequestAlertException("Not enough seats available in the selected rooms", ENTITY_NAME, "notEnoughExamSeats",
                     Map.of("numberOfUsableSeats", numberOfUsableSeats, "numberOfExamUsers", numberOfExamUsers));
         }
 
-        examRoomExamAssignmentRepository.deleteAllByExamId(examId);
+        assignExamRoomsToExam(exam, examRoomsForExam);
+
+        distributeExamUsersToUsableSeatsInRooms(exam, examRoomsForExam);
+    }
+
+    private void assignExamRoomsToExam(Exam exam, Set<ExamRoom> examRoomsForExam) {
+        examRoomExamAssignmentRepository.deleteAllByExamId(exam.getId());
         List<ExamRoomExamAssignment> examRoomExamAssignments = new ArrayList<>();
         for (ExamRoom examRoom : examRoomsForExam) {
             var examRoomExamAssignment = new ExamRoomExamAssignment();
@@ -83,8 +89,6 @@ public class ExamRoomDistributionService {
             examRoomExamAssignments.add(examRoomExamAssignment);
         }
         examRoomExamAssignmentRepository.saveAll(examRoomExamAssignments);
-
-        distributeExamUsersToUsableSeatsInRooms(exam, examRoomsForExam);
     }
 
     private void distributeExamUsersToUsableSeatsInRooms(Exam exam, Set<ExamRoom> examRoomsForExam) {
