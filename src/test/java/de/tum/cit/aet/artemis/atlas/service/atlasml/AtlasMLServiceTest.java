@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,8 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -46,7 +45,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 class AtlasMLServiceTest {
 
     @Mock
@@ -71,8 +69,7 @@ class AtlasMLServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(config.getAtlasmlBaseUrl()).thenReturn("http://localhost:8000");
-        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
+        lenient().when(config.getAtlasmlBaseUrl()).thenReturn("http://localhost:8000");
         atlasMLService = new AtlasMLService(atlasmlRestTemplate, shortTimeoutAtlasmlRestTemplate, config, competencyRepository, competencyExerciseLinkRepository,
                 featureToggleService);
     }
@@ -125,6 +122,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveCompetencies() {
         // Given
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         AtlasMLCompetencyDTO competencyDTO = new AtlasMLCompetencyDTO(1L, "Test Competency", "Test Description", 1L);
 
         SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(List.of(competencyDTO), null, OperationTypeDTO.UPDATE.value());
@@ -142,12 +140,16 @@ class AtlasMLServiceTest {
     @Test
     void testSaveCompetencies_WithDomainObjects() {
         // Given
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         Competency competency = new Competency();
         competency.setId(1L);
         competency.setTitle("Test Competency");
         competency.setDescription("Test Description");
         competency.setTaxonomy(CompetencyTaxonomy.APPLY);
         competency.setOptional(false);
+        Course course = new Course();
+        course.setId(1L);
+        competency.setCourse(course);
 
         CompetencyRelation relation = new CompetencyRelation();
         relation.setType(RelationType.ASSUMES);
@@ -167,6 +169,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveCompetencies_WhenServiceThrowsException() {
         // Given
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(null, null, OperationTypeDTO.UPDATE.value());
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
@@ -259,6 +262,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveExercise_WithAllParameters() {
         // Given
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         Long exerciseId = 123L;
         String title = "Test Exercise";
         String description = "Test Description";
@@ -279,6 +283,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveExercise_DefaultOperationTypeDTO() {
         // Given
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         Long exerciseId = 123L;
         String title = "Test Exercise";
         String description = "Test Description";
@@ -312,6 +317,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveExercise_WhenException() {
         // Given
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         Long exerciseId = 123L;
         String title = "Test Exercise";
         String description = "Test Description";
@@ -331,6 +337,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveExerciseWithCompetencies() {
         // Given
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         Exercise exercise = new ProgrammingExercise();
         exercise.setId(1L);
         exercise.setTitle("Test Exercise");
@@ -376,6 +383,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveExerciseWithCompetencies_WithNullDescription() {
         // Given
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         Exercise exercise = new ProgrammingExercise();
         exercise.setId(1L);
         exercise.setTitle("Test Exercise");
@@ -407,6 +415,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveExerciseWithCompetencies_WhenException() {
         // Given
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         Exercise exercise = new ProgrammingExercise();
         exercise.setId(1L);
         exercise.setTitle("Test Exercise");
@@ -428,6 +437,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveExerciseWithCompetenciesById() {
         // Given
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         Long exerciseId = 1L;
         Exercise exercise = new ProgrammingExercise();
         exercise.setId(exerciseId);
@@ -461,6 +471,7 @@ class AtlasMLServiceTest {
     void testSaveExerciseWithCompetenciesById_NoLinks() {
         // Given
         Long exerciseId = 1L;
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId)).thenReturn(List.of());
 
         // When
@@ -486,6 +497,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveExerciseWithCompetenciesById_WhenException() {
         // Given
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         Long exerciseId = 1L;
         when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exerciseId)).thenThrow(new RuntimeException("Database error"));
 
@@ -550,6 +562,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveCompetencies_HttpServerErrorException() {
         // Given
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(null, null, OperationTypeDTO.UPDATE.value());
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))
@@ -564,6 +577,7 @@ class AtlasMLServiceTest {
     @Test
     void testSaveCompetencies_ResourceAccessException() {
         // Given
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
         SaveCompetencyRequestDTO request = new SaveCompetencyRequestDTO(null, null, OperationTypeDTO.UPDATE.value());
 
         when(atlasmlRestTemplate.exchange(eq("http://localhost:8000/api/v1/competency/save"), eq(HttpMethod.POST), any(HttpEntity.class), eq(String.class)))

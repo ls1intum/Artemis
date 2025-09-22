@@ -218,11 +218,12 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
             expect(linkDS).toBeTruthy();
             if (linkJava) {
                 compForSelect.toggleCompetency(linkJava);
+                tick();
             }
             if (linkDS) {
                 compForSelect.toggleCompetency(linkDS);
+                tick();
             }
-            tick();
             fixture.detectChanges();
 
             // Step 10: Verify form is valid and save button is enabled
@@ -265,11 +266,12 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
             expect(linkPatterns).toBeTruthy();
             if (linkTesting) {
                 compMixed.toggleCompetency(linkTesting);
+                tick();
             }
             if (linkPatterns) {
                 compMixed.toggleCompetency(linkPatterns);
+                tick();
             }
-            tick();
             fixture.detectChanges();
 
             // Verify both are selected but only one is marked as suggested

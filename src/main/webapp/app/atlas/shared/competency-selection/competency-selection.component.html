@@ -12,12 +12,12 @@
                 </fa-stack>
             }
             <jhi-button
-                jhiType="WARNING"
+                [btnType]="ButtonType.WARNING"
                 [disabled]="isSuggesting || disabled || !exerciseDescription?.trim()"
                 (onClick)="suggestCompetencies()"
                 [tooltip]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip' | artemisTranslate"
                 [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
-                size="sm"
+                [btnSize]="ButtonSize.SMALL"
                 class="ms-2"
             >
                 @if (isSuggesting) {

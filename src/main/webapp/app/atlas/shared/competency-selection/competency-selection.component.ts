@@ -24,6 +24,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-competency-selection',
@@ -36,7 +37,17 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
             useExisting: forwardRef(() => CompetencySelectionComponent),
         },
     ],
-    imports: [FaStackComponent, NgbTooltip, FaIconComponent, FaStackItemSizeDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe, FeatureToggleHideDirective],
+    imports: [
+        FaStackComponent,
+        NgbTooltip,
+        FaIconComponent,
+        FaStackItemSizeDirective,
+        FormsModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FeatureToggleHideDirective,
+        ButtonComponent,
+    ],
 })
 export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
     private route = inject(ActivatedRoute);
@@ -78,6 +89,9 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     protected readonly LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF = LOW_COMPETENCY_LINK_WEIGHT_CUT_OFF; // halfway between low and medium
     protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF;
     // halfway between medium and high
+
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
 
     ngOnInit(): void {
         // it's an explicit design decision to not clutter every component that uses this component with the need to check if the atlas profile is enabled
