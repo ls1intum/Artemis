@@ -73,7 +73,10 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
@@ -84,7 +87,10 @@ import de.tum.cit.aet.artemis.quiz.dto.question.create.DragItemCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.create.DropLocationCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.create.MultipleChoiceQuestionCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.create.QuizQuestionCreateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.create.ShortAnswerMappingCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.create.ShortAnswerQuestionCreateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.create.ShortAnswerSolutionCreateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.create.ShortAnswerSpotCreateDTO;
 import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
@@ -894,23 +900,68 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     private static ShortAnswerQuestion createShortAnswerQuestionFromDTO(ShortAnswerQuestionCreateDTO shortAnswerQuestionCreateDTO) {
+        ShortAnswerQuestion question = new ShortAnswerQuestion();
+        List<ShortAnswerSpot> spots = getShortAnswerSpotsFromDTO(shortAnswerQuestionCreateDTO);
+        List<ShortAnswerSolution> solutions = getShortAnswerSolutionsFromDTO(shortAnswerQuestionCreateDTO);
+        List<ShortAnswerMapping> mappings = getShortAnswerMappingsFromDTO(shortAnswerQuestionCreateDTO, spots, solutions);
+        question.setTitle(shortAnswerQuestionCreateDTO.title());
+        question.setText(shortAnswerQuestionCreateDTO.text());
+        question.setHint(shortAnswerQuestionCreateDTO.hint());
+        question.setExplanation(shortAnswerQuestionCreateDTO.explanation());
+        question.setPoints(shortAnswerQuestionCreateDTO.points());
+        question.setScoringType(shortAnswerQuestionCreateDTO.scoringType());
+        question.setRandomizeOrder(shortAnswerQuestionCreateDTO.randomizeOrder());
+        question.setSimilarityValue(shortAnswerQuestionCreateDTO.similarityValue());
+        question.setSpots(spots);
+        question.setSolutions(solutions);
+        question.setCorrectMappings(mappings);
         return null;
+    }
+
+    private static List<ShortAnswerSpot> getShortAnswerSpotsFromDTO(ShortAnswerQuestionCreateDTO sa) {
+        List<ShortAnswerSpot> spots = new ArrayList<>();
+        for (ShortAnswerSpotCreateDTO spotCreateDTO : sa.spots()) {
+            ShortAnswerSpot spot = new ShortAnswerSpot();
+            spot.setTempID(spotCreateDTO.tempID());
+            spot.setSpotNr(spotCreateDTO.spotNr());
+            spot.setWidth(spotCreateDTO.width());
+            spots.add(spot);
+        }
+        return spots;
+    }
+
+    private static List<ShortAnswerSolution> getShortAnswerSolutionsFromDTO(ShortAnswerQuestionCreateDTO sa) {
+        List<ShortAnswerSolution> solutions = new ArrayList<>();
+        for (ShortAnswerSolutionCreateDTO solutionCreateDTO : sa.solutions()) {
+            ShortAnswerSolution solution = new ShortAnswerSolution();
+            solution.setTempID(solutionCreateDTO.tempID());
+            solution.setText(solutionCreateDTO.text());
+            solutions.add(solution);
+        }
+        return solutions;
+    }
+
+    private static List<ShortAnswerMapping> getShortAnswerMappingsFromDTO(ShortAnswerQuestionCreateDTO sa, List<ShortAnswerSpot> spots, List<ShortAnswerSolution> solutions) {
+        List<ShortAnswerMapping> mappings = new ArrayList<>();
+        for (ShortAnswerMappingCreateDTO mappingCreateDTO : sa.correctMappings()) {
+            ShortAnswerMapping mapping = new ShortAnswerMapping();
+            ShortAnswerSpot spot = spots.stream().filter(s -> s.getTempID().equals(mappingCreateDTO.spotTempId())).findFirst().orElse(null);
+            ShortAnswerSolution solution = solutions.stream().filter(s -> s.getTempID().equals(mappingCreateDTO.solutionTempId())).findFirst().orElse(null);
+            mapping.setSpot(spot);
+            mapping.setSolution(solution);
+            mappings.add(mapping);
+        }
+        return mappings;
     }
 
     private static List<QuizQuestion> createQuizQuestionsFromDTOs(List<? extends QuizQuestionCreateDTO> questionCreateDTOs) {
         List<QuizQuestion> quizQuestions = new ArrayList<>();
         for (QuizQuestionCreateDTO questionCreateDTO : questionCreateDTOs) {
-            if (questionCreateDTO instanceof MultipleChoiceQuestionCreateDTO mc) {
-                quizQuestions.add(createMultipleChoiceQuestionFromDTO(mc));
-            }
-            else if (questionCreateDTO instanceof DragAndDropQuestionCreateDTO dnd) {
-                quizQuestions.add(createDragAndDropQuestionFromDTO(dnd));
-            }
-            else if (questionCreateDTO instanceof ShortAnswerQuestionCreateDTO sa) {
-
-            }
-            else {
-                throw new BadRequestAlertException("Unknown question type: " + questionCreateDTO.getClass(), ENTITY_NAME, "unknownQuestionType");
+            switch (questionCreateDTO) {
+                case MultipleChoiceQuestionCreateDTO mc -> quizQuestions.add(createMultipleChoiceQuestionFromDTO(mc));
+                case DragAndDropQuestionCreateDTO dnd -> quizQuestions.add(createDragAndDropQuestionFromDTO(dnd));
+                case ShortAnswerQuestionCreateDTO sa -> quizQuestions.add(createShortAnswerQuestionFromDTO(sa));
+                default -> throw new BadRequestAlertException("Unknown question type: " + questionCreateDTO.getClass(), ENTITY_NAME, "unknownQuestionType");
             }
         }
         return quizQuestions;

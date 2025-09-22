@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.exception.QuizJoinException;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -122,6 +123,8 @@ public class QuizExerciseResource {
 
     private final CourseService courseService;
 
+    private final CourseRepository courseRepository;
+
     private final ExerciseService exerciseService;
 
     private final ExerciseDeletionService exerciseDeletionService;
@@ -154,17 +157,18 @@ public class QuizExerciseResource {
     private String applicationName;
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
-            UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
-            Optional<ExamDateApi> examDateApi, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
-            QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
-            StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService, QuizBatchRepository quizBatchRepository,
-            ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService, QuizResultService quizResultService,
-            Optional<CompetencyProgressApi> competencyProgressApi) {
+            UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
+            ExerciseDeletionService exerciseDeletionService, Optional<ExamDateApi> examDateApi, InstanceMessageSendService instanceMessageSendService,
+            QuizStatisticService quizStatisticService, QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService,
+            GroupNotificationService groupNotificationService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
+            QuizBatchRepository quizBatchRepository, ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService,
+            QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
+        this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.examDateApi = examDateApi;
@@ -251,8 +255,23 @@ public class QuizExerciseResource {
     @PostMapping("courses/{courseId}/quiz-exercises")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<QuizExercise>> createQuizExercise2(@PathVariable Long courseId, @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) {
-        return null;
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
+        log.info("REST request to create QuizExercise : {} in course {}", quizExerciseDTO, courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        QuizExercise quizExercise = QuizExerciseService.createNewQuizExerciseFromDTO(quizExerciseDTO);
+        quizExercise.setCourse(course);
+
+        if (!quizExercise.isValid()) {
+            throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
+        }
+
+        quizExercise.validateGeneralSettings();
+        quizExerciseService.handleDndQuizFileCreation(quizExercise, files);
+        QuizExercise result = quizExerciseService.save(quizExercise);
+        channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
+        return ResponseEntity.status(HttpStatus.CREATED).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
+                .body(List.of(result));
     }
 
     /**
