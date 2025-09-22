@@ -9,7 +9,7 @@ import { MockDirective, MockService } from 'ng-mocks';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Router, RouterLink } from '@angular/router';
-import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { RawTutorialGroupDetailGroupDTO, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import * as CourseModel from 'app/core/course/shared/entities/course.model';
 
 import { By } from '@angular/platform-browser';
