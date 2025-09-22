@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.core.util;
 public class TimeLogUtil {
 
     /**
-     * calculate the difference to the given start time in nano seconds and format it in a readable way
+     * calculate the difference to the given start time in nanoseconds and format it in a readable way
      *
      * @param timeNanoStart the time of the first measurement in nanoseconds
      * @return formatted string of the duration between now and timeNanoStart
