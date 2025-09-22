@@ -169,7 +169,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     postInThread?: Post;
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
-    previousConversationBeforeSearch?: ConversationDTO;
     lastKnownConversationId?: number;
 
     conversationSelected = true;
@@ -455,28 +454,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onSelectionChange(searchInfo: ConversationGlobalSearchConfig) {
-        const wasSearchEmpty =
-            this.courseWideSearchConfig.selectedConversations.length === 0 && this.courseWideSearchConfig.selectedAuthors.length === 0 && !this.courseWideSearchConfig.searchTerm;
-        const isSearchActive = searchInfo.selectedConversations.length > 0 || searchInfo.selectedAuthors.length > 0 || searchInfo.searchTerm;
-
-        if (wasSearchEmpty && isSearchActive && this.activeConversation) {
-            this.previousConversationBeforeSearch = this.activeConversation;
-        }
-
-        if (!isSearchActive) {
-            this.previousConversationBeforeSearch = undefined;
-        }
-
         this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
         this.courseWideSearchConfig.selectedAuthors = searchInfo.selectedAuthors;
         this.courseWideSearch()?.onSearchConfigSelectionChange();
     }
 
     onClearSearchAndRestorePrevious() {
-        if (this.previousConversationBeforeSearch) {
-            this.metisConversationService.setActiveConversation(this.previousConversationBeforeSearch.id);
-            this.previousConversationBeforeSearch = undefined;
-        } else if (this.lastKnownConversationId) {
+        if (this.lastKnownConversationId) {
             this.metisConversationService.setActiveConversation(this.lastKnownConversationId);
         } else {
             this.metisConversationService.setActiveConversation(undefined);

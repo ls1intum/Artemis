@@ -785,20 +785,16 @@ examples.forEach((activeConversation) => {
         });
 
         describe('X button conversation restoration', () => {
-            it('should restore previous conversation when X button is clicked', () => {
-                const activeConversation = generateExampleChannelDTO({ id: 123, name: 'Test Channel' } as ChannelDTO);
-                component.activeConversation = activeConversation;
-                component.previousConversationBeforeSearch = activeConversation;
+            it('should restore last known conversation when X button is clicked', () => {
+                component.lastKnownConversationId = 123;
                 const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
 
                 component.onClearSearchAndRestorePrevious();
 
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(123);
-                expect(component.previousConversationBeforeSearch).toBeUndefined();
             });
 
-            it('should restore last known conversation when no previous conversation saved', () => {
-                component.previousConversationBeforeSearch = undefined;
+            it('should restore last known conversation when available', () => {
                 component.lastKnownConversationId = 456;
                 const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
 
@@ -808,7 +804,6 @@ examples.forEach((activeConversation) => {
             });
 
             it('should clear to All messages when no conversation to restore', () => {
-                component.previousConversationBeforeSearch = undefined;
                 component.lastKnownConversationId = undefined;
                 const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
 
@@ -827,41 +822,6 @@ examples.forEach((activeConversation) => {
                 }
 
                 expect(component.lastKnownConversationId).toBe(789);
-            });
-
-            it('should save previous conversation when search starts', () => {
-                component.initializeCourseWideSearchConfig();
-                const activeConversation = generateExampleChannelDTO({ id: 111, name: 'Original Channel' } as ChannelDTO);
-                component.activeConversation = activeConversation;
-                component.courseWideSearchConfig.searchTerm = '';
-                component.courseWideSearchConfig.selectedConversations = [];
-                component.courseWideSearchConfig.selectedAuthors = [];
-
-                const searchInfo = {
-                    searchTerm: 'test',
-                    selectedConversations: [],
-                    selectedAuthors: [],
-                };
-
-                component.onSelectionChange(searchInfo);
-
-                expect(component.previousConversationBeforeSearch).toEqual(activeConversation);
-            });
-
-            it('should clear previous conversation when search is completely cleared', () => {
-                component.initializeCourseWideSearchConfig();
-                const activeConversation = generateExampleChannelDTO({ id: 222, name: 'Test Channel' } as ChannelDTO);
-                component.previousConversationBeforeSearch = activeConversation;
-
-                const searchInfo = {
-                    searchTerm: '',
-                    selectedConversations: [],
-                    selectedAuthors: [],
-                };
-
-                component.onSelectionChange(searchInfo);
-
-                expect(component.previousConversationBeforeSearch).toBeUndefined();
             });
         });
     });
