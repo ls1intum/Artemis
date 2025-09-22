@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 from typing import Dict, Any, List
 from logging_config import logging
-from quick-course-setup.utils import authenticate_user
+from utils import authenticate_user
 
 # Load configuration
 config = configparser.ConfigParser()
