@@ -95,25 +95,23 @@ public class QuizQuestionProgressService {
      * @param questionIds Optional set of question IDs to filter the questions
      * @return A list of quiz questions sorted by due date
      */
-    public Slice<QuizQuestionTrainingDTO> getQuestionsForSession(long courseId, long userId, Pageable pageable, Set<Long> questionIds) {
+    public Slice<QuizQuestionTrainingDTO> getQuestionsForSession(long courseId, long userId, Pageable pageable, Set<Long> questionIds, boolean isNewSession) {
         ZonedDateTime now = ZonedDateTime.now();
-        if (questionIds == null) {
+        if (isNewSession) {
             Set<QuizQuestionProgress> allProgress = quizQuestionProgressRepository.findAllByUserIdAndCourseId(userId, courseId);
 
             questionIds = allProgress.stream().filter(progress -> {
                 QuizQuestionProgressData data = progress.getProgressJson();
                 return data != null && data.getDueDate() != null && data.getDueDate().isAfter(now);
             }).map(QuizQuestionProgress::getQuizQuestionId).collect(Collectors.toSet());
-            if (questionIds.isEmpty()) {
-                questionIds.add(-1L);
-            }
+            isNewSession = false;
         }
 
         if (areQuestionsDue(courseId, questionIds.size())) {
-            return loadDueQuestions(questionIds, courseId, pageable);
+            return loadDueQuestions(questionIds, courseId, pageable, isNewSession);
         }
         else {
-            return loadAllPracticeQuestions(courseId, pageable);
+            return loadAllPracticeQuestions(courseId, pageable, isNewSession);
         }
     }
 
@@ -123,21 +121,21 @@ public class QuizQuestionProgressService {
         return notDueCount < totalQuestionsCount;
     }
 
-    private Slice<QuizQuestionTrainingDTO> loadDueQuestions(Set<Long> questionIds, Long courseId, Pageable pageable) {
+    private Slice<QuizQuestionTrainingDTO> loadDueQuestions(Set<Long> questionIds, Long courseId, Pageable pageable, boolean isNewSession) {
         Slice<QuizQuestion> questionPage = quizQuestionRepository.findAllDueQuestions(questionIds, courseId, pageable);
 
         return questionPage.map(question -> {
             QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(question);
-            return new QuizQuestionTrainingDTO(dto, true, questionIds);
+            return new QuizQuestionTrainingDTO(dto, true, questionIds, isNewSession);
         });
     }
 
-    private Slice<QuizQuestionTrainingDTO> loadAllPracticeQuestions(Long courseId, Pageable pageable) {
+    private Slice<QuizQuestionTrainingDTO> loadAllPracticeQuestions(Long courseId, Pageable pageable, boolean isNewSession) {
         Slice<QuizQuestion> questionPage = quizQuestionRepository.findAllPracticeQuizQuestionsByCourseId(courseId, pageable);
 
         return questionPage.map(question -> {
             QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(question);
-            return new QuizQuestionTrainingDTO(dto, false, null);
+            return new QuizQuestionTrainingDTO(dto, false, null, isNewSession);
         });
     }
 

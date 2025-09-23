@@ -35,4 +35,5 @@ export class QuizQuestionTraining {
     public quizQuestionWithSolutionDTO?: QuizQuestionWithSolutionDTO;
     public isRated: boolean;
     public questionIds: number[];
+    public isNewSession: boolean;
 }

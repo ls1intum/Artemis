@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/quiz-training-answer.model';
 import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluation';
 import { QuizQuestionTraining } from 'app/quiz/overview/course-training-quiz/quiz-question-training.model';
 import { createRequestOption } from 'app/shared/util/request.util';
+import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
 
 @Injectable({
     providedIn: 'root',
@@ -32,16 +32,19 @@ export class CourseTrainingQuizService {
      * @param page the page number to retrieve
      * @param size the number of items per page
      * @param questionIds
+     * @param isNewSession
      */
-    getQuizQuestionsPage(courseId: number, page: number, size: number, questionIds?: number[]): Observable<HttpResponse<QuizQuestionTraining[]>> {
+    getQuizQuestionsPage(courseId: number, page: number, size: number, questionIds: number[], isNewSession: boolean): Observable<HttpResponse<QuizQuestionTraining[]>> {
         const params = {
             page,
             size,
+            isNewSession,
         };
         return this.getQuizQuestions(courseId, params, questionIds);
     }
 
-    submitForTraining(answer: QuizTrainingAnswer, questionId: number, courseId: number): Observable<HttpResponse<SubmittedAnswerAfterEvaluation>> {
-        return this.http.post<SubmittedAnswerAfterEvaluation>(`api/quiz/courses/${courseId}/training-questions/${questionId}/submit`, answer, { observe: 'response' });
+    submitForTraining(answer: SubmittedAnswer, questionId: number, courseId: number, isRated: boolean): Observable<HttpResponse<SubmittedAnswerAfterEvaluation>> {
+        const params = { isRated };
+        return this.http.post<SubmittedAnswerAfterEvaluation>(`api/quiz/courses/${courseId}/training-questions/${questionId}/submit`, answer, { params, observe: 'response' });
     }
 }

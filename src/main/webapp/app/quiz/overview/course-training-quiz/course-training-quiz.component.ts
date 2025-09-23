@@ -18,11 +18,11 @@ import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-dr
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { QuizTrainingAnswer } from 'app/quiz/overview/course-training-quiz/quiz-training-answer.model';
 import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training-quiz/SubmittedAnswerAfterEvaluation';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { QuizQuestionTraining } from 'app/quiz/overview/course-training-quiz/quiz-question-training.model';
 import { DialogModule } from 'primeng/dialog';
+import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
 
 @Component({
     selector: 'jhi-course-training-quiz',
@@ -45,9 +45,8 @@ export class CourseTrainingQuizComponent {
 
     // Pagination options
     page = signal(0);
-    size = 10;
+    size = 3; // The number of questions per page is set so low for testing purposes and will be increased to 50 after successful testing
     totalItems = signal(0);
-    loading = signal(false);
     allLoadedQuestions = signal<QuizQuestionTraining[]>([]);
     hasNext = signal(false);
 
@@ -65,9 +64,9 @@ export class CourseTrainingQuizComponent {
     );
     course = computed(() => this.courseSignal());
     questionsLoaded = computed(() => this.allLoadedQuestions().length > 0);
-    nextPage = computed(() => (this.currentIndex() + 2) % this.size === 0 && !this.loading() && this.hasNext());
+    nextPage = computed(() => (this.currentIndex() + 2) % this.size === 0 && this.hasNext());
 
-    trainingAnswer = new QuizTrainingAnswer();
+    submittedAnswer: SubmittedAnswer;
     showingResult = false;
     submitted = false;
     questionScores: number = 0;
@@ -76,7 +75,8 @@ export class CourseTrainingQuizComponent {
     shortAnswerSubmittedTexts: ShortAnswerSubmittedText[] = [];
     previousRatedStatus = true;
     showUnratedConfirmation = false;
-    questionIds: number[] | undefined;
+    questionIds: number[] = [];
+    isNewSession = true;
 
     /**
      * checks if the current question is the last question
@@ -138,13 +138,13 @@ export class CourseTrainingQuizComponent {
             return;
         }
 
-        this.quizService.getQuizQuestionsPage(this.courseId(), this.page(), this.size, this.questionIds).subscribe({
+        this.quizService.getQuizQuestionsPage(this.courseId(), this.page(), this.size, this.questionIds, this.isNewSession).subscribe({
             next: (res: HttpResponse<QuizQuestionTraining[]>) => {
                 this.hasNext.set(res.headers.get('X-Has-Next') === 'true');
 
-                this.loading.set(true);
-                if (this.page() === 0) {
-                    this.questionIds = res.body?.[0]?.questionIds;
+                if (this.page() === 0 && res.body) {
+                    this.questionIds = res.body[0].questionIds ? res.body[0].questionIds : [];
+                    this.isNewSession = res.body[0].isNewSession;
                 }
 
                 if (this.page() === 0) {
@@ -152,7 +152,6 @@ export class CourseTrainingQuizComponent {
                 } else {
                     this.allLoadedQuestions.update((current) => [...current, ...(res.body || [])]);
                 }
-                this.loading.set(false);
 
                 if (this.allLoadedQuestions().length > 0 && this.currentIndex() === 0) {
                     this.initQuestion(this.currentQuestion()!);
@@ -165,7 +164,7 @@ export class CourseTrainingQuizComponent {
      * loads the next page of questions
      */
     loadNextPage(): void {
-        if (this.loading() || !this.hasNext()) {
+        if (!this.hasNext()) {
             return;
         }
         this.page.update((page) => page + 1);
@@ -203,7 +202,6 @@ export class CourseTrainingQuizComponent {
     initQuestion(question: QuizQuestion): void {
         this.showingResult = false;
         this.submitted = false;
-        this.trainingAnswer = new QuizTrainingAnswer();
         this.checkRatingStatusChange();
         if (question) {
             switch (question.type) {
@@ -224,7 +222,6 @@ export class CourseTrainingQuizComponent {
      * applies the current selection to the trainingAnswer object
      */
     applySelection() {
-        this.trainingAnswer.submittedAnswer = undefined;
         const question = this.currentQuestion();
         if (!question) {
             return;
@@ -236,7 +233,7 @@ export class CourseTrainingQuizComponent {
                 const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
                 mcSubmittedAnswer.quizQuestion = question;
                 mcSubmittedAnswer.selectedOptions = answerOptions;
-                this.trainingAnswer.submittedAnswer = mcSubmittedAnswer;
+                this.submittedAnswer = mcSubmittedAnswer;
                 break;
             }
             case QuizQuestionType.DRAG_AND_DROP: {
@@ -244,7 +241,7 @@ export class CourseTrainingQuizComponent {
                 const ddSubmittedAnswer = new DragAndDropSubmittedAnswer();
                 ddSubmittedAnswer.quizQuestion = question;
                 ddSubmittedAnswer.mappings = mappings;
-                this.trainingAnswer.submittedAnswer = ddSubmittedAnswer;
+                this.submittedAnswer = ddSubmittedAnswer;
                 break;
             }
             case QuizQuestionType.SHORT_ANSWER: {
@@ -252,7 +249,7 @@ export class CourseTrainingQuizComponent {
                 const saSubmittedAnswer = new ShortAnswerSubmittedAnswer();
                 saSubmittedAnswer.quizQuestion = question;
                 saSubmittedAnswer.submittedTexts = submittedTexts;
-                this.trainingAnswer.submittedAnswer = saSubmittedAnswer;
+                this.submittedAnswer = saSubmittedAnswer;
                 break;
             }
         }
@@ -271,8 +268,7 @@ export class CourseTrainingQuizComponent {
             return;
         }
         this.applySelection();
-        this.trainingAnswer.isRated = this.isRated();
-        this.quizService.submitForTraining(this.trainingAnswer, questionId, this.courseId()).subscribe({
+        this.quizService.submitForTraining(this.submittedAnswer, questionId, this.courseId(), this.isRated()).subscribe({
             next: (response: HttpResponse<SubmittedAnswerAfterEvaluation>) => {
                 if (response.body) {
                     this.onSubmitSuccess(response.body);

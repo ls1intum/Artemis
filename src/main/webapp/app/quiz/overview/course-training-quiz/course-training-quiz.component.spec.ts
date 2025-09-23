@@ -55,9 +55,9 @@ describe('CourseTrainingQuizComponent', () => {
     let quizService: CourseTrainingQuizService;
 
     const mockQuestions = [
-        { quizQuestionWithSolutionDTO: question1, isRated: false, questionIds: [1] },
-        { quizQuestionWithSolutionDTO: question2, isRated: true, questionIds: [1] },
-        { quizQuestionWithSolutionDTO: question3, isRated: false, questionIds: [1] },
+        { quizQuestionWithSolutionDTO: question1, isRated: false, questionIds: [1], isNewSession: true },
+        { quizQuestionWithSolutionDTO: question2, isRated: true, questionIds: [1], isNewSession: true },
+        { quizQuestionWithSolutionDTO: question3, isRated: false, questionIds: [1], isNewSession: true },
     ];
 
     beforeEach(async () => {
@@ -149,8 +149,7 @@ describe('CourseTrainingQuizComponent', () => {
         expect(initQuestionSpy).toHaveBeenCalledWith(question2);
     });
 
-    it('should increment page and call loadQuestions when not loading and not allQuestionsLoaded', () => {
-        component.loading.set(false);
+    it('should increment page and call loadQuestions when hasNext is true', () => {
         component.page.set(0);
         component.hasNext.set(true);
         const loadQuestionsSpy = jest.spyOn(component, 'loadQuestions');
@@ -161,9 +160,9 @@ describe('CourseTrainingQuizComponent', () => {
         expect(loadQuestionsSpy).toHaveBeenCalled();
     });
 
-    it('should not increment page or call loadQuestions when loading is true', () => {
-        component.loading.set(true);
+    it('should not increment page or call loadQuestions when hasNext is false', () => {
         component.page.set(0);
+        component.hasNext.set(false);
         const loadQuestionsSpy = jest.spyOn(component, 'loadQuestions');
 
         component.loadNextPage();
@@ -172,17 +171,15 @@ describe('CourseTrainingQuizComponent', () => {
         expect(loadQuestionsSpy).not.toHaveBeenCalled();
     });
 
-    it('should set allQuestionsLoaded to true and loading to false when response body is empty', () => {
+    it('should set allQuestionsLoaded to true when response body is empty', () => {
         const mockResponse = new HttpResponse<QuizQuestionTraining[]>({
             body: [],
             headers: { get: () => '0' } as any,
         });
         jest.spyOn(quizService, 'getQuizQuestionsPage').mockReturnValue(of(mockResponse));
-        component.loading.set(true);
 
         component.loadQuestions();
-
-        expect(component.loading()).toBeFalse();
+        expect(component.hasNext()).toBeFalsy();
     });
 
     it('should init the current question', () => {

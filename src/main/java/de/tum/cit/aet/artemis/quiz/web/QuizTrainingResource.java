@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -31,7 +32,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.quiz.dto.QuizTrainingAnswerDTO;
+import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
@@ -70,20 +71,16 @@ public class QuizTrainingResource {
      * @param courseId    the id of the course whose quiz questions should be retrieved
      * @param pageable    pagination information
      * @param questionIds optional set of question IDs to filter the questions
-     * @return a list of 10 quiz questions for the training session
+     * @return a list of quiz questions for the training session depending on the pagination information
      */
     @PostMapping("courses/{courseId}/training-questions")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<QuizQuestionTrainingDTO>> getQuizQuestionsForPractice(@PathVariable long courseId, Pageable pageable,
-            @RequestBody(required = false) Set<Long> questionIds) {
+    public ResponseEntity<List<QuizQuestionTrainingDTO>> getQuizQuestionsForPractice(@PathVariable long courseId, Pageable pageable, @RequestParam boolean isNewSession,
+            @RequestBody Set<Long> questionIds) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        if (questionIds != null && questionIds.isEmpty()) {
-            questionIds.add(-1L);
-        }
-
-        Slice<QuizQuestionTrainingDTO> quizQuestionsSlice = quizQuestionProgressService.getQuestionsForSession(courseId, user.getId(), pageable, questionIds);
+        Slice<QuizQuestionTrainingDTO> quizQuestionsSlice = quizQuestionProgressService.getQuestionsForSession(courseId, user.getId(), pageable, questionIds, isNewSession);
         HttpHeaders headers = new HttpHeaders();
         headers.add("X-Has-Next", Boolean.toString(quizQuestionsSlice.hasNext()));
         return new ResponseEntity<>(quizQuestionsSlice.getContent(), headers, HttpStatus.OK);
@@ -99,8 +96,8 @@ public class QuizTrainingResource {
      */
     @PostMapping("courses/{courseId}/training-questions/{quizQuestionId}/submit")
     @EnforceAtLeastStudent
-    public ResponseEntity<SubmittedAnswerAfterEvaluationDTO> submitForTraining(@PathVariable long courseId, @PathVariable long quizQuestionId,
-            @Valid @RequestBody QuizTrainingAnswerDTO submittedAnswer) {
+    public ResponseEntity<SubmittedAnswerAfterEvaluationDTO> submitForTraining(@PathVariable long courseId, @PathVariable long quizQuestionId, @RequestParam boolean isRated,
+            @Valid @RequestBody SubmittedAnswer submittedAnswer) {
         log.debug("REST request to submit QuizQuestion for training : {}", submittedAnswer);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -108,7 +105,7 @@ public class QuizTrainingResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         ZonedDateTime answeredAt = ZonedDateTime.now();
 
-        SubmittedAnswerAfterEvaluationDTO result = quizTrainingService.submitForTraining(quizQuestionId, user.getId(), courseId, submittedAnswer, answeredAt);
+        SubmittedAnswerAfterEvaluationDTO result = quizTrainingService.submitForTraining(quizQuestionId, user.getId(), courseId, submittedAnswer, isRated, answeredAt);
 
         return ResponseEntity.ok(result);
     }

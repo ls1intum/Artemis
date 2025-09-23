@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
-import de.tum.cit.aet.artemis.quiz.dto.QuizTrainingAnswerDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
@@ -86,6 +85,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
 
+        Course course = new Course();
+        courseTestRepository.save(course);
         User user = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         userId = user.getId();
 
@@ -96,6 +97,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizQuestionProgress = new QuizQuestionProgress();
         quizQuestionProgress.setUserId(userId);
         quizQuestionProgress.setQuizQuestionId(quizQuestionId);
+        quizQuestionProgress.setCourseId(course.getId());
 
         QuizQuestionProgressData progressData = new QuizQuestionProgressData();
         progressData.setEasinessFactor(2.5);
@@ -137,6 +139,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
             QuizQuestionProgress progress = new QuizQuestionProgress();
             progress.setUserId(userId);
+            progress.setCourseId(course.getId());
             progress.setQuizQuestionId(question.getId());
             QuizQuestionProgressData data = new QuizQuestionProgressData();
             data.setDueDate(ZonedDateTime.now().minusDays(i));
@@ -150,7 +153,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         Pageable pageable = Pageable.ofSize(10);
 
-        Slice<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(course.getId(), userId, pageable, Set.of(questions.getFirst().getId()));
+        Slice<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(course.getId(), userId, pageable, Set.of(questions.getFirst().getId()), false);
         assertThat(result.hasNext()).isTrue();
         assertThat(result.getSize()).isEqualTo(10);
         for (QuizQuestionTrainingDTO dto : result.getContent()) {
@@ -192,7 +195,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         Pageable pageable = Pageable.ofSize(10);
 
-        Slice<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(course.getId(), userId, pageable, null);
+        Slice<QuizQuestionTrainingDTO> result = quizQuestionProgressService.getQuestionsForSession(course.getId(), userId, pageable, Set.of(), true);
 
         assertThat(result.hasNext()).isTrue();
         assertThat(result.getSize()).isEqualTo(10);
@@ -276,15 +279,16 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         progress.setProgressJson(dataExisting);
         progress.setQuizQuestionId(mcQuestion.getId());
         progress.setUserId(userId);
+        progress.setCourseId(course.getId());
         quizQuestionProgressRepository.save(progress);
 
         MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
         submittedAnswer.setQuizQuestion(mcQuestion);
         submittedAnswer.setSelectedOptions(Set.of());
-        QuizTrainingAnswerDTO trainingAnswerDTO = new QuizTrainingAnswerDTO(submittedAnswer, true);
 
-        SubmittedAnswerAfterEvaluationDTO result = request.postWithResponseBody("/api/quiz/courses/" + course.getId() + "/training-questions/" + mcQuestion.getId() + "/submit",
-                trainingAnswerDTO, SubmittedAnswerAfterEvaluationDTO.class, HttpStatus.OK);
+        SubmittedAnswerAfterEvaluationDTO result = request.postWithResponseBody(
+                "/api/quiz/courses/" + course.getId() + "/training-questions/" + mcQuestion.getId() + "/submit?isRated=true", submittedAnswer,
+                SubmittedAnswerAfterEvaluationDTO.class, HttpStatus.OK);
 
         assertThat(result).isNotNull();
         assertThat(result.multipleChoiceSubmittedAnswer()).isNotNull();
@@ -320,8 +324,8 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         quizExercise.setIsOpenForPractice(true);
         quizExerciseService.save(quizExercise);
 
-        List<QuizQuestionTrainingDTO> quizQuestions = Arrays
-                .asList(request.postWithResponseBody("/api/quiz/courses/" + course.getId() + "/training-questions", Set.of(), QuizQuestionTrainingDTO[].class, OK));
+        List<QuizQuestionTrainingDTO> quizQuestions = Arrays.asList(
+                request.postWithResponseBody("/api/quiz/courses/" + course.getId() + "/training-questions?isNewSession=true", Set.of(), QuizQuestionTrainingDTO[].class, OK));
 
         Assertions.assertThat(quizQuestions).isNotNull();
         Assertions.assertThat(quizQuestions).hasSameSizeAs(quizExercise.getQuizQuestions());
