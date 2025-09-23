@@ -101,9 +101,6 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     private subscriptionCounter = 0;
     private sessionId = '';
 
-    private watchdogTimer?: number;
-    private lastActivityAt = 0;
-
     constructor() {
         this.connectionStateInternal = new BehaviorSubject<ConnectionState>(new ConnectionState(false, false, true));
     }
@@ -180,30 +177,9 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             debug: false,
             protocols: ['v12.stomp'],
         };
-
         // TODO: consider to switch to RxStomp (like in the latest jhipster version)
         const ws = new WebSocket(url, 'v12.stomp');
-
-        ws.addEventListener(
-            'message',
-            () => {
-                this.lastActivityAt = Date.now();
-            },
-            { passive: true },
-        );
-
-        // 🔧 30s of silence => assume stalled (3× your 10s incoming heartbeat)
-        this.lastActivityAt = Date.now();
-        this.watchdogTimer = window.setInterval(() => {
-            if (Date.now() - this.lastActivityAt >= 20_000) {
-                try {
-                    ws.close();
-                } catch {
-                    /* empty */
-                }
-                this.stompFailureCallback();
-            }
-        }, 5_000);
+        ws.addEventListener('close', (event) => {}, true);
         this.stompClient = over(ws, options);
         // Note: debugging is deactivated to prevent console log statements
         this.stompClient.debug = () => {};
@@ -328,10 +304,6 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * Close the connection to the websocket (e.g. due to logout), unsubscribe all observables and set alreadyConnectedOnce to false
      */
     disconnect() {
-        if (this.watchdogTimer) {
-            window.clearInterval(this.watchdogTimer);
-            this.watchdogTimer = undefined;
-        }
         this.observables.forEach((_observable, channel) => this.unsubscribe(channel));
         this.waitUntilConnectionSubscriptions.forEach((subscription) => subscription.unsubscribe());
         if (this.stompClient) {
