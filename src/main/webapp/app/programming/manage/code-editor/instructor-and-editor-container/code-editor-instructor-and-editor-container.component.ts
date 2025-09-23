@@ -17,7 +17,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HyperionCodeGenerationService } from 'app/hyperion/code-generation.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
-import { inject } from '@angular/core';
+import { inject, signal } from '@angular/core';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -61,13 +61,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     private codeGenerationService = inject(HyperionCodeGenerationService);
     private codeGenAlertService = inject(AlertService);
-    isGeneratingCode = false;
+    isGeneratingCode = signal(false);
 
     /**
      * Generates code for the current programming exercise using AI
      */
     generateCode(): void {
-        if (!this.exercise?.id || this.isGeneratingCode) {
+        if (!this.exercise?.id || this.isGeneratingCode()) {
             return;
         }
 
@@ -80,13 +80,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        this.isGeneratingCode = true;
+        this.isGeneratingCode.set(true);
 
         const request = { repositoryType: this.selectedRepository };
 
         this.codeGenerationService.generateCode(this.exercise.id, request).subscribe({
             next: (response) => {
-                this.isGeneratingCode = false;
+                this.isGeneratingCode.set(false);
 
                 if (response.success) {
                     this.codeGenAlertService.addAlert({
@@ -103,7 +103,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }
             },
             error: () => {
-                this.isGeneratingCode = false;
+                this.isGeneratingCode.set(false);
                 this.codeGenAlertService.addAlert({
                     type: AlertType.DANGER,
                     translationKey: 'artemisApp.programmingExercise.codeGeneration.error',

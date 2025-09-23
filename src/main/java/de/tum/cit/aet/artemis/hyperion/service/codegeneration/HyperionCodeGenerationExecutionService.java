@@ -53,6 +53,10 @@ public class HyperionCodeGenerationExecutionService {
 
     private static final int MAX_ITERATIONS = 3;
 
+    private static final long TIMEOUT = 180_000; // 3 minutes
+
+    private static final long POLL_INTERVAL = 3_000; // 3 seconds
+
     /**
      * Holds repository setup results
      */
@@ -365,8 +369,6 @@ public class HyperionCodeGenerationExecutionService {
      * @throws InterruptedException if the waiting thread is interrupted
      */
     private Result waitForBuildResult(ProgrammingExercise exercise, String commitHash) throws InterruptedException {
-        long timeout = 180_000;
-        long pollInterval = 3_000;
         long startTime = System.currentTimeMillis();
 
         var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
@@ -376,7 +378,7 @@ public class HyperionCodeGenerationExecutionService {
         }
 
         int pollCount = 0;
-        while (System.currentTimeMillis() - startTime < timeout) {
+        while (System.currentTimeMillis() - startTime < TIMEOUT) {
             try {
                 ProgrammingSubmission submission = programmingSubmissionRepository
                         .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(solutionParticipation.getId(), commitHash);
@@ -391,14 +393,14 @@ public class HyperionCodeGenerationExecutionService {
 
                 pollCount++;
 
-                Thread.sleep(pollInterval);
+                Thread.sleep(POLL_INTERVAL);
             }
             catch (Exception e) {
                 log.warn("Exception while polling for build result for commit {}: {}. Continuing...", commitHash, e.getMessage());
-                Thread.sleep(pollInterval);
+                Thread.sleep(POLL_INTERVAL);
             }
         }
-        log.warn("Timed out waiting for build result for commit {} in exercise {} after {} polls ({}ms)", commitHash, exercise.getId(), pollCount, timeout);
+        log.warn("Timed out waiting for build result for commit {} in exercise {} after {} polls ({}ms)", commitHash, exercise.getId(), pollCount, TIMEOUT);
         return null; // Timeout
     }
 }
