@@ -39,7 +39,7 @@ public class HyperionCodeGenerationResource {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationResource.class);
 
-    private static final String ENTITY_NAME = "codeGeneration";
+    private static final String ENTITY_NAME = "hyperionCodeGeneration";
 
     private final UserRepository userRepository;
 
@@ -63,7 +63,7 @@ public class HyperionCodeGenerationResource {
      * @param request    the request containing repository type specification
      * @return ResponseEntity with status 200 (OK) and the generation result, or error status
      */
-    @PostMapping("exercises/{exerciseId}/generate-code")
+    @PostMapping("programming-exercises/{exerciseId}/generate-code")
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<CodeGenerationResultDTO> generateCode(@PathVariable long exerciseId, @Valid @RequestBody CodeGenerationRequestDTO request) {
         log.debug("REST request to generate code for programming exercise [{}] with repository type [{}]", exerciseId, request.repositoryType());

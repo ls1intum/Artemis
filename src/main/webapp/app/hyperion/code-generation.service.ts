@@ -34,6 +34,6 @@ export class HyperionCodeGenerationService {
      * @returns Observable of the generation result
      */
     generateCode(exerciseId: number, request: CodeGenerationRequestDTO = {}): Observable<CodeGenerationResultDTO> {
-        return this.http.post<CodeGenerationResultDTO>(`${this.resourceUrl}/exercises/${exerciseId}/generate-code`, request);
+        return this.http.post<CodeGenerationResultDTO>(`${this.resourceUrl}/programming-exercises/${exerciseId}/generate-code`, request);
     }
 }
