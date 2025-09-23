@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,10 +22,12 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
@@ -308,6 +312,60 @@ public class HyperionProgrammingExerciseContextRendererService {
                 String newPrefix = prefix + (isLastFile ? "    " : "│   ");
                 generateTreeStructure(file, structure, newPrefix, false);
             }
+        }
+    }
+
+    /**
+     * Reads existing solution code from the solution repository.
+     * This method retrieves source files from the solution repository
+     * and concatenates their content as a string for test generation.
+     *
+     * @param exercise the programming exercise
+     * @return concatenated content of all solution source files
+     * @throws NetworkingException if repository access fails
+     */
+    public String getExistingSolutionCode(ProgrammingExercise exercise, GitService gitService) throws NetworkingException {
+        try {
+            var solutionRepositoryUri = exercise.getVcsSolutionRepositoryUri();
+            if (solutionRepositoryUri == null) {
+                log.warn("No solution repository URI found for exercise {}, using problem statement only", exercise.getId());
+                return "No solution code available. Please refer to the problem statement.";
+            }
+
+            Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepositoryUri, true, "main", false);
+            if (solutionRepository == null) {
+                log.warn("Failed to access solution repository for exercise {}", exercise.getId());
+                return "Solution repository not accessible. Please refer to the problem statement.";
+            }
+
+            // Read all Java files from the solution repository
+            Path repositoryPath = solutionRepository.getLocalPath();
+            StringBuilder solutionCode = new StringBuilder();
+
+            try {
+                Files.walk(repositoryPath).filter(path -> path.toString().endsWith(".java")).filter(path -> path.toString().contains("src/")).filter(Files::isRegularFile)
+                        .forEach(path -> {
+                            try {
+                                String content = Files.readString(path);
+                                solutionCode.append("// File: ").append(repositoryPath.relativize(path)).append("\n");
+                                solutionCode.append(content).append("\n\n");
+                            }
+                            catch (IOException e) {
+                                log.warn("Failed to read file {}: {}", path, e.getMessage());
+                            }
+                        });
+            }
+            catch (IOException e) {
+                log.error("Failed to scan solution repository for exercise {}: {}", exercise.getId(), e.getMessage());
+                return "Failed to read solution code. Please refer to the problem statement.";
+            }
+
+            return solutionCode.length() > 0 ? solutionCode.toString() : "No solution code found. Please refer to the problem statement.";
+
+        }
+        catch (Exception e) {
+            log.error("Error accessing solution repository for exercise {}: {}", exercise.getId(), e.getMessage(), e);
+            throw new NetworkingException("Failed to access solution repository", e);
         }
     }
 }
