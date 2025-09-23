@@ -128,7 +128,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         StatsForDashboardDTO statsForDashboardDTO = request.get("/api/exercise/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
                 StatsForDashboardDTO.class);
         assertThat(statsForDashboardDTO.getNumberOfSubmissions().inTime()).isEqualTo(submissions.size() + 1);
-        assertThat(statsForDashboardDTO.getTotalNumberOfAssessments().inTime()).isEqualTo(3);
+        assertThat(statsForDashboardDTO.getTotalNumberOfAssessments()).isEqualTo(3);
         assertThat(statsForDashboardDTO.getNumberOfAutomaticAssistedAssessments().inTime()).isEqualTo(1);
 
         for (Exercise exercise : course.getExercises()) {
@@ -150,7 +150,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         StatsForDashboardDTO statsForDashboardDTO = request.get("/api/exercise/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
                 StatsForDashboardDTO.class);
         assertThat(statsForDashboardDTO.getNumberOfSubmissions().inTime()).isZero();
-        assertThat(statsForDashboardDTO.getTotalNumberOfAssessments().inTime()).isZero();
+        assertThat(statsForDashboardDTO.getTotalNumberOfAssessments()).isZero();
         assertThat(statsForDashboardDTO.getNumberOfAutomaticAssistedAssessments().inTime()).isZero();
 
         for (Exercise exercise : course.getExercises()) {
@@ -646,8 +646,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             for (Exercise exercise : course.getExercises()) {
                 StatsForDashboardDTO stats = request.get("/api/exercise/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
                         StatsForDashboardDTO.class);
-                assertThat(stats.getTotalNumberOfAssessments().inTime()).as("Number of in-time assessments is correct").isZero();
-                assertThat(stats.getTotalNumberOfAssessments().late()).as("Number of late assessments is correct").isZero();
+                assertThat(stats.getTotalNumberOfAssessments()).as("Number of in-time assessments is correct").isZero();
 
                 assertThat(stats.getTutorLeaderboardEntries()).as("Number of tutor leaderboard entries is correct").hasSameSizeAs(tutors);
                 assertThat(stats.getNumberOfOpenComplaints()).as("Number of open complaints should be available to tutor").isNotNull();

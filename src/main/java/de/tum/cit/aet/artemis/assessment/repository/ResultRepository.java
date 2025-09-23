@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
-import de.tum.cit.aet.artemis.assessment.dto.dashboard.ResultCountDTO;
 import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -208,22 +207,22 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     Optional<Result> findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsById(@Param("resultId") long resultId);
 
     /**
-     * counts the number of assessments of a course, which are either rated or not rated
+     * counts the number of assessments of a course, which are either rated or not rated (excluding test run participations)
      *
-     * @param exerciseIds - the exercises of the course
-     * @return a list with 3 elements: count of rated (in time) and unrated (late) assessments of a course and count of assessments without rating (null)
+     * @param exerciseIdsWithManualAssessment - the ids of the exercises of the course (should be filtered to only include exercises with manual assessment)
+     * @return the number of assessments for the course
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ResultCountDTO(r.rated, COUNT(r))
+            SELECT COUNT(r)
             FROM Result r
                 JOIN r.submission s
                 JOIN s.participation p
             WHERE r.completionDate IS NOT NULL
                 AND r.assessor IS NOT NULL
+                AND p.testRun = FALSE
                 AND p.exercise.id IN :exerciseIds
-            GROUP BY r.rated
             """)
-    List<ResultCountDTO> countAssessmentsByExerciseIdsAndRated(@Param("exerciseIds") Set<Long> exerciseIds);
+    long countAssessmentsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIdsWithManualAssessment);
 
     /**
      * Load a result from the database by its id together with the associated submission and the list of feedback items.
@@ -276,6 +275,29 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND (e.dueDate IS NULL OR r.submission.submissionDate <= e.dueDate)
             """)
     long countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Counts the number of finished assessments for a set of exercise IDs, ignoring test runs.
+     * Only submissions that have been submitted before the due date (if set) are considered.
+     *
+     * @param exerciseIds set of exercise IDs
+     * @return the number of finished assessments for the given exercise IDs, ignoring test runs
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT p)
+            FROM StudentParticipation p
+                JOIN p.submissions s
+                JOIN s.results r
+                JOIN p.exercise e
+            WHERE e.id IN :exerciseIds
+                AND p.testRun = FALSE
+                AND r.assessor IS NOT NULL
+                AND r.rated = TRUE
+                AND r.submission.submitted = TRUE
+                AND r.completionDate IS NOT NULL
+                AND (e.dueDate IS NULL OR r.submission.submissionDate <= e.dueDate)
+            """)
+    long countNumberOfFinishedAssessmentsForExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * @param exerciseId id of exercise
@@ -551,34 +573,22 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @param exerciseId - the exercise we are interested in
      * @return a number of assessments for the exercise
      */
-    default DueDateStat countNumberOfFinishedAssessmentsForExercise(long exerciseId) {
-        return new DueDateStat(countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(exerciseId), 0L);
+    default long countNumberOfFinishedAssessmentsForExercise(long exerciseId) {
+        return countNumberOfFinishedAssessmentsForExerciseIgnoreTestRuns(exerciseId);
     }
 
     /**
      * Given a courseId, return the number of assessments for that course that have been completed (e.g. no draft!)
      *
-     * @param exerciseIds - the exercise ids of the course we are interested in
+     * @param exerciseIds - the exercise ids of the course we are interested in (should be filtered to only include exercises with manual assessment)
      * @return a number of assessments for the course
      */
-    default DueDateStat countNumberOfAssessments(Set<Long> exerciseIds) {
+    default long countNumberOfAssessments(Set<Long> exerciseIds) {
         // avoid invoking the query for empty sets, because this can lead to performance issues
         if (exerciseIds == null || exerciseIds.isEmpty()) {
-            return new DueDateStat(0, 0);
+            return 0;
         }
-        var ratedCounts = countAssessmentsByExerciseIdsAndRated(exerciseIds);
-        long inTime = 0;
-        long late = 0;
-        for (var ratedCount : ratedCounts) {
-            if (ratedCount.rated()) {
-                inTime = ratedCount.count();
-            }
-            else {
-                late = ratedCount.count();
-            }
-            // we are not interested in results with rated is null even if the database would return such
-        }
-        return new DueDateStat(inTime, late);
+        return countAssessmentsForExerciseIdsIgnoreTestRuns(exerciseIds);
     }
 
     @Query("""
@@ -904,4 +914,21 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     Optional<Result> findLatestResultWithFeedbacksBySubmissionId(@Param("submissionId") long submissionId, @Param("dateTime") ZonedDateTime dateTime);
 
+    /**
+     * Find the latest results for the given participation IDs.
+     *
+     * @param participationIds the participation IDs for which to find the latest results
+     * @return a set of latest results
+     */
+    @Query("""
+            SELECT r
+            FROM Result r
+            WHERE r.submission.participation.id IN :participationIds
+            AND r.id = (
+                 SELECT MAX(r2.id)
+                 FROM Result r2
+                 WHERE r2.submission.participation.id = r.submission.participation.id
+               )
+            """)
+    Set<Result> findLatestResultsByParticipationIds(@Param("participationIds") Set<Long> participationIds);
 }
