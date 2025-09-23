@@ -37,12 +37,12 @@ description = "Interactive Learning with Individual Feedback"
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 
 wrapper {
-    gradleVersion = "9.0.0"
+    gradleVersion = "9.1.0"
 }
 
 node {
