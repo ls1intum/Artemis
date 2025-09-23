@@ -122,7 +122,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetQuestionsForSession() {
-        quizQuestionRepository.deleteAll();
         Course course = new Course();
         courseTestRepository.save(course);
 
@@ -164,7 +163,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetQuestionsForSessionNoDueDate() {
-        quizQuestionRepository.deleteAll();
         Course course = new Course();
         courseTestRepository.save(course);
 
