@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.stream.IntStream;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 

@@ -31,9 +31,9 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 @Service
 @Lazy
 @Conditional(HyperionEnabled.class)
-public class HyperionTestRepository extends HyperionCodeGenerationStrategy {
+public class HyperionTestRepositoryService extends HyperionCodeGenerationService {
 
-    private static final Logger log = LoggerFactory.getLogger(HyperionTestRepository.class);
+    private static final Logger log = LoggerFactory.getLogger(HyperionTestRepositoryService.class);
 
     private final GitService gitService;
 
@@ -45,7 +45,7 @@ public class HyperionTestRepository extends HyperionCodeGenerationStrategy {
      * @param templates                     service for rendering prompt templates
      * @param gitService                    service for Git operations
      */
-    public HyperionTestRepository(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
+    public HyperionTestRepositoryService(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
             GitService gitService) {
         super(programmingExerciseRepository, chatClient, templates);
         this.gitService = gitService;

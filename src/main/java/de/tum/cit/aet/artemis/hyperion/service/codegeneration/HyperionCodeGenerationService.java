@@ -32,9 +32,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Service
 @Lazy
 @Conditional(HyperionEnabled.class)
-public abstract class HyperionCodeGenerationStrategy {
+public abstract class HyperionCodeGenerationService {
 
-    private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationStrategy.class);
+    private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationService.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -42,7 +42,7 @@ public abstract class HyperionCodeGenerationStrategy {
 
     private final HyperionPromptTemplateService templates;
 
-    public HyperionCodeGenerationStrategy(ProgrammingExerciseRepository programmingExerciseRepository, @Autowired(required = false) ChatClient chatClient,
+    public HyperionCodeGenerationService(ProgrammingExerciseRepository programmingExerciseRepository, @Autowired(required = false) ChatClient chatClient,
             HyperionPromptTemplateService templates) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.chatClient = chatClient;

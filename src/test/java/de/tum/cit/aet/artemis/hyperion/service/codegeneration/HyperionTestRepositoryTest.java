@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 
-class HyperionTestRepositoryTest {
+class HyperionTestRepositoryServiceTest {
 
     @Mock
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -49,7 +49,7 @@ class HyperionTestRepositoryTest {
 
     private ChatClient chatClient;
 
-    private HyperionTestRepository testRepository;
+    private HyperionTestRepositoryService testRepository;
 
     private User user;
 
@@ -59,7 +59,7 @@ class HyperionTestRepositoryTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         this.chatClient = ChatClient.create(chatModel);
-        this.testRepository = new HyperionTestRepository(programmingExerciseRepository, chatClient, templates, gitService);
+        this.testRepository = new HyperionTestRepositoryService(programmingExerciseRepository, chatClient, templates, gitService);
 
         this.user = new User();
         user.setLogin("testuser");

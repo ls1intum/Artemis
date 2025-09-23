@@ -116,7 +116,7 @@ public class HyperionCodeGenerationExecutionService {
      * @return the corresponding code generation strategy
      * @throws IllegalArgumentException if repository type is not supported
      */
-    private HyperionCodeGenerationStrategy resolveStrategy(RepositoryType repositoryType) {
+    private HyperionCodeGenerationService resolveStrategy(RepositoryType repositoryType) {
         String strategyBeanName = switch (repositoryType) {
             case SOLUTION -> "solutionRepositoryStrategy";
             case TEMPLATE -> "templateRepositoryStrategy";
@@ -124,7 +124,7 @@ public class HyperionCodeGenerationExecutionService {
             default -> throw new IllegalArgumentException("Unsupported repository type for code generation: " + repositoryType);
         };
 
-        return applicationContext.getBean(strategyBeanName, HyperionCodeGenerationStrategy.class);
+        return applicationContext.getBean(strategyBeanName, HyperionCodeGenerationService.class);
     }
 
     /**
@@ -266,7 +266,7 @@ public class HyperionCodeGenerationExecutionService {
      * @return iteration result with success status and build logs
      */
     private IterationResult executeGenerationIteration(ProgrammingExercise exercise, User user, Repository repository, LocalVCRepositoryUri repositoryUri,
-            HyperionCodeGenerationStrategy strategy, String lastBuildLogs, int iteration) {
+            HyperionCodeGenerationService strategy, String lastBuildLogs, int iteration) {
         try {
             String repositoryStructure = repositoryStructureService.getRepositoryStructure(repository);
 
@@ -331,7 +331,7 @@ public class HyperionCodeGenerationExecutionService {
 
         var repositoryUri = exercise.getRepositoryURI(repositoryType);
         try {
-            HyperionCodeGenerationStrategy strategy = resolveStrategy(repositoryType);
+            HyperionCodeGenerationService strategy = resolveStrategy(repositoryType);
             String lastBuildLogs = null;
             Result result = null;
 

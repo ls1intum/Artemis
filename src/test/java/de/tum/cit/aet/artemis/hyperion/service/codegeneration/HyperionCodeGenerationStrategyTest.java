@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
-class HyperionCodeGenerationStrategyTest {
+class HyperionCodeGenerationServiceTest {
 
     @Mock
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -170,7 +170,7 @@ class HyperionCodeGenerationStrategyTest {
         return new ChatResponse(List.of(generation));
     }
 
-    private static class TestCodeGenerationStrategy extends HyperionCodeGenerationStrategy {
+    private static class TestCodeGenerationStrategy extends HyperionCodeGenerationService {
 
         public TestCodeGenerationStrategy(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates) {
             super(programmingExerciseRepository, chatClient, templates);

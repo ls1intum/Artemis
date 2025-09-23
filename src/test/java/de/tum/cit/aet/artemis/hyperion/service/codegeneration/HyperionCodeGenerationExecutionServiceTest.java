@@ -55,7 +55,7 @@ class HyperionCodeGenerationExecutionServiceTest {
     private HyperionProgrammingExerciseContextRendererService repositoryStructureService;
 
     @Mock
-    private HyperionCodeGenerationStrategy mockStrategy;
+    private HyperionCodeGenerationService mockStrategy;
 
     private HyperionCodeGenerationExecutionService service;
 
@@ -80,27 +80,27 @@ class HyperionCodeGenerationExecutionServiceTest {
 
     @Test
     void resolveStrategy_withSolutionRepositoryType_returnsSolutionStrategy() throws Exception {
-        when(applicationContext.getBean("solutionRepositoryStrategy", HyperionCodeGenerationStrategy.class)).thenReturn(mockStrategy);
+        when(applicationContext.getBean("solutionRepositoryStrategy", HyperionCodeGenerationService.class)).thenReturn(mockStrategy);
 
-        HyperionCodeGenerationStrategy result = (HyperionCodeGenerationStrategy) ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.SOLUTION);
+        HyperionCodeGenerationService result = (HyperionCodeGenerationService) ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.SOLUTION);
 
         assertThat(result).isEqualTo(mockStrategy);
     }
 
     @Test
     void resolveStrategy_withTemplateRepositoryType_returnsTemplateStrategy() throws Exception {
-        when(applicationContext.getBean("templateRepositoryStrategy", HyperionCodeGenerationStrategy.class)).thenReturn(mockStrategy);
+        when(applicationContext.getBean("templateRepositoryStrategy", HyperionCodeGenerationService.class)).thenReturn(mockStrategy);
 
-        HyperionCodeGenerationStrategy result = (HyperionCodeGenerationStrategy) ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.TEMPLATE);
+        HyperionCodeGenerationService result = (HyperionCodeGenerationService) ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.TEMPLATE);
 
         assertThat(result).isEqualTo(mockStrategy);
     }
 
     @Test
     void resolveStrategy_withTestsRepositoryType_returnsTestStrategy() throws Exception {
-        when(applicationContext.getBean("testRepositoryStrategy", HyperionCodeGenerationStrategy.class)).thenReturn(mockStrategy);
+        when(applicationContext.getBean("testRepositoryStrategy", HyperionCodeGenerationService.class)).thenReturn(mockStrategy);
 
-        HyperionCodeGenerationStrategy result = (HyperionCodeGenerationStrategy) ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.TESTS);
+        HyperionCodeGenerationService result = (HyperionCodeGenerationService) ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.TESTS);
 
         assertThat(result).isEqualTo(mockStrategy);
     }

@@ -24,9 +24,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Service
 @Lazy
 @Conditional(HyperionEnabled.class)
-public class HyperionSolutionRepository extends HyperionCodeGenerationStrategy {
+public class HyperionSolutionRepositoryService extends HyperionCodeGenerationService {
 
-    public HyperionSolutionRepository(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates) {
+    public HyperionSolutionRepositoryService(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates) {
         super(programmingExerciseRepository, chatClient, templates);
     }
 
