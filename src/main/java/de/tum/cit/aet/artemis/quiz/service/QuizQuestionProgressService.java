@@ -89,10 +89,11 @@ public class QuizQuestionProgressService {
     /**
      * Get the sorted List of quiz questions based on their due date
      *
-     * @param courseId    ID of the course for which the quiz questions are to be fetched
-     * @param userId      ID of the user for whom the quiz questions are to be fetched
-     * @param pageable    Pageable object with pagination information
-     * @param questionIds Optional set of question IDs to filter the questions
+     * @param courseId     ID of the course for which the quiz questions are to be fetched
+     * @param userId       ID of the user for whom the quiz questions are to be fetched
+     * @param pageable     Pageable object with pagination information
+     * @param questionIds  Optional set of question IDs to filter the questions
+     * @param isNewSession Boolean indicating if it is a new training session or a continuation of an existing one
      * @return A list of quiz questions sorted by due date
      */
     public Slice<QuizQuestionTrainingDTO> getQuestionsForSession(long courseId, long userId, Pageable pageable, Set<Long> questionIds, boolean isNewSession) {

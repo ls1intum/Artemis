@@ -68,9 +68,10 @@ public class QuizTrainingResource {
     /**
      * Retrieves the quiz questions for the training session for the given course. The questions are selected based on the spaced repetition algorithm.
      *
-     * @param courseId    the id of the course whose quiz questions should be retrieved
-     * @param pageable    pagination information
-     * @param questionIds optional set of question IDs to filter the questions
+     * @param courseId     the id of the course whose quiz questions should be retrieved
+     * @param pageable     pagination information
+     * @param isNewSession whether a new training session is being started
+     * @param questionIds  optional set of question IDs to filter the questions
      * @return a list of quiz questions for the training session depending on the pagination information
      */
     @PostMapping("courses/{courseId}/training-questions")
@@ -91,6 +92,7 @@ public class QuizTrainingResource {
      *
      * @param courseId        the id of the course containing the quiz question
      * @param quizQuestionId  the id of the quiz question which is being answered
+     * @param isRated         whether the submitted answer should be rated (i.e. affect the user's progress= or not
      * @param submittedAnswer the submitted answer by the user for the quiz question
      * @return the ResponseEntity with status 200 (OK) and the result of the evaluated submitted answer as its body
      */
