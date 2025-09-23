@@ -17,7 +17,6 @@
         transition: 0.15s;
         background-color: var(--background-color-for-hover) !important;
         color: var(--content-color);
-
         display: flex;
         cursor: pointer;
         height: 100px;
@@ -213,6 +212,7 @@
 @media screen and (max-width: 850px) {
     .card {
         height: unset;
+
         .card-heading {
             height: unset;
             max-height: 135px;

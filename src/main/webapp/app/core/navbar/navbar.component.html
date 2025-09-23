@@ -288,6 +288,14 @@
                             <span jhiTranslate="global.menu.admin.cleanupService"></span>
                         </a>
                     </li>
+                    @if (examEnabled) {
+                        <li>
+                            <a class="dropdown-item" routerLink="/admin/exam-rooms" routerLinkActive="active" (click)="collapseNavbar()">
+                                <fa-icon [icon]="faThLarge" [fixedWidth]="true" />
+                                <span jhiTranslate="global.menu.admin.examRooms"></span>
+                            </a>
+                        </li>
+                    }
                 </ul>
             </li>
             @if (!currAccount && languages && languages.length > 1) {

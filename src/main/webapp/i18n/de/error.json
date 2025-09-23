@@ -111,6 +111,25 @@
         "teamExercise": {
             "cannotStart": "Teamübung kann nicht ohne zugewiesenes Team gestartet werden."
         },
-        "assignmentRepositoryNotAllowed": "Assignment-Repositories werden für Klausuraufgaben nicht unterstützt. Bitte nutze stattdessen das Testlauf-Feature, um die Aufgabe auszuprobieren."
+        "assignmentRepositoryNotAllowed": "Assignment-Repositories werden für Klausuraufgaben nicht unterstützt. Bitte nutze stattdessen das Testlauf-Feature, um die Aufgabe auszuprobieren.",
+        "room": {
+            "fileEmpty": "Die hochgeladene Datei enthält keinen Inhalt",
+            "fileTooLarge": "Die hochgeladene Datei überschreitet die maximal zulässige Dateigröße von {{ maxSize }}",
+            "malformedJson": "Konnte {{ roomNumber }} nicht verarbeiten, der JSON Inhalt scheint falsch formatiert zu sein",
+            "missingRoomNumber": "Fehlende Raumnummer. Bitte stelle sicher, dass keine .json Datei einen leeren Namen hat",
+            "parseIoException": "Ein interner Fehler ist aufgetreten: {{ errorMessage }}",
+            "missingNameOrBuilding": "Raum {{ roomNumber }} spezifiziert keinen Raumnamen und/oder Gebäude",
+            "missingSeats": "Konnte die Sitze von Raum {{ roomNumber }} nicht verarbeiten",
+            "malformedRow": "Raum {{ roomNumber }} hat eine fehlende oder anderweitig fehlerhafte Reihe",
+            "malformedSeat": "Raum {{ roomNumber }} hat einen fehlenden oder anderweitig fehlerhaften Sitz",
+            "invalidSeatCondition": "Raum {{ roomNumber }} hat einen unbekannten Sitz-Zustand: '{{ seatCondition }}'",
+            "missingLayouts": "Konnte die Layouts von Raum {{ roomNumber }} nicht verarbeiten",
+            "malformedLayout": "Layout {{ layoutName }} ist fehlerhaft in Raum {{ roomNumber }}",
+            "unknownLayoutType": "Unbekannter Layout-Typ '{{ layoutType }}' in Layout '{{ layoutName }}' in Raum {{ roomNumber }}"
+        },
+        "wrongCourse": "Die Reaktion gehört nicht zum ausgewählten Kurs.",
+        "reactionNotFound": "Die Reaktion konnte nicht gefunden werden.",
+        "missingAssociation": "Die Reaktion muss einem Beitrag oder einer Antwort zugeordnet sein.",
+        "emojiIdMissing": "emojiId muss gesetzt sein."
     }
 }
