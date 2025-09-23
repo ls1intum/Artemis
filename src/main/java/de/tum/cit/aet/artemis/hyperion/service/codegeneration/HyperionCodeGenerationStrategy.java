@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  * class/method header generation, and core logic implementation. Supports iterative improvement
  * through build feedback integration.
  */
-@Service("HyperionCodeGenerationService")
+@Service
 @Lazy
 @Conditional(HyperionEnabled.class)
 public abstract class HyperionCodeGenerationStrategy {

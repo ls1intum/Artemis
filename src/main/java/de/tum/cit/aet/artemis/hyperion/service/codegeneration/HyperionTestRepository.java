@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
  * Generates unit tests, integration tests, and edge case scenarios by analyzing the solution code
  * and problem requirements to ensure thorough testing coverage.
  */
-@Service("hyperionTestRepositoryStrategy")
+@Service
 @Lazy
 @Conditional(HyperionEnabled.class)
 public class HyperionTestRepository extends HyperionCodeGenerationStrategy {
