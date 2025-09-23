@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subscriber, Subscription, first } from 'rxjs';
-import { Client, ConnectionHeaders, Frame, Message, Subscription as StompSubscription, over } from 'webstomp-client';
+import Stomp, { Client, ConnectionHeaders, Frame, Message, Subscription as StompSubscription } from 'webstomp-client';
 import { gzip, ungzip } from 'pako';
 import { captureException } from '@sentry/angular';
 
@@ -178,9 +178,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             protocols: ['v12.stomp'],
         };
         // TODO: consider to switch to RxStomp (like in the latest jhipster version)
-        const ws = new WebSocket(url, 'v12.stomp');
-        ws.addEventListener('close', (event) => {}, true);
-        this.stompClient = over(ws, options);
+        this.stompClient = Stomp.client(url, options);
         // Note: debugging is deactivated to prevent console log statements
         this.stompClient.debug = () => {};
         const headers = {} as ConnectionHeaders;
