@@ -14,7 +14,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.hyperion.service.HyperionRepositoryStructureService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -52,7 +52,7 @@ class HyperionCodeGenerationExecutionServiceTest {
     private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     @Mock
-    private HyperionRepositoryStructureService repositoryStructureService;
+    private HyperionProgrammingExerciseContextRendererService repositoryStructureService;
 
     @Mock
     private HyperionCodeGenerationStrategy mockStrategy;

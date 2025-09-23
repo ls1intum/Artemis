@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFile;
-import de.tum.cit.aet.artemis.hyperion.service.HyperionRepositoryStructureService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -81,12 +81,12 @@ public class HyperionCodeGenerationExecutionService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final HyperionRepositoryStructureService repositoryStructureService;
+    private final HyperionProgrammingExerciseContextRendererService repositoryStructureService;
 
     public HyperionCodeGenerationExecutionService(GitService gitService, ApplicationContext applicationContext, RepositoryService repositoryService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ResultRepository resultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionRepositoryStructureService repositoryStructureService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionProgrammingExerciseContextRendererService repositoryStructureService) {
         this.gitService = gitService;
         this.applicationContext = applicationContext;
         this.repositoryService = repositoryService;
