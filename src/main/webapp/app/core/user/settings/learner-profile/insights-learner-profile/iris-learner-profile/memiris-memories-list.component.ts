@@ -10,7 +10,6 @@ import { faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons
 
 @Component({
     selector: 'jhi-memiris-memories-list',
-    standalone: true,
     imports: [CommonModule, TranslateDirective, FaIconComponent],
     templateUrl: './memiris-memories-list.component.html',
 })
@@ -60,7 +59,7 @@ export class MemirisMemoriesListComponent implements OnInit {
     async toggleOpen(memory: MemirisMemory) {
         if (!memory?.id) return;
         const id = memory.id;
-        const currentlyOpen = !!this.open[id];
+        const currentlyOpen = this.open[id];
         this.open[id] = !currentlyOpen;
 
         if (this.open[id] && !this.details[id] && !this.loadingDetails[id]) {

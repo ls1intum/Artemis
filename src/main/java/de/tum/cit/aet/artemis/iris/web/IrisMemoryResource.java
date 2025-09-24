@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryWithRelationsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
@@ -44,6 +46,7 @@ public class IrisMemoryResource {
      */
     @GetMapping("user")
     @EnforceAtLeastStudent
+    @FeatureToggle(Feature.Memiris)
     public ResponseEntity<List<MemirisMemoryDTO>> listMemories() {
         var user = userRepository.getUser();
         var memories = pyrisConnectorService.listMemirisMemories(user.getId());
@@ -58,6 +61,7 @@ public class IrisMemoryResource {
      */
     @DeleteMapping("user/{memoryId}")
     @EnforceAtLeastStudent
+    @FeatureToggle(Feature.Memiris)
     public ResponseEntity<Void> deleteMemory(@PathVariable String memoryId) {
         var user = userRepository.getUser();
         pyrisConnectorService.deleteMemirisMemory(user.getId(), memoryId);
@@ -73,6 +77,7 @@ public class IrisMemoryResource {
      */
     @GetMapping("user/{memoryId}")
     @EnforceAtLeastStudent
+    @FeatureToggle(Feature.Memiris)
     public ResponseEntity<MemirisMemoryWithRelationsDTO> getMemoryWithRelations(@PathVariable String memoryId) {
         var user = userRepository.getUser();
         var dto = pyrisConnectorService.getMemirisMemoryWithRelations(user.getId(), memoryId);

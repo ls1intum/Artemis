@@ -2,9 +2,11 @@ package de.tum.cit.aet.artemis.iris.dto;
 
 import java.util.List;
 
+import jakarta.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MemirisMemoryWithRelationsDTO(String id, String title, String content, boolean sleptOn, boolean deleted, List<MemirisLearningDTO> learnings,
-        List<MemirisMemoryConnectionDTO> connections) {
+public record MemirisMemoryWithRelationsDTO(@NotNull String id, @NotNull String title, @NotNull String content, @NotNull boolean sleptOn, @NotNull boolean deleted,
+        @NotNull List<MemirisLearningDTO> learnings, @NotNull List<MemirisMemoryConnectionDTO> connections) {
 }
