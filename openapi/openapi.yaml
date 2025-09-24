@@ -183,6 +183,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-code:
+    post:
+      tags: [hyperion-code-generation]
+      operationId: generateCode
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CodeGenerationRequestDTO'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CodeGenerationResultDTO'}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags: [tutorial-group]
@@ -478,3 +498,23 @@ components:
         registrationNumber: {type: string}
         firstName: {type: string}
         lastName: {type: string}
+    CodeGenerationRequestDTO:
+      type: object
+      description: Request DTO for code generation
+      properties:
+        repositoryType:
+          type: string
+          description: Type of repository to generate code for
+          enum: [TEMPLATE, SOLUTION, TESTS]
+          example: SOLUTION
+    CodeGenerationResultDTO:
+      type: object
+      description: Response DTO for code generation result
+      properties:
+        success: {type: boolean, description: Whether the code generation was successful,
+          example: true}
+        message: {type: string, description: Result message describing the outcome,
+          example: Solution code generated successfully and compiles without errors.}
+        attempts: {type: integer, format: int32, description: Number of generation
+            attempts made, example: 1}
+      required: [success, message, attempts]

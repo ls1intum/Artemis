@@ -14,7 +14,8 @@ import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../stat
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HyperionCodeGenerationService } from 'app/hyperion/code-generation.service';
+import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
+import { CodeGenerationRequestDTO } from 'app/openapi/model/codeGenerationRequestDTO';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { inject, signal } from '@angular/core';
@@ -59,7 +60,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     irisSettings?: IrisSettings;
     protected readonly RepositoryType = RepositoryType;
 
-    private codeGenerationService = inject(HyperionCodeGenerationService);
+    private codeGenerationService = inject(HyperionCodeGenerationApiService);
     private codeGenAlertService = inject(AlertService);
     isGeneratingCode = signal(false);
 
@@ -82,7 +83,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
         this.isGeneratingCode.set(true);
 
-        const request = { repositoryType: this.selectedRepository };
+        const request: CodeGenerationRequestDTO = {
+            repositoryType: this.selectedRepository as CodeGenerationRequestDTO.RepositoryTypeEnum,
+        };
 
         this.codeGenerationService.generateCode(this.exercise.id, request).subscribe({
             next: (response) => {

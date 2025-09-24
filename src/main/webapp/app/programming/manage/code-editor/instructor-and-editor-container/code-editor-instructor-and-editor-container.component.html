@@ -154,7 +154,7 @@
                 }
                 <!-- Hyperion Code Generation -->
                 <div class="btn-group" ngbDropdown role="group" aria-label="AI Code Generation">
-                    @if (isGeneratingCode) {
+                    @if (isGeneratingCode()) {
                         <button class="btn btn-outline-primary" disabled>
                             <fa-icon [icon]="faSpinner" animation="spin" />
                         </button>
