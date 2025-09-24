@@ -2685,8 +2685,8 @@ public class CourseTestService {
     // Test
     public void testGetCourseManagementDetailData() throws Exception {
         adjustUserGroupsToCustomGroups();
-        // TODO: we should use fixed dates here to avoid flakiness, e.g. mock the clock
-        ZonedDateTime now = ZonedDateTime.now();
+        // we inject a fixed clock in our tests that TimeUtil uses, so the timestamp below is always the same in tests.
+        ZonedDateTime now = TimeUtil.now();
         // add courses with exercises
         var courses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         var course1 = courses.getFirst();

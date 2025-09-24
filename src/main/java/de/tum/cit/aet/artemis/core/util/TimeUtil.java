@@ -1,12 +1,16 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 public class TimeUtil {
+
+    private static volatile Clock clock = Clock.systemDefaultZone();
 
     /**
      * Private constructor to prevent instantiation.
@@ -62,5 +66,21 @@ public class TimeUtil {
             return null;
         }
         return zonedDateTime.toInstant();
+    }
+
+    public static ZonedDateTime now() {
+        return ZonedDateTime.now(clock);
+    }
+
+    public static ZonedDateTime now(ZoneId zone) {
+        return ZonedDateTime.now(clock.withZone(zone));
+    }
+
+    public static void setClock(Clock newClock) {
+        clock = newClock;
+    }
+
+    public static void resetClock() {
+        clock = Clock.systemDefaultZone();
     }
 }

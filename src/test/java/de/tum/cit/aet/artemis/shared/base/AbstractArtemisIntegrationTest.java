@@ -7,12 +7,15 @@ import static org.mockito.Mockito.doReturn;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
 import jakarta.mail.internet.MimeMessage;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,6 +58,7 @@ import de.tum.cit.aet.artemis.core.util.HibernateQueryInterceptor;
 import de.tum.cit.aet.artemis.core.util.QueryCountAssert;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.util.ThrowingProducer;
+import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -202,6 +206,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         // Set the static file upload path for all tests
         // This makes it a simple unit test that doesn't require a server start.
         FilePathConverter.setFileUploadPath(rootPath);
+        Clock fixedClock = Clock.fixed(Instant.parse("2025-09-09T10:25:00Z"), ZoneOffset.UTC);
+        TimeUtil.setClock(fixedClock);
     }
 
     @BeforeEach
@@ -221,6 +227,11 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @AfterEach
     void stopQuizScheduler() {
         scheduleService.clearAllTasks();
+    }
+
+    @AfterAll
+    static void resetClock() {
+        TimeUtil.resetClock();
     }
 
     @AfterEach
