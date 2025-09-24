@@ -11,7 +11,7 @@ import subprocess
 
 # Load configuration
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read('../quick-course-setup/config.ini')
 
 # Constants from config
 SERVER_URL: str = config.get('Settings', 'server_url')
