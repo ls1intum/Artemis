@@ -49,10 +49,6 @@ public class QuizTrainingLeaderboard extends DomainObject {
     @Column(nullable = false, name = "answered_wrong")
     private int answeredWrong;
 
-    // The total number of questions available for training
-    @Column(nullable = false, name = "total_questions")
-    private long totalQuestions;
-
     // The due date for the next quiz training session
     @Column(nullable = false, name = "due_date")
     private ZonedDateTime dueDate;
@@ -60,6 +56,10 @@ public class QuizTrainingLeaderboard extends DomainObject {
     // The current streak the student is on (number of training sessions done at the exact due date)
     @Column(nullable = false, name = "streak")
     private int streak;
+
+    // Flag indicating whether the user wants to be shown in the leaderboard or not
+    @Column(nullable = false, name = "show_in_leaderboard")
+    private boolean showInLeaderboard;
 
     public User getUser() {
         return user;
@@ -117,14 +117,6 @@ public class QuizTrainingLeaderboard extends DomainObject {
         this.answeredWrong = answeredWrong;
     }
 
-    public long getTotalQuestions() {
-        return totalQuestions;
-    }
-
-    public void setTotalQuestions(long totalQuestions) {
-        this.totalQuestions = totalQuestions;
-    }
-
     public ZonedDateTime getDueDate() {
         return dueDate;
     }
@@ -139,5 +131,13 @@ public class QuizTrainingLeaderboard extends DomainObject {
 
     public void setStreak(int streak) {
         this.streak = streak;
+    }
+
+    public boolean isShowInLeaderboard() {
+        return showInLeaderboard;
+    }
+
+    public void setShowInLeaderboard(boolean showInLeaderboard) {
+        this.showInLeaderboard = showInLeaderboard;
     }
 }

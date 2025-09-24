@@ -175,7 +175,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         List<LeaderboardEntryDTO> leaderboardEntryDTO = quizTrainingLeaderboardService.getLeaderboard(instructor.getId(), course.getId());
         assertThat(leaderboardEntryDTO.size()).isEqualTo(1);
         assertThat(leaderboardEntryDTO.get(0).studentLeague()).isEqualTo(0);
-        assertThat(leaderboardEntryDTO.get(0).league()).isEqualTo(3);
+        assertThat(leaderboardEntryDTO.get(0).selectedLeague()).isEqualTo(3);
     }
 
     @Test

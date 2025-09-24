@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -17,7 +16,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.QuizTrainingLeaderboard;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
@@ -36,8 +34,6 @@ public class QuizTrainingLeaderboardService {
 
     private final UserRepository userRepository;
 
-    private final QuizQuestionProgressRepository quizQuestionProgressRepository;
-
     private final QuizQuestionRepository quizQuestionRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
@@ -54,7 +50,6 @@ public class QuizTrainingLeaderboardService {
         this.quizTrainingLeaderboardRepository = quizTrainingLeaderboardRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
-        this.quizQuestionProgressRepository = quizQuestionProgressRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
@@ -70,6 +65,7 @@ public class QuizTrainingLeaderboardService {
     public List<LeaderboardEntryDTO> getLeaderboard(long userId, long courseId) {
         User user = userRepository.findByIdElseThrow(userId);
         Course course = courseRepository.findByIdElseThrow(courseId);
+        long totalQuestions = quizQuestionRepository.countOfQuizQuestionsAvailableForPractice(courseId);
         int studentLeague;
         if (authorizationCheckService.isStudentInCourse(course, user)) {
             studentLeague = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).map(QuizTrainingLeaderboard::getLeague).orElse(BRONZE_LEAGUE);
@@ -77,16 +73,16 @@ public class QuizTrainingLeaderboardService {
         else {
             studentLeague = NO_LEAGUE;
         }
-        int league;
+        int selectedLeague;
         if (studentLeague == 0) {
-            league = BRONZE_LEAGUE;
+            selectedLeague = BRONZE_LEAGUE;
         }
         else {
-            league = studentLeague;
+            selectedLeague = studentLeague;
         }
 
-        List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueAndCourseIdOrderByScoreDescUserAscId(league, courseId);
-        List<LeaderboardEntryDTO> leaderboard = getLeaderboardEntryDTOS(leaderboardEntries, league, studentLeague);
+        List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueAndCourseIdOrderByScoreDescUserAscId(selectedLeague, courseId);
+        List<LeaderboardEntryDTO> leaderboard = getLeaderboardEntryDTOS(leaderboardEntries, selectedLeague, totalQuestions);
         return leaderboard;
     }
 
@@ -94,20 +90,36 @@ public class QuizTrainingLeaderboardService {
      * Converts a list of leaderboard entities to DTOs, including rank and league information.
      *
      * @param leaderboardEntries the list of leaderboard entities
-     * @param leagueId           the league ID to use for the entries
-     * @param studentLeagueId    the league ID of the student
+     * @param selectedLeague     the league ID to use for the entries
      * @return a list of leaderboard entry DTOs
      */
-    private static List<LeaderboardEntryDTO> getLeaderboardEntryDTOS(List<QuizTrainingLeaderboard> leaderboardEntries, int leagueId, int studentLeagueId) {
+    private static List<LeaderboardEntryDTO> getLeaderboardEntryDTOS(List<QuizTrainingLeaderboard> leaderboardEntries, int selectedLeague, long totalQuestions) {
         List<LeaderboardEntryDTO> leaderboard = new ArrayList<>();
         int rank = 1;
         for (QuizTrainingLeaderboard leaderboardEntry : leaderboardEntries) {
             String username = leaderboardEntry.getLeaderboardName() != null ? leaderboardEntry.getLeaderboardName() : leaderboardEntry.getUser().getName();
-            leaderboard.add(new LeaderboardEntryDTO(rank++, leagueId, studentLeagueId, leaderboardEntry.getUser().getId(), leaderboardEntry.getUser().getName(),
+            leaderboard.add(new LeaderboardEntryDTO(rank++, selectedLeague, leaderboardEntry.getUser().getId(), leaderboardEntry.getUser().getName(),
                     leaderboardEntry.getUser().getImageUrl(), username, leaderboardEntry.getScore(), leaderboardEntry.getAnsweredCorrectly(), leaderboardEntry.getAnsweredWrong(),
-                    leaderboardEntry.getTotalQuestions(), leaderboardEntry.getDueDate(), leaderboardEntry.getStreak()));
+                    totalQuestions, leaderboardEntry.getDueDate(), leaderboardEntry.getStreak()));
         }
         return leaderboard;
+    }
+
+    public void setInitialLeaderboardEntry(long userId, long courseId, boolean shownInLeaderboard, String leaderboardName) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.findByIdElseThrow(userId);
+        QuizTrainingLeaderboard leaderboardEntry = new QuizTrainingLeaderboard();
+        leaderboardEntry.setUser(user);
+        leaderboardEntry.setCourse(course);
+        leaderboardEntry.setLeague(BRONZE_LEAGUE);
+        leaderboardEntry.setScore(0);
+        leaderboardEntry.setAnsweredCorrectly(0);
+        leaderboardEntry.setAnsweredWrong(0);
+        leaderboardEntry.setDueDate(ZonedDateTime.now());
+        leaderboardEntry.setStreak(0);
+        leaderboardEntry.setShowInLeaderboard(shownInLeaderboard);
+        leaderboardEntry.setLeaderboardName(leaderboardName);
+        quizTrainingLeaderboardRepository.save(leaderboardEntry);
     }
 
     /**
@@ -125,8 +137,8 @@ public class QuizTrainingLeaderboardService {
         int wrongAnswers = answerCounts.wrong;
         long totalAvailableQuestions = quizQuestionRepository.countOfQuizQuestionsAvailableForPractice(courseId);
 
-        Course course = courseRepository.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
-        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.findByIdElseThrow(userId);
         QuizTrainingLeaderboard leaderboardEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).orElseGet(() -> {
             QuizTrainingLeaderboard entry = new QuizTrainingLeaderboard();
             entry.setUser(user);
@@ -136,7 +148,6 @@ public class QuizTrainingLeaderboardService {
             entry.setScore(0);
             entry.setAnsweredCorrectly(0);
             entry.setAnsweredWrong(0);
-            entry.setTotalQuestions(totalAvailableQuestions);
             entry.setDueDate(ZonedDateTime.now());
             entry.setStreak(0);
             return entry;
@@ -145,7 +156,6 @@ public class QuizTrainingLeaderboardService {
         leaderboardEntry.setScore(leaderboardEntry.getScore() + delta);
         leaderboardEntry.setAnsweredCorrectly(leaderboardEntry.getAnsweredCorrectly() + correctAnswers);
         leaderboardEntry.setAnsweredWrong(leaderboardEntry.getAnsweredWrong() + wrongAnswers);
-        leaderboardEntry.setTotalQuestions(totalAvailableQuestions);
 
         ZonedDateTime dueDate = findLatestDueDate(answeredQuestions);
         leaderboardEntry.setDueDate(dueDate);
@@ -206,78 +216,5 @@ public class QuizTrainingLeaderboardService {
         }
 
         return new AnswerCounts(correctCount, wrongCount);
-    }
-
-    /**
-     * Initializes the leaderboard entry for a user in a course.
-     *
-     * @param userId                  the ID of the user
-     * @param courseId                the ID of the course
-     * @param totalAvailableQuestions the total number of available questions in the course
-     * @throws IllegalArgumentException if the user or course is not found
-     */
-    public void initializeLeaderboard(long userId, long courseId, long totalAvailableQuestions) {
-        Course course = courseRepository.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
-        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
-
-        Set<Long> quizQuestionIds = quizQuestionRepository.findQuizQuestionIdsByCourseId(courseId);
-        Set<QuizQuestionProgress> progressSet = quizQuestionProgressRepository.findAllByUserIdAndQuizQuestionIdIn(userId, quizQuestionIds);
-
-        Set<QuizQuestionProgressData> progressDataSet = new HashSet<>();
-        for (QuizQuestionProgress progress : progressSet) {
-            QuizQuestionProgressData progressData = progress.getProgressJson();
-            if (progressData != null) {
-                progressDataSet.add(progressData);
-            }
-        }
-
-        int score = calculateScoreDelta(progressDataSet);
-        AnswerCounts answerCounts = calculateAnswerCounts(progressDataSet);
-        int answeredCorrectly = answerCounts.correct;
-        int answeredWrong = answerCounts.wrong;
-
-        QuizTrainingLeaderboard leaderboardEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).orElseGet(() -> {
-            QuizTrainingLeaderboard entry = new QuizTrainingLeaderboard();
-            entry.setUser(user);
-            entry.setCourse(course);
-            entry.setLeaderboardName(""); // This will be adapted to the chosen name of the user later
-            entry.setLeague(BRONZE_LEAGUE);
-            entry.setScore(score);
-            entry.setAnsweredCorrectly(answeredCorrectly);
-            entry.setAnsweredWrong(answeredWrong);
-            entry.setTotalQuestions(totalAvailableQuestions);
-            entry.setDueDate(ZonedDateTime.now());
-            entry.setStreak(0);
-            return entry;
-        });
-        quizTrainingLeaderboardRepository.save(leaderboardEntry);
-    }
-
-    /**
-     * Initializes leaderboard entries for all users in a course.
-     *
-     * @param courseId                the ID of the course
-     * @param totalAvailableQuestions the total number of available questions in the course
-     * @throws IllegalArgumentException if the course is not found
-     */
-    public void initializeLeaderboardsForCourse(long courseId, long totalAvailableQuestions) {
-        Course course = courseRepository.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found"));
-        Set<User> users = userRepository.getUsersInCourse(course);
-
-        for (User user : users) {
-            initializeLeaderboard(user.getId(), courseId, totalAvailableQuestions);
-        }
-    }
-
-    /**
-     * Scheduled task that rebuilds all leaderboards for all courses weekly on Monday at 2 am.
-     */
-    // @Scheduled(cron = "0 0 2 ? * MON") - The exact scheduling will be determined later
-    public void weeklyLeaderboardRebuild() {
-        List<Course> allCourses = courseRepository.findAll();
-        for (Course course : allCourses) {
-            long totalQuestions = quizQuestionRepository.countOfQuizQuestionsAvailableForPractice(course.getId());
-            initializeLeaderboardsForCourse(course.getId(), totalQuestions);
-        }
     }
 }
