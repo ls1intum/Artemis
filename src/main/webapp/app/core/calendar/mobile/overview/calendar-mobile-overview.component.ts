@@ -8,7 +8,7 @@ import { CalendarMobileMonthPresentationComponent } from 'app/core/calendar/mobi
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarMobileDayPresentationComponent } from 'app/core/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronLeft, faChevronRight, faFilter, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpFromBracket, faChevronLeft, faChevronRight, faFilter, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { PopoverModule } from 'primeng/popover';
@@ -43,6 +43,7 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     readonly faChevronRight = faChevronRight;
     readonly faChevronLeft = faChevronLeft;
     readonly faFilter = faFilter;
+    readonly faArrowUpFromBracket = faArrowUpFromBracket;
 
     firstDateOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     selectedDate = signal<Dayjs | undefined>(undefined);
