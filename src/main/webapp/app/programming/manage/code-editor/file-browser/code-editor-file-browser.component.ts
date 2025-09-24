@@ -1,4 +1,20 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Injector, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, effect, inject, input } from '@angular/core';
+import {
+    AfterViewInit,
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnInit,
+    Output,
+    SimpleChanges,
+    ViewChild,
+    computed,
+    effect,
+    inject,
+    input,
+    signal,
+} from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
@@ -87,18 +103,33 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     private repositoryService = inject(CodeEditorRepositoryService);
     private fileService = inject(CodeEditorFileService);
     private conflictService = inject(CodeEditorConflictStateService);
-    // get an injector once, in a valid injection context
-    private readonly injector = inject(Injector);
     CommitState = CommitState;
     FileType = FileType;
-    private isProblemStatement = (path?: string) => path === PROBLEM_STATEMENT_IDENTIFIER;
+    constructor() {
+        // React to participation() signal changes
+        effect(() => {
+            const p = this.participation();
+            if (p !== undefined) {
+                this.initializeRepositoryFiles();
+            }
+        });
+
+        // React to showEditorInstructions signal changes
+        effect(() => {
+            this.showEditorInstructions();
+            if (this.participation()) {
+                this.handleProblemStatementVisibility();
+            }
+        });
+    }
+
     @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
     @ViewChild('treeview', { static: false }) treeview: TreeViewComponent<string>;
     participation = input<Participation>();
     showEditorInstructions = input(true);
     @Input()
     get selectedFile(): string | undefined {
-        return this.selectedFileValue;
+        return this.selectedFileSignal();
     }
     @Input()
     disableActions = false;
@@ -135,7 +166,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     onError = new EventEmitter<string>();
 
     isLoadingFiles: boolean;
-    selectedFileValue?: string;
+    selectedFileSignal = signal<string | undefined>(undefined);
+    isProblemStatementSelected = computed(() => this.selectedFileSignal() === PROBLEM_STATEMENT_IDENTIFIER);
     commitStateValue: CommitState;
     repositoryFiles: { [fileName: string]: FileType };
     repositoryFilesWithInformationAboutChange: { [fileName: string]: boolean } | undefined;
@@ -175,8 +207,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     faAngleDoubleDown = faAngleDoubleDown;
 
     set selectedFile(file: string | undefined) {
-        this.selectedFileValue = file;
-        this.selectedFileChange.emit(this.selectedFile);
+        this.selectedFileSignal.set(file);
+        this.selectedFileChange.emit(file);
     }
 
     set commitState(commitState: CommitState) {
@@ -195,28 +227,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
         // Initial setup (kept so PS shows even before participation arrives)
         this.initializeRepositoryFiles();
-
-        // React to participation() signal changes
-        effect(
-            () => {
-                const p = this.participation();
-                if (p !== undefined) {
-                    this.initializeRepositoryFiles();
-                }
-            },
-            { injector: this.injector },
-        );
-
-        // React to showEditorInstructions signal changes
-        effect(
-            () => {
-                this.showEditorInstructions();
-                if (this.participation()) {
-                    this.handleProblemStatementVisibility();
-                }
-            },
-            { injector: this.injector },
-        );
     }
 
     /**
@@ -282,7 +292,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
         if (this.displayOnly || !this.showEditorInstructions()) {
             delete this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER];
-            if (this.isProblemStatement(this.selectedFile)) {
+            if (this.isProblemStatementSelected()) {
                 this.selectedFile = undefined;
             }
         } else {
@@ -332,7 +342,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             .subscribe({
                 error: (error: Error) => {
                     this.isLoadingFiles = false;
-                    // TODO: Should PS be shown even when status/content loading failed
                     this.initializeRepositoryFiles();
                     this.setupTreeview();
                     this.onError.emit(error.message);
@@ -409,8 +418,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         }
 
         const fileKeys = Object.keys(this.repositoryFiles).sort((a, b) => {
-            if (this.isProblemStatement(a)) return -1;
-            if (this.isProblemStatement(b)) return 1;
+            if (a === PROBLEM_STATEMENT_IDENTIFIER) return -1;
+            if (b === PROBLEM_STATEMENT_IDENTIFIER) return 1;
             return a.localeCompare(b);
         });
 
