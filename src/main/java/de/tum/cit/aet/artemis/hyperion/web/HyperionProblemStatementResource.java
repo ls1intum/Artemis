@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
@@ -98,7 +97,7 @@ public class HyperionProblemStatementResource {
      * @param request  the request containing the user prompt
      * @return the ResponseEntity with status 200 (OK) and the generated draft problem statement or an error status
      */
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     @PostMapping("courses/{courseId}/problem-statements/generate")
     public ResponseEntity<ProblemStatementGenerationResponseDTO> generateProblemStatement(@PathVariable long courseId, @RequestBody ProblemStatementGenerationRequestDTO request) {
         log.debug("REST request to Hyperion generate draft problem statement for course [{}]", courseId);
