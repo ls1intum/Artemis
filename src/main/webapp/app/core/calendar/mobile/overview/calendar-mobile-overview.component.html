@@ -5,22 +5,23 @@
                 <fa-icon [icon]="faChevronLeft" />
             </div>
         </button>
-        <button data-testid="today-button" pButton size="small" severity="secondary" (click)="goToToday()">
-            <span class="button-label" jhiTranslate="artemisApp.calendar.todayButtonLabel"></span>
-        </button>
+        <button data-testid="today-button" pButton size="small" severity="secondary" (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
         @let courseId = currentCourseId();
         @let subscriptionToken = calendarSubscriptionToken();
         @if (courseId && subscriptionToken) {
             <div>
-                <button data-testid="subscribe-button" pButton size="small" severity="secondary" (click)="subscriptionPopover.open($event)">
-                    <span class="button-label" jhiTranslate="artemisApp.calendar.subscribeButtonLabel"></span>
-                </button>
+                <button
+                    data-testid="subscribe-button"
+                    pButton
+                    size="small"
+                    severity="secondary"
+                    (click)="subscriptionPopover.open($event)"
+                    jhiTranslate="artemisApp.calendar.subscribeButtonLabel"
+                ></button>
                 <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="courseId" [isMobile]="true" #subscriptionPopover />
             </div>
         }
-        <button pButton size="small" severity="secondary" (click)="filterPopover.toggle($event)">
-            <span class="button-label">Filter</span>
-        </button>
+        <button pButton size="small" severity="secondary" (click)="filterPopover.toggle($event)" jhiTranslate="artemisApp.calendar.filterButtonLabel"></button>
         <button pButton size="small" (click)="goToNext()">
             <div class="chevron">
                 <fa-icon [icon]="faChevronRight" />
@@ -29,7 +30,7 @@
     </div>
     <div class="calendar-presentation-container">
         <div class="presentation-header">
-            <div class="title-and-control-row">
+            <div class="presentation-header-top-section">
                 <div class="header-spacer">
                     @if (selectedDate()) {
                         <button type="button" class="close-button" (click)="unselectDate()">
@@ -38,9 +39,9 @@
                     }
                 </div>
                 <div class="month-title">{{ firstDateOfCurrentMonth().format('MMMM YYYY') }}</div>
-                <div class="header-spacer"></div>
+                <div class="spacer"></div>
             </div>
-            <div class="day-name-row">
+            <div class="presentation-header-bottom-section">
                 @for (dayNameKey of weekdayNameKeys; track dayNameKey) {
                     <div class="weekday-label" jhiTranslate="{{ dayNameKey }}"></div>
                 }
@@ -62,21 +63,25 @@
 
 <p-popover #filterPopover>
     <div class="popover-content">
-        <div class="filter-option-label">
+        <div class="filter-option-row">
             <p-checkbox [ngModel]="lectureFilterOptionSelected()" (ngModelChange)="toggleFilterOption(CalendarEventFilterOption.LectureEvents)" [binary]="true" />
-            Lectures
+            <div class="filter-option-indicator lecture"></div>
+            <span jhiTranslate="artemisApp.calendar.filterOption.lectures"></span>
         </div>
-        <div class="filter-option-label">
+        <div class="filter-option-row">
             <p-checkbox [ngModel]="exerciseFilterOptionSelected()" (ngModelChange)="toggleFilterOption(CalendarEventFilterOption.ExerciseEvents)" [binary]="true" />
-            Exercises
+            <div class="filter-option-indicator exercise"></div>
+            <span jhiTranslate="artemisApp.calendar.filterOption.exercises"></span>
         </div>
-        <div class="filter-option-label">
+        <div class="filter-option-row">
             <p-checkbox [ngModel]="tutorialFilterOptionSelected()" (ngModelChange)="toggleFilterOption(CalendarEventFilterOption.TutorialEvents)" [binary]="true" />
-            Tutorials
+            <div class="filter-option-indicator tutorial"></div>
+            <span jhiTranslate="artemisApp.calendar.filterOption.tutorials"></span>
         </div>
-        <div class="filter-option-label">
+        <div class="filter-option-row">
             <p-checkbox [ngModel]="examFilterOptionSelected()" (ngModelChange)="toggleFilterOption(CalendarEventFilterOption.ExamEvents)" [binary]="true" />
-            Exams
+            <div class="filter-option-indicator exam"></div>
+            <span jhiTranslate="artemisApp.calendar.filterOption.exams"></span>
         </div>
     </div>
 </p-popover>

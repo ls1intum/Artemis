@@ -68,7 +68,7 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     }
 
     toggleFilterOption(option: CalendarEventFilterOption) {
-        if (this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.LectureEvents)) {
+        if (this.calendarService.includedEventFilterOptions().includes(option)) {
             this.calendarService.includedEventFilterOptions.update((oldOptions) => oldOptions.filter((otherOption) => otherOption !== option));
         } else {
             this.calendarService.includedEventFilterOptions.update((oldOptions) => [...oldOptions, option]);
