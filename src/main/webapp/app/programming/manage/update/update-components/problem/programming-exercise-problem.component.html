@@ -1,7 +1,46 @@
 <section>
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle"></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage"></p>
-    @if (isEditFieldDisplayedRecord().problemStatement) {
+    <!-- Generate Draft Problem Statement Button -->
+    <div class="btn-group">
+        <p-button (click)="openGeneratePopover($event)" icon="pi pi-brain" label="Generate Draft Problem Statement" severity="secondary" size="small" [disabled]="isGenerating" />
+    </div>
+
+    <!-- Problem Statement Generation Popover -->
+    <p-popover #generatePopover [style]="{ width: '500px' }">
+        <div class="p-4">
+            <h4 class="mb-3">Generate Draft Problem Statement</h4>
+            <p class="text-sm text-muted mb-3">Describe what you want the programming exercise to focus on. Be specific about requirements, concepts, or learning objectives.</p>
+
+            <!-- User Prompt Input -->
+            <div class="mb-4">
+                <label for="userPrompt" class="form-label">Your Requirements:</label>
+                <textarea
+                    id="userPrompt"
+                    [(ngModel)]="userPrompt"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Example: Create a Java exercise about implementing a binary search tree with insert, delete, and search operations. Students should demonstrate understanding of tree traversal and recursive algorithms."
+                    [disabled]="isGenerating"
+                >
+                </textarea>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-end gap-2">
+                <p-button label="Cancel" severity="secondary" size="small" (click)="cancelGeneration()" [disabled]="isGenerating" />
+                <p-button
+                    label="Generate"
+                    icon="pi pi-magic-wand"
+                    size="small"
+                    (click)="generateProblemStatement()"
+                    [disabled]="!userPrompt?.trim() || isGenerating"
+                    [loading]="isGenerating"
+                />
+            </div>
+        </div>
+    </p-popover>
+    @if (isEditFieldDisplayedRecord()?.problemStatement) {
         <div class="form-group" id="field_problemStatement" name="problemStatement">
             <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
             @if (programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile) {
@@ -20,8 +59,8 @@
             }
             @if (programmingExerciseCreationConfig.isImportFromExistingExercise) {
                 <jhi-programming-exercise-instructions
-                    [exercise]="programmingExercise"
-                    [participation]="programmingExercise.templateParticipation!"
+                    [exercise]="programmingExercise()!"
+                    [participation]="programmingExercise()?.templateParticipation!"
                     [personalParticipation]="false"
                 />
             }
@@ -31,11 +70,11 @@
                 !programmingExerciseCreationConfig.isImportFromExistingExercise
             ) {
                 <jhi-programming-exercise-editable-instructions
-                    [participation]="programmingExercise.templateParticipation!"
-                    [(exercise)]="exercise"
+                    [participation]="programmingExercise()?.templateParticipation!"
+                    [exercise]="programmingExercise()!"
                     [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
-                    [showStatus]="!!programmingExercise?.id"
-                    [editMode]="!!programmingExercise?.id"
+                    [showStatus]="!!programmingExercise()?.id"
+                    [editMode]="!!programmingExercise()?.id"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
                     (instructionChange)="problemStatementChange.emit($event)"
                     [forceRender]="programmingExerciseCreationConfig.rerenderSubject"
@@ -44,13 +83,14 @@
             }
         </div>
     }
-    @if (isEditFieldDisplayedRecord().linkedCompetencies && !programmingExerciseCreationConfig.isExamMode) {
+    @if (isEditFieldDisplayedRecord()?.linkedCompetencies && !programmingExerciseCreationConfig.isExamMode) {
         <div class="form-group">
             <jhi-competency-selection
                 id="competencies"
                 [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                 [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
-                [(ngModel)]="programmingExercise.competencyLinks"
+                [ngModel]="programmingExercise()?.competencyLinks"
+                (ngModelChange)="onCompetencyLinksChange($event)"
                 name="competencyLinks"
             />
         </div>

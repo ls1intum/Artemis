@@ -1,6 +1,6 @@
 .gitignore
 api.base.service.ts
-api/hyperionReviewAndRefineApi.service.ts
+api/hyperionProblemStatementApi.service.ts
 api/tutorialGroupApi.service.ts
 api/tutorialGroupFreePeriodApi.service.ts
 api/tutorialGroupSessionApi.service.ts
@@ -11,6 +11,8 @@ model/channel.ts
 model/consistencyCheckResponse.ts
 model/consistencyIssue.ts
 model/conversationUser.ts
+model/problemStatementGenerationRequest.ts
+model/problemStatementGenerationResponse.ts
 model/problemStatementRewriteRequest.ts
 model/problemStatementRewriteResponse.ts
 model/student.ts

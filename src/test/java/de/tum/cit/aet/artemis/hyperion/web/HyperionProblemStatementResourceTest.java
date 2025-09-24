@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-class HyperionReviewAndRefineResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     private CourseTestRepository courseRepository;
