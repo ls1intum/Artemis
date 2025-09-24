@@ -1,24 +1,27 @@
 <div class="frame">
     <div class="header">
-        <button type="button" class="header-button primary-button" (click)="goToPrevious()">
+        <button pButton size="small" (click)="goToPrevious()">
             <div class="chevron">
                 <fa-icon [icon]="faChevronLeft" />
             </div>
         </button>
-        <button data-testid="today-button" type="button" class="header-button secondary-button" (click)="goToToday()">
-            <span class="today-label" jhiTranslate="artemisApp.calendar.todayButtonLabel"></span>
+        <button data-testid="today-button" pButton size="small" severity="secondary" (click)="goToToday()">
+            <span class="button-label" jhiTranslate="artemisApp.calendar.todayButtonLabel"></span>
         </button>
         @let courseId = currentCourseId();
         @let subscriptionToken = calendarSubscriptionToken();
         @if (courseId && subscriptionToken) {
             <div>
-                <button data-testid="subscribe-button" type="button" class="header-button secondary-button" (click)="subscriptionPopover.open($event)">
-                    <span class="today-label" jhiTranslate="artemisApp.calendar.subscribeButtonLabel"></span>
+                <button data-testid="subscribe-button" pButton size="small" severity="secondary" (click)="subscriptionPopover.open($event)">
+                    <span class="button-label" jhiTranslate="artemisApp.calendar.subscribeButtonLabel"></span>
                 </button>
                 <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="courseId" [isMobile]="true" #subscriptionPopover />
             </div>
         }
-        <button type="button" class="header-button primary-button" (click)="goToNext()">
+        <button pButton size="small" severity="secondary" (click)="filterPopover.toggle($event)">
+            <span class="button-label">Filter</span>
+        </button>
+        <button pButton size="small" (click)="goToNext()">
             <div class="chevron">
                 <fa-icon [icon]="faChevronRight" />
             </div>
@@ -26,7 +29,7 @@
     </div>
     <div class="calendar-presentation-container">
         <div class="presentation-header">
-            <div class="title-close-button-row">
+            <div class="title-and-control-row">
                 <div class="header-spacer">
                     @if (selectedDate()) {
                         <button type="button" class="close-button" (click)="unselectDate()">
@@ -35,9 +38,7 @@
                     }
                 </div>
                 <div class="month-title">{{ firstDateOfCurrentMonth().format('MMMM YYYY') }}</div>
-                <div class="header-spacer">
-                    <jhi-calendar-event-filter [variant]="CalendarEventFilterComponentVariant.MOBILE" />
-                </div>
+                <div class="header-spacer"></div>
             </div>
             <div class="day-name-row">
                 @for (dayNameKey of weekdayNameKeys; track dayNameKey) {
@@ -58,3 +59,24 @@
         }
     </div>
 </div>
+
+<p-popover #filterPopover>
+    <div class="popover-content">
+        <div class="filter-option-label">
+            <p-checkbox [ngModel]="lectureFilterOptionSelected()" (ngModelChange)="toggleFilterOption(CalendarEventFilterOption.LectureEvents)" [binary]="true" />
+            Lectures
+        </div>
+        <div class="filter-option-label">
+            <p-checkbox [ngModel]="exerciseFilterOptionSelected()" (ngModelChange)="toggleFilterOption(CalendarEventFilterOption.ExerciseEvents)" [binary]="true" />
+            Exercises
+        </div>
+        <div class="filter-option-label">
+            <p-checkbox [ngModel]="tutorialFilterOptionSelected()" (ngModelChange)="toggleFilterOption(CalendarEventFilterOption.TutorialEvents)" [binary]="true" />
+            Tutorials
+        </div>
+        <div class="filter-option-label">
+            <p-checkbox [ngModel]="examFilterOptionSelected()" (ngModelChange)="toggleFilterOption(CalendarEventFilterOption.ExamEvents)" [binary]="true" />
+            Exams
+        </div>
+    </div>
+</p-popover>

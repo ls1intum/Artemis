@@ -78,7 +78,7 @@ describe('CalendarDesktopOverviewComponent', () => {
         expect(weekButton).toBeTruthy();
         expect(monthButton).toBeTruthy();
 
-        expect(component.presentation()).toBe('month');
+        expect(component.selectedPresentation()).toBe('month');
         expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-month-presentation'))).toBeTruthy();
         expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-week-presentation'))).toBeFalsy();
 
@@ -102,7 +102,7 @@ describe('CalendarDesktopOverviewComponent', () => {
 
         weekButton.click();
         fixture.detectChanges();
-        expect(component.presentation()).toBe('week');
+        expect(component.selectedPresentation()).toBe('week');
         expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-week-presentation'))).toBeTruthy();
         expect(fixture.debugElement.query(By.css('jhi-calendar-desktop-month-presentation'))).toBeFalsy();
 
@@ -159,7 +159,7 @@ describe('CalendarDesktopOverviewComponent', () => {
 
         component.firstDayOfCurrentMonth.set(october.startOf('month'));
         component.firstDayOfCurrentWeek.set(october.startOf('isoWeek'));
-        component.presentation.set('month');
+        component.selectedPresentation.set('month');
         fixture.detectChanges();
 
         const heading = () => fixture.debugElement.query(By.css('.h3')).nativeElement.textContent.trim();

@@ -1,63 +1,27 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronDown, faFilter, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import * as utils from 'app/core/calendar/shared/util/calendar-util';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { FormsModule } from '@angular/forms';
 
 export enum CalendarEventFilterComponentVariant {
     MOBILE,
     DESKTOP,
 }
 
-type IncludedOptionAndMetadata = { option: CalendarEventFilterOption; nameKey: string; colorClassName: string };
-
-type OptionAndMetadata = { option: CalendarEventFilterOption; nameKey: string; isIncluded: boolean };
-
 @Component({
     selector: 'jhi-calendar-event-filter',
-    imports: [NgbPopover, FaIconComponent, TranslateDirective, NgClass],
+    imports: [NgbPopover, FaIconComponent, TranslateDirective, NgClass, FormsModule, MultiSelectModule],
     templateUrl: './calendar-event-filter.component.html',
     styleUrl: './calendar-event-filter.component.scss',
 })
 export class CalendarEventFilterComponent {
-    private calendarService = inject(CalendarService);
-
     variant = input.required<CalendarEventFilterComponentVariant>();
-    includedOptionsAndMetadata = computed<IncludedOptionAndMetadata[]>(() => {
-        const includedOptions = this.calendarService.includedEventFilterOptions();
-        return includedOptions.map((option) => ({ option: option, nameKey: utils.getFilterOptionNameKey(option), colorClassName: this.getColorClassFor(option) }));
-    });
-    optionsAndMetadata = computed<OptionAndMetadata[]>(() => {
-        const includedOptions = this.calendarService.includedEventFilterOptions();
-        return this.calendarService.eventFilterOptions.map((option) => ({
-            option: option,
-            nameKey: utils.getFilterOptionNameKey(option),
-            isIncluded: includedOptions.includes(option),
-        }));
-    });
 
-    readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
     readonly faChevronDown = faChevronDown;
-    readonly faXmark = faXmark;
+
     readonly faFilter = faFilter;
-
-    toggleOption(option: CalendarEventFilterOption) {
-        this.calendarService.toggleEventFilterOption(option);
-    }
-
-    private getColorClassFor(option: CalendarEventFilterOption): string {
-        if (option === 'examEvents') {
-            return 'exam-chip';
-        } else if (option === 'lectureEvents') {
-            return 'lecture-chip';
-        } else if (option === 'tutorialEvents') {
-            return 'tutorial-chip';
-        } else {
-            return 'exercise-chip';
-        }
-    }
 }
