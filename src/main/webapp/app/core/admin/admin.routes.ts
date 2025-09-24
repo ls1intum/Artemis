@@ -66,7 +66,7 @@ const routes: Routes = [
     },
     {
         path: 'build-queue',
-        loadComponent: () => import('app/buildagent/build-queue/build-queue.component').then((m) => m.BuildQueueComponent),
+        loadComponent: () => import('app/buildagent/build-queue/build-overview.component').then((m) => m.BuildOverviewComponent),
         data: {
             pageTitle: 'artemisApp.buildQueue.title',
         },

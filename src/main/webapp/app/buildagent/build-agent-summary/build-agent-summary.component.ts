@@ -3,7 +3,7 @@ import { BuildAgentInformation, BuildAgentStatus } from 'app/buildagent/shared/e
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subscription } from 'rxjs';
 import { faPause, faPlay, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
+import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
 import { Router, RouterModule } from '@angular/router';
 import { BuildAgent } from 'app/buildagent/shared/entities/build-agent.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -25,7 +25,7 @@ import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     private readonly websocketService = inject(WebsocketService);
     private readonly buildAgentsService = inject(BuildAgentsService);
-    private readonly buildQueueService = inject(BuildQueueService);
+    private readonly buildQueueService = inject(BuildOverviewService);
     private readonly router = inject(Router);
     private readonly modalService = inject(NgbModal);
     private readonly alertService = inject(AlertService);
