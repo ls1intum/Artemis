@@ -2,12 +2,16 @@ package de.tum.cit.aet.artemis.core.util;
 
 import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Utility class for time-related operations.
+ * It provides methods to calculate relative time, convert between ZonedDateTime and Instant, and get the current time.
+ * It also allows setting a custom Clock for testing purposes.
+ */
 public class TimeUtil {
 
     private static volatile Clock clock = Clock.systemDefaultZone();
@@ -68,12 +72,15 @@ public class TimeUtil {
         return zonedDateTime.toInstant();
     }
 
+    /**
+     * Calculates the current ZonedDateTime based on the current clock.
+     * In production, this is the system default clock.
+     * In tests, the clock can be set to a fixed time for consistent results.
+     *
+     * @return the current ZonedDateTime
+     */
     public static ZonedDateTime now() {
         return ZonedDateTime.now(clock);
-    }
-
-    public static ZonedDateTime now(ZoneId zone) {
-        return ZonedDateTime.now(clock.withZone(zone));
     }
 
     public static void setClock(Clock newClock) {

@@ -206,7 +206,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         // Set the static file upload path for all tests
         // This makes it a simple unit test that doesn't require a server start.
         FilePathConverter.setFileUploadPath(rootPath);
-        Clock fixedClock = Clock.fixed(Instant.parse("2025-09-09T10:25:00Z"), ZoneOffset.UTC);
+        Clock fixedClock = Clock.fixed(Instant.parse("2025-09-10T10:25:00Z"), ZoneOffset.UTC);
         TimeUtil.setClock(fixedClock);
     }
 
