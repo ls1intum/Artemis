@@ -6,6 +6,9 @@
             </div>
         </button>
         <button data-testid="today-button" pButton size="small" severity="secondary" (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
+        <button pButton size="small" severity="secondary" (click)="filterPopover.toggle($event)">
+            <fa-icon [icon]="faFilter" />
+        </button>
         @let courseId = currentCourseId();
         @let subscriptionToken = calendarSubscriptionToken();
         @if (courseId && subscriptionToken) {
@@ -21,7 +24,6 @@
                 <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="courseId" [isMobile]="true" #subscriptionPopover />
             </div>
         }
-        <button pButton size="small" severity="secondary" (click)="filterPopover.toggle($event)" jhiTranslate="artemisApp.calendar.filterButtonLabel"></button>
         <button pButton size="small" (click)="goToNext()">
             <div class="chevron">
                 <fa-icon [icon]="faChevronRight" />
