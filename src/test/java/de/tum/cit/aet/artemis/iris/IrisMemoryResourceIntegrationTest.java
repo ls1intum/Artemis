@@ -82,7 +82,7 @@ class IrisMemoryResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var pyrisMemory = new PyrisMemoryDTO(memoryId, "T", "C", true, false);
         var learning = new PyrisLearningDTO("L1", "LTitle", "LContent", "Ref", List.of(memoryId));
         var connected = new PyrisMemoryDTO("M-2", "Other", "OtherContent", false, false);
-        var connection = new PyrisMemoryConnectionDTO("CN1", "related", List.of(connected), "desc", java.util.Map.of(), 0.8);
+        var connection = new PyrisMemoryConnectionDTO("CN1", "related", List.of(connected), "desc", 0.8);
         var body = new PyrisMemoryWithRelationsDTO(pyrisMemory, List.of(learning), List.of(connection));
         irisRequestMockProvider.mockGetMemoryWithRelations(user.getId(), memoryId, body);
 
