@@ -17,7 +17,7 @@ public record ExampleSubmissionDTO(long id, boolean usedForTutorial, long submis
      * @param exampleSubmission the ExampleSubmission to convert
      */
     public static ExampleSubmissionDTO of(ExampleSubmission exampleSubmission) {
-        var submission = Objects.requireNonNull(exampleSubmission.getSubmission(), "ExampleSubmission must reference an underlying Submission");
-        return new ExampleSubmissionDTO(exampleSubmission.getId(), exampleSubmission.isUsedForTutorial(), submission.getId(), exampleSubmission.getAssessmentExplanation());
+        var submissionId = Objects.requireNonNull(exampleSubmission.getSubmission().getId(), "ExampleSubmission submission must already be persisted");
+        return new ExampleSubmissionDTO(exampleSubmission.getId(), exampleSubmission.isUsedForTutorial(), submissionId, exampleSubmission.getAssessmentExplanation());
     }
 }
