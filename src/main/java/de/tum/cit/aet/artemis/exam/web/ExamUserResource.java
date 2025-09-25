@@ -189,8 +189,6 @@ public class ExamUserResource {
         examUser.setDidCheckName(true);
         examUser.setDidCheckRegistrationNumber(true);
         examUser.setSigningImagePath("some path");
-        examUser.setActualSeat(examUser.getPlannedSeat());
-        examUser.setActualRoom(examUser.getPlannedRoom());
         examUserRepository.save(examUser);
 
         return ResponseEntity.noContent().build();
