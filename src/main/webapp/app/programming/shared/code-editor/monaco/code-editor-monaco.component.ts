@@ -143,7 +143,8 @@ export class CodeEditorMonacoComponent implements OnChanges {
         const editorWasReset = changes.commitState && changes.commitState.previousValue !== CommitState.UNDEFINED && this.commitState() === CommitState.UNDEFINED;
         // Refreshing the editor resets any local files.
         if (editorWasRefreshed || editorWasReset) {
-            this.fileSession.set({});
+            const updated = Object.fromEntries(Object.entries(this.fileSession()).map(([name, s]) => [name, { ...s, loadingError: false }]));
+            this.fileSession.set(updated);
             this.editor().reset();
         }
         if ((changes.selectedFile && this.selectedFile()) || editorWasRefreshed) {
@@ -168,6 +169,20 @@ export class CodeEditorMonacoComponent implements OnChanges {
         }
 
         this.editor().layout();
+    }
+
+    private programmaticChangeDepth = 0;
+
+    private beginProgrammaticChange() {
+        this.programmaticChangeDepth++;
+    }
+    private endProgrammaticChange() {
+        if (this.programmaticChangeDepth > 0) {
+            this.programmaticChangeDepth--;
+        }
+    }
+    private get isProgrammaticChange() {
+        return this.programmaticChangeDepth > 0;
     }
 
     async selectFileInEditor(fileName: string | undefined): Promise<void> {
@@ -208,22 +223,42 @@ export class CodeEditorMonacoComponent implements OnChanges {
     }
 
     switchToSelectedFile(selectedFileName: string, code: string): void {
-        this.editor().changeModel(selectedFileName, code);
-        this.editor().setPosition(this.fileSession()[selectedFileName].cursor);
-        this.editor().setScrollTop(this.fileSession()[this.selectedFile()!].scrollTop ?? 0);
+        this.beginProgrammaticChange();
+        try {
+            this.editor().changeModel(selectedFileName, code);
+            this.editor().setPosition(this.fileSession()[selectedFileName].cursor);
+            this.editor().setScrollTop(this.fileSession()[this.selectedFile()!].scrollTop ?? 0);
+        } finally {
+            this.endProgrammaticChange();
+        }
     }
 
     onFileTextChanged(text: string): void {
-        if (this.selectedFile() && this.fileSession()[this.selectedFile()!]) {
-            const previousText = this.fileSession()[this.selectedFile()!].code;
-            const previousScrollTop = this.fileSession()[this.selectedFile()!].scrollTop;
-            if (previousText !== text) {
-                this.fileSession.set({
-                    ...this.fileSession(),
-                    [this.selectedFile()!]: { code: text, loadingError: false, scrollTop: previousScrollTop, cursor: this.editor().getPosition() },
-                });
-                this.onFileContentChange.emit({ file: this.selectedFile()!, fileContent: text });
-            }
+        // Ignore changes that happen while we are switching models/scroll/position
+        if (this.isProgrammaticChange) {
+            return;
+        }
+
+        // Prefer the active model's filename from Monaco; fall back to selectedFile()
+        const activeFileName = (this.editor().getModelFileName?.() as string | undefined) ?? this.selectedFile();
+        if (!activeFileName || !this.fileSession()[activeFileName]) {
+            return;
+        }
+
+        const previousText = this.fileSession()[activeFileName].code;
+        const previousScrollTop = this.fileSession()[activeFileName].scrollTop;
+
+        if (previousText !== text) {
+            this.fileSession.set({
+                ...this.fileSession(),
+                [activeFileName]: {
+                    code: text,
+                    loadingError: false,
+                    scrollTop: previousScrollTop,
+                    cursor: this.editor().getPosition(),
+                },
+            });
+            this.onFileContentChange.emit({ file: activeFileName, fileContent: text });
         }
     }
 

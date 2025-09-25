@@ -267,8 +267,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param languageId The language ID to use for syntax highlighting (will be inferred from the file extension if left out).
      */
     changeModel(fileName: string, newFileContent?: string, languageId?: string) {
-        const uri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${fileName}`);
-        const model = monaco.editor.getModel(uri) ?? monaco.editor.createModel(newFileContent ?? '', undefined, uri);
+        // Use a real filename-looking URI so Monaco can infer language
+        const uri = monaco.Uri.file(`/${fileName}`);
+
+        // Reuse the model for this URI or create a new one; passing `undefined` allows inference
+        const model = monaco.editor.getModel(uri) ?? monaco.editor.createModel(newFileContent ?? '', /* language */ undefined, uri);
 
         if (!this.models.includes(model)) {
             this.models.push(model);
@@ -277,12 +280,21 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             model.setValue(newFileContent);
         }
 
-        // Some elements remain when the model is changed - dispose of them.
         this.disposeEditorElements();
 
-        monaco.editor.setModelLanguage(model, languageId !== undefined ? languageId : model.getLanguageId());
+        if (languageId) {
+            monaco.editor.setModelLanguage(model, languageId);
+        }
+
         model.setEOL(monaco.editor.EndOfLineSequence.LF);
         this._editor.setModel(model);
+    }
+
+    public getModelFileName(): string | undefined {
+        const uri = this._editor.getModel()?.uri;
+        if (!uri) return undefined;
+        const parts = uri.path.split('/');
+        return parts[parts.length - 1] || undefined;
     }
 
     /**
