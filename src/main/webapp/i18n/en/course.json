@@ -49,31 +49,31 @@
             "courseIcon": "Course Icon",
             "shortName": "Short Name",
             "maxComplaints": {
-                "title": "Maximum number of complaints per student",
+                "title": "Max. Number of Complaints per Student",
                 "description": "Set the maximum number of complaints allowed per student. Accepted complaints do not count toward this quota. This limit applies only to individual exercises."
             },
             "maxTeamComplaints": {
-                "title": "Maximum number of complaints per team",
+                "title": "Max. Number of Complaints per Team",
                 "description": "Set the maximum number of complaints allowed per team. Accepted complaints do not count toward this quota. This limit applies only to team exercises."
             },
             "maxComplaintTimeDays": {
-                "title": "Complaint due date in days after result date",
+                "title": "Complaint Due Date in Days After Result Date",
                 "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to submit any more complaints after this due date."
             },
             "maxComplaintTextLimit": {
-                "title": "Maximum number of characters per complaint",
+                "title": "Max. Number of Characters per Complaint",
                 "description": "This value indicates the maximum number of characters a student may use per complaint."
             },
             "maxComplaintResponseTextLimit": {
-                "title": "Maximum number of characters per complaint response",
+                "title": "Max. Number of Characters per Response",
                 "description": "This value indicates the maximum number of characters that may be used for the response per complaint."
             },
             "complaintsEnabled": {
-                "title": "Enable complaints",
+                "title": "Enable Complaints",
                 "description": "Enabling this allows students to complain about assessments."
             },
             "requestMoreFeedbackEnabled": {
-                "title": "Enable more feedback requests",
+                "title": "Enable More Feedback Requests",
                 "description": "This option allows students to request more feedback without complaining. Asking for further feedback will not count towards the number of complaints, but it will also not allow modification of the assessment. By default, this option is enabled, but it can be disabled if assessment corrections must always be possible."
             },
             "maxRequestMoreFeedbackTimeDays": {
@@ -81,7 +81,7 @@
                 "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to request more feedback after this due date."
             },
             "customizeGroupNames": {
-                "title": "Customize group names",
+                "title": "Customize Group Names",
                 "description": "Customizing the group names should not be necessary and may cause users to lose access to this course. Make sure you have a good reason for customizing the group names."
             },
             "studentGroupName": "Students",
@@ -96,10 +96,13 @@
             "ltiConfiguration": "LTI Configuration",
             "recentlyAccessed": "Recently accessed",
             "maxPoints": {
-                "title": "Maximum number of points for course",
+                "title": "Max. Points for Course",
                 "info": "This value is used for example calculations (e.g. in the grading key) and does not influence the students' grades. The grades are calculated based on the points achievable in the course."
             },
-            "accuracyOfScores": "Number of decimal places used for calculating the scores",
+            "accuracyOfScores": {
+                "title": "Decimal Places for Score Calculations",
+                "info": "The number of decimal places used for calculating the scores in this course, determining the accuracy of the scores."
+            },
             "defaultProgrammingLanguage": "Default Programming Language",
             "gradingSystem": "Grading Key",
             "testCourse": {
@@ -150,7 +153,7 @@
                 "title": "Student Course Unenrollment Enabled",
                 "description": "Activate this checkbox to allow students to unenroll independently in the course. You can specify the latest date for unenrollment, otherwise the students can do so until the end of the course."
             },
-            "unenrollmentEndDate": "Latest date to unenroll",
+            "unenrollmentEndDate": "Latest Date to Unenroll",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",
@@ -196,6 +199,15 @@
             "editor": "Editor",
             "instructor": "Instructor",
             "form": {
+                "sections": {
+                    "general": "General Information",
+                    "exercises": "Exercises & Grading",
+                    "additionalFeatures": {
+                        "title": "Additional Course Features",
+                        "info": "Learn more about the additional course features with the info buttons next to each feature."
+                    },
+                    "enrollment": "Student Course Enrollment"
+                },
                 "shortname": {
                     "minlength": "Short Name must contain at least 3 characters.",
                     "forbidden": "Short Name must start with a letter and cannot contain special characters."
@@ -264,8 +276,6 @@
             },
             "activeStudents": "Active students: {{ students }}",
             "notStartedYet": "The course has not officially started yet. Official course start:",
-            "noOrganizations": "No Organizations",
-            "organizationAddingHint": "Administrators can add organizations to courses.",
             "imageCropper": {
                 "title": "Crop your image",
                 "uploadTitle": "Add an icon"

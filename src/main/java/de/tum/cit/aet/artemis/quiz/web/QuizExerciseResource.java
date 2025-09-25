@@ -29,6 +29,7 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -43,7 +44,6 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -75,7 +75,6 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
@@ -83,6 +82,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
@@ -105,9 +105,6 @@ public class QuizExerciseResource {
     private static final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
 
     private static final String ENTITY_NAME = "quizExercise";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final QuizSubmissionService quizSubmissionService;
 
@@ -139,8 +136,6 @@ public class QuizExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final GroupNotificationScheduleService groupNotificationScheduleService;
-
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final QuizBatchService quizBatchService;
@@ -153,15 +148,16 @@ public class QuizExerciseResource {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final Optional<SlideApi> slideApi;
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             Optional<ExamDateApi> examDateApi, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
-            GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService,
-            QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi) {
+            StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService, QuizBatchRepository quizBatchRepository,
+            ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService, QuizResultService quizResultService,
+            Optional<CompetencyProgressApi> competencyProgressApi) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -175,7 +171,6 @@ public class QuizExerciseResource {
         this.quizExerciseImportService = quizExerciseImportService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
-        this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.quizBatchService = quizBatchService;
         this.quizBatchRepository = quizBatchRepository;
@@ -184,7 +179,6 @@ public class QuizExerciseResource {
         this.quizSubmissionService = quizSubmissionService;
         this.quizResultService = quizResultService;
         this.competencyProgressApi = competencyProgressApi;
-        this.slideApi = slideApi;
     }
 
     /**
@@ -253,71 +247,29 @@ public class QuizExerciseResource {
     }
 
     /**
-     * PUT /quiz-exercises/:exerciseId : Updates an existing quizExercise.
+     * PATCH /quiz-exercises/:exerciseId : Update an existing quizExercise with a DTO.
      *
-     * @param exerciseId       the id of the quizExercise to save
-     * @param quizExercise     the quizExercise to update
-     * @param files            the new files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
-     * @param notificationText about the quiz exercise update that should be displayed to the student group
+     * @param exerciseId                the id of the quizExercise to save
+     * @param quizExerciseFromEditorDTO the quizExercise to update
+     * @param files                     the new files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in
+     *                                      {@code quizExercise}
+     * @param notificationText          about the quiz exercise update that should be displayed to the student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with status 500
      *         (Internal Server Error) if the quizExercise couldn't be updated
      */
-    @PutMapping(value = "quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PatchMapping(value = "quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<QuizExercise> updateQuizExercise(@PathVariable Long exerciseId, @RequestPart("exercise") QuizExercise quizExercise,
+    public ResponseEntity<QuizExercise> updateQuizExercise(@PathVariable Long exerciseId, @RequestPart("exercise") QuizExerciseFromEditorDTO quizExerciseFromEditorDTO,
             @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText)
             throws IOException {
-        log.info("REST request to update quiz exercise : {}", quizExercise);
-        quizExercise.setId(exerciseId);
+        log.info("REST request to patch quiz exercise : {}", exerciseId);
+        QuizExercise quizBase = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(exerciseId);
 
-        // check if quiz is valid
-        if (!quizExercise.isValid()) {
-            // TODO: improve error message and tell the client why the quiz is invalid (also see above in create Quiz)
-            throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
-        }
+        QuizExercise originalQuiz = quizExerciseService.copyFieldsForUpdate(quizBase);
 
-        quizExercise.validateGeneralSettings();
-
-        // Valid exercises have set either a course or an exerciseGroup
-        quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-
-        final var originalQuiz = quizExerciseRepository.findByIdWithQuestionsAndCompetenciesElseThrow(exerciseId);
-
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // Forbid conversion between normal course exercise and exam exercise
-        exerciseService.checkForConversionBetweenExamAndCourseExercise(quizExercise, originalQuiz, ENTITY_NAME);
-
-        // check if quiz is has already started
-        var batches = quizBatchRepository.findAllByQuizExercise(originalQuiz);
-        if (batches.stream().anyMatch(QuizBatch::isStarted)) {
-            throw new BadRequestAlertException("The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.", ENTITY_NAME, "quizHasStarted");
-        }
-
-        quizExercise.reconnectJSONIgnoreAttributes();
-
-        // don't allow changing batches except in synchronized mode as the client doesn't have the full list and saving the exercise could otherwise end up deleting a bunch
-        if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED || quizExercise.getQuizBatches() == null || quizExercise.getQuizBatches().size() > 1) {
-            quizExercise.setQuizBatches(batches);
-        }
-
-        quizExerciseService.handleDndQuizFileUpdates(quizExercise, originalQuiz, files);
-
-        Channel updatedChannel = channelService.updateExerciseChannel(originalQuiz, quizExercise);
-
-        exerciseService.reconnectCompetencyExerciseLinks(quizExercise);
-
-        quizExercise = quizExerciseService.save(quizExercise);
-        exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalQuiz, quizExercise, notificationText);
-        if (updatedChannel != null) {
-            quizExercise.setChannelName(updatedChannel.getName());
-        }
-        QuizExercise finalQuizExercise = quizExercise;
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalQuiz, Optional.of(finalQuizExercise)));
-        slideApi.ifPresent(api -> api.handleDueDateChange(originalQuiz, finalQuizExercise));
-
-        return ResponseEntity.ok(quizExercise);
+        quizExerciseService.mergeDTOIntoDomainObject(quizBase, quizExerciseFromEditorDTO);
+        QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files, notificationText);
+        return ResponseEntity.ok(result);
     }
 
     /**
