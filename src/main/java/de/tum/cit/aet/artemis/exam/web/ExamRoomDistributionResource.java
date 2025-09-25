@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -75,5 +76,16 @@ public class ExamRoomDistributionResource {
         examRoomDistributionService.distributeRegisteredStudents(examId, examRoomIds);
 
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("courses/{courseId}/exams/{examId}/rooms-for-exam")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Set<ExamRoom>> getAllExamRoomsForExam(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get all exam rooms for exam : {}", examId);
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+
+        Set<ExamRoom> response = examRoomDistributionService.getAllExamRoomsForExam(examId);
+
+        return ResponseEntity.ok(response);
     }
 }

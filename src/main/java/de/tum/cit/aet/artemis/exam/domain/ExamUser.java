@@ -5,12 +5,15 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 
 @Entity
 @Table(name = "exam_user")
@@ -28,6 +31,12 @@ public class ExamUser extends AbstractAuditingEntity {
 
     @Column(name = "planned_seat")
     private String plannedSeat;
+
+    @Transient
+    private ExamRoom plannedRoomTransient;
+
+    @Transient
+    private ExamSeatDTO plannedSeatTransient;
 
     @Column(name = "did_check_image")
     private boolean didCheckImage = false;
@@ -87,6 +96,19 @@ public class ExamUser extends AbstractAuditingEntity {
 
     public void setPlannedSeat(String plannedSeat) {
         this.plannedSeat = plannedSeat;
+    }
+
+    public ExamRoom getPlannedRoomTransient() {
+        return plannedRoomTransient;
+    }
+
+    public ExamSeatDTO getPlannedSeatTransient() {
+        return plannedSeatTransient;
+    }
+
+    public void setTransientPlannedRoomAndSeat(ExamRoom plannedRoom, ExamSeatDTO plannedSeat) {
+        this.plannedRoomTransient = plannedRoom;
+        this.plannedSeatTransient = plannedSeat;
     }
 
     public boolean getDidCheckRegistrationNumber() {

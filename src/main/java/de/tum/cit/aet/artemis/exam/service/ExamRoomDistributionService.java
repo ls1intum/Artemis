@@ -118,4 +118,8 @@ public class ExamRoomDistributionService {
             }
         }
     }
+
+    public Set<ExamRoom> getAllExamRoomsForExam(long examId) {
+        return examRoomRepository.findAllByExamId(examId);
+    }
 }
