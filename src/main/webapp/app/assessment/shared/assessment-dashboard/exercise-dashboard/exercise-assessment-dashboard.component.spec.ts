@@ -455,10 +455,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
     it('should call readInstruction', () => {
         const tutorParticipationServiceCreateStub = jest.spyOn(tutorParticipationService, 'create');
-        const tutorParticipation = { id: 1, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS };
+        const tutorParticipationDto = { id: 1, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS };
         tutorParticipationServiceCreateStub.mockImplementation(() => {
             expect(comp.isLoading).toBeTrue();
-            return of(new HttpResponse({ body: tutorParticipation, headers: new HttpHeaders() }));
+            return of(new HttpResponse({ body: tutorParticipationDto, headers: new HttpHeaders() }));
         });
 
         expect(comp.tutorParticipation).toBeUndefined();
@@ -466,10 +466,39 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.readInstruction();
 
+        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledOnce();
+        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledWith(comp.exerciseId);
+
         expect(comp.isLoading).toBeFalse();
 
-        expect(comp.tutorParticipation).toEqual(tutorParticipation);
+        expect(comp.tutorParticipation).toEqual(tutorParticipationDto);
         expect(comp.tutorParticipationStatus).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+    });
+
+    it('should show error if readInstruction fails', () => {
+        const httpError = new HttpErrorResponse({
+            status: 400,
+            statusText: 'Bad Request',
+            error: { detail: 'Mock error' },
+        });
+
+        const tutorParticipationServiceCreateStub = jest.spyOn(tutorParticipationService, 'create').mockReturnValue(throwError(() => httpError));
+
+        const alertErrorSpy = jest.spyOn(TestBed.inject(AlertService), 'error');
+
+        expect(comp.isLoading).toBeFalse();
+
+        comp.readInstruction();
+
+        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledOnce();
+        expect(tutorParticipationServiceCreateStub).toHaveBeenCalledWith(comp.exerciseId);
+
+        expect(comp.isLoading).toBeFalse();
+
+        expect(alertErrorSpy).toHaveBeenCalledWith('Mock error');
+
+        expect(comp.tutorParticipation).toBeUndefined();
+        expect(comp.tutorParticipationStatus).toBeUndefined();
     });
 
     describe('test calls for all exercise types', () => {
