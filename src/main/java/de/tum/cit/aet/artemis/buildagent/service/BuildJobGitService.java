@@ -35,7 +35,6 @@ import org.eclipse.jgit.transport.SshTransport;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.transport.sshd.JGitKeyCache;
-import org.eclipse.jgit.transport.sshd.KeyPasswordProvider;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.slf4j.Logger;
@@ -68,9 +67,6 @@ public class BuildJobGitService extends AbstractGitService {
 
     @Value("${artemis.version-control.ssh-private-key-folder-path:#{null}}")
     private Optional<String> gitSshPrivateKeyPath;
-
-    @Value("${artemis.version-control.ssh-private-key-password:#{null}}")
-    private Optional<String> gitSshPrivateKeyPassphrase;
 
     @Value("${artemis.version-control.ssh-template-clone-url:#{null}}")
     private Optional<String> sshUrlTemplate;
@@ -108,7 +104,6 @@ public class BuildJobGitService extends AbstractGitService {
 
     protected boolean useSsh() {
         return useSshForBuildAgent;
-        // password is optional and will only be applied if the ssh private key was encrypted using a password
     }
 
     /**
@@ -116,7 +111,7 @@ public class BuildJobGitService extends AbstractGitService {
      */
     protected void configureSsh() {
         CredentialsProvider.setDefault(new CustomCredentialsProvider());
-        final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase, localVCBaseUri);
+        final var sshSessionFactoryBuilder = getSshdSessionFactoryBuilder(gitSshPrivateKeyPath, localVCBaseUri);
         jgitKeyCache = new JGitKeyCache();
         sshdSessionFactory = sshSessionFactoryBuilder.build(jgitKeyCache);
         sshCallback = transport -> {
@@ -130,10 +125,9 @@ public class BuildJobGitService extends AbstractGitService {
         };
     }
 
-    protected static SshdSessionFactoryBuilder getSshdSessionFactoryBuilder(Optional<String> gitSshPrivateKeyPath, Optional<String> gitSshPrivateKeyPassphrase, URI gitUri) {
+    protected static SshdSessionFactoryBuilder getSshdSessionFactoryBuilder(Optional<String> gitSshPrivateKeyPath, URI gitUri) {
         // @formatter:off
         return new SshdSessionFactoryBuilder()
-            .setKeyPasswordProvider(keyPasswordProvider -> new CustomKeyPasswordProvider(gitSshPrivateKeyPath, gitSshPrivateKeyPassphrase))
             .setConfigStoreFactory((homeDir, configFile, localUserName) -> new CustomSshConfigStore(gitUri))
             .setSshDirectory(Path.of(gitSshPrivateKeyPath.orElseThrow()).toFile())
             .setHomeDirectory(Path.of(System.getProperty("user.home")).toFile());
@@ -169,38 +163,6 @@ public class BuildJobGitService extends AbstractGitService {
                 }
             }
             return true;
-        }
-    }
-
-    static class CustomKeyPasswordProvider implements KeyPasswordProvider {
-
-        Optional<String> gitSshPrivateKeyPath;
-
-        Optional<String> gitSshPrivateKeyPassphrase;
-
-        public CustomKeyPasswordProvider(Optional<String> gitSshPrivateKeyPath, Optional<String> gitSshPrivateKeyPassphrase) {
-            this.gitSshPrivateKeyPath = gitSshPrivateKeyPath;
-            this.gitSshPrivateKeyPassphrase = gitSshPrivateKeyPassphrase;
-        }
-
-        @Override
-        public char[] getPassphrase(URIish uri, int attempt) {
-            // Example: /Users/artemis/.ssh/artemis/id_rsa contains /Users/artemis/.ssh/artemis
-            if (gitSshPrivateKeyPath.isPresent() && gitSshPrivateKeyPassphrase.isPresent() && uri.getPath().contains(gitSshPrivateKeyPath.get())) {
-                return gitSshPrivateKeyPassphrase.get().toCharArray();
-            }
-            else {
-                return null;
-            }
-        }
-
-        @Override
-        public void setAttempts(int maxNumberOfAttempts) {
-        }
-
-        @Override
-        public boolean keyLoaded(URIish uri, int attempt, Exception error) {
-            return false;
         }
     }
 
