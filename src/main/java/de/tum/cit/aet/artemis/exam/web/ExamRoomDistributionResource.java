@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppInformationDTO;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomDistributionService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
@@ -56,7 +57,6 @@ public class ExamRoomDistributionResource {
      * @param courseId    the id of the course
      * @param examId      the id of the exam
      * @param examRoomIds the ids of all the exam rooms we want to distribute the students to
-     *
      * @return 200 (OK) if the distribution was successful
      */
     @PostMapping("courses/{courseId}/exams/{examId}/distribute-registered-students")
@@ -78,14 +78,22 @@ public class ExamRoomDistributionResource {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("courses/{courseId}/exams/{examId}/rooms-for-exam")
+    /**
+     * GET /courses/{courseId}/exams/{examId}/attendance-checker-information : Gets information necessary for operating
+     * the attendance checker app
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return 200 (OK) if the retrieval was successful
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/attendance-checker-information")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Set<ExamRoom>> getAllExamRoomsForExam(@PathVariable long courseId, @PathVariable long examId) {
-        log.debug("REST request to get all exam rooms for exam : {}", examId);
+    public ResponseEntity<AttendanceCheckerAppInformationDTO> getAttendanceCheckerAppInformation(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get attendance checker information for exam : {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        Set<ExamRoom> response = examRoomDistributionService.getAllExamRoomsForExam(examId);
+        var information = examRoomDistributionService.getAttendanceCheckerAppInformation(examId);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(information);
     }
 }

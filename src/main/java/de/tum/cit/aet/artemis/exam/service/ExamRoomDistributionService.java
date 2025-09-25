@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
+import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomExamAssignmentRepository;
@@ -45,13 +46,16 @@ public class ExamRoomDistributionService {
 
     private final ExamUserRepository examUserRepository;
 
+    private final ExamUserService examUserService;
+
     public ExamRoomDistributionService(ExamRepository examRepository, ExamRoomRepository examRoomRepository, ExamRoomService examRoomService,
-            ExamRoomExamAssignmentRepository examRoomExamAssignmentRepository, ExamUserRepository examUserRepository) {
+            ExamRoomExamAssignmentRepository examRoomExamAssignmentRepository, ExamUserRepository examUserRepository, ExamUserService examUserService) {
         this.examRepository = examRepository;
         this.examRoomRepository = examRoomRepository;
         this.examRoomService = examRoomService;
         this.examRoomExamAssignmentRepository = examRoomExamAssignmentRepository;
         this.examUserRepository = examUserRepository;
+        this.examUserService = examUserService;
     }
 
     /**
@@ -121,5 +125,14 @@ public class ExamRoomDistributionService {
 
     public Set<ExamRoom> getAllExamRoomsForExam(long examId) {
         return examRoomRepository.findAllByExamId(examId);
+    }
+
+    public AttendanceCheckerAppInformationDTO getAttendanceCheckerAppInformation(long examId) {
+        Exam exam = examRepository.findById(examId).orElseThrow();
+        Set<ExamUser> examUsers = exam.getExamUsers();
+        examUserService.setPlannedRoomAndSeatTransientForExamUsers(examUsers);
+        Set<ExamRoom> examRooms = examRoomRepository.findAllByExamId(examId);
+
+        return AttendanceCheckerAppInformationDTO.from(examRooms, examUsers);
     }
 }
