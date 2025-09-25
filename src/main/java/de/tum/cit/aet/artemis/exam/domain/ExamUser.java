@@ -8,6 +8,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
@@ -32,9 +33,11 @@ public class ExamUser extends AbstractAuditingEntity {
     @Column(name = "planned_seat")
     private String plannedSeat;
 
+    @JsonIgnore
     @Transient
     private ExamRoom plannedRoomTransient;
 
+    @JsonIgnore
     @Transient
     private ExamSeatDTO plannedSeatTransient;
 

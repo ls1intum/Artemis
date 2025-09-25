@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
@@ -192,7 +193,7 @@ public class ExamUserService {
      *                                                                            or if the planned room or seat cannot be mapped to actual entities.
      */
     public void setPlannedRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers, boolean ignoreExamUsersWithoutPlannedRoomAndSeat) {
-        var usedExams = examUsers.stream().map(ExamUser::getExam).distinct().toList();
+        List<Exam> usedExams = examUsers.stream().map(ExamUser::getExam).distinct().toList();
         if (usedExams.size() != 1) {
             throw new BadRequestAlertException("All exam users must belong to the same exam", ENTITY_NAME, "examUserService.multipleExams", Map.of("foundExams", usedExams.size()));
         }
@@ -200,10 +201,10 @@ public class ExamUserService {
         Set<ExamRoom> examRoomsUsedInExam = examRoomRepository.findAllByExamId(examId);
 
         for (ExamUser examUser : examUsers) {
-            final String plannedRoomName = examUser.getPlannedRoom();
+            final String plannedRoomNumber = examUser.getPlannedRoom();
             final String plannedSeatName = examUser.getPlannedSeat();
 
-            if (!StringUtils.hasText(plannedRoomName) || !StringUtils.hasText(plannedSeatName)) {
+            if (!StringUtils.hasText(plannedRoomNumber) || !StringUtils.hasText(plannedSeatName)) {
                 if (ignoreExamUsersWithoutPlannedRoomAndSeat) {
                     continue;
                 }
@@ -213,11 +214,10 @@ public class ExamUserService {
                 }
             }
 
-            Optional<ExamRoom> matchingRoom = examRoomsUsedInExam.stream()
-                    .filter(room -> room.getName().equalsIgnoreCase(plannedRoomName) || room.getAlternativeName().equalsIgnoreCase(plannedRoomName)).findFirst();
+            Optional<ExamRoom> matchingRoom = examRoomsUsedInExam.stream().filter(room -> room.getRoomNumber().equalsIgnoreCase(plannedRoomNumber)).findFirst();
             if (matchingRoom.isEmpty()) {
                 throw new BadRequestAlertException("Planned room of exam user cannot be mapped to an actual room", ENTITY_NAME, "examUser.service.plannedRoomNotFound",
-                        Map.of("userName", examUser.getUser().getLogin(), "plannedRoom", plannedRoomName));
+                        Map.of("userName", examUser.getUser().getLogin(), "plannedRoom", plannedRoomNumber));
             }
 
             Optional<ExamSeatDTO> matchingSeat = matchingRoom.get().getSeats().stream().filter(seat -> seat.name().equalsIgnoreCase(plannedSeatName)).findFirst();

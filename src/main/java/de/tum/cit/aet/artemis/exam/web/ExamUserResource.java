@@ -165,11 +165,11 @@ public class ExamUserResource {
     }
 
     /**
-     * PUT courses/{courseId}/exams/{examId}/attendance : Verifies attendance check status of the current student
+     * PUT courses/{courseId}/exams/{examId}/attendance : Verifies attendance for the specified student
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam
-     * @return 200 (OK) if the verification was successful
+     * @return 204 (No Content) if the verification was successful
      */
     @PutMapping("courses/{courseId}/exams/{examId}/attendance")
     @EnforceAtLeastInstructor
@@ -187,10 +187,11 @@ public class ExamUserResource {
         examUser.setDidCheckLogin(true);
         examUser.setDidCheckName(true);
         examUser.setDidCheckRegistrationNumber(true);
+        examUser.setSigningImagePath("some path");
         examUser.setActualSeat(examUser.getPlannedSeat());
         examUser.setActualRoom(examUser.getPlannedRoom());
         examUserRepository.save(examUser);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }
