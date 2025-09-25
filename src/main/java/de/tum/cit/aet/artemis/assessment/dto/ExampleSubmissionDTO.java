@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
+import java.util.Objects;
+
 import org.springframework.lang.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -15,7 +17,7 @@ public record ExampleSubmissionDTO(long id, boolean usedForTutorial, long submis
      * @param exampleSubmission the ExampleSubmission to convert
      */
     public static ExampleSubmissionDTO of(ExampleSubmission exampleSubmission) {
-        return new ExampleSubmissionDTO(exampleSubmission.getId(), exampleSubmission.isUsedForTutorial(), exampleSubmission.getSubmission().getId(),
-                exampleSubmission.getAssessmentExplanation());
+        var submission = Objects.requireNonNull(exampleSubmission.getSubmission(), "ExampleSubmission must reference an underlying Submission");
+        return new ExampleSubmissionDTO(exampleSubmission.getId(), exampleSubmission.isUsedForTutorial(), submission.getId(), exampleSubmission.getAssessmentExplanation());
     }
 }
