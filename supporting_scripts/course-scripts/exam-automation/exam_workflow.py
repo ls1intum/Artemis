@@ -7,18 +7,22 @@ from typing import Dict, Any, List
 from logging_config import logging
 from create_exam import main as create_exam_main
 from utils import authenticate_user
-import subprocess
 
 # Load configuration
 config = configparser.ConfigParser()
-config.read('../quick-course-setup/config.ini')
+config.read(['../config.ini', 'config.ini'])
 
 # Constants from config
-SERVER_URL: str = config.get('Settings', 'server_url')
-CLIENT_URL: str = config.get('Settings', 'client_url')
-ADMIN_USER: str = config.get('Settings', 'admin_user')
-ADMIN_PASSWORD: str = config.get('Settings', 'admin_password')
-COURSE_ID: int = int(config.get('ExamSettings', 'course_id'))
+try:
+    SERVER_URL: str = config.get('Settings', 'server_url')
+    CLIENT_URL: str = config.get('Settings', 'client_url')
+    ADMIN_USER: str = config.get('Settings', 'admin_user')
+    ADMIN_PASSWORD: str = config.get('Settings', 'admin_password')
+    COURSE_ID: int = int(config.get('ExamSettings', 'course_id'))
+except (configparser.NoSectionError, configparser.NoOptionError, ValueError) as e:
+    logging.error(f"Configuration error: {str(e)}")
+    logging.error("Please check your config.ini file has all required settings.")
+    exit(1)
 
 def get_exam_exercises(session: requests.Session, exam_id: int) -> List[Dict[str, Any]]:
     """Get all exercises in the exam."""
@@ -49,8 +53,7 @@ def get_course_students(session: requests.Session) -> List[Dict[str, Any]]:
     logging.info(f"Found {len(students)} students in course {COURSE_ID}")
     return students
 
-def student_submit_exercise(session: requests.Session, student_username: str, student_password: str, 
-                          exercise_id: int, exam_id: int) -> None:
+def student_submit_exercise(student_username: str, student_password: str, exercise_id: int, exam_id: int) -> None:
     """Have a student submit an exercise and then submit the exam."""
     try:
         # Authenticate as student
@@ -204,22 +207,6 @@ def set_exam_start_time(session: requests.Session, exam_id: int) -> None:
         
     logging.info(f"Exam {exam_id} start time set to {start_time_str}")
 
-def trigger_automatic_assessment(session: requests.Session, exercise_id: int) -> None:
-    """Trigger automatic assessment for the programming exercise to generate grades."""
-    # Try different endpoints for triggering builds
-    endpoints = [
-        f"{SERVER_URL}/programming/programming-exercises/{exercise_id}/trigger-build",
-        f"{SERVER_URL}/programming/programming-exercises/{exercise_id}/build",
-        f"{SERVER_URL}/programming/programming-exercises/{exercise_id}/trigger-automatic-assessment"
-    ]
-    
-    for url in endpoints:
-        response = session.post(url)
-        if response.status_code != 200:
-            logging.debug(f"Failed to trigger automatic assessment with {url}: {response.status_code}")
-            return
-    logging.info(f"Successfully triggered automatic assessment for exercise {exercise_id}")
-
 def publish_scores(session: requests.Session, exam_id: int) -> None:
     """Publish scores for the exam by setting publishResultsDate to current time."""
     current_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
@@ -244,33 +231,6 @@ def publish_scores(session: requests.Session, exam_id: int) -> None:
         return
         
     logging.info(f"Scores published for exam {exam_id} at {current_time}")
-
-def create_participations_and_commits_for_exam_exercise(session: requests.Session, exam_id: int, exercise_id: int) -> None:
-    """Explicitly create participations and trigger a commit for each student for the exam programming exercise."""
-    students = get_course_students(session)
-    for student in students:
-        student_login = student.get('login')
-        if not student_login or not student_login.startswith('student'):
-            continue
-        # Authenticate as student
-        student_session = requests.Session()
-        authenticate_user(student_login, "Password123!", student_session)
-        # Create participation
-        participation_url = f"{CLIENT_URL}/exercise/exercises/{exercise_id}/participations"
-        participation_response = student_session.post(participation_url)
-        if participation_response.status_code != 201:
-            logging.warning(f"Failed to create participation for {student_login} in exercise {exercise_id}. Status: {participation_response.status_code}")
-            continue
-        participation = participation_response.json()
-        participation_id = participation.get('id')
-        logging.info(f"Created participation for {student_login} in exercise {exercise_id}")
-        # Trigger a commit
-        commit_url = f"{CLIENT_URL}/programming/repository/{participation_id}/commit"
-        commit_response = student_session.post(commit_url)
-        if commit_response.status_code not in [200, 201]:
-            logging.warning(f"Failed to trigger commit for {student_login} in participation {participation_id}. Status: {commit_response.status_code}")
-            continue
-        logging.info(f"Triggered commit for {student_login} in participation {participation_id}")
 
 def main() -> None:
     """Main function to run the complete exam workflow."""
@@ -321,7 +281,7 @@ def main() -> None:
         if student_username and student_username.startswith('student'):
             thread = threading.Thread(
                 target=student_submit_exercise,
-                args=(session, student_username, "Password123!", exercise_id, exam_id)
+                args=(student_username, "Password123!", exercise_id, exam_id)
             )
             threads.append(thread)
             thread.start()

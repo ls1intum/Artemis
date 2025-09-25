@@ -2,28 +2,29 @@ import requests
 import configparser
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, List
 from logging_config import logging
 from utils import authenticate_user
 
 # Load configuration
 config = configparser.ConfigParser()
-config.read('../quick-course-setup/config.ini')
+config.read(['../config.ini', 'config.ini'])
+
 
 # Constants from config
-SERVER_URL: str = config.get('Settings', 'server_url')
-ADMIN_USER: str = config.get('Settings', 'admin_user')
-ADMIN_PASSWORD: str = config.get('Settings', 'admin_password')
-
-# Course settings
-COURSE_ID: int = int(config.get('ExamSettings', 'course_id'))
-
-# Exam settings
-EXAM_TITLE: str = config.get('ExamSettings', 'exam_title')
-
-PROGRAMMING_EXERCISE_NAME: str = config.get('ExamSettings', 'programming_exercise_name')
-NUMBER_OF_CORRECTION_ROUNDS: int = int(config.get('ExamSettings', 'number_of_correction_rounds'))
+try:
+    SERVER_URL: str = config.get('Settings', 'server_url')
+    ADMIN_USER: str = config.get('Settings', 'admin_user')
+    ADMIN_PASSWORD: str = config.get('Settings', 'admin_password')
+    COURSE_ID: int = int(config.get('ExamSettings', 'course_id'))
+    EXAM_TITLE: str = config.get('ExamSettings', 'exam_title')
+    PROGRAMMING_EXERCISE_NAME: str = config.get('ExamSettings', 'programming_exercise_name')
+    NUMBER_OF_CORRECTION_ROUNDS: int = int(config.get('ExamSettings', 'number_of_correction_rounds'))
+except (configparser.NoSectionError, configparser.NoOptionError, ValueError) as e:
+    logging.error(f"Configuration error: {str(e)}")
+    logging.error("Please check your config.ini file has all required settings.")
+    exit(1)
 
 def generate_exam_short_name(title: str) -> str:
     """Generate a short name for the exam based on the title."""
@@ -32,9 +33,8 @@ def generate_exam_short_name(title: str) -> str:
     short_name = re.sub(r'\s+', '', short_name)
     return short_name.upper()
 
-def calculate_exam_dates() -> tuple[str, str, str, int]:
+def calculate_exam_dates() -> tuple[str, str, str, int, str, str]:
     """Calculate exam start, end, and visible dates based on current time."""
-    from datetime import datetime, timedelta, timezone
     now = datetime.now(timezone.utc)
     start_date = (now + timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S+00:00")
     end_date = (now + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S+00:00")
@@ -80,6 +80,10 @@ def create_exam(session: requests.Session, course_id: int, title: str, short_nam
         exam_data = response.json()
         logging.info(f"Created exam '{title}' with ID {exam_data.get('id')}")
         return exam_data
+    elif response.status_code == 404:
+        logging.error(f"Course with ID {course_id} does not exist.")
+        logging.error("Please check your course_id in config.ini or create a course first using the quick-course-setup scripts.")
+        raise Exception(f"Course {course_id} not found")
     else:
         raise Exception(f"Failed to create exam. Status code: {response.status_code}\nResponse: {response.text}")
 
@@ -95,7 +99,7 @@ def get_course_students(session: requests.Session, course_id: int) -> List[Dict[
     else:
         raise Exception(f"Failed to get course students. Status code: {response.status_code}\nResponse: {response.text}")
 
-def register_students_for_exam(session: requests.Session, exam_id: int, students: List[Dict[str, Any]]) -> None:
+def register_students_for_exam(session: requests.Session, exam_id: int) -> None:
     """Register students for the exam."""
     url: str = f"{SERVER_URL}/exam/courses/{COURSE_ID}/exams/{exam_id}/register-course-students"
     
@@ -155,19 +159,18 @@ def create_programming_exercise_in_exam(session: requests.Session, exercise_grou
     if response.status_code == 201:
         exercise_data = response.json()
         logging.info(f"Created default programming exercise '{payload['title']}' in exercise group {exercise_group_id}")
-        # return complete_exercise
         # Combine our payload with the response to get complete exercise data
         # This ensures we have all required fields for building the exercise template
         complete_exercise = {**payload, **exercise_data}
-        
+
         # Log key fields for debugging
-        logging.info(f"Exercise ID: {complete_exercise.get("id")}")
-        logging.info(f"Project Key: {complete_exercise.get("projectKey")}")
-        logging.info(f"Template Repository: {complete_exercise.get("templateParticipation", {}).get("repositoryUri")}")
-        logging.info(f"Solution Repository: {complete_exercise.get("solutionParticipation", {}).get("repositoryUri")}")
-        logging.info(f"Test Repository: {complete_exercise.get("testRepositoryUri")}")
-        
-        # return complete_exercise
+        logging.info(f"Exercise ID: {complete_exercise.get('id')}")
+        logging.info(f"Project Key: {complete_exercise.get('projectKey')}")
+        logging.info(f"Template Repository: {complete_exercise.get('templateParticipation', {}).get('repositoryUri')}")
+        logging.info(f"Solution Repository: {complete_exercise.get('solutionParticipation', {}).get('repositoryUri')}")
+        logging.info(f"Test Repository: {complete_exercise.get('testRepositoryUri')}")
+
+        return complete_exercise
     else:
         raise Exception(f"Failed to create programming exercise. Status code: {response.status_code}\nResponse: {response.text}")
 
@@ -194,7 +197,7 @@ def main() -> int:
         students = get_course_students(session, COURSE_ID)
         
         # Step 4: Register students for the exam
-        register_students_for_exam(session, exam_id, students)
+        register_students_for_exam(session, exam_id)
         
         # Step 5: Create exercise group and programming exercise
         # Create exercise group first
@@ -214,8 +217,13 @@ def main() -> int:
         return exam_id
         
     except Exception as e:
-        logging.error(f"Error during exam creation: {str(e)}")
-        raise
+        if "Course" in str(e) and "not found" in str(e):
+            logging.error("❌ Course not found!")
+            logging.error("Please run the quick-course-setup scripts first to create a course.")
+            logging.error("Then update the course_id in config.ini to match the created course.")
+        else:
+            logging.error(f"Error during exam creation: {str(e)}")
+        exit(1)
 
 if __name__ == "__main__":
     main() 
