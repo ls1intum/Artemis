@@ -123,10 +123,12 @@ public class ExamRoomDistributionService {
         }
     }
 
-    public Set<ExamRoom> getAllExamRoomsForExam(long examId) {
-        return examRoomRepository.findAllByExamId(examId);
-    }
-
+    /**
+     * Generates information relevant for displaying rooms and students in the attendance checker app
+     *
+     * @param examId The exam id
+     * @return the generated information
+     */
     public AttendanceCheckerAppInformationDTO getAttendanceCheckerAppInformation(long examId) {
         Exam exam = examRepository.findById(examId).orElseThrow();
         Set<ExamUser> examUsers = exam.getExamUsers();

@@ -167,8 +167,9 @@ public class ExamUserResource {
     /**
      * PUT courses/{courseId}/exams/{examId}/attendance : Verifies attendance for the specified student
      *
-     * @param courseId the id of the course
-     * @param examId   the id of the exam
+     * @param courseId     the id of the course
+     * @param examId       the id of the exam
+     * @param studentLogin the login of the student we want to verify
      * @return 204 (No Content) if the verification was successful
      */
     @PutMapping("courses/{courseId}/exams/{examId}/attendance")

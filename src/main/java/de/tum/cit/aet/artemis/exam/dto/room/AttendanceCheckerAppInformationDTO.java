@@ -45,6 +45,7 @@ record ExamUserWithExamRoomAndSeatDTO (
     @NotBlank @Size(max = 50) String firstName,
     @NotBlank @Size(max = 50) String lastName,
     @NotBlank @Size(max = 10) String registrationNumber,
+    @Nullable String imageUrl,
     @NotBlank String examRoomNumber,
     @NotNull ExamSeatDTO examSeat
 ) {
@@ -54,6 +55,7 @@ record ExamUserWithExamRoomAndSeatDTO (
             examUser.getUser().getFirstName(),
             examUser.getUser().getLastName(),
             examUser.getUser().getRegistrationNumber(),
+            examUser.getUser().getImageUrl(),
             examUser.getPlannedRoomTransient().getRoomNumber(),
             examUser.getPlannedSeatTransient()
         );

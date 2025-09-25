@@ -189,8 +189,8 @@ public class ExamUserService {
      * @param examUsers                                All exam users for which the transient fields should be set.
      * @param ignoreExamUsersWithoutPlannedRoomAndSeat If true, exam users without a planned room or seat will be ignored.
      *                                                     If false, an exception will be thrown when an exam user without a planned room or seat is encountered.
-     * @throws de.tum.cit.aet.artemis.core.exception.BadRequestAlertException If ignoreExamUsersWithoutPlannedRoomAndSeat is false and the conditions are met as described,
-     *                                                                            or if the planned room or seat cannot be mapped to actual entities.
+     * @throws BadRequestAlertException If ignoreExamUsersWithoutPlannedRoomAndSeat is false and the conditions are met as described,
+     *                                      or if the planned room or seat cannot be mapped to actual entities.
      */
     public void setPlannedRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers, boolean ignoreExamUsersWithoutPlannedRoomAndSeat) {
         List<Exam> usedExams = examUsers.stream().map(ExamUser::getExam).distinct().toList();
@@ -232,6 +232,9 @@ public class ExamUserService {
 
     /**
      * @see #setPlannedRoomAndSeatTransientForExamUsers(Set, boolean)
+     *
+     * @param examUsers All exam users for which the transient fields should be set.
+     * @throws BadRequestAlertException If an exam user does not have a planned room or seat
      */
     public void setPlannedRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers) {
         setPlannedRoomAndSeatTransientForExamUsers(examUsers, false);
