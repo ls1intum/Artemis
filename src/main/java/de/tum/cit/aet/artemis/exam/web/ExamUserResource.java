@@ -174,7 +174,7 @@ public class ExamUserResource {
      */
     @PutMapping("courses/{courseId}/exams/{examId}/attendance")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> verifyStudentAttendance(@PathVariable long courseId, @PathVariable long examId, @RequestParam String studentLogin) {
+    public ResponseEntity<Void> markAsAttended(@PathVariable long courseId, @PathVariable long examId, @RequestParam String studentLogin) {
         log.debug("REST request to verify attendance of student '{}' for exam with id: {}", studentLogin, examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
