@@ -4,50 +4,64 @@ This project contains Python scripts that automate the creation and management o
 
 ## Overview
 
-The exam automation scripts provide a complete workflow for setting up and running programming exams in Artemis. They are particularly useful for:
+The exam automation scripts provide a workflow for setting up and running programming exams in Artemis. They are particularly useful for:
 - Testing exam functionality in development environments
 - Creating demo exams for presentations
 - Automating exam setup for testing scenarios
 - Simulating student behavior during exams
 
-## Setup
+## Quick Start
 
-### Prerequisites
-
-- Python 3.8 or higher
-- pip
-- Running Artemis instance (local)
-- Admin access to the Artemis instance
-
-### 1. Create and activate a virtual environment (recommended)
+- Configure settings (see Configuration below)
+- Run the workflow script from this directory:
 
 ```shell
-# Create virtual environment
-python3 -m venv venv
+chmod +x ./run.sh   # once, if needed
+./run.sh
+```
 
-# Activate virtual environment
-# On macOS/Linux:
+The runner will ensure a virtual environment exists, install dependencies, and execute the full exam workflow.
+
+## Setup (Manual)
+
+If you prefer to run scripts manually:
+
+1) Prerequisites
+- Python 3.8 or higher
+- pip
+- Running Artemis instance (local or test server)
+- Admin access to the Artemis instance
+
+2) Create and activate a virtual environment
+
+```shell
+python3 -m venv venv
+# macOS/Linux
 source venv/bin/activate
-# On Windows:
+# Windows
 venv\Scripts\activate
 ```
 
-### 2. Install required packages
+3) Install dependencies
 
 ```shell
 pip install -r requirements.txt
 ```
 
-### 3. Configure the environment
-
-1. Start your local Artemis instance
-2. Configure the `config.ini` file according to your setup (see Configuration section below)
+4) Configure environment (see Configuration below) and start your Artemis instance
 
 ## Configuration
 
-The `config.ini` file contains all necessary configuration settings:
+This script now uses a multi-layer configuration:
 
-### Server Settings
+- Shared settings: `supporting_scripts/course-scripts/config.ini` (parent folder)
+- Exam-specific settings: `supporting_scripts/course-scripts/exam-automation/config.ini` (this folder)
+
+Both files are loaded; exam-specific values can complement the shared ones.
+
+### Shared Settings (parent config)
+File: `supporting_scripts/course-scripts/config.ini`
+
 ```ini
 [Settings]
 admin_user = artemis_admin
@@ -56,7 +70,9 @@ server_url = http://localhost:8080/api
 client_url = http://localhost:9000/api
 ```
 
-### Exam Settings
+### Exam Settings (local config)
+File: `supporting_scripts/course-scripts/exam-automation/config.ini`
+
 ```ini
 [ExamSettings]
 course_id = 1
@@ -71,7 +87,13 @@ number_of_correction_rounds = 1
 
 ## Scripts Overview
 
-**Note:** The exam automation scripts use shared utility functions from the `quick-course-setup` directory for user authentication and management.
+Note: The exam automation scripts use local shared utilities in `utils.py` and are designed to work with courses and users created by the quick-course-setup scripts.
+
+### 0. `run.sh`
+Convenience runner that:
+- Creates/uses a Python virtual environment
+- Installs requirements
+- Executes `exam_workflow.py`
 
 ### 1. `create_exam.py`
 Creates a complete exam setup with programming exercises.
@@ -83,6 +105,9 @@ Creates a complete exam setup with programming exercises.
 - Creates an exercise group
 - Sets up a programming exercise within the exam
 - Configures exam settings (working time, grace period, etc. wrt. now())
+
+Defaults:
+- Programming exercise: Java, plain Gradle build
 
 **What it cannot do:**
 - Create students (registers existing course users to exam)
@@ -112,7 +137,7 @@ Runs a complete exam simulation workflow.
 ### Basic Exam Creation
 
 1. Ensure you have a course with students enrolled
-2. Configure `config.ini` with your settings
+2. Configure the parent `../config.ini` (shared Settings) and local `./config.ini` (ExamSettings)
 3. Run the exam creation script:
 
 ```shell
@@ -126,7 +151,7 @@ This will create an exam and return the exam ID for further use.
 To run the complete exam simulation:
 
 ```shell
-python3 exam_workflow.py
+./run.sh
 ```
 
 This will:
@@ -149,9 +174,9 @@ The scripts provide detailed logging output showing:
 
 ### Common Issues
 
-1. **Authentication failures**: Verify admin credentials in `config.ini`
+1. **Authentication failures**: Verify admin credentials and URLs in the parent `supporting_scripts/course-scripts/config.ini`
 2. **Course not found**: Ensure the course ID exists and is accessible
-3. **No students enrolled**: Use quick-course-setup scripts to create students first
+3. **No students enrolled**: Use quick-course-setup scripts to create a course and users first; then set `course_id` in `exam-automation/config.ini`
 4. **Exam timing issues**: Check system time and timezone settings
 5. **Submission failures**: Verify student credentials and exercise setup
 

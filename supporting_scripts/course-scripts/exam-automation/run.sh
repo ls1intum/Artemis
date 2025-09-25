@@ -69,27 +69,6 @@ fi
 
 echo -e "${GREEN}✓ Configuration file found${NC}"
 
-# Get server URL from config.ini
-SERVER_URL=$(python3 -c "
-import configparser
-try:
-    config = configparser.ConfigParser()
-    config.read('$SCRIPT_DIR/config.ini')
-    print(config.get('Settings', 'server_url'))
-except Exception:
-    print('http://localhost:8080/api')
-" 2>/dev/null)
-
-# Check if Artemis server is running
-echo -e "${YELLOW}Checking Artemis server connectivity...${NC}"
-if curl -s --connect-timeout 5 "$SERVER_URL/public/health" > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Artemis server appears to be running at $SERVER_URL${NC}"
-else
-    echo -e "${YELLOW}Warning: Could not connect to Artemis server at $SERVER_URL${NC}"
-    echo "Please ensure your Artemis instance is running before proceeding"
-    echo "The script will continue anyway..."
-fi
-
 # Run the exam workflow
 echo -e "${BLUE}=== Starting Exam Workflow ===${NC}"
 echo -e "${YELLOW}Running exam_workflow.py...${NC}"
