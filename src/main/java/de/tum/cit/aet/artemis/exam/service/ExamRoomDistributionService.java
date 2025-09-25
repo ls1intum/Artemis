@@ -130,7 +130,7 @@ public class ExamRoomDistributionService {
      * @return the generated information
      */
     public AttendanceCheckerAppInformationDTO getAttendanceCheckerAppInformation(long examId) {
-        Exam exam = examRepository.findById(examId).orElseThrow();
+        Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         Set<ExamUser> examUsers = exam.getExamUsers();
         examUserService.setPlannedRoomAndSeatTransientForExamUsers(examUsers);
         Set<ExamRoom> examRooms = examRoomRepository.findAllByExamId(examId);
