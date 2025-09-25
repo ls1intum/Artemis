@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation, computed, effect, inject, input, output, untracked } from '@angular/core';
+import { Component, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
@@ -34,7 +34,6 @@ export class ShortAnswerQuestionComponent {
 
     question = input.required<QuizQuestion>();
     shortAnswerQuestion = computed(() => this.question() as ShortAnswerQuestion);
-    _forceSampleSolution: boolean;
 
     // TODO: Map vs. Array --> consistency
     submittedTexts = input<ShortAnswerSubmittedText[]>([]);
@@ -49,22 +48,30 @@ export class ShortAnswerQuestionComponent {
 
     constructor() {
         effect(() => {
-            if (this.forceSampleSolution()) {
+            const question = this.shortAnswerQuestion();
+            const forced = this.forceSampleSolution();
+
+            if (!question) {
+                this.hideSampleSolution();
+                return;
+            }
+            this.hideSampleSolution();
+
+            if (forced) {
                 this.showSampleSolution();
             }
         });
         effect(() => {
-            const currentQuestion = this.shortAnswerQuestion();
-            if (currentQuestion) {
-                untracked(() => {
-                    this.hideSampleSolution();
-                    this.watchCollection();
-                });
+            const question = this.shortAnswerQuestion();
+            if (!question) {
+                return;
             }
+            this.watchCollection();
         });
     }
 
-    showingSampleSolution = false;
+    showingSampleSolution = signal(false);
+
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
     sampleSolutions: ShortAnswerSolution[] = [];
     textParts: string[][];
@@ -117,14 +124,14 @@ export class ShortAnswerQuestionComponent {
     showSampleSolution() {
         // TODO: the question is not yet available
         this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolutions(this.shortAnswerQuestion());
-        this.showingSampleSolution = true;
+        this.showingSampleSolution.set(true);
     }
 
     /**
      * Display the student's answer again
      */
     hideSampleSolution() {
-        this.showingSampleSolution = false;
+        this.showingSampleSolution.set(false);
     }
 
     /**
@@ -185,7 +192,7 @@ export class ShortAnswerQuestionComponent {
      * @param spotTag Spot tag for which to get the text
      */
     getTextForSpotAsString(spotTag: string): string {
-        if (this.showingSampleSolution) {
+        if (this.showingSampleSolution()) {
             return this.getSampleSolutionForSpotAsString(spotTag);
         }
         return this.getSubmittedTextForSpotAsString(spotTag);
@@ -196,7 +203,7 @@ export class ShortAnswerQuestionComponent {
      * @param spotTag Spot tag for which to get the size
      */
     getSizeForSpot(spotTag: string): number {
-        if (this.showingSampleSolution) {
+        if (this.showingSampleSolution()) {
             return this.getSampleSolutionSizeForSpot(spotTag);
         }
         return this.getSubmittedTextSizeForSpot(spotTag);
@@ -214,7 +221,7 @@ export class ShortAnswerQuestionComponent {
         if (spot.invalid) {
             return 'invalid';
         }
-        if (this.showingSampleSolution) {
+        if (this.showingSampleSolution()) {
             return 'completely-correct';
         }
         const submittedTextForSpot = this.getSubmittedTextForSpot(spotTag);

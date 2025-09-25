@@ -72,13 +72,13 @@ describe('DragAndDropQuestionComponent', () => {
         expect(comp.renderedQuestion.hint).toBe(`${question.hint}markdown`);
         expect(comp.renderedQuestion.explanation).toBe(`${question.explanation}markdown`);
         expect(comp.hideSampleSolution).toHaveBeenCalledOnce();
-        expect(comp.showingSampleSolution).toBeFalsy();
+        expect(comp.showingSampleSolution()).toBeFalsy();
     });
 
     it('should count correct mappings as zero if no correct mappings', () => {
         const { dropLocation } = getDropLocationMappingAndItem();
         comp.dragAndDropQuestion().dropLocations = [dropLocation];
-        comp.ngOnChanges();
+        fixture.detectChanges();
         expect(comp.correctAnswer).toBe(0);
     });
 
@@ -93,7 +93,7 @@ describe('DragAndDropQuestionComponent', () => {
         fixture.componentRef.setInput('mappings', [correctMapping4]);
         fixture.detectChanges();
         comp.dragAndDropQuestion().correctMappings = [correctMapping1, correctMapping2, correctMapping4];
-        comp.ngOnChanges();
+        fixture.detectChanges();
         /*
          *   without selected items it should not set correct answers to drop locations without valid drag item
          *   as they are excluded from the score calculation as well
@@ -111,7 +111,7 @@ describe('DragAndDropQuestionComponent', () => {
         fixture.componentRef.setInput('mappings', [correctMapping1, correctMapping3]);
         fixture.detectChanges();
         comp.dragAndDropQuestion().dropLocations = [dropLocation1, dropLocation2, dropLocation3, dropLocation5];
-        comp.ngOnChanges();
+        fixture.detectChanges();
         expect(comp.correctAnswer).toBe(1);
     });
 
@@ -135,13 +135,13 @@ describe('DragAndDropQuestionComponent', () => {
         expect(comp.forceSampleSolution()).toBeTrue();
         expect(solveSpy).toHaveBeenCalledWith(comp.question(), mappings);
         expect(comp.sampleSolutionMappings).toEqual(mappings);
-        expect(comp.showingSampleSolution).toBeTrue();
+        expect(comp.showingSampleSolution()).toBeTrue();
     });
 
     it('should hide sample solutions', () => {
-        comp.showingSampleSolution = true;
+        comp.showingSampleSolution.set(true);
         comp.hideSampleSolution();
-        expect(comp.showingSampleSolution).toBeFalse();
+        expect(comp.showingSampleSolution()).toBeFalse();
     });
 
     it('should return unassigned drag items', () => {

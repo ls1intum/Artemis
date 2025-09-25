@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, ViewEncapsulation, computed, effect, inject, input, output, viewChild } from '@angular/core';
+import { Component, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
@@ -57,7 +57,7 @@ enum MappingResult {
         NgbTooltip,
     ],
 })
-export class DragAndDropQuestionComponent implements OnChanges, OnInit {
+export class DragAndDropQuestionComponent {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
 
@@ -91,7 +91,7 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
 
     mappingsChange = output<DragAndDropMapping[]>();
 
-    showingSampleSolution = false;
+    showingSampleSolution = signal(false);
     renderedQuestion: RenderedQuizQuestionMarkDownElement;
     sampleSolutionMappings = new Array<DragAndDropMapping>();
     dropAllowed = false;
@@ -103,25 +103,36 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
 
     constructor() {
         effect(() => {
-            if (this.forceSampleSolution()) {
-                this.showSampleSolution();
-            }
-        });
-        effect(() => {
-            const currentQuestion = this.dragAndDropQuestion();
-            if (currentQuestion) {
+            const question = this.dragAndDropQuestion();
+            const forced = this.forceSampleSolution();
+
+            if (!question) {
                 this.hideSampleSolution();
-                this.watchCollection();
+                return;
+            }
+
+            if (forced) {
+                this.showSampleSolution();
+            } else {
+                this.hideSampleSolution();
             }
         });
-    }
 
-    ngOnInit(): void {
-        this.evaluateDropLocations();
-    }
+        effect(() => {
+            const question = this.dragAndDropQuestion();
+            if (!question) {
+                return;
+            }
+            this.watchCollection();
+        });
 
-    ngOnChanges() {
-        this.evaluateDropLocations();
+        effect(() => {
+            const q = this.dragAndDropQuestion();
+            this.mappings();
+            if (!q) return;
+
+            this.evaluateDropLocations();
+        });
     }
 
     watchCollection() {
@@ -312,14 +323,14 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
      */
     showSampleSolution() {
         this.sampleSolutionMappings = this.dragAndDropQuestionUtil.solve(this.dragAndDropQuestion(), this.mappings());
-        this.showingSampleSolution = true;
+        this.showingSampleSolution.set(true);
     }
 
     /**
      * Display the student's answer again
      */
     hideSampleSolution() {
-        this.showingSampleSolution = false;
+        this.showingSampleSolution.set(false);
     }
 
     /**

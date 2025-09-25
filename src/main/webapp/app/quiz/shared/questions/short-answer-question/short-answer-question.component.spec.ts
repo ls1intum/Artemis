@@ -61,7 +61,7 @@ describe('ShortAnswerQuestionComponent', () => {
         expect(extractSafeHtmlText(component.renderedQuestion.hint)).toBe(`<p>${hint}</p>`);
         expect(extractSafeHtmlText(component.renderedQuestion.explanation)).toBe(`<p>${explanation}</p>`);
         expect(component.hideSampleSolution).toHaveBeenCalledOnce();
-        expect(component.showingSampleSolution).toBeFalsy();
+        expect(component.showingSampleSolution()).toBeFalsy();
     });
 
     it('should set submitted texts', () => {
@@ -117,7 +117,7 @@ describe('ShortAnswerQuestionComponent', () => {
 
         expect(component.sampleSolutions).toHaveLength(1);
         expect(component.sampleSolutions[0]).toStrictEqual(solution);
-        expect(component.showingSampleSolution).toBeTrue();
+        expect(component.showingSampleSolution()).toBeTrue();
     });
 
     it('should toggle show sample solution', () => {
@@ -127,19 +127,19 @@ describe('ShortAnswerQuestionComponent', () => {
 
         fixture.componentRef.setInput('question', alternativeQuestion);
         fixture.componentRef.setInput('showResult', true);
-        component.showingSampleSolution = true;
+        component.showingSampleSolution.set(true);
 
         fixture.componentRef.setInput('forceSampleSolution', false);
         fixture.detectChanges();
         fixture.componentRef.setInput('forceSampleSolution', true);
         fixture.detectChanges();
-        expect(component.showingSampleSolution).toBeTrue();
+        expect(component.showingSampleSolution()).toBeTruthy();
 
         fixture.componentRef.setInput('forceSampleSolution', false);
         fixture.detectChanges();
         component.hideSampleSolution();
 
-        expect(component.showingSampleSolution).toBeFalse();
+        expect(component.showingSampleSolution()).toBeFalse();
     });
 
     it('should get submitted text size for spot', () => {

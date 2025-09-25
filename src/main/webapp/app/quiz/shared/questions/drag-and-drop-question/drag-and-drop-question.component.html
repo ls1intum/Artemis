@@ -80,18 +80,18 @@
         }
         @if (showResult()) {
             <div class="dnd-instructions">
-                @if (showingSampleSolution) {
+                @if (showingSampleSolution()) {
                     <span jhiTranslate="artemisApp.dragAndDropQuestion.showingSampleSolution"></span>
                 }
-                @if (!showingSampleSolution) {
+                @if (!showingSampleSolution()) {
                     <span jhiTranslate="artemisApp.dragAndDropQuestion.showingYourAnswer"></span>
                 }
                 @if (!forceSampleSolution()) {
                     <div>
-                        @if (!showingSampleSolution) {
+                        @if (!showingSampleSolution()) {
                             <div class="btn btn-outline-primary" (click)="showSampleSolution()" jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></div>
                         }
-                        @if (showingSampleSolution) {
+                        @if (showingSampleSolution()) {
                             <div class="btn btn-outline-primary" (click)="hideSampleSolution()" jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></div>
                         }
                     </div>
@@ -141,7 +141,7 @@
                             }
                         </div>
                     }
-                    @if (showResult() && !showingSampleSolution && dragAndDropQuestion().dropLocations) {
+                    @if (showResult() && !showingSampleSolution() && dragAndDropQuestion().dropLocations) {
                         <div>
                             @for (dropLocation of dragAndDropQuestion().dropLocations; track dropLocation) {
                                 <div>
@@ -207,7 +207,7 @@
                             }
                         </div>
                     }
-                    @if (showResult() && showingSampleSolution) {
+                    @if (showResult() && showingSampleSolution()) {
                         <div>
                             @for (dropLocation of dragAndDropQuestion().dropLocations; track dropLocation) {
                                 <div>

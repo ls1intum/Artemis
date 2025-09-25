@@ -118,10 +118,10 @@
     <br />
     @if (showResult() && !forceSampleSolution()) {
         <div>
-            @if (!showingSampleSolution) {
+            @if (!showingSampleSolution()) {
                 <div class="btn btn-outline-primary" (click)="showSampleSolution()" jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></div>
             }
-            @if (showingSampleSolution) {
+            @if (showingSampleSolution()) {
                 <div class="btn btn-outline-primary" (click)="hideSampleSolution()" jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></div>
             }
         </div>
