@@ -575,10 +575,10 @@ describe('FileUploadAssessmentComponent', () => {
             const navigateStub = jest.spyOn(router, 'navigate').mockImplementation();
             const returnedSubmission = createSubmission(exercise);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(returnedSubmission));
-            comp.courseId = 77;
-            comp.exerciseId = comp.exercise!.id!;
-            comp.exerciseGroupId = 79;
-            comp.examId = 80;
+            fixture.componentRef.setInput('courseId', 77);
+            fixture.componentRef.setInput('exerciseId', comp.exercise!.id!);
+            fixture.componentRef.setInput('exerciseGroupId', 79);
+            fixture.componentRef.setInput('examId', 80);
 
             comp.assessNext();
 

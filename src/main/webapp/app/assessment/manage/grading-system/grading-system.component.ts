@@ -37,7 +37,7 @@ export class GradingSystemComponent {
     readonly GradeType = GradeType;
 
     courseId = input.required<number>();
-    examId = input.required<number>();
+    examId = input<number>();
     isExam = computed(() => this.examId() !== undefined);
     childComponent?: BaseGradingSystemComponent;
 

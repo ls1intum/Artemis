@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, inject, input } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, effect, inject, input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -191,52 +191,55 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
             this.alertService.error('artemisApp.examParticipation.saveSubmissionError');
         });
+
+        effect(() => {
+            if (this.studentExamId()) {
+                this.testExam = true;
+            }
+            this.loadingExam = true;
+            const studentExamIdAsNumber = this.studentExamId() ? parseInt(this.studentExamId()!, 10) : undefined;
+            if (this.testRunId()) {
+                this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()!).subscribe({
+                    next: (studentExam) => {
+                        this.studentExam = studentExam;
+                        this.studentExam.exam!.course = new Course();
+                        this.studentExam.exam!.course.id = this.courseId();
+                        this.exam = studentExam.exam!;
+                        this.testExam = this.exam.testExam!;
+                        this.loadingExam = false;
+                    },
+                    error: () => (this.loadingExam = false),
+                });
+            } else if (this.testExam && !!studentExamIdAsNumber) {
+                this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), studentExamIdAsNumber).subscribe({
+                    next: (studentExam) => {
+                        this.handleStudentExam(studentExam);
+                    },
+                    error: () => {
+                        this.handleNoStudentExam();
+                    },
+                });
+            } else {
+                this.studentExamSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
+                    next: (studentExam) => {
+                        this.handleStudentExam(studentExam);
+                    },
+                    error: () => {
+                        this.handleNoStudentExam();
+                    },
+                });
+            }
+        });
     }
 
     examId = input.required<number>();
     courseId = input.required<number>();
     testRunId = input<number>();
-    studentExamId = input<number>();
+    studentExamId = input<string>(); // can be a number or 'start'
     /**
      * loads the exam from the server and initializes the view
      */
     ngOnInit(): void {
-        if (this.studentExamId()) {
-            this.testExam = true;
-        }
-        this.loadingExam = true;
-        if (this.testRunId()) {
-            this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()!).subscribe({
-                next: (studentExam) => {
-                    this.studentExam = studentExam;
-                    this.studentExam.exam!.course = new Course();
-                    this.studentExam.exam!.course.id = this.courseId();
-                    this.exam = studentExam.exam!;
-                    this.testExam = this.exam.testExam!;
-                    this.loadingExam = false;
-                },
-                error: () => (this.loadingExam = false),
-            });
-        } else if (this.testExam && this.studentExamId()) {
-            this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExamId()!).subscribe({
-                next: (studentExam) => {
-                    this.handleStudentExam(studentExam);
-                },
-                error: () => {
-                    this.handleNoStudentExam();
-                },
-            });
-        } else {
-            this.studentExamSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
-                next: (studentExam) => {
-                    this.handleStudentExam(studentExam);
-                },
-                error: () => {
-                    this.handleNoStudentExam();
-                },
-            });
-        }
-
         // listen to connect / disconnect events
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.connected = status.connected;

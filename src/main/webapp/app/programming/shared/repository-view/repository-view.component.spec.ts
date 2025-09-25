@@ -18,7 +18,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
-
 describe('RepositoryViewComponent', () => {
     let component: RepositoryViewComponent;
     let fixture: ComponentFixture<RepositoryViewComponent>;

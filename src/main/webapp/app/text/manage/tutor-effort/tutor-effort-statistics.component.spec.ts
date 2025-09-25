@@ -11,6 +11,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
@@ -44,8 +45,8 @@ describe('TutorEffortStatisticsComponent', () => {
         },
     ];
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -56,20 +57,21 @@ describe('TutorEffortStatisticsComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideNoopAnimations(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(TutorEffortStatisticsComponent);
-                component = fixture.componentInstance;
-                compiled = fixture.debugElement.nativeElement;
-                fixture.detectChanges();
-                textExerciseService = TestBed.inject(TextExerciseService);
-                textAssessmentService = TestBed.inject(TextAssessmentService);
-                getNumberOfTutorsInvolvedInAssessmentStub = jest.spyOn(textAssessmentService, 'getNumberOfTutorsInvolvedInAssessment');
-                calculateTutorEffortStub = jest.spyOn(textExerciseService, 'calculateTutorEffort');
-                router = TestBed.inject(Router);
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(TutorEffortStatisticsComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('exerciseId', 1);
+        textExerciseService = TestBed.inject(TextExerciseService);
+        textAssessmentService = TestBed.inject(TextAssessmentService);
+        getNumberOfTutorsInvolvedInAssessmentStub = jest.spyOn(textAssessmentService, 'getNumberOfTutorsInvolvedInAssessment').mockReturnValue(of(0));
+        calculateTutorEffortStub = jest.spyOn(textExerciseService, 'calculateTutorEffort').mockReturnValue(of(tutorEffortsMocked));
+        router = TestBed.inject(Router);
+        fixture.detectChanges();
+        compiled = fixture.debugElement.nativeElement;
     });
 
     it('should call loadTutorEfforts and calculateTutorEffort on init', () => {
@@ -94,7 +96,7 @@ describe('TutorEffortStatisticsComponent', () => {
     });
 
     it('should check tutor effort response handler with empty input', () => {
-        component.currentExerciseId = 1;
+        fixture.componentRef.setInput('exerciseId', 1);
         const expected: TutorEffort[] = [];
         component.handleTutorEffortResponse(expected);
         expect(component.tutorEfforts).toEqual(expected);
@@ -142,8 +144,8 @@ describe('TutorEffortStatisticsComponent', () => {
     });
 
     it('should delegate the user correctly', () => {
-        component.currentCourseId = 42;
-        component.currentExerciseId = 33;
+        fixture.componentRef.setInput('courseId', 42);
+        fixture.componentRef.setInput('exerciseId', 33);
         const navigateSpy = jest.spyOn(router, 'navigate');
         const expectedArray = ['/course-management', 42, 'assessment-dashboard', 33];
 

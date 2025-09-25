@@ -142,7 +142,7 @@ describe('Lti13DeepLinkingComponent', () => {
         // TODO: change the test to avoid mocking window.location
         component.selectExercise(exercise1.id);
         component.selectExercise(exercise2.id);
-        component.courseId = 123;
+        fixture.componentRef.setInput('courseId', 123);
         const nonSuccessResponse = new HttpResponse({
             status: 400,
             body: { message: 'Bad request' },
@@ -166,7 +166,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
     it('should set isLinking to false if there is an error during the HTTP request', fakeAsync(() => {
         component.selectExercise(exercise1.id);
-        component.courseId = 123;
+        fixture.componentRef.setInput('courseId', 123);
         const mockError = new Error('Network error');
         httpMock.post.mockReturnValue(throwError(() => mockError));
 
@@ -190,7 +190,7 @@ describe('Lti13DeepLinkingComponent', () => {
     it('should send deep link request and navigate when exercise is selected', () => {
         // TODO: change the test to avoid mocking window.location
         component.selectExercise(exercise1.id);
-        component.courseId = 123;
+        fixture.componentRef.setInput('courseId', 123);
 
         const mockResponse = new HttpResponse({
             status: 200,
@@ -279,7 +279,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
     it('should send deep link request when competency is selected', fakeAsync(() => {
         component.enableCompetency();
-        component.courseId = 123;
+        fixture.componentRef.setInput('courseId', 123);
 
         const mockResponse = new HttpResponse({
             status: 200,
@@ -313,7 +313,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
     it('should send deep link request when learning path is selected', fakeAsync(() => {
         component.enableLearningPath();
-        component.courseId = 123;
+        fixture.componentRef.setInput('courseId', 123);
 
         const mockResponse = new HttpResponse({
             status: 200,
@@ -334,7 +334,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
     it('should send deep link request when IRIS is selected', fakeAsync(() => {
         component.enableIris();
-        component.courseId = 123;
+        fixture.componentRef.setInput('courseId', 123);
 
         const mockResponse = new HttpResponse({
             status: 200,
@@ -359,7 +359,7 @@ describe('Lti13DeepLinkingComponent', () => {
         component.lectures = [lecture1, lecture2];
         component.selectLecture(lecture1.id);
         component.selectLecture(lecture2.id);
-        component.courseId = 123;
+        fixture.componentRef.setInput('courseId', 123);
 
         const mockResponse = new HttpResponse({
             status: 200,

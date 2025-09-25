@@ -35,8 +35,8 @@ describe('QuizExercise Statistic Footer Component', () => {
     let router: Router;
     let quizServiceFindSpy: jest.SpyInstance;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: Router, useClass: MockRouter },
                 QuizStatisticUtil,
@@ -59,17 +59,18 @@ describe('QuizExercise Statistic Footer Component', () => {
                 },
             })
             .overrideTemplate(QuizStatisticsFooterComponent, '')
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(QuizStatisticsFooterComponent);
-                comp = fixture.componentInstance;
-                quizService = fixture.debugElement.injector.get(QuizExerciseService);
-                accountService = fixture.debugElement.injector.get(AccountService);
-                router = fixture.debugElement.injector.get(Router);
-                routerSpy = jest.spyOn(router, 'navigateByUrl');
-                accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-                quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
-            });
+            .compileComponents();
+
+        fixture = TestBed.createComponent(QuizStatisticsFooterComponent);
+        comp = fixture.componentInstance;
+        fixture.componentRef.setInput('exerciseId', quizExercise.id!);
+        fixture.componentRef.setInput('questionId', question.id!);
+        quizService = fixture.debugElement.injector.get(QuizExerciseService);
+        accountService = fixture.debugElement.injector.get(AccountService);
+        router = fixture.debugElement.injector.get(Router);
+        routerSpy = jest.spyOn(router, 'navigateByUrl');
+        accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+        quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
     });
 
     afterEach(() => {
@@ -99,7 +100,7 @@ describe('QuizExercise Statistic Footer Component', () => {
 
     it('should set quiz and update properties', () => {
         // setup
-        comp.questionIdParam = 1;
+        fixture.componentRef.setInput('questionId', 1);
 
         // call
         comp.loadQuiz(quizExercise);

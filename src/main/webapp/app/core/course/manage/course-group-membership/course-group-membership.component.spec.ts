@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -19,7 +19,13 @@ describe('Course Group Membership Component', () => {
     let fixture: ComponentFixture<CourseGroupMembershipComponent>;
     let courseService: CourseManagementService;
     const courseGroup = CourseGroup.STUDENTS;
-    const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
+    const course = {
+        id: 123,
+        title: 'Course Title',
+        isAtLeastInstructor: true,
+        endDate: dayjs().subtract(5, 'minutes'),
+        courseArchivePath: 'some-path',
+    } as Course;
     const parentRoute = {
         data: of({ course }),
     } as any as ActivatedRoute;
@@ -49,40 +55,45 @@ describe('Course Group Membership Component', () => {
     });
 
     it('should initialize', () => {
+        jest.spyOn(courseService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [] })));
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('courseGroup', courseGroup);
         fixture.detectChanges();
-        expect(CourseGroupMembershipComponent).not.toBeNull();
+        expect(comp).toBeDefined();
     });
 
     describe('OnInit', () => {
         it('should load all course group users', () => {
             const getUsersStub = jest.spyOn(courseService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
+            fixture.componentRef.setInput('course', course);
+            fixture.componentRef.setInput('courseGroup', courseGroup);
             fixture.detectChanges();
-            expect(comp.course).toEqual(course);
-            expect(comp.courseGroup).toEqual(courseGroup);
+            expect(comp.course()).toEqual(course);
+            expect(comp.courseGroup()).toEqual(courseGroup);
             expect(getUsersStub).toHaveBeenCalledOnce();
         });
     });
 
     describe('courseGroupName', () => {
         it('should return courses studentGroupName if group is students', () => {
-            comp.courseGroup = CourseGroup.STUDENTS;
-            comp.course = { ...course };
-            comp.course.studentGroupName = 'testStudentGroupName';
-            expect(comp.courseGroupName).toBe(comp.course.studentGroupName);
+            fixture.componentRef.setInput('courseGroup', CourseGroup.STUDENTS);
+            const testCourse = { ...course, studentGroupName: 'testStudentGroupName' };
+            fixture.componentRef.setInput('course', testCourse);
+            expect(comp.courseGroupName).toBe('testStudentGroupName');
         });
 
         it('should return courses teachingAssistantGroupName if group is tutors', () => {
-            comp.courseGroup = CourseGroup.TUTORS;
-            comp.course = { ...course };
-            comp.course.teachingAssistantGroupName = 'testTeachingAssistantGroupName';
-            expect(comp.courseGroupName).toBe(comp.course.teachingAssistantGroupName);
+            fixture.componentRef.setInput('courseGroup', CourseGroup.TUTORS);
+            const testCourse = { ...course, teachingAssistantGroupName: 'testTeachingAssistantGroupName' };
+            fixture.componentRef.setInput('course', testCourse);
+            expect(comp.courseGroupName).toBe('testTeachingAssistantGroupName');
         });
 
         it('should return courses instructorGroupName if group is instructors', () => {
-            comp.courseGroup = CourseGroup.INSTRUCTORS;
-            comp.course = { ...course };
-            comp.course.instructorGroupName = 'testInstructorGroupName';
-            expect(comp.courseGroupName).toBe(comp.course.instructorGroupName);
+            fixture.componentRef.setInput('courseGroup', CourseGroup.INSTRUCTORS);
+            const testCourse = { ...course, instructorGroupName: 'testInstructorGroupName' };
+            fixture.componentRef.setInput('course', testCourse);
+            expect(comp.courseGroupName).toBe('testInstructorGroupName');
         });
     });
 
@@ -96,10 +107,10 @@ describe('Course Group Membership Component', () => {
 
     describe('exportFileName', () => {
         it('should return export file name', () => {
-            comp.courseGroup = CourseGroup.STUDENTS;
+            fixture.componentRef.setInput('courseGroup', CourseGroup.STUDENTS);
             const user1 = new User(1, 'user1');
             comp.allCourseGroupUsers = [user1];
-            comp.course = { title: 'Example' };
+            fixture.componentRef.setInput('course', { title: 'Example' });
 
             expect(comp.exportFilename).toBe('Student Example');
             const user2 = new User(2, 'user2');

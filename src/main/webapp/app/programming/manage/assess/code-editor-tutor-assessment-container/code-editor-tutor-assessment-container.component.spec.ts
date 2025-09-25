@@ -179,6 +179,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         fixture = TestBed.createComponent(CodeEditorTutorAssessmentContainerComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('exerciseId', exercise.id!);
+        fixture.componentRef.setInput('submissionId', submission.id!.toString());
         router = TestBed.inject(Router);
         programmingAssessmentManualResultService = TestBed.inject(ProgrammingAssessmentManualResultService);
         programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
@@ -379,6 +382,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         getProgrammingSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(submission));
 
+        fixture.componentRef.setInput('submissionId', 'new');
         comp.ngOnInit();
         tick(100);
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
@@ -561,8 +565,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         comp.ngOnInit();
         const courseId = 123;
-        comp.courseId = courseId;
-        comp.exerciseId = exercise.id!;
+        fixture.componentRef.setInput('courseId', courseId);
+        fixture.componentRef.setInput('exerciseId', exercise.id!);
         tick(100);
         comp.nextSubmission();
 

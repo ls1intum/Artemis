@@ -1,4 +1,4 @@
-@if (!!testRunId) {
+@if (!!testRunId()) {
     <jhi-test-run-ribbon id="testRunRibbon" />
 }
 @if (exam) {
@@ -34,7 +34,7 @@
                         />
                     </div>
                     <!-- exercises -->
-                    <div class="vw-100 module-bg rounded-3 px-3 pt-3 content-exam-height" [ngClass]="{ 'content-exam-height-testRun': testRunId, 'me-3': !testRunId }">
+                    <div class="vw-100 module-bg rounded-3 px-3 pt-3 content-exam-height" [ngClass]="{ 'content-exam-height-testRun': testRunId(), 'me-3': !testRunId() }">
                         <div [ngClass]="{ 'd-flex h-100 justify-content-between flex-column': !checkVerticalOverflow() }">
                             <div [hidden]="activePageIndex !== -1">
                                 <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)" />
@@ -165,7 +165,7 @@
                         (heightChange)="updateHeight($event)"
                     />
 
-                    <div class="module-bg rounded-3 px-3 pt-3 end-view content-exam-height" [ngClass]="{ 'content-exam-height-testRun': testRunId }">
+                    <div class="module-bg rounded-3 px-3 pt-3 end-view content-exam-height" [ngClass]="{ 'content-exam-height-testRun': testRunId() }">
                         <jhi-exam-participation-cover
                             [startView]="false"
                             [exam]="exam"
@@ -209,14 +209,14 @@
             </div>
         }
         @if (showExamSummary) {
-            <div [ngClass]="{ 'p-3 scrollable-content': !testRunId }">
+            <div [ngClass]="{ 'p-3 scrollable-content': !testRunId() }">
                 <jhi-exam-participation-summary [studentExam]="studentExam" />
             </div>
         }
     }
 }
 @if (!loadingExam && !exam) {
-    @if (isAtLeastTutor && !testRunId) {
+    @if (isAtLeastTutor && !testRunId()) {
         <div class="alert alert-warning">
             <h6 jhiTranslate="artemisApp.examParticipation.atLeastTutorStudentExam"></h6>
             @if (isAtLeastInstructor) {

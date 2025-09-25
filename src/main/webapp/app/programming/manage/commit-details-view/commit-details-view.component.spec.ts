@@ -254,7 +254,7 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationSub?.closed).toBeTrue();
     });
 
     it('should handle commits for template participation', () => {
@@ -272,7 +272,7 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationSub?.closed).toBeTrue();
     });
 
     it('should handle new repository files for commit with template', async () => {
@@ -297,7 +297,7 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationSub?.closed).toBeTrue();
         expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
     });
 
@@ -318,7 +318,7 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationSub?.closed).toBeTrue();
         expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
     });
 
@@ -343,7 +343,7 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationSub?.closed).toBeTrue();
         expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
     });
 
@@ -361,7 +361,7 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationSub?.closed).toBeTrue();
     });
 
     it('should fetch repository files', () => {
@@ -384,7 +384,7 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationSub?.closed).toBeTrue();
         expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
     });
 
@@ -410,7 +410,7 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationSub?.closed).toBeTrue();
         expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
     });
 
@@ -445,7 +445,7 @@ describe('CommitDetailsViewComponent', () => {
         component.ngOnDestroy();
 
         // Expect subscription to be unsubscribed
-        expect(component.paramSub?.closed).toBeTrue();
+        expect(component.participationSub?.closed).toBeTrue();
         expect(component.participationRepoFilesSubscription?.closed).toBeTrue();
     });
 });

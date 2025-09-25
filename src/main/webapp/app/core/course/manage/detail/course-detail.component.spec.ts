@@ -103,6 +103,7 @@ describe('Course Management Detail Component', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(CourseDetailComponent);
         component = fixture.componentInstance;
+        fixture.componentRef.setInput('courseId', course.id!);
         courseManagementService = TestBed.inject(CourseManagementService);
         irisSettingsService = TestBed.inject(IrisSettingsService);
         profileService = TestBed.inject(ProfileService);
