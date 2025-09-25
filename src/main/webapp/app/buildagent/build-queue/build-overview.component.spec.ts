@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
-import { BuildQueueComponent } from 'app/buildagent/build-queue/build-queue.component';
-import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
+import { BuildOverviewComponent } from 'app/buildagent/build-queue/build-overview.component';
+import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
@@ -31,8 +31,8 @@ class ActivatedRouteStub {
 }
 
 describe('BuildQueueComponent', () => {
-    let component: BuildQueueComponent;
-    let fixture: ComponentFixture<BuildQueueComponent>;
+    let component: BuildOverviewComponent;
+    let fixture: ComponentFixture<BuildOverviewComponent>;
 
     const mockBuildQueueService = {
         getQueuedBuildJobsByCourseId: jest.fn(),
@@ -268,9 +268,9 @@ describe('BuildQueueComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [BuildQueueComponent],
+            imports: [BuildOverviewComponent],
             providers: [
-                { provide: BuildQueueService, useValue: mockBuildQueueService },
+                { provide: BuildOverviewService, useValue: mockBuildQueueService },
                 { provide: ActivatedRoute, useValue: routeStub },
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: DataTableComponent, useClass: DataTableComponent },
@@ -280,7 +280,7 @@ describe('BuildQueueComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(BuildQueueComponent);
+        fixture = TestBed.createComponent(BuildOverviewComponent);
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
         modalService = TestBed.inject(NgbModal);
