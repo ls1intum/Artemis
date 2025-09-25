@@ -62,16 +62,18 @@ public class ExamRoomDistributionService {
      * @param examRoomIds The ids of the rooms to distribute to
      * @implNote Currently only the "default" layout strategy is used.
      */
-    public void distributeRegisteredStudents(long examId, @NotEmpty Set<Long> examRoomIds, boolean onlyUseDefaultLayouts) {
+    public void distributeRegisteredStudents(long examId, @NotEmpty Set<Long> examRoomIds, boolean useOnlyDefaultLayouts) {
         final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         final Set<ExamRoom> examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
 
         final int numberOfUsableSeats = examRoomsForExam.stream().mapToInt(examRoom -> examRoomService.getDefaultLayoutStrategyOrElseThrow(examRoom).getCapacity()).sum();
         final int numberOfExamUsers = exam.getExamUsers().size();
 
-        if (onlyUseDefaultLayouts && numberOfUsableSeats < numberOfExamUsers) {
-            throw new BadRequestAlertException("Not enough seats available in the selected rooms", ENTITY_NAME, "notEnoughExamSeats",
-                    Map.of("numberOfUsableSeats", numberOfUsableSeats, "numberOfExamUsers", numberOfExamUsers));
+        if (numberOfUsableSeats < numberOfExamUsers) {
+            if (useOnlyDefaultLayouts) {
+                throw new BadRequestAlertException("Not enough seats available in the selected rooms", ENTITY_NAME, "notEnoughExamSeats",
+                        Map.of("numberOfUsableSeats", numberOfUsableSeats, "numberOfExamUsers", numberOfExamUsers));
+            }
         }
 
         assignExamRoomsToExam(exam, examRoomsForExam);

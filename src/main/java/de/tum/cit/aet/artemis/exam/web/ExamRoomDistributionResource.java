@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -60,8 +61,10 @@ public class ExamRoomDistributionResource {
      */
     @PostMapping("courses/{courseId}/exams/{examId}/distribute-registered-students")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> distributeRegisteredStudents(@PathVariable long courseId, @PathVariable long examId, @RequestBody Set<Long> examRoomIds) {
+    public ResponseEntity<Void> distributeRegisteredStudents(@PathVariable long courseId, @PathVariable long examId,
+            @RequestParam(defaultValue = "false") boolean useOnlyDefaultLayouts, @RequestBody Set<Long> examRoomIds) {
         log.debug("REST request to distribute students across rooms for exam : {}", examId);
+        log.error("useOnlyDefaultLayout: {}", useOnlyDefaultLayouts);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         if (examRoomIds == null || examRoomIds.isEmpty()) {
@@ -72,7 +75,7 @@ public class ExamRoomDistributionResource {
             throw new BadRequestAlertException("You have invalid room IDs", ENTITY_NAME, "invalidRoomIDs");
         }
 
-        examRoomDistributionService.distributeRegisteredStudents(examId, examRoomIds);
+        examRoomDistributionService.distributeRegisteredStudents(examId, examRoomIds, useOnlyDefaultLayouts);
 
         return ResponseEntity.ok().build();
     }
