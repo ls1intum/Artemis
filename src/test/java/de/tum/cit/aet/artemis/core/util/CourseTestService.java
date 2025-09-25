@@ -20,8 +20,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2686,6 +2688,8 @@ public class CourseTestService {
     public void testGetCourseManagementDetailData() throws Exception {
         adjustUserGroupsToCustomGroups();
         // we inject a fixed clock in our tests that TimeUtil uses, so the timestamp below is always the same in tests.
+        Clock fixedClock = Clock.fixed(Instant.parse("2025-09-10T10:25:00Z"), ZoneOffset.UTC);
+        TimeUtil.setClock(fixedClock);
         ZonedDateTime now = TimeUtil.now();
         // add courses with exercises
         var courses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);

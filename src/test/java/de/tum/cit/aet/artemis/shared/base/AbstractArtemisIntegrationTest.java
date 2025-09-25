@@ -7,9 +7,7 @@ import static org.mockito.Mockito.doReturn;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -206,8 +204,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         // Set the static file upload path for all tests
         // This makes it a simple unit test that doesn't require a server start.
         FilePathConverter.setFileUploadPath(rootPath);
-        Clock fixedClock = Clock.fixed(Instant.parse("2025-09-10T10:25:00Z"), ZoneOffset.UTC);
-        TimeUtil.setClock(fixedClock);
     }
 
     @BeforeEach
