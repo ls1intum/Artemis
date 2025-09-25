@@ -53,7 +53,7 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
             FROM QuizQuestion q
             WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE
             """)
-    Slice<QuizQuestion> findAllPracticeQuizQuestionsByCourseId(@Param("courseId") Long courseId, Pageable pageable);
+    Slice<QuizQuestion> findAllPracticeQuizQuestionsByCourseId(@Param("courseId") long courseId, Pageable pageable);
 
     @Query("""
             SELECT q

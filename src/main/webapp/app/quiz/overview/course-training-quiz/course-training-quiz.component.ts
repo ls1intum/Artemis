@@ -45,7 +45,7 @@ export class CourseTrainingQuizComponent {
 
     // Pagination options
     page = signal(0);
-    size = 3; // The number of questions per page is set so low for testing purposes and will be increased to 50 after successful testing
+    size = 20;
     totalItems = signal(0);
     allLoadedQuestions = signal<QuizQuestionTraining[]>([]);
     hasNext = signal(false);
