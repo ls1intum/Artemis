@@ -106,11 +106,13 @@ export class TextResultComponent {
             return undefined;
         }
 
-        const textBlock = new TextBlock();
-        textBlock.startIndex = 0;
-        textBlock.endIndex = this.submissionText.length;
-        textBlock.text = this.submissionText;
+        if (this.submission.blocks) {
+            const result = this.submission.blocks.find((block) => block.id === feedback.reference);
+            if (result) {
+                return new TextResultBlock(result, feedback);
+            }
+        }
 
-        return new TextResultBlock(textBlock, feedback);
+        return undefined;
     }
 }
