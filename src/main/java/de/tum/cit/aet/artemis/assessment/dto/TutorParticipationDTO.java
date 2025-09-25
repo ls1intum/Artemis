@@ -4,13 +4,16 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorParticipationDTO(long id, long exerciseId, long tutorId, TutorParticipationStatus status, Set<ExampleSubmissionDTO> trainedExampleSubmissions) {
+public record TutorParticipationDTO(long id, long exerciseId, long tutorId, @NotNull TutorParticipationStatus status,
+        @NotNull Set<ExampleSubmissionDTO> trainedExampleSubmissions) {
 
     /**
      * Convert a TutorParticipation entity to a TutorParticipationDTO.
