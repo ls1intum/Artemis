@@ -15,7 +15,7 @@ type Day = { date: Dayjs; isSelected: boolean; id: string };
 export class CalendarMobileDayPresentationComponent implements AfterViewInit {
     private static readonly INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT = 7.5;
     private static readonly INITIAL_SCROLL_POSITION =
-        CalendarMobileDayPresentationComponent.INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT * CalendarEventsPerDaySectionComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL;
+        CalendarMobileDayPresentationComponent.INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT * CalendarEventsPerDaySectionComponent.HOUR_HEIGHT_IN_PIXEL;
     readonly utils = utils;
     private scrollContainer = viewChild<ElementRef>('scrollContainer');
 
