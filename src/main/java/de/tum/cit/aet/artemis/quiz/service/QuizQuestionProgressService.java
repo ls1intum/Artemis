@@ -269,7 +269,6 @@ public class QuizQuestionProgressService {
      * @param courseId   The id of the course
      * @param answer     The submitted answer for the question
      * @param answeredAt The time when the question was answered
-     * @param courseId   The id of the course
      */
 
     public void saveProgressFromTraining(QuizQuestion question, long userId, long courseId, SubmittedAnswer answer, ZonedDateTime answeredAt) {
