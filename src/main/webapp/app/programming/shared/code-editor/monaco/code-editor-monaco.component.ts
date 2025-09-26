@@ -227,7 +227,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
                         code: text,
                         loadingError: false,
                         scrollTop: previousScrollTop,
-                        cursor: this.editor().getPosition(),
+                        cursor: fileName === this.selectedFile() ? this.editor().getPosition() : this.fileSession()[fileName].cursor,
                     },
                 });
 
