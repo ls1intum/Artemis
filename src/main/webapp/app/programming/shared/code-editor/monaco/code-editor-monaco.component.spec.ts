@@ -140,7 +140,7 @@ describe('CodeEditorMonacoComponent', () => {
         comp.fileSession.set(fileSession);
         fixture.componentRef.setInput('selectedFile', selectedFile);
         comp.onFileTextChanged({ text: newCode, fileName: selectedFile });
-        expect(valueCallbackStub).toHaveBeenCalledExactlyOnceWith({ file: selectedFile, fileContent: newCode });
+        expect(valueCallbackStub).toHaveBeenCalledExactlyOnceWith({ fileName: selectedFile, text: newCode });
         expect(comp.fileSession()).toEqual({
             [selectedFile]: { ...fileSession[selectedFile], code: newCode, scrollTop: 0 },
         });

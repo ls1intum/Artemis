@@ -82,7 +82,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
     readonly buildAnnotations = input<Annotation[]>([]);
 
     readonly onError = output<string>();
-    readonly onFileContentChange = output<{ file: string; fileContent: string }>();
+    readonly onFileContentChange = output<{ fileName: string; text: string }>();
     readonly onUpdateFeedback = output<Feedback[]>();
     readonly onFileLoad = output<string>();
     readonly onAcceptSuggestion = output<Feedback>();
@@ -231,7 +231,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
                     },
                 });
 
-                this.onFileContentChange.emit({ file: fileName, fileContent: text });
+                this.onFileContentChange.emit({ fileName, text });
             }
         }
     }
