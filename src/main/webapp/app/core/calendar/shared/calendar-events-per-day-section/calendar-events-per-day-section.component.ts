@@ -5,14 +5,13 @@ import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entit
 import { Dayjs } from 'dayjs/esm';
 import { CalendarEventAndPosition, PositionInfo } from 'app/core/calendar/shared/entities/calendar-event-and-position.model';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
+import { CalendarNewEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-new-component/calendar-new-event-detail-popover.component';
 
 type Day = { date: Dayjs; eventsAndPositions: CalendarEventAndPosition[]; id: string };
 
 @Component({
     selector: 'jhi-calendar-events-per-day-section',
-    imports: [NgClass, NgStyle, CalendarEventDetailPopoverComponent, NgbPopover],
+    imports: [NgClass, NgStyle, CalendarNewEventDetailPopoverComponent],
     templateUrl: './calendar-events-per-day-section.component.html',
     styleUrl: './calendar-events-per-day-section.component.scss',
 })
@@ -22,7 +21,6 @@ export class CalendarEventsPerDaySectionComponent {
 
     private eventService = inject(CalendarService);
     private dateToEventAndPositionMap = computed(() => this.computeDateToEventAndPositionMap(this.eventService.eventMap(), this.dates()));
-    private popover?: NgbPopover;
 
     readonly CalendarEventType = CalendarEventType;
 
@@ -43,23 +41,6 @@ export class CalendarEventsPerDaySectionComponent {
         effect(() => {
             this.isEventSelected.emit(this.selectedEvent() !== undefined);
         });
-    }
-
-    openPopover(event: CalendarEvent, popover: NgbPopover) {
-        if (this.selectedEvent() === event) {
-            this.closePopover();
-            return;
-        }
-        this.selectedEvent.set(event);
-        this.popover?.close();
-        this.popover = popover;
-        popover.open();
-    }
-
-    closePopover() {
-        this.popover?.close();
-        this.popover = undefined;
-        this.selectedEvent.set(undefined);
     }
 
     private getEventsAndPositions(date: Dayjs): CalendarEventAndPosition[] {

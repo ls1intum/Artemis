@@ -5,7 +5,7 @@
     </div>
     <div class="info-row">
         <div class="icon-frame">
-            <fa-icon class="popover-icon" [icon]="utils.getIconForEvent(event())" />
+            <fa-icon [icon]="utils.getIconForEvent(event())" />
         </div>
         <div jhiTranslate="{{ utils.getEventTypeNameKey(event()) }}" data-testid="event-type-name-key"></div>
     </div>
@@ -35,7 +35,7 @@
     @if (event().facilitator) {
         <div class="info-row" id="facilitator-row">
             <div class="icon-frame">
-                <fa-icon class="popover-icon" [icon]="faUser" />
+                <fa-icon [icon]="faUser" />
             </div>
             <div>{{ event().facilitator }}</div>
         </div>

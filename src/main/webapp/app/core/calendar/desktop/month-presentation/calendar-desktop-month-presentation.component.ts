@@ -1,6 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Dayjs } from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -8,16 +7,15 @@ import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
-import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover/calendar-event-detail-popover.component';
+import { CalendarNewEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-new-component/calendar-new-event-detail-popover.component';
 
 @Component({
     selector: 'jhi-calendar-desktop-month-presentation',
-    imports: [NgClass, NgTemplateOutlet, NgbPopover, FaIconComponent, TranslateDirective, CalendarDayBadgeComponent, CalendarEventDetailPopoverComponent],
+    imports: [NgClass, NgTemplateOutlet, FaIconComponent, TranslateDirective, CalendarDayBadgeComponent, CalendarNewEventDetailPopoverComponent],
     templateUrl: './calendar-desktop-month-presentation.component.html',
     styleUrls: ['./calendar-desktop-month-presentation.component.scss'],
 })
 export class CalendarDesktopMonthPresentationComponent {
-    private popover?: NgbPopover;
     private eventMap = inject(CalendarService).eventMap;
 
     firstDayOfCurrentMonth = input.required<Dayjs>();
@@ -30,23 +28,6 @@ export class CalendarDesktopMonthPresentationComponent {
     getEventsOf(day: Dayjs): CalendarEvent[] {
         const key = day.format('YYYY-MM-DD');
         return this.eventMap().get(key) ?? [];
-    }
-
-    openPopover(event: CalendarEvent, popover: NgbPopover) {
-        if (this.selectedEvent() === event) {
-            this.closePopover();
-            return;
-        }
-        this.selectedEvent.set(event);
-        this.popover?.close();
-        this.popover = popover;
-        popover.open();
-    }
-
-    closePopover() {
-        this.popover?.close();
-        this.popover = undefined;
-        this.selectedEvent.set(undefined);
     }
 
     /**
