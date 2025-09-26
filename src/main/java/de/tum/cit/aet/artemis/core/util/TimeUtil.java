@@ -83,6 +83,13 @@ public class TimeUtil {
         return ZonedDateTime.now(clock);
     }
 
+    /**
+     * Sets a new Clock instance.
+     * This is used for testing purposes to control the current time.
+     * When no longer needed, the clock should be reset to the system default using {@link #resetClock()}.
+     *
+     * @param newClock the new Clock instance to set
+     */
     public static void setClock(Clock newClock) {
         clock = newClock;
     }

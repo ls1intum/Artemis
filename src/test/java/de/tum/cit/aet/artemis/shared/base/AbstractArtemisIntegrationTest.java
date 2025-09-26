@@ -13,7 +13,6 @@ import java.util.Optional;
 
 import jakarta.mail.internet.MimeMessage;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +55,6 @@ import de.tum.cit.aet.artemis.core.util.HibernateQueryInterceptor;
 import de.tum.cit.aet.artemis.core.util.QueryCountAssert;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.util.ThrowingProducer;
-import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -223,11 +221,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @AfterEach
     void stopQuizScheduler() {
         scheduleService.clearAllTasks();
-    }
-
-    @AfterAll
-    static void resetClock() {
-        TimeUtil.resetClock();
     }
 
     @AfterEach
