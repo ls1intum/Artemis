@@ -66,7 +66,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private contentHeightListener?: Disposable;
     private textChangedListener?: Disposable;
     private blurEditorWidgetListener?: Disposable;
-    private textChangedEmitTimeout?: NodeJS.Timeout;
+    private textChangedEmitTimeouts = new Map<string, NodeJS.Timeout>();
     private customBackspaceCommandId: string | undefined;
 
     /*
@@ -177,6 +177,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
         this.blurEditorWidgetListener?.dispose();
+
+        // Clean up all per-model debounce timeouts
+        this.textChangedEmitTimeouts.forEach((timeout) => clearTimeout(timeout));
+        this.textChangedEmitTimeouts.clear();
     }
 
     private emitTextChangeEvent() {
@@ -187,15 +191,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
         if (!delay) {
             this.textChanged.emit({ text: newValue, fileName: fullFilePath });
-        } else {
-            if (this.textChangedEmitTimeout) {
-                clearTimeout(this.textChangedEmitTimeout);
-                this.textChangedEmitTimeout = undefined;
-            }
-            this.textChangedEmitTimeout = setTimeout(() => {
-                this.textChanged.emit({ text: newValue, fileName: fullFilePath });
-            }, delay);
+            return;
         }
+        const modelKey = model?.uri?.toString() ?? '';
+        const existing = this.textChangedEmitTimeouts.get(modelKey);
+        if (existing) {
+            clearTimeout(existing);
+        }
+        const timeoutId = setTimeout(() => {
+            this.textChanged.emit({ text: newValue, fileName: fullFilePath });
+            this.textChangedEmitTimeouts.delete(modelKey);
+        }, delay);
+        this.textChangedEmitTimeouts.set(modelKey, timeoutId);
     }
 
     private extractFilePathFromModel(model: monaco.editor.ITextModel | null): string {
