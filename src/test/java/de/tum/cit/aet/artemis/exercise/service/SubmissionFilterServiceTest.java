@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
+import io.jsonwebtoken.lang.Arrays;
 
 class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -282,6 +283,31 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
         assertThat(submission).isPresent().get().isEqualTo(submissionWithManualAssessment);
         assertThat(submission.get().getResults()).hasSize(1);
         assertThat(submission.get().getResults().getFirst()).isEqualTo(retriggeredSecondResult);
+    }
+
+    @Test
+    void shouldFindLatestAutomaticProgrammingSubmissionManualAssessment_beforeAssessmentDueDate() {
+        var programmingExercise = exerciseByType.get(ExerciseType.PROGRAMMING);
+        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusHours(3));
+
+        var submissionWithManualAssessment = new ProgrammingSubmission();
+        submissionWithManualAssessment.setId(2L);
+        var firstResult = new Result().rated(true).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
+        firstResult.setId(1L);
+        var secondResult = new Result().rated(true).score(1.0).completionDate(ZonedDateTime.now().plusHours(1)).assessmentType(AssessmentType.AUTOMATIC);
+        secondResult.setId(2L);
+        var secondResultWithManualAssessment = new Result().score(2.0).rated(true).completionDate(ZonedDateTime.now().plusHours(2)).assessmentType(AssessmentType.SEMI_AUTOMATIC);
+        secondResultWithManualAssessment.setId(4L);
+
+        Result[] resultsArray = new Result[] { firstResult, secondResult, null, secondResultWithManualAssessment };
+
+        submissionWithManualAssessment.setResults(Arrays.asList(resultsArray));
+        Set<Submission> submissions = Set.of(submissionWithManualAssessment);
+        submissions.forEach(s -> s.setParticipation(new StudentParticipation().exercise(programmingExercise)));
+        var submission = submissionFilterService.getLatestSubmissionWithResult(submissions, false);
+        assertThat(submission).isPresent().get().isEqualTo(submissionWithManualAssessment);
+        assertThat(submission.get().getResults()).hasSize(1);
+        assertThat(submission.get().getResults().getFirst()).isEqualTo(secondResult);
     }
 
     @Test
