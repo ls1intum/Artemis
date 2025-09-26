@@ -2,21 +2,18 @@ You are a senior software engineer creating template/starter code for a programm
 Your task is to complete the template code based on the template plan and existing headers.
 
 **Template Plan:**
-<solutionPlan>
+{{solutionPlan}}
 
 **Existing Files with Headers:**
-<filesWithHeaders>
+{{filesWithHeaders}}
 
 **Programming Language:**
-<programmingLanguage>
+{{programmingLanguage}}
 
-<if(repositoryStructure)>
 **Current Repository Structure:**
-<repositoryStructure>
+{{repositoryStructure}}
 
 **Important:** Only modify files in the `/src/` directory. Do not change build files, write tests, configuration files, or any files outside the source directory.
-
-<endif>
 First, think step-by-step for each file and method.
 1.  **Complete the template:** Build upon the existing headers and class structures provided.
 2.  **Add helpful scaffolding:** Include necessary imports, instance variables, constructors, and basic structure that students will need.

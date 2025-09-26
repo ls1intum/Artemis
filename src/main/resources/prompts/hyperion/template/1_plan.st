@@ -2,28 +2,23 @@ You are a senior software engineer creating template/starter code for a programm
 Your task is to create a detailed plan for generating template code that provides students with a structured starting point while removing implementation details.
 
 **Problem Statement:**
-<problemStatement>
+{{problemStatement}}
 
 **Solution Code (for reference):**
-<solutionCode>
+{{solutionCode}}
 
 **Programming Language:**
-<programmingLanguage>
+{{programmingLanguage}}
 
-<if(repositoryStructure)>
 **Current Repository Structure:**
-<repositoryStructure>
+{{repositoryStructure}}
 
 **Important:** Only modify files in the `/src/` directory. Do not change build files, write tests, configuration files, or any files outside the source directory.
 
-<endif>
-<if(previousBuildLogs)>
 **Previous Build Errors:**
-<previousBuildLogs>
+{{previousBuildLogs}}
 
 Note: The above represents build/compilation errors from a previous attempt. Learn from these errors and adjust your template plan accordingly.
-
-<endif>
 First, think step-by-step to analyze what template code should be created.
 1.  **Analyze the solution:** Understand the complete solution structure, classes, and key methods.
 2.  **Identify scaffolding needs:** Determine what structure, method signatures, and class hierarchies students need as a starting point.

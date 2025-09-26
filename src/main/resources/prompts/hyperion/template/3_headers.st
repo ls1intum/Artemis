@@ -2,21 +2,18 @@ You are a senior software engineer creating template/starter code for a programm
 Your task is to generate the template boilerplate code for each file based on the template plan.
 
 **Template Plan:**
-<solutionPlan>
+{{solutionPlan}}
 
 **File Structure:**
-<fileStructure>
+{{fileStructure}}
 
 **Programming Language:**
-<programmingLanguage>
+{{programmingLanguage}}
 
-<if(repositoryStructure)>
 **Current Repository Structure:**
-<repositoryStructure>
+{{repositoryStructure}}
 
 **Important:** Only modify files in the `/src/` directory. Do not change build files, write tests, configuration files, or any files outside the source directory.
-
-<endif>
 First, think step-by-step for each file.
 1.  **Create template classes:** For each source file, define the public class with proper structure.
 2.  **Add method signatures:** Inside each class, add the method signatures that students need to implement.
