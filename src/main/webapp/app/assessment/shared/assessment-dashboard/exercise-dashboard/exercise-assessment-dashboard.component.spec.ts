@@ -475,6 +475,18 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.tutorParticipationStatus).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
     });
 
+    it('should show error if readInstruction fails', () => {
+        const httpError = new HttpErrorResponse({ status: 400, error: { detail: 'Mock error' } });
+        const createStub = jest.spyOn(tutorParticipationService, 'create').mockReturnValue(throwError(() => httpError));
+        const onErrorSpy = jest.spyOn<any, any>(comp as any, 'onError').mockImplementation(() => undefined);
+
+        comp.readInstruction();
+
+        expect(createStub).toHaveBeenCalledWith(comp.exerciseId);
+        expect(onErrorSpy).toHaveBeenCalledOnce();
+        expect(onErrorSpy).toHaveBeenCalledWith(httpError);
+    });
+
     describe('test calls for all exercise types', () => {
         it('fileuploadSubmission', () => {
             modelingSubmissionStubWithoutAssessment.mockReturnValue(throwError(() => lockLimitErrorResponse));
