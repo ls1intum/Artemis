@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
  * REST controller for Memiris memories.
  */
 @Profile(PROFILE_IRIS)
+@FeatureToggle(Feature.Memiris)
 @Lazy
 @RestController
 @RequestMapping("api/iris/memories/")
@@ -46,7 +47,6 @@ public class IrisMemoryResource {
      */
     @GetMapping("user")
     @EnforceAtLeastStudent
-    @FeatureToggle(Feature.Memiris)
     public ResponseEntity<List<MemirisMemoryDTO>> listMemories() {
         var user = userRepository.getUser();
         var memories = pyrisConnectorService.listMemirisMemories(user.getId());
@@ -61,7 +61,6 @@ public class IrisMemoryResource {
      */
     @DeleteMapping("user/{memoryId}")
     @EnforceAtLeastStudent
-    @FeatureToggle(Feature.Memiris)
     public ResponseEntity<Void> deleteMemory(@PathVariable String memoryId) {
         var user = userRepository.getUser();
         pyrisConnectorService.deleteMemirisMemory(user.getId(), memoryId);
@@ -77,7 +76,6 @@ public class IrisMemoryResource {
      */
     @GetMapping("user/{memoryId}")
     @EnforceAtLeastStudent
-    @FeatureToggle(Feature.Memiris)
     public ResponseEntity<MemirisMemoryWithRelationsDTO> getMemoryWithRelations(@PathVariable String memoryId) {
         var user = userRepository.getUser();
         var dto = pyrisConnectorService.getMemirisMemoryWithRelations(user.getId(), memoryId);
