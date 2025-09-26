@@ -453,6 +453,14 @@ public class BuildJobContainerService {
         final int maxRetries = 3;
         final long retryDelayMs = 1000;
 
+        /*
+         * Retry mechanism is essential for Docker container operations due to potential transient failures:
+         * - Docker daemon may be temporarily overloaded or unresponsive
+         * - Network connectivity issues between client and Docker daemon
+         * - Container filesystem may be temporarily locked or busy
+         * - Resource contention during concurrent build operations
+         * This improves reliability in CI/CD environments where multiple builds run simultaneously.
+         */
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
             try (final var uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray());
                     final var copyToContainerCommand = buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId)

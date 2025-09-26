@@ -221,6 +221,7 @@
                 "tasksOfExercise": "Teilaufgaben:"
             },
             "codeGeneration": {
+                "creationAssistance": "Erstellungsassistenz",
                 "generateCode": "Code generieren",
                 "generating": "Generiere...",
                 "description": "Generiere Lösung, Template und Test-Code mit KI",
