@@ -120,7 +120,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    // when upgrading to Spring Boot 4, we can remove this test.
+    // TODO When upgrading to Spring Boot 4, we can remove this test.
     @SuppressWarnings("removal")
     void testNoMockBeanAndSpyBean() {
         ArchRule noMockBeanAndSpyBean = noFields().should().beAnnotatedWith(MockBean.class).orShould().beAnnotatedWith(SpyBean.class)
