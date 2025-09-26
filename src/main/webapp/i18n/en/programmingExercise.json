@@ -221,6 +221,7 @@
                 "tasksOfExercise": "Tasks:"
             },
             "codeGeneration": {
+                "creationAssistance": "Creation Assistance",
                 "generateCode": "Generate Code",
                 "generating": "Generating...",
                 "description": "Generate solution, template, and test code using AI",
