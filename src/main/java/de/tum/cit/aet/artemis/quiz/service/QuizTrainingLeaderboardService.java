@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -38,7 +37,17 @@ public class QuizTrainingLeaderboardService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private static final int BRONZE_LEAGUE = 3;
+    private final QuizQuestionProgressRepository quizQuestionProgressRepository;
+
+    private static final int BRONZE_LEAGUE = 5;
+
+    private static final int SILVER_LEAGUE = 4;
+
+    private static final int GOLD_LEAGUE = 3;
+
+    private static final int DIAMOND_LEAGUE = 2;
+
+    private static final int MASTER_LEAGUE = 1;
 
     private static final int NO_LEAGUE = 0;
 
@@ -46,12 +55,13 @@ public class QuizTrainingLeaderboardService {
     }
 
     public QuizTrainingLeaderboardService(QuizTrainingLeaderboardRepository quizTrainingLeaderboardRepository, CourseRepository courseRepository, UserRepository userRepository,
-            QuizQuestionProgressRepository quizQuestionProgressRepository, QuizQuestionRepository quizQuestionRepository, AuthorizationCheckService authorizationCheckService) {
+            QuizQuestionRepository quizQuestionRepository, AuthorizationCheckService authorizationCheckService, QuizQuestionProgressRepository quizQuestionProgressRepository) {
         this.quizTrainingLeaderboardRepository = quizTrainingLeaderboardRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.quizQuestionProgressRepository = quizQuestionProgressRepository;
     }
 
     /**
@@ -125,96 +135,100 @@ public class QuizTrainingLeaderboardService {
     /**
      * Updates the leaderboard score for a user in a course based on answered questions.
      *
-     * @param userId            the ID of the user
-     * @param courseId          the ID of the course
-     * @param answeredQuestions the set of answered question progress data
+     * @param userId           the ID of the user
+     * @param courseId         the ID of the course
+     * @param answeredQuestion the set of answered question progress data
      * @throws IllegalArgumentException if the user or course is not found
      */
-    public void updateLeaderboardScore(long userId, long courseId, Set<QuizQuestionProgressData> answeredQuestions) {
-        int delta = calculateScoreDelta(answeredQuestions);
-        AnswerCounts answerCounts = calculateAnswerCounts(answeredQuestions);
+    public void updateLeaderboardScore(long userId, long courseId, QuizQuestionProgressData answeredQuestion) {
+        int delta = calculateScoreDelta(answeredQuestion);
+        AnswerCounts answerCounts = calculateAnswerCounts(answeredQuestion);
         int correctAnswers = answerCounts.correct;
         int wrongAnswers = answerCounts.wrong;
-        long totalAvailableQuestions = quizQuestionRepository.countOfQuizQuestionsAvailableForPractice(courseId);
 
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.findByIdElseThrow(userId);
-        QuizTrainingLeaderboard leaderboardEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).orElseGet(() -> {
-            QuizTrainingLeaderboard entry = new QuizTrainingLeaderboard();
-            entry.setUser(user);
-            entry.setCourse(course);
-            entry.setLeaderboardName(user.getFirstName()); // This will be adapted to the chosen name of the user later
-            entry.setLeague(BRONZE_LEAGUE);
-            entry.setScore(0);
-            entry.setAnsweredCorrectly(0);
-            entry.setAnsweredWrong(0);
-            entry.setDueDate(ZonedDateTime.now());
-            entry.setStreak(0);
-            return entry;
-        });
+        QuizTrainingLeaderboard leaderboardEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).orElseThrow();
+        ZonedDateTime dueDate = findLatestDueDate(userId, courseId);
+        int score = leaderboardEntry.getScore() + delta;
+        int league = calculateLeague(score);
 
-        leaderboardEntry.setScore(leaderboardEntry.getScore() + delta);
-        leaderboardEntry.setAnsweredCorrectly(leaderboardEntry.getAnsweredCorrectly() + correctAnswers);
-        leaderboardEntry.setAnsweredWrong(leaderboardEntry.getAnsweredWrong() + wrongAnswers);
+        quizTrainingLeaderboardRepository.updateLeaderboardEntry(userId, courseId, score, correctAnswers, wrongAnswers, league, dueDate);
+    }
 
-        ZonedDateTime dueDate = findLatestDueDate(answeredQuestions);
-        leaderboardEntry.setDueDate(dueDate);
-
-        quizTrainingLeaderboardRepository.save(leaderboardEntry);
+    private int calculateLeague(int score) {
+        if (score < 100) {
+            return BRONZE_LEAGUE;
+        }
+        else if (score < 200) {
+            return SILVER_LEAGUE;
+        }
+        else if (score < 300) {
+            return GOLD_LEAGUE;
+        }
+        else if (score < 400) {
+            return DIAMOND_LEAGUE;
+        }
+        else {
+            return MASTER_LEAGUE;
+        }
     }
 
     /**
      * Finds the earliest due date from a set of quiz question progress data.
      * If no due dates are available, returns the current time.
      *
-     * @param progressDataSet the set of quiz question progress data to analyze
      * @return the earliest due date found or the current time if none exists
      */
-    private ZonedDateTime findLatestDueDate(Set<QuizQuestionProgressData> progressDataSet) {
-        return progressDataSet.stream().map(QuizQuestionProgressData::getDueDate).filter(date -> date != null).min(ZonedDateTime::compareTo).orElse(ZonedDateTime.now());
+    private ZonedDateTime findLatestDueDate(long userId, long courseId) {
+        // Set<QuizQuestionProgress> progressSet = quizQuestionProgressRepository.findByUserIdAndCourseId(userId, courseId); -- This is implemented in a previous PR
+        // return progressDataSet.stream().map(QuizQuestionProgressData::getDueDate).filter(date -> date != null).min(ZonedDateTime::compareTo).orElse(ZonedDateTime.now());
+        return null; // Placeholder until the above line can be used
     }
 
     /**
-     * Calculates the score delta based on the answered questions.
+     * Calculates the score delta based on the answered question.
      *
-     * @param answeredQuestions the set of answered question progress data
+     * @param answeredQuestion the answered question progress data
      * @return the calculated score delta
      */
-    private int calculateScoreDelta(Set<QuizQuestionProgressData> answeredQuestions) {
+    private int calculateScoreDelta(QuizQuestionProgressData answeredQuestion) {
         int delta = 0;
-        for (QuizQuestionProgressData data : answeredQuestions) {
-            double lastScore = data.getLastScore();
-            int box = data.getBox();
+        double lastScore = answeredQuestion.getLastScore();
+        int box = answeredQuestion.getBox();
 
-            // Preliminary formula for score calculation
-            double questionDelta = 2 * lastScore + box * lastScore;
+        // Preliminary formula for score calculation
+        double questionDelta = 2 * lastScore + box * lastScore;
 
-            delta += (int) Math.round(questionDelta);
-        }
+        delta += (int) Math.round(questionDelta);
         return delta;
     }
 
     /**
-     * Calculates the number of correctly and incorrectly answered questions from a set of quiz question progress data.
+     * Calculates the number of correctly and incorrectly answered questions from the answered quiz question progress data.
      * A question is considered correctly answered if its last score is greater than or equal to 1.0,
      * otherwise it is counted as incorrectly answered.
      *
-     * @param answeredQuestions the set of quiz question progress data to analyze
+     * @param answeredQuestion the answered quiz question progress data to analyze
      * @return an AnswerCounts record containing the count of correct and wrong answers
      */
-    private AnswerCounts calculateAnswerCounts(Set<QuizQuestionProgressData> answeredQuestions) {
+    private AnswerCounts calculateAnswerCounts(QuizQuestionProgressData answeredQuestion) {
         int correctCount = 0;
         int wrongCount = 0;
 
-        for (QuizQuestionProgressData data : answeredQuestions) {
-            if (data.getLastScore() >= 1.0) {
-                correctCount++;
-            }
-            else {
-                wrongCount++;
-            }
+        if (answeredQuestion.getLastScore() >= 1.0) {
+            correctCount++;
+        }
+        else {
+            wrongCount++;
         }
 
         return new AnswerCounts(correctCount, wrongCount);
+    }
+
+    public void updateLeaderboardName(long userId, String newName) {
+        quizTrainingLeaderboardRepository.updateLeaderboardName(userId, newName);
+    }
+
+    public void updateShownInLeaderboard(long userId, boolean shownInLeaderboard) {
+        quizTrainingLeaderboardRepository.updateShownInLeaderboard(userId, shownInLeaderboard);
     }
 }

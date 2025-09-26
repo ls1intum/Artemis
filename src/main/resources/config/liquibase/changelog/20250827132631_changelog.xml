@@ -28,13 +28,13 @@
             <column name="answered_wrong" type="int">
                 <constraints nullable="false"/>
             </column>
-            <column name="total_questions" type="int">
-                <constraints nullable="false"/>
-            </column>
             <column name="due_date" type="datetime(3)">
                 <constraints nullable="false"/>
             </column>
             <column name="streak" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="show_in_leaderboard" type="boolean">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -60,9 +60,10 @@
                 columnNames="user_id, course_id"
                 constraintName="uc_quiz_training_leaderboard_user_course"/>
 
-        <createIndex indexName="idx_quiz_training_league_course" tableName="quiz_training_leaderboard">
+        <createIndex indexName="idx_quiz_training_league_course_show" tableName="quiz_training_leaderboard">
             <column name="league"/>
             <column name="course_id"/>
+            <column name="show_in_leaderboard"/>
         </createIndex>
     </changeSet>
 </databaseChangeLog>

@@ -3,12 +3,14 @@ package de.tum.cit.aet.artemis.quiz.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -24,4 +26,29 @@ public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<
 
     @EntityGraph(type = LOAD, attributePaths = "user")
     Optional<QuizTrainingLeaderboard> findByUserIdAndCourseId(long userId, long courseId);
+
+    @Query("""
+                UPDATE QuizTrainingLeaderboard qtl
+                SET qtl.score = :score,
+                    qtl.answeredCorrectly = :correctAnswers,
+                    qtl.answeredWrong = :wrongAnswers,
+                    qtl.league = :league,
+                    qtl.dueDate = :dueDate
+                WHERE qtl.user.id = :userId AND qtl.course.id = :courseId
+            """)
+    void updateLeaderboardEntry(long userId, long courseId, int score, int correctAnswers, int wrongAnswers, int league, ZonedDateTime dueDate);
+
+    @Query("""
+            UPDATE QuizTrainingLeaderboard qtl
+            SET qtl.leaderboardName = :newName
+            WHERE qtl.user.id = :userId
+            """)
+    void updateLeaderboardName(long userId, String newName);
+
+    @Query("""
+            UPDATE QuizTrainingLeaderboard qtl
+            SET qtl.showInLeaderboard = :showInLeaderboard
+            WHERE qtl.user.id = :userId
+            """)
+    void updateShownInLeaderboard(long userId, boolean shownInLeaderboard);
 }

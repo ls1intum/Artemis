@@ -293,6 +293,7 @@ public class QuizQuestionProgressService {
                 updateExistingProgress(userId, question, data, answeredAt);
             }
         }
+        quizTrainingLeaderboardService.updateLeaderboardScore(userId, courseId, data);
     }
 
     /**

@@ -17,6 +17,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,6 +37,9 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
+import de.tum.cit.aet.artemis.quiz.dto.LeaderboardSettingDTO;
+import de.tum.cit.aet.artemis.quiz.dto.QuizTrainingAnswerDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvaluationDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
@@ -137,4 +141,22 @@ public class QuizTrainingResource {
         List<LeaderboardEntryDTO> leaderboard = quizTrainingLeaderboardService.getLeaderboard(user.getId(), courseId);
         return ResponseEntity.ok(leaderboard);
     }
+
+    @PostMapping("leaderboard-settings")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Void> setLeaderboardSettings(@Valid @RequestBody LeaderboardSettingDTO leaderboardSettingDTO) {
+        log.debug("Rest request to set leaderboard settings: {}", leaderboardSettingDTO);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Boolean shownInLeaderboard = leaderboardSettingDTO.shownInLeaderboard();
+        String leaderboardName = leaderboardSettingDTO.leaderboardName();
+        if (leaderboardName != null) {
+            quizTrainingLeaderboardService.updateLeaderboardName(user.getId(), leaderboardName);
+        }
+        if (shownInLeaderboard != null) {
+            quizTrainingLeaderboardService.updateShownInLeaderboard(user.getId(), shownInLeaderboard);
+        }
+        return ResponseEntity.ok().build();
+    }
+
 }
