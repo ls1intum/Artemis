@@ -56,7 +56,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     stickyScroll = input<boolean>(false);
     readOnly = input<boolean>(false);
 
-    textChanged = output<string>();
+    textChanged = output<{ text: string; fileName: string }>();
     contentHeightChanged = output<number>();
     onBlurEditor = output<void>();
 
@@ -181,18 +181,37 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     private emitTextChangeEvent() {
         const newValue = this.getText();
-        const delay = undefined;
+        const delay = this.textChangedEmitDelay();
+        const model = this.getModel();
+        const fullFilePath = this.extractFilePathFromModel(model);
+
         if (!delay) {
-            this.textChanged.emit(newValue);
+            this.textChanged.emit({ text: newValue, fileName: fullFilePath });
         } else {
             if (this.textChangedEmitTimeout) {
                 clearTimeout(this.textChangedEmitTimeout);
                 this.textChangedEmitTimeout = undefined;
             }
             this.textChangedEmitTimeout = setTimeout(() => {
-                this.textChanged.emit(newValue);
+                this.textChanged.emit({ text: newValue, fileName: fullFilePath });
             }, delay);
         }
+    }
+
+    private extractFilePathFromModel(model: any): string {
+        if (!model?.uri?.path) {
+            return '';
+        }
+
+        const uriPath = model.uri.path;
+        const parts = uriPath.split('/');
+
+        const editorIdIndex = parts.findIndex((part: string) => part.includes('ICodeEditor'));
+        if (editorIdIndex !== -1 && editorIdIndex < parts.length - 1) {
+            return parts.slice(editorIdIndex + 1).join('/');
+        }
+
+        return parts[parts.length - 1] || '';
     }
 
     getPosition(): EditorPosition {

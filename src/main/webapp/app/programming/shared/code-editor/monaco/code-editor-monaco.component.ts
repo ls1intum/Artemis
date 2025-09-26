@@ -213,16 +213,25 @@ export class CodeEditorMonacoComponent implements OnChanges {
         this.editor().setScrollTop(this.fileSession()[this.selectedFile()!].scrollTop ?? 0);
     }
 
-    onFileTextChanged(text: string): void {
-        if (this.selectedFile() && this.fileSession()[this.selectedFile()!]) {
-            const previousText = this.fileSession()[this.selectedFile()!].code;
-            const previousScrollTop = this.fileSession()[this.selectedFile()!].scrollTop;
+    onFileTextChanged(event: { text: string; fileName: string }): void {
+        const { text, fileName } = event;
+        // Apply text change to the specific file it belongs to, not the currently selected file
+        if (fileName && this.fileSession()[fileName]) {
+            const previousText = this.fileSession()[fileName].code;
+            const previousScrollTop = this.fileSession()[fileName].scrollTop;
+
             if (previousText !== text) {
                 this.fileSession.set({
                     ...this.fileSession(),
-                    [this.selectedFile()!]: { code: text, loadingError: false, scrollTop: previousScrollTop, cursor: this.editor().getPosition() },
+                    [fileName]: {
+                        code: text,
+                        loadingError: false,
+                        scrollTop: previousScrollTop,
+                        cursor: this.editor().getPosition(),
+                    },
                 });
-                this.onFileContentChange.emit({ file: this.selectedFile()!, fileContent: text });
+
+                this.onFileContentChange.emit({ file: fileName, fileContent: text });
             }
         }
     }
