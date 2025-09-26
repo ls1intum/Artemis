@@ -90,7 +90,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
-    static final TypeReference<Map<String, List<CalendarEventDTO>>> EVENT_MAP_RETURN_TYPE = new TypeReference<Map<String, List<CalendarEventDTO>>>() {
+    static final TypeReference<Map<String, List<CalendarEventDTO>>> EVENT_MAP_RETURN_TYPE = new TypeReference<>() {
     };
 
     static final Comparator<ZonedDateTime> TIMESTAMP_COMPARATOR = Comparator.comparing(zdt -> zdt.toInstant().truncatedTo(ChronoUnit.MILLIS));

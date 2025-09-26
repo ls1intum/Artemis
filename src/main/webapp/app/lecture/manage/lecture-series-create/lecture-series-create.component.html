@@ -1,0 +1,32 @@
+<div class="frame">
+    <p>
+        Scaffold multiple lectures by defining a weekday, time, repetition frequency and repetition end date. Create lecture contents later. This can be useful if you want to
+        inform course participants when lectures will take place throughout the semester.
+    </p>
+    <div class="from-section">
+        <p-floatlabel variant="on">
+            <p-select
+                inputId="weekday"
+                [options]="weekdayOptions"
+                [ngModel]="selectedWeekdayIndex()"
+                (ngModelChange)="onSelectedWeekdayOptionChange($event)"
+                optionLabel="label"
+                optionValue="weekdayIndex"
+                style="width: 8rem"
+            />
+            <label for="weekday">Weekday</label>
+        </p-floatlabel>
+        <p-floatlabel variant="on">
+            <p-inputMask inputId="start-time" mask="99 : 99" slotChar="-" [ngModel]="startTime() ?? ''" (ngModelChange)="onStartTimeChange($event)" [style]="{ width: '8rem' }" />
+            <label for="start-time">Start Time</label>
+        </p-floatlabel>
+        <p-floatlabel variant="on">
+            <p-inputMask inputId="end-time" mask="99 : 99" slotChar="-" [ngModel]="endTime() ?? ''" (ngModelChange)="onEndTimeChange($event)" [style]="{ width: '8rem' }" />
+            <label for="end-time">End Time</label>
+        </p-floatlabel>
+        <p-floatlabel variant="on">
+            <p-datepicker inputId="end-date" [ngModel]="endDate() ?? null" (ngModelChange)="endDate.set($event ?? undefined)" style="width: 8rem" />
+            <label for="end-date">End Date</label>
+        </p-floatlabel>
+    </div>
+</div>

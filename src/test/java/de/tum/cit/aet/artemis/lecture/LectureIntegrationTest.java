@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +38,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.dto.LectureCreateDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
@@ -146,6 +149,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
         request.postWithResponseBody("/api/lecture/lectures/import/" + lecture1.getId() + "?courseId=" + course1.getId(), null, Lecture.class, HttpStatus.FORBIDDEN);
+        request.postListWithResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(), Lecture.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -479,5 +483,36 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Channel channel = channelRepository.findChannelByLectureId(lecture.getId());
         assertThat(channel).isNotNull();
         assertThat(channel.getName()).isEqualTo("lecture-" + lecture.getTitle().toLowerCase().replaceAll("[-\\s]+", "-")); // default name of imported lecture channel
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateLectureSeriesShouldReturnNotFoundIfCourseDoesNotExist() throws Exception {
+        request.postListWithResponseBody("/api/lecture/courses/-1/lectures", List.of(), Lecture.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateLectureSeries() throws Exception {
+        ZoneId timezone = ZoneId.of("Europe/Berlin");
+        ZonedDateTime startLecture1 = ZonedDateTime.of(1989, 11, 9, 18, 53, 0, 0, timezone);
+        ZonedDateTime endLecture1 = startLecture1.plusHours(1);
+        String titleLecture1 = "Requirements Engineering";
+        String channelNameLecture1 = "lecture-1";
+        ZonedDateTime startLecture2 = startLecture1.plusWeeks(1);
+        ZonedDateTime endLecture2 = startLecture2.plusHours(1);
+        String titleLecture2 = "System Design";
+        String channelNameLecture2 = "lecture-2";
+        LectureCreateDTO dto1 = new LectureCreateDTO(titleLecture1, channelNameLecture1, null, startLecture1, endLecture1);
+        LectureCreateDTO dto2 = new LectureCreateDTO(titleLecture2, channelNameLecture2, null, startLecture2, endLecture2);
+
+        List<Lecture> lectures = request.postListWithResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(dto1, dto2), Lecture.class, HttpStatus.CREATED);
+
+        assertThat(lectures).hasSize(2);
+        assertThat(lectures).extracting(Lecture::getTitle).containsExactlyInAnyOrder("Requirements Engineering", "System Design");
+
+        assertThat(lectures).extracting(Lecture::getTitle, Lecture::getChannelName, Lecture::getVisibleDate, l -> l.getStartDate().toInstant(), l -> l.getEndDate().toInstant())
+                .containsExactlyInAnyOrder(tuple(titleLecture1, channelNameLecture1, null, startLecture1.toInstant(), endLecture1.toInstant()),
+                        tuple(titleLecture2, channelNameLecture2, null, startLecture2.toInstant(), endLecture2.toInstant()));
     }
 }

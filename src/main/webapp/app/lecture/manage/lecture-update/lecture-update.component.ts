@@ -5,7 +5,6 @@ import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LectureService } from '../services/lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
@@ -28,6 +27,18 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { LectureSeriesCreateComponent } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
+
+export enum LectureCreationMode {
+    SINGLE = 'single',
+    SERIES = 'series',
+}
+
+interface CreateLectureOption {
+    label: string;
+    mode: LectureCreationMode;
+}
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -45,6 +56,8 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         LectureUpdateUnitsComponent,
         NgbTooltip,
         ArtemisTranslatePipe,
+        SelectButtonModule,
+        LectureSeriesCreateComponent,
     ],
 })
 export class LectureUpdateComponent implements OnInit, OnDestroy {
@@ -53,7 +66,6 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     protected readonly faSave = faSave;
     protected readonly faPuzzleProcess = faPuzzlePiece;
     protected readonly faBan = faBan;
-
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
@@ -64,11 +76,11 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     private readonly calendarService = inject(CalendarService);
     private readonly router = inject(Router);
 
+    private subscriptions = new Subscription();
     titleSection = viewChild.required(LectureTitleChannelNameComponent);
     lecturePeriodSection = viewChild.required(LectureUpdatePeriodComponent);
     unitSection = viewChild(LectureUpdateUnitsComponent);
     formStatusBar = viewChild(FormStatusBarComponent);
-
     courseTitle = model<string>('');
     lecture = signal<Lecture>(new Lecture());
     lectureOnInit: Lecture;
@@ -76,21 +88,14 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     isSaving: boolean;
     isProcessing: boolean;
     processUnitMode: boolean;
-
     formStatusSections: FormSectionStatus[];
-
-    courses: Course[];
-
     domainActionsDescription = [new FormulaAction()];
     file: File;
     fileName: string;
     fileInputTouched = false;
-
     isNewlyCreatedExercise = false;
-
     isChangeMadeToTitleOrPeriodSection = false;
     shouldDisplayDismissWarning = true;
-
     areSectionsValid = computed(() => {
         return (
             this.titleSection().titleChannelNameComponent().isValid() &&
@@ -99,7 +104,15 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
         );
     });
 
-    private subscriptions = new Subscription();
+    createLectureOptions: CreateLectureOption[] = [
+        { label: 'Single Lecture', mode: LectureCreationMode.SINGLE },
+        { label: 'Lecture Series', mode: LectureCreationMode.SERIES },
+    ];
+    selectedCreateLectureOption = signal<LectureCreationMode>(LectureCreationMode.SINGLE);
+    onCreateLectureOptionChange(optionMode: LectureCreationMode) {
+        this.selectedCreateLectureOption.set(optionMode);
+    }
+    isLectureSeriesCreationMode = computed(() => !this.isEditMode() && this.selectedCreateLectureOption() === LectureCreationMode.SERIES);
 
     constructor() {
         effect(() => {
