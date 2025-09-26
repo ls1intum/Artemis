@@ -91,7 +91,7 @@ public class TimeUtil {
      *
      * @param newClock the new Clock instance to set
      */
-    public static void setClock(Clock newClock) {
+    public static void setClock(@NotNull Clock newClock) {
         clock = Objects.requireNonNull(newClock, "Clock must not be null");
 
     }
