@@ -198,20 +198,18 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
     }
 
-    private extractFilePathFromModel(model: any): string {
-        if (!model?.uri?.path) {
+    private extractFilePathFromModel(model: monaco.editor.ITextModel | null): string {
+        const path = model?.uri?.path ?? '';
+        if (!path) {
             return '';
         }
-
-        const uriPath = model.uri.path;
-        const parts = uriPath.split('/');
-
-        const editorIdIndex = parts.findIndex((part: string) => part.includes('ICodeEditor'));
-        if (editorIdIndex !== -1 && editorIdIndex < parts.length - 1) {
-            return parts.slice(editorIdIndex + 1).join('/');
+        // Path format: /model/<editorId>/<full/file/path>
+        const parts = path.split('/').filter(Boolean);
+        if (parts.length >= 3 && parts[0] === 'model') {
+            return parts.slice(2).join('/');
         }
-
-        return parts[parts.length - 1] || '';
+        // Fallback: best effort
+        return parts.slice(1).join('/') || parts[parts.length - 1] || '';
     }
 
     getPosition(): EditorPosition {
