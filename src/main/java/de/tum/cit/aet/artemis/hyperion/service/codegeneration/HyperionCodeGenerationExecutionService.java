@@ -12,7 +12,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.hibernate.LazyInitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -71,9 +70,13 @@ public class HyperionCodeGenerationExecutionService {
 
     private final GitService gitService;
 
-    private final ApplicationContext applicationContext;
-
     private final RepositoryService repositoryService;
+
+    private final HyperionSolutionRepositoryService solutionStrategy;
+
+    private final HyperionTemplateRepositoryService templateStrategy;
+
+    private final HyperionTestRepositoryService testStrategy;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
@@ -87,12 +90,12 @@ public class HyperionCodeGenerationExecutionService {
 
     private final HyperionProgrammingExerciseContextRendererService repositoryStructureService;
 
-    public HyperionCodeGenerationExecutionService(GitService gitService, ApplicationContext applicationContext, RepositoryService repositoryService,
+    public HyperionCodeGenerationExecutionService(GitService gitService, RepositoryService repositoryService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ResultRepository resultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionProgrammingExerciseContextRendererService repositoryStructureService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionProgrammingExerciseContextRendererService repositoryStructureService,
+            HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy) {
         this.gitService = gitService;
-        this.applicationContext = applicationContext;
         this.repositoryService = repositoryService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -100,6 +103,9 @@ public class HyperionCodeGenerationExecutionService {
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.repositoryStructureService = repositoryStructureService;
+        this.solutionStrategy = solutionStrategy;
+        this.templateStrategy = templateStrategy;
+        this.testStrategy = testStrategy;
     }
 
     /**
@@ -121,14 +127,12 @@ public class HyperionCodeGenerationExecutionService {
      * @throws IllegalArgumentException if repository type is not supported
      */
     private HyperionCodeGenerationService resolveStrategy(RepositoryType repositoryType) {
-        String strategyBeanName = switch (repositoryType) {
-            case SOLUTION -> "solutionRepositoryStrategy";
-            case TEMPLATE -> "templateRepositoryStrategy";
-            case TESTS -> "testRepositoryStrategy";
+        return switch (repositoryType) {
+            case SOLUTION -> solutionStrategy;
+            case TEMPLATE -> templateStrategy;
+            case TESTS -> testStrategy;
             default -> throw new IllegalArgumentException("Unsupported repository type for code generation: " + repositoryType);
         };
-
-        return applicationContext.getBean(strategyBeanName, HyperionCodeGenerationService.class);
     }
 
     /**
