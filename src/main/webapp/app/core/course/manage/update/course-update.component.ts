@@ -33,7 +33,7 @@ import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { KeyValuePipe, NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { KeyValuePipe, NgStyle, NgTemplateOutlet } from '@angular/common';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -57,7 +57,6 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
         TranslateDirective,
         NgStyle,
         ColorSelectorComponent,
-        NgClass,
         NgbTooltip,
         FormDateTimePickerComponent,
         HelpIconComponent,
