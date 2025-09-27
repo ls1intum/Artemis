@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -35,8 +35,18 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     private accountService = inject(AccountService);
     private sortService = inject(SortService);
 
-    @Input() fileUploadExercises: FileUploadExercise[] = [];
+    readonly fileUploadExercises = input<FileUploadExercise[]>([]);
+    private readonly fileUploadExercisesState = signal<FileUploadExercise[]>([]);
     filteredFileUploadExercises: FileUploadExercise[] = [];
+
+    constructor() {
+        super();
+        effect(() => {
+            const exercises = this.fileUploadExercises() ?? [];
+            this.fileUploadExercisesState.set(exercises);
+            this.updateFilteredExercises(exercises);
+        });
+    }
 
     // Icons
     faSort = faSort;
@@ -49,7 +59,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     farListAlt = faListAlt;
 
     protected get exercises() {
-        return this.fileUploadExercises;
+        return this.fileUploadExercisesState();
     }
 
     protected loadExercises(): void {
@@ -58,22 +68,27 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
             .pipe(filter((res) => !!res.body))
             .subscribe({
                 next: (res: HttpResponse<FileUploadExercise[]>) => {
-                    this.fileUploadExercises = res.body!;
-                    // reconnect exercise with course
-                    this.fileUploadExercises.forEach((exercise) => {
+                    const exercises = (res.body ?? []).map((exercise) => {
                         exercise.course = this.course;
                         this.accountService.setAccessRightsForExercise(exercise);
-                        this.selectedExercises = [];
+                        return exercise;
                     });
-                    this.emitExerciseCount(this.fileUploadExercises.length);
-                    this.applyFilter();
+                    this.selectedExercises = [];
+                    this.fileUploadExercisesState.set(exercises);
+                    this.emitExerciseCount(exercises.length);
+                    this.updateFilteredExercises(exercises);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
 
     protected applyFilter(): void {
-        this.filteredFileUploadExercises = this.fileUploadExercises.filter((exercise) => this.filter.matchesExercise(exercise));
+        const exercises = this.fileUploadExercisesState();
+        if (!this.filter) {
+            this.updateFilteredExercises(exercises);
+            return;
+        }
+        this.filteredFileUploadExercises = exercises.filter((exercise) => this.filter.matchesExercise(exercise));
         this.emitFilteredExerciseCount(this.filteredFileUploadExercises.length);
     }
 
@@ -108,12 +123,27 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.fileUploadExercises, this.predicate, this.reverse);
-        this.applyFilter();
+        const exercises = [...this.fileUploadExercisesState()];
+        this.sortService.sortByProperty(exercises, this.predicate, this.reverse);
+        this.fileUploadExercisesState.set(exercises);
+        if (this.filter) {
+            this.applyFilter();
+        } else {
+            this.updateFilteredExercises(exercises);
+        }
     }
 
     /**
      * Used in the template for jhiSort
      */
     callback() {}
+
+    private updateFilteredExercises(exercises: FileUploadExercise[]) {
+        if (this.filter) {
+            this.filteredFileUploadExercises = exercises.filter((exercise) => this.filter.matchesExercise(exercise));
+        } else {
+            this.filteredFileUploadExercises = [...exercises];
+        }
+        this.emitFilteredExerciseCount(this.filteredFileUploadExercises.length);
+    }
 }

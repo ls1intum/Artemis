@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, input, viewChild } from '@angular/core';
 import { UpperCasePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -20,7 +20,7 @@ import { ButtonType } from 'app/shared/components/buttons/button/button.componen
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { addParticipationToResult, getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
+import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -67,17 +67,16 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     private fileUploadAssessmentService = inject(FileUploadAssessmentService);
     private accountService = inject(AccountService);
 
-    readonly addParticipationToResult = addParticipationToResult;
-    @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
+    fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
-    @Input() participationId?: number;
-    @Input() displayHeader = true;
-    @Input() expandProblemStatement = true;
-    @Input() displayedInExamSummary = false;
+    participationId = input<number | undefined>();
+    displayHeader = input(true);
+    expandProblemStatement = input(true);
+    displayedInExamSummary = input(false);
 
-    @Input() inputExercise?: FileUploadExercise;
-    @Input() inputSubmission?: FileUploadSubmission;
-    @Input() inputParticipation?: StudentParticipation;
+    inputExercise = input<FileUploadExercise | undefined>();
+    inputSubmission = input<FileUploadSubmission | undefined>();
+    inputParticipation = input<StudentParticipation | undefined>();
 
     submission?: FileUploadSubmission;
     submittedFileName: string;
@@ -111,7 +110,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         if (this.inputValuesArePresent()) {
             this.setupComponentWithInputValues();
         } else {
-            const participationId = this.participationId ?? Number(this.route.snapshot.paramMap.get('participationId'));
+            const participationId = this.participationId() ?? Number(this.route.snapshot.paramMap.get('participationId'));
             if (Number.isNaN(participationId)) {
                 return this.alertService.error('artemisApp.fileUploadExercise.error');
             }
@@ -160,7 +159,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     }
 
     private inputValuesArePresent(): boolean {
-        return !!(this.inputExercise || this.inputSubmission || this.inputParticipation);
+        return !!(this.inputExercise() || this.inputSubmission() || this.inputParticipation());
     }
 
     /**
@@ -171,14 +170,17 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * @private
      */
     private setupComponentWithInputValues() {
-        if (this.inputExercise) {
-            this.fileUploadExercise = this.inputExercise;
+        const exercise = this.inputExercise();
+        if (exercise) {
+            this.fileUploadExercise = exercise;
         }
-        if (this.inputSubmission) {
-            this.submission = this.inputSubmission;
+        const submission = this.inputSubmission();
+        if (submission) {
+            this.submission = submission;
         }
-        if (this.inputParticipation) {
-            this.participation = this.inputParticipation;
+        const participation = this.inputParticipation();
+        if (participation) {
+            this.participation = participation;
         }
 
         if (this.submission?.submitted) {
@@ -225,7 +227,10 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 } else {
                     this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file.name });
                 }
-                this.fileInput.nativeElement.value = '';
+                const fileInput = this.fileInput();
+                if (fileInput) {
+                    fileInput.nativeElement.value = '';
+                }
                 this.submissionFile = undefined;
                 this.isSaving = false;
             },

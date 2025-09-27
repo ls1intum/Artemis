@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -170,21 +171,22 @@ describe('FileUploadExerciseUpdateComponent', () => {
         it('should calculate valid sections', () => {
             const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(false);
-            comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
-            comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
-            comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
+            const teamConfigMock = { formValidChanges: new Subject(), formValid: true } as TeamConfigFormGroupComponent;
+            comp.teamConfigFormGroupComponent = signal(teamConfigMock);
+            comp.bonusPoints = signal({ valueChanges: new Subject(), valid: true } as unknown as NgModel);
+            comp.points = signal({ valueChanges: new Subject(), valid: true } as unknown as NgModel);
 
             comp.ngOnInit();
             comp.ngAfterViewInit();
 
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(true);
             fixture.detectChanges();
-            expect(calculateValidSpy).toHaveBeenCalledOnce();
+            expect(calculateValidSpy).toHaveBeenCalledTimes(2);
             expect(comp.formStatusSections).toBeDefined();
             expect(comp.formStatusSections[0].valid).toBeTrue();
 
             comp.validateDate();
-            expect(calculateValidSpy).toHaveBeenCalledTimes(2);
+            expect(calculateValidSpy).toHaveBeenCalledTimes(3);
 
             comp.ngOnDestroy();
         });

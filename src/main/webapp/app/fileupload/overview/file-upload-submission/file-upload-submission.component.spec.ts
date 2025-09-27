@@ -397,9 +397,9 @@ describe('FileUploadSubmissionComponent', () => {
         const getDataForFileUploadEditorSpy = jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor');
         const fileUploadSubmission = createFileUploadSubmission();
         fileUploadSubmission.submitted = true;
-        comp.inputExercise = fileUploadExercise;
-        comp.inputSubmission = fileUploadSubmission;
-        comp.inputParticipation = fileUploadParticipation;
+        fixture.componentRef.setInput('inputExercise', fileUploadExercise);
+        fixture.componentRef.setInput('inputSubmission', fileUploadSubmission);
+        fixture.componentRef.setInput('inputParticipation', fileUploadParticipation);
 
         fixture.detectChanges();
 
