@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { Component, OnChanges, effect, inject, input, output } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,6 +18,7 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
     selector: 'jhi-common-course-competency-form',
     templateUrl: './common-course-competency-form.component.html',
     styleUrls: ['./common-course-competency-form.component.scss'],
+    standalone: true,
     imports: [
         NgbDropdownModule,
         ReactiveFormsModule,
@@ -30,19 +31,19 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
         MarkdownEditorMonacoComponent,
     ],
 })
-export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
+export class CommonCourseCompetencyFormComponent implements OnChanges {
     private translateService = inject(TranslateService);
 
-    @Input() formData: CourseCompetencyFormData;
-    @Input() isEditMode = false;
-    @Input() isInConnectMode = false;
-    @Input() isInSingleLectureMode = false;
-    @Input() lecturesOfCourseWithLectureUnits: Lecture[] = [];
-    @Input() averageStudentScore?: number;
-    @Input() form: FormGroup;
-    @Input() courseCompetency: CourseCompetency;
+    formData = input.required<CourseCompetencyFormData>();
+    isEditMode = input<boolean>(false);
+    isInConnectMode = input<boolean>(false);
+    isInSingleLectureMode = input<boolean>(false);
+    lecturesOfCourseWithLectureUnits = input<Lecture[]>([]);
+    averageStudentScore = input<number>();
+    form = input.required<FormGroup>();
+    courseCompetency = input.required<CourseCompetency>();
 
-    @Output() onTitleOrDescriptionChange = new EventEmitter<void>();
+    onTitleOrDescriptionChange = output<void>();
 
     protected readonly competencyValidators = CourseCompetencyValidators;
     protected readonly DateTimePickerType = DateTimePickerType;
@@ -57,19 +58,19 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     protected readonly competencyTaxonomy = CompetencyTaxonomy;
 
     get titleControl() {
-        return this.form.get('title');
+        return this.form().get('title');
     }
 
     get descriptionControl() {
-        return this.form.get('description');
+        return this.form().get('description');
     }
 
     get masteryThresholdControl() {
-        return this.form.get('masteryThreshold');
+        return this.form().get('masteryThreshold');
     }
 
     get taxonomyControl() {
-        return this.form.get('taxonomy') as FormControl;
+        return this.form().get('taxonomy') as FormControl;
     }
 
     /**
@@ -81,18 +82,24 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
         this.descriptionControl?.markAsDirty();
     }
 
-    ngOnInit() {
-        merge(this.titleControl!.valueChanges, this.descriptionControl!.valueChanges).subscribe(() => this.suggestTaxonomies());
+    constructor() {
+        effect(() => {
+            const titleCtrl = this.titleControl;
+            const descCtrl = this.descriptionControl;
+            if (titleCtrl && descCtrl) {
+                merge(titleCtrl.valueChanges, descCtrl.valueChanges).subscribe(() => this.suggestTaxonomies());
+            }
+        });
     }
 
     ngOnChanges() {
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
+        if (this.isEditMode() && this.formData()) {
+            this.setFormValues(this.formData());
         }
     }
 
     private setFormValues(formData: CourseCompetencyFormData) {
-        this.form.patchValue(formData);
+        this.form().patchValue(formData);
     }
 
     /**

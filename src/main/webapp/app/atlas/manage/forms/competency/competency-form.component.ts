@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, input } from '@angular/core';
 import { CourseCompetencyFormComponent, CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 
 import { CommonCourseCompetencyFormComponent } from 'app/atlas/manage/forms/common-course-competency-form.component';
@@ -11,10 +11,11 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: 'jhi-competency-form',
     templateUrl: './competency-form.component.html',
     styleUrls: ['./competency-form.component.scss'],
+    standalone: true,
     imports: [CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule, FontAwesomeModule, TranslateDirective],
 })
-export class CompetencyFormComponent extends CourseCompetencyFormComponent implements OnInit, OnChanges {
-    @Input() formData: CourseCompetencyFormData = {
+export class CompetencyFormComponent extends CourseCompetencyFormComponent implements OnChanges {
+    formData = input<CourseCompetencyFormData>({
         id: undefined,
         title: undefined,
         description: undefined,
@@ -22,20 +23,20 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
         taxonomy: undefined,
         masteryThreshold: undefined,
         optional: false,
-    };
-    @Input() competency: Competency;
+    });
+    competency = input.required<Competency>();
 
-    @Output() formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
-
-    ngOnChanges() {
+    constructor() {
+        super();
         this.initializeForm();
-        if (this.isEditMode && this.formData) {
-            this.setFormValues(this.formData);
-        }
     }
 
-    ngOnInit() {
+    ngOnChanges(changes: SimpleChanges) {
         this.initializeForm();
+        const fd = this.formData();
+        if (this.isEditMode() && fd) {
+            this.setFormValues(fd);
+        }
     }
 
     private setFormValues(formData: CourseCompetencyFormData) {

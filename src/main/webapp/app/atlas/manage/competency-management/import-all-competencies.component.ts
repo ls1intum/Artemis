@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { Course, CourseForImportDTO } from 'app/core/course/shared/entities/course.model';
 import { Column, ImportComponent } from 'app/shared/import/import.component';
 
@@ -42,6 +42,7 @@ export type ImportAllFromCourseResult = {
 
 @Component({
     selector: 'jhi-import-all-competencies',
+    standalone: true,
     templateUrl: './import-all-competencies.component.html',
     imports: [
         NgbPagination,
@@ -60,7 +61,7 @@ export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImp
     //import relations by default
     protected importRelations = true;
 
-    @Input() public competencyType: CourseCompetencyType | 'courseCompetency' = CourseCompetencyType.COMPETENCY;
+    public competencyType = input<CourseCompetencyType | 'courseCompetency'>(CourseCompetencyType.COMPETENCY);
 
     constructor() {
         const pagingService = inject(CourseForImportDTOPagingService);
