@@ -9,10 +9,10 @@ import * as utils from 'app/core/calendar/shared/util/calendar-util';
 @Component({
     selector: 'jhi-calendar-event-detail-popover-new-component',
     imports: [PopoverModule, TranslateDirective, FaIconComponent],
-    templateUrl: './calendar-new-event-detail-popover.component.html',
-    styleUrl: './calendar-new-event-detail-popover.component.scss',
+    templateUrl: './calendar-event-detail-popover.component.html',
+    styleUrl: './calendar-event-detail-popover.component.scss',
 })
-export class CalendarNewEventDetailPopoverComponent {
+export class CalendarEventDetailPopoverComponent {
     readonly utils = utils;
     readonly faXmark = faXmark;
     readonly faClock = faClock;

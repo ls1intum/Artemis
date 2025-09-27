@@ -5,13 +5,13 @@ import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entit
 import { Dayjs } from 'dayjs/esm';
 import { CalendarEventAndPosition, PositionInfo } from 'app/core/calendar/shared/entities/calendar-event-and-position.model';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { CalendarNewEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-new-component/calendar-new-event-detail-popover.component';
+import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-new-component/calendar-event-detail-popover.component';
 
 type Day = { date: Dayjs; eventsAndPositions: CalendarEventAndPosition[]; id: string };
 
 @Component({
     selector: 'jhi-calendar-events-per-day-section',
-    imports: [NgClass, NgStyle, CalendarNewEventDetailPopoverComponent],
+    imports: [NgClass, NgStyle, CalendarEventDetailPopoverComponent],
     templateUrl: './calendar-events-per-day-section.component.html',
     styleUrl: './calendar-events-per-day-section.component.scss',
 })

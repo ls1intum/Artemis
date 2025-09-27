@@ -2,7 +2,6 @@ import { Component, OnInit, computed, effect, inject, signal } from '@angular/co
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
-import { NgClass } from '@angular/common';
 import { finalize } from 'rxjs/operators';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import 'dayjs/esm/locale/en';
@@ -29,7 +28,6 @@ type CalendarEventFilterOptionAndMetadata = { option: CalendarEventFilterOption;
     imports: [
         CalendarDesktopMonthPresentationComponent,
         CalendarDesktopWeekPresentationComponent,
-        NgClass,
         FaIconComponent,
         TranslateDirective,
         CalendarSubscriptionPopoverComponent,

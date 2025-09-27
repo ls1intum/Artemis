@@ -7,11 +7,11 @@ import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
-import { CalendarNewEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-new-component/calendar-new-event-detail-popover.component';
+import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-new-component/calendar-event-detail-popover.component';
 
 @Component({
     selector: 'jhi-calendar-desktop-month-presentation',
-    imports: [NgClass, NgTemplateOutlet, FaIconComponent, TranslateDirective, CalendarDayBadgeComponent, CalendarNewEventDetailPopoverComponent],
+    imports: [NgClass, NgTemplateOutlet, FaIconComponent, TranslateDirective, CalendarDayBadgeComponent, CalendarEventDetailPopoverComponent],
     templateUrl: './calendar-desktop-month-presentation.component.html',
     styleUrls: ['./calendar-desktop-month-presentation.component.scss'],
 })
