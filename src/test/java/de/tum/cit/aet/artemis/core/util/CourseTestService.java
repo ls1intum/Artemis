@@ -20,8 +20,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2474,15 +2476,14 @@ public class CourseTestService {
 
     // Test
     public void testGetExerciseStatsForCourseOverview() throws Exception {
-        TimeUtil.setClock(TimeUtil.getFixedClock());
         String testSuffix = "exercisestatsoverview";
         adjustUserGroupsToCustomGroups(testSuffix);
         // Add a course and set the instructor group name
         var instructorsCourse = courseUtilService.createCourse();
         adjustCourseGroups(instructorsCourse, testSuffix);
 
-        instructorsCourse.setStartDate(TimeUtil.now().minusWeeks(1).with(DayOfWeek.MONDAY));
-        instructorsCourse.setEndDate(TimeUtil.now().minusWeeks(1).with(DayOfWeek.WEDNESDAY));
+        instructorsCourse.setStartDate(ZonedDateTime.now().minusWeeks(1).with(DayOfWeek.MONDAY));
+        instructorsCourse.setEndDate(ZonedDateTime.now().minusWeeks(1).with(DayOfWeek.WEDNESDAY));
 
         var instructor = userUtilService.getUserByLogin(userPrefix + "instructor1");
 
@@ -2491,9 +2492,9 @@ public class CourseTestService {
         var student2 = userUtilService.createAndSaveUser(userPrefix + "user2");
 
         // Add a team exercise which was just released but not due
-        var releaseDate = TimeUtil.now().minusDays(4);
-        var futureDueDate = TimeUtil.now().plusDays(2);
-        var futureAssessmentDueDate = TimeUtil.now().plusDays(4);
+        var releaseDate = ZonedDateTime.now().minusDays(4);
+        var futureDueDate = ZonedDateTime.now().plusDays(2);
+        var futureAssessmentDueDate = ZonedDateTime.now().plusDays(4);
         var teamExerciseNotEnded = textExerciseUtilService.createTeamTextExercise(instructorsCourse, releaseDate, futureDueDate, futureAssessmentDueDate);
         teamExerciseNotEnded = exerciseRepo.save(teamExerciseNotEnded);
 
@@ -2506,8 +2507,8 @@ public class CourseTestService {
         instructorsCourse.addExercises(teamExerciseNotEnded);
 
         // Create an exercise which has passed the due and assessment due date
-        var dueDate = TimeUtil.now().minusDays(2);
-        var passedAssessmentDueDate = TimeUtil.now().minusDays(1);
+        var dueDate = ZonedDateTime.now().minusDays(2);
+        var passedAssessmentDueDate = ZonedDateTime.now().minusDays(1);
         var exerciseAssessmentDone = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, passedAssessmentDueDate, instructorsCourse);
         exerciseAssessmentDone.setMaxPoints(5.0);
         exerciseAssessmentDone = exerciseRepo.save(exerciseAssessmentDone);
@@ -2609,7 +2610,6 @@ public class CourseTestService {
 
     // Test
     public void testGetExerciseStatsForCourseOverviewWithPastExercises() throws Exception {
-        TimeUtil.setClock(TimeUtil.getFixedClock());
         // Add a single course with six past exercises, from which only five are returned
         String testSuffix = "statspast";
         adjustUserGroupsToCustomGroups(testSuffix);
@@ -2617,12 +2617,12 @@ public class CourseTestService {
         var instructorsCourse = courseUtilService.createCourse();
         adjustCourseGroups(instructorsCourse, testSuffix);
 
-        var releaseDate = TimeUtil.now().minusDays(7);
-        var dueDate = TimeUtil.now().minusDays(4);
-        var olderDueDate = TimeUtil.now().minusDays(4);
-        var assessmentDueDate = TimeUtil.now().minusDays(2);
-        var olderAssessmentDueDate = TimeUtil.now().minusDays(3);
-        var oldestAssessmentDueDate = TimeUtil.now().minusDays(6);
+        var releaseDate = ZonedDateTime.now().minusDays(7);
+        var dueDate = ZonedDateTime.now().minusDays(4);
+        var olderDueDate = ZonedDateTime.now().minusDays(4);
+        var assessmentDueDate = ZonedDateTime.now().minusDays(2);
+        var olderAssessmentDueDate = ZonedDateTime.now().minusDays(3);
+        var oldestAssessmentDueDate = ZonedDateTime.now().minusDays(6);
 
         // Add five exercises with different combinations of due dates and assessment due dates
         instructorsCourse.addExercises(exerciseRepo.save(TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, instructorsCourse)));
@@ -2688,8 +2688,8 @@ public class CourseTestService {
     public void testGetCourseManagementDetailData() throws Exception {
         adjustUserGroupsToCustomGroups();
         // we inject a fixed clock in our tests that TimeUtil uses, so the timestamp below is always the same in tests.
-
-        TimeUtil.setClock(TimeUtil.getFixedClock());
+        Clock fixedClock = Clock.fixed(Instant.parse("2025-09-10T10:25:00Z"), ZoneOffset.UTC);
+        TimeUtil.setClock(fixedClock);
         ZonedDateTime now = TimeUtil.now();
         // add courses with exercises
         var courses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
