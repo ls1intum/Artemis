@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
+import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -126,7 +127,7 @@ public class ExerciseDateService {
      * @return true, if the current time is before the due date.
      */
     public boolean isBeforeLatestDueDate(Exercise exercise) {
-        final ZonedDateTime now = ZonedDateTime.now();
+        final ZonedDateTime now = TimeUtil.now();
         return getLatestIndividualDueDate(exercise).map(now::isBefore).orElse(true);
     }
 
@@ -197,7 +198,7 @@ public class ExerciseDateService {
         if (exercise.isExamExercise()) {
             return exercise.getExam().resultsPublished();
         }
-        return exercise.getAssessmentDueDate() == null || ZonedDateTime.now().isAfter(exercise.getAssessmentDueDate());
+        return exercise.getAssessmentDueDate() == null || TimeUtil.now().isAfter(exercise.getAssessmentDueDate());
     }
 
     /**

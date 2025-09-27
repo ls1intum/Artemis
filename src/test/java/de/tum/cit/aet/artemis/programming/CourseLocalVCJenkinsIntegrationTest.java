@@ -28,6 +28,8 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @BeforeEach
     void setup() {
         courseTestService.setup(TEST_PREFIX, this);
+        // Some tests in this class rely on this user
+        userUtilService.createAndSaveUser("ab12cde");
         jenkinsRequestMockProvider.enableMockingOfRequests();
     }
 

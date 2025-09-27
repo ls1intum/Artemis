@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.util;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
@@ -98,5 +99,15 @@ public class TimeUtil {
 
     public static void resetClock() {
         clock = Clock.systemDefaultZone();
+    }
+
+    /**
+     * Provides a Clock instance fixed at 2025-09-10T10:25:00Z (UTC).
+     * This is useful for testing purposes to ensure consistent and repeatable results.
+     *
+     * @return a clock instance fixed at 2025-09-10T10:25:00Z (UTC)
+     */
+    public static Clock getFixedClock() {
+        return Clock.fixed(Instant.parse("2025-09-10T10:25:00Z"), ZoneOffset.UTC);
     }
 }

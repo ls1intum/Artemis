@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamLiveEventsApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -534,7 +535,7 @@ public class ExerciseService {
      */
     public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse) {
         // We only display the latest five past exercises in the client, only calculate statistics for those
-        List<Exercise> pastExercises = exerciseRepository.getPastExercisesForCourseManagementOverview(courseId, now());
+        List<Exercise> pastExercises = exerciseRepository.getPastExercisesForCourseManagementOverview(courseId, TimeUtil.now());
 
         Comparator<Exercise> exerciseDateComparator = Comparator.comparing(
                 exercise -> exercise.getAssessmentDueDate() != null ? exercise.getAssessmentDueDate() : exercise.getDueDate(), Comparator.nullsLast(Comparator.naturalOrder()));
@@ -550,7 +551,7 @@ public class ExerciseService {
         }
 
         // Fill statistics for all exercises potentially displayed on the client
-        var exercisesForManagementOverview = exerciseRepository.getActiveExercisesForCourseManagementOverview(courseId, now());
+        var exercisesForManagementOverview = exerciseRepository.getActiveExercisesForCourseManagementOverview(courseId, TimeUtil.now());
         exercisesForManagementOverview.addAll(lastFivePastExercises);
         return generateCourseManagementDTOs(exercisesForManagementOverview, amountOfStudentsInCourse, averageScoreById);
     }

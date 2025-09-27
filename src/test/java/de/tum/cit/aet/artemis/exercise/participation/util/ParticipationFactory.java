@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -52,7 +53,7 @@ public class ParticipationFactory {
         textSubmission.setLanguage(language);
         textSubmission.setSubmitted(submitted);
         if (submitted) {
-            textSubmission.setSubmissionDate(now().minusDays(1));
+            textSubmission.setSubmissionDate(TimeUtil.now().minusDays(1));
         }
         return textSubmission;
     }
