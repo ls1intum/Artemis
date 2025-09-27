@@ -7,6 +7,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { AccountService } from 'app/core/auth/account.service';
 import { provideHttpClient } from '@angular/common/http';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 describe('Tutor Participation Service', () => {
     let service: TutorParticipationService;
@@ -20,6 +21,11 @@ describe('Tutor Participation Service', () => {
         });
         service = TestBed.inject(TutorParticipationService);
         httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+        jest.restoreAllMocks();
     });
 
     it('should create a TutorParticipationDTO for an exercise', fakeAsync(() => {
@@ -49,5 +55,25 @@ describe('Tutor Participation Service', () => {
 
     afterEach(() => {
         httpMock.verify();
+    });
+
+    it('should fail from creating a TutorParticipationDTO', () => {
+        let capturedError: HttpErrorResponse | undefined;
+
+        service
+            .create(exerciseId)
+            .pipe(take(1))
+            .subscribe({
+                next: () => {
+                    throw new Error('expected error');
+                },
+                error: (err) => (capturedError = err),
+            });
+
+        const req = httpMock.expectOne((r) => r.method === 'POST');
+        req.flush({ message: 'boom' }, { status: 400, statusText: 'Bad Request' });
+
+        expect(capturedError).toBeInstanceOf(HttpErrorResponse);
+        expect(capturedError!.status).toBe(400);
     });
 });
