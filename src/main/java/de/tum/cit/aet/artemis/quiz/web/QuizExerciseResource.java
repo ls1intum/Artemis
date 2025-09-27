@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -221,7 +223,7 @@ public class QuizExerciseResource {
      */
     @PostMapping(value = "exercise-groups/{exerciseGroupId}/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
-    public ResponseEntity<QuizExercise> createExamQuizExercise(@PathVariable Long exerciseGroupId, @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
+    public ResponseEntity<QuizExercise> createExamQuizExercise(@PathVariable Long exerciseGroupId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
         log.info("REST request to create QuizExercise : {} in exam exercise group {}", quizExerciseDTO, exerciseGroupId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
@@ -257,7 +259,7 @@ public class QuizExerciseResource {
      */
     @PostMapping(value = "courses/{courseId}/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<QuizExercise> createCourseQuizExercise(@PathVariable Long courseId, @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
+    public ResponseEntity<QuizExercise> createCourseQuizExercise(@PathVariable Long courseId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
         log.info("REST request to create QuizExercise : {} in course {}", quizExerciseDTO, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);

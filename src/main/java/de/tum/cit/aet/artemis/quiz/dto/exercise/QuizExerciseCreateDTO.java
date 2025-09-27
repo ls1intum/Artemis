@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -23,8 +24,8 @@ import de.tum.cit.aet.artemis.quiz.dto.question.create.QuizQuestionCreateDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, DifficultyLevel difficulty,
         @NotNull ExerciseMode mode, @NotNull IncludedInOverallScore includedInOverallScore, @NotNull Double maxPoints, Double bonusPoints,
-        Set<CompetencyExerciseLink> competencyLinks, Set<String> categories, @NotNull String channelName, boolean randomizeQuestionOrder, @NotNull QuizMode quizMode, int duration,
-        Set<QuizBatchCreationDTO> quizBatches, @NotEmpty List<? extends QuizQuestionCreateDTO> quizQuestions) {
+        Set<CompetencyExerciseLink> competencyLinks, Set<String> categories, String channelName, Boolean randomizeQuestionOrder, @NotNull QuizMode quizMode,
+        @NotNull Integer duration, Set<QuizBatchCreationDTO> quizBatches, @NotEmpty List<@Valid ? extends QuizQuestionCreateDTO> quizQuestions) {
 
     /**
      * Creates a {@link QuizExerciseCreateDTO} from the given {@link QuizExercise} domain object.
@@ -70,7 +71,7 @@ public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releas
         quizExercise.setCompetencyLinks(competencyLinks == null ? Set.of() : competencyLinks);
         quizExercise.setCategories(categories == null ? Set.of() : categories);
         quizExercise.setChannelName(channelName);
-        quizExercise.setRandomizeQuestionOrder(randomizeQuestionOrder);
+        quizExercise.setRandomizeQuestionOrder(randomizeQuestionOrder != null ? randomizeQuestionOrder : Boolean.FALSE);
         quizExercise.setQuizMode(quizMode);
         quizExercise.setDuration(duration);
         quizExercise.setQuizBatches(Optional.ofNullable(quizBatches).orElse(Set.of()).stream().map(QuizBatchCreationDTO::toDomainObject).collect(Collectors.toSet()));

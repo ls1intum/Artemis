@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.dto.question.create;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -14,7 +15,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record MultipleChoiceQuestionCreateDTO(@NotNull String title, String text, String hint, String explanation, @NotNull @Positive Double points,
-        @NotNull ScoringType scoringType, @NotNull Boolean randomizeOrder, @NotEmpty List<AnswerOptionCreateDTO> answerOptions, @NotNull Boolean singleChoice)
+        @NotNull ScoringType scoringType, Boolean randomizeOrder, @NotEmpty List<@Valid AnswerOptionCreateDTO> answerOptions, @NotNull Boolean singleChoice)
         implements QuizQuestionCreateDTO {
 
     /**
@@ -50,7 +51,7 @@ public record MultipleChoiceQuestionCreateDTO(@NotNull String title, String text
         question.setExplanation(explanation);
         question.setPoints(points);
         question.setScoringType(scoringType);
-        question.setRandomizeOrder(randomizeOrder);
+        question.setRandomizeOrder(randomizeOrder != null ? randomizeOrder : Boolean.FALSE);
         question.setSingleChoice(singleChoice);
 
         List<AnswerOption> options = answerOptions.stream().map(AnswerOptionCreateDTO::toDomainObject).toList();

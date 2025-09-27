@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.dto.question.create;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -13,8 +14,8 @@ import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragAndDropQuestionCreateDTO(@NotEmpty String title, String text, String hint, String explanation, @NotNull @Positive Double points, @NotNull ScoringType scoringType,
-        @NotNull Boolean randomizeOrder, String backgroundFilePath, @NotEmpty List<DropLocationCreateDTO> dropLocations, @NotEmpty List<DragItemCreateDTO> dragItems,
-        @NotEmpty List<DragAndDropMappingCreateDTO> correctMappings) implements QuizQuestionCreateDTO {
+        Boolean randomizeOrder, String backgroundFilePath, @NotEmpty List<@Valid DropLocationCreateDTO> dropLocations, @NotEmpty List<@Valid DragItemCreateDTO> dragItems,
+        @NotEmpty List<@Valid DragAndDropMappingCreateDTO> correctMappings) implements QuizQuestionCreateDTO {
 
     /**
      * Converts this DTO to a {@link DragAndDropQuestion} domain object.
@@ -35,7 +36,7 @@ public record DragAndDropQuestionCreateDTO(@NotEmpty String title, String text, 
         dragAndDropQuestion.setExplanation(explanation);
         dragAndDropQuestion.setPoints(points);
         dragAndDropQuestion.setScoringType(scoringType);
-        dragAndDropQuestion.setRandomizeOrder(randomizeOrder);
+        dragAndDropQuestion.setRandomizeOrder(randomizeOrder != null ? randomizeOrder : Boolean.FALSE);
         dragAndDropQuestion.setBackgroundFilePath(backgroundFilePath);
 
         List<de.tum.cit.aet.artemis.quiz.domain.DropLocation> locations = dropLocations.stream().map(DropLocationCreateDTO::toDomainObject).toList();

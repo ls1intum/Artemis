@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.dto.question.create;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -16,8 +17,8 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ShortAnswerQuestionCreateDTO(@NotEmpty String title, String text, String hint, String explanation, @NotNull @Positive Double points, @NotNull ScoringType scoringType,
-        @NotNull Boolean randomizeOrder, @NotEmpty List<ShortAnswerSpotCreateDTO> spots, @NotEmpty List<ShortAnswerSolutionCreateDTO> solutions,
-        @NotEmpty List<ShortAnswerMappingCreateDTO> correctMappings, @NotNull Integer similarityValue, @NotNull Boolean matchLetterCase) implements QuizQuestionCreateDTO {
+        Boolean randomizeOrder, @NotEmpty List<@Valid ShortAnswerSpotCreateDTO> spots, @NotEmpty List<@Valid ShortAnswerSolutionCreateDTO> solutions,
+        @NotEmpty List<@Valid ShortAnswerMappingCreateDTO> correctMappings, @NotNull Integer similarityValue, @NotNull Boolean matchLetterCase) implements QuizQuestionCreateDTO {
 
     /**
      * Creates a {@link ShortAnswerQuestionCreateDTO} from the given {@link ShortAnswerQuestion} domain object.
@@ -56,7 +57,7 @@ public record ShortAnswerQuestionCreateDTO(@NotEmpty String title, String text, 
         shortAnswerQuestion.setExplanation(explanation);
         shortAnswerQuestion.setPoints(points);
         shortAnswerQuestion.setScoringType(scoringType);
-        shortAnswerQuestion.setRandomizeOrder(randomizeOrder);
+        shortAnswerQuestion.setRandomizeOrder(randomizeOrder != null ? randomizeOrder : Boolean.FALSE);
         shortAnswerQuestion.setSimilarityValue(similarityValue);
         shortAnswerQuestion.setMatchLetterCase(matchLetterCase);
 
