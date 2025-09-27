@@ -39,7 +39,7 @@ import { LearningPathInstructorPageComponent } from 'app/atlas/manage/learning-p
 import { AssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard.component';
 import { CourseScoresComponent } from 'app/core/course/manage/course-scores/course-scores.component';
 import { FaqComponent } from 'app/communication/faq/faq.component';
-import { BuildQueueComponent } from 'app/buildagent/build-queue/build-queue.component';
+import { BuildOverviewComponent } from 'app/buildagent/build-queue/build-overview.component';
 import { CourseDetailComponent } from 'app/core/course/manage/detail/course-detail.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
@@ -141,7 +141,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         | AssessmentDashboardComponent
         | CourseScoresComponent
         | FaqComponent
-        | BuildQueueComponent
+        | BuildOverviewComponent
         | undefined
     >(undefined);
 
@@ -261,7 +261,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             componentRef instanceof AssessmentDashboardComponent ||
             componentRef instanceof CourseScoresComponent ||
             componentRef instanceof FaqComponent ||
-            componentRef instanceof BuildQueueComponent
+            componentRef instanceof BuildOverviewComponent
         ) {
             this.activatedComponentReference.set(componentRef);
         }

@@ -137,11 +137,14 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         const lastSelectedExam = this.getLastSelectedExam();
         const examId = this.route.firstChild?.snapshot.params.examId;
         if (!examId && lastSelectedExam) {
+            // First, try to navigate to the last selected exam
             this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
         } else if (!examId && upcomingExam) {
+            // Second, try to navigate to the upcoming exam
             this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
         } else {
-            this.examSelected = examId ? true : false;
+            // If both is not defined, do not navigate and only set examSelected to true when the examId was found in the client URL
+            this.examSelected = !!examId;
         }
     }
 
@@ -256,12 +259,8 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         return groupedExamGroups;
     }
 
-    getLastSelectedExam(): string | undefined {
-        let lastSelectedExam = this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId);
-        if (lastSelectedExam && lastSelectedExam.startsWith('"') && lastSelectedExam.endsWith('"')) {
-            lastSelectedExam = lastSelectedExam.slice(1, -1);
-        }
-        return lastSelectedExam;
+    getLastSelectedExam(): number | undefined {
+        return this.sessionStorageService.retrieve<number>('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId);
     }
 
     toggleSidebar() {

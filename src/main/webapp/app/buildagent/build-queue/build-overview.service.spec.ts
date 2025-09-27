@@ -1,6 +1,6 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
-import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
+import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -17,8 +17,8 @@ import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-buil
 import { provideHttpClient } from '@angular/common/http';
 import { BuildLogEntry } from 'app/buildagent/shared/entities/build-log.model';
 
-describe('BuildQueueService', () => {
-    let service: BuildQueueService;
+describe('BuildOverviewService', () => {
+    let service: BuildOverviewService;
     let httpMock: HttpTestingController;
     let elem1: BuildJob;
     let repositoryInfo: RepositoryInfo;
@@ -64,7 +64,7 @@ describe('BuildQueueService', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
-        service = TestBed.inject(BuildQueueService);
+        service = TestBed.inject(BuildOverviewService);
         httpMock = TestBed.inject(HttpTestingController);
         elem1 = new BuildJob();
         repositoryInfo = new RepositoryInfo();

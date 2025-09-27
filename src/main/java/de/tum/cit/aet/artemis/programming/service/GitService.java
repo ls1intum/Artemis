@@ -115,9 +115,11 @@ public class GitService extends AbstractGitService {
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
 
+    // TODO: we do not need this user any more
     @Value("${artemis.version-control.user}")
     protected String gitUser;
 
+    // TODO: we do not need this password any more
     @Value("${artemis.version-control.password}")
     protected String gitPassword;
 
@@ -142,6 +144,7 @@ public class GitService extends AbstractGitService {
      */
     @PostConstruct
     public void init() {
+        // TODO: this should not be used anymore
         if (useSsh()) {
             log.info("GitService will use ssh keys as authentication method to interact with remote git repositories");
             configureSsh();

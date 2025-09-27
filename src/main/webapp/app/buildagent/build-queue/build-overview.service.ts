@@ -9,7 +9,7 @@ import { HttpResponse } from '@angular/common/http';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 
 @Injectable({ providedIn: 'root' })
-export class BuildQueueService {
+export class BuildOverviewService {
     private http = inject(HttpClient);
 
     public resourceUrl = 'api/programming';
