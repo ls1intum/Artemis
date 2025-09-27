@@ -421,7 +421,7 @@ public final class Constants {
     public static final String MODULE_FEATURE_TUTORIALGROUP = "tutorialgroup";
 
     /**
-     * The name of the module feature used for Atlas functionality.
+     * The name of the module feature used for nebula functionality.
      */
     public static final String MODULE_FEATURE_NEBULA = "nebula";
 
