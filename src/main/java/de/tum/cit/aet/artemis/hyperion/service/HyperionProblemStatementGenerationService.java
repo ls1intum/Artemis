@@ -54,7 +54,7 @@ public class HyperionProblemStatementGenerationService {
                     course.getTitle() != null ? course.getTitle() : "Programming Course", "courseDescription",
                     course.getDescription() != null ? course.getDescription() : "A programming course");
 
-            String prompt = templateService.render("hyperion/generate_draft_problem_statement", templateVariables);
+            String prompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement.st", templateVariables);
             String generatedProblemStatement = chatClient.prompt().user(prompt).call().content();
 
             return new ProblemStatementGenerationResponseDTO(generatedProblemStatement);

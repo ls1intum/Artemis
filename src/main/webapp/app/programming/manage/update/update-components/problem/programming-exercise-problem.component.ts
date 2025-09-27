@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output, inject, input, output, viewChil
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -17,6 +18,12 @@ import { ButtonModule } from 'primeng/button';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
 import { finalize } from 'rxjs';
+import { Subscription } from 'rxjs';
+import { facArtemisIntelligence } from 'app/shared/icons/icons';
+import { faBan, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { ButtonComponent, ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -32,6 +39,8 @@ import { finalize } from 'rxjs';
         ArtemisTranslatePipe,
         PopoverModule,
         ButtonModule,
+        FaIconComponent,
+        ButtonComponent,
     ],
 })
 export class ProgrammingExerciseProblemComponent {
@@ -52,9 +61,18 @@ export class ProgrammingExerciseProblemComponent {
     // Problem statement generation properties
     userPrompt = '';
     isGenerating = false;
+    private currentGenerationSubscription: Subscription | null = null;
+
+    // icons
+    facArtemisIntelligence = facArtemisIntelligence;
+    faSpinner = faSpinner;
+    faBan = faBan;
+    faSave = faSave;
 
     // Injected services
     private hyperionApiService = inject(HyperionProblemStatementApiService);
+    private translateService = inject(TranslateService);
+    private alertService = inject(AlertService);
 
     /**
      * Opens the problem statement generation popover
@@ -67,6 +85,11 @@ export class ProgrammingExerciseProblemComponent {
      * Cancels the problem statement generation and closes the popover
      */
     cancelGeneration(): void {
+        if (this.currentGenerationSubscription) {
+            this.currentGenerationSubscription.unsubscribe();
+            this.currentGenerationSubscription = null;
+        }
+        this.isGenerating = false;
         this.userPrompt = '';
         this.generatePopover()?.hide();
     }
@@ -85,11 +108,12 @@ export class ProgrammingExerciseProblemComponent {
             userPrompt: this.userPrompt.trim(),
         };
 
-        this.hyperionApiService
+        this.currentGenerationSubscription = this.hyperionApiService
             .generateProblemStatement(exercise.course.id, request)
             .pipe(
                 finalize(() => {
                     this.isGenerating = false;
+                    this.currentGenerationSubscription = null;
                 }),
             )
             .subscribe({
@@ -103,6 +127,9 @@ export class ProgrammingExerciseProblemComponent {
                     // Close the popover
                     this.generatePopover()?.hide();
                     this.userPrompt = '';
+
+                    // Show success alert
+                    this.alertService.success('artemisApp.programmingExercise.problemStatement.generationSuccess');
                 },
                 error: (error) => {
                     // eslint-disable-next-line no-undef
@@ -111,14 +138,12 @@ export class ProgrammingExerciseProblemComponent {
             });
     }
 
+    protected readonly ButtonSize = ButtonSize;
+
     /**
-     * Handles changes to competency links
+     * Get the translated example placeholder text for the input field
      */
-    onCompetencyLinksChange(competencyLinks: any): void {
-        const exercise = this.programmingExercise();
-        if (exercise) {
-            exercise.competencyLinks = competencyLinks;
-            this.programmingExerciseChange.emit(exercise);
-        }
+    getTranslatedPlaceholder(): string {
+        return this.translateService.instant('artemisApp.programmingExercise.problemStatement.examplePlaceholder');
     }
 }

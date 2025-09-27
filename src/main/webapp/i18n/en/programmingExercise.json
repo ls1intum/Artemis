@@ -218,7 +218,13 @@
                 "title": "Problem Statement",
                 "taskCommand": "Task",
                 "testCaseCommand": "Insert Test Case",
-                "tasksOfExercise": "Tasks:"
+                "tasksOfExercise": "Tasks:",
+                "generationAssistance": "AI Problem Statement Generation Assistance",
+                "generateDraftTitle": "Generate Draft Problem Statement",
+                "generateDraftDescription": "Describe what you want the programming exercise to focus on. Be specific about requirements, concepts.",
+                "yourRequirements": "Your Requirements:",
+                "examplePlaceholder": "Example: Create a Java exercise about implementing a binary search tree with insert, delete, and search operations. Students should demonstrate understanding of tree traversal and recursive algorithms.",
+                "generationSuccess": "Problem statement has been successfully generated."
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
