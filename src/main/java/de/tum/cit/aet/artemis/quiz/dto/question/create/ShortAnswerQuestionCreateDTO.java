@@ -47,4 +47,23 @@ public record ShortAnswerQuestionCreateDTO(@NotEmpty String title, String text, 
         shortAnswerQuestion.setCorrectMappings(shortAnswerMappings);
         return shortAnswerQuestion;
     }
+
+    /**
+     * Creates a {@link ShortAnswerQuestionCreateDTO} from the given {@link ShortAnswerQuestion} domain object.
+     * <p>
+     * Maps the domain object's properties to the corresponding DTO fields and transforms the lists
+     * of {@link ShortAnswerSpot}, {@link ShortAnswerSolution}, and {@link ShortAnswerMapping} into lists
+     * of {@link ShortAnswerSpotCreateDTO}, {@link ShortAnswerSolutionCreateDTO}, and {@link ShortAnswerMappingCreateDTO}
+     * by invoking their respective {@code of} methods.
+     *
+     * @param question the {@link ShortAnswerQuestion} domain object to convert
+     * @return the {@link ShortAnswerQuestionCreateDTO} with properties and child DTOs set from the domain object
+     */
+    public static ShortAnswerQuestionCreateDTO of(ShortAnswerQuestion question) {
+        List<ShortAnswerSpotCreateDTO> spotDTOs = question.getSpots().stream().map(ShortAnswerSpotCreateDTO::of).toList();
+        List<ShortAnswerSolutionCreateDTO> solutionDTOs = question.getSolutions().stream().map(ShortAnswerSolutionCreateDTO::of).toList();
+        List<ShortAnswerMappingCreateDTO> mappingDTOs = question.getCorrectMappings().stream().map(ShortAnswerMappingCreateDTO::of).toList();
+        return new ShortAnswerQuestionCreateDTO(question.getTitle(), question.getText(), question.getHint(), question.getExplanation(), question.getPoints(),
+                question.getScoringType(), question.isRandomizeOrder(), spotDTOs, solutionDTOs, mappingDTOs, question.getSimilarityValue(), question.getMatchLetterCase());
+    }
 }

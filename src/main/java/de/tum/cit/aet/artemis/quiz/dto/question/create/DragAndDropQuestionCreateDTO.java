@@ -45,4 +45,23 @@ public record DragAndDropQuestionCreateDTO(@NotEmpty String title, String text, 
         dragAndDropQuestion.setCorrectMappings(mappings);
         return dragAndDropQuestion;
     }
+
+    /**
+     * Creates a {@link DragAndDropQuestionCreateDTO} from the given {@link DragAndDropQuestion} domain object.
+     * <p>
+     * Maps the domain object's properties to the corresponding DTO fields and transforms the lists
+     * of {@link de.tum.cit.aet.artemis.quiz.domain.DropLocation}, {@link de.tum.cit.aet.artemis.quiz.domain.DragItem},
+     * and {@link de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping} into lists of {@link DropLocationCreateDTO},
+     * {@link DragItemCreateDTO}, and {@link DragAndDropMappingCreateDTO} by invoking their respective {@code of} methods.
+     *
+     * @param question the {@link DragAndDropQuestion} domain object to convert
+     * @return the {@link DragAndDropQuestionCreateDTO} with properties and child DTOs set from the domain object
+     */
+    public static DragAndDropQuestionCreateDTO of(DragAndDropQuestion question) {
+        List<DropLocationCreateDTO> locationDTOs = question.getDropLocations().stream().map(DropLocationCreateDTO::of).toList();
+        List<DragItemCreateDTO> itemDTOs = question.getDragItems().stream().map(DragItemCreateDTO::of).toList();
+        List<DragAndDropMappingCreateDTO> mappingDTOs = question.getCorrectMappings().stream().map(DragAndDropMappingCreateDTO::of).toList();
+        return new DragAndDropQuestionCreateDTO(question.getTitle(), question.getText(), question.getHint(), question.getExplanation(), question.getPoints(),
+                question.getScoringType(), question.isRandomizeOrder(), question.getBackgroundFilePath(), locationDTOs, itemDTOs, mappingDTOs);
+    }
 }

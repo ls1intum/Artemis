@@ -24,4 +24,17 @@ public record DropLocationCreateDTO(long tempID, double posX, double posY, doubl
         dragItem.setHeight(height);
         return dragItem;
     }
+
+    /**
+     * Creates a {@link DropLocationCreateDTO} from the given {@link DropLocation} domain object.
+     * <p>
+     * Maps the domain object's properties to the corresponding DTO fields, including temporary ID
+     * and positional/dimensional attributes.
+     *
+     * @param dropLocation the {@link DropLocation} domain object to convert
+     * @return the {@link DropLocationCreateDTO} with properties set from the domain object
+     */
+    public static DropLocationCreateDTO of(DropLocation dropLocation) {
+        return new DropLocationCreateDTO(dropLocation.getTempID(), dropLocation.getPosX(), dropLocation.getPosY(), dropLocation.getWidth(), dropLocation.getHeight());
+    }
 }

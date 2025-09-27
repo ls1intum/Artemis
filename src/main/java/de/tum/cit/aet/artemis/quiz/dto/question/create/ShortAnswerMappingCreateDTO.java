@@ -28,4 +28,17 @@ public record ShortAnswerMappingCreateDTO(long solutionTempId, long spotTempId) 
         shortAnswerMapping.setSpot(shortAnswerSpot);
         return shortAnswerMapping;
     }
+
+    /**
+     * Creates a {@link ShortAnswerMappingCreateDTO} from the given {@link ShortAnswerMapping} domain object.
+     * <p>
+     * Maps the temporary IDs of the associated {@link ShortAnswerSolution} and {@link ShortAnswerSpot}
+     * to the corresponding DTO fields.
+     *
+     * @param mapping the {@link ShortAnswerMapping} domain object to convert
+     * @return the {@link ShortAnswerMappingCreateDTO} with temp IDs set from the domain object
+     */
+    public static ShortAnswerMappingCreateDTO of(ShortAnswerMapping mapping) {
+        return new ShortAnswerMappingCreateDTO(mapping.getSolution().getTempID(), mapping.getSpot().getTempID());
+    }
 }

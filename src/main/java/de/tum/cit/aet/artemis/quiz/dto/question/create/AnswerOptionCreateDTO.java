@@ -25,4 +25,17 @@ public record AnswerOptionCreateDTO(@NotEmpty String text, String hint, String e
         answerOption.setIsCorrect(isCorrect);
         return answerOption;
     }
+
+    /**
+     * Creates an {@link AnswerOptionCreateDTO} from the given {@link AnswerOption} domain object.
+     * <p>
+     * Maps the domain object's properties to the corresponding DTO fields,
+     * including text, hint, explanation, and correctness flag.
+     *
+     * @param answerOption the {@link AnswerOption} domain object to convert
+     * @return the {@link AnswerOptionCreateDTO} with properties set from the domain object
+     */
+    public static AnswerOptionCreateDTO of(AnswerOption answerOption) {
+        return new AnswerOptionCreateDTO(answerOption.getText(), answerOption.getHint(), answerOption.getExplanation(), answerOption.isIsCorrect());
+    }
 }

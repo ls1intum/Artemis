@@ -28,4 +28,17 @@ public record DragAndDropMappingCreateDTO(long dragItemTempId, long dropLocation
         dragAndDropMapping.setDropLocation(dropLocation);
         return dragAndDropMapping;
     }
+
+    /**
+     * Creates a {@link DragAndDropMappingCreateDTO} from the given {@link DragAndDropMapping} domain object.
+     * <p>
+     * Maps the temporary IDs of the associated {@link DragItem} and {@link DropLocation}
+     * to the corresponding DTO fields.
+     *
+     * @param mapping the {@link DragAndDropMapping} domain object to convert
+     * @return the {@link DragAndDropMappingCreateDTO} with temp IDs set from the domain object
+     */
+    public static DragAndDropMappingCreateDTO of(DragAndDropMapping mapping) {
+        return new DragAndDropMappingCreateDTO(mapping.getDragItem().getTempID(), mapping.getDropLocation().getTempID());
+    }
 }

@@ -22,4 +22,17 @@ public record ShortAnswerSpotCreateDTO(long tempID, int spotNr, int width) {
         spot.setWidth(width);
         return spot;
     }
+
+    /**
+     * Creates a {@link ShortAnswerSpotCreateDTO} from the given {@link ShortAnswerSpot} domain object.
+     * <p>
+     * Maps the domain object's properties to the corresponding DTO fields, including temporary ID,
+     * spot number, and width.
+     *
+     * @param spot the {@link ShortAnswerSpot} domain object to convert
+     * @return the {@link ShortAnswerSpotCreateDTO} with properties set from the domain object
+     */
+    public static ShortAnswerSpotCreateDTO of(ShortAnswerSpot spot) {
+        return new ShortAnswerSpotCreateDTO(spot.getTempID(), spot.getSpotNr(), spot.getWidth());
+    }
 }

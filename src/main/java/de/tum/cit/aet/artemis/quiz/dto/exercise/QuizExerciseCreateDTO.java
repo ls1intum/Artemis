@@ -50,4 +50,21 @@ public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releas
         quizExercise.setQuizQuestions(quizQuestions.stream().map(QuizQuestionCreateDTO::toDomainObject).toList());
         return quizExercise;
     }
+
+    /**
+     * Creates a {@link QuizExerciseCreateDTO} from the given {@link QuizExercise} domain object.
+     * <p>
+     * Maps the domain object's properties to the corresponding DTO fields, handling null-safe
+     * collections for competency links and categories. Transforms the list of {@link de.tum.cit.aet.artemis.quiz.domain.QuizQuestion}
+     * into a list of {@link QuizQuestionCreateDTO} objects by invoking their respective {@code of} methods.
+     *
+     * @param quizExercise the {@link QuizExercise} domain object to convert
+     * @return the {@link QuizExerciseCreateDTO} with properties and quiz question DTOs set from the domain object
+     */
+    public static QuizExerciseCreateDTO of(QuizExercise quizExercise) {
+        List<QuizQuestionCreateDTO> questionDTOs = quizExercise.getQuizQuestions().stream().map(QuizQuestionCreateDTO::of).toList();
+        return new QuizExerciseCreateDTO(quizExercise.getTitle(), quizExercise.getReleaseDate(), quizExercise.getStartDate(), quizExercise.getDueDate(),
+                quizExercise.getDifficulty(), quizExercise.getMode(), quizExercise.getIncludedInOverallScore(), quizExercise.getCompetencyLinks(), quizExercise.getCategories(),
+                quizExercise.getChannelName(), quizExercise.isRandomizeQuestionOrder(), quizExercise.getQuizMode(), quizExercise.getDuration(), questionDTOs);
+    }
 }
