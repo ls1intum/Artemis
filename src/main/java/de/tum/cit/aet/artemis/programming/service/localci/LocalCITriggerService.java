@@ -137,7 +137,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll) throws LocalCIException {
-        triggerBuild(participation, null, null, triggerAll);
+        triggerBuild(participation, null, null, triggerAll, 0);
     }
 
     /**
@@ -150,10 +150,28 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo) throws LocalCIException {
-        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false);
+        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, 0);
     }
 
-    private void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, boolean triggerAll)
+    public void retryBuildJob(BuildJob buildJob, ProgrammingExerciseParticipation participation) throws LocalCIException {
+        log.info("Retrying build for missing build job with id {} (retry count: {})", buildJob.getBuildJobId(), buildJob.getRetryCount() + 1);
+        triggerBuild(participation, buildJob.getCommitHash(), buildJob.getTriggeredByPushTo(), buildJob.getRetryCount() + 1);
+    }
+
+    /**
+     * Add a new build job item containing all relevant information necessary for the execution to the distributed build job queue.
+     *
+     * @param participation     the participation of the repository which should be built and tested
+     * @param commitHashToBuild the commit hash of the commit that triggers the build. If it is null, the latest commit of the default branch will be built.
+     * @param triggeredByPushTo type of the repository that was pushed to and triggered the build job
+     * @param retryCount        how often the build has been retried after it went missing
+     * @throws LocalCIException if the build job could not be added to the queue.
+     */
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, int retryCount) throws LocalCIException {
+        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, retryCount);
+    }
+
+    private void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, boolean triggerAll, int retryCount)
             throws LocalCIException {
 
         log.info("Triggering build for participation {} and commit hash {}", participation.getId(), commitHashToBuild);
@@ -207,7 +225,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         BuildAgentDTO buildAgent = new BuildAgentDTO(null, null, null);
 
         BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), buildAgent, participation.getId(), courseId,
-                programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
+                programmingExercise.getId(), retryCount, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
         // Save the build job before adding it to the queue to ensure it exists in the database.
         // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,
