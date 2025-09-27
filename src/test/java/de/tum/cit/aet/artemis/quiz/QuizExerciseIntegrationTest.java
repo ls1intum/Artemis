@@ -255,7 +255,14 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
      * @return the created quiz exercise or null if the request failed
      */
     private QuizExercise createQuizExerciseWithFiles(QuizExercise quizExercise, HttpStatus expectedStatus, boolean addBackgroundImage) throws Exception {
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz/quiz-exercises");
+        String url;
+        if (quizExercise.isExamExercise()) {
+            url = "/api/quiz/exercise-groups/" + quizExercise.getExerciseGroup().getId() + "/quiz-exercises";
+        }
+        else {
+            url = "/api/quiz/courses/" + quizExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/quiz-exercises";
+        }
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, url);
         addFilesToBuilderAndModifyExercise(builder, quizExercise, addBackgroundImage);
         builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
                 .contentType(MediaType.MULTIPART_FORM_DATA);
