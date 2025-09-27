@@ -76,6 +76,7 @@ public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releas
         quizExercise.setDuration(duration);
         quizExercise.setQuizBatches(Optional.ofNullable(quizBatches).orElse(Set.of()).stream().map(QuizBatchCreationDTO::toDomainObject).collect(Collectors.toSet()));
         quizExercise.setQuizQuestions(quizQuestions.stream().map(QuizQuestionCreateDTO::toDomainObject).toList());
+        quizExercise.setAllowedNumberOfAttempts(1);
         return quizExercise;
     }
 }
