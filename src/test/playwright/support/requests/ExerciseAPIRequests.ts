@@ -41,6 +41,7 @@ import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-ass
 import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
 import { Fixtures } from '../../fixtures/fixtures';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
+import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
 
 type PatchProgrammingExerciseTestVisibilityDto = {
     id: number;
@@ -446,24 +447,34 @@ export class ExerciseAPIRequests {
             quizMode,
             channelName: 'exercise-' + titleLowercase(title),
         };
-        const dates = {
-            releaseDate: dayjsToString(releaseDate),
-        };
-        const quizBatches = [];
-        if (startOfWorkingTime) {
-            quizBatches.push({ startTime: dayjsToString(startOfWorkingTime) });
+
+        let url: string;
+        let newQuizExercise: any;
+        let quizBatches: any[] = [];
+        if (body.hasOwnProperty('course')) {
+            url = `api/quiz/courses/${body.course.id}/quiz-exercises`;
+            const dates = {
+                releaseDate: dayjsToString(releaseDate),
+            };
+            if (startOfWorkingTime) {
+                quizBatches = [{ startTime: dayjsToString(startOfWorkingTime) }];
+            }
+            newQuizExercise = { ...quizExercise, quizBatches, ...dates, ...body };
+        } else {
+            url = `api/quiz/exercise-groups/${body.exerciseGroup.id}/quiz-exercises`;
+            newQuizExercise = { ...quizExercise, ...body };
         }
 
-        const newQuizExercise = body.hasOwnProperty('course') ? { ...quizExercise, quizBatches, ...dates, ...body } : { ...quizExercise, ...body };
+        const quizExerciseDTO = convertQuizExerciseToCreationDTO(newQuizExercise);
         const multipartData = {
             exercise: {
                 name: 'exercise',
                 mimeType: 'application/json',
-                buffer: Buffer.from(JSON.stringify(newQuizExercise)),
+                buffer: Buffer.from(JSON.stringify(quizExerciseDTO)),
             },
         };
 
-        const response = await this.page.request.post(QUIZ_EXERCISE_BASE, {
+        const response = await this.page.request.post(url, {
             multipart: multipartData,
         });
         return response.json();
