@@ -12,6 +12,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from '../../../../../core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
+import { ProblemStatementGenerationResponse } from 'app/openapi/model/problemStatementGenerationResponse';
+import { AlertService } from 'app/shared/service/alert.service';
+import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
 
 describe('ProgrammingExerciseProblemComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseProblemComponent>;
@@ -22,6 +26,14 @@ describe('ProgrammingExerciseProblemComponent', () => {
         queryParams: of({}),
     } as ActivatedRoute;
 
+    const mockHyperionApiService = {
+        generateProblemStatement: jest.fn(),
+    };
+
+    const mockAlertService = {
+        success: jest.fn(),
+    };
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
@@ -29,7 +41,8 @@ describe('ProgrammingExerciseProblemComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
-
+                { provide: HyperionProblemStatementApiService, useValue: mockHyperionApiService },
+                { provide: AlertService, useValue: mockAlertService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -43,8 +56,8 @@ describe('ProgrammingExerciseProblemComponent', () => {
             linkedCompetencies: true,
         });
 
-        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-        comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+        fixture.componentRef.setInput('programmingExercise', new ProgrammingExercise(undefined, undefined));
+        fixture.componentRef.setInput('programmingExerciseCreationConfig', programmingExerciseCreationConfigMock);
     });
 
     afterEach(() => {
@@ -55,9 +68,41 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.detectChanges();
         expect(comp).not.toBeNull();
 
-        const exercise = new ProgrammingExercise(undefined, undefined);
-        comp.exercise = exercise;
+        const exercise = comp.programmingExercise();
+        expect(exercise).toBeDefined();
+    }));
 
-        expect(comp.exercise).toBe(exercise);
+    it('should generate problem statement successfully', fakeAsync(() => {
+        const courseId = 42;
+        const userPrompt = 'Create a Java exercise about binary search trees';
+        const generatedText = 'Generated draft problem statement about binary search trees';
+
+        const mockResponse: ProblemStatementGenerationResponse = {
+            draftProblemStatement: generatedText,
+        };
+
+        const request: ProblemStatementGenerationRequest = {
+            userPrompt: userPrompt,
+        };
+
+        // Set up the programming exercise with a course
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: courseId } as any;
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        mockHyperionApiService.generateProblemStatement.mockReturnValue(of(mockResponse));
+
+        // Trigger the generation
+        comp.userPrompt = userPrompt;
+        comp.generateProblemStatement();
+
+        // Verify the API was called correctly
+        expect(mockHyperionApiService.generateProblemStatement).toHaveBeenCalledWith(courseId, request);
+
+        // Verify the alert was shown
+        expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationSuccess');
+
+        // Verify the exercise was updated
+        expect(programmingExercise.problemStatement).toBe(generatedText);
     }));
 });

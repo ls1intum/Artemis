@@ -32,7 +32,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private static final String TEST_PREFIX = "hyperionreviewrefine";
+    private static final String TEST_PREFIX = "hyperionproblemstatementresource";
 
     private long persistedExerciseId;
 
@@ -77,6 +77,10 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     private void mockRewriteImproved() {
         doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Improved problem statement."))))).when(chatModel).call(any(Prompt.class));
+    }
+
+    private void mockGenerateSuccess() {
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Draft problem statement generated successfully."))))).when(chatModel).call(any(Prompt.class));
     }
 
     @Test
@@ -166,6 +170,54 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         courseRepository.findById(courseId).orElseThrow();
         String body = "{\"problemStatementText\":\"Original\"}";
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/rewrite", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldGenerateProblemStatementForInstructor() throws Exception {
+        long courseId = persistedCourseId;
+        mockRewriteImproved();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        courseRepository.findById(courseId).orElseThrow();
+        String body = "{\"userPrompt\":\"Prompt\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.draftProblemStatement").isString());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    void shouldGenerateProblemStatementForEditor() throws Exception {
+        long courseId = persistedCourseId;
+        mockRewriteImproved();
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+        courseRepository.findById(courseId).orElseThrow();
+        String body = "{\"userPrompt\":\"Prompt\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.draftProblemStatement").isString());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    void shouldReturnForbiddenForGenerateTutor() throws Exception {
+        long courseId = persistedCourseId;
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        courseRepository.findById(courseId).orElseThrow();
+
+        String body = "{\"userPrompt\":\"Prompt\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void shouldReturnForbiddenForGenerateStudent() throws Exception {
+        long courseId = persistedCourseId;
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        courseRepository.findById(courseId).orElseThrow();
+        String body = "{\"userPrompt\":\"Prompt\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isForbidden());
     }
 }
