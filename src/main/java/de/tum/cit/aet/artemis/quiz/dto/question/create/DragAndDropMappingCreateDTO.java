@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.create;
 
+import jakarta.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
@@ -7,7 +9,7 @@ import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record DragAndDropMappingCreateDTO(long dragItemTempId, long dropLocationTempId) {
+public record DragAndDropMappingCreateDTO(@NotNull Long dragItemTempId, @NotNull Long dropLocationTempId) {
 
     /**
      * Converts this DTO to a {@link DragAndDropMapping} domain object.

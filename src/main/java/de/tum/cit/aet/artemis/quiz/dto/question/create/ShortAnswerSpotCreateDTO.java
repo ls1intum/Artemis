@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.create;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ShortAnswerSpotCreateDTO(long tempID, int spotNr, int width) {
+public record ShortAnswerSpotCreateDTO(@NotNull Long tempID, @NotNull Integer spotNr, @NotNull @Positive Integer width) {
 
     /**
      * Converts this DTO to a {@link ShortAnswerSpot} domain object.

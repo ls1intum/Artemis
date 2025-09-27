@@ -19,7 +19,12 @@ export interface QuizExerciseCreationDTO {
     randomizeQuestionOrder?: boolean;
     quizMode?: QuizMode;
     duration?: number;
+    quizBatches?: QuizBatchCreationDTO[];
     quizQuestions?: QuizQuestionCreateDTO[];
+}
+
+export interface QuizBatchCreationDTO {
+    startTime?: dayjs.Dayjs;
 }
 
 export function convertQuizExerciseToCreationDTO(exercise: QuizExercise): QuizExerciseCreationDTO {
@@ -37,6 +42,7 @@ export function convertQuizExerciseToCreationDTO(exercise: QuizExercise): QuizEx
         randomizeQuestionOrder: exercise.randomizeQuestionOrder ?? true,
         quizMode: exercise.quizMode,
         duration: exercise.duration ?? 0,
+        quizBatches: exercise.quizBatches ? exercise.quizBatches.map((batch) => ({ startTime: batch.startTime })) : undefined,
         quizQuestions: exercise.quizQuestions ? convertQuizQuestionsToDTOs(exercise.quizQuestions) : undefined,
     };
 }

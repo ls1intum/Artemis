@@ -191,16 +191,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         checkCreatedFiles(quizExercise);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createQuizExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
-        ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(createEmptyCourse(), true);
-        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup);
-        quizExercise.setCourse(exerciseGroup.getExam().getCourse());
-
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
-    }
-
     private Course createEmptyCourse() {
         final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
         final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
@@ -335,13 +325,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         MvcResult result = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(mediaType)).andReturn();
         byte[] image = result.getResponse().getContentAsByteArray();
         assertThat(image).isNotEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createQuizExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
-        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExerciseForExam(null);
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
     @Test
@@ -581,14 +564,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         QuizExercise updatedQuizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
         assertThat(updatedQuizExercise).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExistingQuizExercise() throws Exception {
-        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

@@ -4,6 +4,7 @@ import java.util.List;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -12,8 +13,25 @@ import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MultipleChoiceQuestionCreateDTO(@NotNull String title, String text, String hint, String explanation, double points, @NotNull ScoringType scoringType,
-        boolean randomizeOrder, @NotEmpty List<AnswerOptionCreateDTO> answerOptions, boolean singleChoice) implements QuizQuestionCreateDTO {
+public record MultipleChoiceQuestionCreateDTO(@NotNull String title, String text, String hint, String explanation, @NotNull @Positive Double points,
+        @NotNull ScoringType scoringType, @NotNull Boolean randomizeOrder, @NotEmpty List<AnswerOptionCreateDTO> answerOptions, @NotNull Boolean singleChoice)
+        implements QuizQuestionCreateDTO {
+
+    /**
+     * Creates a {@link MultipleChoiceQuestionCreateDTO} from the given {@link MultipleChoiceQuestion} domain object.
+     * <p>
+     * Maps the domain object's properties to the corresponding DTO fields and transforms the list
+     * of {@link AnswerOption} into a list of {@link AnswerOptionCreateDTO} by invoking their respective
+     * {@code of} methods.
+     *
+     * @param question the {@link MultipleChoiceQuestion} domain object to convert
+     * @return the {@link MultipleChoiceQuestionCreateDTO} with properties and child DTOs set from the domain object
+     */
+    public static MultipleChoiceQuestionCreateDTO of(MultipleChoiceQuestion question) {
+        List<AnswerOptionCreateDTO> optionDTOs = question.getAnswerOptions().stream().map(AnswerOptionCreateDTO::of).toList();
+        return new MultipleChoiceQuestionCreateDTO(question.getTitle(), question.getText(), question.getHint(), question.getExplanation(), question.getPoints(),
+                question.getScoringType(), question.isRandomizeOrder(), optionDTOs, question.isSingleChoice());
+    }
 
     /**
      * Converts this DTO to a {@link MultipleChoiceQuestion} domain object.
@@ -38,21 +56,5 @@ public record MultipleChoiceQuestionCreateDTO(@NotNull String title, String text
         List<AnswerOption> options = answerOptions.stream().map(AnswerOptionCreateDTO::toDomainObject).toList();
         question.setAnswerOptions(options);
         return question;
-    }
-
-    /**
-     * Creates a {@link MultipleChoiceQuestionCreateDTO} from the given {@link MultipleChoiceQuestion} domain object.
-     * <p>
-     * Maps the domain object's properties to the corresponding DTO fields and transforms the list
-     * of {@link AnswerOption} into a list of {@link AnswerOptionCreateDTO} by invoking their respective
-     * {@code of} methods.
-     *
-     * @param question the {@link MultipleChoiceQuestion} domain object to convert
-     * @return the {@link MultipleChoiceQuestionCreateDTO} with properties and child DTOs set from the domain object
-     */
-    public static MultipleChoiceQuestionCreateDTO of(MultipleChoiceQuestion question) {
-        List<AnswerOptionCreateDTO> optionDTOs = question.getAnswerOptions().stream().map(AnswerOptionCreateDTO::of).toList();
-        return new MultipleChoiceQuestionCreateDTO(question.getTitle(), question.getText(), question.getHint(), question.getExplanation(), question.getPoints(),
-                question.getScoringType(), question.isRandomizeOrder(), optionDTOs, question.isSingleChoice());
     }
 }

@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.create;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record DropLocationCreateDTO(long tempID, double posX, double posY, double width, double height) {
+public record DropLocationCreateDTO(@NotNull Long tempID, @NotNull Double posX, @NotNull Double posY, @NotNull @Positive Double width, @NotNull @Positive Double height) {
 
     /**
      * Converts this DTO to a {@link DropLocation} domain object.
