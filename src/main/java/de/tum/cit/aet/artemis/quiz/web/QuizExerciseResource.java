@@ -74,6 +74,7 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -210,51 +211,53 @@ public class QuizExerciseResource {
     }
 
     /**
-     * POST /quiz-exercises : Create a new quizExercise.
+     * POST /exercise-groups/{exerciseGroupId}/quiz-exercises : Create a new quizExercise for an exam.
      *
-     * @param quizExercise the quizExercise to create
-     * @param files        the files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
-     * @return the ResponseEntity with status 201 (Created) and with body the new quizExercise, or with status 400 (Bad Request) if the quizExercise has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @param exerciseGroupId the id of the exercise group to which the quiz exercise should be added
+     * @param quizExerciseDTO the quizExercise DTO to create
+     * @param files           the files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExerciseDTO}
+     * @return the ResponseEntity with status 201 (Created) and with body the new quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid
+     * @throws IOException if there is an error handling the files
      */
-    @PostMapping(value = "quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "exercise-groups/{exerciseGroupId}/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
-    public ResponseEntity<QuizExercise> createQuizExercise(@RequestPart("exercise") QuizExercise quizExercise,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
-        log.info("REST request to create QuizExercise : {}", quizExercise);
-        if (quizExercise.getId() != null) {
-            throw new BadRequestAlertException("A new quizExercise cannot already have an ID", ENTITY_NAME, "idExists");
-        }
+    public ResponseEntity<QuizExercise> createExamQuizExercise(@PathVariable Long exerciseGroupId, @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
+        log.info("REST request to create QuizExercise : {} in exam exercise group {}", quizExerciseDTO, exerciseGroupId);
+        QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
+        quizExerciseService.resolveQuizQuestionMappings(quizExercise);
 
-        // check if quiz is valid
-        if (!quizExercise.isValid()) {
-            // TODO: improve error message and tell the client why the quiz is invalid (also see below in update Quiz)
-            throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
-        }
+        // We create a new ExerciseGroup with the given id
+        // The exercise group is replaced when retrieveCourseOverExerciseGroupOrCourseId is called below
+        // This approach avoids an additional database call
+        ExerciseGroup exerciseGroup = new ExerciseGroup();
+        exerciseGroup.setId(exerciseGroupId);
+        quizExercise.setExerciseGroup(exerciseGroup);
 
-        quizExercise.validateGeneralSettings();
-        // Valid exercises have set either a course or an exerciseGroup
-        quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-
-        // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-
+        if (!quizExercise.isValid()) {
+            throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
+        }
+        quizExercise.validateGeneralSettings();
         quizExerciseService.handleDndQuizFileCreation(quizExercise, files);
-
         QuizExercise result = quizExerciseService.save(quizExercise);
-
-        channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
-
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
-
-        return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.status(HttpStatus.CREATED).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
-    @PostMapping("courses/{courseId}/quiz-exercises")
+    /**
+     * POST /courses/{courseId}/quiz-exercises : Create a new quizExercise for a course.
+     *
+     * @param courseId        the id of the course to which the quiz exercise should be added
+     * @param quizExerciseDTO the quizExercise DTO to create
+     * @param files           the files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExerciseDTO}
+     * @return the ResponseEntity with status 201 (Created) and with body the new quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid
+     * @throws IOException if there is an error handling the files
+     */
+    @PostMapping(value = "courses/{courseId}/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<List<QuizExercise>> createQuizExercise2(@PathVariable Long courseId, @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
+    public ResponseEntity<QuizExercise> createCourseQuizExercise(@PathVariable Long courseId, @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
         log.info("REST request to create QuizExercise : {} in course {}", quizExerciseDTO, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -270,8 +273,7 @@ public class QuizExerciseResource {
         QuizExercise result = quizExerciseService.save(quizExercise);
         channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
-        return ResponseEntity.status(HttpStatus.CREATED).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString()))
-                .body(List.of(result));
+        return ResponseEntity.status(HttpStatus.CREATED).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
     /**

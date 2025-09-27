@@ -23,7 +23,7 @@ export class QuizExerciseService {
     private exerciseService = inject(ExerciseService);
     private fileService = inject(FileService);
     private resourceUrl = 'api/quiz/quiz-exercises';
-    private createUrl = 'api/quiz/courses';
+    private quizBaseURL = 'api/quiz';
 
     /**
      * Create the given quiz exercise
@@ -42,9 +42,16 @@ export class QuizExerciseService {
             formData.append('files', file, fileName);
         });
 
-        return this.http
-            .post<QuizExercise>(`${this.createUrl}/${quizExercise.course?.id}/quiz-exercises`, formData, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+        let url: string;
+        if (quizExercise.exerciseGroup && quizExercise.exerciseGroup.id) {
+            url = `${this.quizBaseURL}/exercise-groups/${quizExercise.exerciseGroup.id}/quiz-exercises`;
+        } else if (quizExercise.course && quizExercise.course.id) {
+            url = `${this.quizBaseURL}/courses/${quizExercise.course.id}/quiz-exercises`;
+        } else {
+            throw new Error('Quiz exercise must belong to a course or an exercise group');
+        }
+
+        return this.http.post<QuizExercise>(url, formData, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
     /**
