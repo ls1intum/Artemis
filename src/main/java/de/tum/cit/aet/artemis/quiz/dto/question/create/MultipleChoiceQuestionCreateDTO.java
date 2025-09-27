@@ -15,6 +15,15 @@ import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 public record MultipleChoiceQuestionCreateDTO(@NotNull String title, String text, String hint, String explanation, double points, @NotNull ScoringType scoringType,
         boolean randomizeOrder, @NotEmpty List<AnswerOptionCreateDTO> answerOptions, boolean singleChoice) implements QuizQuestionCreateDTO {
 
+    /**
+     * Converts this DTO to a {@link MultipleChoiceQuestion} domain object.
+     * <p>
+     * Maps the DTO properties to the corresponding fields in the domain object and transforms the list
+     * of {@link AnswerOptionCreateDTO} into a list of {@link AnswerOption} objects by invoking their
+     * respective {@code toDomainObject} methods.
+     *
+     * @return the {@link MultipleChoiceQuestion} domain object with properties set from this DTO
+     */
     public MultipleChoiceQuestion toDomainObject() {
         MultipleChoiceQuestion question = new MultipleChoiceQuestion();
         question.setTitle(title);

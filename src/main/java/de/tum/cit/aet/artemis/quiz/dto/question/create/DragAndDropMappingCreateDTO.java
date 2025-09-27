@@ -9,6 +9,15 @@ import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragAndDropMappingCreateDTO(long dragItemTempId, long dropLocationTempId) {
 
+    /**
+     * Converts this DTO to a {@link DragAndDropMapping} domain object.
+     * <p>
+     * Creates temporary {@link DragItem} and {@link DropLocation} objects populated
+     * with the provided tempIDs and associates them with the mapping. This method is used to
+     * initialize mappings prior to resolution with actual domain objects in the question.
+     *
+     * @return the {@link DragAndDropMapping} domain object with temporary drag item and drop location references
+     */
     public DragAndDropMapping toDomainObject() {
         DragAndDropMapping dragAndDropMapping = new DragAndDropMapping();
         DragItem dragItem = new DragItem();

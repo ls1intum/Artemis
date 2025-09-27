@@ -17,6 +17,16 @@ public record ShortAnswerQuestionCreateDTO(@NotEmpty String title, String text, 
         List<ShortAnswerSpotCreateDTO> spots, List<ShortAnswerSolutionCreateDTO> solutions, List<ShortAnswerMappingCreateDTO> correctMappings, int similarityValue,
         boolean matchLetterCase) implements QuizQuestionCreateDTO {
 
+    /**
+     * Converts this DTO to a {@link ShortAnswerQuestion} domain object.
+     * <p>
+     * Maps the DTO properties to the corresponding fields in the domain object and transforms the lists
+     * of {@link ShortAnswerSpotCreateDTO}, {@link ShortAnswerSolutionCreateDTO}, and {@link ShortAnswerMappingCreateDTO}
+     * into lists of {@link ShortAnswerSpot}, {@link ShortAnswerSolution}, and {@link ShortAnswerMapping} objects
+     * by invoking their respective {@code toDomainObject} methods.
+     *
+     * @return the {@link ShortAnswerQuestion} domain object with properties and child entities set from this DTO
+     */
     public ShortAnswerQuestion toDomainObject() {
         ShortAnswerQuestion shortAnswerQuestion = new ShortAnswerQuestion();
         shortAnswerQuestion.setTitle(title);

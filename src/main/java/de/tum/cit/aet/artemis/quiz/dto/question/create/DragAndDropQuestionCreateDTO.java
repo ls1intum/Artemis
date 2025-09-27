@@ -15,6 +15,17 @@ public record DragAndDropQuestionCreateDTO(@NotEmpty String title, String text, 
         boolean randomizeOrder, String backgroundFilePath, @NotEmpty List<DropLocationCreateDTO> dropLocations, @NotEmpty List<DragItemCreateDTO> dragItems,
         @NotEmpty List<DragAndDropMappingCreateDTO> correctMappings) implements QuizQuestionCreateDTO {
 
+    /**
+     * Converts this DTO to a {@link DragAndDropQuestion} domain object.
+     * <p>
+     * Maps the DTO properties to the corresponding fields in the domain object and transforms the lists
+     * of {@link DropLocationCreateDTO}, {@link DragItemCreateDTO}, and {@link DragAndDropMappingCreateDTO}
+     * into lists of {@link de.tum.cit.aet.artemis.quiz.domain.DropLocation}, {@link de.tum.cit.aet.artemis.quiz.domain.DragItem},
+     * and {@link de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping} objects by invoking their respective
+     * {@code toDomainObject} methods.
+     *
+     * @return the {@link DragAndDropQuestion} domain object with properties and child entities set from this DTO
+     */
     public DragAndDropQuestion toDomainObject() {
         DragAndDropQuestion dragAndDropQuestion = new DragAndDropQuestion();
         dragAndDropQuestion.setTitle(title);

@@ -11,5 +11,13 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
         @JsonSubTypes.Type(value = ShortAnswerQuestionCreateDTO.class, name = "short-answer") })
 public interface QuizQuestionCreateDTO {
 
+    /**
+     * Converts this DTO to a {@link QuizQuestion} domain object.
+     * <p>
+     * Implementations of this interface should map their properties to the appropriate
+     * {@link QuizQuestion} subclass and return the populated domain object.
+     *
+     * @return the {@link QuizQuestion} domain object corresponding to this DTO
+     */
     QuizQuestion toDomainObject();
 }

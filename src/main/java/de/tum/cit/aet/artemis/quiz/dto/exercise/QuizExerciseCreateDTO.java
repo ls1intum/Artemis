@@ -22,6 +22,16 @@ public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releas
         @NotNull ExerciseMode mode, @NotNull IncludedInOverallScore includedInOverallScore, Set<CompetencyExerciseLink> competencyLinks, Set<String> categories,
         @NotNull String channelName, boolean randomizeQuestionOrder, @NotNull QuizMode quizMode, int duration, @NotEmpty List<? extends QuizQuestionCreateDTO> quizQuestions) {
 
+    /**
+     * Converts this DTO to a {@link QuizExercise} domain object.
+     * <p>
+     * Maps the DTO properties to the corresponding fields in the domain object, handling null-safe
+     * collections for competency links and categories. Transforms the list of {@link QuizQuestionCreateDTO}
+     * into a list of {@link de.tum.cit.aet.artemis.quiz.domain.QuizQuestion} objects by invoking their
+     * respective {@code toDomainObject} methods.
+     *
+     * @return the {@link QuizExercise} domain object with properties and quiz questions set from this DTO
+     */
     public QuizExercise toDomainObject() {
         QuizExercise quizExercise = new QuizExercise();
         quizExercise.setTitle(title);

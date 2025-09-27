@@ -41,7 +41,15 @@ describe('QuizExercise Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                SessionStorageService,
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+            ],
         });
         service = TestBed.inject(QuizExerciseService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -61,7 +69,10 @@ describe('QuizExercise Service', () => {
         expect((await result)?.body).toEqual(elemDefault);
     });
 
-    it('should create a QuizExercise', async () => {
+    it('should create a QuizExercise for a course', async () => {
+        const course = new Course();
+        course.id = 1;
+        const quizExercise = new QuizExercise(course, undefined);
         const returnedFromService = Object.assign(
             {
                 id: 0,
@@ -69,11 +80,33 @@ describe('QuizExercise Service', () => {
             elemDefault,
         );
         const expected = Object.assign({}, returnedFromService);
-        const result = firstValueFrom(service.create(new QuizExercise(undefined, undefined), fileMap));
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/quiz-exercises' });
+        const result = firstValueFrom(service.create(quizExercise, fileMap));
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/courses/1/quiz-exercises' });
         validateFormData(req);
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
+    });
+
+    it('should create a QuizExercise for an exam', async () => {
+        const exerciseGroup = { id: 1 } as any; // Simplified mock for ExerciseGroup
+        const quizExercise = new QuizExercise(undefined, exerciseGroup);
+        const returnedFromService = Object.assign(
+            {
+                id: 0,
+            },
+            elemDefault,
+        );
+        const expected = Object.assign({}, returnedFromService);
+        const result = firstValueFrom(service.create(quizExercise, fileMap));
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz/exercise-groups/1/quiz-exercises' });
+        validateFormData(req);
+        req.flush(returnedFromService);
+        expect((await result)?.body).toEqual(expected);
+    });
+
+    it('should throw an error if QuizExercise has neither course nor exerciseGroup', async () => {
+        const quizExercise = new QuizExercise(undefined, undefined);
+        expect(() => service.create(quizExercise, fileMap)).toThrow('Quiz exercise must belong to a course or an exercise group');
     });
 
     it('should import a QuizExercise', async () => {
@@ -350,6 +383,7 @@ describe('QuizExercise Service', () => {
 
         await expect(service.fetchFilePromise(fileName, mockJSZip, filePath)).rejects.toThrow(`File with name: ${fileName} at path: ${filePath} could not be fetched`);
     });
+
     function validateFormData(req: TestRequest) {
         expect(req.request.body).toBeInstanceOf(FormData);
         expect(req.request.body.get('exercise')).toBeInstanceOf(Blob);

@@ -7,6 +7,14 @@ import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragItemCreateDTO(long tempID, String text, String pictureFilePath) {
 
+    /**
+     * Converts this DTO to a {@link DragItem} domain object.
+     * <p>
+     * Maps the DTO properties directly to the corresponding fields in the domain object,
+     * including temporary ID, text, and picture file path.
+     *
+     * @return the {@link DragItem} domain object with properties set from this DTO
+     */
     public DragItem toDomainObject() {
         DragItem dragItem = new DragItem();
         dragItem.setTempID(tempID);
