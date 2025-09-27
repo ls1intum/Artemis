@@ -61,12 +61,10 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
-import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
-import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -78,19 +76,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.create.AnswerOptionCreateDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.create.DragAndDropMappingCreateDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.create.DragAndDropQuestionCreateDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.create.DragItemCreateDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.create.DropLocationCreateDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.create.MultipleChoiceQuestionCreateDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.create.QuizQuestionCreateDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.create.ShortAnswerMappingCreateDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.create.ShortAnswerQuestionCreateDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.create.ShortAnswerSolutionCreateDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.create.ShortAnswerSpotCreateDTO;
 import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
@@ -813,175 +799,50 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         return events;
     }
 
-    private static MultipleChoiceQuestion createMultipleChoiceQuestionFromDTO(MultipleChoiceQuestionCreateDTO mc) {
-        MultipleChoiceQuestion question = new MultipleChoiceQuestion();
-        List<AnswerOption> answerOptions = getMCAnswerOptionsFromDTO(mc);
-        question.setTitle(mc.title());
-        question.setText(mc.text());
-        question.setHint(mc.hint());
-        question.setExplanation(mc.explanation());
-        question.setPoints(mc.points());
-        question.setScoringType(mc.scoringType());
-        question.setRandomizeOrder(mc.randomizeOrder());
-        question.setSingleChoice(mc.singleChoice());
-        question.setAnswerOptions(answerOptions);
-        return question;
-    }
-
-    private static List<AnswerOption> getMCAnswerOptionsFromDTO(MultipleChoiceQuestionCreateDTO mc) {
-        List<AnswerOption> answerOptions = new ArrayList<>();
-        for (AnswerOptionCreateDTO answerOptionCreateDTO : mc.answerOptions()) {
-            AnswerOption answerOption = new AnswerOption();
-            answerOption.setText(answerOptionCreateDTO.text());
-            answerOption.setHint(answerOptionCreateDTO.hint());
-            answerOption.setExplanation(answerOptionCreateDTO.explanation());
-            answerOption.setIsCorrect(answerOptionCreateDTO.isCorrect());
-            answerOptions.add(answerOption);
-        }
-        return answerOptions;
-    }
-
-    private static DragAndDropQuestion createDragAndDropQuestionFromDTO(DragAndDropQuestionCreateDTO dc) {
-        DragAndDropQuestion question = new DragAndDropQuestion();
-        List<DropLocation> dropLocations = getDropLocationsFromDTO(dc);
-        List<DragItem> dragItems = getDragItemsFromDTO(dc);
-        List<DragAndDropMapping> mappings = getDragAndDropMappingsFromDTO(dc, dropLocations, dragItems);
-        question.setTitle(dc.title());
-        question.setText(dc.text());
-        question.setHint(dc.hint());
-        question.setExplanation(dc.explanation());
-        question.setPoints(dc.points());
-        question.setScoringType(dc.scoringType());
-        question.setRandomizeOrder(dc.randomizeOrder());
-        question.setBackgroundFilePath(dc.backgroundFilePath());
-        question.setDropLocations(dropLocations);
-        question.setDragItems(dragItems);
-        question.setCorrectMappings(mappings);
-        return question;
-    }
-
-    private static List<DropLocation> getDropLocationsFromDTO(DragAndDropQuestionCreateDTO dc) {
-        List<DropLocation> dropLocations = new ArrayList<>();
-        for (DropLocationCreateDTO dropLocationCreateDTO : dc.dropLocations()) {
-            DropLocation dropLocation = new DropLocation();
-            dropLocation.setTempID(dropLocationCreateDTO.tempID());
-            dropLocation.setPosX(dropLocationCreateDTO.posX());
-            dropLocation.setPosY(dropLocationCreateDTO.posY());
-            dropLocation.setWidth(dropLocationCreateDTO.width());
-            dropLocation.setHeight(dropLocationCreateDTO.height());
-        }
-        return dropLocations;
-    }
-
-    private static List<DragItem> getDragItemsFromDTO(DragAndDropQuestionCreateDTO dc) {
-        List<DragItem> dragItems = new ArrayList<>();
-        for (DragItemCreateDTO dragItemCreateDTO : dc.dragItems()) {
-            DragItem dragItem = new DragItem();
-            dragItem.setTempID(dragItemCreateDTO.tempID());
-            dragItem.setText(dragItemCreateDTO.text());
-            dragItem.setPictureFilePath(dragItemCreateDTO.pictureFilePath());
-            dragItems.add(dragItem);
-        }
-        return dragItems;
-    }
-
-    private static List<DragAndDropMapping> getDragAndDropMappingsFromDTO(DragAndDropQuestionCreateDTO dc, List<DropLocation> dropLocations, List<DragItem> dragItems) {
-        List<DragAndDropMapping> mappings = new ArrayList<>();
-        for (DragAndDropMappingCreateDTO mappingCreateDTO : dc.correctMappings()) {
-            // TODO: Return here and check if this is even necessary
-            DragAndDropMapping mapping = new DragAndDropMapping();
-            DropLocation dropLocation = dropLocations.stream().filter(dl -> dl.getTempID().equals(mappingCreateDTO.dropLocationTempId())).findFirst().orElse(null);
-            DragItem dragItem = dragItems.stream().filter(di -> di.getTempID().equals(mappingCreateDTO.dragItemTempId())).findFirst().orElse(null);
-            mapping.setDropLocation(dropLocation);
-            mapping.setDragItem(dragItem);
-            mappings.add(mapping);
-        }
-        return mappings;
-    }
-
-    private static ShortAnswerQuestion createShortAnswerQuestionFromDTO(ShortAnswerQuestionCreateDTO shortAnswerQuestionCreateDTO) {
-        ShortAnswerQuestion question = new ShortAnswerQuestion();
-        List<ShortAnswerSpot> spots = getShortAnswerSpotsFromDTO(shortAnswerQuestionCreateDTO);
-        List<ShortAnswerSolution> solutions = getShortAnswerSolutionsFromDTO(shortAnswerQuestionCreateDTO);
-        List<ShortAnswerMapping> mappings = getShortAnswerMappingsFromDTO(shortAnswerQuestionCreateDTO, spots, solutions);
-        question.setTitle(shortAnswerQuestionCreateDTO.title());
-        question.setText(shortAnswerQuestionCreateDTO.text());
-        question.setHint(shortAnswerQuestionCreateDTO.hint());
-        question.setExplanation(shortAnswerQuestionCreateDTO.explanation());
-        question.setPoints(shortAnswerQuestionCreateDTO.points());
-        question.setScoringType(shortAnswerQuestionCreateDTO.scoringType());
-        question.setRandomizeOrder(shortAnswerQuestionCreateDTO.randomizeOrder());
-        question.setSimilarityValue(shortAnswerQuestionCreateDTO.similarityValue());
-        question.setSpots(spots);
-        question.setSolutions(solutions);
-        question.setCorrectMappings(mappings);
-        return null;
-    }
-
-    private static List<ShortAnswerSpot> getShortAnswerSpotsFromDTO(ShortAnswerQuestionCreateDTO sa) {
-        List<ShortAnswerSpot> spots = new ArrayList<>();
-        for (ShortAnswerSpotCreateDTO spotCreateDTO : sa.spots()) {
-            ShortAnswerSpot spot = new ShortAnswerSpot();
-            spot.setTempID(spotCreateDTO.tempID());
-            spot.setSpotNr(spotCreateDTO.spotNr());
-            spot.setWidth(spotCreateDTO.width());
-            spots.add(spot);
-        }
-        return spots;
-    }
-
-    private static List<ShortAnswerSolution> getShortAnswerSolutionsFromDTO(ShortAnswerQuestionCreateDTO sa) {
-        List<ShortAnswerSolution> solutions = new ArrayList<>();
-        for (ShortAnswerSolutionCreateDTO solutionCreateDTO : sa.solutions()) {
-            ShortAnswerSolution solution = new ShortAnswerSolution();
-            solution.setTempID(solutionCreateDTO.tempID());
-            solution.setText(solutionCreateDTO.text());
-            solutions.add(solution);
-        }
-        return solutions;
-    }
-
-    private static List<ShortAnswerMapping> getShortAnswerMappingsFromDTO(ShortAnswerQuestionCreateDTO sa, List<ShortAnswerSpot> spots, List<ShortAnswerSolution> solutions) {
-        List<ShortAnswerMapping> mappings = new ArrayList<>();
-        for (ShortAnswerMappingCreateDTO mappingCreateDTO : sa.correctMappings()) {
-            ShortAnswerMapping mapping = new ShortAnswerMapping();
-            ShortAnswerSpot spot = spots.stream().filter(s -> s.getTempID().equals(mappingCreateDTO.spotTempId())).findFirst().orElse(null);
-            ShortAnswerSolution solution = solutions.stream().filter(s -> s.getTempID().equals(mappingCreateDTO.solutionTempId())).findFirst().orElse(null);
-            mapping.setSpot(spot);
-            mapping.setSolution(solution);
-            mappings.add(mapping);
-        }
-        return mappings;
-    }
-
-    private static List<QuizQuestion> createQuizQuestionsFromDTOs(List<? extends QuizQuestionCreateDTO> questionCreateDTOs) {
-        List<QuizQuestion> quizQuestions = new ArrayList<>();
-        for (QuizQuestionCreateDTO questionCreateDTO : questionCreateDTOs) {
-            switch (questionCreateDTO) {
-                case MultipleChoiceQuestionCreateDTO mc -> quizQuestions.add(createMultipleChoiceQuestionFromDTO(mc));
-                case DragAndDropQuestionCreateDTO dnd -> quizQuestions.add(createDragAndDropQuestionFromDTO(dnd));
-                case ShortAnswerQuestionCreateDTO sa -> quizQuestions.add(createShortAnswerQuestionFromDTO(sa));
-                default -> throw new BadRequestAlertException("Unknown question type: " + questionCreateDTO.getClass(), ENTITY_NAME, "unknownQuestionType");
+    /**
+     * Resolves the mappings in DragAndDrop and ShortAnswer questions within the given QuizExercise.
+     * <p>
+     * This method iterates through all questions in the quiz exercise. For DragAndDropQuestions and ShortAnswerQuestions,
+     * it replaces the temporary objects in the correct mappings with the actual objects from the question's collections,
+     * matching them by their temporary IDs (tempID).
+     * <p>
+     * If a mapping cannot be resolved (i.e., no matching object found for a tempID), a BadRequestAlertException is thrown.
+     *
+     * @param quizExercise the QuizExercise containing the questions to process
+     * @throws BadRequestAlertException if any mapping cannot be resolved due to invalid tempIDs
+     */
+    public void resolveQuizQuestionMappings(QuizExercise quizExercise) throws BadRequestAlertException {
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            if (question instanceof DragAndDropQuestion dnd) {
+                Map<Long, DragItem> idToDragItem = dnd.getDragItems().stream().collect(Collectors.toMap(DragItem::getTempID, Function.identity()));
+                Map<Long, DropLocation> idToDropLocation = dnd.getDropLocations().stream().collect(Collectors.toMap(DropLocation::getTempID, Function.identity()));
+                for (DragAndDropMapping mapping : dnd.getCorrectMappings()) {
+                    Long dragItemTempId = mapping.getDragItem().getTempID();
+                    Long dropLocationTempId = mapping.getDropLocation().getTempID();
+                    DragItem dragItem = idToDragItem.get(dragItemTempId);
+                    DropLocation dropLocation = idToDropLocation.get(dropLocationTempId);
+                    if (dragItem == null || dropLocation == null) {
+                        throw new BadRequestAlertException("Could not resolve drag and drop mappings", ENTITY_NAME, "invalidMappings");
+                    }
+                    mapping.setDragItem(dragItem);
+                    mapping.setDropLocation(dropLocation);
+                }
+            }
+            else if (question instanceof ShortAnswerQuestion sa) {
+                Map<Long, ShortAnswerSpot> idToSpot = sa.getSpots().stream().collect(Collectors.toMap(ShortAnswerSpot::getTempID, Function.identity()));
+                Map<Long, ShortAnswerSolution> idToSolution = sa.getSolutions().stream().collect(Collectors.toMap(ShortAnswerSolution::getTempID, Function.identity()));
+                for (ShortAnswerMapping mapping : sa.getCorrectMappings()) {
+                    Long spotTempId = mapping.getSpot().getTempID();
+                    Long solutionTempId = mapping.getSolution().getTempID();
+                    ShortAnswerSpot spot = idToSpot.get(spotTempId);
+                    ShortAnswerSolution solution = idToSolution.get(solutionTempId);
+                    if (spot == null || solution == null) {
+                        throw new BadRequestAlertException("Could not resolve short answer mappings", ENTITY_NAME, "invalidMappings");
+                    }
+                    mapping.setSpot(spot);
+                    mapping.setSolution(solution);
+                }
             }
         }
-        return quizQuestions;
-    }
-
-    public static QuizExercise createNewQuizExerciseFromDTO(QuizExerciseCreateDTO quizExerciseCreateDTO) {
-        QuizExercise quizExercise = new QuizExercise();
-        quizExercise.setTitle(quizExerciseCreateDTO.title());
-        quizExercise.setReleaseDate(quizExerciseCreateDTO.releaseDate());
-        quizExercise.setStartDate(quizExerciseCreateDTO.startDate());
-        quizExercise.setDueDate(quizExerciseCreateDTO.dueDate());
-        quizExercise.setDifficulty(quizExerciseCreateDTO.difficulty());
-        quizExercise.setMode(quizExerciseCreateDTO.mode());
-        quizExercise.setIncludedInOverallScore(quizExerciseCreateDTO.includedInOverallScore());
-        quizExercise.setCompetencyLinks(quizExerciseCreateDTO.competencyLinks());
-        quizExercise.setCategories(quizExerciseCreateDTO.categories());
-        quizExercise.setChannelName(quizExerciseCreateDTO.channelName());
-        quizExercise.setRandomizeQuestionOrder(quizExerciseCreateDTO.randomizeQuestionOrder());
-        quizExercise.setQuizMode(quizExerciseCreateDTO.quizMode());
-        quizExercise.setDuration(quizExerciseCreateDTO.duration());
-        return quizExercise;
     }
 }

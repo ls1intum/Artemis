@@ -13,6 +13,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.dto.question.create.QuizQuestionCreateDTO;
 
@@ -20,4 +21,23 @@ import de.tum.cit.aet.artemis.quiz.dto.question.create.QuizQuestionCreateDTO;
 public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, DifficultyLevel difficulty,
         @NotNull ExerciseMode mode, @NotNull IncludedInOverallScore includedInOverallScore, Set<CompetencyExerciseLink> competencyLinks, Set<String> categories,
         @NotNull String channelName, boolean randomizeQuestionOrder, @NotNull QuizMode quizMode, int duration, @NotEmpty List<? extends QuizQuestionCreateDTO> questions) {
+
+    public QuizExercise toDomainObject() {
+        QuizExercise quizExercise = new QuizExercise();
+        quizExercise.setTitle(title);
+        quizExercise.setReleaseDate(releaseDate);
+        quizExercise.setStartDate(startDate);
+        quizExercise.setDueDate(dueDate);
+        quizExercise.setDifficulty(difficulty);
+        quizExercise.setMode(mode);
+        quizExercise.setIncludedInOverallScore(includedInOverallScore);
+        quizExercise.setCompetencyLinks(competencyLinks);
+        quizExercise.setCategories(categories);
+        quizExercise.setChannelName(channelName);
+        quizExercise.setRandomizeQuestionOrder(randomizeQuestionOrder);
+        quizExercise.setQuizMode(quizMode);
+        quizExercise.setDuration(duration);
+        quizExercise.setQuizQuestions(questions.stream().map(QuizQuestionCreateDTO::toDomainObject).toList());
+        return quizExercise;
+    }
 }

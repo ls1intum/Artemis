@@ -258,9 +258,9 @@ public class QuizExerciseResource {
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
         log.info("REST request to create QuizExercise : {} in course {}", quizExerciseDTO, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        QuizExercise quizExercise = QuizExerciseService.createNewQuizExerciseFromDTO(quizExerciseDTO);
+        QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
+        quizExerciseService.resolveQuizQuestionMappings(quizExercise);
         quizExercise.setCourse(course);
-
         if (!quizExercise.isValid()) {
             throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
         }
