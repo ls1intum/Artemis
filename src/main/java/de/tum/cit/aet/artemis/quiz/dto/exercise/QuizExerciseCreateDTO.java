@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.quiz.dto.question.create.QuizQuestionCreateDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, DifficultyLevel difficulty,
         @NotNull ExerciseMode mode, @NotNull IncludedInOverallScore includedInOverallScore, Set<CompetencyExerciseLink> competencyLinks, Set<String> categories,
-        @NotNull String channelName, boolean randomizeQuestionOrder, @NotNull QuizMode quizMode, int duration, @NotEmpty List<? extends QuizQuestionCreateDTO> questions) {
+        @NotNull String channelName, boolean randomizeQuestionOrder, @NotNull QuizMode quizMode, int duration, @NotEmpty List<? extends QuizQuestionCreateDTO> quizQuestions) {
 
     public QuizExercise toDomainObject() {
         QuizExercise quizExercise = new QuizExercise();
@@ -31,13 +31,13 @@ public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releas
         quizExercise.setDifficulty(difficulty);
         quizExercise.setMode(mode);
         quizExercise.setIncludedInOverallScore(includedInOverallScore);
-        quizExercise.setCompetencyLinks(competencyLinks);
-        quizExercise.setCategories(categories);
+        quizExercise.setCompetencyLinks(competencyLinks == null ? Set.of() : competencyLinks);
+        quizExercise.setCategories(categories == null ? Set.of() : categories);
         quizExercise.setChannelName(channelName);
         quizExercise.setRandomizeQuestionOrder(randomizeQuestionOrder);
         quizExercise.setQuizMode(quizMode);
         quizExercise.setDuration(duration);
-        quizExercise.setQuizQuestions(questions.stream().map(QuizQuestionCreateDTO::toDomainObject).toList());
+        quizExercise.setQuizQuestions(quizQuestions.stream().map(QuizQuestionCreateDTO::toDomainObject).toList());
         return quizExercise;
     }
 }
