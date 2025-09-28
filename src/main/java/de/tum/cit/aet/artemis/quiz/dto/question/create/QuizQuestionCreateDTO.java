@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 @JsonSubTypes({ @JsonSubTypes.Type(value = MultipleChoiceQuestionCreateDTO.class, name = "multiple-choice"),
         @JsonSubTypes.Type(value = DragAndDropQuestionCreateDTO.class, name = "drag-and-drop"),
         @JsonSubTypes.Type(value = ShortAnswerQuestionCreateDTO.class, name = "short-answer") })
-public interface QuizQuestionCreateDTO {
+public sealed interface QuizQuestionCreateDTO permits DragAndDropQuestionCreateDTO, MultipleChoiceQuestionCreateDTO, ShortAnswerQuestionCreateDTO {
 
     String ENTITY_NAME = "QuizExercise";
 
