@@ -642,8 +642,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: (res) => {
-                    this.tutorParticipation = res.body!;
-                    this.tutorParticipationStatus = this.tutorParticipation.status!;
+                    const dto = res.body!;
+                    this.tutorParticipation = dto;
+                    this.tutorParticipationStatus = dto.status!;
                     this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
                 },
                 error: this.onError,
