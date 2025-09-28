@@ -128,7 +128,8 @@
             "unknownLayoutType": "Unbekannter Layout-Typ '{{ layoutType }}' in Layout '{{ layoutName }}' in Raum {{ roomNumber }}",
             "invalidLayout": "Das Layout {{ layoutName }} in Raum {{ roomNumber }} ist fehlerhaft",
             "seatNotFoundFixedSelection": "Der Sitz mit Reihenindex {{ rowIndex }} und Sitzindex {{ seatIndex }} in Raum {{ roomNumber }} existiert nicht",
-            "missingDefaultLayout": "Der Raum {{ roomNumber }} hat kein Standardlayout ('default')"
+            "missingDefaultLayout": "Der Raum {{ roomNumber }} hat kein Standardlayout ('default')",
+            "missingSpecifiedLayout": "Der Raum {{ roomNumber }} hat kein Layout namens {{ layoutName }}"
         },
         "examUser": {
             "service": {
