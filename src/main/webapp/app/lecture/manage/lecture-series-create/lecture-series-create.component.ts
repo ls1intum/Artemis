@@ -1,14 +1,19 @@
-import { Component, effect, input, signal } from '@angular/core';
+import { Component, effect, inject, input, signal } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputMaskModule } from 'primeng/inputmask';
+import { ButtonModule } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPenToSquare, faXmark } from '@fortawesome/free-solid-svg-icons';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { LectureSeriesEditModalComponent } from 'app/lecture/manage/lecture-series-edit-modal/lecture-series-edit-modal.component';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { Router } from '@angular/router';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { LectureCreateDTO } from 'app/lecture/shared/entities/lecture.model';
 
 type WeekdayIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -30,14 +35,22 @@ export enum LectureDraftState {
     REGULAR = 'regular',
 }
 
+// TODO: create strings
+// TODO: adapt lecture numbering to existing lectures
+// TODO: add loading indicator while saving
 // TODO: add input validation
 @Component({
     selector: 'jhi-lecture-series-create',
-    imports: [SelectModule, FormsModule, DatePickerModule, FloatLabelModule, InputMaskModule, FaIconComponent, LectureSeriesEditModalComponent, NgClass],
+    imports: [SelectModule, FormsModule, DatePickerModule, FloatLabelModule, InputMaskModule, ButtonModule, FaIconComponent, LectureSeriesEditModalComponent, NgClass],
     templateUrl: './lecture-series-create.component.html',
     styleUrl: './lecture-series-create.component.scss',
 })
 export class LectureSeriesCreateComponent {
+    private lectureService = inject(LectureService);
+    private alertService = inject(AlertService);
+    private router = inject(Router);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faXmark = faXmark;
     protected readonly LectureDraftState = LectureDraftState;
@@ -53,10 +66,10 @@ export class LectureSeriesCreateComponent {
         { label: 'Saturday', weekdayIndex: 6 },
         { label: 'Sunday', weekdayIndex: 7 },
     ];
-    selectedWeekdayIndex = signal<WeekdayIndex | undefined>(1);
-    startTime = signal<string | undefined>('13:00');
-    endTime = signal<string | undefined>('14:00');
-    endDate = signal<Date | undefined>(new Date(2025, 9, 20, 0, 0, 0, 0));
+    selectedWeekdayIndex = signal<WeekdayIndex | undefined>(undefined);
+    startTime = signal<string | undefined>(undefined);
+    endTime = signal<string | undefined>(undefined);
+    endDate = signal<Date | undefined>(undefined);
 
     constructor() {
         effect(() => this.updateLectureDrafts(this.selectedWeekdayIndex(), this.startTime(), this.endTime(), this.endDate()));
@@ -76,6 +89,26 @@ export class LectureSeriesCreateComponent {
 
     deleteLectureDraft(lectureDraft: LectureDraft) {
         lectureDraft.state = LectureDraftState.DELETED;
+    }
+
+    save() {
+        const lecturesToSave = this.lectureDrafts()
+            .filter((draft) => draft.state !== LectureDraftState.DELETED)
+            .map((draft) => draft.dto);
+        const courseId = this.courseId();
+        this.lectureService.createSeries(lecturesToSave, courseId).subscribe({
+            next: () => {
+                this.router.navigate(['course-management', courseId, 'lectures']);
+            },
+            error: () => {
+                this.alertService.addErrorAlert('Something went wrong. Please try again.');
+            },
+        });
+    }
+
+    cancel() {
+        const courseId = this.courseId();
+        this.navigationUtilService.navigateBack(['course-management', courseId, 'lectures']);
     }
 
     private updateLectureDrafts(selectedWeekdayIndex?: number, startTime?: string, endTime?: string, endDate?: Date) {

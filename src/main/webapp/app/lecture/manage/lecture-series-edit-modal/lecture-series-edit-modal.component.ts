@@ -8,6 +8,7 @@ import { AutoFocusModule } from 'primeng/autofocus';
 import { LectureDraft, LectureDraftState } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
 import dayjs, { Dayjs } from 'dayjs/esm';
 
+// TODO: create strings
 // TODO: add input validation
 @Component({
     selector: 'jhi-lecture-series-edit-modal',

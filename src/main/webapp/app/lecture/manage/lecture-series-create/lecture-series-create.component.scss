@@ -58,4 +58,10 @@
             color: var(--primary);
         }
     }
+
+    .controls-section {
+        display: flex;
+        justify-content: end;
+        gap: 1rem;
+    }
 }
