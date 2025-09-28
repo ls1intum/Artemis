@@ -172,9 +172,9 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         }
     }
 
-    codeChanged(code: string): void {
+    codeChanged(event: { text: string; fileName: string }): void {
         if (this.active instanceof ScriptAction) {
-            (this.active as ScriptAction).script = code;
+            (this.active as ScriptAction).script = event.text;
         }
     }
 
