@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.versioning.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -86,7 +89,7 @@ public class ExerciseVersionService {
      */
     private void createExerciseVersion(Long exerciseId, ExerciseType exerciseType, String userLogin) {
         try {
-            var author = userRepository.findOneByLogin(userLogin).orElse(null);
+            User author = userRepository.findOneByLogin(userLogin).orElse(null);
             if (author == null) {
                 log.error("No active user during exercise version creation check");
                 return;
@@ -99,18 +102,18 @@ public class ExerciseVersionService {
             ExerciseVersion exerciseVersion = new ExerciseVersion();
             exerciseVersion.setExercise(exercise);
             exerciseVersion.setAuthor(author);
-            var exerciseSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
-            var previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
+            ExerciseSnapshotDTO exerciseSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
+            Optional<ExerciseVersion> previousVersion = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId());
             if (previousVersion.isPresent()) {
-                var previousVersionSnapshot = previousVersion.get().getExerciseSnapshot();
-                var equal = previousVersionSnapshot.equals(exerciseSnapshot);
+                ExerciseSnapshotDTO previousVersionSnapshot = previousVersion.get().getExerciseSnapshot();
+                boolean equal = previousVersionSnapshot.equals(exerciseSnapshot);
                 if (equal) {
                     log.info("Exercise {} has no versionable changes from last version", exercise.getId());
                     return;
                 }
             }
             exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
-            var savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
+            ExerciseVersion savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
             log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
         }
         catch (Exception e) {

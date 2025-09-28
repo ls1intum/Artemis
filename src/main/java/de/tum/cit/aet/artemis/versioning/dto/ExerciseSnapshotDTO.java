@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseSnapshotDTO(
         // fields of BaseExercise class
-        Long id, String title, String shortName, Double maxPoints, Double bonusPoints, AssessmentType assessmentType, ZonedDateTime releaseDate, ZonedDateTime startDate,
+        long id, String title, String shortName, Double maxPoints, Double bonusPoints, AssessmentType assessmentType, ZonedDateTime releaseDate, ZonedDateTime startDate,
         ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, DifficultyLevel difficulty, ExerciseMode mode,
 
         // fields of Exercise class

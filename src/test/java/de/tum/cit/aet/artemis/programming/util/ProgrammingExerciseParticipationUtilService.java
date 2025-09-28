@@ -46,14 +46,7 @@ public class ProgrammingExerciseParticipationUtilService {
      */
     public ProgrammingExercise addTemplateParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         final var repoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
-        TemplateProgrammingExerciseParticipation participation = exercise.getTemplateParticipation();
-        if (participation == null && exercise.getId() != null) {
-            participation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(exercise.getId()).orElse(null);
-        }
-
-        if (participation == null) {
-            participation = new TemplateProgrammingExerciseParticipation();
-        }
+        TemplateProgrammingExerciseParticipation participation = new TemplateProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.TEMPLATE));
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
@@ -72,14 +65,7 @@ public class ProgrammingExerciseParticipationUtilService {
      */
     public ProgrammingExercise addSolutionParticipationForProgrammingExercise(ProgrammingExercise exercise) {
         final var repoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
-        SolutionProgrammingExerciseParticipation participation = exercise.getSolutionParticipation();
-        if (participation == null && exercise.getId() != null) {
-            participation = solutionProgrammingExerciseParticipationRepo.findByProgrammingExerciseId(exercise.getId()).orElse(null);
-        }
-
-        if (participation == null) {
-            participation = new SolutionProgrammingExerciseParticipation();
-        }
+        SolutionProgrammingExerciseParticipation participation = new SolutionProgrammingExerciseParticipation();
         participation.setProgrammingExercise(exercise);
         participation.setBuildPlanId(exercise.generateBuildPlanId(BuildPlanType.SOLUTION));
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);

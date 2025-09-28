@@ -9,8 +9,8 @@ import jakarta.persistence.PostUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Configurable;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.annotation.Profile;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -25,15 +25,15 @@ import de.tum.cit.aet.artemis.versioning.event.ExerciseChangedEvent;
 
 @Profile(PROFILE_CORE)
 @Configurable
-public class ExerciseVersionEntityListener implements ApplicationContextAware {
+public class ExerciseVersionEntityListener implements ApplicationEventPublisherAware {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseVersionEntityListener.class);
 
-    private ApplicationContext applicationContext;
+    private ApplicationEventPublisher eventPublisher;
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) {
-        this.applicationContext = applicationContext;
+    public void setApplicationEventPublisher(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
     }
 
     @PostPersist
@@ -98,8 +98,8 @@ public class ExerciseVersionEntityListener implements ApplicationContextAware {
      * @param exerciseType the type of the exercise to publish the event for
      */
     private void publishExerciseChangedEvent(Long exerciseId, ExerciseType exerciseType) {
-        if (applicationContext == null) {
-            log.error("No application context found, cannot publish ExerciseChangedEvent");
+        if (eventPublisher == null) {
+            log.error("No application event publisher found, cannot publish ExerciseChangedEvent");
             return;
         }
         var userLogin = SecurityUtils.getCurrentUserLogin();
@@ -107,6 +107,6 @@ public class ExerciseVersionEntityListener implements ApplicationContextAware {
             log.error("No user login found, cannot publish ExerciseChangedEvent");
             return;
         }
-        applicationContext.publishEvent(new ExerciseChangedEvent(exerciseId, exerciseType, userLogin.get()));
+        eventPublisher.publishEvent(new ExerciseChangedEvent(exerciseId, exerciseType, userLogin.get()));
     }
 }
