@@ -99,16 +99,22 @@ public class ExamRoomDistributionService {
             roomNumberToUsableSeatsDefaultLayout.put(examRoom.getRoomNumber(), examRoomService.getDefaultUsableSeats(examRoom));
         }
 
-        Set<ExamUser> examUsers = exam.getExamUsers();
-        Iterator<ExamUser> examUsersIterator = examUsers.iterator();
+        setPlannedRoomAndPlannedSeatForExamUsersRandomly(exam, roomNumberToUsableSeatsDefaultLayout);
 
-        distributionLoop: for (var roomNumberToUsableSeatsEntry : roomNumberToUsableSeatsDefaultLayout.entrySet()) {
+        examUserRepository.saveAll(exam.getExamUsers());
+        examRepository.save(exam);
+    }
+
+    private void setPlannedRoomAndPlannedSeatForExamUsersRandomly(Exam exam, Map<String, List<ExamSeatDTO>> roomNumberToUsableSeats) {
+        Iterator<ExamUser> examUsersIterator = exam.getExamUsers().iterator();
+
+        for (var roomNumberToUsableSeatsEntry : roomNumberToUsableSeats.entrySet()) {
             final String roomNumber = roomNumberToUsableSeatsEntry.getKey();
             final List<ExamSeatDTO> usableSeatsForThisRoom = roomNumberToUsableSeatsEntry.getValue();
 
             for (ExamSeatDTO seat : usableSeatsForThisRoom) {
                 if (!examUsersIterator.hasNext()) {
-                    break distributionLoop;
+                    return;
                 }
 
                 ExamUser nextExamUser = examUsersIterator.next();
@@ -117,8 +123,5 @@ public class ExamRoomDistributionService {
                 exam.addExamUser(nextExamUser);
             }
         }
-
-        examUserRepository.saveAll(examUsers);
-        examRepository.save(exam);
     }
 }
