@@ -61,7 +61,7 @@ public class HyperionProblemStatementGenerationService {
         }
         catch (Exception e) {
             log.error("Error generating problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
-            return new ProblemStatementGenerationResponseDTO("Failed to generate problem statement. Please try again or create one manually.");
+            return new ProblemStatementGenerationResponseDTO("");
         }
     }
 }

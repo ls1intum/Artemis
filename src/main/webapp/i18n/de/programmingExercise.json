@@ -224,7 +224,8 @@
                 "generateDraftDescription": "Beschreibe, worauf sich die Programmierübung konzentrieren soll. Sei spezifisch bezüglich Anforderungen und Konzepten.",
                 "yourRequirements": "Ihre Anforderungen:",
                 "examplePlaceholder": "Beispiel: Erstelle eine Java-Übung zur Implementierung eines binären Suchbaums mit Insert-, Delete- und Search-Operationen. Studierende sollen Verständnis für Baumtraversal und rekursive Algorithmen demonstrieren.",
-                "generationSuccess": "Aufgabenstellung wurde erfolgreich generiert."
+                "generationSuccess": "Aufgabenstellung wurde erfolgreich generiert.",
+                "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut."
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",

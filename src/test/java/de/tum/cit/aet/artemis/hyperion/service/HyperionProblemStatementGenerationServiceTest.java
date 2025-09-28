@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
 
-public class HyperionProblemStatementGenerationServiceTest {
+class HyperionProblemStatementGenerationServiceTest {
 
     @Mock
     private ChatModel chatModel;

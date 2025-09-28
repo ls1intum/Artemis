@@ -37,7 +37,33 @@ Use this format for each programming task:
 - Use proper PlantUML syntax with @startuml/@enduml
 - Show relationships, inheritance, and associations
 - Include method signatures and attributes
-- Use colors and styling for better readability
+- Use theme-aware styling for both light and dark mode compatibility
+- Apply consistent colors and proper contrast for accessibility
+
+### UML Styling for Theme Compatibility:
+When creating UML diagrams, use these styling guidelines:
+- Use neutral colors that work in both themes
+- Apply proper contrast for text readability
+- Use skinparam settings for consistent appearance
+
+### Example UML with Theme-Aware Styling:
+```
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+skinparam classBackgroundColor #F8F9FA
+skinparam classBorderColor #6C757D
+skinparam classArrowColor #495057
+skinparam classFontColor #212529
+skinparam classFontSize 12
+skinparam classAttributeFontColor #495057
+skinparam classStereotypeFontColor #6C757D
+
+class ExampleClass {
+  +method()
+}
+@enduml
+```
 
 ### Example Structure:
 ```

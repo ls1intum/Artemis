@@ -78,7 +78,9 @@ export class ProgrammingExerciseProblemComponent {
      * Opens the problem statement generation popover
      */
     openGeneratePopover(event: Event): void {
-        this.userPrompt = ''; // Reset the prompt
+        if (!this.isGenerating) {
+            this.userPrompt = ''; // Reset the prompt
+        }
         this.generatePopover()?.show(event);
     }
     /**
@@ -118,13 +120,18 @@ export class ProgrammingExerciseProblemComponent {
             )
             .subscribe({
                 next: (response) => {
+                    // Check if the response contains an empty or invalid problem statement
+                    if (!response.draftProblemStatement || response.draftProblemStatement.trim() === '') {
+                        this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
+                        // eslint-disable-next-line no-undef
+                        console.error('AI generation failed: Empty response received');
+                        return;
+                    }
+
                     if (response.draftProblemStatement && exercise) {
-                        // Update the programming exercise problem statement
                         exercise.problemStatement = response.draftProblemStatement;
                         this.programmingExerciseChange.emit(exercise);
                     }
-
-                    // Close the popover
                     this.generatePopover()?.hide();
                     this.userPrompt = '';
 
@@ -132,6 +139,7 @@ export class ProgrammingExerciseProblemComponent {
                     this.alertService.success('artemisApp.programmingExercise.problemStatement.generationSuccess');
                 },
                 error: (error) => {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                     // eslint-disable-next-line no-undef
                     console.error('Error generating problem statement:', error);
                 },
