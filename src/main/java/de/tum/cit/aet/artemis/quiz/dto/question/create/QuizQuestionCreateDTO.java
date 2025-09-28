@@ -33,16 +33,12 @@ public interface QuizQuestionCreateDTO {
      * @return the corresponding {@link QuizQuestionCreateDTO} implementation with properties set from the domain object
      * @throws IllegalArgumentException if the question type is unsupported
      */
-    public static QuizQuestionCreateDTO of(QuizQuestion question) {
-        if (question instanceof MultipleChoiceQuestion mc) {
-            return MultipleChoiceQuestionCreateDTO.of(mc);
-        }
-        else if (question instanceof DragAndDropQuestion dnd) {
-            return DragAndDropQuestionCreateDTO.of(dnd);
-        }
-        else if (question instanceof ShortAnswerQuestion sa) {
-            return ShortAnswerQuestionCreateDTO.of(sa);
-        }
-        throw new IllegalArgumentException("Unsupported question type: " + question.getClass());
+    static QuizQuestionCreateDTO of(QuizQuestion question) {
+        return switch (question) {
+            case MultipleChoiceQuestion mc -> MultipleChoiceQuestionCreateDTO.of(mc);
+            case DragAndDropQuestion dnd -> DragAndDropQuestionCreateDTO.of(dnd);
+            case ShortAnswerQuestion sa -> ShortAnswerQuestionCreateDTO.of(sa);
+            default -> throw new IllegalArgumentException("Unsupported question type: " + question.getClass());
+        };
     }
 }
