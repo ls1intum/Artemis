@@ -159,9 +159,9 @@ public class QuizExerciseResource {
             UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             Optional<ExamDateApi> examDateApi, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
-            GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService,
-            QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<AtlasMLApi> atlasMLApi) {
+            StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService, QuizBatchRepository quizBatchRepository,
+            ChannelService channelService, ChannelRepository channelRepository, QuizSubmissionService quizSubmissionService, QuizResultService quizResultService,
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<AtlasMLApi> atlasMLApi) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -278,7 +278,7 @@ public class QuizExerciseResource {
         quizExerciseService.mergeDTOIntoDomainObject(quizBase, quizExerciseFromEditorDTO);
         QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files, notificationText);
 
-        // Notify AtlasML about the quiz exercise update// Notify AtlasML about the quiz exercise update
+        // Notify AtlasML about the quiz exercise update
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise update");
 
         return ResponseEntity.ok(result);
