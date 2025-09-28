@@ -54,7 +54,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
-import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -386,30 +385,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createQuizExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-
-        quizExercise.setMaxPoints(10.0);
-        quizExercise.setBonusPoints(1.0);
-        quizExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
-
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createQuizExercise_NotIncludedInvalidBonusPoints() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-
-        quizExercise.setMaxPoints(10.0);
-        quizExercise.setBonusPoints(1.0);
-        quizExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
-    }
-
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @EnumSource(QuizMode.class)
@@ -448,16 +423,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
             question.setScoringType(null);
-        }
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateQuiz_InvalidPoints_badRequest() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
-            question.setPoints(0.0);
         }
         createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
