@@ -41,16 +41,14 @@
         </select>
     </div>
     <div class="col-3 ps-2 pe-0 d-flex justify-content-end gap-2">
-        <button
-            class="btn btn-warning d-flex align-items-center"
-            type="button"
-            (click)="fetchSuggestions()"
+        <jhi-button
+            [btnType]="ButtonType.WARNING"
+            [icon]="faLightbulb"
+            (onClick)="fetchSuggestions()"
             [disabled]="isLoadingSuggestions()"
-            [ngbTooltip]="'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip' | artemisTranslate"
+            tooltip="artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip"
             [jhiFeatureToggleHide]="FeatureToggle.AtlasML"
-        >
-            <fa-icon [icon]="faLightbulb" style="color: white" />
-        </button>
+        />
         @if (exactRelationAlreadyExists()) {
             <button (click)="deleteRelation()" class="btn btn-danger">
                 @if (isLoading()) {
@@ -83,12 +81,15 @@
     <div class="p-3 pt-0 suggestions-scroll-container">
         <div class="mb-3 d-flex justify-content-between align-items-center">
             <h6 class="mb-0" jhiTranslate="artemisApp.courseCompetency.relations.suggestions.aiSuggestionsTitle"></h6>
-            <button class="btn btn-primary mt-2" (click)="addSelectedSuggestions()" [disabled]="selectedSuggestionsCount() === 0 || isLoading()" type="button">
-                @if (isLoading()) {
-                    <fa-icon [icon]="faSpinner" animation="spin" />
-                }
-                <span [jhiTranslate]="'artemisApp.courseCompetency.relations.suggestions.addSuggestions'" [translateValues]="{ count: selectedSuggestionsCount() }"></span>
-            </button>
+            <jhi-button
+                [btnType]="ButtonType.PRIMARY"
+                (onClick)="addSelectedSuggestions()"
+                [disabled]="selectedSuggestionsCount() === 0 || isLoading()"
+                [isLoading]="isLoading()"
+                [title]="addSuggestionsTitle()"
+                class="mt-2"
+                data-testid="add-suggestions-button"
+            />
         </div>
         <div class="list-group">
             @for (s of suggestedRelations(); track s; let i = $index) {

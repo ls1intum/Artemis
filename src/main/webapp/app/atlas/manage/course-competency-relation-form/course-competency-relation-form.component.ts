@@ -12,6 +12,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 
 interface SuggestedRelationDTO {
     tail_id: string;
@@ -23,12 +24,13 @@ interface SuggestedRelationDTO {
     selector: 'jhi-course-competency-relation-form',
     templateUrl: './course-competency-relation-form.component.html',
     styleUrl: './course-competency-relation-form.component.scss',
-    imports: [TranslateDirective, CommonModule, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, NgbTooltip, FeatureToggleHideDirective],
+    imports: [TranslateDirective, CommonModule, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, NgbTooltip, FeatureToggleHideDirective, ButtonComponent],
 })
 export class CourseCompetencyRelationFormComponent {
     protected readonly faSpinner = faSpinner;
     protected readonly faLightbulb = faLightbulb;
     protected readonly FeatureToggle = FeatureToggle;
+    protected readonly ButtonType = ButtonType;
 
     protected readonly competencyRelationType = CompetencyRelationType;
 
@@ -62,6 +64,7 @@ export class CourseCompetencyRelationFormComponent {
     readonly isLoadingSuggestions = signal<boolean>(false);
     readonly selectedSuggestions = signal<Set<number>>(new Set());
     readonly selectedSuggestionsCount = computed(() => this.selectedSuggestions().size);
+    readonly addSuggestionsTitle = computed(() => 'artemisApp.courseCompetency.relations.suggestions.addSuggestions');
 
     constructor() {
         effect(() => this.selectRelation(this.selectedRelationId()));

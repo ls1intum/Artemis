@@ -68,7 +68,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
                 {
                     provide: FeatureToggleService,
                     useValue: {
-                        getFeatureToggleActive: jest.fn().mockReturnValue(of(false)),
+                        getFeatureToggleActive: jest.fn().mockReturnValue(of(true)),
                     },
                 },
             ],
@@ -343,7 +343,12 @@ describe('CourseCompetencyRelationFormComponent', () => {
         });
 
         it('should show lightbulb button for relation suggestions', () => {
-            const btn = fixture.debugElement.queryAll(By.css('jhi-button')).find((de) => (de.componentInstance?.tooltip ?? '').includes('getAiSuggestionsTooltip'));
+            // First check if any jhi-button elements exist at all
+            const allButtons = fixture.debugElement.queryAll(By.css('jhi-button'));
+            expect(allButtons.length).toBeGreaterThan(0);
+
+            // Find the button with the correct tooltip
+            const btn = allButtons.find((de) => de.componentInstance?.tooltip === 'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
             expect(btn).toBeTruthy();
             expect(btn?.componentInstance?.disabled).toBeFalse();
         });
@@ -354,7 +359,9 @@ describe('CourseCompetencyRelationFormComponent', () => {
             component.fetchSuggestions();
             fixture.detectChanges();
 
-            const btn = fixture.debugElement.queryAll(By.css('jhi-button')).find((de) => (de.componentInstance?.tooltip ?? '').includes('getAiSuggestionsTooltip'));
+            const btn = fixture.debugElement
+                .queryAll(By.css('jhi-button'))
+                .find((de) => de.componentInstance?.tooltip === 'artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
             expect(btn?.componentInstance?.disabled).toBeTrue();
             expect(component.isLoadingSuggestions()).toBeTrue();
         });
@@ -471,8 +478,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
             await component.fetchSuggestions();
             fixture.detectChanges();
 
-            const buttons: HTMLButtonElement[] = Array.from(fixture.debugElement.nativeElement.querySelectorAll('button'));
-            const importButton = buttons.find((b) => (b.textContent || '').includes('Add Suggestions'));
+            const importButton = fixture.debugElement.query(By.css('[data-testid="add-suggestions-button"]'));
             expect(importButton).toBeTruthy();
         });
 
