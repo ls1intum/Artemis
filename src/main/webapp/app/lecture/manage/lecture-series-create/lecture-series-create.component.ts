@@ -1,4 +1,5 @@
 import { Component, effect, input, signal } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -7,6 +8,7 @@ import { InputMaskModule } from 'primeng/inputmask';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPenToSquare, faXmark } from '@fortawesome/free-solid-svg-icons';
 import dayjs, { Dayjs } from 'dayjs/esm';
+import { LectureSeriesEditModalComponent } from 'app/lecture/manage/lecture-series-edit-modal/lecture-series-edit-modal.component';
 import { LectureCreateDTO } from 'app/lecture/shared/entities/lecture.model';
 
 type WeekdayIndex = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -16,30 +18,31 @@ interface WeekdayOption {
     weekdayIndex: WeekdayIndex;
 }
 
-interface LectureDraft {
+export interface LectureDraft {
     key: string;
     state: LectureDraftState;
     dto: LectureCreateDTO;
 }
 
-enum LectureDraftState {
+export enum LectureDraftState {
     EDITED = 'edited',
     DELETED = 'deleted',
     REGULAR = 'regular',
 }
 
+// TODO: add input validation
 @Component({
     selector: 'jhi-lecture-series-create',
-    imports: [SelectModule, FormsModule, DatePickerModule, FloatLabelModule, InputMaskModule, FaIconComponent],
+    imports: [SelectModule, FormsModule, DatePickerModule, FloatLabelModule, InputMaskModule, FaIconComponent, LectureSeriesEditModalComponent, NgClass],
     templateUrl: './lecture-series-create.component.html',
     styleUrl: './lecture-series-create.component.scss',
 })
 export class LectureSeriesCreateComponent {
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faXmark = faXmark;
+    protected readonly LectureDraftState = LectureDraftState;
 
     courseId = input.required<number>();
-
     lectureDrafts = signal<LectureDraft[]>([]);
     weekdayOptions: WeekdayOption[] = [
         { label: 'Monday', weekdayIndex: 1 },
@@ -71,7 +74,7 @@ export class LectureSeriesCreateComponent {
         this.endTime.set(time);
     }
 
-    delete(lectureDraft: LectureDraft) {
+    deleteLectureDraft(lectureDraft: LectureDraft) {
         lectureDraft.state = LectureDraftState.DELETED;
     }
 
@@ -128,6 +131,4 @@ export class LectureSeriesCreateComponent {
         const [hh, mm] = time.split(':');
         return [parseInt(hh, 10), parseInt(mm, 10)];
     }
-
-    protected readonly LectureDraftState = LectureDraftState;
 }

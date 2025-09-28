@@ -1,0 +1,42 @@
+<p-dialog header="Edit Lecture Details" [modal]="true" [visible]="show()" [closable]="false" [focusOnShow]="false" appendTo="body">
+    <div class="frame">
+        <div class="form-grid">
+            <label for="title">Title</label>
+            <input pInputText id="title" [pAutoFocus]="true" [ngModel]="title()" (ngModelChange)="onTitleChange($event)" />
+            <label for="visibleDate">Visible date</label>
+            <p-datepicker
+                inputId="visibleDate"
+                [ngModel]="visibleDate() ?? null"
+                (ngModelChange)="onVisibleDateChange($event)"
+                [showTime]="true"
+                [hourFormat]="'24'"
+                [firstDayOfWeek]="1"
+                appendTo="body"
+            />
+            <label for="startDate">Start</label>
+            <p-datepicker
+                inputId="startDate"
+                [ngModel]="startDate() ?? null"
+                (ngModelChange)="onStartDateChange($event)"
+                [showTime]="true"
+                [hourFormat]="'24'"
+                [firstDayOfWeek]="1"
+                appendTo="body"
+            />
+            <label for="endDate">End</label>
+            <p-datepicker
+                inputId="endDate"
+                [ngModel]="endDate() ?? null"
+                (ngModelChange)="onEndDateChange($event)"
+                [showTime]="true"
+                [hourFormat]="'24'"
+                [firstDayOfWeek]="1"
+                appendTo="body"
+            />
+        </div>
+        <div class="controls-section">
+            <button pButton severity="secondary" size="small" (click)="cancel()">Cancel</button>
+            <button pButton size="small" (click)="save()">Save</button>
+        </div>
+    </div>
+</p-dialog>

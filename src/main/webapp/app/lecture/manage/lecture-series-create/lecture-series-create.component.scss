@@ -19,13 +19,34 @@
 
     .draft-card {
         display: flex;
+        align-items: center;
         padding: 0.5rem;
         gap: 0.5rem;
         background-color: var(--body-bg);
         border-radius: 0.5rem;
 
-        .spacer {
+        .card-number {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 1.3rem;
+            height: 1.3rem;
+            border-radius: 0.3rem;
+            background-color: var(--primary);
+            color: white;
+
+            &.edited {
+                background-color: var(--warning);
+                color: black;
+            }
+        }
+
+        .draft-title {
             flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
         }
 
         .card-button {
