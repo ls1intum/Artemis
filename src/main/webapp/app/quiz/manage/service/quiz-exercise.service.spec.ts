@@ -15,6 +15,13 @@ import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-qu
 import dayjs from 'dayjs/esm';
 import { firstValueFrom } from 'rxjs';
 import JSZip from 'jszip';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
+import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
+import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
+import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
+import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
 /**
  * create a QuizExercise that when used as an HTTP response can be deserialized as an equal object
@@ -27,6 +34,59 @@ const makeQuiz = () => {
     quizEx.exampleSolutionPublicationDate = undefined;
     quizEx.studentParticipations = [];
     delete quizEx.exerciseGroup;
+    return quizEx;
+};
+
+const makeDragAndDropQuestion = () => {
+    const question = new DragAndDropQuestion();
+    const dragItem = new DragItem();
+    const dropLocation = new DropLocation();
+    const mapping = new DragAndDropMapping(dragItem, dropLocation);
+    question.dragItems = [dragItem];
+    question.dropLocations = [dropLocation];
+    question.correctMappings = [mapping];
+    question.type = QuizQuestionType.DRAG_AND_DROP;
+    return question;
+};
+
+const makeShortAnswerQuestion = () => {
+    const question = new ShortAnswerQuestion();
+    const spot = new ShortAnswerSpot();
+    const solution = new ShortAnswerSolution();
+    const mapping = new ShortAnswerMapping(spot, solution);
+    question.type = QuizQuestionType.SHORT_ANSWER;
+    question.spots = [spot];
+    question.solutions = [solution];
+    question.correctMappings = [mapping];
+    return question;
+};
+
+const makeMultipleChoiceQuestion = () => {
+    const question = new MultipleChoiceQuestion();
+    question.type = QuizQuestionType.MULTIPLE_CHOICE;
+    const answerOption = new AnswerOption();
+    question.answerOptions = [answerOption];
+    return question;
+};
+
+const makeCourseQuiz = () => {
+    const quizEx = new QuizExercise(new Course(), undefined);
+    quizEx.releaseDate = dayjs('1000-01-01T00:00:00Z');
+    quizEx.dueDate = dayjs('2000-01-01T00:00:00Z');
+    quizEx.assessmentDueDate = undefined;
+    quizEx.exampleSolutionPublicationDate = undefined;
+    quizEx.quizQuestions = [makeDragAndDropQuestion(), makeShortAnswerQuestion(), makeMultipleChoiceQuestion()];
+    delete quizEx.exerciseGroup;
+    return quizEx;
+};
+
+const makeExamQuiz = () => {
+    const quizEx = new QuizExercise(undefined, { id: 1 } as any);
+    quizEx.releaseDate = dayjs('1000-01-01T00:00:00Z');
+    quizEx.dueDate = dayjs('2000-01-01T00:00:00Z');
+    quizEx.assessmentDueDate = undefined;
+    quizEx.exampleSolutionPublicationDate = undefined;
+    quizEx.quizQuestions = [makeDragAndDropQuestion(), makeShortAnswerQuestion(), makeMultipleChoiceQuestion()];
     return quizEx;
 };
 
@@ -70,7 +130,7 @@ describe('QuizExercise Service', () => {
     });
 
     it('should create a QuizExercise for a course', async () => {
-        const course = new Course();
+        const course = makeCourseQuiz();
         course.id = 1;
         const quizExercise = new QuizExercise(course, undefined);
         const returnedFromService = Object.assign(
@@ -88,8 +148,7 @@ describe('QuizExercise Service', () => {
     });
 
     it('should create a QuizExercise for an exam', async () => {
-        const exerciseGroup = { id: 1 } as any; // Simplified mock for ExerciseGroup
-        const quizExercise = new QuizExercise(undefined, exerciseGroup);
+        const quizExercise = makeExamQuiz();
         const returnedFromService = Object.assign(
             {
                 id: 0,
