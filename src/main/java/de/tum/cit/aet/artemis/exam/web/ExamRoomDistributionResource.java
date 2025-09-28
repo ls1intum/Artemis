@@ -51,11 +51,16 @@ public class ExamRoomDistributionResource {
 
     /**
      * POST /courses/{courseId}/exams/{examId}/distribute-registered-students : Distribute all students registered to
-     * an exam across a selection of rooms
+     * an exam across a selection of rooms.
+     * <p>
+     * If {@code useOnlyDefaultLayouts} is {@code false}, the rooms are picked dynamically if the default capacity of
+     * all rooms combined doesn't suffice. If the default capacity doesn't suffice and this is {@code true}, then an
+     * error is thrown.
      *
-     * @param courseId    the id of the course
-     * @param examId      the id of the exam
-     * @param examRoomIds the ids of all the exam rooms we want to distribute the students to
+     * @param courseId              the id of the course
+     * @param examId                the id of the exam
+     * @param useOnlyDefaultLayouts if we want to only use 'default' layouts
+     * @param examRoomIds           the ids of all the exam rooms we want to distribute the students to
      *
      * @return 200 (OK) if the distribution was successful
      */

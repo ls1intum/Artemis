@@ -60,9 +60,10 @@ public class ExamRoomDistributionService {
      * Distribute all students who are registered for a given exam across a selection of rooms.
      * Existing planned seats and room assignments are replaced.
      *
-     * @param examId      The exam
-     * @param examRoomIds The ids of the rooms to distribute to
-     * @implNote Currently only the "default" layout strategy is used.
+     * @param examId                The exam
+     * @param examRoomIds           The ids of the rooms to distribute to
+     * @param useOnlyDefaultLayouts if we want to only use 'default' layouts
+     * @throws BadRequestAlertException if the capacity doesn't suffice to seat the students
      */
     public void distributeRegisteredStudents(long examId, @NotEmpty Set<Long> examRoomIds, boolean useOnlyDefaultLayouts) {
         final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
