@@ -850,4 +850,28 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
     }
+
+    /**
+     * Creates a new quiz exercise, handling validation, file processing, saving, and related updates.
+     *
+     * @param quizExercise the quiz exercise domain object to create
+     * @param files        the files for drag and drop questions (optional)
+     * @param isExam       true if creating for an exam, false for a course
+     * @return the created and saved quiz exercise
+     * @throws IOException if there is an error handling the files
+     */
+    public QuizExercise createQuizExercise(QuizExercise quizExercise, List<MultipartFile> files, boolean isExam) throws IOException {
+        resolveQuizQuestionMappings(quizExercise);
+        if (!quizExercise.isValid()) {
+            throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
+        }
+        quizExercise.validateGeneralSettings();
+        handleDndQuizFileCreation(quizExercise, files);
+        QuizExercise result = save(quizExercise);
+        if (!isExam) {
+            channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
+        }
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
+        return result;
+    }
 }

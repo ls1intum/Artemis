@@ -227,7 +227,6 @@ public class QuizExerciseResource {
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
         log.info("REST request to create QuizExercise : {} in exam exercise group {}", quizExerciseDTO, exerciseGroupId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
-        quizExerciseService.resolveQuizQuestionMappings(quizExercise);
 
         // We create a new ExerciseGroup with the given id
         // The exercise group is replaced when retrieveCourseOverExerciseGroupOrCourseId is called below
@@ -238,13 +237,8 @@ public class QuizExerciseResource {
 
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        if (!quizExercise.isValid()) {
-            throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
-        }
-        quizExercise.validateGeneralSettings();
-        quizExerciseService.handleDndQuizFileCreation(quizExercise, files);
-        QuizExercise result = quizExerciseService.save(quizExercise);
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
+
+        QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, true);
         return ResponseEntity.status(HttpStatus.CREATED).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
@@ -264,17 +258,9 @@ public class QuizExerciseResource {
         log.info("REST request to create QuizExercise : {} in course {}", quizExerciseDTO, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
-        quizExerciseService.resolveQuizQuestionMappings(quizExercise);
         quizExercise.setCourse(course);
-        if (!quizExercise.isValid()) {
-            throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
-        }
 
-        quizExercise.validateGeneralSettings();
-        quizExerciseService.handleDndQuizFileCreation(quizExercise, files);
-        QuizExercise result = quizExerciseService.save(quizExercise);
-        channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
+        QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, false);
         return ResponseEntity.status(HttpStatus.CREATED).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
