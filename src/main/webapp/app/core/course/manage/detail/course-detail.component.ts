@@ -187,10 +187,16 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         const athenaDetails = this.getAthenaDetails();
 
         const details: Detail[] = [
-            { type: DetailType.Text, title: 'artemisApp.course.maxPoints.title', data: { text: this.course.maxPoints } },
             {
                 type: DetailType.Text,
-                title: 'artemisApp.course.accuracyOfScores',
+                title: 'artemisApp.course.maxPoints.title',
+                titleHelpText: 'artemisApp.course.maxPoints.info',
+                data: { text: this.course.maxPoints },
+            },
+            {
+                type: DetailType.Text,
+                title: 'artemisApp.course.accuracyOfScores.title',
+                titleHelpText: 'artemisApp.course.accuracyOfScores.info',
                 data: { text: this.course.accuracyOfScores },
             },
             {
@@ -220,7 +226,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         details.splice(4, 0, {
             type: DetailType.Text,
             title: 'artemisApp.forms.configurationForm.timeZoneInput.label',
-            titleHelpText: 'artemisApp.forms.configurationForm.timeZoneInput.beta',
             data: { text: this.course.timeZone },
         });
 

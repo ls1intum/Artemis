@@ -51,6 +51,8 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -115,6 +117,16 @@ class ArchitectureTest extends AbstractArchitectureTest {
         classNames.check(testClasses);
         noPublicTestClasses.check(testClasses.that(are(not(or(simpleNameContaining("Abstract"), INTERFACES)))));
         noPublicTests.check(testClasses);
+    }
+
+    @Test
+    // TODO When upgrading to Spring Boot 4, we can remove this test.
+    @SuppressWarnings("removal")
+    void testNoMockBeanAndSpyBean() {
+        ArchRule noMockBeanAndSpyBean = noFields().should().beAnnotatedWith(MockBean.class).orShould().beAnnotatedWith(SpyBean.class)
+                .because("We use @MockitoBean or @MockitoSpyBean.");
+        noMockBeanAndSpyBean.check(testClasses);
+
     }
 
     @Test
