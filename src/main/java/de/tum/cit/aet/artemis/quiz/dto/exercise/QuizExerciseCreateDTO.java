@@ -24,8 +24,8 @@ import de.tum.cit.aet.artemis.quiz.dto.question.create.QuizQuestionCreateDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, DifficultyLevel difficulty,
         @NotNull ExerciseMode mode, @NotNull IncludedInOverallScore includedInOverallScore, @NotNull Double maxPoints, Double bonusPoints,
-        Set<CompetencyExerciseLink> competencyLinks, Set<String> categories, String channelName, Boolean randomizeQuestionOrder, @NotNull QuizMode quizMode,
-        @NotNull Integer duration, Set<QuizBatchCreationDTO> quizBatches, @NotEmpty List<@Valid ? extends QuizQuestionCreateDTO> quizQuestions) {
+        Set<CompetencyExerciseLink> competencyLinks, Set<String> categories, String channelName, Boolean randomizeQuestionOrder, @NotNull QuizMode quizMode, Integer duration,
+        Set<QuizBatchCreationDTO> quizBatches, @NotEmpty List<@Valid ? extends QuizQuestionCreateDTO> quizQuestions) {
 
     /**
      * Creates a {@link QuizExerciseCreateDTO} from the given {@link QuizExercise} domain object.
