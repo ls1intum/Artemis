@@ -26,5 +26,11 @@ export class Lecture implements BaseEntity {
 }
 
 export class LectureCreateDTO {
-    constructor(title: string, channelName?: string, visibleDate?: Dayjs, startDate?: Dayjs, endDate?: Dayjs) {}
+    constructor(
+        public title: string,
+        public channelName?: string,
+        public visibleDate?: Dayjs,
+        public startDate?: Dayjs,
+        public endDate?: Dayjs,
+    ) {}
 }

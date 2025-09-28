@@ -12,4 +12,29 @@
         display: flex;
         gap: 2rem;
     }
+
+    h3 {
+        margin: 0;
+    }
+
+    .draft-card {
+        display: flex;
+        padding: 0.5rem;
+        gap: 0.5rem;
+        background-color: var(--body-bg);
+        border-radius: 0.5rem;
+
+        .spacer {
+            flex: 1;
+        }
+
+        .card-button {
+            all: unset;
+            cursor: pointer;
+        }
+
+        .card-button:hover {
+            color: var(--primary);
+        }
+    }
 }
