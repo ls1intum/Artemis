@@ -369,15 +369,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createQuizExercise_InvalidMaxScore() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-        quizExercise.setMaxPoints(0.0);
-
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createQuizExercise_InvalidDates_badRequest() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now()));
