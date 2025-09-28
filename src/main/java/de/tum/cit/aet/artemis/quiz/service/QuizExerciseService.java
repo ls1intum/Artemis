@@ -510,6 +510,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             quizPointStatistic.setQuiz(quizExercise);
         }
 
+        // Set released for practice to false if not set already
+        if (quizExercise.isIsOpenForPractice() == null) {
+            quizExercise.setIsOpenForPractice(Boolean.FALSE);
+        }
+
         // make sure the pointers in the statistics are correct
         quizExercise.recalculatePointCounters();
 
