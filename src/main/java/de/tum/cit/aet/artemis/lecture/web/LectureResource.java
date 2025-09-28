@@ -137,7 +137,7 @@ public class LectureResource {
     // TODO: add javaDoc
     @PostMapping("courses/{courseId}/lectures")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<Lecture>> createLectureSeries(@PathVariable long courseId, @RequestBody List<LectureCreateDTO> lectureDTOs) throws URISyntaxException {
+    public ResponseEntity<Void> createLectureSeries(@PathVariable long courseId, @RequestBody List<LectureCreateDTO> lectureDTOs) throws URISyntaxException {
         log.debug("REST request to save Lecture series for courseId {} with lectures: {}", courseId, lectureDTOs);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -145,7 +145,7 @@ public class LectureResource {
         List<Lecture> lectures = lectureDTOs.stream().map(lectureDTO -> createLectureUsing(lectureDTO, course)).toList();
         List<Lecture> savedLectures = lectureRepository.saveAll(lectures);
         savedLectures.forEach(lecture -> channelService.createLectureChannel(lecture, Optional.ofNullable(lecture.getChannelName())));
-        return ResponseEntity.created(URI.create("/api/lecture/courses/" + courseId + "/lectures")).body(savedLectures);
+        return ResponseEntity.noContent().build();
     }
 
     private Lecture createLectureUsing(LectureCreateDTO lectureDTO, Course course) {
