@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 import { clearTextField, drag } from '../../../utils';
-import { QUIZ_EXERCISE_BASE } from '../../../constants';
+import { QUIZ_EXERCISE_BASE, QUIZ_EXERCISE_BASE_CREATION } from '../../../constants';
 import { Fixtures } from '../../../../fixtures/fixtures';
 import { AbstractExerciseCreationPage } from '../AbstractExerciseCreationPage';
 
@@ -94,8 +94,9 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
     }
 
     async saveQuiz() {
-        const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE);
-        await this.page.locator('#quiz-save').click();
+        const saveButton = this.page.locator('#quiz-save');
+        const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE_CREATION);
+        await saveButton.click();
         return await responsePromise;
     }
 
