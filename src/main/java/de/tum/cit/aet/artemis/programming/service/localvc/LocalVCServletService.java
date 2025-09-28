@@ -103,8 +103,6 @@ public class LocalVCServletService {
 
     private final RepositoryAccessService repositoryAccessService;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
@@ -149,7 +147,6 @@ public class LocalVCServletService {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
-        this.authorizationCheckService = authorizationCheckService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.ciTriggerService = ciTriggerService;
@@ -249,9 +246,11 @@ public class LocalVCServletService {
 
         User user = authenticateUser(authorizationHeader, exercise, localVCRepositoryUri);
 
-        // Check that offline IDE usage is allowed.
-        if (Boolean.FALSE.equals(exercise.isAllowOfflineIde()) && authorizationCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
-            throw new LocalVCForbiddenException();
+        try {
+            repositoryAccessService.checkHasAccessToOfflineIDE(exercise, user);
+        }
+        catch (AccessForbiddenException e) {
+            throw new LocalVCForbiddenException(e);
         }
 
         try {
@@ -489,10 +488,7 @@ public class LocalVCServletService {
 
         ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
 
-        boolean isAllowedRepository = repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())
-                || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString());
-
-        return isAllowedRepository && authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        return repositoryAccessService.checkHasAccessToForcePush(exercise, user, repositoryTypeOrUserName);
     }
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
@@ -648,9 +644,12 @@ public class LocalVCServletService {
 
         // Students are not able to access Test or Aux repositories.
         // To save on db queries we do not check whether it is an Aux repo here, as we would need to fetch them first.
-        if (!authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+        try {
+            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, exercise, user, repositoryTypeOrUserName);
+        }
+        catch (AccessForbiddenException e) {
             if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
-                throw new LocalVCForbiddenException();
+                throw new LocalVCForbiddenException(e);
             }
             // The user is a student, and the repository is not a test repository
             return false;
