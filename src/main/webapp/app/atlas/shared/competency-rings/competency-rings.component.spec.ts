@@ -19,8 +19,8 @@ describe('CompetencyRings', () => {
                 fixture = TestBed.createComponent(CompetencyRingsComponent);
                 component = fixture.componentInstance;
 
-                component.progress = 110;
-                component.mastery = -10;
+                fixture.componentRef.setInput('progress', 110);
+                fixture.componentRef.setInput('mastery', -10);
             });
     });
 

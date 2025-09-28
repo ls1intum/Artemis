@@ -63,9 +63,9 @@ describe('CompetencyPopoverComponent', () => {
         'should navigate',
         fakeAsync((navigateTo: 'competencyManagement' | 'courseCompetencies', expectedPath: string) => {
             const location: Location = TestBed.inject(Location);
-            competencyPopoverComponent.navigateTo = navigateTo;
-            competencyPopoverComponent.competencyLinks = [{ competency: { id: 1, title: 'competency' }, weight: 1 }];
-            competencyPopoverComponent.courseId = 1;
+            competencyPopoverComponentFixture.componentRef.setInput('navigateTo', navigateTo as any);
+            competencyPopoverComponentFixture.componentRef.setInput('competencyLinks', [{ competency: { id: 1, title: 'competency' }, weight: 1 }] as any);
+            competencyPopoverComponentFixture.componentRef.setInput('courseId', 1 as any);
             competencyPopoverComponentFixture.detectChanges();
             const popoverButton = competencyPopoverComponentFixture.debugElement.nativeElement.querySelector('button');
             popoverButton.click();
