@@ -246,8 +246,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     /**
      * When the content of a file changes, set it as unsaved.
      */
-    onFileContentChange({ file, fileContent }: { file: string; fileContent: string }) {
-        this.unsavedFiles = { ...this.unsavedFiles, [file]: fileContent };
+    onFileContentChange({ fileName, text }: { fileName: string; text: string }) {
+        this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
         this.onFileChanged.emit();
     }
 
