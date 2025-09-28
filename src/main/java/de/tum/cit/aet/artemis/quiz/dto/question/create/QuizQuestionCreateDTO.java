@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz.dto.question.create;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
@@ -13,6 +14,8 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
         @JsonSubTypes.Type(value = DragAndDropQuestionCreateDTO.class, name = "drag-and-drop"),
         @JsonSubTypes.Type(value = ShortAnswerQuestionCreateDTO.class, name = "short-answer") })
 public interface QuizQuestionCreateDTO {
+
+    String ENTITY_NAME = "QuizExercise";
 
     /**
      * Converts this DTO to a {@link QuizQuestion} domain object.
@@ -38,7 +41,7 @@ public interface QuizQuestionCreateDTO {
             case MultipleChoiceQuestion mc -> MultipleChoiceQuestionCreateDTO.of(mc);
             case DragAndDropQuestion dnd -> DragAndDropQuestionCreateDTO.of(dnd);
             case ShortAnswerQuestion sa -> ShortAnswerQuestionCreateDTO.of(sa);
-            default -> throw new IllegalArgumentException("Unsupported question type: " + question.getClass());
+            default -> throw new BadRequestAlertException("The quiz question type is invalid", ENTITY_NAME, "invalidQuiz");
         };
     }
 }
