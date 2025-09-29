@@ -1,25 +1,25 @@
 <div class="alert unified-feedback" [ngClass]="inferredAlertClass()">
-    <div class="unified-feedback__content">
+    <div class="unified-feedback-content">
         @if (inferredReference() && showReference()) {
-            <div class="unified-feedback__reference">
-                <span class="unified-feedback__reference-label">Reference:</span>
-                <span class="unified-feedback__reference-text">{{ inferredReference() }}</span>
+            <div class="unified-feedback-reference">
+                <span class="unified-feedback-reference-label">Reference:</span>
+                <span class="unified-feedback-reference-text">{{ inferredReference() }}</span>
             </div>
         }
 
-        <div class="unified-feedback__main">
-            <div class="unified-feedback__header">
-                <div class="unified-feedback__header-left">
-                    <fa-icon [icon]="inferredIcon()" class="unified-feedback__icon" />
+        <div class="unified-feedback-main">
+            <div class="unified-feedback-header">
+                <div class="unified-feedback-header-left">
+                    <fa-icon [icon]="inferredIcon()" class="unified-feedback-icon" />
                     @if (inferredTitle()) {
-                        <span class="unified-feedback__title">{{ inferredTitle() }}</span>
+                        <span class="unified-feedback-title">{{ inferredTitle() }}</span>
                     }
                 </div>
-                <div class="unified-feedback__points">{{ points() }} points</div>
+                <div class="unified-feedback-points">{{ points() }} points</div>
             </div>
 
             @if (feedbackContent()) {
-                <div class="unified-feedback__text" [innerHTML]="feedbackContent()"></div>
+                <div class="unified-feedback-text" [innerHTML]="feedbackContent()"></div>
             }
         </div>
     </div>
