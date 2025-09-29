@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -139,7 +140,7 @@ public class QuizTrainingResource {
         return ResponseEntity.ok(leaderboard);
     }
 
-    @PostMapping("leaderboard-settings")
+    @PutMapping("leaderboard-settings")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> updateLeaderboardSettings(@Valid @RequestBody LeaderboardSettingDTO leaderboardSettingDTO) {
         log.debug("Rest request to set leaderboard settings: {}", leaderboardSettingDTO);

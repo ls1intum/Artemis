@@ -42,6 +42,7 @@ public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<
             """)
     void updateLeaderboardEntry(long userId, long courseId, int score, int correctAnswers, int wrongAnswers, int league, ZonedDateTime dueDate);
 
+    @Transactional
     @Modifying
     @Query("""
             UPDATE QuizTrainingLeaderboard qtl
@@ -50,11 +51,12 @@ public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<
             """)
     void updateLeaderboardName(long userId, String newName);
 
+    @Transactional
     @Modifying
     @Query("""
             UPDATE QuizTrainingLeaderboard qtl
             SET qtl.showInLeaderboard = :showInLeaderboard
             WHERE qtl.user.id = :userId
             """)
-    void updateShownInLeaderboard(long userId, boolean shownInLeaderboard);
+    void updateShownInLeaderboard(long userId, boolean showInLeaderboard);
 }

@@ -66,8 +66,8 @@ public class QuizTrainingLeaderboardService {
     /**
      * Retrieves the leaderboard entries for a given user and course.
      *
-     * @param userId   the ID of the user
-     * @param courseId the ID of the course
+     * @param userId   the id of the user
+     * @param courseId the id of the course
      * @return a list of leaderboard entry DTOs
      */
     public List<LeaderboardEntryDTO> getLeaderboard(long userId, long courseId) {
@@ -132,8 +132,8 @@ public class QuizTrainingLeaderboardService {
     /**
      * Updates the leaderboard score for a user in a course based on answered questions.
      *
-     * @param userId           the ID of the user
-     * @param courseId         the ID of the course
+     * @param userId           the id of the user
+     * @param courseId         the id of the course
      * @param answeredQuestion the set of answered question progress data
      * @throws IllegalArgumentException if the user or course is not found
      */
@@ -170,7 +170,7 @@ public class QuizTrainingLeaderboardService {
 
     /**
      * Finds the earliest due date from a set of quiz question progress data.
-     * If no due dates are available, returns the current time.
+     * If no due dates are available, return the current time.
      *
      * @return the earliest due date found or the current time if none exists
      */
