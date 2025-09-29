@@ -2,7 +2,7 @@
     <div class="unified-feedback-content">
         @if (inferredReference() && showReference()) {
             <div class="unified-feedback-reference">
-                <span class="unified-feedback-reference-label">Reference:</span>
+                <span class="unified-feedback-reference-label" jhiTranslate="artemisApp.feedback.reference"></span>
                 <span class="unified-feedback-reference-text">{{ inferredReference() }}</span>
             </div>
         }
@@ -15,7 +15,7 @@
                         <span class="unified-feedback-title">{{ inferredTitle() }}</span>
                     }
                 </div>
-                <div class="unified-feedback-points">{{ points() }} points</div>
+                <div class="unified-feedback-points">{{ points() }} {{ 'artemisApp.feedback.points' | artemisTranslate }}</div>
             </div>
 
             @if (feedbackContent()) {

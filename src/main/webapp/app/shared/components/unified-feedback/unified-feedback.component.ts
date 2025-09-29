@@ -4,6 +4,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-assessment.util';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted';
 
@@ -17,7 +19,7 @@ interface FeedbackTypeConfig {
     selector: 'jhi-unified-feedback',
     templateUrl: './unified-feedback.component.html',
     styleUrls: ['./unified-feedback.component.scss'],
-    imports: [NgClass, FaIconComponent],
+    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class UnifiedFeedbackComponent {
     feedbackContent = input<string>('');
