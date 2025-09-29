@@ -320,7 +320,7 @@ describe('CodeEditorContainerIntegration', () => {
         await loadFile(selectedFile, fileContent);
 
         containerFixture.detectChanges();
-        container.monacoEditor.onFileTextChanged(newFileContent);
+        container.monacoEditor.onFileTextChanged({ text: newFileContent, fileName: selectedFile });
         containerFixture.detectChanges();
 
         expect(getFileStub).toHaveBeenCalledOnce();
