@@ -32,7 +32,7 @@ def get_exam_exercises(session: requests.Session, exam_id: int) -> List[Dict[str
     if response.status_code != 200:
         logging.error(f"Failed to get exam exercises. Status code: {response.status_code}")
         return []
-        
+
     exercise_groups = response.json()
     exercises = []
     for group in exercise_groups:

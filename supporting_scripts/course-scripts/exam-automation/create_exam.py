@@ -49,7 +49,7 @@ def create_exam(session: requests.Session, course_id: int, title: str, short_nam
     url: str = f"{SERVER_URL}/exam/courses/{course_id}/exams"
 
     start_date, end_date, visible_date, working_time, review_start_date, review_end_date = calculate_exam_dates()
-    
+
     payload: Dict[str, Any] = {
         "title": title,
         "shortName": short_name,
