@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -219,7 +220,8 @@ public class CalendarResource {
                 .collect(Collectors.toSet());
         Set<CalendarEventDTO> filteredDTOs = CalendarUtil.filterForEventsOverlappingMonths(calendarEventDTOs, months, clientTimeZone);
         Set<CalendarEventDTO> splitDTOs = CalendarUtil.splitEventsSpanningMultipleDaysIfNecessary(filteredDTOs, clientTimeZone);
-        Map<String, List<CalendarEventDTO>> calendarEventDTOsByDay = splitDTOs.stream()
+        List<CalendarEventDTO> sortedDTOs = splitDTOs.stream().sorted(Comparator.comparing(CalendarEventDTO::startDate)).toList();
+        Map<String, List<CalendarEventDTO>> calendarEventDTOsByDay = sortedDTOs.stream()
                 .collect(Collectors.groupingBy(dto -> dto.startDate().withZoneSameInstant(clientTimeZone).toLocalDate().toString()));
 
         return ResponseEntity.ok(calendarEventDTOsByDay);
