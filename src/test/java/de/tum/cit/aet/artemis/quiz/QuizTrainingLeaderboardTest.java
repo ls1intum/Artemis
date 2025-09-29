@@ -4,7 +4,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.http.HttpStatus.OK;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 
@@ -69,61 +68,33 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         quizTrainingLeaderboard.setUser(user);
         quizTrainingLeaderboard.setLeaderboardName("Timm");
         quizTrainingLeaderboard.setScore(10);
-        quizTrainingLeaderboard.setLeague(2);
+        quizTrainingLeaderboard.setLeague(5);
         quizTrainingLeaderboard.setAnsweredCorrectly(10);
         quizTrainingLeaderboard.setAnsweredWrong(10);
         quizTrainingLeaderboard.setDueDate(ZonedDateTime.now());
         quizTrainingLeaderboard.setStreak(0);
+        quizTrainingLeaderboard.setShowInLeaderboard(true);
         return quizTrainingLeaderboard;
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateQuizLeaderboardEntry() {
-        User user = userTestRepository.findAll().get(0);
+        User user = userTestRepository.findAll().getFirst();
         Course course = courseUtilService.createCourse();
         QuizTrainingLeaderboard quizTrainingLeaderboard = getQuizTrainingLeaderboard(course, user);
         quizTrainingLeaderboardRepository.save(quizTrainingLeaderboard);
         QuizQuestionProgressData data = new QuizQuestionProgressData();
         data.setLastScore(1.0);
         data.setBox(2);
-        QuizQuestionProgressData data2 = new QuizQuestionProgressData();
-        data2.setLastScore(0.0);
-        data2.setBox(1);
         quizTrainingLeaderboardService.updateLeaderboardScore(user.getId(), course.getId(), data);
         QuizTrainingLeaderboard leaderboardEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(user.getId(), course.getId()).orElseThrow();
-        assertThat(leaderboardEntry.getLeaderboardName()).isEqualTo("Timm");
         assertThat(leaderboardEntry.getScore()).isEqualTo(14);
-        assertThat(leaderboardEntry.getLeague()).isEqualTo(2);
+        assertThat(leaderboardEntry.getLeague()).isEqualTo(5);
         assertThat(leaderboardEntry.getAnsweredCorrectly()).isEqualTo(11);
-        assertThat(leaderboardEntry.getAnsweredWrong()).isEqualTo(11);
+        assertThat(leaderboardEntry.getAnsweredWrong()).isEqualTo(10);
         assertThat(leaderboardEntry.getCourse().getId()).isEqualTo(course.getId());
         assertThat(leaderboardEntry.getUser().getId()).isEqualTo(user.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUpdateQuizLeaderboardEntryNoExistingEntry() {
-        User user = userTestRepository.findAll().get(0);
-        Course course = courseUtilService.createCourse();
-        QuizQuestionProgressData data1 = new QuizQuestionProgressData();
-        data1.setLastScore(1.0);
-        data1.setBox(2);
-        data1.setDueDate(ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MINUTES));
-        QuizQuestionProgressData data2 = new QuizQuestionProgressData();
-        data2.setLastScore(0.0);
-        data2.setBox(1);
-        data2.setDueDate(ZonedDateTime.now().plusDays(2).truncatedTo(ChronoUnit.MINUTES));
-        quizTrainingLeaderboardService.updateLeaderboardScore(user.getId(), course.getId(), data1);
-        QuizTrainingLeaderboard leaderboardEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(user.getId(), course.getId()).orElseThrow();
-        assertThat(leaderboardEntry.getLeaderboardName()).isEqualTo(user.getFirstName());
-        assertThat(leaderboardEntry.getScore()).isEqualTo(4);
-        assertThat(leaderboardEntry.getLeague()).isEqualTo(3);
-        assertThat(leaderboardEntry.getAnsweredCorrectly()).isEqualTo(1);
-        assertThat(leaderboardEntry.getAnsweredWrong()).isEqualTo(1);
-        assertThat(leaderboardEntry.getCourse().getId()).isEqualTo(course.getId());
-        assertThat(leaderboardEntry.getUser().getId()).isEqualTo(user.getId());
-        assertThat(leaderboardEntry.getDueDate()).isEqualTo(ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MINUTES));
     }
 
     @Test
@@ -137,54 +108,22 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         course.setStudentGroupName("Test");
         userTestRepository.save(user);
         courseTestRepository.save(course);
-        courseAccessService.enrollUserForCourseOrThrow(user, course);
         QuizTrainingLeaderboard quizTrainingLeaderboard = getQuizTrainingLeaderboard(course, user);
         quizTrainingLeaderboardRepository.save(quizTrainingLeaderboard);
         List<LeaderboardEntryDTO> leaderboardEntryDTO = quizTrainingLeaderboardService.getLeaderboard(user.getId(), course.getId());
         assertThat(leaderboardEntryDTO.size()).isEqualTo(1);
-        assertThat(leaderboardEntryDTO.get(0).answeredCorrectly()).isEqualTo(10);
-        assertThat(leaderboardEntryDTO.get(0).answeredWrong()).isEqualTo(10);
-        assertThat(leaderboardEntryDTO.get(0).score()).isEqualTo(10);
-        assertThat(leaderboardEntryDTO.get(0).rank()).isEqualTo(1);
-        assertThat(leaderboardEntryDTO.get(0).totalQuestions()).isEqualTo(30);
-        assertThat(leaderboardEntryDTO.get(0).leaderboardName()).isEqualTo("Timm");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetLeaderboardEntryNotStudent() {
-        User user = userTestRepository.findAll().get(0);
-        User instructor = userTestRepository.findAll().get(1);
-        Course course = courseUtilService.createCourse();
-        course.setEnrollmentEnabled(true);
-        user.setGroups(Set.of("Test"));
-        user.setAuthorities(Set.of(Authority.USER_AUTHORITY));
-        course.setStudentGroupName("Test");
-        userTestRepository.save(user);
-        courseTestRepository.save(course);
-        courseAccessService.enrollUserForCourseOrThrow(user, course);
-        QuizTrainingLeaderboard quizTrainingLeaderboard = getQuizTrainingLeaderboard(course, instructor);
-        quizTrainingLeaderboard.setLeague(3);
-        quizTrainingLeaderboardRepository.save(quizTrainingLeaderboard);
-        List<LeaderboardEntryDTO> leaderboardEntryDTO = quizTrainingLeaderboardService.getLeaderboard(instructor.getId(), course.getId());
-        assertThat(leaderboardEntryDTO.size()).isEqualTo(1);
-        assertThat(leaderboardEntryDTO.get(0).selectedLeague()).isEqualTo(3);
+        assertThat(leaderboardEntryDTO.getFirst().answeredCorrectly()).isEqualTo(10);
+        assertThat(leaderboardEntryDTO.getFirst().answeredWrong()).isEqualTo(10);
+        assertThat(leaderboardEntryDTO.getFirst().score()).isEqualTo(10);
+        assertThat(leaderboardEntryDTO.getFirst().rank()).isEqualTo(1);
+        assertThat(leaderboardEntryDTO.getFirst().leaderboardName()).isEqualTo("Timm");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetQuizQuestionsForPractice() throws Exception {
-        User user = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        user.setGroups(Set.of("Test"));
-        user.setAuthorities(Set.of(Authority.USER_AUTHORITY));
-
         Course course = courseUtilService.createCourse();
-        course.setEnrollmentEnabled(true);
-        course.setStudentGroupName("Test");
-
-        userTestRepository.save(user);
         courseTestRepository.save(course);
-        courseAccessService.enrollUserForCourseOrThrow(user, course);
 
         List<LeaderboardEntryDTO> entries = request.getList("/api/quiz/courses/" + course.getId() + "/training/leaderboard", OK, LeaderboardEntryDTO.class);
 

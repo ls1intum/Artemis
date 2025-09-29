@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.QuizTrainingLeaderboard;
 import de.tum.cit.aet.artemis.quiz.dto.LeaderboardEntryDTO;
@@ -51,9 +53,6 @@ public class QuizTrainingLeaderboardService {
 
     private static final int NO_LEAGUE = 0;
 
-    private record AnswerCounts(int correct, int wrong) {
-    }
-
     public QuizTrainingLeaderboardService(QuizTrainingLeaderboardRepository quizTrainingLeaderboardRepository, CourseRepository courseRepository, UserRepository userRepository,
             QuizQuestionRepository quizQuestionRepository, AuthorizationCheckService authorizationCheckService, QuizQuestionProgressRepository quizQuestionProgressRepository) {
         this.quizTrainingLeaderboardRepository = quizTrainingLeaderboardRepository;
@@ -70,7 +69,6 @@ public class QuizTrainingLeaderboardService {
      * @param userId   the ID of the user
      * @param courseId the ID of the course
      * @return a list of leaderboard entry DTOs
-     * @throws IllegalArgumentException if the user or course is not found
      */
     public List<LeaderboardEntryDTO> getLeaderboard(long userId, long courseId) {
         User user = userRepository.findByIdElseThrow(userId);
@@ -92,8 +90,7 @@ public class QuizTrainingLeaderboardService {
         }
 
         List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueAndCourseIdOrderByScoreDescUserAscId(selectedLeague, courseId);
-        List<LeaderboardEntryDTO> leaderboard = getLeaderboardEntryDTOS(leaderboardEntries, selectedLeague, totalQuestions);
-        return leaderboard;
+        return getLeaderboardEntryDTOS(leaderboardEntries, selectedLeague, totalQuestions);
     }
 
     /**
@@ -142,9 +139,8 @@ public class QuizTrainingLeaderboardService {
      */
     public void updateLeaderboardScore(long userId, long courseId, QuizQuestionProgressData answeredQuestion) {
         int delta = calculateScoreDelta(answeredQuestion);
-        AnswerCounts answerCounts = calculateAnswerCounts(answeredQuestion);
-        int correctAnswers = answerCounts.correct;
-        int wrongAnswers = answerCounts.wrong;
+        int correctAnswers = answeredQuestion.getLastScore() == 1.0 ? 1 : 0;
+        int wrongAnswers = answeredQuestion.getLastScore() < 1.0 ? 1 : 0;
 
         QuizTrainingLeaderboard leaderboardEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).orElseThrow();
         ZonedDateTime dueDate = findLatestDueDate(userId, courseId);
@@ -179,9 +175,8 @@ public class QuizTrainingLeaderboardService {
      * @return the earliest due date found or the current time if none exists
      */
     private ZonedDateTime findLatestDueDate(long userId, long courseId) {
-        // Set<QuizQuestionProgress> progressSet = quizQuestionProgressRepository.findByUserIdAndCourseId(userId, courseId); -- This is implemented in a previous PR
-        // return progressDataSet.stream().map(QuizQuestionProgressData::getDueDate).filter(date -> date != null).min(ZonedDateTime::compareTo).orElse(ZonedDateTime.now());
-        return null; // Placeholder until the above line can be used
+        return quizQuestionProgressRepository.findAllByUserIdAndCourseId(userId, courseId).stream().map(QuizQuestionProgress::getProgressJson)
+                .map(QuizQuestionProgressData::getDueDate).filter(Objects::nonNull).min(ZonedDateTime::compareTo).orElse(ZonedDateTime.now());
     }
 
     /**
@@ -200,28 +195,6 @@ public class QuizTrainingLeaderboardService {
 
         delta += (int) Math.round(questionDelta);
         return delta;
-    }
-
-    /**
-     * Calculates the number of correctly and incorrectly answered questions from the answered quiz question progress data.
-     * A question is considered correctly answered if its last score is greater than or equal to 1.0,
-     * otherwise it is counted as incorrectly answered.
-     *
-     * @param answeredQuestion the answered quiz question progress data to analyze
-     * @return an AnswerCounts record containing the count of correct and wrong answers
-     */
-    private AnswerCounts calculateAnswerCounts(QuizQuestionProgressData answeredQuestion) {
-        int correctCount = 0;
-        int wrongCount = 0;
-
-        if (answeredQuestion.getLastScore() >= 1.0) {
-            correctCount++;
-        }
-        else {
-            wrongCount++;
-        }
-
-        return new AnswerCounts(correctCount, wrongCount);
     }
 
     public void updateLeaderboardName(long userId, String newName) {

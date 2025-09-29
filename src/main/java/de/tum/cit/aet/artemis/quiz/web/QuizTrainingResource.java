@@ -140,8 +140,8 @@ public class QuizTrainingResource {
     }
 
     @PostMapping("leaderboard-settings")
-    @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Void> setLeaderboardSettings(@Valid @RequestBody LeaderboardSettingDTO leaderboardSettingDTO) {
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> updateLeaderboardSettings(@Valid @RequestBody LeaderboardSettingDTO leaderboardSettingDTO) {
         log.debug("Rest request to set leaderboard settings: {}", leaderboardSettingDTO);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -156,4 +156,15 @@ public class QuizTrainingResource {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("courses/{courseId}/leaderboard-entry")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Void> initializeLeaderboardEntry(@PathVariable long courseId, @Valid @RequestBody LeaderboardSettingDTO leaderboardEntryDTO) {
+        log.debug("REST request to initialize or update leaderboard entry: {}", leaderboardEntryDTO);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean shownInLeaderboard = leaderboardEntryDTO.shownInLeaderboard() != null ? leaderboardEntryDTO.shownInLeaderboard() : false;
+        String leaderboardName = leaderboardEntryDTO.leaderboardName();
+        quizTrainingLeaderboardService.setInitialLeaderboardEntry(user.getId(), courseId, shownInLeaderboard, leaderboardName);
+        return ResponseEntity.ok().build();
+    }
 }
