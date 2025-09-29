@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewEncapsulation, inject, output, viewChild } from '@angular/core';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -50,8 +50,8 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     @Input() question: MultipleChoiceQuestion;
     @Input() questionIndex: number;
 
-    @Output() questionUpdated = new EventEmitter();
-    @Output() questionDeleted = new EventEmitter();
+    questionUpdated = output();
+    questionDeleted = output();
 
     questionEditorText = '';
     isQuestionCollapsed: boolean;

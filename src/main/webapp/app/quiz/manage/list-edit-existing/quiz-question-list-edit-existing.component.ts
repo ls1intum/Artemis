@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, ViewEncapsulation, inject, output } from '@angular/core';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -48,8 +48,8 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
     @Input() courseId: number;
     @Input() filePool: Map<string, { path?: string; file: File }>;
 
-    @Output() onQuestionsAdded = new EventEmitter<Array<QuizQuestion>>();
-    @Output() onFilesAdded = new EventEmitter<Map<string, { path: string; file: File }>>();
+    onQuestionsAdded = output<Array<QuizQuestion>>();
+    onFilesAdded = output<Map<string, { path: string; file: File }>>();
 
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;

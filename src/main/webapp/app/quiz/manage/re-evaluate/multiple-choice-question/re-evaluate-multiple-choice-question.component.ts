@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, Input, OnInit, output } from '@angular/core';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
@@ -25,10 +25,10 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
     @Input() question: MultipleChoiceQuestion;
     @Input() questionIndex: number;
 
-    @Output() questionDeleted = new EventEmitter<object>();
-    @Output() questionUpdated = new EventEmitter<object>();
-    @Output() questionMoveUp = new EventEmitter<object>();
-    @Output() questionMoveDown = new EventEmitter<object>();
+    questionDeleted = output<void>();
+    questionUpdated = output<void>();
+    questionMoveUp = output<void>();
+    questionMoveDown = output<void>();
 
     markdownMap: Map<number, string>;
     questionText: string;

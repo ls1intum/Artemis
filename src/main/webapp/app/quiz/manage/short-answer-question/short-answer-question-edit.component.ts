@@ -1,18 +1,4 @@
-import {
-    AfterViewInit,
-    ChangeDetectorRef,
-    Component,
-    ElementRef,
-    EventEmitter,
-    Input,
-    OnChanges,
-    OnInit,
-    Output,
-    SimpleChanges,
-    ViewEncapsulation,
-    inject,
-    viewChild,
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewEncapsulation, inject, output, viewChild } from '@angular/core';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
@@ -93,11 +79,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     @Input() questionIndex: number;
     @Input() reEvaluationInProgress: boolean;
 
-    @Output() questionUpdated = new EventEmitter();
-    @Output() questionDeleted = new EventEmitter();
+    readonly questionUpdated = output<void>();
+    readonly questionDeleted = output<void>();
     /** Question move up and down are used for re-evaluate **/
-    @Output() questionMoveUp = new EventEmitter();
-    @Output() questionMoveDown = new EventEmitter();
+    readonly questionMoveUp = output<void>();
+    readonly questionMoveDown = output<void>();
 
     readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 

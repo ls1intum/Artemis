@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, Input, OnInit, inject, output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
@@ -58,8 +58,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     @Input()
     quizExercise: QuizExercise;
 
-    @Output()
-    loadQuizExercises = new EventEmitter();
+    loadQuizExercises = output<void>();
 
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewEncapsulation, inject, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, ViewEncapsulation, inject, output, viewChildren } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -39,9 +39,9 @@ export class QuizQuestionListEditComponent {
     @Input() quizQuestions: QuizQuestion[] = [];
     @Input() disabled = false;
 
-    @Output() onQuestionAdded = new EventEmitter<QuizQuestion>();
-    @Output() onQuestionUpdated = new EventEmitter();
-    @Output() onQuestionDeleted = new EventEmitter<QuizQuestion>();
+    onQuestionAdded = output<QuizQuestion>();
+    onQuestionUpdated = output<void>();
+    onQuestionDeleted = output<QuizQuestion>();
 
     readonly editMultipleChoiceQuestionComponents = viewChildren<MultipleChoiceQuestionEditComponent>('editMultipleChoice');
 

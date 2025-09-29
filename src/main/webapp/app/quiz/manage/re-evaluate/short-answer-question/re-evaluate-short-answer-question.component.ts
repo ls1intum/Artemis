@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, Input, output } from '@angular/core';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-question/short-answer-question-edit.component';
@@ -28,12 +28,8 @@ export class ReEvaluateShortAnswerQuestionComponent {
     @Input()
     questionIndex: number;
 
-    @Output()
-    questionUpdated = new EventEmitter();
-    @Output()
-    questionDeleted = new EventEmitter();
-    @Output()
-    questionMoveUp = new EventEmitter();
-    @Output()
-    questionMoveDown = new EventEmitter();
+    questionUpdated = output();
+    questionDeleted = output();
+    questionMoveUp = output();
+    questionMoveDown = output();
 }
