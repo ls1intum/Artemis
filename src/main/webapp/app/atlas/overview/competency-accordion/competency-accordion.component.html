@@ -59,13 +59,15 @@
     <div [class.competency-accordion-body-open]="open" [class.competency-accordion-body-closed]="!open" class="competency-accordion-body">
         @if (promptForRating) {
             <div [class.pb-1]="course() && (nextExercises.length > 0 || nextLectureUnits.length > 0)">
-                <jhi-judgement-of-learning-rating
-                    [competencyId]="competency().id"
-                    [courseId]="course()!.id"
-                    [mastery]="mastery"
-                    [(rating)]="jolRating"
-                    (ratingChange)="onRatingChange($event)"
-                />
+                @if (course()) {
+                    <jhi-judgement-of-learning-rating
+                        [competencyId]="competency().id"
+                        [courseId]="course()!.id!"
+                        [mastery]="mastery"
+                        [(rating)]="jolRating"
+                        (ratingChange)="onRatingChange($event!)"
+                    />
+                }
             </div>
         }
         @if (course()) {

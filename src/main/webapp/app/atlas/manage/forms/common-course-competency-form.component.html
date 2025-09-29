@@ -69,7 +69,7 @@
             <jhi-taxonomy-select [selectId]="'taxonomy'" [form]="taxonomyControl" />
         </div>
     }
-    @if (!isInConnectMode) {
+    @if (!isInConnectMode()) {
         <div class="form-group">
             <label for="masteryThreshold">
                 {{ 'artemisApp.courseCompetency.masteryThreshold' | artemisTranslate }}: {{ masteryThresholdControl!.value ?? DEFAULT_MASTERY_THRESHOLD }}%
