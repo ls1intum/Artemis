@@ -75,7 +75,56 @@ Verifying the integration
 3. Run a consistency check to ensure the LLM call succeeds. Inspect the server logs for ``Hyperion`` entries
    if the request fails; misconfigured credentials and missing network egress are the most common causes.
 
-Operational considerations
+Code Generation Process
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Hyperion can automatically generate complete programming exercise repositories (solution, template, and test code)
+using a structured AI-driven approach. The generation process consists of a 4-step pipeline with iterative 
+improvement based on compilation feedback.
+
+4-Step Generation Pipeline
+""""""""""""""""""""""""""
+
+Each repository component follows a systematic generation process:
+
+1. **Solution Planning**: Creates a high-level algorithmic approach and identifies key components needed
+2. **File Structure Definition**: Organizes the code into appropriate files and packages 
+3. **Class and Method Headers**: Generates class definitions, method signatures, and documentation
+4. **Core Logic Implementation**: Produces the complete functional implementation
+
+Iterative Compilation Feedback
+"""""""""""""""""""""""""""""""
+
+For each repository component, Hyperion automatically:
+
+- Generates code using the 4-step pipeline
+- Commits changes and triggers a CI build  
+- Waits for compilation results
+- If compilation fails, uses build logs as feedback for the next iteration
+- Retries up to 3 times (default value) per component, incorporating error messages to improve the code
+- Stores the final generated code in the repository, even if compilation ultimately fails
+
+This feedback loop enables Hyperion to self-correct common issues like syntax errors, missing imports, 
+or incorrect API usage.
+
+Cost Considerations
+"""""""""""""""""""
+
+Average code generation costs depend on the LLM model and number of components (solution, template, or test repository):
+
+**Per Component Costs** (with up to 3 iterations):
+
+- **GPT-5**: ~$0.05 per repository component
+- **GPT-5-mini**: ~$0.01 per repository component
+
+**Full Assignment Costs** (solution + template + test repositories):
+
+- **GPT-5**: ~$0.15 total
+- **GPT-5-mini**: ~$0.03 total
+
+*Note: Problem statement generation incurs additional costs and is billed separately.*
+
+Operational considerations 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - **Cost control:** Define usage policies and rate limits with your provider. Hyperion requests can process the
