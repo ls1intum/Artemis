@@ -1,4 +1,4 @@
-import { Component, inject, input, model, output } from '@angular/core';
+import { Component, Input, inject, model, output, signal } from '@angular/core';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 
 import { AlertService } from 'app/shared/service/alert.service';
@@ -17,10 +17,11 @@ export class JudgementOfLearningRatingComponent {
     private courseCompetencyService = inject(CourseCompetencyService);
     private alertService = inject(AlertService);
 
-    courseId = input.required<number>();
-    competencyId = input.required<number>();
+    @Input() courseId!: number;
+    @Input() competencyId!: number;
     rating = model<number>();
-    mastery = input<number>();
+    @Input() mastery?: number;
+    readonly helpText = signal('artemisApp.courseStudentDashboard.judgementOfLearning.info');
 
     ratingChange = output<number>();
 
@@ -29,13 +30,13 @@ export class JudgementOfLearningRatingComponent {
      * @param event - starRating component that holds the new rating value
      */
     onRate(event: { oldValue: number; newValue: number; starRating: StarRatingComponent }) {
-        if (this.rating() !== undefined || this.courseId() === undefined) {
+        if (this.rating() !== undefined || this.courseId === undefined) {
             return;
         }
 
         const newRating = event.newValue;
 
-        this.courseCompetencyService.setJudgementOfLearning(this.courseId(), this.competencyId(), newRating).subscribe({
+        this.courseCompetencyService.setJudgementOfLearning(this.courseId, this.competencyId, newRating).subscribe({
             next: () => {
                 this.rating.set(newRating);
                 this.ratingChange.emit(newRating);

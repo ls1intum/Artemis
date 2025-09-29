@@ -17,10 +17,10 @@ export class StandardizedCompetencyFilterComponent implements OnInit, OnDestroy 
     competencyTitleFilterChange = output<string>();
     knowledgeAreaFilterChange = output<KnowledgeAreaDTO | undefined>();
 
-    protected titleFilterSubject = new Subject<void>();
+    protected titleFilterSubject = new Subject<string>();
 
     ngOnInit(): void {
-        this.titleFilterSubject.pipe(debounceTime(500)).subscribe(() => this.competencyTitleFilterChange.emit(this.competencyTitleFilter()));
+        this.titleFilterSubject.pipe(debounceTime(500)).subscribe((value) => this.competencyTitleFilterChange.emit(value));
     }
 
     ngOnDestroy(): void {

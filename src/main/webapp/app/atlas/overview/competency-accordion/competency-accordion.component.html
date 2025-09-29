@@ -47,10 +47,10 @@
             </div>
             <div class="competency-rings-container py-2">
                 <jhi-competency-rings
-                    [class.muted-competency-rings]="promptForRating && this.jolRating === undefined"
-                    [progress]="this.progress"
-                    [mastery]="this.mastery"
-                    [hideProgress]="promptForRating && this.jolRating === undefined"
+                    [class.muted-competency-rings]="promptForRating && jolRating === undefined"
+                    [progress]="progress"
+                    [mastery]="mastery"
+                    [hideProgress]="promptForRating && jolRating === undefined"
                     [playAnimation]="false"
                 />
             </div>
@@ -58,12 +58,12 @@
     </button>
     <div [class.competency-accordion-body-open]="open" [class.competency-accordion-body-closed]="!open" class="competency-accordion-body">
         @if (promptForRating) {
-            <div [class.pb-1]="course && (nextExercises.length > 0 || nextLectureUnits.length > 0)">
+            <div [class.pb-1]="course() && (nextExercises.length > 0 || nextLectureUnits.length > 0)">
                 <jhi-judgement-of-learning-rating
                     [competencyId]="competency().id"
-                    [courseId]="course()?.id"
+                    [courseId]="course()!.id"
                     [mastery]="mastery"
-                    [rating]="jolRating"
+                    [(rating)]="jolRating"
                     (ratingChange)="onRatingChange($event)"
                 />
             </div>
@@ -74,13 +74,13 @@
             }
             @if (nextExercises.length > 0) {
                 @for (exercise of nextExercises; track exercise) {
-                    <jhi-course-exercise-row [course]="course()" [exercise]="exercise" />
+                    <jhi-course-exercise-row [course]="course()!" [exercise]="exercise" />
                 }
             }
             @if (nextLectureUnits.length > 0) {
                 @for (lectureUnit of nextLectureUnits; track lectureUnit) {
                     <div class="lecture-unit-container d-flex align-items-center my-2 px-2 position-relative">
-                        <a class="stretched-link" [routerLink]="['/courses', course().id, 'lectures', lectureUnit.lectureId]"></a>
+                        <a class="stretched-link" [routerLink]="['/courses', course()!.id, 'lectures', lectureUnit.lectureId]"></a>
                         <div class="m-0 fs-5 fw-medium px-2">
                             <fa-icon
                                 class="me-2"

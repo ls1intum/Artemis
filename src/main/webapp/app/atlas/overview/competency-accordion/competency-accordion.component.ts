@@ -27,6 +27,7 @@ export interface CompetencyAccordionToggleEvent {
     selector: 'jhi-competency-accordion',
     templateUrl: './competency-accordion.component.html',
     styleUrl: './competency-accordion.component.scss',
+    standalone: true,
     imports: [
         FaIconComponent,
         NgbTooltip,
