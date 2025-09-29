@@ -14,7 +14,7 @@ import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/c
 export class CalendarDesktopWeekPresentationComponent implements AfterViewInit {
     private static readonly INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT = 7.5;
     private static readonly INITIAL_SCROLL_POSITION =
-        CalendarDesktopWeekPresentationComponent.INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT * CalendarEventsPerDaySectionComponent.HOUR_SEGMENT_HEIGHT_IN_PIXEL;
+        CalendarDesktopWeekPresentationComponent.INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT * CalendarEventsPerDaySectionComponent.HOUR_HEIGHT_IN_PIXEL;
     firstDayOfCurrentWeek = input.required<Dayjs>();
     isEventSelected = signal<boolean>(false);
     scrollContainer = viewChild<ElementRef>('scrollContainer');
