@@ -273,10 +273,11 @@ public class AthenaResource {
     }
 
     /**
-     * GET public/programming-exercises/:exerciseId/repository/{repositoryType} : Get the instructor repository (template, solution, tests) as a file map
+     * GET public/programming-exercises/{exerciseId}/repository/{repositoryType} : Get the instructor repository (template, solution, tests) as a file map
      *
-     * @param exerciseId the id of the exercise
-     * @param auth       the auth header value to check
+     * @param exerciseId     the id of the exercise
+     * @param repositoryType the type of the repository
+     * @param auth           the auth header value to check
      * @return 200 Ok with the file map as body if successful
      */
     @GetMapping("public/programming-exercises/{exerciseId}/repository/{repositoryType}")

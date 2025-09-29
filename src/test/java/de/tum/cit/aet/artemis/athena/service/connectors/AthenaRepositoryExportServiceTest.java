@@ -19,6 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -142,11 +143,11 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    void shouldThrowIllegalArgumentExceptionWhenFeedbackSuggestionModuleIsNull() {
+    void shouldThrowBadRequestAlertExceptionWhenFeedbackSuggestionModuleIsNull() {
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setFeedbackSuggestionModule(null);
 
-        assertThatExceptionOfType(IllegalArgumentException.class).as("Should throw IllegalArgumentException when feedback suggestion module is null")
+        assertThatExceptionOfType(BadRequestAlertException.class).as("Should throw BadRequestAlertException when feedback suggestion module is null")
                 .isThrownBy(() -> athenaModuleService.getAthenaModuleUrl(programmingExercise))
                 .withMessageContaining("Exercise does not have a feedback suggestion module configured");
     }
