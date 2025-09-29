@@ -1,8 +1,6 @@
 import { Component, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
-import { polyfill } from 'mobile-drag-drop';
-import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
 import { ImageComponent } from 'app/shared/image/image.component';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
@@ -18,19 +16,6 @@ import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { QuizScoringInfoStudentModalComponent } from '../quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { DragItemComponent } from './drag-item/drag-item.component';
 import { addPublicFilePrefix } from 'app/app.constants';
-
-// options are optional ;)
-polyfill({
-    // use this to make use of the scroll behavior
-    dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
-});
-
-// Drag-enter listener for mobile devices: without this code, mobile drag and drop will not work correctly!
-// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-(event: any) => {
-    event.preventDefault();
-};
-window.addEventListener('touchmove', () => {}, { passive: false });
 
 enum MappingResult {
     MAPPED_CORRECT,
@@ -158,7 +143,7 @@ export class DragAndDropQuestionComponent {
     }
 
     /** Sets the view displayed to the user
-     * @param {Output} value -> loading: background picture for drag and drop question is currently loading
+     * @param value -> loading: background picture for drag and drop question is currently loading
      *                          success: background picture for drag and drop question was loaded
      *                          error: an error occurred during background download */
     changeLoading(value: string) {
