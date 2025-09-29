@@ -16,6 +16,9 @@ public class QuizQuestionProgress extends DomainObject {
     @Column(name = "user_id")
     private long userId;
 
+    @Column(name = "course_id")
+    private long courseId;
+
     @Column(name = "quiz_question_id")
     private long quizQuestionId;
 
@@ -32,6 +35,14 @@ public class QuizQuestionProgress extends DomainObject {
 
     public void setUserId(long userId) {
         this.userId = userId;
+    }
+
+    public long getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(long courseId) {
+        this.courseId = courseId;
     }
 
     public long getQuizQuestionId() {
