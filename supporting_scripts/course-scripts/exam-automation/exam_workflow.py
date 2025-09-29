@@ -28,7 +28,7 @@ def get_exam_exercises(session: requests.Session, exam_id: int) -> List[Dict[str
     """Get all exercises in the exam."""
     url = f"{SERVER_URL}/exam/courses/{COURSE_ID}/exams/{exam_id}/exercise-groups"
     response = session.get(url)
-    
+
     if response.status_code != 200:
         logging.error(f"Failed to get exam exercises. Status code: {response.status_code}")
         return []
@@ -299,4 +299,4 @@ def main() -> None:
     logging.info("=== Exam Workflow Completed Successfully ===")
 
 if __name__ == "__main__":
-    main() 
+    main()

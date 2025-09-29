@@ -40,7 +40,6 @@ def calculate_exam_dates() -> tuple[str, str, str, int, str, str]:
     end_date = (now + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%S+00:00")
     visible_date = (now + timedelta(minutes=59)).strftime("%Y-%m-%dT%H:%M:%S+00:00")
     working_time = int((datetime.fromisoformat(end_date[:-6]) - datetime.fromisoformat(start_date[:-6])).total_seconds())
-    #TODO: revert this maybe
     review_start_date = (datetime.fromisoformat(end_date[:-6]) + timedelta(hours=5)).strftime("%Y-%m-%dT%H:%M:%S+00:00")
     review_end_date = (datetime.fromisoformat(end_date[:-6]) + timedelta(days=1)).strftime("%Y-%m-%dT%H:%M:%S+00:00")
     return start_date, end_date, visible_date, working_time, review_start_date, review_end_date
@@ -48,7 +47,7 @@ def calculate_exam_dates() -> tuple[str, str, str, int, str, str]:
 def create_exam(session: requests.Session, course_id: int, title: str, short_name: str) -> Dict[str, Any]:
     """Create an exam in the specified course."""
     url: str = f"{SERVER_URL}/exam/courses/{course_id}/exams"
-    
+
     start_date, end_date, visible_date, working_time, review_start_date, review_end_date = calculate_exam_dates()
     
     payload: Dict[str, Any] = {
@@ -129,8 +128,7 @@ def create_exercise_group(session: requests.Session, exam_id: int, title: str) -
     else:
         raise Exception(f"Failed to create exercise group. Status code: {response.status_code}\nResponse: {response.text}")
 
-def create_programming_exercise_in_exam(session: requests.Session, exercise_group_id: int, exercise_name: str, 
-                                      exercise_number: int = 1) -> Dict[str, Any]:
+def create_programming_exercise_in_exam(session: requests.Session, exercise_group_id: int, exercise_name: str, exercise_number: int = 1) -> Dict[str, Any]:
     """Create a default programming exercise in the exercise group with minimal required fields."""
     url: str = f"{SERVER_URL}/programming/programming-exercises/setup"
 
@@ -226,4 +224,4 @@ def main() -> int:
         exit(1)
 
 if __name__ == "__main__":
-    main() 
+    main()
