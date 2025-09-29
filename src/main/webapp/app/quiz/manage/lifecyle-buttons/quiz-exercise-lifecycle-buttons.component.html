@@ -1,19 +1,21 @@
-@if (quizExercise.status === QuizStatus.CLOSED && quizExercise.isAtLeastEditor) {
+@if (quizExercise().status === QuizStatus.CLOSED && quizExercise().isAtLeastEditor) {
     <button type="submit" (click)="openForPractice()" class="btn btn-warning btn-sm me-1 mb-1">
         <fa-icon [icon]="faPlayCircle" />
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.openForPractice"></span>
     </button>
 }
 @if (
-    (quizExercise.status === QuizStatus.VISIBLE || quizExercise.status === QuizStatus.INVISIBLE) && quizExercise.quizMode === QuizMode.SYNCHRONIZED && quizExercise.isAtLeastEditor
+    (quizExercise().status === QuizStatus.VISIBLE || quizExercise().status === QuizStatus.INVISIBLE) &&
+    quizExercise().quizMode === QuizMode.SYNCHRONIZED &&
+    quizExercise().isAtLeastEditor
 ) {
-    <button id="instructor-quiz-start-{{ quizExercise.id }}" type="submit" (click)="startQuiz()" class="btn btn-warning btn-sm me-1 mb-1">
+    <button id="instructor-quiz-start-{{ quizExercise().id }}" type="submit" (click)="startQuiz()" class="btn btn-warning btn-sm me-1 mb-1">
         <fa-icon [icon]="faPlayCircle" />
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz"></span>
     </button>
 }
-@if ((quizExercise.status === QuizStatus.VISIBLE || quizExercise.status === QuizStatus.ACTIVE) && quizExercise.quizMode === QuizMode.BATCHED) {
-    @for (batch of quizExercise.quizBatches; track batch) {
+@if ((quizExercise().status === QuizStatus.VISIBLE || quizExercise().status === QuizStatus.ACTIVE) && quizExercise().quizMode === QuizMode.BATCHED) {
+    @for (batch of quizExercise().quizBatches ?? []; track batch) {
         <div>
             ID: {{ batch.id }}
             @if (!batch.ended) {
@@ -26,7 +28,7 @@
                 <span> Done </span>
             }
             @if (!batch.started) {
-                <button id="instructor-quiz-start-{{ quizExercise.id }}-{{ batch.id }}" type="submit" (click)="startBatch(batch.id!)" class="btn btn-warning btn-sm me-1 mb-1">
+                <button id="instructor-quiz-start-{{ quizExercise().id }}-{{ batch.id }}" type="submit" (click)="startBatch(batch.id!)" class="btn btn-warning btn-sm me-1 mb-1">
                     <fa-icon [icon]="faPlayCircle" />
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz"></span>
                 </button>
@@ -34,21 +36,23 @@
         </div>
     }
     <div>
-        <button id="instructor-quiz-add-{{ quizExercise.id }}" type="submit" (click)="addBatch()" class="btn btn-primary btn-sm me-1 mb-1">
+        <button id="instructor-quiz-add-{{ quizExercise().id }}" type="submit" (click)="addBatch()" class="btn btn-primary btn-sm me-1 mb-1">
             <fa-icon [icon]="faPlus" />
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.addBatch"></span>
         </button>
     </div>
 }
 @if (
-    (quizExercise.status === QuizStatus.VISIBLE || quizExercise.status === QuizStatus.ACTIVE) && quizExercise.quizMode !== QuizMode.SYNCHRONIZED && quizExercise.isAtLeastInstructor
+    (quizExercise().status === QuizStatus.VISIBLE || quizExercise().status === QuizStatus.ACTIVE) &&
+    quizExercise().quizMode !== QuizMode.SYNCHRONIZED &&
+    quizExercise().isAtLeastInstructor
 ) {
     <button
-        id="quiz-set-end-{{ quizExercise.id }}"
+        id="quiz-set-end-{{ quizExercise().id }}"
         class="mb-1"
         jhiDeleteButton
         [actionType]="ActionType.EndNow"
-        [entityTitle]="quizExercise.title || ''"
+        [entityTitle]="quizExercise().title || ''"
         deleteQuestion="artemisApp.quizExercise.endNow.question"
         deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
         (delete)="endQuiz()"
@@ -57,8 +61,8 @@
         <fa-icon [icon]="faStopCircle" />
     </button>
 }
-@if (quizExercise.status === QuizStatus.INVISIBLE && quizExercise.isAtLeastEditor) {
-    <button id="quiz-set-visible-{{ quizExercise.id }}" type="submit" (click)="showQuiz()" class="btn btn-warning btn-sm me-1 mb-1">
+@if (quizExercise().status === QuizStatus.INVISIBLE && quizExercise().isAtLeastEditor) {
+    <button id="quiz-set-visible-{{ quizExercise().id }}" type="submit" (click)="showQuiz()" class="btn btn-warning btn-sm me-1 mb-1">
         <fa-icon [icon]="faEye" />
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.showNow"></span>
     </button>
