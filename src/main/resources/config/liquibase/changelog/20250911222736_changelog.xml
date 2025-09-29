@@ -128,14 +128,14 @@
             SET repository_url_new = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(?:\.git)?(?:\?.*)?$', '\1')
             WHERE repository_url IS NOT NULL
               AND repository_url LIKE '%/git/%'
-              AND discriminator IN ('TEPEP', 'SEPEP', 'PESP');
+              AND discriminator IN ('TPEP', 'SPEP', 'PESP');
         </sql>
         <sql dbms="mysql">
             UPDATE participation
             SET repository_url_new = REGEXP_REPLACE(repository_url, '^.*?/git/([^?]+?)(\\.git)?(?:\\?.*)?$', '$1')
             WHERE repository_url IS NOT NULL
               AND repository_url LIKE '%/git/%'
-              AND discriminator IN ('TEPEP', 'SEPEP', 'PESP');
+              AND discriminator IN ('TPEP', 'SPEP', 'PESP');
         </sql>
         <sql dbms="h2">
             UPDATE participation
