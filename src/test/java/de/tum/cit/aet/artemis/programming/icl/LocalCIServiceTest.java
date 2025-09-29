@@ -143,7 +143,6 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
 
     @Test
     void testUnsupportedMethods() {
-        continuousIntegrationService.givePlanPermissions(null, null);
         continuousIntegrationService.enablePlan(null, null);
         continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null);
         assertThat(continuousIntegrationService.getPlanKey(null)).isNull();

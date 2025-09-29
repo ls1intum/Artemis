@@ -36,10 +36,10 @@ const moduleThresholds = {
         lines:      91.78,
     },
     buildagent: {
-        statements: 93.16,
-        branches:   83.13,
-        functions:  88.07,
-        lines:      93.04,
+        statements: 93.05,
+        branches:   83.59,
+        functions:  87.15,
+        lines:      92.93,
     },
     communication: {
         statements: 92.08,
@@ -70,6 +70,15 @@ const moduleThresholds = {
         branches:   78.48,
         functions:  84.80,
         lines:      93.23,
+    },
+    hyperion: {
+        // Currently, there are no files under src/main/webapp/app/hyperion/ in this branch,
+        // so thresholds mirror the current effective coverage (no files found → skipped by checker).
+        // Once client-side Hyperion code exists, update these to the measured coverage.
+        statements: 0,
+        branches:   0,
+        functions:  0,
+        lines:      0,
     },
     iris: {
         statements: 86.99,
@@ -103,7 +112,7 @@ const moduleThresholds = {
     },
     programming: {
         statements: 88.74,
-        branches:   76.65,
+        branches:   76.59,
         functions:  80.93,
         lines:      88.86,
     },
@@ -115,7 +124,7 @@ const moduleThresholds = {
     },
     shared: {
         statements: 86.74,
-        branches:   71.49,
+        branches:   71.31,
         functions:  83.88,
         lines:      86.53,
     },

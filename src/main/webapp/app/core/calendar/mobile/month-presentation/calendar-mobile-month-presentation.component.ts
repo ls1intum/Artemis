@@ -4,7 +4,7 @@ import { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
-import { CalendarEventService } from 'app/core/calendar/shared/service/calendar-event.service';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
 type Day = { date: Dayjs; events: CalendarEvent[]; firstTwoEvents: CalendarEvent[]; isInDisplayedMonth: boolean; id: string };
 type Week = { days: Day[]; id: string };
@@ -16,7 +16,7 @@ type Week = { days: Day[]; id: string };
     styleUrl: './calendar-mobile-month-presentation.component.scss',
 })
 export class CalendarMobileMonthPresentationComponent {
-    private dateToEventsMao = inject(CalendarEventService).eventMap;
+    private dateToEventsMap = inject(CalendarService).eventMap;
 
     readonly CalendarEventType = CalendarEventType;
 
@@ -33,7 +33,7 @@ export class CalendarMobileMonthPresentationComponent {
             const days: Day[] = [];
             for (let i = 0; i < 7; i++) {
                 const id = date.format('YYYY-MM-DD');
-                const events = this.dateToEventsMao().get(id) ?? [];
+                const events = this.dateToEventsMap().get(id) ?? [];
                 const firstTwoEvents = utils.limitToLengthTwo(events);
                 const isInDisplayedMonth = utils.areDatesInSameMonth(date, firstDateOfMonth);
                 days.push({ date: date, events, firstTwoEvents, isInDisplayedMonth, id });
