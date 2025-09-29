@@ -41,6 +41,14 @@ public class ExamUser extends AbstractAuditingEntity {
     @Transient
     private ExamSeatDTO plannedSeatTransient;
 
+    @JsonIgnore
+    @Transient
+    private ExamRoom actualRoomTransient;
+
+    @JsonIgnore
+    @Transient
+    private ExamSeatDTO actualSeatTransient;
+
     @Column(name = "did_check_image")
     private boolean didCheckImage = false;
 
@@ -112,6 +120,19 @@ public class ExamUser extends AbstractAuditingEntity {
     public void setTransientPlannedRoomAndSeat(ExamRoom plannedRoom, ExamSeatDTO plannedSeat) {
         this.plannedRoomTransient = plannedRoom;
         this.plannedSeatTransient = plannedSeat;
+    }
+
+    public ExamRoom getActualRoomTransient() {
+        return actualRoomTransient;
+    }
+
+    public ExamSeatDTO getActualSeatTransient() {
+        return actualSeatTransient;
+    }
+
+    public void setTransientActualRoomAndSeat(ExamRoom actualRoom, ExamSeatDTO actualSeat) {
+        this.actualRoomTransient = actualRoom;
+        this.actualSeatTransient = actualSeat;
     }
 
     public boolean getDidCheckRegistrationNumber() {

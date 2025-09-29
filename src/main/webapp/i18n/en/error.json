@@ -133,9 +133,9 @@
         "examUser": {
             "service": {
                 "multipleExams": "All exam users must belong to the same exam, but currently they belong to {{ foundExams }} different exams",
-                "missingPlannedRoomOrSeat": "User {{ userName }} is missing a planned room and seat",
-                "plannedRoomNotFound": "The planned room {{ plannedRoom }} of user {{ userName }} could not be found",
-                "plannedSeatNotFound": "The planned seat {{ plannedSeat }} of user {{ userName }} could not be found"
+                "missingRoomOrSeat": "User {{ userName }} is missing a room or seat",
+                "roomNotFound": "The room {{ roomNumber }} of user {{ userName }} could not be found",
+                "seatNotFound": "The seat {{ seatName }} of user {{ userName }} could not be found"
             }
         },
         "notEnoughExamSeats": "The selected rooms can only seat {{ numberOfUsableSeats }} of the {{ numberOfExamUsers }} students",

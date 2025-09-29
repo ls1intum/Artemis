@@ -43,6 +43,45 @@ record ExamRoomForAttendanceCheckerDTO(
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+record ExamUserLocationDTO(
+    @Nullable Long roomId,
+    @NotBlank String roomNumber,  // examUser.plannedRoom if legacy version
+    @Nullable String roomAlternativeNumber,
+    @Nullable String roomName,
+    @Nullable String roomAlternativeName,
+    @Nullable String roomBuilding,
+    @NotBlank String seatName  // examUser.plannedSeat if legacy version
+) {
+    static ExamUserLocationDTO plannedFrom(ExamUser examUser) {
+        final boolean isLegacy = examUser.getPlannedRoomTransient() == null || examUser.getPlannedSeatTransient() == null;
+
+        return new ExamUserLocationDTO(
+            isLegacy ? null : examUser.getPlannedRoomTransient().getId(),
+            isLegacy ? examUser.getPlannedRoom() : examUser.getPlannedRoomTransient().getRoomNumber(),
+            isLegacy ? null : examUser.getPlannedRoomTransient().getAlternativeRoomNumber(),
+            isLegacy ? null : examUser.getPlannedRoomTransient().getName(),
+            isLegacy ? null : examUser.getPlannedRoomTransient().getAlternativeName(),
+            isLegacy ? null : examUser.getPlannedRoomTransient().getBuilding(),
+            isLegacy ? examUser.getPlannedSeat() : examUser.getPlannedSeatTransient().name()
+        );
+    }
+
+    static ExamUserLocationDTO actualFrom(ExamUser examUser) {
+        final boolean isLegacy = examUser.getPlannedRoomTransient() == null || examUser.getPlannedSeatTransient() == null;
+
+        return new ExamUserLocationDTO(
+            isLegacy ? null : examUser.getActualRoomTransient().getId(),
+            isLegacy ? examUser.getActualRoom() : examUser.getActualRoomTransient().getRoomNumber(),
+            isLegacy ? null : examUser.getActualRoomTransient().getAlternativeRoomNumber(),
+            isLegacy ? null : examUser.getActualRoomTransient().getName(),
+            isLegacy ? null : examUser.getActualRoomTransient().getAlternativeName(),
+            isLegacy ? null : examUser.getActualRoomTransient().getBuilding(),
+            isLegacy ? examUser.getActualSeat() : examUser.getActualSeatTransient().name()
+        );
+    }
+}
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 record ExamUserWithExamRoomAndSeatDTO (
     @NotBlank @Size(max = 50) String login,
     // Names are nullable because not everyone has a first and/or last name
@@ -56,13 +95,8 @@ record ExamUserWithExamRoomAndSeatDTO (
     @NotNull boolean didCheckRegistrationNumber,
     @NotNull boolean didCheckLogin,
     @Nullable String signingImagePath,
-    @NotNull long examRoomId,
-    @NotBlank String examRoomNumber,
-    @Nullable String examRoomAlternativeNumber,
-    @NotBlank String examRoomName,
-    @Nullable String examRoomAlternativeName,
-    @NotBlank String examRoomBuilding,
-    @NotNull ExamSeatDTO examSeat  // this is a copy of the respective seat in the ExamRoom...DTO
+    @NotNull ExamUserLocationDTO plannedLocation,
+    @Nullable ExamUserLocationDTO actualLocation
 ) {
     static ExamUserWithExamRoomAndSeatDTO from(ExamUser examUser) {
         return new ExamUserWithExamRoomAndSeatDTO(
@@ -77,13 +111,8 @@ record ExamUserWithExamRoomAndSeatDTO (
             examUser.getDidCheckRegistrationNumber(),
             examUser.getDidCheckLogin(),
             examUser.getSigningImagePath(),
-            examUser.getPlannedRoomTransient().getId(),
-            examUser.getPlannedRoomTransient().getRoomNumber(),
-            examUser.getPlannedRoomTransient().getAlternativeRoomNumber(),
-            examUser.getPlannedRoomTransient().getName(),
-            examUser.getPlannedRoomTransient().getAlternativeName(),
-            examUser.getPlannedRoomTransient().getBuilding(),
-            examUser.getPlannedSeatTransient()
+            ExamUserLocationDTO.plannedFrom(examUser),
+            ExamUserLocationDTO.actualFrom(examUser)
         );
     }
 }

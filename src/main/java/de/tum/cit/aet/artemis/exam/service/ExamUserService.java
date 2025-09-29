@@ -9,7 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
+import org.apache.commons.lang3.function.TriConsumer;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripperByArea;
@@ -183,16 +185,20 @@ public class ExamUserService {
     }
 
     /**
-     * Sets the transient planned room and planned seat fields for all {@link ExamUser}s.
+     * Sets the transient room and seat fields for all {@link ExamUser}s.
      * The exam users must all belong to the same exam.
      *
-     * @param examUsers                                All exam users for which the transient fields should be set.
-     * @param ignoreExamUsersWithoutPlannedRoomAndSeat If true, exam users without a planned room or seat will be ignored.
-     *                                                     If false, an exception will be thrown when an exam user without a planned room or seat is encountered.
-     * @throws BadRequestAlertException If ignoreExamUsersWithoutPlannedRoomAndSeat is false and the conditions are met as described,
-     *                                      or if the planned room or seat cannot be mapped to actual entities.
+     * @param examUsers                         All exam users for which the transient fields should be set.
+     * @param ignoreExamUsersWithoutRoomAndSeat If true, exam users without a room or seat will be ignored.
+     *                                              If false, an exception will be thrown when an exam user without a room or seat is encountered.
+     * @param roomGetter                        The getter function to get the room string from the exam user.
+     * @param seatGetter                        The getter function to get the seat string from the exam user.
+     * @param roomAndSeatSetter                 The setter function to set the transient room and seat fields of the exam user.
+     * @throws BadRequestAlertException If ignoreExamUsersWithoutRoomAndSeat is false and the conditions are met as described,
+     *                                      or if th room or seat cannot be mapped to actual entities.
      */
-    public void setPlannedRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers, boolean ignoreExamUsersWithoutPlannedRoomAndSeat) {
+    public void setRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers, boolean ignoreExamUsersWithoutRoomAndSeat, Function<ExamUser, String> roomGetter,
+            Function<ExamUser, String> seatGetter, TriConsumer<ExamUser, ExamRoom, ExamSeatDTO> roomAndSeatSetter) {
         List<Exam> usedExams = examUsers.stream().map(ExamUser::getExam).distinct().toList();
         if (usedExams.size() != 1) {
             throw new BadRequestAlertException("All exam users must belong to the same exam", ENTITY_NAME, "examUserService.multipleExams", Map.of("foundExams", usedExams.size()));
@@ -201,42 +207,52 @@ public class ExamUserService {
         Set<ExamRoom> examRoomsUsedInExam = examRoomRepository.findAllByExamId(examId);
 
         for (ExamUser examUser : examUsers) {
-            final String plannedRoomNumber = examUser.getPlannedRoom();
-            final String plannedSeatName = examUser.getPlannedSeat();
+            final String roomNumber = roomGetter.apply(examUser);
+            final String seatName = seatGetter.apply(examUser);
 
-            if (!StringUtils.hasText(plannedRoomNumber) || !StringUtils.hasText(plannedSeatName)) {
-                if (ignoreExamUsersWithoutPlannedRoomAndSeat) {
+            if (!StringUtils.hasText(roomNumber) || !StringUtils.hasText(seatName)) {
+                if (ignoreExamUsersWithoutRoomAndSeat) {
                     continue;
                 }
                 else {
-                    throw new BadRequestAlertException("Exam user does not have a planned room or seat", ENTITY_NAME, "examUser.service.missingPlannedRoomOrSeat",
+                    throw new BadRequestAlertException("Exam user does not have a room or seat", ENTITY_NAME, "examUser.service.missingRoomOrSeat",
                             Map.of("userName", examUser.getUser().getLogin()));
                 }
             }
 
-            Optional<ExamRoom> matchingRoom = examRoomsUsedInExam.stream().filter(room -> room.getRoomNumber().equalsIgnoreCase(plannedRoomNumber)).findFirst();
+            Optional<ExamRoom> matchingRoom = examRoomsUsedInExam.stream().filter(room -> room.getRoomNumber().equalsIgnoreCase(roomNumber)).findFirst();
             if (matchingRoom.isEmpty()) {
-                throw new BadRequestAlertException("Planned room of exam user cannot be mapped to an actual room", ENTITY_NAME, "examUser.service.plannedRoomNotFound",
-                        Map.of("userName", examUser.getUser().getLogin(), "plannedRoom", plannedRoomNumber));
+                throw new BadRequestAlertException("Room of exam user cannot be mapped to an actual room", ENTITY_NAME, "examUser.service.roomNotFound",
+                        Map.of("userName", examUser.getUser().getLogin(), "roomNumber", roomNumber));
             }
 
-            Optional<ExamSeatDTO> matchingSeat = matchingRoom.get().getSeats().stream().filter(seat -> seat.name().equalsIgnoreCase(plannedSeatName)).findFirst();
+            Optional<ExamSeatDTO> matchingSeat = matchingRoom.get().getSeats().stream().filter(seat -> seat.name().equalsIgnoreCase(seatName)).findFirst();
             if (matchingSeat.isEmpty()) {
-                throw new BadRequestAlertException("Planned seat of exam user cannot be mapped to an actual seat", ENTITY_NAME, "examUser.service.plannedSeatNotFound",
-                        Map.of("userName", examUser.getUser().getLogin(), "plannedSeat", plannedSeatName));
+                throw new BadRequestAlertException("Seat of exam user cannot be mapped to an actual seat", ENTITY_NAME, "examUser.service.seatNotFound",
+                        Map.of("userName", examUser.getUser().getLogin(), "seatName", seatName));
             }
 
-            examUser.setTransientPlannedRoomAndSeat(matchingRoom.get(), matchingSeat.get());
+            roomAndSeatSetter.accept(examUser, matchingRoom.get(), matchingSeat.get());
         }
     }
 
     /**
-     * @see #setPlannedRoomAndSeatTransientForExamUsers(Set, boolean)
-     *
-     * @param examUsers All exam users for which the transient fields should be set.
+     * @param examUsers                         All exam users for which the transient fields should be set.
+     * @param ignoreExamUsersWithoutRoomAndSeat If true, exam users without a room or seat will be ignored.
+     *                                              If false, an exception will be thrown when an exam user without a room or seat is encountered.
      * @throws BadRequestAlertException If an exam user does not have a planned room or seat
+     * @see #setRoomAndSeatTransientForExamUsers
      */
-    public void setPlannedRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers) {
-        setPlannedRoomAndSeatTransientForExamUsers(examUsers, false);
+    public void setPlannedRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers, boolean ignoreExamUsersWithoutRoomAndSeat) {
+        setRoomAndSeatTransientForExamUsers(examUsers, ignoreExamUsersWithoutRoomAndSeat, ExamUser::getPlannedRoom, ExamUser::getPlannedSeat,
+                ExamUser::setTransientPlannedRoomAndSeat);
+    }
+
+    /**
+     * @param examUsers All exam users for which the transient fields should be set.
+     * @see #setRoomAndSeatTransientForExamUsers
+     */
+    public void setActualRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers) {
+        setRoomAndSeatTransientForExamUsers(examUsers, true, ExamUser::getActualRoom, ExamUser::getActualSeat, ExamUser::setTransientActualRoomAndSeat);
     }
 }

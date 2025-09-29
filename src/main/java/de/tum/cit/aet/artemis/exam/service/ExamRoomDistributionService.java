@@ -131,8 +131,11 @@ public class ExamRoomDistributionService {
      */
     public AttendanceCheckerAppExamInformationDTO getAttendanceCheckerAppInformation(long examId) {
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
+
         Set<ExamUser> examUsers = exam.getExamUsers();
-        examUserService.setPlannedRoomAndSeatTransientForExamUsers(examUsers);
+        examUserService.setPlannedRoomAndSeatTransientForExamUsers(examUsers, true);  // needs to be true to support the legacy system
+        examUserService.setActualRoomAndSeatTransientForExamUsers(examUsers);
+
         Set<ExamRoom> examRooms = examRoomRepository.findAllByExamId(examId);
 
         return AttendanceCheckerAppExamInformationDTO.from(exam, examRooms);
