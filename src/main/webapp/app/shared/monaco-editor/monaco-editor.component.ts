@@ -56,7 +56,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     stickyScroll = input<boolean>(false);
     readOnly = input<boolean>(false);
 
-    textChanged = output<string>();
+    textChanged = output<{ text: string; fileName: string }>();
     contentHeightChanged = output<number>();
     onBlurEditor = output<void>();
 
@@ -66,7 +66,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private contentHeightListener?: Disposable;
     private textChangedListener?: Disposable;
     private blurEditorWidgetListener?: Disposable;
-    private textChangedEmitTimeout?: NodeJS.Timeout;
+    private textChangedEmitTimeouts = new Map<string, NodeJS.Timeout>();
     private customBackspaceCommandId: string | undefined;
 
     /*
@@ -177,22 +177,46 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
         this.blurEditorWidgetListener?.dispose();
+
+        // Clean up all per-model debounce timeouts
+        this.textChangedEmitTimeouts.forEach((timeout) => clearTimeout(timeout));
+        this.textChangedEmitTimeouts.clear();
     }
 
     private emitTextChangeEvent() {
         const newValue = this.getText();
         const delay = this.textChangedEmitDelay();
+        const model = this.getModel();
+        const fullFilePath = this.extractFilePathFromModel(model);
+
         if (!delay) {
-            this.textChanged.emit(newValue);
-        } else {
-            if (this.textChangedEmitTimeout) {
-                clearTimeout(this.textChangedEmitTimeout);
-                this.textChangedEmitTimeout = undefined;
-            }
-            this.textChangedEmitTimeout = setTimeout(() => {
-                this.textChanged.emit(newValue);
-            }, delay);
+            this.textChanged.emit({ text: newValue, fileName: fullFilePath });
+            return;
         }
+        const modelKey = model?.uri?.toString() ?? '';
+        const existing = this.textChangedEmitTimeouts.get(modelKey);
+        if (existing) {
+            clearTimeout(existing);
+        }
+        const timeoutId = setTimeout(() => {
+            this.textChanged.emit({ text: newValue, fileName: fullFilePath });
+            this.textChangedEmitTimeouts.delete(modelKey);
+        }, delay);
+        this.textChangedEmitTimeouts.set(modelKey, timeoutId);
+    }
+
+    private extractFilePathFromModel(model: monaco.editor.ITextModel | null): string {
+        const path = model?.uri?.path ?? '';
+        if (!path) {
+            return '';
+        }
+        // Path format: /model/<editorId>/<full/file/path>
+        const parts = path.split('/').filter(Boolean);
+        if (parts.length >= 3 && parts[0] === 'model') {
+            return parts.slice(2).join('/');
+        }
+        // Fallback: best effort
+        return parts.slice(1).join('/') || parts[parts.length - 1] || '';
     }
 
     getPosition(): EditorPosition {
