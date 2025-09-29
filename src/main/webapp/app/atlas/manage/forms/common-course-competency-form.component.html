@@ -73,7 +73,7 @@
         <div class="form-group">
             <label for="masteryThreshold">
                 {{ 'artemisApp.courseCompetency.masteryThreshold' | artemisTranslate }}: {{ masteryThresholdControl!.value ?? DEFAULT_MASTERY_THRESHOLD }}%
-                @if (averageStudentScore()) {
+                @if (averageStudentScore() !== null) {
                     <small> ({{ 'artemisApp.courseCompetency.create.averageMastery' | artemisTranslate }}: {{ averageStudentScore() }}%) </small>
                 }
             </label>

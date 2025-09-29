@@ -194,8 +194,10 @@ export class CompetencyAccordionComponent implements OnChanges {
             ?.map((exercise) => this.metrics().exerciseMetrics?.exerciseInformation?.[exercise]?.maxPoints ?? 0)
             .reduce((a, b) => a + b, 0);
 
-        const progress = (competencyPoints / competencyMaxPoints) * 100;
-        return round(progress, 1);
+        if (!competencyMaxPoints) {
+            return undefined;
+        }
+        return round((competencyPoints / competencyMaxPoints) * 100, 1);
     }
 
     calculateLectureUnitsProgress(): number | undefined {

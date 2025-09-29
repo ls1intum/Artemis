@@ -57,7 +57,7 @@ export class CompetencySearchComponent {
      */
     performSearch() {
         if (this.advancedSearchEnabled) {
-            this.search.set(this.search());
+            this.search.update((s) => ({ ...s }));
         } else {
             //only search with competency title if advancedSearch is disabled
             this.search.set({

@@ -100,7 +100,7 @@ describe('CompetencyManagementTableComponent', () => {
         ];
 
         competencyManagementTableComponent.updateDataAfterImportAll(responseBody);
-        expect(competencyManagementTableComponent.courseCompetencies()).toHaveLength(2);
+        expect(competencyManagementTableComponent.allCompetencies()).toHaveLength(2);
     });
 
     it('should handle delete competency', () => {

@@ -112,12 +112,10 @@ export class CompetencyManagementTableComponent {
      */
     updateDataAfterImportAll(res: Array<CompetencyWithTailRelationDTO>) {
         const importedCompetencies = res.map((dto) => dto.competency).filter((element): element is CourseCompetency => !!element);
-        const currentList = this.courseCompetencies() ?? [];
-        const newCourseCompetencies = importedCompetencies.filter((competency) => !currentList.some((existingCompetency) => existingCompetency.id === competency.id));
-        // Mutate input array for immediate UI feedback
-        currentList.push(...newCourseCompetencies);
-        // Propagate to parent via two-way model
-        this.allCompetencies.update((allCourseCompetencies) => allCourseCompetencies.concat(importedCompetencies));
+        // Use allCompetencies as the single source of truth and avoid mutating inputs
+        const currentList = this.allCompetencies();
+        const newOnes = importedCompetencies.filter((c) => !currentList.some((e) => e?.id === c?.id));
+        this.allCompetencies.set([...currentList, ...newOnes]);
     }
 
     /**
