@@ -5,13 +5,13 @@
 <div class="modal-body">
     <div class="row mb-2">
         <div class="col">
-            <button (click)="openCreateDiagramDialog(courseId)" id="create-apollon-diagram" class="btn btn-primary">
+            <button (click)="openCreateDiagramDialog(courseId() ?? internalCourseId())" id="create-apollon-diagram" class="btn btn-primary">
                 <fa-icon [icon]="faPlus" />
                 <span jhiTranslate="artemisApp.apollonDiagram.home.createLabel"></span>
             </button>
         </div>
     </div>
-    @if (apollonDiagrams && apollonDiagrams.length > 0) {
+    @if (apollonDiagrams().length > 0) {
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -24,7 +24,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (apollonDiagram of apollonDiagrams; track trackId($index, apollonDiagram)) {
+                    @for (apollonDiagram of apollonDiagrams(); track trackId($index, apollonDiagram)) {
                         <tr>
                             <td>
                                 <span>{{ apollonDiagram.id }}</span>
@@ -41,7 +41,7 @@
                                     jhiTranslate="entity.action.open"
                                     id="open-diagram"
                                 ></button>
-                                @if (course && course.isAtLeastInstructor) {
+                                @if (course() && course()!.isAtLeastInstructor) {
                                     <button
                                         class="me-1"
                                         (delete)="delete(apollonDiagram)"

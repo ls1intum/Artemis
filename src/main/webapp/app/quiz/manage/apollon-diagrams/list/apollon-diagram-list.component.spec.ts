@@ -63,7 +63,7 @@ describe('ApollonDiagramList Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('ngOnInit', () => {
+    it('should load diagrams and course', () => {
         const apollonDiagrams: ApollonDiagram[] = [new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!), new ApollonDiagram(UMLDiagramType.ActivityDiagram, course.id!)];
         const diagramResponse: HttpResponse<ApollonDiagram[]> = new HttpResponse({ body: apollonDiagrams });
         const courseResponse: HttpResponse<Course> = new HttpResponse({ body: course });
@@ -71,9 +71,8 @@ describe('ApollonDiagramList Component', () => {
         jest.spyOn(apollonDiagramService, 'getDiagramsByCourse').mockReturnValue(of(diagramResponse));
         jest.spyOn(courseService, 'find').mockReturnValue(of(courseResponse));
 
-        // test
-        fixture.componentInstance.ngOnInit();
-        expect(isEqual(fixture.componentInstance.apollonDiagrams, apollonDiagrams)).toBeTruthy();
+        fixture.detectChanges();
+        expect(isEqual(fixture.componentInstance.apollonDiagrams(), apollonDiagrams)).toBeTruthy();
     });
 
     it('delete', () => {
@@ -89,9 +88,9 @@ describe('ApollonDiagramList Component', () => {
         }
 
         const diagramToDelete = apollonDiagrams[0];
-        fixture.componentInstance.apollonDiagrams = apollonDiagrams;
+        fixture.componentInstance.apollonDiagrams.set(apollonDiagrams);
         fixture.componentInstance.delete(diagramToDelete);
-        expect(fixture.componentInstance.apollonDiagrams.find((diagram) => diagram.id === diagramToDelete.id)).toBeFalsy();
+        expect(fixture.componentInstance.apollonDiagrams().find((diagram) => diagram.id === diagramToDelete.id)).toBeFalsy();
     });
 
     it('openCreateDiagramDialog', () => {
