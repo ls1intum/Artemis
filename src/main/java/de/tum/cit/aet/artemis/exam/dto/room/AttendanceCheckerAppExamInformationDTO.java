@@ -1,0 +1,117 @@
+package de.tum.cit.aet.artemis.exam.dto.room;
+
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+
+// @formatter:off
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record ExamRoomForAttendanceCheckerDTO(
+    @NotNull long id,
+    @NotEmpty String roomNumber,
+    @Nullable String alternativeRoomNumber,
+    @NotEmpty String name,
+    @Nullable String alternativeName,
+    @NotEmpty String building,
+    @NotNull List<ExamSeatDTO> seats
+) {
+    static ExamRoomForAttendanceCheckerDTO from(ExamRoom examRoom) {
+        return new ExamRoomForAttendanceCheckerDTO(
+            examRoom.getId(),
+            examRoom.getRoomNumber(),
+            examRoom.getAlternativeRoomNumber(),
+            examRoom.getName(),
+            examRoom.getAlternativeName(),
+            examRoom.getBuilding(),
+            examRoom.getSeats()
+        );
+    }
+}
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+record ExamUserWithExamRoomAndSeatDTO (
+    @NotBlank @Size(max = 50) String login,
+    // Names are nullable because not everyone has a first and/or last name
+    @Nullable @Size(max = 50) String firstName,
+    @Nullable @Size(max = 50) String lastName,
+    @NotBlank @Size(max = 10) String registrationNumber,
+    @Nullable @Email @Size(max = 100) String email,
+    @Nullable String imageUrl,
+    @NotNull boolean didCheckImage,
+    @NotNull boolean didCheckName,
+    @NotNull boolean didCheckRegistrationNumber,
+    @NotNull boolean didCheckLogin,
+    @Nullable String signingImagePath,
+    @NotNull long examRoomId,
+    @NotBlank String examRoomNumber,
+    @Nullable String examRoomAlternativeNumber,
+    @NotBlank String examRoomName,
+    @Nullable String examRoomAlternativeName,
+    @NotBlank String examRoomBuilding,
+    @NotNull ExamSeatDTO examSeat  // this is a copy of the respective seat in the ExamRoom...DTO
+) {
+    static ExamUserWithExamRoomAndSeatDTO from(ExamUser examUser) {
+        return new ExamUserWithExamRoomAndSeatDTO(
+            examUser.getUser().getLogin(),
+            examUser.getUser().getFirstName(),
+            examUser.getUser().getLastName(),
+            examUser.getUser().getRegistrationNumber(),
+            examUser.getUser().getEmail(),
+            examUser.getUser().getImageUrl(),
+            examUser.getDidCheckImage(),
+            examUser.getDidCheckName(),
+            examUser.getDidCheckRegistrationNumber(),
+            examUser.getDidCheckLogin(),
+            examUser.getSigningImagePath(),
+            examUser.getPlannedRoomTransient().getId(),
+            examUser.getPlannedRoomTransient().getRoomNumber(),
+            examUser.getPlannedRoomTransient().getAlternativeRoomNumber(),
+            examUser.getPlannedRoomTransient().getName(),
+            examUser.getPlannedRoomTransient().getAlternativeName(),
+            examUser.getPlannedRoomTransient().getBuilding(),
+            examUser.getPlannedSeatTransient()
+        );
+    }
+}
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record AttendanceCheckerAppExamInformationDTO(
+    @NotNull long examId,
+    @NotBlank String examTitle,
+    @NotNull ZonedDateTime startDate,
+    @NotNull ZonedDateTime endDate,
+    @NotNull boolean isTestExam,
+    @NotNull long courseId,
+    @NotBlank String courseTitle,
+    @NotNull Set<ExamRoomForAttendanceCheckerDTO> examRoomsUsedInExam,  // might be empty
+    @NotEmpty Set<ExamUserWithExamRoomAndSeatDTO> examUsersWithExamRoomAndSeat
+) {
+    public static AttendanceCheckerAppExamInformationDTO from(Exam exam, Set<ExamRoom> examRooms) {
+        return new AttendanceCheckerAppExamInformationDTO(
+            exam.getId(),
+            exam.getTitle(),
+            exam.getStartDate(),
+            exam.getEndDate(),
+            exam.isTestExam(),
+            exam.getCourse().getId(),
+            exam.getCourse().getTitle(),
+            examRooms.stream().map(ExamRoomForAttendanceCheckerDTO::from).collect(Collectors.toSet()),
+            exam.getExamUsers().stream().map(ExamUserWithExamRoomAndSeatDTO::from).collect(Collectors.toSet())
+        );
+    }
+}
+// @formatter:on

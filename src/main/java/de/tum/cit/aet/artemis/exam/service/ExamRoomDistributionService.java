@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
-import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppInformationDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomExamAssignmentRepository;
@@ -129,12 +129,12 @@ public class ExamRoomDistributionService {
      * @param examId The exam id
      * @return the generated information
      */
-    public AttendanceCheckerAppInformationDTO getAttendanceCheckerAppInformation(long examId) {
+    public AttendanceCheckerAppExamInformationDTO getAttendanceCheckerAppInformation(long examId) {
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         Set<ExamUser> examUsers = exam.getExamUsers();
         examUserService.setPlannedRoomAndSeatTransientForExamUsers(examUsers);
         Set<ExamRoom> examRooms = examRoomRepository.findAllByExamId(examId);
 
-        return AttendanceCheckerAppInformationDTO.from(examRooms, examUsers);
+        return AttendanceCheckerAppExamInformationDTO.from(exam, examRooms);
     }
 }
