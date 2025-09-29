@@ -94,9 +94,10 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         IrisMessage savedMessage;
         boolean statusSent = false;
         if (statusUpdate.sessionTitle() != null && !statusUpdate.sessionTitle().isBlank()) {
-            session.setTitle(statusUpdate.sessionTitle());
+            String sessionTitle = statusUpdate.sessionTitle().length() > 255 ? statusUpdate.sessionTitle().substring(0, 255) : statusUpdate.sessionTitle();
+            session.setTitle(sessionTitle);
             irisSessionRepository.save(session);
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens());
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), sessionTitle, statusUpdate.suggestions(), statusUpdate.tokens());
             statusSent = true;
         }
         if (statusUpdate.result() != null) {

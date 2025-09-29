@@ -135,9 +135,10 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         // TODO: LLM Token Tracking - or better, make this class a subclass of AbstractIrisChatSessionService
         var session = (IrisTextExerciseChatSession) irisSessionRepository.findByIdElseThrow(job.sessionId());
         if (statusUpdate.sessionTitle() != null && !statusUpdate.sessionTitle().isBlank()) {
-            session.setTitle(statusUpdate.sessionTitle());
+            String sessionTitle = statusUpdate.sessionTitle().length() > 255 ? statusUpdate.sessionTitle().substring(0, 255) : statusUpdate.sessionTitle();
+            session.setTitle(sessionTitle);
             irisSessionRepository.save(session);
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.sessionTitle(), null, statusUpdate.tokens());
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), sessionTitle, null, statusUpdate.tokens());
         }
         if (statusUpdate.result() != null) {
             var message = session.newMessage();
