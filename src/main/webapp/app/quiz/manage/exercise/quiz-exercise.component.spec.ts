@@ -54,7 +54,7 @@ describe('QuizExercise Management Component', () => {
         accountService = TestBed.inject(AccountService);
 
         comp.course = course;
-        comp.quizExercises = [quizExercise];
+        comp.quizExercises.set([quizExercise]);
     });
 
     afterEach(() => {
@@ -78,7 +78,7 @@ describe('QuizExercise Management Component', () => {
 
         // THEN
         expect(quizExerciseService.findForCourse).toHaveBeenCalledOnce();
-        expect(comp.quizExercises[0]).toEqual(quizExercise);
+        expect(comp.quizExercises()[0]).toEqual(quizExercise);
     });
 
     it('should delete multiple quizzes', () => {
@@ -107,7 +107,7 @@ describe('QuizExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('Quiz', '', 'quiz');
 
             // THEN
-            expect(comp.quizExercises).toHaveLength(1);
+            expect(comp.quizExercises()).toHaveLength(1);
             expect(comp.filteredQuizExercises).toHaveLength(1);
         });
 
@@ -116,7 +116,7 @@ describe('QuizExercise Management Component', () => {
             comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
 
             // THEN
-            expect(comp.quizExercises).toHaveLength(1);
+            expect(comp.quizExercises()).toHaveLength(1);
             expect(comp.filteredQuizExercises).toHaveLength(0);
         });
     });
@@ -127,7 +127,7 @@ describe('QuizExercise Management Component', () => {
 
         // THEN
         expect(comp.selectedExercises[0]).toContainEntry(['id', quizExercise.id]);
-        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.quizExercises.length);
+        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.quizExercises().length);
     });
 
     it('should load one', () => {
@@ -138,8 +138,8 @@ describe('QuizExercise Management Component', () => {
         jest.spyOn(quizExerciseService, 'getStatus').mockReturnValue(QuizStatus.VISIBLE);
         comp.loadOne(quizExercise.id!);
         expect(findExerciseSpy).toHaveBeenCalledOnce();
-        expect(comp.quizExercises).toHaveLength(1);
-        expect(comp.quizExercises[0].isAtLeastEditor).toBeTruthy();
+        expect(comp.quizExercises()).toHaveLength(1);
+        expect(comp.quizExercises()[0].isAtLeastEditor).toBeTruthy();
     });
 
     it('should correctly calculate isEditable when loadExercises is called and isQuizEditable returns false', () => {
@@ -160,7 +160,7 @@ describe('QuizExercise Management Component', () => {
 
         // THEN
         expect(quizExerciseService.findForCourse).toHaveBeenCalledOnce();
-        expect(comp.quizExercises[0]).toEqual(quizExercise);
-        expect(comp.quizExercises[0].isEditable).toBeFalse();
+        expect(comp.quizExercises()[0]).toEqual(quizExercise);
+        expect(comp.quizExercises()[0].isEditable).toBeFalse();
     });
 });
