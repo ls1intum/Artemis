@@ -17,14 +17,17 @@ def login_as_admin(session: requests.Session) -> None:
 def add_user_to_course(session: requests.Session, course_id: int, user_group: str, user_name: str) -> None:
     """Add a user to a specified course and group."""
     url: str = f"{SERVER_URL}/core/courses/{course_id}/{user_group}/{user_name}"
-    response: requests.Response = session.post(url)
+    response: requests.Response = session.post(url, timeout=10)
     if response.status_code == 200:
         logging.info(f"Added user {user_name} to group {user_group}")
     else:
         logging.error(f"Could not add user {user_name} to group {user_group}")
 
-def authenticate_user(username: str, password: str, session: requests.Session = requests.Session()) -> requests.Response:
+def authenticate_user(username: str, password: str, session: requests.Session = None) -> requests.Response:
     """Authenticate a user and return the session response."""
+    if session is None:
+        session = requests.Session()
+
     url: str = f"{SERVER_URL}/core/public/authenticate"
     headers: Dict[str, str] = {
         "Content-Type": "application/json"
@@ -36,7 +39,7 @@ def authenticate_user(username: str, password: str, session: requests.Session = 
         "rememberMe": True
     }
 
-    response: requests.Response = session.post(url, json=payload, headers=headers)
+    response: requests.Response = session.post(url, json=payload, headers=headers, timeout=10)
 
     if response.status_code == 200:
         logging.info(f"Authentication successful for user {username}")
