@@ -34,6 +34,7 @@
                     [questionIndex]="currentIndex() + 1"
                     [showResult]="showingResult"
                     [score]="questionScores"
+                    [forceSampleSolution]="false"
                 />
             }
             @if (question.type === DRAG_AND_DROP) {
@@ -44,6 +45,7 @@
                     [questionIndex]="currentIndex() + 1"
                     [showResult]="showingResult"
                     [score]="questionScores"
+                    [forceSampleSolution]="false"
                 />
             }
         }
