@@ -19,14 +19,17 @@ public record ExampleSubmissionDTO(long id, boolean usedForTutorial, long submis
      * @throws BadRequestAlertException if submission or submission id is missing
      */
     public static ExampleSubmissionDTO of(@NotNull ExampleSubmission exampleSubmission) {
+        Long exampleSubmissionId = exampleSubmission.getId();
+        if (exampleSubmissionId == null) {
+            throw new BadRequestAlertException("ExampleSubmission cannot be null", "exampleSubmission", "exampleSubmission.isNull");
+        }
         if (exampleSubmission.getSubmission() == null) {
             throw new BadRequestAlertException("Submission cannot be null", "exampleSubmission", "exampleSubmission.submissionIsNull");
         }
-        if (exampleSubmission.getSubmission().getId() == null) {
+        Long submissionId = exampleSubmission.getSubmission().getId();
+        if (submissionId == null) {
             throw new BadRequestAlertException("Submission ID must be persisted before conversion", "exampleSubmission", "exampleSubmission.submissionIdMissing");
         }
-
-        long submissionId = exampleSubmission.getSubmission().getId();
-        return new ExampleSubmissionDTO(exampleSubmission.getId(), exampleSubmission.isUsedForTutorial(), submissionId, exampleSubmission.getAssessmentExplanation());
+        return new ExampleSubmissionDTO(exampleSubmissionId, exampleSubmission.isUsedForTutorial(), submissionId, exampleSubmission.getAssessmentExplanation());
     }
 }
