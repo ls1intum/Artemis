@@ -452,7 +452,7 @@ public class TutorialGroupResource {
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
 
-        var responsibleUser = getUserAndCheckWhetherHeIsAllowedToChangeRegistration(tutorialGroupFromDatabase);
+        var responsibleUser = getUserAndCheckWhetherTheyAreAllowedToChangeRegistration(tutorialGroupFromDatabase);
 
         User studentToDeregister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
         tutorialGroupService.deregisterStudent(studentToDeregister, tutorialGroupFromDatabase, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, responsibleUser);
@@ -474,7 +474,7 @@ public class TutorialGroupResource {
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
 
-        User responsibleUser = getUserAndCheckWhetherHeIsAllowedToChangeRegistration(tutorialGroupFromDatabase);
+        User responsibleUser = getUserAndCheckWhetherTheyAreAllowedToChangeRegistration(tutorialGroupFromDatabase);
 
         User userToRegister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
         if (!userToRegister.getGroups().contains(tutorialGroupFromDatabase.getCourse().getStudentGroupName())) {
@@ -656,10 +656,10 @@ public class TutorialGroupResource {
         return authorizationCheckService.isAdmin(user) || authorizationCheckService.isAtLeastInstructorInCourse(course, user);
     }
 
-    private User getUserAndCheckWhetherHeIsAllowedToChangeRegistration(TutorialGroup tutorialGroup) {
+    private User getUserAndCheckWhetherTheyAreAllowedToChangeRegistration(TutorialGroup tutorialGroup) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         boolean isAdminOrInstructor = authorizationCheckService.isAdmin(user) || authorizationCheckService.isAtLeastInstructorInCourse(tutorialGroup.getCourse(), user);
-        tutorialGroupService.isAllowedToChangeRegistrationsOfTutorialGroup(tutorialGroup, user, isAdminOrInstructor);
+        tutorialGroupService.checkIfUserIsAllowedToChangeRegistrationsOfTutorialGroupElseThrow(tutorialGroup, user, isAdminOrInstructor);
         return user;
     }
 

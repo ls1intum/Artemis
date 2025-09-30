@@ -696,14 +696,21 @@ public class TutorialGroupService {
      * @param user                the user for which to check permission
      * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
      */
-    public void isAllowedToChangeRegistrationsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdminOrInstructor) {
+    public void checkIfUserIsAllowedToChangeRegistrationsOfTutorialGroupElseThrow(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdminOrInstructor) {
         // ToDo: Clarify if this is the correct permission check
         if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to change the registrations of tutorial group: " + tutorialGroup.getId());
         }
     }
 
-    public void isAllowedToDeleteTutorialGroup(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdminOrInstructor) {
+    /**
+     * Checks if a user is allowed to delete the passed tutorial group. This is the case if the user is admin, or instructor of the group's course, or tutor of thr group.
+     *
+     * @param tutorialGroup       the tutorial group for which to check permission
+     * @param user                the user for which to check permission
+     * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
+     */
+    public void checkIfUserIsAllowedToDeleteTutorialGroupElseThrow(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdminOrInstructor) {
         if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to delete the tutorial group: " + tutorialGroup.getId());
         }
@@ -716,7 +723,7 @@ public class TutorialGroupService {
      * @param user                the user for which to check permission
      * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
      */
-    public void isAllowedToModifySessionsOfTutorialGroup(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdminOrInstructor) {
+    public void checkIfUserIsAllowedToModifySessionsOfTutorialGroupElseThrow(@NotNull TutorialGroup tutorialGroup, @NotNull User user, boolean isAdminOrInstructor) {
         // ToDo: Clarify if this is the correct permission check
         if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
             throw new AccessForbiddenException("The user is not allowed to modify the sessions of tutorial group: " + tutorialGroup.getId());
