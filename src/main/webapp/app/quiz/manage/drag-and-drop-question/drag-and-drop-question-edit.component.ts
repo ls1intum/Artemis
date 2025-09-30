@@ -123,7 +123,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
     readonly question = input.required<DragAndDropQuestion>();
     readonly questionIndex = input.required<number>();
-    readonly reEvaluationInProgress = input.required<boolean>();
+    readonly reEvaluationInProgress = input<boolean>();
     readonly filePool = input<Map<string, { path?: string; file: File }>>(new Map());
 
     readonly questionUpdated = output<void>();

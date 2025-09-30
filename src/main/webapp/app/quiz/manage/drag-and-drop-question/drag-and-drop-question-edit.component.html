@@ -178,14 +178,14 @@
                     <div class="col-8 form-group">
                         <button
                             class="btn btn-outline-secondary invalid-button"
-                            [hidden]="question().invalid ?? false"
+                            [hidden]="!!question().invalid"
                             (click)="question().invalid = true"
                             jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
                         ></button>
                         <button
                             class="btn btn-outline-secondary invalid-button"
-                            [hidden]="!(question().invalid ?? false)"
-                            [disabled]="question().invalid ?? false"
+                            [hidden]="!question().invalid"
+                            [disabled]="!!question().invalid"
                             jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
                         ></button>
                     </div>

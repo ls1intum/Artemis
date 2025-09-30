@@ -73,7 +73,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
 
     question = input<QuizQuestion>();
     questionIndex = input.required<number>();
-    reEvaluationInProgress = input.required<boolean>();
+    reEvaluationInProgress = input<boolean>();
 
     readonly questionUpdated = output<void>();
     readonly questionDeleted = output<void>();
