@@ -45,7 +45,7 @@ def get_course_students(session: requests.Session) -> List[Dict[str, Any]]:
     """Get all students enrolled in the course."""
     url = f"{SERVER_URL}/core/courses/{COURSE_ID}/students"
     response = session.get(url)
-    
+
     if response.status_code != 200:
         raise Exception(f"Failed to get course students. Status code: {response.status_code}")
         

@@ -72,7 +72,7 @@ def create_exam(session: requests.Session, course_id: int, title: str, short_nam
         "examStudentReviewEnd": review_end_date,
         "course": {"id": course_id}
     }
-    
+
     response: requests.Response = session.post(url, json=payload)
     
     if response.status_code == 201:
