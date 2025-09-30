@@ -34,7 +34,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
-import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('Example Modeling Submission Component', () => {
@@ -49,13 +49,14 @@ describe('Example Modeling Submission Component', () => {
     participation.exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
     participation.id = 1;
     const submission = { id: 20, submitted: true, participation } as ModelingSubmission;
+    const EXERCISE_ID = 22;
 
     const exampleSubmission: ExampleSubmission = {
         submission,
     };
 
     const exercise = {
-        id: 22,
+        id: EXERCISE_ID,
         diagramType: UMLDiagramType.ClassDiagram,
         course: { id: 2 },
         maxPoints: 30,
@@ -248,7 +249,7 @@ describe('Example Modeling Submission Component', () => {
         const tutorParticipationService = TestBed.inject(TutorParticipationService);
         const dto: TutorParticipationDTO = {
             id: 1,
-            exerciseId: comp.exerciseId,
+            exerciseId: EXERCISE_ID,
             tutorId: 3,
             status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
         };

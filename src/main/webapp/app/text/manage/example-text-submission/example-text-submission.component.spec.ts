@@ -36,7 +36,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
-import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
@@ -457,7 +457,7 @@ describe('ExampleTextSubmissionComponent', () => {
         const tutorParticipationService = TestBed.inject(TutorParticipationService);
         const dto: TutorParticipationDTO = {
             id: 1,
-            exerciseId: comp.exerciseId,
+            exerciseId: EXERCISE_ID,
             tutorId: 3,
             status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
         };
