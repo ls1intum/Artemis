@@ -17,6 +17,7 @@ artemis:
 
 spring:
     datasource:
+        driver-class-name: com.p6spy.engine.spy.P6SpyDriver
         url: jdbc:p6spy:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
 
 server:
