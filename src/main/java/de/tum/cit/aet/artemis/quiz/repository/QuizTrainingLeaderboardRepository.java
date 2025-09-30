@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,16 +41,8 @@ public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<
                     qtl.dueDate = :dueDate
                 WHERE qtl.user.id = :userId AND qtl.course.id = :courseId
             """)
-    void updateLeaderboardEntry(long userId, long courseId, int score, int correctAnswers, int wrongAnswers, int league, ZonedDateTime dueDate);
-
-    @Transactional
-    @Modifying
-    @Query("""
-            UPDATE QuizTrainingLeaderboard qtl
-            SET qtl.leaderboardName = :newName
-            WHERE qtl.user.id = :userId
-            """)
-    void updateLeaderboardName(long userId, String newName);
+    void updateLeaderboardEntry(@Param("userId") long userId, @Param("courseId") long courseId, @Param("score") int score, @Param("correctAnswers") int correctAnswers,
+            @Param("wrongAnswers") int wrongAnswers, @Param("league") int league, @Param("dueDate") ZonedDateTime dueDate);
 
     @Transactional
     @Modifying
@@ -58,5 +51,5 @@ public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<
             SET qtl.showInLeaderboard = :showInLeaderboard
             WHERE qtl.user.id = :userId
             """)
-    void updateShownInLeaderboard(long userId, boolean showInLeaderboard);
+    void updateShownInLeaderboard(@Param("userId") long userId, @Param("showInLeaderboard") boolean showInLeaderboard);
 }
