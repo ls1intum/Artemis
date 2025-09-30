@@ -80,6 +80,7 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
     updateDescriptionControl(content: string) {
         this.descriptionControl?.setValue(content);
         this.descriptionControl?.markAsDirty();
+        this.onTitleOrDescriptionChange.emit();
     }
 
     constructor() {
@@ -87,7 +88,10 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
             const titleCtrl = this.titleControl;
             const descCtrl = this.descriptionControl;
             if (titleCtrl && descCtrl) {
-                const subscription: Subscription = merge(titleCtrl.valueChanges, descCtrl.valueChanges).subscribe(() => this.suggestTaxonomies());
+                const subscription: Subscription = merge(titleCtrl.valueChanges, descCtrl.valueChanges).subscribe(() => {
+                    this.suggestTaxonomies();
+                    this.onTitleOrDescriptionChange.emit();
+                });
                 onCleanup(() => subscription.unsubscribe());
             }
         });

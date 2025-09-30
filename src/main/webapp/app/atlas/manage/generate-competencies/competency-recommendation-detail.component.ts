@@ -1,6 +1,6 @@
 import { Component, effect, input, model, output } from '@angular/core';
 import { CourseCompetencyValidators } from 'app/atlas/shared/entities/competency.model';
-import { faChevronRight, faPencilAlt, faSave, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faPen, faSave, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CompetencyFormControlsWithViewed } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
@@ -41,7 +41,7 @@ export class CompetencyRecommendationDetailComponent {
     protected readonly faTrash = faTrash;
     protected readonly faWrench = faWrench;
     protected readonly faSave = faSave;
-    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faPen = faPen;
 
     //Other constants for html
     protected readonly competencyValidators = CourseCompetencyValidators;
