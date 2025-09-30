@@ -7,7 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -28,12 +27,7 @@ public class QuizTrainingLeaderboard extends DomainObject {
     @JoinColumn
     private Course course;
 
-    // The name the student sets for the leaderboard
-    @Size(max = 50)
-    @Column(nullable = false, name = "leaderboard_name", length = 50)
-    private String leaderboardName;
-
-    // The league the student is in (1-3)
+    // The league the student is in (1-5)
     @Column(nullable = false, name = "league")
     private int league;
 
@@ -75,14 +69,6 @@ public class QuizTrainingLeaderboard extends DomainObject {
 
     public void setCourse(Course course) {
         this.course = course;
-    }
-
-    public String getLeaderboardName() {
-        return leaderboardName;
-    }
-
-    public void setLeaderboardName(String leaderboardName) {
-        this.leaderboardName = leaderboardName;
     }
 
     public int getLeague() {

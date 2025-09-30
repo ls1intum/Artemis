@@ -13,9 +13,6 @@
             <column name="course_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="leaderboard_name" type="varchar(50)">
-                <constraints nullable="false"/>
-            </column>
             <column name="league" type="tinyint">
                 <constraints nullable="false"/>
             </column>
