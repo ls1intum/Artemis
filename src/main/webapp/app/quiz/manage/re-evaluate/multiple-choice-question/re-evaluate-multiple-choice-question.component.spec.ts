@@ -19,7 +19,6 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
         fixture = TestBed.createComponent(ReEvaluateMultipleChoiceQuestionComponent);
         component = fixture.componentInstance;
 
-        // Provide the @Inputs
         const question = {
             title: 'Test Question',
             answerOptions: [answer1],

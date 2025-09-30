@@ -45,21 +45,21 @@ describe('QuizQuestionListEditComponent', () => {
     it('should add multiple choice question to quizQuestions and emit onQuestionAdded Output', () => {
         const onQuestionAddedEmit = jest.spyOn(component.onQuestionAdded, 'emit');
         component.addMultipleChoiceQuestion();
-        expect(component.quizQuestions).toBeArrayOfSize(1);
+        expect(component.quizQuestions()).toBeArrayOfSize(1);
         expect(onQuestionAddedEmit).toHaveBeenCalledOnce();
     });
 
     it('should add drag and drop question to quizQuestions and emit onQuestionAdded Output', () => {
         const onQuestionAddedEmit = jest.spyOn(component.onQuestionAdded, 'emit');
         component.addDragAndDropQuestion();
-        expect(component.quizQuestions).toBeArrayOfSize(1);
+        expect(component.quizQuestions()).toBeArrayOfSize(1);
         expect(onQuestionAddedEmit).toHaveBeenCalledOnce();
     });
 
     it('should add short answer question to quizQuestions and emit onQuestionAdded Output', () => {
         const onQuestionAddedEmit = jest.spyOn(component.onQuestionAdded, 'emit');
         component.addShortAnswerQuestion();
-        expect(component.quizQuestions).toBeArrayOfSize(1);
+        expect(component.quizQuestions()).toBeArrayOfSize(1);
         expect(onQuestionAddedEmit).toHaveBeenCalledOnce();
     });
 
@@ -76,9 +76,9 @@ describe('QuizQuestionListEditComponent', () => {
         component.showExistingQuestions = true;
         component.handleExistingQuestionsAdded([question0, question1]);
         expect(component.showExistingQuestions).toBeFalse();
-        expect(component.quizQuestions).toBeArrayOfSize(2);
-        expect(component.quizQuestions[0]).toEqual(question0);
-        expect(component.quizQuestions[1]).toEqual(question1);
+        expect(component.quizQuestions()).toBeArrayOfSize(2);
+        expect(component.quizQuestions()[0]).toEqual(question0);
+        expect(component.quizQuestions()[1]).toEqual(question1);
     });
 
     it('should emit onQuestionUpdated Output', () => {
@@ -90,12 +90,12 @@ describe('QuizQuestionListEditComponent', () => {
     it('should delete question and emit onQuestionUpdated Output', () => {
         const question0 = new MultipleChoiceQuestion();
         const question1 = new ShortAnswerQuestion();
-        component.quizQuestions = [question0, question1];
+        fixture.componentRef.setInput('quizQuestions', [question0, question1]);
         const onQuestionDeletedEmit = jest.spyOn(component.onQuestionDeleted, 'emit');
         component.handleQuestionDeleted(0);
         expect(onQuestionDeletedEmit).toHaveBeenCalledOnce();
-        expect(component.quizQuestions).toBeArrayOfSize(1);
-        expect(component.quizQuestions[0]).toEqual(question1);
+        expect(component.quizQuestions()).toBeArrayOfSize(1);
+        expect(component.quizQuestions()[0]).toEqual(question1);
     });
 
     it('should add file', () => {
