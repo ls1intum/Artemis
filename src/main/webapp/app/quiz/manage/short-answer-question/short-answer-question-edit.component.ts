@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnInit, SimpleChanges, ViewEncapsulation, inject, output, viewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewEncapsulation, effect, inject, input, output, viewChild } from '@angular/core';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
@@ -57,7 +57,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         ArtemisTranslatePipe,
     ],
 })
-export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
+export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit {
     shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
     private modalService = inject(NgbModal);
     private changeDetector = inject(ChangeDetectorRef);
@@ -71,13 +71,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     shortAnswerQuestion: ShortAnswerQuestion;
 
-    @Input()
-    set question(quizQuestion: QuizQuestion) {
-        this.shortAnswerQuestion = quizQuestion as ShortAnswerQuestion;
-    }
-
-    @Input() questionIndex: number;
-    @Input() reEvaluationInProgress: boolean;
+    question = input<QuizQuestion>();
+    questionIndex = input.required<number>();
+    reEvaluationInProgress = input.required<boolean>();
 
     readonly questionUpdated = output<void>();
     readonly questionDeleted = output<void>();
@@ -118,6 +114,21 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     protected readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
+    private firstChange = true;
+
+    constructor() {
+        effect(() => {
+            if (!this.question()) {
+                return;
+            }
+            this.shortAnswerQuestion = this.question() as ShortAnswerQuestion;
+            if (!this.firstChange) {
+                this.questionUpdated.emit();
+            }
+            this.firstChange = false;
+        });
+    }
+
     ngOnInit(): void {
         this.markdownActions = [
             new BoldAction(),
@@ -147,23 +158,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function ngOnChanges
-     * @desc Watch for any changes to the question model and notify listener
-     * @param changes {SimpleChanges}
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        /** Check if previousValue wasn't null to avoid firing at component initialization **/
-        if (changes.question && changes.question.previousValue) {
-            this.questionUpdated.emit();
-        }
-    }
-
-    /**
      * @function ngAfterViewInit
      * @desc Setup the question editor
      */
     ngAfterViewInit(): void {
-        if (!this.reEvaluationInProgress) {
+        if (!this.reEvaluationInProgress()) {
             requestAnimationFrame(this.setupQuestionEditor.bind(this));
         }
     }
@@ -460,7 +459,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const solution = new ShortAnswerSolution();
         solution.text = InsertShortAnswerOptionAction.DEFAULT_TEXT_SHORT;
         // Add solution directly to the question if re-evaluation is in progress
-        if (this.reEvaluationInProgress) {
+        if (this.reEvaluationInProgress()) {
             this.shortAnswerQuestion.solutions.push(solution);
             this.questionUpdated.emit();
             // Use the editor to add the solution

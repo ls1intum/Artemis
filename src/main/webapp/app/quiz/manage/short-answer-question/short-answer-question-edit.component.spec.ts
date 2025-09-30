@@ -7,7 +7,6 @@ import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-q
 import { QuizScoringInfoModalComponent } from 'app/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { MatchPercentageInfoModalComponent } from 'app/quiz/manage/match-percentage-info-modal/match-percentage-info-modal.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { SimpleChange } from '@angular/core';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
@@ -17,7 +16,6 @@ import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-qu
 import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.util';
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockResizeObserver } from 'src/test/javascript/spec/helpers/mocks/service/mock-resize-observer';
-import { firstValueFrom } from 'rxjs';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -86,9 +84,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     beforeEach(() => {
         component.shortAnswerQuestion = question;
-        component.questionIndex = 0;
-        component.reEvaluationInProgress = false;
-
+        fixture.componentRef.setInput('questionIndex', 0);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
         fixture.detectChanges();
     });
 
@@ -261,10 +258,26 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.textParts).toEqual(expectedTextParts);
     });
 
-    it('should invoke ngOnChanges', () => {
-        component.ngOnChanges({
-            question: { currentValue: question2, previousValue: question } as SimpleChange,
-        });
+    it('should update shortAnswerQuestion and emit questionUpdated on question input change', () => {
+        const emitSpy = jest.spyOn(component.questionUpdated, 'emit');
+
+        expect(component.shortAnswerQuestion).toEqual(question);
+
+        fixture.componentRef.setInput('question', question2);
+
+        fixture.detectChanges();
+
+        expect(component.shortAnswerQuestion).toEqual(question2);
+
+        expect(emitSpy).toHaveBeenCalledTimes(0);
+
+        fixture.componentRef.setInput('question', question);
+
+        fixture.detectChanges();
+
+        expect(component.shortAnswerQuestion).toEqual(question);
+
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 
     it('should react to a solution being dropped on a spot', () => {
