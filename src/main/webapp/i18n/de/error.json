@@ -130,6 +130,9 @@
         "wrongCourse": "Die Reaktion gehört nicht zum ausgewählten Kurs.",
         "reactionNotFound": "Die Reaktion konnte nicht gefunden werden.",
         "missingAssociation": "Die Reaktion muss einem Beitrag oder einer Antwort zugeordnet sein.",
-        "emojiIdMissing": "emojiId muss gesetzt sein."
+        "emojiIdMissing": "emojiId muss gesetzt sein.",
+        "exampleSubmission": {
+            "submissionIdMissing": "Die Beispielabgabe muss mit einer Abgabe verknüpft sein (submissionId fehlt)."
+        }
     }
 }

@@ -20,13 +20,17 @@ export class TutorParticipation implements BaseEntity {
 }
 
 export class TutorParticipationDTO {
-    id?: number;
-    exerciseId?: number;
-    tutorId?: number;
-    status?: TutorParticipationStatus;
+    id: number;
+    exerciseId: number;
+    tutorId: number;
+    status: TutorParticipationStatus;
     trainedExampleSubmissions?: ExampleSubmissionDTO[];
 
-    constructor() {
-        this.trainedExampleSubmissions = [];
+    constructor(id: number, exerciseId: number, status: TutorParticipationStatus, tutorId: number, trainedExampleSubmissions: ExampleSubmissionDTO[] = []) {
+        this.id = id;
+        this.exerciseId = exerciseId;
+        this.status = status;
+        this.tutorId = tutorId;
+        this.trainedExampleSubmissions = trainedExampleSubmissions;
     }
 }

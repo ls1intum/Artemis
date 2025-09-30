@@ -33,7 +33,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TutorParticipation, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
+import { TutorParticipation, TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -641,7 +641,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             .create(this.exerciseId)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
-                next: (res) => {
+                next: (res: HttpResponse<TutorParticipationDTO>) => {
                     const dto = res.body!;
                     this.tutorParticipation = dto;
                     this.tutorParticipationStatus = dto.status!;
