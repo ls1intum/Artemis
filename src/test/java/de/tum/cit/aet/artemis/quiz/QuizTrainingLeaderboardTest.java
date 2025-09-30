@@ -50,7 +50,6 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         QuizTrainingLeaderboard quizTrainingLeaderboard = new QuizTrainingLeaderboard();
         quizTrainingLeaderboard.setCourse(course);
         quizTrainingLeaderboard.setUser(user);
-        quizTrainingLeaderboard.setLeaderboardName("Timm");
         quizTrainingLeaderboard.setScore(10);
         quizTrainingLeaderboard.setLeague(5);
         quizTrainingLeaderboard.setAnsweredCorrectly(10);
@@ -96,7 +95,6 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         assertThat(leaderboardEntryDTO.getFirst().answeredWrong()).isEqualTo(10);
         assertThat(leaderboardEntryDTO.getFirst().score()).isEqualTo(10);
         assertThat(leaderboardEntryDTO.getFirst().rank()).isEqualTo(1);
-        assertThat(leaderboardEntryDTO.getFirst().leaderboardName()).isEqualTo("Timm");
     }
 
     @Test
@@ -106,7 +104,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         Course course = courseUtilService.createCourse();
         userTestRepository.save(user);
         courseTestRepository.save(course);
-        LeaderboardSettingDTO settingDTO = new LeaderboardSettingDTO("TestUser", true);
+        LeaderboardSettingDTO settingDTO = new LeaderboardSettingDTO(true);
         request.postWithResponseBody("/api/quiz/courses/" + course.getId() + "/leaderboard-entry", settingDTO, Void.class, OK);
         QuizTrainingLeaderboard leaderboardEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(user.getId(), course.getId()).orElseThrow();
         assertThat(leaderboardEntry.getScore()).isEqualTo(0);
@@ -115,7 +113,6 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         assertThat(leaderboardEntry.getAnsweredWrong()).isEqualTo(0);
         assertThat(leaderboardEntry.getCourse().getId()).isEqualTo(course.getId());
         assertThat(leaderboardEntry.getUser().getId()).isEqualTo(user.getId());
-        assertThat(leaderboardEntry.getLeaderboardName()).isEqualTo("TestUser");
         assertThat(leaderboardEntry.getStreak()).isEqualTo(0);
         assertThat(leaderboardEntry.isShowInLeaderboard()).isTrue();
         assertThat(leaderboardEntry.getDueDate()).isCloseTo(ZonedDateTime.now(), Assertions.within(5, ChronoUnit.MINUTES));
@@ -130,10 +127,28 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         courseTestRepository.save(course);
         QuizTrainingLeaderboard quizTrainingLeaderboard = getQuizTrainingLeaderboard(course, user);
         quizTrainingLeaderboardRepository.save(quizTrainingLeaderboard);
-        LeaderboardSettingDTO settingDTO = new LeaderboardSettingDTO("NewName", false);
+        LeaderboardSettingDTO settingDTO = new LeaderboardSettingDTO(false);
         request.put("/api/quiz/leaderboard-settings", settingDTO, OK);
         QuizTrainingLeaderboard updatedEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(user.getId(), course.getId()).orElseThrow();
-        assertThat(updatedEntry.getLeaderboardName()).isEqualTo("NewName");
         assertThat(updatedEntry.isShowInLeaderboard()).isFalse();
+    }
+
+    @Test
+    void testCalculateLeague() {
+        int score = 50;
+        int league = quizTrainingLeaderboardService.calculateLeague(score);
+        assertThat(league).isEqualTo(5);
+        score = 101;
+        league = quizTrainingLeaderboardService.calculateLeague(score);
+        assertThat(league).isEqualTo(4);
+        score = 201;
+        league = quizTrainingLeaderboardService.calculateLeague(score);
+        assertThat(league).isEqualTo(3);
+        score = 301;
+        league = quizTrainingLeaderboardService.calculateLeague(score);
+        assertThat(league).isEqualTo(2);
+        score = 401;
+        league = quizTrainingLeaderboardService.calculateLeague(score);
+        assertThat(league).isEqualTo(1);
     }
 }

@@ -288,7 +288,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         submittedAnswer.setQuizQuestion(mcQuestion);
         submittedAnswer.setSelectedOptions(Set.of());
 
-        quizTrainingLeaderboardService.setInitialLeaderboardEntry(userId, course.getId(), true, "TestUser");
+        quizTrainingLeaderboardService.setInitialLeaderboardEntry(userId, course.getId(), true);
 
         SubmittedAnswerAfterEvaluationDTO result = request.postWithResponseBody(
                 "/api/quiz/courses/" + course.getId() + "/training-questions/" + mcQuestion.getId() + "/submit?isRated=true", submittedAnswer,

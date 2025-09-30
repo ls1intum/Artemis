@@ -104,15 +104,14 @@ public class QuizTrainingLeaderboardService {
         List<LeaderboardEntryDTO> leaderboard = new ArrayList<>();
         int rank = 1;
         for (QuizTrainingLeaderboard leaderboardEntry : leaderboardEntries) {
-            String username = leaderboardEntry.getLeaderboardName() != null ? leaderboardEntry.getLeaderboardName() : leaderboardEntry.getUser().getName();
             leaderboard.add(new LeaderboardEntryDTO(rank++, selectedLeague, leaderboardEntry.getUser().getId(), leaderboardEntry.getUser().getName(),
-                    leaderboardEntry.getUser().getImageUrl(), username, leaderboardEntry.getScore(), leaderboardEntry.getAnsweredCorrectly(), leaderboardEntry.getAnsweredWrong(),
+                    leaderboardEntry.getUser().getImageUrl(), leaderboardEntry.getScore(), leaderboardEntry.getAnsweredCorrectly(), leaderboardEntry.getAnsweredWrong(),
                     totalQuestions, leaderboardEntry.getDueDate(), leaderboardEntry.getStreak()));
         }
         return leaderboard;
     }
 
-    public void setInitialLeaderboardEntry(long userId, long courseId, boolean shownInLeaderboard, String leaderboardName) {
+    public void setInitialLeaderboardEntry(long userId, long courseId, boolean shownInLeaderboard) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.findByIdElseThrow(userId);
         QuizTrainingLeaderboard leaderboardEntry = new QuizTrainingLeaderboard();
@@ -125,7 +124,6 @@ public class QuizTrainingLeaderboardService {
         leaderboardEntry.setDueDate(ZonedDateTime.now());
         leaderboardEntry.setStreak(0);
         leaderboardEntry.setShowInLeaderboard(shownInLeaderboard);
-        leaderboardEntry.setLeaderboardName(leaderboardName);
         quizTrainingLeaderboardRepository.save(leaderboardEntry);
     }
 
@@ -150,7 +148,7 @@ public class QuizTrainingLeaderboardService {
         quizTrainingLeaderboardRepository.updateLeaderboardEntry(userId, courseId, score, correctAnswers, wrongAnswers, league, dueDate);
     }
 
-    private int calculateLeague(int score) {
+    public int calculateLeague(int score) {
         if (score < 100) {
             return BRONZE_LEAGUE;
         }
@@ -195,10 +193,6 @@ public class QuizTrainingLeaderboardService {
 
         delta += (int) Math.round(questionDelta);
         return delta;
-    }
-
-    public void updateLeaderboardName(long userId, String newName) {
-        quizTrainingLeaderboardRepository.updateLeaderboardName(userId, newName);
     }
 
     public void updateShownInLeaderboard(long userId, boolean shownInLeaderboard) {

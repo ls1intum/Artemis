@@ -147,10 +147,6 @@ public class QuizTrainingResource {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Boolean shownInLeaderboard = leaderboardSettingDTO.shownInLeaderboard();
-        String leaderboardName = leaderboardSettingDTO.leaderboardName();
-        if (leaderboardName != null) {
-            quizTrainingLeaderboardService.updateLeaderboardName(user.getId(), leaderboardName);
-        }
         if (shownInLeaderboard != null) {
             quizTrainingLeaderboardService.updateShownInLeaderboard(user.getId(), shownInLeaderboard);
         }
@@ -164,8 +160,7 @@ public class QuizTrainingResource {
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         boolean shownInLeaderboard = leaderboardEntryDTO.shownInLeaderboard() != null ? leaderboardEntryDTO.shownInLeaderboard() : false;
-        String leaderboardName = leaderboardEntryDTO.leaderboardName();
-        quizTrainingLeaderboardService.setInitialLeaderboardEntry(user.getId(), courseId, shownInLeaderboard, leaderboardName);
+        quizTrainingLeaderboardService.setInitialLeaderboardEntry(user.getId(), courseId, shownInLeaderboard);
         return ResponseEntity.ok().build();
     }
 }
