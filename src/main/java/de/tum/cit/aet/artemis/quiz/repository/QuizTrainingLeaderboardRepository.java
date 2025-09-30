@@ -34,15 +34,22 @@ public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<
     @Modifying
     @Query("""
                 UPDATE QuizTrainingLeaderboard qtl
-                SET qtl.score = :score,
-                    qtl.answeredCorrectly = qtl.answeredCorrectly + :correctAnswers,
-                    qtl.answeredWrong = qtl.answeredWrong + :wrongAnswers,
-                    qtl.league = :league,
-                    qtl.dueDate = :dueDate
+                SET qtl.score = qtl.score + :scoreDelta,
+                       qtl.answeredCorrectly = qtl.answeredCorrectly + :correctAnswers,
+                       qtl.answeredWrong = qtl.answeredWrong + :wrongAnswers,
+                       qtl.league =
+                            CASE
+                                WHEN (qtl.score + :scoreDelta) < 100 THEN 5
+                                WHEN (qtl.score + :scoreDelta) < 200 THEN 4
+                                WHEN (qtl.score + :scoreDelta) < 300 THEN 3
+                                WHEN (qtl.score + :scoreDelta) < 400 THEN 2
+                                ELSE 1
+                            END,
+                       qtl.dueDate = :dueDate
                 WHERE qtl.user.id = :userId AND qtl.course.id = :courseId
             """)
-    void updateLeaderboardEntry(@Param("userId") long userId, @Param("courseId") long courseId, @Param("score") int score, @Param("correctAnswers") int correctAnswers,
-            @Param("wrongAnswers") int wrongAnswers, @Param("league") int league, @Param("dueDate") ZonedDateTime dueDate);
+    void updateLeaderboardEntry(@Param("userId") long userId, @Param("courseId") long courseId, @Param("scoreDelta") int scoreDelta, @Param("correctAnswers") int correctAnswers,
+            @Param("wrongAnswers") int wrongAnswers, @Param("dueDate") ZonedDateTime dueDate);
 
     @Transactional
     @Modifying

@@ -15,7 +15,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
 import de.tum.cit.aet.artemis.quiz.domain.QuizTrainingLeaderboard;
@@ -41,18 +40,8 @@ public class QuizTrainingLeaderboardService {
 
     private static final int BRONZE_LEAGUE = 5;
 
-    private static final int SILVER_LEAGUE = 4;
-
-    private static final int GOLD_LEAGUE = 3;
-
-    private static final int DIAMOND_LEAGUE = 2;
-
-    private static final int MASTER_LEAGUE = 1;
-
-    private static final int NO_LEAGUE = 0;
-
     public QuizTrainingLeaderboardService(QuizTrainingLeaderboardRepository quizTrainingLeaderboardRepository, CourseRepository courseRepository, UserRepository userRepository,
-            QuizQuestionRepository quizQuestionRepository, AuthorizationCheckService authorizationCheckService, QuizQuestionProgressRepository quizQuestionProgressRepository) {
+            QuizQuestionRepository quizQuestionRepository, QuizQuestionProgressRepository quizQuestionProgressRepository) {
         this.quizTrainingLeaderboardRepository = quizTrainingLeaderboardRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
@@ -131,40 +120,13 @@ public class QuizTrainingLeaderboardService {
      * @throws IllegalArgumentException if the user or course is not found
      */
     public void updateLeaderboardScore(long userId, long courseId, QuizQuestionProgressData answeredQuestion) {
-        int delta = calculateScoreDelta(answeredQuestion);
+        int scoreDelta = calculateScoreDelta(answeredQuestion);
         int correctAnswers = answeredQuestion.getLastScore() == 1.0 ? 1 : 0;
         int wrongAnswers = answeredQuestion.getLastScore() < 1.0 ? 1 : 0;
 
-        QuizTrainingLeaderboard leaderboardEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).orElseThrow();
-        ZonedDateTime dueDate = findLatestDueDate(userId, courseId);
-        int score = leaderboardEntry.getScore() + delta;
-        int league = calculateLeague(score);
+        ZonedDateTime dueDate = findEarliestDueDate(userId, courseId);
 
-        quizTrainingLeaderboardRepository.updateLeaderboardEntry(userId, courseId, score, correctAnswers, wrongAnswers, league, dueDate);
-    }
-
-    /**
-     * Determines the league of a user based on their score.
-     *
-     * @param score the user's current score
-     * @return the league constant corresponding to the score
-     */
-    public int calculateLeague(int score) {
-        if (score < 100) {
-            return BRONZE_LEAGUE;
-        }
-        else if (score < 200) {
-            return SILVER_LEAGUE;
-        }
-        else if (score < 300) {
-            return GOLD_LEAGUE;
-        }
-        else if (score < 400) {
-            return DIAMOND_LEAGUE;
-        }
-        else {
-            return MASTER_LEAGUE;
-        }
+        quizTrainingLeaderboardRepository.updateLeaderboardEntry(userId, courseId, scoreDelta, correctAnswers, wrongAnswers, dueDate);
     }
 
     /**
@@ -173,7 +135,7 @@ public class QuizTrainingLeaderboardService {
      *
      * @return the earliest due date found or the current time if none exists
      */
-    private ZonedDateTime findLatestDueDate(long userId, long courseId) {
+    private ZonedDateTime findEarliestDueDate(long userId, long courseId) {
         return quizQuestionProgressRepository.findAllByUserIdAndCourseId(userId, courseId).stream().map(QuizQuestionProgress::getProgressJson)
                 .map(QuizQuestionProgressData::getDueDate).filter(Objects::nonNull).min(ZonedDateTime::compareTo).orElse(ZonedDateTime.now());
     }

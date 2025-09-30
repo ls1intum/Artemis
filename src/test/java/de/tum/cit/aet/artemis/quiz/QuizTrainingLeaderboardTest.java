@@ -132,23 +132,4 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         QuizTrainingLeaderboard updatedEntry = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(user.getId(), course.getId()).orElseThrow();
         assertThat(updatedEntry.isShowInLeaderboard()).isFalse();
     }
-
-    @Test
-    void testCalculateLeague() {
-        int score = 50;
-        int league = quizTrainingLeaderboardService.calculateLeague(score);
-        assertThat(league).isEqualTo(5);
-        score = 101;
-        league = quizTrainingLeaderboardService.calculateLeague(score);
-        assertThat(league).isEqualTo(4);
-        score = 201;
-        league = quizTrainingLeaderboardService.calculateLeague(score);
-        assertThat(league).isEqualTo(3);
-        score = 301;
-        league = quizTrainingLeaderboardService.calculateLeague(score);
-        assertThat(league).isEqualTo(2);
-        score = 401;
-        league = quizTrainingLeaderboardService.calculateLeague(score);
-        assertThat(league).isEqualTo(1);
-    }
 }
