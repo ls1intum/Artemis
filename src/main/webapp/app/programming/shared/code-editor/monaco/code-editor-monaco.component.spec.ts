@@ -15,6 +15,7 @@ import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileType,
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { IKeyboardEvent } from 'monaco-editor';
 
 describe('CodeEditorMonacoComponent', () => {
     let comp: CodeEditorMonacoComponent;
@@ -342,6 +343,44 @@ describe('CodeEditorMonacoComponent', () => {
         expect(comp.newFeedbackLines()).toEqual([feedbackLineZeroBased]);
         tick(1);
         expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(feedbackLineOneBased, `feedback-new-${feedbackLineZeroBased}`, element);
+    }));
+
+    it('should open feedback widget using keybind viewing a tutor assessment', fakeAsync(() => {
+        // Feedback is stored as 0-based line numbers, but the editor requires 1-based line numbers.
+        const feedbackLineOneBased = 4;
+        const feedbackLineZeroBased = feedbackLineOneBased - 1;
+        const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
+        const getPositionStub = jest.spyOn(comp.editor(), 'getPosition').mockImplementation();
+        getPositionStub.mockReturnValue({
+            lineNumber: feedbackLineOneBased,
+            column: 0,
+        });
+
+        let capturedOnKeyDown: ((e: IKeyboardEvent) => void) | undefined;
+        jest.spyOn(comp.editor(), 'onKeyDown').mockImplementation((kd) => {
+            capturedOnKeyDown = kd;
+            return { dispose: jest.fn() } as any;
+        });
+
+        const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
+
+        fixture.componentRef.setInput('isTutorAssessment', true);
+        fixture.componentRef.setInput('selectedFile', 'file1.java');
+        fixture.componentRef.setInput('feedbacks', exampleFeedbacks);
+        fixture.detectChanges();
+
+        comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, 'file1', false) }).then(() => {
+            // Simulate adding the element.
+            const event = new KeyboardEvent('keydown', { key: '+', code: 'NumpadAdd' });
+            expect(capturedOnKeyDown).toBeDefined();
+            // @ts-ignore
+            capturedOnKeyDown({ browserEvent: event });
+
+            expect(comp.newFeedbackLines()).toEqual([feedbackLineZeroBased]);
+            tick(1);
+            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(feedbackLineOneBased, `feedback-new-${feedbackLineZeroBased}`, element);
+            expect(selectFileInEditorStub).toHaveBeenCalledOnce();
+        });
     }));
 
     it('should delete feedbacks and notify', () => {
