@@ -122,8 +122,6 @@ Average code generation costs depend on the LLM model and number of components (
 - **GPT-5**: ~$0.15 total
 - **GPT-5-mini**: ~$0.03 total
 
-*Note: Problem statement generation incurs additional costs and is billed separately.*
-
 Operational considerations 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
