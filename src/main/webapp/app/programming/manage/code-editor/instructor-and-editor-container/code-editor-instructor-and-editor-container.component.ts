@@ -19,6 +19,8 @@ import { CodeGenerationRequestDTO } from 'app/openapi/model/codeGenerationReques
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { inject, signal } from '@angular/core';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -62,7 +64,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     private codeGenerationService = inject(HyperionCodeGenerationApiService);
     private codeGenAlertService = inject(AlertService);
+    private profileService = inject(ProfileService);
     isGeneratingCode = signal(false);
+
+    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     /**
      * Generates code for the current programming exercise using AI
