@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
@@ -39,8 +39,8 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     private websocketService = inject(WebsocketService);
     private serverDateService = inject(ArtemisServerDateService);
 
-    @Input() isQuizPointStatistic: boolean;
-    @Input() isQuizStatistic: boolean;
+    isQuizPointStatistic = input<boolean>();
+    isQuizStatistic = input<boolean>();
 
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -146,9 +146,9 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     previousStatistic() {
         const baseUrl = this.quizStatisticUtil.getBaseUrlForQuizExercise(this.quizExercise);
 
-        if (this.isQuizStatistic) {
+        if (this.isQuizStatistic()) {
             this.router.navigateByUrl(baseUrl + `/quiz-point-statistic`);
-        } else if (this.isQuizPointStatistic) {
+        } else if (this.isQuizPointStatistic()) {
             if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
                 this.router.navigateByUrl(baseUrl + `/quiz-statistic`);
             } else {
@@ -167,9 +167,9 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     nextStatistic() {
         const baseUrl = this.quizStatisticUtil.getBaseUrlForQuizExercise(this.quizExercise);
 
-        if (this.isQuizPointStatistic) {
+        if (this.isQuizPointStatistic()) {
             this.router.navigateByUrl(baseUrl + `/quiz-statistic`);
-        } else if (this.isQuizStatistic) {
+        } else if (this.isQuizStatistic()) {
             // go to quiz-statistic if the position = last position
             if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
                 this.router.navigateByUrl(baseUrl + `/quiz-point-statistic`);
