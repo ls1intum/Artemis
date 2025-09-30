@@ -5,14 +5,14 @@
                 <div class="me-3">
                     <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed()" />
                 </div>
-                <h6 class="mb-0 text-nowrap text-truncate overflow-hidden">{{ titleControl.value ?? '' }}</h6>
+                <h6 class="mb-0 text-nowrap text-truncate overflow-hidden">{{ titleControl()?.value ?? '' }}</h6>
             </div>
             <div class="d-flex align-items-center flex-grow-1 justify-content-end">
                 <div class="d-flex me-3">
                     <input class="me-1" type="checkbox" id="viewed-{{ index() }}" formControlName="viewed" />
                     <label for="viewed-{{ index() }}" jhiTranslate="artemisApp.competency.generate.viewedLabel"></label>
                 </div>
-                @if (!isInEditMode) {
+                @if (!isInEditMode()) {
                     <jhi-button
                         class="me-1"
                         id="editButton-{{ index() }}"
@@ -32,7 +32,7 @@
                         [title]="'entity.action.save'"
                         [icon]="faSave"
                         (onClick)="save()"
-                        [disabled]="!isSavePossible"
+                        [disabled]="!isSavePossible()"
                         [shouldSubmit]="false"
                     />
                 }
@@ -51,12 +51,12 @@
             <div class="form-group">
                 <label for="title-{{ index() }}" jhiTranslate="artemisApp.competency.title"></label>
                 <input type="text" class="form-control" id="title-{{ index() }}" formControlName="title" />
-                @if (titleControl.invalid && (titleControl.dirty || titleControl.touched)) {
+                @if (titleControl()?.invalid && (titleControl()?.dirty || titleControl()?.touched)) {
                     <div class="alert alert-danger">
-                        @if (titleControl.errors?.required) {
+                        @if (titleControl()?.errors?.required) {
                             <div jhiTranslate="artemisApp.competency.create.titleRequiredValidationError"></div>
                         }
-                        @if (titleControl.errors?.maxlength) {
+                        @if (titleControl()?.errors?.maxlength) {
                             <div jhiTranslate="artemisApp.competency.create.titleMaxLengthValidationError" [translateValues]="{ max: competencyValidators.TITLE_MAX }"></div>
                         }
                     </div>
@@ -64,9 +64,9 @@
             </div>
             <div class="form-group">
                 <label for="description-{{ index() }}" jhiTranslate="artemisApp.competency.description"></label>
-                @if (isInEditMode) {
+                @if (isInEditMode()) {
                     <jhi-markdown-editor-monaco
-                        [markdown]="descriptionControl.value"
+                        [markdown]="descriptionControl()?.value"
                         (markdownChange)="updateDescriptionControl($event)"
                         id="description-{{ index() }}"
                         class="markdown-preview"
@@ -77,12 +77,12 @@
                         id="description-{{ index() }}"
                         disabled="true"
                         class="markdown-preview border rounded p-1"
-                        [innerHTML]="descriptionControl.value || '&nbsp;' | htmlForMarkdown"
+                        [innerHTML]="descriptionControl()?.value || '&nbsp;' | htmlForMarkdown"
                     ></div>
                 }
-                @if (descriptionControl.invalid && descriptionControl.dirty) {
+                @if (descriptionControl()?.invalid && descriptionControl()?.dirty) {
                     <div class="alert alert-danger">
-                        @if (descriptionControl.errors?.maxlength) {
+                        @if (descriptionControl()?.errors?.maxlength) {
                             <div
                                 jhiTranslate="artemisApp.competency.create.descriptionMaxLengthValidationError"
                                 [translateValues]="{ max: competencyValidators.DESCRIPTION_MAX }"
@@ -93,7 +93,7 @@
             </div>
             <div class="form-group">
                 <label for="taxonomy-{{ index() }}" jhiTranslate="artemisApp.competency.taxonomy"></label>
-                <jhi-taxonomy-select selectId="taxonomy-{{ index() }}" [form]="taxonomyControl" />
+                <jhi-taxonomy-select selectId="taxonomy-{{ index() }}" [form]="taxonomyControl()" />
             </div>
         </div>
     </div>

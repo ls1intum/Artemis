@@ -1,4 +1,4 @@
-import { Component, effect, input, model, output } from '@angular/core';
+import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { CourseCompetencyValidators } from 'app/atlas/shared/entities/competency.model';
 import { faChevronRight, faPen, faSave, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -33,7 +33,7 @@ export class CompetencyRecommendationDetailComponent {
     form = input<FormGroup<CompetencyFormControlsWithViewed>>();
     index = input<number>(0);
     isCollapsed = model<boolean>(true);
-    isInEditMode = false;
+    isInEditMode = signal<boolean>(false);
 
     onDelete = output<void>();
 
@@ -54,10 +54,10 @@ export class CompetencyRecommendationDetailComponent {
             if (!form) {
                 return;
             }
-            this.titleControl.addValidators([Validators.required, Validators.maxLength(CourseCompetencyValidators.TITLE_MAX)]);
-            this.descriptionControl.addValidators([Validators.maxLength(CourseCompetencyValidators.DESCRIPTION_MAX)]);
+            this.titleControl()?.addValidators([Validators.required, Validators.maxLength(CourseCompetencyValidators.TITLE_MAX)]);
+            this.descriptionControl()?.addValidators([Validators.maxLength(CourseCompetencyValidators.DESCRIPTION_MAX)]);
             form.controls.competency.disable();
-            this.viewedControl.enable();
+            this.viewedControl()?.enable();
         });
     }
 
@@ -66,7 +66,7 @@ export class CompetencyRecommendationDetailComponent {
      */
     toggle() {
         this.isCollapsed.set(!this.isCollapsed());
-        this.viewedControl.setValue(true);
+        this.viewedControl()?.setValue(true);
     }
 
     /**
@@ -85,9 +85,9 @@ export class CompetencyRecommendationDetailComponent {
             return;
         }
         form.controls.competency.enable();
-        this.isInEditMode = true;
+        this.isInEditMode.set(true);
         this.isCollapsed.set(false);
-        this.viewedControl.setValue(true);
+        this.viewedControl()?.setValue(true);
     }
 
     /**
@@ -99,7 +99,7 @@ export class CompetencyRecommendationDetailComponent {
             return;
         }
         form.controls.competency.disable();
-        this.isInEditMode = false;
+        this.isInEditMode.set(false);
         this.isCollapsed.set(true);
     }
 
@@ -108,33 +108,21 @@ export class CompetencyRecommendationDetailComponent {
      * @param content markdown content
      */
     updateDescriptionControl(content: string) {
-        this.descriptionControl.setValue(content);
-        this.descriptionControl.markAsDirty();
+        this.descriptionControl()?.setValue(content);
+        this.descriptionControl()?.markAsDirty();
     }
 
     /**
      * Only allows save if no form controls have validation errors
      */
-    get isSavePossible() {
+    isSavePossible = computed(() => {
         const form = this.form();
         return !!form && !form.invalid;
-    }
+    });
 
-    //getters for the form controls
-
-    get titleControl() {
-        return this.form()!.controls.competency.controls.title;
-    }
-
-    get descriptionControl() {
-        return this.form()!.controls.competency.controls.description;
-    }
-
-    get taxonomyControl() {
-        return this.form()!.controls.competency.controls.taxonomy;
-    }
-
-    get viewedControl() {
-        return this.form()!.controls.viewed;
-    }
+    // control accessors as computed signals to avoid unsafe non-null assertions
+    titleControl = computed(() => this.form()?.controls.competency.controls.title);
+    descriptionControl = computed(() => this.form()?.controls.competency.controls.description);
+    taxonomyControl = computed(() => this.form()?.controls.competency.controls.taxonomy);
+    viewedControl = computed(() => this.form()?.controls.viewed);
 }
