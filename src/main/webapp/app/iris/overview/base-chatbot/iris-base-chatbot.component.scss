@@ -136,7 +136,6 @@
         gap: 5px;
         flex: 1;
         overflow-y: auto;
-
         scrollbar-width: thin;
         scrollbar-color: var(--bs-border-color) transparent;
 
@@ -179,18 +178,18 @@
         margin-bottom: 10px;
         color: var(--bs-body-color);
         padding: 10px;
+
         // prettier-ignore
         -webkit-mask: radial-gradient(var(--t) at var(--_d) 0, #0000 98%, #000 102%) var(--_d) 100% / calc(100% - var(--r)) var(--t) no-repeat,
         conic-gradient(at var(--r) var(--r), #000 75%, #0000 0) calc(var(--r) / -2) calc(var(--r) / -2) padding-box,
         radial-gradient(50% 50%, #000 98%, #0000 101%) 0 0 / var(--r) var(--r) space padding-box;
         overflow-wrap: break-word;
-        word-wrap: break-word;
-        word-break: break-word;
 
         ::ng-deep {
             > p,
             > span > p {
                 margin-bottom: 7px;
+
                 &:last-child {
                     margin-bottom: 0;
                 }
@@ -203,6 +202,7 @@
                 > p {
                     margin-bottom: 0;
                 }
+
                 &:not(:last-child) > p {
                     margin-bottom: 7px;
                 }
@@ -224,6 +224,7 @@
 
 .bubble-left {
     --_d: 0%;
+
     border-left: var(--t) solid #0000;
     background-color: var(--iris-client-chat-background);
     margin-right: var(--t);
@@ -232,6 +233,7 @@
 
 .bubble-right {
     --_d: 100%;
+
     border-right: var(--t) solid #0000;
     margin-left: var(--t);
     place-self: end;
@@ -295,7 +297,7 @@ pre {
     .chat-history-label p {
         color: var(--iris-chat-history-label-color);
         font-size: 0.8rem;
-        margin: 0.5rem 0 0.2rem 0;
+        margin: 0.5rem 0 0.2rem;
         padding-left: 1rem;
     }
 
@@ -442,12 +444,15 @@ cdk-global-scrollblock {
     align-items: center;
     justify-content: start;
     background-color: transparent;
+
     &:hover {
         color: var(--primary);
     }
+
     &:focus {
         border-color: transparent;
     }
+
     transition: border-color 0.2s 0.3s + 0.2s * 2 ease-in-out;
 }
 

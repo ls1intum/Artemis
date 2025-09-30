@@ -11,3 +11,20 @@ export class Reaction {
     public post?: Post;
     public answerPost?: AnswerPost;
 }
+
+export class ReactionDTO {
+    emojiId?: string;
+    relatedPostId?: number;
+
+    constructor(emojiId?: string, relatedPostId?: number) {
+        this.emojiId = emojiId;
+        this.relatedPostId = relatedPostId;
+    }
+
+    /**
+     * Converts a Reaction to a minimal API payload.
+     */
+    static fromReaction(reaction: Reaction): ReactionDTO {
+        return new ReactionDTO(reaction.emojiId, reaction.post?.id ?? reaction.answerPost?.id);
+    }
+}

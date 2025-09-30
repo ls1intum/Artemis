@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 
 @Profile(PROFILE_BUILDAGENT)
 @Component
-@Lazy
+@Lazy(false)
 public class BuildLogsMap {
 
     @Value("${artemis.continuous-integration.build-logs.max-lines-per-job:10000}")
