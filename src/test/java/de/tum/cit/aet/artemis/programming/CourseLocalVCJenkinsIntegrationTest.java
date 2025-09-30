@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,11 +28,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     @BeforeEach
     void setup() {
         courseTestService.setup(TEST_PREFIX, this);
+        userUtilService.createAndSaveUser("ab12cde");
         jenkinsRequestMockProvider.enableMockingOfRequests();
     }
 
-    @AfterAll
-    static void resetClock() {
+    @AfterEach
+    void resetClock() {
         TimeUtil.resetClock();
     }
 
