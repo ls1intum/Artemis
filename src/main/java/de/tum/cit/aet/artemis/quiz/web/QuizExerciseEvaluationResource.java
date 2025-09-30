@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
 
 /**
- * REST controller for managing QuizExercise.
+ * REST controller for evaluating and re-evaluating quiz exercises.
  */
 @Profile(PROFILE_CORE)
 @Lazy

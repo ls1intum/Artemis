@@ -39,7 +39,8 @@ import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizMessagingService;
 
 /**
- * REST controller for managing QuizExercise.
+ * REST controller for handling quiz batches.
+ * Allows students to join a batch and tutors to create and start batches.
  */
 @Profile(PROFILE_CORE)
 @Lazy
