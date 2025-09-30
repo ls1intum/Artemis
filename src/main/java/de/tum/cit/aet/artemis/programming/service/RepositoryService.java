@@ -250,7 +250,7 @@ public class RepositoryService {
      * @throws IOException if an I/O error occurs
      */
     public Map<String, String> getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(LocalVCRepositoryUri repositoryUri, ZonedDateTime deadline) throws IOException {
-        try (var bareRepository = gitService.getBareRepository(repositoryUri, false)) {
+        try (Repository bareRepository = gitService.getBareRepository(repositoryUri, false)) {
             return getFilesContentFromBareRepositoryForLastCommitBeforeOrAt(bareRepository, deadline);
         }
     }
