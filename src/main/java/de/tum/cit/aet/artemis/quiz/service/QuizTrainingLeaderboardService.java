@@ -37,8 +37,6 @@ public class QuizTrainingLeaderboardService {
 
     private final QuizQuestionRepository quizQuestionRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final QuizQuestionProgressRepository quizQuestionProgressRepository;
 
     private static final int BRONZE_LEAGUE = 5;
@@ -59,7 +57,6 @@ public class QuizTrainingLeaderboardService {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.quizQuestionRepository = quizQuestionRepository;
-        this.authorizationCheckService = authorizationCheckService;
         this.quizQuestionProgressRepository = quizQuestionProgressRepository;
     }
 
@@ -71,26 +68,12 @@ public class QuizTrainingLeaderboardService {
      * @return a list of leaderboard entry DTOs
      */
     public List<LeaderboardEntryDTO> getLeaderboard(long userId, long courseId) {
-        User user = userRepository.findByIdElseThrow(userId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
         long totalQuestions = quizQuestionRepository.countOfQuizQuestionsAvailableForPractice(courseId);
-        int studentLeague;
-        if (authorizationCheckService.isStudentInCourse(course, user)) {
-            studentLeague = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).map(QuizTrainingLeaderboard::getLeague).orElse(BRONZE_LEAGUE);
-        }
-        else {
-            studentLeague = NO_LEAGUE;
-        }
-        int selectedLeague;
-        if (studentLeague == 0) {
-            selectedLeague = BRONZE_LEAGUE;
-        }
-        else {
-            selectedLeague = studentLeague;
-        }
+        int league;
+        league = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).map(QuizTrainingLeaderboard::getLeague).orElse(BRONZE_LEAGUE);
 
-        List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueAndCourseIdOrderByScoreDescUserAscId(selectedLeague, courseId);
-        return getLeaderboardEntryDTOS(leaderboardEntries, selectedLeague, totalQuestions);
+        List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueAndCourseIdOrderByScoreDescUserAscId(league, courseId);
+        return getLeaderboardEntryDTOS(leaderboardEntries, league, totalQuestions);
     }
 
     /**
@@ -111,6 +94,18 @@ public class QuizTrainingLeaderboardService {
         return leaderboard;
     }
 
+    /**
+     * Creates and saves a new leaderboard entry for the specified user and course.
+     *
+     * <p>
+     * Initializes a new QuizTrainingLeaderboard entry with default values (score, league, streak, etc.)
+     * and sets the visibility in the leaderboard according to the provided parameter.
+     * </p>
+     *
+     * @param userId             the ID of the user for whom the leaderboard entry is created
+     * @param courseId           the ID of the course for which the leaderboard entry is created
+     * @param shownInLeaderboard whether the user should be shown in the leaderboard
+     */
     public void setInitialLeaderboardEntry(long userId, long courseId, boolean shownInLeaderboard) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.findByIdElseThrow(userId);
@@ -148,6 +143,12 @@ public class QuizTrainingLeaderboardService {
         quizTrainingLeaderboardRepository.updateLeaderboardEntry(userId, courseId, score, correctAnswers, wrongAnswers, league, dueDate);
     }
 
+    /**
+     * Determines the league of a user based on their score.
+     *
+     * @param score the user's current score
+     * @return the league constant corresponding to the score
+     */
     public int calculateLeague(int score) {
         if (score < 100) {
             return BRONZE_LEAGUE;
