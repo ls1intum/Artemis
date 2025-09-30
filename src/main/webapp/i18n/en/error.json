@@ -132,7 +132,8 @@
         "missingAssociation": "The reaction must be associated with a post or an answer post.",
         "emojiIdMissing": "emojiId must be set.",
         "exampleSubmission": {
-            "submissionIdMissing": "Die Beispielabgabe muss mit einer Abgabe verknüpft sein (submissionId fehlt)."
+            "submissionIsNull": "Submission cannot be null",
+            "submissionIdMissing": "Submission ID must be persisted before conversion"
         }
     }
 }

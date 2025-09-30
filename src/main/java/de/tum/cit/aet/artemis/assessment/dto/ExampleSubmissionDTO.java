@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -17,10 +18,14 @@ public record ExampleSubmissionDTO(long id, boolean usedForTutorial, long submis
      * @return a DTO representation
      * @throws BadRequestAlertException if submission or submission id is missing
      */
-    public static ExampleSubmissionDTO of(ExampleSubmission exampleSubmission) {
-        if (exampleSubmission.getSubmission() == null || exampleSubmission.getSubmission().getId() == null) {
-            throw new BadRequestAlertException("SubmissionId is missing", "exampleSubmission", "exampleSubmission.submissionIdMissing");
+    public static ExampleSubmissionDTO of(@NotNull ExampleSubmission exampleSubmission) {
+        if (exampleSubmission.getSubmission() == null) {
+            throw new BadRequestAlertException("Submission cannot be null", "exampleSubmission", "exampleSubmission.submissionIsNull");
         }
+        if (exampleSubmission.getSubmission().getId() == null) {
+            throw new BadRequestAlertException("Submission ID must be persisted before conversion", "exampleSubmission", "exampleSubmission.submissionIdMissing");
+        }
+
         long submissionId = exampleSubmission.getSubmission().getId();
         return new ExampleSubmissionDTO(exampleSubmission.getId(), exampleSubmission.isUsedForTutorial(), submissionId, exampleSubmission.getAssessmentExplanation());
     }

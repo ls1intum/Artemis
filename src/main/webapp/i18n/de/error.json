@@ -132,7 +132,8 @@
         "missingAssociation": "Die Reaktion muss einem Beitrag oder einer Antwort zugeordnet sein.",
         "emojiIdMissing": "emojiId muss gesetzt sein.",
         "exampleSubmission": {
-            "submissionIdMissing": "Die Beispielabgabe muss mit einer Abgabe verknüpft sein (submissionId fehlt)."
+            "submissionIsNull": "Submission darf nicht null sein",
+            "submissionIdMissing": "Submission ID muss vor der Konvertierung persistent sein"
         }
     }
 }
