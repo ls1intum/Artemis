@@ -34,6 +34,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('Example Modeling Submission Component', () => {
@@ -245,7 +246,13 @@ describe('Example Modeling Submission Component', () => {
     it('should read and understood', () => {
         // GIVEN
         const tutorParticipationService = TestBed.inject(TutorParticipationService);
-        jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: {} })));
+        const dto: TutorParticipationDTO = {
+            id: 1,
+            exerciseId: comp.exerciseId,
+            tutorId: 3,
+            status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS,
+        };
+        jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: dto })));
         const alertSpy = jest.spyOn(alertService, 'success');
         const routerSpy = jest.spyOn(router, 'navigate');
         comp.exercise = exercise;
