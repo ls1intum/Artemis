@@ -6,6 +6,7 @@ import { ReEvaluateShortAnswerQuestionComponent } from 'app/quiz/manage/re-evalu
 import { ElementRef, signal } from '@angular/core';
 import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 
 describe('ReEvaluateShortAnswerQuestionComponent', () => {
     let fixture: ComponentFixture<ReEvaluateShortAnswerQuestionComponent>;
@@ -25,6 +26,8 @@ describe('ReEvaluateShortAnswerQuestionComponent', () => {
     });
 
     it('should initialize component', () => {
+        fixture.componentRef.setInput('question', new ShortAnswerQuestion());
+        fixture.componentRef.setInput('questionIndex', 1);
         fixture.detectChanges();
         expect(component).not.toBeNull();
     });
