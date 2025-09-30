@@ -111,8 +111,14 @@ describe('QuizQuestionListEditExistingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CommonModule, FormsModule],
-            declarations: [QuizQuestionListEditExistingComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
+            imports: [
+                CommonModule,
+                FormsModule,
+                QuizQuestionListEditExistingComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(ArtemisDatePipe),
+                MockDirective(TranslateDirective),
+            ],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -133,35 +139,42 @@ describe('QuizQuestionListEditExistingComponent', () => {
                 changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
                 modalService = fixture.debugElement.injector.get(NgbModal);
                 component = fixture.componentInstance;
-                fixture.detectChanges();
             });
     });
 
-    describe('ngOnChanges', () => {
-        it('should load exams when show is true', () => {
+    describe('effect behavior', () => {
+        it('should load courses and exams when show signal is true', () => {
             const exam = new Exam();
             const course = new Course();
             const getAllCoursesWithQuizExercisesSpy = jest
                 .spyOn(courseService, 'getAllCoursesWithQuizExercises')
                 .mockReturnValue(of(new HttpResponse<Course[]>({ body: [course] })));
             const findAllExamsAccessibleToUserSpy = jest.spyOn(examService, 'findAllExamsAccessibleToUser').mockReturnValue(of(new HttpResponse<Exam[]>({ body: [exam] })));
-            component.show = true;
-            component.ngOnChanges();
+
+            // Set the input signals
+            fixture.componentRef.setInput('show', true);
+            fixture.componentRef.setInput('courseId', 123);
+            fixture.detectChanges();
+
             expect(getAllCoursesWithQuizExercisesSpy).toHaveBeenCalledOnce();
-            expect(findAllExamsAccessibleToUserSpy).toHaveBeenCalledOnce();
+            expect(findAllExamsAccessibleToUserSpy).toHaveBeenCalledWith(123);
             expect(component.courses).toBeArrayOfSize(1);
             expect(component.courses[0]).toEqual(course);
             expect(component.exams).toBeArrayOfSize(1);
             expect(component.exams[0]).toEqual(exam);
         });
 
-        it('should not load exams when show is false', () => {
+        it('should not load courses and exams when show signal is false', () => {
             const getAllCoursesWithQuizExercisesSpy = jest.spyOn(courseService, 'getAllCoursesWithQuizExercises');
             const findAllExamsAccessibleToUserSpy = jest.spyOn(examService, 'findAllExamsAccessibleToUser');
-            component.show = false;
+
+            // Set the input signals
+            fixture.componentRef.setInput('show', false);
+            fixture.componentRef.setInput('courseId', 123);
             component.exams = [];
             component.courses = [];
-            component.ngOnChanges();
+            fixture.detectChanges();
+
             expect(getAllCoursesWithQuizExercisesSpy).not.toHaveBeenCalled();
             expect(findAllExamsAccessibleToUserSpy).not.toHaveBeenCalled();
             expect(component.courses).toBeArrayOfSize(0);
