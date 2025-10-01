@@ -48,7 +48,7 @@ def get_course_students(session: requests.Session) -> List[Dict[str, Any]]:
 
     if response.status_code != 200:
         raise Exception(f"Failed to get course students. Status code: {response.status_code}")
-        
+
     students = response.json()
     logging.info(f"Found {len(students)} students in course {COURSE_ID}")
     return students

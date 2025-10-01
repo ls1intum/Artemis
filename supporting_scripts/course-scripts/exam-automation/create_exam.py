@@ -74,7 +74,7 @@ def create_exam(session: requests.Session, course_id: int, title: str, short_nam
     }
 
     response: requests.Response = session.post(url, json=payload)
-    
+
     if response.status_code == 201:
         exam_data = response.json()
         logging.info(f"Created exam '{title}' with ID {exam_data.get('id')}")
