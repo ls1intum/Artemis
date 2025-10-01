@@ -53,7 +53,7 @@
 
     <div class="calendar-presentation-container">
         @if (presentation() === 'month') {
-            <jhi-calendar-desktop-month-presentation [firstDayOfCurrentMonth]="firstDateOfCurrentMonth()" />
+            <jhi-calendar-desktop-month-presentation [firstDateOfCurrentMonth]="firstDateOfCurrentMonth()" />
         } @else {
             <jhi-calendar-desktop-week-presentation [firstDayOfCurrentWeek]="firstDateOfCurrentWeek()" />
         }

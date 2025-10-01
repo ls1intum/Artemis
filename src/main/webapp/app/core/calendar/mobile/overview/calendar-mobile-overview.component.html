@@ -49,7 +49,7 @@
         @if (day) {
             <jhi-calendar-mobile-day-presentation [date]="day" />
         } @else {
-            <jhi-calendar-mobile-month-presentation [firstDateOfMonth]="firstDateOfCurrentMonth()" (selectDate)="selectDate($event)" />
+            <jhi-calendar-mobile-month-presentation [firstDateOfCurrentMonth]="firstDateOfCurrentMonth()" (selectDate)="selectDate($event)" />
         }
         @if (isLoading()) {
             <div class="loading-overlay">
