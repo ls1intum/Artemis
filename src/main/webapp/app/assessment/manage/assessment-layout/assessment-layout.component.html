@@ -26,10 +26,16 @@
     [complaintHandled]="!!complaint ? complaint.accepted !== undefined : false"
     [complaintType]="complaint?.complaintType"
     (useAsExampleSubmission)="useAsExampleSubmission.emit()"
+    [hasUnassessedSubmissions]="hasUnassessedSubmissions"
 />
+
 <jhi-assessment-complaint-alert [complaint]="complaint" />
 <ng-content />
-<jhi-assessment-note [assessmentNote]="result?.assessmentNote" (onAssessmentNoteChange)="setAssessmentNoteForResult($event)" />
+
+@if (submission && hasUnassessedSubmissions) {
+    <jhi-assessment-note [assessmentNote]="result?.assessmentNote" (onAssessmentNoteChange)="setAssessmentNoteForResult($event)" />
+}
+
 @if (complaint) {
     <jhi-complaints-for-tutor-form
         class="row mt-4"
