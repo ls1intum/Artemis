@@ -123,27 +123,25 @@ export class AssessmentLayoutComponent implements OnChanges, OnDestroy {
                 map((stats: StatsForDashboard | null) => {
                     if (!stats) return false;
 
-                    // Backend sends submissions split into “inTime” and “late”
-                    const submitted = (stats as any).numberOfSubmissions?.inTime + (stats as any).numberOfSubmissions?.late || 0;
+                    const toNum = (x?: { inTime?: number; late?: number; total?: number } | null) => x?.total ?? (x?.inTime ?? 0) + (x?.late ?? 0);
 
-                    // Assessments are given per correction round
+                    const submitted = toNum(stats.numberOfSubmissions);
                     let assessed = 0;
-                    const rounds = (stats as any).numberOfAssessmentsOfCorrectionRounds as Array<{ inTime?: number; late?: number }> | undefined;
-                    if (rounds && Number.isInteger(this.correctionRound) && rounds[this.correctionRound!]) {
-                        assessed = (rounds[this.correctionRound!].inTime ?? 0) + (rounds[this.correctionRound!].late ?? 0);
+
+                    const rounds = stats.numberOfAssessmentsOfCorrectionRounds as Array<{ inTime?: number; late?: number; total?: number }> | undefined;
+
+                    if (Array.isArray(rounds) && Number.isInteger(this.correctionRound) && rounds[this.correctionRound!]) {
+                        assessed = toNum(rounds[this.correctionRound!]);
                     } else {
-                        // Fallback if correctionRound not provided: total across all rounds
-                        assessed = (stats as any).totalNumberOfAssessments ?? 0;
+                        assessed = toNum(stats.totalNumberOfAssessments); // <-- numeric now
                     }
 
-                    const locked = (stats as any).totalNumberOfAssessmentLocks ?? 0;
-
+                    const locked = stats.totalNumberOfAssessmentLocks ?? 0;
                     const remaining = Math.max(0, submitted - assessed - locked);
 
-                    // true if there’s at least one submission left to assess
                     return remaining > 0;
                 }),
-                catchError(() => of(false)), // On error, fall back to “no submissions left”
+                catchError(() => of(false)),
             )
             .subscribe((v: boolean) => (this.hasUnassessedSubmissions = v));
     }

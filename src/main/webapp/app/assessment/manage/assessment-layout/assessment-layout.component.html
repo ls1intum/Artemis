@@ -32,7 +32,7 @@
 <jhi-assessment-complaint-alert [complaint]="complaint" />
 <ng-content />
 
-@if (submission && hasUnassessedSubmissions) {
+@if (submission) {
     <jhi-assessment-note [assessmentNote]="result?.assessmentNote" (onAssessmentNoteChange)="setAssessmentNoteForResult($event)" />
 }
 

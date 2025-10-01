@@ -151,8 +151,8 @@ describe('AssessmentLayoutComponent', () => {
         expect(component.hasUnassessedSubmissions).toBeFalse();
     });
 
-    it('guards AssessmentNote visibility by submission && hasUnassessedSubmissions', () => {
-        // case 1: note visible
+    it('shows AssessmentNote whenever a submission is loaded, regardless of remaining queue', () => {
+        // case 1: remaining > 0
         let body = {
             numberOfSubmissions: due(2, 0),
             numberOfAssessmentsOfCorrectionRounds: [due(0, 0)],
@@ -169,7 +169,7 @@ describe('AssessmentLayoutComponent', () => {
         let note = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
         expect(note).toBeTruthy();
 
-        // case 2: all assessed → note disappears
+        // case 2: all assessed → note still visible (because submission exists)
         body = {
             numberOfSubmissions: due(1, 0),
             numberOfAssessmentsOfCorrectionRounds: [due(1, 0)],
@@ -183,6 +183,6 @@ describe('AssessmentLayoutComponent', () => {
         fixture.detectChanges();
 
         note = fixture.debugElement.query(By.directive(AssessmentNoteComponent));
-        expect(note).toBeFalsy();
+        expect(note).toBeTruthy();
     });
 });
