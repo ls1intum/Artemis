@@ -4,13 +4,13 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 import { toSignal } from '@angular/core/rxjs-interop';
 import { EMPTY } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { LeaderboardService } from 'app/core/course/overview/course-training/leaderboard/service/leaderboard-service.spec';
+import { LeaderboardService } from 'app/quiz/overview/course-training-quiz/leaderboard/service/leaderboard-service.spec';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { LeaderboardEntry } from 'app/core/course/overview/course-training/leaderboard/leaderboard-types';
-import { LeagueSilverIconComponent } from 'app/core/course/overview/course-training/leaderboard/league/silver-icon.component';
-import { LeagueBronzeIconComponent } from 'app/core/course/overview/course-training/leaderboard/league/bronze-icon.component';
-import { LeagueGoldIconComponent } from 'app/core/course/overview/course-training/leaderboard/league/gold-icon.component';
-import { Leaderboard } from 'app/core/course/overview/course-training/leaderboard/leaderboard.component';
+import { LeaderboardEntry } from 'app/quiz/overview/course-training-quiz/leaderboard/leaderboard-types';
+import { LeagueSilverIconComponent } from 'app/quiz/overview/course-training-quiz/leaderboard/league/silver-icon.component';
+import { LeagueBronzeIconComponent } from 'app/quiz/overview/course-training-quiz/leaderboard/league/bronze-icon.component';
+import { LeagueGoldIconComponent } from 'app/quiz/overview/course-training-quiz/leaderboard/league/gold-icon.component';
+import { Leaderboard } from 'app/quiz/overview/course-training-quiz/leaderboard/leaderboard.component';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
