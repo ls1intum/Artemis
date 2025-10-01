@@ -43,7 +43,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
 
     @BeforeEach
     void setUp() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
     }
 
     private QuizTrainingLeaderboard getQuizTrainingLeaderboard(Course course, User user) {
@@ -54,7 +54,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
         quizTrainingLeaderboard.setLeague(5);
         quizTrainingLeaderboard.setAnsweredCorrectly(10);
         quizTrainingLeaderboard.setAnsweredWrong(10);
-        quizTrainingLeaderboard.setDueDate(ZonedDateTime.now());
+        quizTrainingLeaderboard.setDueDate(ZonedDateTime.now().truncatedTo(ChronoUnit.MINUTES));
         quizTrainingLeaderboard.setStreak(0);
         quizTrainingLeaderboard.setShowInLeaderboard(true);
         return quizTrainingLeaderboard;
@@ -82,18 +82,32 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetLeaderboardEntry() throws Exception {
+    void testGetLeaderboardEntries() throws Exception {
         User user = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
+        User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
+        User user3 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student3");
         Course course = courseUtilService.createCourse();
         userTestRepository.save(user);
+        userTestRepository.save(user2);
+        userTestRepository.save(user3);
         courseTestRepository.save(course);
         QuizTrainingLeaderboard quizTrainingLeaderboard = getQuizTrainingLeaderboard(course, user);
+        QuizTrainingLeaderboard quizTrainingLeaderboard2 = getQuizTrainingLeaderboard(course, user2);
+        QuizTrainingLeaderboard quizTrainingLeaderboard3 = getQuizTrainingLeaderboard(course, user3);
+        quizTrainingLeaderboard2.setScore(50);
+        quizTrainingLeaderboard3.setShowInLeaderboard(false);
         quizTrainingLeaderboardRepository.save(quizTrainingLeaderboard);
+        quizTrainingLeaderboardRepository.save(quizTrainingLeaderboard2);
+        quizTrainingLeaderboardRepository.save(quizTrainingLeaderboard3);
+        LeaderboardEntryDTO testEntry1 = LeaderboardEntryDTO.of(quizTrainingLeaderboard, 2, 5, 10);
+        LeaderboardEntryDTO testEntry2 = LeaderboardEntryDTO.of(quizTrainingLeaderboard2, 1, 5, 10);
+        List<LeaderboardEntryDTO> testList = List.of(testEntry2, testEntry1);
         List<LeaderboardEntryDTO> leaderboardEntryDTO = request.getList("/api/quiz/courses/" + course.getId() + "/training/leaderboard", OK, LeaderboardEntryDTO.class);
-        assertThat(leaderboardEntryDTO.size()).isEqualTo(1);
+        assertThat(leaderboardEntryDTO.size()).isEqualTo(2);
+        assertThat(leaderboardEntryDTO.equals(testList));
         assertThat(leaderboardEntryDTO.getFirst().answeredCorrectly()).isEqualTo(10);
         assertThat(leaderboardEntryDTO.getFirst().answeredWrong()).isEqualTo(10);
-        assertThat(leaderboardEntryDTO.getFirst().score()).isEqualTo(10);
+        assertThat(leaderboardEntryDTO.getFirst().score()).isEqualTo(50);
         assertThat(leaderboardEntryDTO.getFirst().rank()).isEqualTo(1);
     }
 

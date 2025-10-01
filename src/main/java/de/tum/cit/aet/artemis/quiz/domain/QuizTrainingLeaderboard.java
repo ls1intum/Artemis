@@ -7,6 +7,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PositiveOrZero;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -29,10 +32,13 @@ public class QuizTrainingLeaderboard extends DomainObject {
 
     // The league the student is in (1-5)
     @Column(nullable = false, name = "league")
+    @Min(1)
+    @Max(5)
     private int league;
 
     // The leaderboard score of the student
     @Column(nullable = false, name = "score")
+    @PositiveOrZero
     private int score;
 
     // The number of questions the student answered correctly in total

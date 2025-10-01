@@ -25,11 +25,21 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizTrainingLeaderboard;
 public interface QuizTrainingLeaderboardRepository extends ArtemisJpaRepository<QuizTrainingLeaderboard, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = "user")
-    List<QuizTrainingLeaderboard> findByLeagueAndCourseIdOrderByScoreDescUserAscId(int leagueId, long courseId);
+    List<QuizTrainingLeaderboard> findByLeagueAndCourseIdAndShowInLeaderboardTrueOrderByScoreDescUserAscId(int leagueId, long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = "user")
     Optional<QuizTrainingLeaderboard> findByUserIdAndCourseId(long userId, long courseId);
 
+    /*
+     * We use a custom query here to perform an atomic update of the leaderboard entry.
+     * The leagues are determined based on the score after applying the scoreDelta.
+     * Each league corresponds to a score range:
+     * - Bronze (5): 0-99
+     * - Silver (4): 100-199
+     * - Gold (3): 200-299
+     * - Diamond (2): 300-399
+     * - Master (1): 400 and above
+     */
     @Transactional
     @Modifying
     @Query("""

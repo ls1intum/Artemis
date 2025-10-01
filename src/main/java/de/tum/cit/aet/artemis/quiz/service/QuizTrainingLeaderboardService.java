@@ -57,11 +57,12 @@ public class QuizTrainingLeaderboardService {
      * @return a list of leaderboard entry DTOs
      */
     public List<LeaderboardEntryDTO> getLeaderboard(long userId, long courseId) {
-        long totalQuestions = quizQuestionRepository.countOfQuizQuestionsAvailableForPractice(courseId);
+        long totalQuestions = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(courseId);
         int league;
         league = quizTrainingLeaderboardRepository.findByUserIdAndCourseId(userId, courseId).map(QuizTrainingLeaderboard::getLeague).orElse(BRONZE_LEAGUE);
 
-        List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueAndCourseIdOrderByScoreDescUserAscId(league, courseId);
+        List<QuizTrainingLeaderboard> leaderboardEntries = quizTrainingLeaderboardRepository.findByLeagueAndCourseIdAndShowInLeaderboardTrueOrderByScoreDescUserAscId(league,
+                courseId);
         return getLeaderboardEntryDTOS(leaderboardEntries, league, totalQuestions);
     }
 
@@ -69,16 +70,15 @@ public class QuizTrainingLeaderboardService {
      * Converts a list of leaderboard entities to DTOs, including rank and league information.
      *
      * @param leaderboardEntries the list of leaderboard entities
-     * @param selectedLeague     the league ID to use for the entries
+     * @param league             the league ID to use for the entries
+     * @param totalQuestions     the number of total questions available for practice
      * @return a list of leaderboard entry DTOs
      */
-    private static List<LeaderboardEntryDTO> getLeaderboardEntryDTOS(List<QuizTrainingLeaderboard> leaderboardEntries, int selectedLeague, long totalQuestions) {
+    private static List<LeaderboardEntryDTO> getLeaderboardEntryDTOS(List<QuizTrainingLeaderboard> leaderboardEntries, int league, long totalQuestions) {
         List<LeaderboardEntryDTO> leaderboard = new ArrayList<>();
         int rank = 1;
         for (QuizTrainingLeaderboard leaderboardEntry : leaderboardEntries) {
-            leaderboard.add(new LeaderboardEntryDTO(rank++, selectedLeague, leaderboardEntry.getUser().getId(), leaderboardEntry.getUser().getName(),
-                    leaderboardEntry.getUser().getImageUrl(), leaderboardEntry.getScore(), leaderboardEntry.getAnsweredCorrectly(), leaderboardEntry.getAnsweredWrong(),
-                    totalQuestions, leaderboardEntry.getDueDate(), leaderboardEntry.getStreak()));
+            leaderboard.add(LeaderboardEntryDTO.of(leaderboardEntry, rank++, league, totalQuestions));
         }
         return leaderboard;
     }
