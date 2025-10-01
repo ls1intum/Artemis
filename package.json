@@ -99,8 +99,7 @@
         "webpack-dev-server": "5.2.2",
         "word-wrap": "1.2.5",
         "ws": "8.18.3",
-        "yargs-parser": "22.0.0",
-        "@primeuix/styled": "0.7.2"
+        "yargs-parser": "22.0.0"
     },
     "devDependencies": {
         "@angular-builders/jest": "20.0.0",
