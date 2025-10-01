@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchCreationDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.create.QuizQuestionCreateDTO;
 
@@ -31,7 +32,7 @@ public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releas
      * Creates a {@link QuizExerciseCreateDTO} from the given {@link QuizExercise} domain object.
      * <p>
      * Maps the domain object's properties to the corresponding DTO fields, handling null-safe
-     * collections for competency links and categories. Transforms the list of {@link de.tum.cit.aet.artemis.quiz.domain.QuizQuestion}
+     * collections for competency links and categories. Transforms the list of {@link QuizQuestion}
      * into a list of {@link QuizQuestionCreateDTO} objects by invoking their respective {@code of} methods.
      *
      * @param quizExercise the {@link QuizExercise} domain object to convert
@@ -51,7 +52,7 @@ public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releas
      * <p>
      * Maps the DTO properties to the corresponding fields in the domain object, handling null-safe
      * collections for competency links and categories. Transforms the list of {@link QuizQuestionCreateDTO}
-     * into a list of {@link de.tum.cit.aet.artemis.quiz.domain.QuizQuestion} objects by invoking their
+     * into a list of {@link QuizQuestion} objects by invoking their
      * respective {@code toDomainObject} methods.
      *
      * @return the {@link QuizExercise} domain object with properties and quiz questions set from this DTO

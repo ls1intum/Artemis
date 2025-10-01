@@ -42,11 +42,14 @@ export class QuizExerciseService {
             formData.append('files', file, fileName);
         });
 
+        const hasExerciseGroup = quizExercise.exerciseGroup?.id;
+        const hasCourse = quizExercise.course?.id;
+
         let url: string;
-        if (quizExercise.exerciseGroup && quizExercise.exerciseGroup.id) {
-            url = `${this.quizBaseURL}/exercise-groups/${quizExercise.exerciseGroup.id}/quiz-exercises`;
-        } else if (quizExercise.course && quizExercise.course.id) {
-            url = `${this.quizBaseURL}/courses/${quizExercise.course.id}/quiz-exercises`;
+        if (hasExerciseGroup) {
+            url = `${this.quizBaseURL}/exercise-groups/${quizExercise.exerciseGroup!.id}/quiz-exercises`;
+        } else if (hasCourse) {
+            url = `${this.quizBaseURL}/courses/${quizExercise.course!.id}/quiz-exercises`;
         } else {
             throw new Error('Quiz exercise must belong to a course or an exercise group');
         }

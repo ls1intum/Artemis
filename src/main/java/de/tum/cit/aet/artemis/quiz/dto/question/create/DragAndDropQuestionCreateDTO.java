@@ -9,7 +9,10 @@ import jakarta.validation.constraints.Positive;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.DragItem;
+import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -22,8 +25,8 @@ public record DragAndDropQuestionCreateDTO(@NotEmpty String title, String text, 
      * <p>
      * Maps the DTO properties to the corresponding fields in the domain object and transforms the lists
      * of {@link DropLocationCreateDTO}, {@link DragItemCreateDTO}, and {@link DragAndDropMappingCreateDTO}
-     * into lists of {@link de.tum.cit.aet.artemis.quiz.domain.DropLocation}, {@link de.tum.cit.aet.artemis.quiz.domain.DragItem},
-     * and {@link de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping} objects by invoking their respective
+     * into lists of {@link DropLocation}, {@link DragItem},
+     * and {@link DragAndDropMapping} objects by invoking their respective
      * {@code toDomainObject} methods.
      *
      * @return the {@link DragAndDropQuestion} domain object with properties and child entities set from this DTO
@@ -39,9 +42,9 @@ public record DragAndDropQuestionCreateDTO(@NotEmpty String title, String text, 
         dragAndDropQuestion.setRandomizeOrder(randomizeOrder != null ? randomizeOrder : Boolean.FALSE);
         dragAndDropQuestion.setBackgroundFilePath(backgroundFilePath);
 
-        List<de.tum.cit.aet.artemis.quiz.domain.DropLocation> locations = dropLocations.stream().map(DropLocationCreateDTO::toDomainObject).toList();
-        List<de.tum.cit.aet.artemis.quiz.domain.DragItem> items = dragItems.stream().map(DragItemCreateDTO::toDomainObject).toList();
-        List<de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping> mappings = correctMappings.stream().map(DragAndDropMappingCreateDTO::toDomainObject).toList();
+        List<DropLocation> locations = dropLocations.stream().map(DropLocationCreateDTO::toDomainObject).toList();
+        List<DragItem> items = dragItems.stream().map(DragItemCreateDTO::toDomainObject).toList();
+        List<DragAndDropMapping> mappings = correctMappings.stream().map(DragAndDropMappingCreateDTO::toDomainObject).toList();
         dragAndDropQuestion.setDropLocations(locations);
         dragAndDropQuestion.setDragItems(items);
         dragAndDropQuestion.setCorrectMappings(mappings);
@@ -52,8 +55,8 @@ public record DragAndDropQuestionCreateDTO(@NotEmpty String title, String text, 
      * Creates a {@link DragAndDropQuestionCreateDTO} from the given {@link DragAndDropQuestion} domain object.
      * <p>
      * Maps the domain object's properties to the corresponding DTO fields and transforms the lists
-     * of {@link de.tum.cit.aet.artemis.quiz.domain.DropLocation}, {@link de.tum.cit.aet.artemis.quiz.domain.DragItem},
-     * and {@link de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping} into lists of {@link DropLocationCreateDTO},
+     * of {@link DropLocation}, {@link DragItem},
+     * and {@link DragAndDropMapping} into lists of {@link DropLocationCreateDTO},
      * {@link DragItemCreateDTO}, and {@link DragAndDropMappingCreateDTO} by invoking their respective {@code of} methods.
      *
      * @param question the {@link DragAndDropQuestion} domain object to convert
