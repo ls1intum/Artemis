@@ -25,11 +25,12 @@ type OptionAndMetadata = { option: CalendarEventFilterOption; nameKey: string; i
 })
 export class CalendarEventFilterComponent {
     private calendarService = inject(CalendarService);
+    private filterOptionNameKeyMap: Record<CalendarEventFilterOption, string> = this.buildFilterOptionNameKeyMap();
 
     variant = input.required<CalendarEventFilterComponentVariant>();
     includedOptionsAndMetadata = computed<IncludedOptionAndMetadata[]>(() => {
         const includedOptions = this.calendarService.includedEventFilterOptions();
-        return includedOptions.map((option) => ({ option: option, nameKey: utils.getFilterOptionNameKey(option), colorClassName: this.getColorClassFor(option) }));
+        return includedOptions.map((option) => ({ option: option, nameKey: this.filterOptionNameKeyMap[option], colorClassName: this.getColorClassFor(option) }));
     });
     optionsAndMetadata = computed<OptionAndMetadata[]>(() => {
         const includedOptions = this.calendarService.includedEventFilterOptions();
@@ -59,5 +60,14 @@ export class CalendarEventFilterComponent {
         } else {
             return 'exercise-chip';
         }
+    }
+
+    private buildFilterOptionNameKeyMap(): Record<CalendarEventFilterOption, string> {
+        return {
+            exerciseEvents: 'artemisApp.calendar.filterOption.exercises',
+            lectureEvents: 'artemisApp.calendar.filterOption.lectures',
+            tutorialEvents: 'artemisApp.calendar.filterOption.tutorials',
+            examEvents: 'artemisApp.calendar.filterOption.exams',
+        };
     }
 }

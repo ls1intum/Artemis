@@ -39,7 +39,7 @@ export class CalendarMonthPresentationComponent {
                     };
                 });
                 const firstTwoEventsAndMetadata = eventsAndMetadata.slice(0, 2);
-                const isInDisplayedMonth = utils.areDatesInSameMonth(date, monthStart);
+                const isInDisplayedMonth = date.month() === monthStart.month();
                 days.push({ date, eventsAndMetadata, firstTwoEventsAndMetadata, isInDisplayedMonth, id });
                 date = date.add(1, 'day');
             }
