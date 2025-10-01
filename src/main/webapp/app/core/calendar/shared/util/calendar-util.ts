@@ -34,10 +34,6 @@ export function getTimeString(timestamp: Dayjs): string {
     return timestamp.format('HH:mm');
 }
 
-export function limitToLengthTwo(events: CalendarEvent[]): CalendarEvent[] {
-    return events.slice(0, 2);
-}
-
 export function range(n: number): number[] {
     return Array.from({ length: n }, (_, i) => i);
 }

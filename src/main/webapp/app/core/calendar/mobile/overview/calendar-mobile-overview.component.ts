@@ -1,17 +1,20 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Component, OnInit, Signal, computed, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 import { finalize } from 'rxjs/operators';
 import { ActivatedRoute } from '@angular/router';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarMobileMonthPresentationComponent } from 'app/core/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { CalendarMobileDayPresentationComponent } from 'app/core/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-calendar-mobile-overview',
@@ -26,10 +29,11 @@ import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/c
     templateUrl: './calendar-mobile-overview.component.html',
     styleUrl: './calendar-mobile-overview.component.scss',
 })
-export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
+export class CalendarMobileOverviewComponent implements OnInit {
+    private translateService = inject(TranslateService);
     private calendarService = inject(CalendarService);
     private activatedRoute = inject(ActivatedRoute);
-    private activatedRouteSubscription?: Subscription;
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
     readonly faXmark = faXmark;
@@ -41,22 +45,19 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
     weekdayNameKeys = utils.getWeekDayNameKeys();
     isLoading = signal<boolean>(false);
     calendarSubscriptionToken = this.calendarService.subscriptionToken;
-    currentCourseId = signal<number | undefined>(undefined);
+    currentCourseId: Signal<number | undefined> = this.getCurrentCourseIdSignal();
+    monthDescription = computed<string>(() => this.firstDateOfCurrentMonth().locale(this.currentLocale()).format('MMMM YYYY'));
 
-    ngOnInit(): void {
-        this.activatedRouteSubscription = this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
-            const courseIdParameter = parameterMap.get('courseId');
-            if (courseIdParameter) {
-                this.currentCourseId.set(+courseIdParameter);
+    constructor() {
+        effect(() => {
+            if (this.currentCourseId() !== undefined) {
                 this.loadEventsForCurrentMonth();
             }
         });
-
-        this.calendarService.loadSubscriptionToken().subscribe();
     }
 
-    ngOnDestroy() {
-        this.activatedRouteSubscription?.unsubscribe();
+    ngOnInit(): void {
+        this.calendarService.loadSubscriptionToken().subscribe();
     }
 
     selectDate(date: Dayjs): void {
@@ -100,6 +101,19 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
             this.firstDateOfCurrentMonth.set(today.startOf('month'));
         }
         this.loadEventsForCurrentMonth();
+    }
+
+    private getCurrentCourseIdSignal(): Signal<number | undefined> {
+        return toSignal(
+            this.activatedRoute.parent!.paramMap.pipe(
+                map((parameterMap) => {
+                    const courseIdParameter = parameterMap.get('courseId');
+                    return courseIdParameter !== null ? Number(courseIdParameter) : undefined;
+                }),
+                distinctUntilChanged(),
+            ),
+            { initialValue: undefined },
+        );
     }
 
     private loadEventsForCurrentMonth(): void {

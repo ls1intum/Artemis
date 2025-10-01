@@ -16,6 +16,7 @@ import { CalendarDesktopWeekPresentationComponent } from 'app/core/calendar/desk
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { CalendarEventFilterComponent, CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
 import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 
 type Presentation = 'week' | 'month';
 
@@ -37,7 +38,7 @@ export class CalendarDesktopOverviewComponent implements OnInit {
     private calendarService = inject(CalendarService);
     private translateService = inject(TranslateService);
     private activatedRoute = inject(ActivatedRoute);
-    private currentLocale = this.getCurrentLocaleSignal();
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
     readonly faChevronRight = faChevronRight;
@@ -97,12 +98,6 @@ export class CalendarDesktopOverviewComponent implements OnInit {
         this.firstDayOfCurrentMonth.set(dayjs().startOf('month'));
         this.firstDayOfCurrentWeek.set(dayjs().startOf('isoWeek'));
         this.loadEventsForCurrentMonth();
-    }
-
-    private getCurrentLocaleSignal(): Signal<string> {
-        return toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)), {
-            initialValue: this.translateService.currentLang,
-        });
     }
 
     private getCurrentCourseIdSignal(): Signal<number | undefined> {
