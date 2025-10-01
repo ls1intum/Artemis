@@ -8,9 +8,9 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 @Component({
     selector: 'jhi-calendar-overview',
     imports: [CalendarDesktopOverviewComponent, CalendarMobileOverviewComponent],
-    templateUrl: './calendar-overview.component.html',
+    templateUrl: './calendar-container.component.html',
 })
-export class CalendarOverviewComponent {
+export class CalendarContainerComponent {
     private breakpointObserver = inject(BreakpointObserver);
 
     readonly isMobile = toSignal(this.breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), { initialValue: false });

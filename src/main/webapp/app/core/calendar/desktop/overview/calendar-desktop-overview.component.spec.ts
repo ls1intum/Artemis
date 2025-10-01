@@ -67,7 +67,7 @@ describe('CalendarDesktopOverviewComponent', () => {
     });
 
     it('should update weeks and months correctly', () => {
-        const initialFirstDayOfCurrentMonth = component.firstDayOfCurrentMonth();
+        const initialFirstDayOfCurrentMonth = component.firstDateOfCurrentMonth();
 
         const previousButton = fixture.debugElement.query(By.css('#previous-button')).nativeElement;
         const nextButton = fixture.debugElement.query(By.css('#next-button')).nativeElement;
@@ -84,8 +84,8 @@ describe('CalendarDesktopOverviewComponent', () => {
 
         previousButton.click();
         fixture.detectChanges();
-        let firstDayOfCurrentMonth = component.firstDayOfCurrentMonth();
-        let firstDayOfCurrentWeek = component.firstDayOfCurrentWeek();
+        let firstDayOfCurrentMonth = component.firstDateOfCurrentMonth();
+        let firstDayOfCurrentWeek = component.firstDateOfCurrentWeek();
         let expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth.subtract(1, 'month');
         let expectedFirstDayOfCurrentWeek = firstDayOfCurrentMonth.startOf('isoWeek');
         expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBeTrue();
@@ -93,8 +93,8 @@ describe('CalendarDesktopOverviewComponent', () => {
 
         nextButton.click();
         fixture.detectChanges();
-        firstDayOfCurrentMonth = component.firstDayOfCurrentMonth();
-        firstDayOfCurrentWeek = component.firstDayOfCurrentWeek();
+        firstDayOfCurrentMonth = component.firstDateOfCurrentMonth();
+        firstDayOfCurrentWeek = component.firstDateOfCurrentWeek();
         expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth;
         expectedFirstDayOfCurrentWeek = initialFirstDayOfCurrentMonth.startOf('isoWeek');
         expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBeTrue();
@@ -108,8 +108,8 @@ describe('CalendarDesktopOverviewComponent', () => {
 
         nextButton.click();
         fixture.detectChanges();
-        firstDayOfCurrentMonth = component.firstDayOfCurrentMonth();
-        firstDayOfCurrentWeek = component.firstDayOfCurrentWeek();
+        firstDayOfCurrentMonth = component.firstDateOfCurrentMonth();
+        firstDayOfCurrentWeek = component.firstDateOfCurrentWeek();
         expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth;
         expectedFirstDayOfCurrentWeek = initialFirstDayOfCurrentMonth.startOf('isoWeek').add(1, 'week');
         expect(firstDayOfCurrentMonth.isSame(expectedFirstDayOfCurrentMonth, 'day')).toBeTrue();
@@ -117,8 +117,8 @@ describe('CalendarDesktopOverviewComponent', () => {
 
         previousButton.click();
         fixture.detectChanges();
-        firstDayOfCurrentMonth = component.firstDayOfCurrentMonth();
-        firstDayOfCurrentWeek = component.firstDayOfCurrentWeek();
+        firstDayOfCurrentMonth = component.firstDateOfCurrentMonth();
+        firstDayOfCurrentWeek = component.firstDateOfCurrentWeek();
         expectedFirstDayOfCurrentMonth = initialFirstDayOfCurrentMonth.startOf('isoWeek').isBefore(initialFirstDayOfCurrentMonth)
             ? initialFirstDayOfCurrentMonth.subtract(1, 'month')
             : initialFirstDayOfCurrentMonth;
@@ -147,8 +147,8 @@ describe('CalendarDesktopOverviewComponent', () => {
         const expectedMonth = today.startOf('month');
         const expectedWeek = today.startOf('isoWeek');
 
-        const actualMonth = component.firstDayOfCurrentMonth();
-        const actualWeek = component.firstDayOfCurrentWeek();
+        const actualMonth = component.firstDateOfCurrentMonth();
+        const actualWeek = component.firstDateOfCurrentWeek();
 
         expect(actualMonth.isSame(expectedMonth, 'day')).toBeTrue();
         expect(actualWeek.isSame(expectedWeek, 'day')).toBeTrue();
@@ -157,8 +157,8 @@ describe('CalendarDesktopOverviewComponent', () => {
     it('should display correct month description', () => {
         const october = dayjs('2025-10-01');
 
-        component.firstDayOfCurrentMonth.set(october.startOf('month'));
-        component.firstDayOfCurrentWeek.set(october.startOf('isoWeek'));
+        component.firstDateOfCurrentMonth.set(october.startOf('month'));
+        component.firstDateOfCurrentWeek.set(october.startOf('isoWeek'));
         component.presentation.set('month');
         fixture.detectChanges();
 

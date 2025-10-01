@@ -3,9 +3,9 @@
         <span class="h3">{{ monthDescription() }}</span>
         <div class="spacer"></div>
         <jhi-calendar-event-filter [variant]="CalendarEventFilterComponentVariant.DESKTOP" />
-        @let courseId = currentCourseId();
+        @let currentCourseId = courseId();
         @let subscriptionToken = calendarSubscriptionToken();
-        @if (courseId && subscriptionToken) {
+        @if (currentCourseId && subscriptionToken) {
             <div>
                 <button
                     data-testid="subscribe-button"
@@ -14,7 +14,7 @@
                     (click)="subscriptionPopover.open($event)"
                     jhiTranslate="artemisApp.calendar.subscribeButtonLabel"
                 ></button>
-                <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="courseId" #subscriptionPopover />
+                <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="currentCourseId" #subscriptionPopover />
             </div>
         }
         <button id="today-button" type="button" class="btn btn-outline-primary" (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
@@ -53,9 +53,9 @@
 
     <div class="calendar-presentation-container">
         @if (presentation() === 'month') {
-            <jhi-calendar-desktop-month-presentation [firstDayOfCurrentMonth]="firstDayOfCurrentMonth()" />
+            <jhi-calendar-desktop-month-presentation [firstDayOfCurrentMonth]="firstDateOfCurrentMonth()" />
         } @else {
-            <jhi-calendar-desktop-week-presentation [firstDayOfCurrentWeek]="firstDayOfCurrentWeek()" />
+            <jhi-calendar-desktop-week-presentation [firstDayOfCurrentWeek]="firstDateOfCurrentWeek()" />
         }
         @if (isLoading()) {
             <div class="loading-overlay">

@@ -1,0 +1,71 @@
+import { Directive, OnInit, Signal, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { distinctUntilChanged, finalize, map } from 'rxjs/operators';
+import { Dayjs } from 'dayjs/esm';
+import { TranslateService } from '@ngx-translate/core';
+import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { ActivatedRoute } from '@angular/router';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { CalendarEventFilterComponentVariant } from 'app/core/calendar/shared/calendar-event-filter/calendar-event-filter.component';
+
+@Directive()
+export abstract class CalendarOverviewComponent implements OnInit {
+    private calendarService = inject(CalendarService);
+    private translateService = inject(TranslateService);
+    private activatedRoute = inject(ActivatedRoute);
+
+    protected readonly CalendarEventFilterComponentVariant = CalendarEventFilterComponentVariant;
+    protected readonly faChevronRight = faChevronRight;
+    protected readonly faChevronLeft = faChevronLeft;
+
+    protected locale = getCurrentLocaleSignal(this.translateService);
+
+    abstract firstDateOfCurrentMonth: Signal<Dayjs>;
+    abstract monthDescription: Signal<string>;
+
+    calendarSubscriptionToken = this.calendarService.subscriptionToken;
+    courseId: Signal<number | undefined> = this.getCurrentCourseIdSignal();
+    isLoading = signal<boolean>(false);
+
+    constructor() {
+        effect(() => {
+            if (this.courseId() !== undefined) {
+                this.loadEventsForCurrentMonth();
+            }
+        });
+    }
+
+    ngOnInit(): void {
+        this.calendarService.loadSubscriptionToken().subscribe();
+    }
+
+    abstract goToPrevious(): void;
+
+    abstract goToNext(): void;
+
+    abstract goToToday(): void;
+
+    protected loadEventsForCurrentMonth(): void {
+        const courseId = this.courseId();
+        if (!courseId) return;
+        this.isLoading.set(true);
+        this.calendarService
+            .loadEventsForCurrentMonth(courseId, this.firstDateOfCurrentMonth())
+            .pipe(finalize(() => this.isLoading.set(false)))
+            .subscribe();
+    }
+
+    private getCurrentCourseIdSignal(): Signal<number | undefined> {
+        return toSignal(
+            this.activatedRoute.parent!.paramMap.pipe(
+                map((parameterMap) => {
+                    const courseIdParameter = parameterMap.get('courseId');
+                    return courseIdParameter !== null ? Number(courseIdParameter) : undefined;
+                }),
+                distinctUntilChanged(),
+            ),
+            { initialValue: undefined },
+        );
+    }
+}

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CalendarOverviewComponent } from './calendar-overview.component';
+import { CalendarContainerComponent } from './calendar-container.component';
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { BehaviorSubject } from 'rxjs';
 import { MockComponent } from 'ng-mocks';
@@ -7,8 +7,8 @@ import { CalendarDesktopOverviewComponent } from 'app/core/calendar/desktop/over
 import { CalendarMobileOverviewComponent } from 'app/core/calendar/mobile/overview/calendar-mobile-overview.component';
 
 describe('CalendarOverview', () => {
-    let component: CalendarOverviewComponent;
-    let fixture: ComponentFixture<CalendarOverviewComponent>;
+    let component: CalendarContainerComponent;
+    let fixture: ComponentFixture<CalendarContainerComponent>;
     let breakpoint$: BehaviorSubject<BreakpointState>;
 
     beforeEach(async () => {
@@ -18,11 +18,11 @@ describe('CalendarOverview', () => {
         });
 
         await TestBed.configureTestingModule({
-            imports: [CalendarOverviewComponent, MockComponent(CalendarDesktopOverviewComponent), MockComponent(CalendarMobileOverviewComponent)],
+            imports: [CalendarContainerComponent, MockComponent(CalendarDesktopOverviewComponent), MockComponent(CalendarMobileOverviewComponent)],
             providers: [{ provide: BreakpointObserver, useValue: { observe: () => breakpoint$.asObservable() } }],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CalendarOverviewComponent);
+        fixture = TestBed.createComponent(CalendarContainerComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });
