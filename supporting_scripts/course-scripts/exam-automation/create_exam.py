@@ -90,7 +90,7 @@ def get_course_students(session: requests.Session, course_id: int) -> List[Dict[
     """Get all students enrolled in the course."""
     url: str = f"{SERVER_URL}/core/courses/{course_id}/students"
     response: requests.Response = session.get(url)
-    
+
     if response.status_code == 200:
         students = response.json()
         logging.info(f"Found {len(students)} students in course {course_id}")
@@ -101,9 +101,9 @@ def get_course_students(session: requests.Session, course_id: int) -> List[Dict[
 def register_students_for_exam(session: requests.Session, exam_id: int) -> None:
     """Register students for the exam."""
     url: str = f"{SERVER_URL}/exam/courses/{COURSE_ID}/exams/{exam_id}/register-course-students"
-    
+
     response: requests.Response = session.post(url)
-    
+
     if response.status_code == 200:
         logging.info(f"Successfully registered all course students for exam {exam_id}")
     else:
@@ -112,15 +112,15 @@ def register_students_for_exam(session: requests.Session, exam_id: int) -> None:
 def create_exercise_group(session: requests.Session, exam_id: int, title: str) -> Dict[str, Any]:
     """Create an exercise group in the exam."""
     url: str = f"{SERVER_URL}/exam/courses/{COURSE_ID}/exams/{exam_id}/exercise-groups"
-    
+
     payload: Dict[str, Any] = {
         "title": title,
         "isMandatory": True,
         "exam": {"id": exam_id}
     }
-    
+
     response: requests.Response = session.post(url, json=payload)
-    
+
     if response.status_code == 201:
         exercise_group_data = response.json()
         logging.info(f"Created exercise group '{title}' in exam {exam_id}")
@@ -151,9 +151,9 @@ def create_programming_exercise_in_exam(session: requests.Session, exercise_grou
         "projectType": "PLAIN_GRADLE",
         "staticCodeAnalysisEnabled": False,
     }
-    
+
     response: requests.Response = session.post(url, json=payload)
-    
+
     if response.status_code == 201:
         exercise_data = response.json()
         logging.info(f"Created default programming exercise '{payload['title']}' in exercise group {exercise_group_id}")
@@ -178,42 +178,42 @@ def main() -> int:
         # Step 1: Authenticate as admin
         session: requests.Session = requests.Session()
         authenticate_user(ADMIN_USER, ADMIN_PASSWORD, session)
-        
+
         if COURSE_ID is None:
             logging.error("Course ID is required. Please provide course_id in config.ini or pass it as parameter.")
             return None
-        
+
         logging.info(f"Using course ID: {COURSE_ID}")
-        
+
         exam_short_name = generate_exam_short_name(EXAM_TITLE)
-        
+
         # Step 2: Create the exam
         exam_data = create_exam(session, COURSE_ID, EXAM_TITLE, exam_short_name)
         exam_id = exam_data.get('id')
-        
+
         # Step 3: Get course students
         students = get_course_students(session, COURSE_ID)
-        
+
         # Step 4: Register students for the exam
         register_students_for_exam(session, exam_id)
-        
+
         # Step 5: Create exercise group and programming exercise
         # Create exercise group first
         exercise_group = create_exercise_group(session, exam_id, "Programming Exercises")
         exercise_group_id = exercise_group.get('id')
-        
+
         # Create programming exercise in the exercise group
         create_programming_exercise_in_exam(session, exercise_group_id, PROGRAMMING_EXERCISE_NAME)
-        
+
         logging.info(f"Exam setup completed successfully!")
         logging.info(f"Course ID: {COURSE_ID}")
         logging.info(f"Exam ID: {exam_id}")
         logging.info(f"Exam Title: {EXAM_TITLE}")
         logging.info(f"Exam Short Name: {exam_short_name}")
         logging.info(f"Students Registered: {len(students)}")
-        
+
         return exam_id
-        
+
     except Exception as e:
         if "Course" in str(e) and "not found" in str(e):
             logging.error("❌ Course not found!")

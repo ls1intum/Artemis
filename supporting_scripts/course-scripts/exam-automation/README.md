@@ -184,7 +184,6 @@ The scripts provide detailed logging output showing:
 
 For issues or questions:
 1. Check the troubleshooting section above
-2. Ensure your Artemis instance is properly configured and able to conduct an exam manually 
+2. Ensure your Artemis instance is properly configured and able to conduct an exam manually
 3. Review Artemis documentation
 4. Check the Artemis project issues
- 
