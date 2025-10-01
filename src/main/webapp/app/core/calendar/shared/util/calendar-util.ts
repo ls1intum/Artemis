@@ -3,17 +3,6 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChalkboardUser, faCheckDouble, faDiagramProject, faFileArrowUp, faFont, faGraduationCap, faKeyboard, faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 
-export function getDatesInWeekOf(date: Dayjs): Dayjs[] {
-    const start = date.startOf('isoWeek');
-    const week: Dayjs[] = [];
-    let currentDay = start;
-    for (let i = 0; i < 7; i++) {
-        week.push(currentDay.clone());
-        currentDay = currentDay.add(1, 'day');
-    }
-    return week;
-}
-
 export function getHoursOfDay(): string[] {
     const hours = Array.from({ length: 23 }, (_, i) => `${(i + 1).toString().padStart(2, '0')}:00`);
     hours.push('00:00');

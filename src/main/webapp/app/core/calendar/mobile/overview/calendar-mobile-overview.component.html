@@ -47,7 +47,7 @@
         </div>
         @let day = selectedDate();
         @if (day) {
-            <jhi-calendar-mobile-day-presentation [selectedDate]="day" />
+            <jhi-calendar-mobile-day-presentation [date]="day" />
         } @else {
             <jhi-calendar-mobile-month-presentation [firstDateOfMonth]="firstDateOfCurrentMonth()" (selectDate)="selectDate($event)" />
         }
