@@ -1,6 +1,6 @@
-package de.tum.cit.aet.artemis.programming.web;
+package de.tum.cit.aet.artemis.programming.exception;
 
-public final class ProgrammingExerciseResourceErrorKeys {
+public final class ProgrammingExerciseErrorKeys {
 
     public static final String INVALID_TEMPLATE_REPOSITORY_URL = "invalid.template.repository.url";
 
@@ -20,6 +20,6 @@ public final class ProgrammingExerciseResourceErrorKeys {
 
     public static final String INVALID_TEST_CASE_WEIGHTS = "invalid.testcases.weights";
 
-    private ProgrammingExerciseResourceErrorKeys() {
+    private ProgrammingExerciseErrorKeys() {
     }
 }
