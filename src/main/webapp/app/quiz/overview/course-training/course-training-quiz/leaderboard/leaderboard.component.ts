@@ -10,27 +10,18 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
     styleUrl: './leaderboard.component.scss',
 })
 export class Leaderboard {
-    currentUser = input<string>('');
+    currentUserId = input<number>(undefined!);
     leaderboardName = input<string>('');
     leaderboard = input<LeaderboardEntry[]>([]);
 
     // Computed properties for the highlight box
     get currentUserRank(): number {
-        const user = this.leaderboard().find((entry) => entry.student === this.currentUser());
+        const user = this.leaderboard().find((entry) => entry.userId === this.currentUserId());
         return user?.rank || 0;
     }
 
-    get currentUserLeague(): number {
-        const user = this.leaderboard().find((entry) => entry.student === this.currentUser());
-        return user?.league || 0;
-    }
-
-    get currentUserStudent(): string {
-        return this.currentUser();
-    }
-
     get currentUserScore(): number {
-        const user = this.leaderboard().find((entry) => entry.student === this.currentUser());
+        const user = this.leaderboard().find((entry) => entry.userId === this.currentUserId());
         return user?.score || 0;
     }
 }

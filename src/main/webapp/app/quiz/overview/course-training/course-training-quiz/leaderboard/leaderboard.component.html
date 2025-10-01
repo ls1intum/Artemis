@@ -8,7 +8,7 @@
             <div class="highlight-item">
                 <span class="highlight-label">Student</span>
                 <span class="highlight-value">
-                    <jhi-profile-picture class="picture" [authorName]="currentUserStudent" [authorId]="currentUserRank" />
+                    <jhi-profile-picture class="picture" [authorName]="leaderboardName()" [authorId]="currentUserRank" />
                     {{ leaderboardName() }}
                 </span>
             </div>
@@ -34,11 +34,7 @@
                         <td class="not-user-column">{{ entry.rank }}</td>
                         <td class="user-name">
                             <jhi-profile-picture class="picture" [authorName]="entry.student" [authorId]="entry.rank" />
-                            @if (entry.student === currentUserStudent) {
-                                {{ leaderboardName() }}
-                            } @else {
-                                {{ entry.student }}
-                            }
+                            {{ entry.student }}
                         </td>
                         <td class="not-user-column">{{ entry.score }}</td>
                     </tr>

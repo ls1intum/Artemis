@@ -173,6 +173,14 @@
     background-color: #ffd700;
 }
 
+.diamond .progress {
+    background-color: hsl(195, 60%, 50%);
+}
+
+.master .progress {
+    background-color: hsl(270, 60%, 50%);
+}
+
 .next-league-icon {
     display: flex;
     align-items: center;
