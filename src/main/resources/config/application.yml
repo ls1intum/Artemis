@@ -301,7 +301,7 @@ server:
 # If these are set through Java code, the Logback appender fails to pick up the desired settings
 # Errors are still reported if the appender fails, but traces are missing
 sentry:
-    dsn: https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2 # Leave empty to disable Sentry, must be a valid URI
+    dsn: https://e52d0b9b6b61769f50b088634b4bc781@sentry.aet.cit.tum.de/2 # Leave empty to disable Sentry, must be a valid URI
     logging:
         enabled: true
         minimum-breadcrumb-level: error
