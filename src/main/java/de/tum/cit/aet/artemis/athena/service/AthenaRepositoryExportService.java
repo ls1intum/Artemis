@@ -33,6 +33,8 @@ public class AthenaRepositoryExportService {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaRepositoryExportService.class);
 
+    private static final String ENTITY_NAME = "programmingExercise";
+
     /**
      * Set of valid instructor repository types that can be accessed by Athena (excludes AUXILIARY).
      */
@@ -83,13 +85,13 @@ public class AthenaRepositoryExportService {
 
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
-        var submission = programmingSubmissionRepository.findById(submissionId).orElseThrow();
+        var submission = programmingSubmissionRepository.findByIdElseThrow(submissionId);
         var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(submission.getParticipation().getId());
         var repoUri = participation.getVcsRepositoryUri();
         if (repoUri == null) {
             throw new BadRequestAlertException(
                     "Repository URI is null for student participation " + participation.getId() + ". This may indicate that the student repository has not been set up yet.",
-                    "error", "invalid.student.repository.url");
+                    ENTITY_NAME, "error.invalid.student.repository.url");
         }
         ZonedDateTime deadline = programmingExercise.getDueDate();
         if (deadline != null) {
@@ -109,13 +111,13 @@ public class AthenaRepositoryExportService {
      * @throws IOException              if reading from the repository fails
      * @throws BadRequestAlertException if the repository URI is null
      * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
-     * @throws IllegalArgumentException if the repository type is not an Athena instructor repository type
+     * @throws BadRequestAlertException if the repository type is not an Athena instructor repository type
      */
     public Map<String, String> getInstructorRepositoryFilesContent(long exerciseId, RepositoryType repositoryType) throws IOException {
         log.debug("Retrieving instructor repository file contents for exercise {}, repository type {}", exerciseId, repositoryType);
 
         if (!ATHENA_INSTRUCTOR_REPOSITORY_TYPES.contains(repositoryType)) {
-            throw new BadRequestAlertException("Invalid instructor repository type", "error", "invalid.instructor.repository.type",
+            throw new BadRequestAlertException("Invalid instructor repository type", ENTITY_NAME, "error.invalid.instructor.repository.type",
                     Map.of("repositoryType", repositoryType, "validTypes", ATHENA_INSTRUCTOR_REPOSITORY_TYPES));
         }
 
@@ -125,9 +127,9 @@ public class AthenaRepositoryExportService {
 
         var repoUri = programmingExercise.getRepositoryURI(repositoryType);
         if (repoUri == null) {
-            String errorKey = "invalid." + repositoryType.name().toLowerCase() + ".repository.url";
+            String errorKey = "error.invalid." + repositoryType.name().toLowerCase() + ".repository.url";
             throw new BadRequestAlertException("Repository URI is null for exercise " + exerciseId + " and repository type " + repositoryType + ". This may indicate that the "
-                    + repositoryType.name().toLowerCase() + " repository has not been set up yet.", "error", errorKey);
+                    + repositoryType.name().toLowerCase() + " repository has not been set up yet.", ENTITY_NAME, errorKey);
         }
         return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repoUri);
     }

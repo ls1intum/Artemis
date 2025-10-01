@@ -129,16 +129,17 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    void shouldThrowIllegalArgumentExceptionForInvalidRepositoryType() {
+    void shouldThrowBadRequestAlertExceptionForInvalidRepositoryType() {
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
         var invalidRepositoryTypes = Set.of(RepositoryType.USER, RepositoryType.AUXILIARY);
         for (var invalidRepositoryType : invalidRepositoryTypes) {
-            assertThatExceptionOfType(IllegalArgumentException.class).as("Should throw IllegalArgumentException for invalid repository type: " + invalidRepositoryType)
+            assertThatExceptionOfType(BadRequestAlertException.class).as("Should throw BadRequestAlertException for invalid repository type: " + invalidRepositoryType)
                     .isThrownBy(() -> athenaRepositoryExportService.getInstructorRepositoryFilesContent(programmingExerciseWithId.getId(), invalidRepositoryType))
-                    .withMessageContaining("is not a valid instructor repository type").withMessageContaining(invalidRepositoryType.toString());
+                    .withMessageContaining("Invalid instructor repository type")
+                    .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("error.invalid.instructor.repository.type"));
         }
     }
 
