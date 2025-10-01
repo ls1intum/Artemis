@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -26,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -34,6 +36,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
+import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
 
 /**
  * REST controller for evaluating and re-evaluating quiz exercises.
@@ -57,6 +60,8 @@ public class QuizExerciseEvaluationResource {
 
     private final ExerciseService exerciseService;
 
+    private final QuizStatisticService quizStatisticService;
+
     private final Optional<ExamDateApi> examDateApi;
 
     private final QuizExerciseRepository quizExerciseRepository;
@@ -64,13 +69,14 @@ public class QuizExerciseEvaluationResource {
     private final UserRepository userRepository;
 
     public QuizExerciseEvaluationResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, UserRepository userRepository,
-            ExerciseService exerciseService, Optional<ExamDateApi> examDateApi, QuizResultService quizResultService) {
+            ExerciseService exerciseService, Optional<ExamDateApi> examDateApi, QuizResultService quizResultService, QuizStatisticService quizStatisticService) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.userRepository = userRepository;
         this.exerciseService = exerciseService;
         this.examDateApi = examDateApi;
         this.quizResultService = quizResultService;
+        this.quizStatisticService = quizStatisticService;
     }
 
     /**
@@ -136,4 +142,21 @@ public class QuizExerciseEvaluationResource {
         quizExercise.validateScoreSettings();
         return ResponseEntity.ok().body(quizExercise);
     }
+
+    /**
+     * GET /quiz-exercises/:quizExerciseId/recalculate-statistics : recalculate all statistics in case something went wrong with them
+     *
+     * @param quizExerciseId the id of the quizExercise for which the statistics should be recalculated
+     * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
+     */
+    @GetMapping("quiz-exercises/{quizExerciseId}/recalculate-statistics")
+    @EnforceAtLeastTutorInExercise(resourceIdFieldName = "quizExerciseId")
+    public ResponseEntity<QuizExercise> recalculateStatistics(@PathVariable Long quizExerciseId) {
+        log.info("REST request to recalculate quiz statistics : {}", quizExerciseId);
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        quizStatisticService.recalculateStatistics(quizExercise);
+        // fetch the quiz exercise again to make sure the latest changes are included
+        return ResponseEntity.ok(quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId()));
+    }
+
 }

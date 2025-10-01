@@ -111,7 +111,7 @@ public class QuizExerciseBatchResource {
     }
 
     /**
-     * POST /quiz-exercises/:quizExerciseId/add-batch : add a new batch to the exercise for batched running
+     * PUT /quiz-exercises/:quizExerciseId/add-batch : add a new batch to the exercise for batched running
      *
      * @param quizExerciseId the id of the quizExercise to add the batch to
      * @return the ResponseEntity with status 200 (OK) and with body the new batch
