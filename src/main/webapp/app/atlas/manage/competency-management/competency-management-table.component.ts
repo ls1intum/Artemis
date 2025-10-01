@@ -81,7 +81,7 @@ export class CompetencyManagementTableComponent {
         const modalRef = this.modalService.open(ImportAllCompetenciesComponent, { size: 'lg', backdrop: 'static' });
         //unary operator is necessary as otherwise courseId is seen as a string and will not match.
         modalRef.componentInstance.disabledIds = [this.courseId()!];
-        modalRef.componentInstance.competencyType = this.competencyType()!;
+        modalRef.componentInstance.competencyType.set(this.competencyType()!);
         modalRef.result.then((result: ImportAllFromCourseResult) => {
             const courseTitle = result.courseForImportDTO.title ?? '';
 
